@@ -1,87 +1,128 @@
-# OCAF Runtime — Rust / Tokio / optional Zenoh
+# OCAF Runtime — Rust / Tokio / Zenoh
 
-**Status: experimental.** This repository provides an in-process tool
-registry and execution core. Zenoh currently opens a session only.
-It does **not** yet expose a working distributed tool RPC protocol,
-dynamic code loading, Lightning payments, or production L402 verification.
+**Status: working experimental distributed RPC prototype; not production hardened.**
 
-## Components
+OCAF provides an async local tool registry and execution engine, plus a
+**real Zenoh query/reply protocol** for pairwise authenticated agent calls.
+The protocol uses HMAC-SHA256, a per-peer tool allowlist, bounded frames,
+request expiration and an in-memory replay cache. Remote execution is
+deliberately limited to **free, enabled tools without special permissions**.
 
-| Module | Function |
+## Capabilities
+
+| Component | Status |
 | --- | --- |
-| `registry` | Register tools, reject duplicates, compile local-only JSON Schemas |
-| `executor` | Async tool executor interface and execution context |
-| `runtime` | Input/output validation, authorizer gate, timeout, atomic budget escrow |
-| `auth` | Pluggable verification contract, **deny-by-default** implementation |
-| `metrics` | Success/failure counters and total elapsed microseconds |
-| `transport` | Optional Zenoh session opening and a local echo demo |
+| Rust/Tokio in-process tool execution | Implemented |
+| Manifest registry and JSON Schema input/output validation | Implemented |
+| Local timeouts, atomic budget escrow and accounting | Implemented |
+| Versioned Zenoh remote query/reply | Implemented |
+| Pairwise HMAC-SHA256 authenticated request/response | Implemented |
+| Exact tool allowlist and signed tool discovery | Implemented |
+| In-memory replay suppression / expiration / bounded concurrency | Implemented |
+| Two-session Zenoh TCP integration test | Automated test |
+| TLS/mTLS transport | Operator-configured (not programmatically enforced) |
+| Durable idempotency, multi-node coordination, agent lifecycle | Not implemented |
+| L402 Lightning payments and cryptographic payment validation | Not implemented |
+| Untrusted executable tool sandbox and production rate limiting | Not implemented |
 
-## Security boundaries
-
-- **Paid tools and permissioned tools are rejected by default**, even if
-  non-empty macaroon, preimage, invoice and nonce strings are supplied.
-- Only a production implementation of `AuthVerifier` that validates
-  cryptographic signatures, caveats, payment preimages/payment hashes,
-  invoice bindings, identity, replay and revocation rules may authorize
-  sensitive calls. **No such provider is included.**
-- Free tools without permissions can run without credentials.
-  They are therefore **public within the invoking process**. Do not
-  expose them remotely without authentication or network access controls.
-- JSON Schema input and output checks are enabled; external `$ref`
-  references are rejected. Registration compiles validators in memory.
-- Budgets are reserved atomically and refunded on failure, timeout or
-  task cancellation; a successful tool commits the charge.
-  This is **local resource accounting, not real Lightning settlement**.
-- The runtime does not yet enforce authenticated agent identities,
-  durable deduplication, exactly-once execution, sandboxed tools, tool
-  provenance, trusted remote transport, or per-agent rate limits.
-
-## Build & test
+## Development
 
 ```bash
 cargo fmt --all -- --check
 cargo clippy --all-targets --no-default-features -- -D warnings
 cargo test --no-default-features
 cargo test
-cargo run
+cargo run --bin ocaf_runtime
 ```
 
-By default, Cargo compiles the optional Zenoh transport. For core-only
-development, use `--no-default-features`. The demo uses a free local
-echo tool and does not simulate a paid L402 transaction.
+The library builds without Zenoh using `--no-default-features`. The
+`ocaf-rpc-node` binary requires the Zenoh feature.
 
-## Example
+## Local two-process RPC demo
 
-```rust
-use ocaf_runtime::runtime::{OcafRuntime, ToolCallRequest};
-// Implement ToolExecutor, declare a valid ToolManifest, then:
-// runtime.register(manifest, executor).await?;
-// runtime.execute(ToolCallRequest { ... }).await?;
+**Security warning:** The following files use plaintext TCP bound to
+`127.0.0.1`. This is a *local-only test*, not secure remote deployment.
+
+Provision a shared 32-byte key to each process, for example:
+
+```bash
+export OCAF_SHARED_KEY_B64="$(openssl rand -base64 32)"
 ```
 
-The example is illustrative; see `src/main.rs` and
-`tests/runtime_regressions.rs` for executable examples.
+Copy that environment variable securely into both local shell sessions.
+Do not check the key into source control or expose it in screenshots.
 
-## Roadmap / acceptance criteria
+**Server terminal:**
 
-1. **Core correctness:** CI-green compile, formatting, lint, regression
-   tests, schema validation, permission and budget invariants.
-2. **Zenoh RPC:** explicit wire protocol, tool discovery, request/reply,
-   connection security, cancellation semantics and integration tests.
-3. **L402:** Lightning-node integration, valid invoices, signed macaroons,
-   payment-hash/preimage verification, replay/caveat/revocation tests.
-4. **Dynamic tools:** signed manifests, sandboxed execution and resource
-   quotas; avoid unsandboxed loading of untrusted code.
-5. **Operability:** tracing/OTel, latency distribution benchmarks with
-   hardware/network profiles, fuzzing, dependency audit and SLOs.
-6. **Production release:** documented threat model, deployment hardening,
-   versioned API and reproducible release artifacts.
+```bash
+export OCAF_ROLE=server
+export OCAF_NODE_ID=agent-b
+export OCAF_PEER_ID=agent-a
+export OCAF_ZENOH_CONFIG=examples/insecure-local/server.json5
+cargo run --bin ocaf-rpc-node
+```
 
-**No sub-millisecond latency claims are made without reproducible
-benchmarks**. Rust/Tokio/Zenoh alone do not establish that bound.
+**Client terminal (with the same shared key):**
 
-## Licensing
+```bash
+export OCAF_ROLE=client
+export OCAF_NODE_ID=agent-a
+export OCAF_PEER_ID=agent-b
+export OCAF_ZENOH_CONFIG=examples/insecure-local/client.json5
+export OCAF_ACTION=discover
+cargo run --bin ocaf-rpc-node
+export OCAF_ACTION=call
+export OCAF_MESSAGE="authenticated request over Zenoh"
+cargo run --bin ocaf-rpc-node
+```
 
-The package declares `MIT` in Cargo.toml. A standalone `LICENSE`
-file and explicit redistribution policy should be confirmed by the
-repository owner before publishing artifacts.
+The server exports only `demo_echo`; it executes through the real
+`OcafRuntime` after verifying the caller's signature, ID, TTL, replay
+status, ACL and manifest safety. Replies are independently signed.
+Calling unknown/paid/restricted tools is denied.
+
+## Deploying across machines
+
+Use a reviewed Zenoh JSON5 configuration via `OCAF_ZENOH_CONFIG` for
+both peers, with reachability and an authenticated encrypted transport
+(e.g. configured TLS/mTLS). The **presence of a config file is NOT proof**
+of TLS or peer identity. Confirm effective Zenoh transport behavior and
+certificates in the deployment environment. The in-process HMAC
+authenticator offers integrity and peer-key authentication, **not**
+confidentiality.
+
+Without `OCAF_ZENOH_CONFIG` the RPC CLI refuses to start unless
+`OCAF_ALLOW_INSECURE_TRANSPORT=1` is explicitly set. This fallback is
+intended solely for isolated development, not production.
+
+## Wire contract
+
+- Fixed keyspace: `ocaf/v1/nodes/{target-node}/rpc`.
+- `RpcRequest` includes version, UUID correlation ID, sender,
+  recipient, issuance time, short TTL and `Discover` / `Execute`.
+- The body bytes are base64-encoded inside a JSON envelope and signed
+  using per-peer HMAC-SHA256. Both sides verify the signature and ID
+  binding. No arbitrary tool code is transferred.
+- The replay cache is *in memory* and is **not exactly-once execution**.
+- Size limits: 64 KiB frame, 32 KiB body; maximum request TTL: 30 s.
+- Do not send personal/private data over the demo's plaintext transport.
+
+See [docs/SECURITY.md](docs/SECURITY.md) for threat model and limitations.
+
+## Production work still required
+
+1. Enforced TLS/mTLS identity and secure configuration verification.
+2. Durable request ledger and idempotent/recoverable distributed jobs.
+3. Signed plugin supply chain, sandbox and capability isolation.
+4. Secret manager integration, peer/key rotation, revocation and quotas.
+5. Distributed traces, fault injection, property tests and benchmarks.
+6. Real L402 payment verification **only after** independent security review.
+
+There are **no substantiated sub-millisecond latency claims** for this
+prototype. Tests prove certain behavior, not all adversarial or
+production network conditions.
+
+## License
+
+The crate declares MIT licensing in `Cargo.toml`. License/redistribution
+status should be reviewed before public release.
