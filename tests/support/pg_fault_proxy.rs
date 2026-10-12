@@ -59,6 +59,11 @@ impl PgFaultProxy {
                     continue;
                 }
                 let mut cancel = signal.clone();
+                // A watch::Receiver clone inherits the original receiver's
+                // *seen* cursor. Refresh it for every new connection:
+                // otherwise a healed connection sees an already handled
+                // partition as a fresh notification and closes immediately.
+                cancel.borrow_and_update();
                 let cancelled = Arc::clone(&count);
                 tokio::spawn(async move {
                     if mode == MODE_BLACKHOLE {
