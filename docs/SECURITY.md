@@ -6,6 +6,9 @@
   The unsigned sender claim is used only for key lookup. Execution follows
   successful verification using that peer's key.
 - Per-peer exact tool allowlist. Unknown peers and denied tools fail closed.
+- Authenticated coordinator heartbeats bind membership to the verified RPC
+  sender; capabilities must be a subset of the administrator-assigned peer
+  ACL. Lookups require the requester's ACL for that capability.
 - Configurable fixed-window quotas on authenticated RPC requests (default 64
   messages per peer per second); exhausted quotas reject messages before
   resource discovery or tool execution.
@@ -41,6 +44,8 @@
 | Tool isolation | Tools run in the same OS process | sandbox, seccomp, capability boundaries and quotas |
 | End-to-end trace/observability | Basic in-process metrics | OpenTelemetry, audit log and incident response |
 | Queue failover | Single-host SQLite, not replicated cluster storage | Replicated coordinator, fencing at external services |
+| Agent membership / discovery | Durable SQLite membership with 15-second expiry and signed RPC | Replicated directory, endpoint attestation and active health probes |
+| Remote node identity | Signed HMAC key possession, no transport certificate enforcement | Workload mTLS and certificate rotation/revocation |
 | Expired worker external side effects | Journal fencing prevents stale commits, not external writes | Transactional outbox, external fencing and idempotency |
 | Multi-router trust | Not independently verified | mTLS Zenoh config and authenticated router topology |
 
@@ -75,6 +80,17 @@ database and transactional processing protocol before deploying active
 replicas across separate hosts. Keep the database and WAL sidecars private,
 exclude them from backups that leak customer metadata, and size capacity
 for a maximum of 4,096 live journal entries (full => fail closed).
+
+## Coordinator trust boundaries
+
+The experimental coordinator uses a separate persistent local SQLite
+membership database and a signed, replay-checked Zenoh RPC request. Agents
+can register only their own sender identity and authorized tool names.
+Requester capability lookups are individually permission-checked and
+rotate fairly across live heartbeat entries. A heartbeat is a claim of
+availability, **not proof of a healthy tool executor**. The coordinator
+is still a single host, and route responses do not implement job-lease
+transfer or reserve work. See [docs/COORDINATOR.md](COORDINATOR.md).
 
 ## Job queue boundaries
 
