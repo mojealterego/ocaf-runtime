@@ -11,9 +11,7 @@ use ocaf_runtime::cluster::jobs::PgJobQueue;
 use ocaf_runtime::cluster::leadership::PgLeader;
 use ocaf_runtime::rpc::{PeerPolicy, RpcAction, RpcClient, RpcGateway, RpcStatus};
 use ocaf_runtime::runtime::OcafRuntime;
-use ocaf_runtime::transport::rpc::{
-    ReconnectPolicy, ResilientZenohRpcClient, ZenohRpcServer,
-};
+use ocaf_runtime::transport::rpc::{ReconnectPolicy, ResilientZenohRpcClient, ZenohRpcServer};
 use serde_json::json;
 
 const SECRET: [u8; 32] = [0xA4; 32];
@@ -64,9 +62,11 @@ async fn zenoh_coordinator_host_loss_and_postgres_takeover_preserve_job_and_retr
     assert!(!b.try_acquire().await?);
     let epoch_a = a.fencing_epoch().await?;
 
-    let session_a = Arc::new(zenoh::open(client_cfg.clone())
-        .await
-        .map_err(|e| anyhow::anyhow!("open first coordinator: {e}"))?);
+    let session_a = Arc::new(
+        zenoh::open(client_cfg.clone())
+            .await
+            .map_err(|e| anyhow::anyhow!("open first coordinator: {e}"))?,
+    );
     let server_a = ZenohRpcServer::new(session_a, Arc::new(gateway(&dsn, Arc::clone(&a)).await?));
     let server_a_task = tokio::spawn(async move { server_a.serve().await });
     tokio::time::sleep(Duration::from_millis(450)).await;
@@ -83,16 +83,21 @@ async fn zenoh_coordinator_host_loss_and_postgres_takeover_preserve_job_and_retr
         policy,
     );
     let id = uuid::Uuid::new_v4().to_string();
-    let submitted = client.request(RpcAction::SubmitJob {
-        id: id.clone(),
-        tool: "safe_echo".into(),
-        args: json!({"body": "durable-across-transport-loss"}),
-    }).await?;
+    let submitted = client
+        .request(RpcAction::SubmitJob {
+            id: id.clone(),
+            tool: "safe_echo".into(),
+            args: json!({"body": "durable-across-transport-loss"}),
+        })
+        .await?;
     assert_eq!(submitted.status, RpcStatus::Ok);
     let first = PgJobQueue::connect(&dsn, true)
         .await?
         .with_leader(Arc::clone(&a));
-    assert_eq!(first.get_owned("submitter", &id).await?.unwrap().attempts, 0);
+    assert_eq!(
+        first.get_owned("submitter", &id).await?.unwrap().attempts,
+        0
+    );
 
     // Simulate loss of the whole coordinator process: drop the
     // queryable and abruptly terminate its dedicated PostgreSQL backend.
@@ -100,8 +105,11 @@ async fn zenoh_coordinator_host_loss_and_postgres_takeover_preserve_job_and_retr
     let _ = server_a_task.await;
     let pid = a.backend_pid().await?;
     let (pg, connection) = tokio_postgres::connect(&dsn, tokio_postgres::NoTls).await?;
-    let driver = tokio::spawn(async move { let _ = connection.await; });
-    let terminated: bool = pg.query_one("SELECT pg_terminate_backend($1)", &[&pid])
+    let driver = tokio::spawn(async move {
+        let _ = connection.await;
+    });
+    let terminated: bool = pg
+        .query_one("SELECT pg_terminate_backend($1)", &[&pid])
         .await?
         .get(0);
     assert!(terminated);
@@ -123,24 +131,30 @@ async fn zenoh_coordinator_host_loss_and_postgres_takeover_preserve_job_and_retr
         .with_leader(Arc::clone(&b));
     assert_eq!(second.recover_expired(0).await?.uncertain, 0);
 
-    let session_b = Arc::new(zenoh::open(client_cfg)
-        .await
-        .map_err(|e| anyhow::anyhow!("open replacement coordinator: {e}"))?);
+    let session_b = Arc::new(
+        zenoh::open(client_cfg)
+            .await
+            .map_err(|e| anyhow::anyhow!("open replacement coordinator: {e}"))?,
+    );
     let server_b = ZenohRpcServer::new(session_b, Arc::new(gateway(&dsn, Arc::clone(&b)).await?));
     let server_b_task = tokio::spawn(async move { server_b.serve().await });
     tokio::time::sleep(Duration::from_millis(450)).await;
 
     // Client creates a new Zenoh connection after the coordinator host
     // replacement. A repeated job UUID cannot create a second job.
-    let repeated = client.request(RpcAction::SubmitJob {
-        id: id.clone(),
-        tool: "safe_echo".into(),
-        args: json!({"body": "durable-across-transport-loss"}),
-    }).await?;
+    let repeated = client
+        .request(RpcAction::SubmitJob {
+            id: id.clone(),
+            tool: "safe_echo".into(),
+            args: json!({"body": "durable-across-transport-loss"}),
+        })
+        .await?;
     assert_eq!(repeated.status, RpcStatus::Ok);
     let status = client.request(RpcAction::GetJob { id: id.clone() }).await?;
     assert_eq!(status.output["status"], "pending");
-    let history = client.request(RpcAction::GetJobAudit { id, limit: 20 }).await?;
+    let history = client
+        .request(RpcAction::GetJobAudit { id, limit: 20 })
+        .await?;
     assert_eq!(history.status, RpcStatus::Ok);
     assert_eq!(history.output.as_array().unwrap().len(), 1);
     assert_eq!(history.output[0]["event"], "submitted");
