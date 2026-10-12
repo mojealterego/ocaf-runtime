@@ -29,6 +29,11 @@ async fn cluster_monitor_counts_only_jobs_owned_by_the_requested_cluster() {
     let Some(url) = dsn() else { return };
     let name_a = format!("monitor_a_{}", uuid::Uuid::new_v4().simple());
     let name_b = format!("monitor_b_{}", uuid::Uuid::new_v4().simple());
+    // The monitor intentionally never executes DDL; the service schema
+    // must be provisioned through the normal job/directory connections.
+    ocaf_runtime::cluster::directory::PgDirectory::connect(&url, true)
+        .await
+        .unwrap();
     let l_a = Arc::new(PgLeader::connect(&url, &name_a, true).await.unwrap());
     let l_b = Arc::new(PgLeader::connect(&url, &name_b, true).await.unwrap());
     assert!(l_a.try_acquire().await.unwrap());
@@ -73,6 +78,12 @@ async fn cluster_monitor_counts_only_jobs_owned_by_the_requested_cluster() {
 async fn operator_health_checks_fail_closed_after_leader_session_crash() {
     let Some(url) = dsn() else { return };
     let name = format!("monitor_fail_{}", uuid::Uuid::new_v4().simple());
+    ocaf_runtime::cluster::jobs::PgJobQueue::connect(&url, true)
+        .await
+        .unwrap();
+    ocaf_runtime::cluster::directory::PgDirectory::connect(&url, true)
+        .await
+        .unwrap();
     let leader = PgLeader::connect(&url, &name, true).await.unwrap();
     let monitor = PgClusterMonitor::connect(&url, &name, true).await.unwrap();
     assert_eq!(
