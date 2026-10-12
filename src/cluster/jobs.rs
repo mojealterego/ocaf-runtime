@@ -241,7 +241,8 @@ impl PgJobQueue {
             .await
             .map_err(storage)?;
         let stored_owner: String = row.get("owner");
-        if row.get::<_, String>("cluster_id") != cluster_id || stored_owner != owner
+        if row.get::<_, String>("cluster_id") != cluster_id
+            || stored_owner != owner
             || row.get::<_, String>("tool") != job.tool
             || serde_json::from_str::<Value>(&row.get::<_, String>("args"))
                 .map_err(|_| JobError::Storage)?
@@ -316,7 +317,15 @@ impl PgJobQueue {
                  lease_expires_at_ms =
                    (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT + $5
                  WHERE id=$1 AND cluster_id=$7 RETURNING lease_expires_at_ms",
-                &[&id, &attempt, &worker, &token, &duration_ms, &generation, &cluster_id],
+                &[
+                    &id,
+                    &attempt,
+                    &worker,
+                    &token,
+                    &duration_ms,
+                    &generation,
+                    &cluster_id,
+                ],
             )
             .await
             .map_err(storage)?;
