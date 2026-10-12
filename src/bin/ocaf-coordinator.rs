@@ -10,8 +10,8 @@ use std::time::Duration;
 
 use base64::engine::general_purpose::STANDARD as B64;
 use base64::Engine as _;
-use ocaf_runtime::coordinator::leadership::LeaderGuard;
 use ocaf_runtime::cluster::leadership::PgLeader;
+use ocaf_runtime::coordinator::leadership::LeaderGuard;
 use ocaf_runtime::rpc::{PeerPolicy, RpcGateway};
 use ocaf_runtime::runtime::OcafRuntime;
 use ocaf_runtime::transport::rpc::ZenohRpcServer;
@@ -122,13 +122,19 @@ async fn run_postgres_cluster(node_id: &str) -> anyhow::Result<()> {
     }
     leader.verify().await?;
     let gateway = RpcGateway::new(node_id, OcafRuntime::new(0), peers, 64)?
-        .with_postgres_replay(&dsn, allow_loopback).await?
-        .with_postgres_coordinator(&dsn, allow_loopback).await?
-        .with_postgres_job_db(&dsn, allow_loopback).await?
+        .with_postgres_replay(&dsn, allow_loopback)
+        .await?
+        .with_postgres_coordinator(&dsn, allow_loopback)
+        .await?
+        .with_postgres_job_db(&dsn, allow_loopback)
+        .await?
         .with_pg_leader(Arc::clone(&leader));
 
-    let session = Arc::new(zenoh::open(config).await
-        .map_err(|err| anyhow::anyhow!("Zenoh open: {err}"))?);
+    let session = Arc::new(
+        zenoh::open(config)
+            .await
+            .map_err(|err| anyhow::anyhow!("Zenoh open: {err}"))?,
+    );
     let server = ZenohRpcServer::new(session, Arc::new(gateway));
     tracing::info!(node=%node_id, cluster=%cluster_id, "PostgreSQL coordinator leader serving");
 
