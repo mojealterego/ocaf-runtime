@@ -20,8 +20,8 @@ submit -> pending --claim/lease--> running --succeed--> succeeded
 ```
 
 The `uncertain` state is terminal for the automatic worker. It means a
-worker disappeared or its lease expired before a trustworthy result could
-be committed; external side effects might already have occurred. An
+worker disappeared, its lease expired, or a non-retry-safe tool returned an
+ambiguous execution error after external side effects might have occurred. An
 operator must reconcile the effect before submitting a *new* job UUID.
 
 ## Core guarantees
@@ -36,6 +36,9 @@ operator must reconcile the effect before submitting a *new* job UUID.
 - Each lease has a UUID fencing token and expiry. A worker holding a
   previous token cannot commit results, failures or heartbeats after
   losing its lease or after task reassignment.
+- Worker classifies uncertain tool errors (timeout, executor error or invalid
+  output) as terminal `uncertain` for non-idempotent jobs rather than
+  incorrectly recording a definitive failure.
 - Worker performs crash recovery before every claim. Expired work that
   is explicitly retry-safe may be retried subject to `max_attempts`;
   otherwise the job is marked `uncertain` and never auto-restarted.
