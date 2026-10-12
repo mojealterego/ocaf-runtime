@@ -3,7 +3,9 @@
 This module is an **embedded, single-host SQLite job orchestration layer**.
 It is not yet a distributed scheduler or a replacement for a fault-tolerant
 database. It is intended for a trusted local supervisor managing OCAF agent
-work. Remote peers currently **cannot submit arbitrary jobs over Zenoh RPC**.
+work. Since v0.8 the same store can also back a **signed, explicitly
+role-authorized remote job API** on the coordinator; see
+[DISTRIBUTED_JOBS.md](DISTRIBUTED_JOBS.md) for its strict boundaries.
 
 ## State machine
 
