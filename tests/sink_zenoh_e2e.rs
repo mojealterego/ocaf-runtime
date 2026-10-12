@@ -51,8 +51,7 @@ async fn separate_zenoh_receiver_fences_postgres_leader_takeover() -> anyhow::Re
     let sink = Arc::new(EffectSink::open(
         &dir.path().join("effect_sink.sqlite"),
         "standalone-sink",
-        SinkKeys::new("leader", CONTROLLER, "worker", WORKER)?
-            .with_cluster_id(&cluster)?,
+        SinkKeys::new("leader", CONTROLLER, "worker", WORKER)?.with_cluster_id(&cluster)?,
     )?);
     let server = ZenohSinkServer::new(server_session, sink);
     let serving = tokio::spawn(async move { server.serve().await });
@@ -71,16 +70,18 @@ async fn separate_zenoh_receiver_fences_postgres_leader_takeover() -> anyhow::Re
     assert_eq!(activation.status, SinkStatus::Ok);
     let id = uuid::Uuid::new_v4().to_string();
     let tool = format!("sink_task_{}", uuid::Uuid::new_v4().simple());
-    queue.submit_owned(
-        "sink-owner",
-        JobSpec {
-            id: id.clone(),
-            tool: tool.clone(),
-            args: json!({}),
-            retry_safe: false,
-            max_attempts: 1,
-        },
-    ).await?;
+    queue
+        .submit_owned(
+            "sink-owner",
+            JobSpec {
+                id: id.clone(),
+                tool: tool.clone(),
+                args: json!({}),
+                retry_safe: false,
+                max_attempts: 1,
+            },
+        )
+        .await?;
     let lease = queue
         .claim_permitted("worker", ocaf_runtime::rpc::now_ms()?, 30_000, &[tool])
         .await?
