@@ -13,12 +13,14 @@ use std::time::Duration;
 use rusqlite::{params, Connection, TransactionBehavior};
 
 use super::RpcError;
+use crate::cluster::replay::PgReplay;
 
 const MAX_REPLAY_ENTRIES: i64 = 4_096;
 
 pub(super) enum ReplayBackend {
     Volatile(Mutex<HashMap<(String, String), u64>>),
     Durable(Arc<SqliteReplayLedger>),
+    Postgres(PgReplay),
 }
 
 impl ReplayBackend {
@@ -30,6 +32,10 @@ impl ReplayBackend {
         Ok(Self::Durable(Arc::new(SqliteReplayLedger::open(path)?)))
     }
 
+    pub(super) fn postgres(db: PgReplay) -> Self {
+        Self::Postgres(db)
+    }
+
     pub(super) async fn reserve(
         &self,
         node: &str,
@@ -39,6 +45,7 @@ impl ReplayBackend {
         now_ms: u64,
     ) -> Result<(), RpcError> {
         match self {
+            Self::Postgres(db) => db.reserve(node, sender, request_id, expires_at_ms, now_ms).await,
             Self::Volatile(seen) => {
                 let mut seen = seen.lock().map_err(|_| RpcError::Unavailable)?;
                 seen.retain(|_, expiry| *expiry >= now_ms);
