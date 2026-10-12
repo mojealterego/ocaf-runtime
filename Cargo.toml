@@ -1,10 +1,15 @@
 [package]
 name = "ocaf_runtime"
-version = "0.20.0"
+version = "0.21.0"
 edition = "2021"
 publish = false
 license = "MIT"
 description = "OmniContext Agent Framework runtime core with fail-closed authorization"
+
+[[bin]]
+name = "ocaf-effect-sink"
+path = "src/bin/ocaf-effect-sink.rs"
+required-features = ["zenoh"]
 
 [[bin]]
 name = "ocaf-rpc-node"

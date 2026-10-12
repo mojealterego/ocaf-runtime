@@ -7,6 +7,7 @@ pub mod metrics;
 pub mod registry;
 pub mod rpc;
 pub mod runtime;
+pub mod sink;
 
 #[cfg(feature = "zenoh")]
 pub mod transport;

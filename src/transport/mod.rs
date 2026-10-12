@@ -1,4 +1,5 @@
 pub mod rpc;
+pub mod sink;
 
 use serde_json::Value;
 use std::sync::Arc;
