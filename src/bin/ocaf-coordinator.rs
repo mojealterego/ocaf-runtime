@@ -10,6 +10,7 @@ use std::time::Duration;
 
 use base64::engine::general_purpose::STANDARD as B64;
 use base64::Engine as _;
+use ocaf_runtime::cluster::jobs::PgJobQueue;
 use ocaf_runtime::cluster::leadership::PgLeader;
 use ocaf_runtime::coordinator::leadership::LeaderGuard;
 use ocaf_runtime::rpc::{PeerPolicy, RpcGateway};
@@ -104,6 +105,9 @@ fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
 /// the same PostgreSQL primary, and serving is tied to an active advisory
 /// leader. PostgreSQL HA, VIP/load balancer and certificate operations are
 /// separate operator responsibilities.
+/// Opt-in restartable HA supervisor. For safety, every iteration opens new
+/// PostgreSQL connections and a fresh Zenoh queryable only *after* election.
+/// The process remains alive during a database outage but does not serve.
 async fn run_postgres_cluster(node_id: &str) -> anyhow::Result<()> {
     let dsn = env_required("OCAF_CLUSTER_PG_DSN")?;
     let cluster_id = env_required("OCAF_CLUSTER_ID")?;
@@ -114,41 +118,102 @@ async fn run_postgres_cluster(node_id: &str) -> anyhow::Result<()> {
     validate_zenoh_config(&source, allow_loopback)?;
     let config = zenoh::Config::from_json5(&source)
         .map_err(|err| anyhow::anyhow!("cannot parse vetted Zenoh config: {err}"))?;
-
-    let leader = Arc::new(PgLeader::connect(&dsn, &cluster_id, allow_loopback).await?);
     let mode = env::var("OCAF_COORDINATOR_MODE").unwrap_or_else(|_| "active".into());
     match mode.as_str() {
+        "active" | "standby" => {
+            serve_postgres_generation(
+                node_id,
+                &dsn,
+                &cluster_id,
+                allow_loopback,
+                &peers,
+                &config,
+                mode.as_str(),
+            )
+            .await
+        }
+        "ha" => {
+            let mut delay = Duration::from_millis(250);
+            loop {
+                let result = serve_postgres_generation(
+                    node_id,
+                    &dsn,
+                    &cluster_id,
+                    allow_loopback,
+                    &peers,
+                    &config,
+                    "standby",
+                )
+                .await;
+                // A failed PostgreSQL connection, loss of a leader session,
+                // or a failed Zenoh service may never leave the old gateway
+                // online while a newly elected leader starts serving.
+                match result {
+                    Ok(()) => tracing::warn!("HA service ended; reconnecting"),
+                    Err(err) => tracing::warn!(error=%err, "HA service unavailable; reconnecting"),
+                }
+                tokio::time::sleep(delay).await;
+                delay = delay.saturating_mul(2).min(Duration::from_secs(5));
+            }
+        }
+        _ => anyhow::bail!("OCAF_COORDINATOR_MODE must be active, standby or ha"),
+    }
+}
+
+async fn serve_postgres_generation(
+    node_id: &str,
+    dsn: &str,
+    cluster_id: &str,
+    allow_loopback: bool,
+    peers: &HashMap<String, PeerPolicy>,
+    config: &zenoh::Config,
+    mode: &str,
+) -> anyhow::Result<()> {
+    let leader = Arc::new(PgLeader::connect(dsn, cluster_id, allow_loopback).await?);
+    match mode {
         "active" => {
             if !leader.try_acquire().await? {
                 anyhow::bail!("another coordinator owns PostgreSQL cluster leadership");
             }
         }
         "standby" => {
-            tracing::info!("standby awaits PostgreSQL cluster leadership");
+            tracing::info!(cluster=%cluster_id, "standby awaits PostgreSQL cluster leadership");
             leader.acquire_standby(Duration::from_millis(250)).await?;
         }
-        _ => anyhow::bail!("OCAF_COORDINATOR_MODE must be active or standby"),
+        _ => anyhow::bail!("invalid internal cluster election mode"),
     }
     leader.verify().await?;
-    let gateway = RpcGateway::new(node_id, OcafRuntime::new(0), peers, 64)?
-        .with_postgres_replay(&dsn, allow_loopback)
+
+    let jobs = PgJobQueue::connect(dsn, allow_loopback)
         .await?
-        .with_postgres_coordinator(&dsn, allow_loopback)
+        .with_leader(Arc::clone(&leader));
+    // Promotion must mark all leases from a former generation uncertain
+    // immediately, rather than waiting for their full deadline.
+    let recovered = jobs.recover_expired(0).await?;
+    tracing::info!(
+        cluster=%cluster_id,
+        epoch=leader.fencing_epoch().await?,
+        uncertain=recovered.uncertain,
+        "PostgreSQL promotion recovery completed"
+    );
+
+    let gateway = RpcGateway::new(node_id, OcafRuntime::new(0), peers.clone(), 64)?
+        .with_postgres_replay(dsn, allow_loopback)
         .await?
-        .with_postgres_job_db(&dsn, allow_loopback)
+        .with_postgres_coordinator(dsn, allow_loopback)
+        .await?
+        .with_postgres_job_db(dsn, allow_loopback)
         .await?
         .with_pg_leader(Arc::clone(&leader));
 
     let session = Arc::new(
-        zenoh::open(config)
+        zenoh::open(config.clone())
             .await
             .map_err(|err| anyhow::anyhow!("Zenoh open: {err}"))?,
     );
     let server = ZenohRpcServer::new(session, Arc::new(gateway));
     tracing::info!(node=%node_id, cluster=%cluster_id, "PostgreSQL coordinator leader serving");
 
-    // If the session dies or PostgreSQL stops responding, destroy the
-    // queryable and terminate rather than serving from a stale host.
     let watch = async {
         loop {
             tokio::time::sleep(Duration::from_millis(500)).await;
@@ -157,15 +222,37 @@ async fn run_postgres_cluster(node_id: &str) -> anyhow::Result<()> {
         #[allow(unreachable_code)]
         Ok::<(), ocaf_runtime::cluster::leadership::PgLeaderError>(())
     };
-    tokio::select! {
+    // Periodic recovery works even when workers stop polling entirely.
+    // Recovery itself verifies leadership and locks the epoch transaction.
+    let sweep = async {
+        loop {
+            tokio::time::sleep(Duration::from_secs(2)).await;
+            jobs.recover_expired(0).await?;
+        }
+        #[allow(unreachable_code)]
+        Ok::<(), ocaf_runtime::jobs::JobError>(())
+    };
+    let result = tokio::select! {
         result = server.serve() => result,
         result = watch => {
             match result {
                 Ok(()) => anyhow::bail!("leader monitor unexpectedly stopped"),
-                Err(err) => anyhow::bail!("PostgreSQL leadership lost; coordinator stopped: {err}"),
+                Err(err) => Err(anyhow::anyhow!("PostgreSQL leadership lost: {err}")),
+            }
+        },
+        result = sweep => {
+            match result {
+                Ok(()) => anyhow::bail!("lease recovery sweep unexpectedly stopped"),
+                Err(err) => Err(anyhow::anyhow!("PostgreSQL recovery failed: {err}")),
             }
         }
+    };
+    // Drop the serving queryable first; release the exact advisory session
+    // before a new iteration attempts another election.
+    if let Err(err) = leader.release().await {
+        tracing::warn!(error=%err, "leader session release failed closed");
     }
+    result
 }
 
 #[tokio::main]
