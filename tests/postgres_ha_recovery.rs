@@ -117,3 +117,74 @@ async fn independent_clusters_cannot_claim_or_recover_each_others_jobs() {
     a.release().await.unwrap();
     b.release().await.unwrap();
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn forced_postgres_backend_loss_promotes_a_fresh_session_and_fences_old_worker() {
+    use std::time::Duration;
+
+    let Some(url) = dsn() else { return };
+    let cluster = format!("ha_disconnect_{}", uuid::Uuid::new_v4().simple());
+    let old = Arc::new(PgLeader::connect(&url, &cluster, true).await.unwrap());
+    let standby = Arc::new(PgLeader::connect(&url, &cluster, true).await.unwrap());
+    assert!(old.try_acquire().await.unwrap());
+    assert!(!standby.try_acquire().await.unwrap());
+    let db1 = PgJobQueue::connect(&url, true)
+        .await
+        .unwrap()
+        .with_leader(Arc::clone(&old));
+    let id = uuid::Uuid::new_v4().to_string();
+    let tool = format!("ha_crash_{}", uuid::Uuid::new_v4().simple());
+    db1.submit_owned(
+        "owner",
+        JobSpec {
+            id: id.clone(),
+            tool: tool.clone(),
+            args: json!({}),
+            retry_safe: false,
+            max_attempts: 1,
+        },
+    )
+    .await
+    .unwrap();
+    let lease = db1
+        .claim_permitted("worker", 0, 300_000, &[tool])
+        .await
+        .unwrap()
+        .unwrap();
+
+    let pid = old.backend_pid().await.unwrap();
+    let (pg, connection) = tokio_postgres::connect(&url, tokio_postgres::NoTls)
+        .await
+        .unwrap();
+    let driving = tokio::spawn(async move {
+        let _ = connection.await;
+    });
+    assert!(pg
+        .query_one("SELECT pg_terminate_backend($1)", &[&pid])
+        .await
+        .unwrap()
+        .get::<_, bool>(0));
+
+    let mut promoted = false;
+    for _ in 0..100 {
+        if standby.try_acquire().await.unwrap() {
+            promoted = true;
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    assert!(promoted, "standby should acquire election after backend termination");
+    let db2 = PgJobQueue::connect(&url, true)
+        .await
+        .unwrap()
+        .with_leader(Arc::clone(&standby));
+    assert_eq!(db2.recover_expired(0).await.unwrap().uncertain, 1);
+    assert_eq!(
+        db2.get_owned("owner", &id).await.unwrap().unwrap().status,
+        JobStatus::Uncertain
+    );
+    assert!(!db2.validate_current_lease(&lease).await.unwrap());
+    assert!(db1.recover_expired(0).await.is_err());
+    standby.release().await.unwrap();
+    driving.abort();
+}
