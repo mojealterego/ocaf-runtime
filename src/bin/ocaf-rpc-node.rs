@@ -83,6 +83,12 @@ async fn main() -> anyhow::Result<()> {
             let client = ZenohRpcClient::new(session, protocol);
             let action = match env::var("OCAF_ACTION").as_deref() {
                 Ok("discover") => RpcAction::Discover,
+                Ok("heartbeat") => RpcAction::Heartbeat {
+                    tools: vec![env::var("OCAF_TOOL").unwrap_or_else(|_| "demo_echo".into())],
+                },
+                Ok("resolve") => RpcAction::Resolve {
+                    tool: env::var("OCAF_TOOL").unwrap_or_else(|_| "demo_echo".into()),
+                },
                 Ok("call") | Err(_) => RpcAction::Execute {
                     tool: "demo_echo".into(),
                     args: json!({"message": env::var("OCAF_MESSAGE").unwrap_or_else(|_| "hello over Zenoh RPC".into())}),
