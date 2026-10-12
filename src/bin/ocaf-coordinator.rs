@@ -19,6 +19,10 @@ use serde::Deserialize;
 struct PeerConfig {
     key_b64: String,
     allowed_tools: Vec<String>,
+    #[serde(default)]
+    submit_jobs: bool,
+    #[serde(default)]
+    worker_jobs: bool,
 }
 
 fn env_required(name: &str) -> anyhow::Result<String> {
@@ -71,7 +75,14 @@ fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
         if !seen_keys.insert(key) {
             anyhow::bail!("each coordinator peer must have a unique secret");
         }
-        peers.insert(node, PeerPolicy::new(key, entry.allowed_tools));
+        let mut policy = PeerPolicy::new(key, entry.allowed_tools);
+        if entry.submit_jobs {
+            policy = policy.allow_job_submission();
+        }
+        if entry.worker_jobs {
+            policy = policy.allow_job_worker();
+        }
+        peers.insert(node, policy);
     }
     Ok(peers)
 }
@@ -82,8 +93,9 @@ async fn main() -> anyhow::Result<()> {
     let node_id = env_required("OCAF_COORDINATOR_NODE_ID")?;
     let replay = absolute_path("OCAF_REPLAY_DB_PATH")?;
     let membership = absolute_path("OCAF_COORDINATOR_DB_PATH")?;
-    if replay == membership {
-        anyhow::bail!("coordinator and replay databases require separate files");
+    let jobs = absolute_path("OCAF_JOBS_DB_PATH")?;
+    if replay == membership || replay == jobs || membership == jobs {
+        anyhow::bail!("coordinator, replay and job databases require separate files");
     }
     let peers = load_peers(&absolute_path("OCAF_PEERS_FILE")?)?;
     let zenoh_config = env_required("OCAF_ZENOH_CONFIG")?;
@@ -92,7 +104,8 @@ async fn main() -> anyhow::Result<()> {
 
     let gateway =
         RpcGateway::with_sqlite_replay(&node_id, OcafRuntime::new(0), peers, 64, &replay)?
-            .with_coordinator_db(&membership)?;
+            .with_coordinator_db(&membership)?
+    .with_job_db(&jobs)?;
     let session = Arc::new(
         zenoh::open(config)
             .await
