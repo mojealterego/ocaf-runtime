@@ -1,6 +1,6 @@
 # OCAF Runtime — Rust / Tokio / Zenoh
 
-**Status: experimental authenticated distributed RPC and crash-resistant local job processing; not production hardened.**
+**Status: experimental signed distributed RPC, durable local jobs and authenticated agent directory; not production hardened.**
 
 OCAF provides an async local tool registry and execution engine, plus a
 **real Zenoh query/reply protocol** for pairwise authenticated agent calls.
@@ -24,7 +24,8 @@ deliberately limited to **free, enabled tools without special permissions**.
 | TLS/mTLS transport | Operator-configured (not programmatically enforced) |
 | Durable admission (at-most-once within TTL) | Implemented with SQLite; not exactly-once execution |
 | SQLite job queue, worker lease/fencing, restart recovery | Implemented for one host |
-| Distributed scheduler, cross-host coordination and agent lifecycle | Not implemented |
+| Authenticated agent membership, 15-second leases, capability routing | Implemented (single-host coordinator) |
+| Replicated distributed scheduler, durable cross-host job dispatch | Not implemented |
 | L402 Lightning payments and cryptographic payment validation | Not implemented |
 | Untrusted executable tool sandbox and production rate limiting | Not implemented |
 
@@ -140,10 +141,26 @@ remote job submission API at this stage.
 See [docs/JOBS.md](docs/JOBS.md) for API examples, persistence guarantees,
 operating requirements and remaining architectural work.
 
+## Authenticated capability coordinator (v0.7)
+
+The standalone `ocaf-coordinator` service accepts signed agent heartbeats
+and capability lookups over Zenoh. Each agent advertises only tools explicitly
+authorized in its administrator-configured HMAC peer policy. The persistent
+SQLite directory expires membership after 15 seconds without a heartbeat
+and rotates lookups fairly among currently advertised nodes.
+
+The demo RPC server can automatically renew its membership every five
+seconds when `OCAF_COORDINATOR_NODE_ID` and `OCAF_COORDINATOR_KEY_B64`
+are provisioned. HMAC does not encrypt traffic; the operator must separately
+enforce verified Zenoh TLS/mTLS for non-loopback deployments.
+
+See [docs/COORDINATOR.md](docs/COORDINATOR.md) for the separate daemon,
+peer provisioning, acceptance tests, and important non-production limitations.
+
 ## Production work still required
 
 1. Enforced TLS/mTLS identity and secure configuration verification.
-2. Replicated durable job scheduling, external-effect fencing and cross-host consensus.
+2. Replicated coordinator and real cross-host job dispatch with external-effect fencing.
 3. Signed plugin supply chain, sandbox and capability isolation.
 4. Secret manager integration, peer/key rotation, revocation and quotas.
 5. Distributed traces, fault injection, property tests and benchmarks.
