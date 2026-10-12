@@ -1,8 +1,7 @@
 use std::time::Instant;
 
-use ocaf_runtime::runtime::{
-    EchoTool, OcafRuntime, ToolCallRequest, ZenohTransport, pricing_tool_manifest, sample_auth,
-};
+use ocaf_runtime::runtime::{OcafRuntime, ToolCallRequest};
+use ocaf_runtime::transport::{EchoTool, ZenohTransport, pricing_tool_manifest, sample_auth};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
