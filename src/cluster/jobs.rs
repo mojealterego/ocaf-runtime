@@ -213,8 +213,22 @@ impl PgJobQueue {
         }
 
         let cluster_id = self.cluster_id().unwrap_or("");
+        // A submission started before leadership loss must not commit
+        // after a newer coordinator has been promoted.
+        let guard = match &self.leader {
+            Some(leader) => Some(
+                leader
+                    .fence_transaction()
+                    .await
+                    .map_err(|_| JobError::Storage)?,
+            ),
+            None => None,
+        };
+        let generation = guard.as_ref().map_or(0, |value| value.epoch());
         let mut client = self.state.client.lock().await;
         let tx = client.transaction().await.map_err(storage)?;
+        self.check_epoch_in_transaction(&tx, cluster_id, generation)
+            .await?;
         let inserted = tx
             .execute(
                 "INSERT INTO ocaf_pg_jobs_v1(id,owner,tool,args,cluster_id,retry_safe,max_attempts,status)

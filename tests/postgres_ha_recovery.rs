@@ -191,3 +191,33 @@ async fn forced_postgres_backend_loss_promotes_a_fresh_session_and_fences_old_wo
     standby.release().await.unwrap();
     driving.abort();
 }
+
+#[tokio::test]
+async fn a_revoked_leader_cannot_submit_new_cluster_jobs_after_promotion() {
+    let Some(url) = dsn() else { return };
+    let cluster = format!("ha_submit_{}", uuid::Uuid::new_v4().simple());
+    let former = Arc::new(PgLeader::connect(&url, &cluster, true).await.unwrap());
+    let new = Arc::new(PgLeader::connect(&url, &cluster, true).await.unwrap());
+    assert!(former.try_acquire().await.unwrap());
+    let before = PgJobQueue::connect(&url, true)
+        .await
+        .unwrap()
+        .with_leader(Arc::clone(&former));
+    former.release().await.unwrap();
+    assert!(new.try_acquire().await.unwrap());
+    let after = PgJobQueue::connect(&url, true)
+        .await
+        .unwrap()
+        .with_leader(Arc::clone(&new));
+    let job = JobSpec {
+        id: uuid::Uuid::new_v4().to_string(),
+        tool: "test_safe".to_string(),
+        args: json!({}),
+        retry_safe: false,
+        max_attempts: 1,
+    };
+    assert!(before.submit_owned("owner", job.clone()).await.is_err());
+    assert!(after.get_owned("owner", &job.id).await.unwrap().is_none());
+    assert!(after.submit_owned("owner", job).await.is_ok());
+    new.release().await.unwrap();
+}
