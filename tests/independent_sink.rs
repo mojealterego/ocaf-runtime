@@ -187,3 +187,64 @@ async fn request_fn_expired(store: &EffectSink, req: &SinkRequest) -> bool {
     let frame = SinkRequest::seal(req, &CONTROLLER).unwrap();
     store.handle_at(&frame, NOW + 31_000).await.is_err()
 }
+
+#[tokio::test]
+async fn epoch_activation_expires_even_when_signed_worker_permit_is_still_valid() {
+    let tmp = tempfile::tempdir().unwrap();
+    let file = tmp.path().join("time_fence.sqlite");
+    let store = sink(&file);
+    let activation = SinkRequest::new(
+        "remote-sink",
+        "controller",
+        NOW,
+        5000,
+        SinkAction::ActivateEpoch {
+            epoch: 23,
+            expires_at_ms: NOW + 1_000,
+        },
+    )
+    .unwrap();
+    let signed_activation = activation.seal(&CONTROLLER).unwrap();
+    assert!(store.handle_at(&signed_activation, NOW).await.is_ok());
+    drop(store);
+
+    let reopened = sink(&file);
+    assert!(matches!(
+        reopened.handle_at(&signed_activation, NOW).await,
+        Err(ocaf_runtime::sink::SinkError::Replay)
+    ));
+    let body = json!({"still_signed":"not_authorized"});
+    let req = SinkRequest::new(
+        "remote-sink",
+        "worker",
+        NOW + 1_100,
+        5000,
+        SinkAction::Apply {
+            permit: permit(&uuid::Uuid::new_v4().to_string(), 23, &body),
+            effect: body,
+        },
+    )
+    .unwrap();
+    let response = reopened
+        .handle_at(&req.seal(&WORKER).unwrap(), NOW + 1_100)
+        .await
+        .unwrap();
+    let signed = SinkResponse::open(&response, &WORKER, &req).unwrap();
+    assert_eq!(signed.status, SinkStatus::Denied);
+}
+
+#[tokio::test]
+async fn a_sink_database_cannot_be_relabelled_to_another_sink_identity() {
+    let tmp = tempfile::tempdir().unwrap();
+    let path = tmp.path().join("identity.sqlite");
+    let original = sink(&path);
+    drop(original);
+    assert!(matches!(
+        EffectSink::open(
+            &path,
+            "different-sink",
+            SinkKeys::new("controller", CONTROLLER, "worker", WORKER).unwrap()
+        ),
+        Err(ocaf_runtime::sink::SinkError::Invalid)
+    ));
+}
