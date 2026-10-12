@@ -320,41 +320,81 @@ async fn crash_expiration_marks_unsafe_remote_work_uncertain() {
 async fn only_original_submitter_can_read_remote_job_status_and_result() {
     let dir = tempfile::tempdir().unwrap();
     let peers = HashMap::from([
-        ("requester".into(), PeerPolicy::new(SUBMIT_KEY, vec!["echo".into()])
-            .allow_job_submission()),
-        ("requester-b".into(), PeerPolicy::new(BAD_KEY, vec!["echo".into()])
-            .allow_job_submission()),
-        ("worker".into(), PeerPolicy::new(WORKER_KEY, vec!["echo".into()])
-            .allow_job_worker()),
+        (
+            "requester".into(),
+            PeerPolicy::new(SUBMIT_KEY, vec!["echo".into()]).allow_job_submission(),
+        ),
+        (
+            "requester-b".into(),
+            PeerPolicy::new(BAD_KEY, vec!["echo".into()]).allow_job_submission(),
+        ),
+        (
+            "worker".into(),
+            PeerPolicy::new(WORKER_KEY, vec!["echo".into()]).allow_job_worker(),
+        ),
     ]);
     let gateway = RpcGateway::new("coord", OcafRuntime::new(0), peers, 16)
         .unwrap()
         .with_job_db(&dir.path().join("jobs.sqlite"))
         .unwrap();
     let id = uuid::Uuid::new_v4().to_string();
-    call(&gateway, "requester", &SUBMIT_KEY, submit(&id), NOW).await.unwrap();
-    let other = call(&gateway, "requester-b", &BAD_KEY,
-        RpcAction::GetJob { id: id.clone() }, NOW+1).await.unwrap();
+    call(&gateway, "requester", &SUBMIT_KEY, submit(&id), NOW)
+        .await
+        .unwrap();
+    let other = call(
+        &gateway,
+        "requester-b",
+        &BAD_KEY,
+        RpcAction::GetJob { id: id.clone() },
+        NOW + 1,
+    )
+    .await
+    .unwrap();
     assert_eq!(other.status, RpcStatus::Ok);
     assert_eq!(other.output, Value::Null);
 
     // Knowing the job UUID and the original payload does not grant ownership.
-    let collision = call(&gateway, "requester-b", &BAD_KEY, submit(&id), NOW+2)
-        .await.unwrap();
+    let collision = call(&gateway, "requester-b", &BAD_KEY, submit(&id), NOW + 2)
+        .await
+        .unwrap();
     assert_eq!(collision.status, RpcStatus::Failed);
 
-    let lease = claim(&gateway, NOW+3).await;
-    call(&gateway, "worker", &WORKER_KEY, RpcAction::FinishJob {
-        lease, outcome: RemoteJobOutcome::Succeeded { output:json!({"result":"secret"}) }
-    }, NOW+4).await.unwrap();
+    let lease = claim(&gateway, NOW + 3).await;
+    call(
+        &gateway,
+        "worker",
+        &WORKER_KEY,
+        RpcAction::FinishJob {
+            lease,
+            outcome: RemoteJobOutcome::Succeeded {
+                output: json!({"result":"secret"}),
+            },
+        },
+        NOW + 4,
+    )
+    .await
+    .unwrap();
 
-    let mine = call(&gateway, "requester", &SUBMIT_KEY,
-        RpcAction::GetJob { id: id.clone() }, NOW+5).await.unwrap();
+    let mine = call(
+        &gateway,
+        "requester",
+        &SUBMIT_KEY,
+        RpcAction::GetJob { id: id.clone() },
+        NOW + 5,
+    )
+    .await
+    .unwrap();
     assert_eq!(mine.status, RpcStatus::Ok);
     assert_eq!(mine.output["status"], "succeeded");
     assert_eq!(mine.output["result"]["result"], "secret");
 
-    let outsider = call(&gateway,"outsider",&BAD_KEY,
-        RpcAction::GetJob {id},NOW+6).await;
+    let outsider = call(
+        &gateway,
+        "outsider",
+        &BAD_KEY,
+        RpcAction::GetJob { id },
+        NOW + 6,
+    )
+    .await;
     assert!(matches!(outsider, Err(RpcError::Unauthorized)));
 }
