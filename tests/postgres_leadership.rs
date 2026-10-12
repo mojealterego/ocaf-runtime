@@ -93,3 +93,86 @@ async fn invalid_cluster_identity_fails_closed() {
     .expect("invalid identity");
     assert!(matches!(err, PgLeaderError::InvalidCluster));
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn concurrent_elections_do_not_stack_postgres_session_locks() {
+    use std::sync::Arc;
+    use tokio::task::JoinSet;
+
+    let Some(url) = dsn() else { return };
+    let cluster = format!("concurrent_{}", uuid::Uuid::new_v4().simple());
+    let active = Arc::new(PgLeader::connect(&url, &cluster, true).await.unwrap());
+    let standby = PgLeader::connect(&url, &cluster, true).await.unwrap();
+    let mut tasks = JoinSet::new();
+    for _ in 0..32 {
+        let candidate = Arc::clone(&active);
+        tasks.spawn(async move { candidate.try_acquire().await });
+    }
+    while let Some(result) = tasks.join_next().await {
+        assert!(result.unwrap().unwrap());
+    }
+    assert!(!standby.try_acquire().await.unwrap());
+    let first_epoch = active.fencing_epoch().await.unwrap();
+    active.release().await.unwrap();
+
+    // PostgreSQL session advisory locks are reentrant. If several
+    // acquisitions were stacked, this takeover would remain blocked.
+    assert!(standby.try_acquire().await.unwrap());
+    assert!(standby.fencing_epoch().await.unwrap() > first_epoch);
+    assert!(active.verify().await.is_err());
+    standby.release().await.unwrap();
+}
+
+#[tokio::test]
+async fn fencing_epoch_is_durable_across_multiple_takeovers() {
+    let Some(url) = dsn() else { return };
+    let cluster = format!("epoch_{}", uuid::Uuid::new_v4().simple());
+    let first = PgLeader::connect(&url, &cluster, true).await.unwrap();
+    let second = PgLeader::connect(&url, &cluster, true).await.unwrap();
+    assert!(first.try_acquire().await.unwrap());
+    let epoch1 = first.fencing_epoch().await.unwrap();
+    assert!(!second.try_acquire().await.unwrap());
+    first.release().await.unwrap();
+    assert!(first.fencing_epoch().await.is_err());
+    assert!(second.try_acquire().await.unwrap());
+    let epoch2 = second.fencing_epoch().await.unwrap();
+    assert_eq!(epoch2, epoch1 + 1);
+    second.release().await.unwrap();
+    assert!(first.try_acquire().await.unwrap());
+    assert_eq!(first.fencing_epoch().await.unwrap(), epoch2 + 1);
+    first.release().await.unwrap();
+}
+
+#[tokio::test]
+async fn changed_database_epoch_fences_a_still_connected_old_leader() {
+    let Some(url) = dsn() else { return };
+    let cluster = format!("fenced_{}", uuid::Uuid::new_v4().simple());
+    let active = PgLeader::connect(&url, &cluster, true).await.unwrap();
+    let standby = PgLeader::connect(&url, &cluster, true).await.unwrap();
+    assert!(active.try_acquire().await.unwrap());
+    let original_epoch = active.fencing_epoch().await.unwrap();
+    let (db, connection) = tokio_postgres::connect(&url, tokio_postgres::NoTls)
+        .await
+        .unwrap();
+    let task = tokio::spawn(async move {
+        let _ = connection.await;
+    });
+    // Test-only epoch corruption models a stale leader seeing a newer
+    // durable election record. It must fail closed despite SELECT 1.
+    assert_eq!(
+        db.execute(
+            "UPDATE ocaf_pg_leader_epochs_v1 SET epoch=epoch+1 WHERE cluster_id=$1",
+            &[&cluster],
+        )
+        .await
+        .unwrap(),
+        1
+    );
+    assert!(matches!(active.verify().await, Err(PgLeaderError::Database)));
+    assert!(!standby.try_acquire().await.unwrap());
+    active.release().await.unwrap();
+    assert!(standby.try_acquire().await.unwrap());
+    assert_eq!(standby.fencing_epoch().await.unwrap(), original_epoch + 2);
+    standby.release().await.unwrap();
+    task.abort();
+}

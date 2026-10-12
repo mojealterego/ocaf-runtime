@@ -354,6 +354,27 @@ host-level fault injection or external-system fencing.
 
 See [docs/LEASE_CLOCK.md](docs/LEASE_CLOCK.md).
 
+## Durable leadership fencing epochs (v0.17)
+
+The PostgreSQL active/passive election now records a **strictly increasing
+epoch per cluster** in the shared primary. Every RPC admission and signed
+reply leadership verification checks both the active backend's *actual*
+PostgreSQL advisory lock and the durable generation, not merely whether
+its TCP session answers `SELECT 1`.
+
+Acquisition and release are serialized per coordinator to prevent stacked
+re-entrant PostgreSQL advisory locks. Ambiguous lock/epoch transitions
+poison the connection and fail closed. `PgLeader::fencing_epoch()` exposes
+the checked generation to explicitly cooperating downstream systems.
+
+**This is coordinator fencing, not external-effect fencing.** A stale
+agent already executing arbitrary external tools can still cause side
+effects unless that external system independently enforces the epoch.
+A single PostgreSQL primary is still assumed; physical split-brain
+partitions and database failover are not certified.
+
+See [docs/FENCING_EPOCH.md](docs/FENCING_EPOCH.md).
+
 ## Production work still required
 
 1. Certificate-backed TLS/mTLS handshakes on separate deployed hosts, plus certificate rotation and revocation.
