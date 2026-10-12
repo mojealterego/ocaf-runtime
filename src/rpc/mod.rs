@@ -105,7 +105,7 @@ pub enum RpcAction {
 
 /// A remote worker is trusted to report whether an execution was completed,
 /// definitively rejected before execution, or ambiguous.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum RemoteJobOutcome {
     Succeeded { output: Value },
