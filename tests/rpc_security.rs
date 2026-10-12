@@ -251,14 +251,21 @@ fn reply_verification_checks_caller_target_and_correlation() {
 #[tokio::test]
 async fn authenticated_peer_is_rate_limited_without_affecting_other_peers() {
     let runtime = OcafRuntime::new(0);
-    runtime.register(manifest("echo", 0, vec![]), Echo).await.unwrap();
+    runtime
+        .register(manifest("echo", 0, vec![]), Echo)
+        .await
+        .unwrap();
     let policy = PeerPolicy::new(KEY, vec!["echo".into()])
         .with_rate_limit(2)
         .unwrap();
     let peers = HashMap::from([
         ("agent-a".to_string(), policy),
-        ("agent-c".to_string(), PeerPolicy::new(KEY, vec!["echo".into()])
-            .with_rate_limit(2).unwrap()),
+        (
+            "agent-c".to_string(),
+            PeerPolicy::new(KEY, vec!["echo".into()])
+                .with_rate_limit(2)
+                .unwrap(),
+        ),
     ]);
     let gateway = RpcGateway::new("agent-b", runtime, peers, 8).unwrap();
 
@@ -272,22 +279,30 @@ async fn authenticated_peer_is_rate_limited_without_affecting_other_peers() {
 
     // A separate authenticated peer has an independent quota.
     let other = RpcRequest::new(
-        "agent-c", "agent-b", NOW, 5000,
+        "agent-c",
+        "agent-b",
+        NOW,
+        5000,
         RpcAction::Execute {
             tool: "echo".into(),
-            args: json!({"message":"peer-c"})
-        }
-    ).unwrap();
+            args: json!({"message":"peer-c"}),
+        },
+    )
+    .unwrap();
     assert!(invoke(&gateway, &other).await.is_ok());
 
     // The original peer can send again in the next rate window.
     let next = RpcRequest::new(
-        "agent-a", "agent-b", NOW + 1000, 5000,
+        "agent-a",
+        "agent-b",
+        NOW + 1000,
+        5000,
         RpcAction::Execute {
             tool: "echo".into(),
-            args: json!({"message":"next"})
-        }
-    ).unwrap();
+            args: json!({"message":"next"}),
+        },
+    )
+    .unwrap();
     let next_bytes = SignedFrame::seal(&next, &KEY).unwrap();
     assert!(gateway.handle_at(&next_bytes, NOW + 1000).await.is_ok());
     assert_eq!(gateway.runtime().metrics.snapshot().await.total_calls, 4);
