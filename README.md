@@ -5,7 +5,7 @@
 OCAF provides an async local tool registry and execution engine, plus a
 **real Zenoh query/reply protocol** for pairwise authenticated agent calls.
 The protocol uses HMAC-SHA256, a per-peer tool allowlist, bounded frames,
-request expiration and an in-memory replay cache. Remote execution is
+request expiration and either an in-memory or durable SQLite replay journal. Remote execution is
 deliberately limited to **free, enabled tools without special permissions**.
 
 ## Capabilities
@@ -18,10 +18,10 @@ deliberately limited to **free, enabled tools without special permissions**.
 | Versioned Zenoh remote query/reply | Implemented |
 | Pairwise HMAC-SHA256 authenticated request/response | Implemented |
 | Exact tool allowlist and signed tool discovery | Implemented |
-| In-memory replay suppression / expiration / bounded concurrency | Implemented |
+| SQLite WAL replay journal / expiration / bounded concurrency | Implemented; mandatory in RPC server CLI |
 | Two-session Zenoh TCP integration test | Automated test |
 | TLS/mTLS transport | Operator-configured (not programmatically enforced) |
-| Durable idempotency, multi-node coordination, agent lifecycle | Not implemented |
+| Durable admission (at-most-once within TTL) | Implemented with SQLite; not exactly-once execution |\n| Durable result cache, cross-host coordination, agent lifecycle | Not implemented |
 | L402 Lightning payments and cryptographic payment validation | Not implemented |
 | Untrusted executable tool sandbox and production rate limiting | Not implemented |
 
@@ -59,6 +59,7 @@ export OCAF_ROLE=server
 export OCAF_NODE_ID=agent-b
 export OCAF_PEER_ID=agent-a
 export OCAF_ZENOH_CONFIG=examples/insecure-local/server.json5
+export OCAF_REPLAY_DB_PATH="$(pwd)/ocaf-replay.sqlite"
 cargo run --bin ocaf-rpc-node
 ```
 
@@ -103,7 +104,7 @@ plaintext loopback-only and must not be used as production settings.
 - The body bytes are base64-encoded inside a JSON envelope and signed
   using per-peer HMAC-SHA256. Both sides verify the signature and ID
   binding. No arbitrary tool code is transferred.
-- The replay cache is *in memory* and is **not exactly-once execution**.
+- The library can use volatile replay protection, but the RPC server CLI\n  requires an absolute `OCAF_REPLAY_DB_PATH` and uses durable SQLite WAL.\n  It commits an admission claim before execution; repeating a signed request\n  ID after restart is rejected within its TTL window. It is **not exactly-once\n  execution**. If the server crashes after admission but before a tool finishes,\n  the outcome may be unknown and retries with the same ID are denied.\n  SQLite is intended for a single host or replicas sharing the same on-disk\n  filesystem; **it is not a cross-host consensus or distributed database**.
 - Size limits: 64 KiB frame, 32 KiB body; maximum request TTL: 30 s.
 - Do not send personal/private data over the demo's plaintext transport.
 
@@ -112,7 +113,7 @@ See [docs/SECURITY.md](docs/SECURITY.md) for threat model and limitations.
 ## Production work still required
 
 1. Enforced TLS/mTLS identity and secure configuration verification.
-2. Durable request ledger and idempotent/recoverable distributed jobs.
+2. Persistent result journal, recoverable distributed job execution and cross-host consensus.
 3. Signed plugin supply chain, sandbox and capability isolation.
 4. Secret manager integration, peer/key rotation, revocation and quotas.
 5. Distributed traces, fault injection, property tests and benchmarks.
