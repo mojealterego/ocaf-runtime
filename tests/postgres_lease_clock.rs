@@ -27,9 +27,17 @@ async fn skewed_coordinator_clock_does_not_change_lease_deadline() {
     let Some(url) = dsn() else { return };
     let queue = PgJobQueue::connect(&url, true).await.unwrap();
     let task = job();
-    queue.submit_owned("owner-clock", task.clone()).await.unwrap();
+    queue
+        .submit_owned("owner-clock", task.clone())
+        .await
+        .unwrap();
     let lease = queue
-        .claim_permitted("worker-clock", u64::MAX, 60_000, std::slice::from_ref(&task.tool))
+        .claim_permitted(
+            "worker-clock",
+            u64::MAX,
+            60_000,
+            std::slice::from_ref(&task.tool),
+        )
         .await
         .unwrap()
         .unwrap();
@@ -56,7 +64,12 @@ async fn skewed_coordinator_clock_does_not_change_lease_deadline() {
         .await
         .unwrap();
     assert_eq!(
-        queue.get_owned("owner-clock", &task.id).await.unwrap().unwrap().status,
+        queue
+            .get_owned("owner-clock", &task.id)
+            .await
+            .unwrap()
+            .unwrap()
+            .status,
         JobStatus::Succeeded
     );
     driver.abort();
@@ -67,7 +80,10 @@ async fn database_expiration_rejects_backdated_completion() {
     let Some(url) = dsn() else { return };
     let queue = PgJobQueue::connect(&url, true).await.unwrap();
     let task = job();
-    queue.submit_owned("owner-expiry", task.clone()).await.unwrap();
+    queue
+        .submit_owned("owner-expiry", task.clone())
+        .await
+        .unwrap();
     let lease = queue
         .claim_permitted("worker-expiry", 0, 60_000, std::slice::from_ref(&task.tool))
         .await
@@ -96,7 +112,12 @@ async fn database_expiration_rejects_backdated_completion() {
     ));
     assert_eq!(queue.recover_expired(0).await.unwrap().uncertain, 1);
     assert_eq!(
-        queue.get_owned("owner-expiry", &task.id).await.unwrap().unwrap().status,
+        queue
+            .get_owned("owner-expiry", &task.id)
+            .await
+            .unwrap()
+            .unwrap()
+            .status,
         JobStatus::Uncertain
     );
     driver.abort();

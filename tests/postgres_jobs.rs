@@ -27,7 +27,6 @@ async fn expire_lease_in_postgres(url: &str, id: &str) {
     task.abort();
 }
 
-
 fn dsn() -> Option<String> {
     let value = std::env::var("OCAF_TEST_PG_DSN").ok();
     assert!(
