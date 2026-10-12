@@ -12,8 +12,8 @@ use ocaf_runtime::transport::sink::ZenohSinkServer;
 use ocaf_runtime::transport_policy::{read_zenoh_config, validate_zenoh_config};
 
 fn required(name: &str) -> anyhow::Result<String> {
-    let value = env::var(name)
-        .map_err(|_| anyhow::anyhow!("missing required configuration: {name}"))?;
+    let value =
+        env::var(name).map_err(|_| anyhow::anyhow!("missing required configuration: {name}"))?;
     if value.is_empty() {
         anyhow::bail!("empty configuration: {name}");
     }
@@ -27,7 +27,8 @@ fn absolute(name: &str) -> anyhow::Result<PathBuf> {
     Ok(path)
 }
 fn key(name: &str) -> anyhow::Result<[u8; 32]> {
-    let raw = B64.decode(required(name)?)
+    let raw = B64
+        .decode(required(name)?)
         .map_err(|_| anyhow::anyhow!("invalid base64 secret: {name}"))?;
     let key: [u8; 32] = raw
         .try_into()

@@ -42,12 +42,9 @@ async fn separate_zenoh_receiver_fences_postgres_leader_takeover() -> anyhow::Re
     let serving = tokio::spawn(async move { server.serve().await });
     tokio::time::sleep(Duration::from_millis(350)).await;
 
-    let controller = ZenohSinkClient::new(
-        controller_session, "standalone-sink", "leader", CONTROLLER,
-    )?;
-    let worker = ZenohSinkClient::new(
-        worker_session, "standalone-sink", "worker", WORKER,
-    )?;
+    let controller =
+        ZenohSinkClient::new(controller_session, "standalone-sink", "leader", CONTROLLER)?;
+    let worker = ZenohSinkClient::new(worker_session, "standalone-sink", "worker", WORKER)?;
     let cluster = format!("sink_remote_{}", uuid::Uuid::new_v4().simple());
     let previous = PgLeader::connect(&pg, &cluster, true).await?;
     let next = PgLeader::connect(&pg, &cluster, true).await?;
@@ -58,18 +55,27 @@ async fn separate_zenoh_receiver_fences_postgres_leader_takeover() -> anyhow::Re
     let effect = json!({"remote_event":"committed"});
     let token = controller
         .issue_permit(
-            &previous, "worker", &id,
-            ocaf_runtime::rpc::now_ms()? + 10_000, &effect,
+            &previous,
+            "worker",
+            &id,
+            ocaf_runtime::rpc::now_ms()? + 10_000,
+            &effect,
         )
         .await?;
-    let committed = worker.request(SinkAction::Apply {
-        permit: token.clone(), effect: effect.clone(),
-    }).await?;
+    let committed = worker
+        .request(SinkAction::Apply {
+            permit: token.clone(),
+            effect: effect.clone(),
+        })
+        .await?;
     assert_eq!(committed.status, SinkStatus::Ok);
     assert_eq!(committed.output["applied"], true);
-    let repeat = worker.request(SinkAction::Apply {
-        permit: token.clone(), effect: effect.clone(),
-    }).await?;
+    let repeat = worker
+        .request(SinkAction::Apply {
+            permit: token.clone(),
+            effect: effect.clone(),
+        })
+        .await?;
     assert_eq!(repeat.status, SinkStatus::Ok);
     assert_eq!(repeat.output["applied"], false);
 
@@ -79,9 +85,12 @@ async fn separate_zenoh_receiver_fences_postgres_leader_takeover() -> anyhow::Re
         controller.activate_from_leader(&next, 10_000).await?.status,
         SinkStatus::Ok
     );
-    let stale = worker.request(SinkAction::Apply {
-        permit: token, effect,
-    }).await?;
+    let stale = worker
+        .request(SinkAction::Apply {
+            permit: token,
+            effect,
+        })
+        .await?;
     assert_eq!(stale.status, SinkStatus::Denied);
     next.release().await?;
     serving.abort();

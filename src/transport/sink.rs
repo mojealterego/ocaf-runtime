@@ -6,7 +6,7 @@ use std::time::Duration;
 use tokio::sync::Semaphore;
 
 use crate::cluster::leadership::PgLeader;
-use crate::rpc::{now_ms, validate_node_id, MAX_FRAME_BYTES, SignedFrame};
+use crate::rpc::{now_ms, validate_node_id, SignedFrame, MAX_FRAME_BYTES};
 use crate::sink::{EffectSink, SinkAction, SinkError, SinkPermit, SinkRequest, SinkResponse};
 
 const WIRE_TIMEOUT: Duration = Duration::from_secs(6);
@@ -157,14 +157,7 @@ impl ZenohSinkClient {
         effect: &serde_json::Value,
     ) -> anyhow::Result<Vec<u8>> {
         let epoch = leader.fencing_epoch().await?;
-        let token = SinkPermit::new(
-            &self.sink_id,
-            worker,
-            job_id,
-            epoch,
-            expires_at_ms,
-            effect,
-        )?;
+        let token = SinkPermit::new(&self.sink_id, worker, job_id, epoch, expires_at_ms, effect)?;
         Ok(SignedFrame::seal(&token, &self.key)?)
     }
 }

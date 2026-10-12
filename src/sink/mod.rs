@@ -227,11 +227,7 @@ pub struct SinkResponse {
 }
 
 impl SinkResponse {
-    pub fn open(
-        bytes: &[u8],
-        key: &[u8; 32],
-        request: &SinkRequest,
-    ) -> Result<Self, SinkError> {
+    pub fn open(bytes: &[u8], key: &[u8; 32], request: &SinkRequest) -> Result<Self, SinkError> {
         let reply: Self = SignedFrame::open(bytes, key)?;
         if reply.version != SINK_VERSION
             || reply.sink_id != request.sink_id
@@ -317,7 +313,11 @@ impl EffectSink {
         )
         .map_err(|_| SinkError::Storage)?;
         let existing: String = tx
-            .query_row("SELECT sink_id FROM sink_identity_v1 WHERE one=1", [], |row| row.get(0))
+            .query_row(
+                "SELECT sink_id FROM sink_identity_v1 WHERE one=1",
+                [],
+                |row| row.get(0),
+            )
             .map_err(|_| SinkError::Storage)?;
         if existing != sink_id {
             return Err(SinkError::Invalid);
@@ -345,7 +345,9 @@ impl EffectSink {
         }
         let outer: SinkWire = serde_json::from_slice(wire).map_err(|_| SinkError::Invalid)?;
         let key = *self.keys.for_sender(&outer.sender)?;
-        let frame = B64.decode(outer.frame_b64).map_err(|_| SinkError::Invalid)?;
+        let frame = B64
+            .decode(outer.frame_b64)
+            .map_err(|_| SinkError::Invalid)?;
         if frame.len() > MAX_FRAME_BYTES {
             return Err(SinkError::Invalid);
         }
@@ -367,10 +369,9 @@ impl EffectSink {
         let sink = self.clone();
         let request_id = req.request_id.clone();
         let recipient = req.sender.clone();
-        let (status, output) =
-            tokio::task::spawn_blocking(move || sink.run_action(req, now))
-                .await
-                .map_err(|_| SinkError::Storage)??;
+        let (status, output) = tokio::task::spawn_blocking(move || sink.run_action(req, now))
+            .await
+            .map_err(|_| SinkError::Storage)??;
 
         let reply = SinkResponse {
             version: SINK_VERSION,
@@ -394,8 +395,11 @@ impl EffectSink {
         let tx = db
             .transaction_with_behavior(TransactionBehavior::Immediate)
             .map_err(|_| SinkError::Storage)?;
-        tx.execute("DELETE FROM sink_replay_v1 WHERE expires_at_ms < ?1", params![now])
-            .map_err(|_| SinkError::Storage)?;
+        tx.execute(
+            "DELETE FROM sink_replay_v1 WHERE expires_at_ms < ?1",
+            params![now],
+        )
+        .map_err(|_| SinkError::Storage)?;
         let inserted = tx
             .execute(
                 "INSERT OR IGNORE INTO sink_replay_v1(sender,request_id,expires_at_ms)
@@ -415,7 +419,8 @@ impl EffectSink {
                 if req.sender != self.keys.controller_id
                     || epoch <= 0
                     || !(u64::try_from(now).map_err(|_| SinkError::Invalid)?
-                        ..=u64::try_from(now).map_err(|_| SinkError::Invalid)?
+                        ..=u64::try_from(now)
+                            .map_err(|_| SinkError::Invalid)?
                             .saturating_add(MAX_ACTIVATION_MS))
                         .contains(&expires_at_ms)
                     || expires_at_ms == u64::try_from(now).map_err(|_| SinkError::Invalid)?
@@ -423,11 +428,9 @@ impl EffectSink {
                     (SinkStatus::Denied, Value::Null)
                 } else {
                     let previous: Option<i64> = tx
-                        .query_row(
-                            "SELECT epoch FROM sink_epochs_v1 WHERE one=1",
-                            [],
-                            |row| row.get(0),
-                        )
+                        .query_row("SELECT epoch FROM sink_epochs_v1 WHERE one=1", [], |row| {
+                            row.get(0)
+                        })
                         .optional()
                         .map_err(|_| SinkError::Storage)?;
                     if previous.is_some_and(|current| epoch < current) {
@@ -524,13 +527,20 @@ impl EffectSink {
                 "SELECT worker,payload_hash,epoch,effect,committed_at_ms
                  FROM sink_effects_v1 WHERE job_id=?1",
                 params![permit.job_id],
-                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)),
+                |row| {
+                    Ok((
+                        row.get(0)?,
+                        row.get(1)?,
+                        row.get(2)?,
+                        row.get(3)?,
+                        row.get(4)?,
+                    ))
+                },
             )
             .map_err(|_| SinkError::Storage)?;
         if existing.0 != worker
             || existing.1 != permit.payload_hash
-            || serde_json::from_str::<Value>(&existing.3)
-                .map_err(|_| SinkError::Storage)?
+            || serde_json::from_str::<Value>(&existing.3).map_err(|_| SinkError::Storage)?
                 != *effect
         {
             return Ok((SinkStatus::Conflict, Value::Null));
