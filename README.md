@@ -291,10 +291,40 @@ operator responsibilities.
 See [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md) for usage, thresholds,
 exit codes, safeguards and CI coverage.
 
+## Stable-endpoint reconnect and deployment hardening (v0.14)
+
+The `ocaf-rpc-node` **client** role now uses a reconnecting
+authenticated Zenoh transport. It recreates a vetted Zenoh session
+with bounded exponential backoff after transport failure and permits
+automatic retry **only** for read-only discovery, owner-only job status
+and audit, or UUID-idempotent job submission. Remote tool `Execute`,
+worker `ClaimJob`, `FinishJob` and `Heartbeat` are **never**
+automatically retried, because a lost reply may conceal side effects
+or an active lease. No retries are unbounded.
+
+`OCAF_RECONNECT_ATTEMPTS` controls the attempt count (1–8, default 4).
+`OCAF_ACTION=submit` now **requires a stable, explicit
+`OCAF_JOB_ID`**, reused for every attempt and invocation. Do not
+generate a new job UUID when a previous response is ambiguous.
+
+The coordinator validates its PostgreSQL leader session **again just
+before sending a signed reply**. This reduces stale-leader
+acknowledgments but cannot undo effects that happened during an
+in-flight request or replace external-system fencing.
+
+New hardened systemd coordinator and health units are in
+[deploy/systemd](deploy/systemd). They are templates requiring an
+operator-provisioned database, secure Zenoh/mTLS PKI, secret files,
+privileged endpoint routing and supervision. Tests exercise bounded
+retry semantics and a real Zenoh server starting after the client.
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for security assumptions,
+commands and remaining machine-level verification work.
+
 ## Production work still required
 
-1. Certificate-backed TLS/mTLS handshake tests on deployed hosts, plus key rotation and revocation.
-2. Replicated job broker/coordinator, external-effect fencing and real **cross-host** high availability.
+1. Certificate-backed TLS/mTLS handshakes on separate deployed hosts, plus certificate rotation and revocation.
+2. PostgreSQL HA replication and external-effect fencing; real **cross-host** fault/partition certification.
 3. Signed plugin supply chain, sandbox and capability isolation.
 4. Secret manager integration, peer/key rotation, revocation and quotas.
 5. Distributed traces, whole-host/partition fault injection, property tests and benchmarks.
