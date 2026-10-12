@@ -6,6 +6,9 @@
   The unsigned sender claim is used only for key lookup. Execution follows
   successful verification using that peer's key.
 - Per-peer exact tool allowlist. Unknown peers and denied tools fail closed.
+- Configurable fixed-window quotas on authenticated RPC requests (default 64
+  messages per peer per second); exhausted quotas reject messages before
+  resource discovery or tool execution.
 - Remote calls are restricted to **enabled, free tools without elevated
   permissions**. Paid tools, permissioned tools and L402 authorization
   credentials are not transported through this RPC layer.
@@ -28,7 +31,7 @@
 | Replays after process restart | SQLite WAL journal committed before execution in RPC server CLI | Verify durable storage, backups and local filesystem semantics |
 | Unauthorized execution by authorized peer | Exact allowlist limits tools; allowed code may still perform side effects | Sandboxed tools, fine-grained capability policy and quotas |
 | Duplicate execution when response is lost | Same request ID is refused even after restart, but outcome is unknown after crash | Durable results, transactional outbox and per-tool idempotency |
-| Network denial of service | Bounded frames/concurrency; not full network DDoS defense | Edge controls, per-peer rate limits and backpressure |
+| Network denial of service | Bounded frames/concurrency and per-peer fixed-window quotas; not full DDoS defense | Edge controls, distributed quotas and network backpressure |
 | Agent identity | Pairwise shared secret authenticates a peer possessing that key | Workload PKI, mTLS identity binding, key rotation |
 | Real L402 payment authorization | Not implemented | Verified invoice/hash/macaroon/caveats, ledger, replay protection |
 | Tool isolation | Tools run in the same OS process | sandbox, seccomp, capability boundaries and quotas |
@@ -79,7 +82,7 @@ not part of this implementation.
 
 1. A complete mutual TLS deployment test with unauthorized peers blocked.
 2. Extend the admission ledger into a transactional result/outbox journal and simulate process crashes.
-3. Per-peer budgets, rate limits and structured audited denials.
+3. Per-peer economic budgets, distributed quotas and structured audited denials.
 4. Sandbox integration for untrusted tools and bounded CPU/memory/network.
 5. Dependency and supply-chain audits, fuzzing of signed envelope parser.
 6. Cross-machine test under network disruption, latency and packet loss.
