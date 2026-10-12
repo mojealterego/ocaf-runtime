@@ -1,0 +1,6 @@
+// PLAINTEXT LOCAL DEMO ONLY. Never expose this listener to a public network.
+{
+  mode: "peer",
+  listen: { endpoints: ["tcp/127.0.0.1:7447"] },
+  scouting: { multicast: { enabled: false } },
+}
