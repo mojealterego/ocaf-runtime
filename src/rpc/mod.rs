@@ -54,7 +54,9 @@ pub enum RpcError {
 pub fn validate_node_id(id: &str) -> Result<(), RpcError> {
     if id.is_empty()
         || id.len() > 64
-        || !id.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'-' || c == b'_')
+        || !id
+            .bytes()
+            .all(|c| c.is_ascii_alphanumeric() || c == b'-' || c == b'_')
     {
         return Err(RpcError::Malformed);
     }
@@ -176,8 +178,8 @@ impl SignedFrame {
         if body.len() > MAX_BODY_BYTES {
             return Err(RpcError::FrameTooLarge);
         }
-        let mut mac = <HmacSha256 as Mac>::new_from_slice(key)
-            .map_err(|_| RpcError::Unavailable)?;
+        let mut mac =
+            <HmacSha256 as Mac>::new_from_slice(key).map_err(|_| RpcError::Unavailable)?;
         mac.update(&body);
         let frame = WireFrame {
             body: B64.encode(body),
@@ -211,8 +213,8 @@ impl SignedFrame {
 
     pub fn open<T: DeserializeOwned>(bytes: &[u8], key: &[u8; 32]) -> Result<T, RpcError> {
         let (body, tag) = Self::unpack(bytes)?;
-        let mut mac = <HmacSha256 as Mac>::new_from_slice(key)
-            .map_err(|_| RpcError::Unavailable)?;
+        let mut mac =
+            <HmacSha256 as Mac>::new_from_slice(key).map_err(|_| RpcError::Unavailable)?;
         mac.update(&body);
         mac.verify_slice(&tag).map_err(|_| RpcError::Unauthorized)?;
         serde_json::from_slice(&body).map_err(|_| RpcError::Malformed)
@@ -288,8 +290,12 @@ impl RpcGateway {
         // Parse only the caller identity from untrusted data before HMAC verification.
         // Every field remains untrusted until the peer-specific MAC is verified.
         let (raw, _) = SignedFrame::unpack(message)?;
-        let unverified: RpcRequest = serde_json::from_slice(&raw).map_err(|_| RpcError::Malformed)?;
-        let peer = self.peers.get(&unverified.sender).ok_or(RpcError::Unauthorized)?;
+        let unverified: RpcRequest =
+            serde_json::from_slice(&raw).map_err(|_| RpcError::Malformed)?;
+        let peer = self
+            .peers
+            .get(&unverified.sender)
+            .ok_or(RpcError::Unauthorized)?;
         let request: RpcRequest = SignedFrame::open(message, &peer.key)?;
         request.check(&self.node_id, now)?;
 
@@ -298,7 +304,11 @@ impl RpcGateway {
                 if !peer.permits(tool) {
                     return Err(RpcError::Unauthorized);
                 }
-                let manifest = self.runtime.registry.resolve(tool).await
+                let manifest = self
+                    .runtime
+                    .registry
+                    .resolve(tool)
+                    .await
                     .ok_or(RpcError::Unauthorized)?;
                 if !manifest.manifest.enabled
                     || manifest.manifest.cost_sats != 0
@@ -322,7 +332,9 @@ impl RpcGateway {
             if seen.len() >= MAX_REPLAY_ENTRIES {
                 return Err(RpcError::Busy);
             }
-            let expires = request.issued_at_ms.saturating_add(request.ttl_ms)
+            let expires = request
+                .issued_at_ms
+                .saturating_add(request.ttl_ms)
                 .saturating_add(FUTURE_CLOCK_SKEW_MS);
             seen.insert(k, expires);
         }
@@ -330,9 +342,14 @@ impl RpcGateway {
         let (status, output) = match request.action {
             RpcAction::Discover => {
                 let all = self.runtime.registry.list().await;
-                let public: Vec<_> = all.into_iter()
-                    .filter(|tool| tool.enabled && tool.cost_sats == 0
-                        && tool.permissions.is_empty() && peer.permits(&tool.name))
+                let public: Vec<_> = all
+                    .into_iter()
+                    .filter(|tool| {
+                        tool.enabled
+                            && tool.cost_sats == 0
+                            && tool.permissions.is_empty()
+                            && peer.permits(&tool.name)
+                    })
                     .collect();
                 (RpcStatus::Ok, json!(public))
             }
@@ -347,9 +364,7 @@ impl RpcGateway {
                 };
                 match self.runtime.execute(call).await {
                     Ok(result) => (RpcStatus::Ok, result.output),
-                    Err(RuntimeError::InvalidInput(_)) => {
-                        (RpcStatus::InvalidInput, Value::Null)
-                    }
+                    Err(RuntimeError::InvalidInput(_)) => (RpcStatus::InvalidInput, Value::Null),
                     Err(RuntimeError::Timeout) => (RpcStatus::Timeout, Value::Null),
                     Err(_) => (RpcStatus::Failed, Value::Null),
                 }
@@ -381,10 +396,18 @@ impl RpcClient {
         if key == [0; 32] {
             return Err(RpcError::Malformed);
         }
-        Ok(Self { node_id: node_id.into(), remote_id: remote_id.into(), key })
+        Ok(Self {
+            node_id: node_id.into(),
+            remote_id: remote_id.into(),
+            key,
+        })
     }
 
-    pub fn prepare(&self, action: RpcAction, ttl_ms: u64) -> Result<(RpcRequest, Vec<u8>), RpcError> {
+    pub fn prepare(
+        &self,
+        action: RpcAction,
+        ttl_ms: u64,
+    ) -> Result<(RpcRequest, Vec<u8>), RpcError> {
         let req = RpcRequest::new(&self.node_id, &self.remote_id, now_ms()?, ttl_ms, action)?;
         let encoded = SignedFrame::seal(&req, &self.key)?;
         Ok((req, encoded))
