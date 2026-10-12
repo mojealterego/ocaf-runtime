@@ -215,3 +215,51 @@ async fn promoted_leader_fences_old_worker_effect_and_expired_job() {
     driver.abort();
     second_leader.release().await.unwrap();
 }
+
+#[tokio::test]
+async fn a_job_worker_without_explicit_effect_permission_cannot_write_sink() {
+    use ocaf_runtime::rpc::RpcError;
+
+    let Some(url) = dsn() else { return };
+    let cluster = format!("acl_{}", uuid::Uuid::new_v4().simple());
+    let tool = format!("effect_{}", uuid::Uuid::new_v4().simple());
+    let leader = Arc::new(PgLeader::connect(&url, &cluster, true).await.unwrap());
+    assert!(leader.try_acquire().await.unwrap());
+    let authorized = gateway(&url, &tool, Arc::clone(&leader)).await;
+    let lease = claimed(&authorized, &tool).await;
+
+    let unprivileged = RpcGateway::new(
+        "effects-coord",
+        OcafRuntime::new(0),
+        HashMap::from([(
+            "effects-worker".to_string(),
+            PeerPolicy::new(WORKER_KEY, vec![tool])
+                .allow_job_worker(),
+        )]),
+        16,
+    )
+    .unwrap()
+    .with_postgres_job_db(&url, true)
+    .await
+    .unwrap()
+    .with_pg_leader(Arc::clone(&leader));
+
+    let req = RpcRequest::new(
+        "effects-worker",
+        "effects-coord",
+        NOW,
+        5_000,
+        RpcAction::ApplyFencedEffect {
+            lease: lease.clone(),
+            effect: json!({"unauthorized": true}),
+        },
+    )
+    .unwrap();
+    let signed = SignedFrame::seal(&req, &WORKER_KEY).unwrap();
+    assert!(matches!(
+        unprivileged.handle_at(&signed, NOW).await,
+        Err(RpcError::Unauthorized)
+    ));
+    assert_eq!(effect_in_db(&url, &lease.id).await, None);
+    leader.release().await.unwrap();
+}
