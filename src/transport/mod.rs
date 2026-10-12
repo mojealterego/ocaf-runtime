@@ -1,3 +1,5 @@
+pub mod rpc;
+
 use serde_json::Value;
 use std::sync::Arc;
 
@@ -13,8 +15,12 @@ pub struct ZenohTransport {
 
 impl ZenohTransport {
     pub async fn connect() -> anyhow::Result<Self> {
+        Self::connect_with_config(zenoh::Config::default()).await
+    }
+
+    pub async fn connect_with_config(config: zenoh::Config) -> anyhow::Result<Self> {
         let session = Arc::new(
-            zenoh::open(zenoh::Config::default())
+            zenoh::open(config)
                 .await
                 .map_err(|error| anyhow::anyhow!("failed to open Zenoh session: {error}"))?,
         );
