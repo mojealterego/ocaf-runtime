@@ -47,10 +47,6 @@ fn storage(_: tokio_postgres::Error) -> JobError {
     JobError::Storage
 }
 
-fn millis(value: u64) -> Result<i64, JobError> {
-    i64::try_from(value).map_err(|_| JobError::Invalid)
-}
-
 fn validate_actor(actor: &str) -> Result<(), JobError> {
     if actor.is_empty()
         || actor.len() > 64
@@ -217,7 +213,7 @@ impl PgJobQueue {
     pub async fn claim_permitted(
         &self,
         worker: &str,
-        now_ms: u64,
+        _now_ms: u64,
         lease_ms: u64,
         tools: &[String],
     ) -> Result<Option<LeasedJob>, JobError> {
@@ -231,7 +227,8 @@ impl PgJobQueue {
         {
             return Err(JobError::Invalid);
         }
-        let expires = millis(now_ms.checked_add(lease_ms).ok_or(JobError::Invalid)?)?;
+        // PostgreSQL, not a potentially skewed coordinator host, owns lease time.
+        let duration_ms = i64::try_from(lease_ms).map_err(|_| JobError::Invalid)?;
         let mut client = self.state.client.lock().await;
         let tx = client.transaction().await.map_err(storage)?;
         let item = tx
@@ -253,13 +250,18 @@ impl PgJobQueue {
         let prev: i32 = row.get("attempts");
         let attempt = prev.checked_add(1).ok_or(JobError::Storage)?;
         let token = Uuid::new_v4().to_string();
-        tx.execute(
-            "UPDATE ocaf_pg_jobs_v1 SET status='running',attempts=$2,
-             worker_id=$3,lease_token=$4,lease_expires_at_ms=$5 WHERE id=$1",
-            &[&id, &attempt, &worker, &token, &expires],
-        )
-        .await
-        .map_err(storage)?;
+        let updated = tx
+            .query_one(
+                "UPDATE ocaf_pg_jobs_v1 SET status='running',attempts=$2,
+                 worker_id=$3,lease_token=$4,
+                 lease_expires_at_ms =
+                   (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT + $5
+                 WHERE id=$1 RETURNING lease_expires_at_ms",
+                &[&id, &attempt, &worker, &token, &duration_ms],
+            )
+            .await
+            .map_err(storage)?;
+        let expires: i64 = updated.get("lease_expires_at_ms");
         tx.execute(
             "INSERT INTO ocaf_pg_job_audit_v1(job_id,actor,event,occurred_at_ms)
              VALUES($1,$2,'claimed',(EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT)",
@@ -281,8 +283,7 @@ impl PgJobQueue {
 
     /// A single SQL statement transitions every expired lease and logs the
     /// uncertainty atomically. Re-running recovery never duplicates entries.
-    pub async fn recover_expired(&self, now_ms: u64) -> Result<RecoverySummary, JobError> {
-        let now = millis(now_ms)?;
+    pub async fn recover_expired(&self, _now_ms: u64) -> Result<RecoverySummary, JobError> {
         let client = self.state.client.lock().await;
         let rows = client
             .query(
@@ -290,14 +291,15 @@ impl PgJobQueue {
                 UPDATE ocaf_pg_jobs_v1 SET status='uncertain',
                 last_error='expired remote lease; external outcome unknown',
                 worker_id=NULL,lease_token=NULL,lease_expires_at_ms=NULL
-                WHERE status='running' AND lease_expires_at_ms<=$1
+                WHERE status='running' AND lease_expires_at_ms <=
+                  (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT
                 RETURNING id
              )
              INSERT INTO ocaf_pg_job_audit_v1(job_id,actor,event,occurred_at_ms)
              SELECT id,'coordinator','uncertain',
                 (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT FROM moved
              RETURNING seq",
-                &[&now],
+                &[],
             )
             .await
             .map_err(storage)?;
@@ -361,12 +363,11 @@ impl PgJobQueue {
     async fn finish(
         &self,
         lease: &LeasedJob,
-        now_ms: u64,
+        _now_ms: u64,
         status: &str,
         result: Option<String>,
         error: Option<&str>,
     ) -> Result<(), JobError> {
-        let now = millis(now_ms)?;
         if result.as_ref().is_some_and(|v| v.len() > MAX_ARGS) {
             return Err(JobError::Invalid);
         }
@@ -379,7 +380,8 @@ impl PgJobQueue {
              worker_id=NULL,lease_token=NULL,lease_expires_at_ms=NULL
              WHERE id=$1 AND status='running' AND worker_id=$2
                AND lease_token=$3 AND tool=$4 AND attempts=$5
-               AND lease_expires_at_ms>$9",
+               AND lease_expires_at_ms >
+                 (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT",
                 &[
                     &lease.id,
                     &lease.worker_id,
@@ -389,7 +391,6 @@ impl PgJobQueue {
                     &status,
                     &result,
                     &error,
-                    &now,
                 ],
             )
             .await

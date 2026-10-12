@@ -5,6 +5,29 @@ use serde_json::json;
 
 const NOW: u64 = 1_800_000_000_000;
 
+async fn expire_lease_in_postgres(url: &str, id: &str) {
+    // Inject a genuinely expired lease using the database's clock.
+    let (client, connection) = tokio_postgres::connect(url, tokio_postgres::NoTls)
+        .await
+        .unwrap();
+    let task = tokio::spawn(async move {
+        let _ = connection.await;
+    });
+    let changed = client
+        .execute(
+            "UPDATE ocaf_pg_jobs_v1
+             SET lease_expires_at_ms =
+               (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT - 1
+             WHERE id=$1 AND status='running'",
+            &[&id],
+        )
+        .await
+        .unwrap();
+    assert_eq!(changed, 1);
+    task.abort();
+}
+
+
 fn dsn() -> Option<String> {
     let value = std::env::var("OCAF_TEST_PG_DSN").ok();
     assert!(
@@ -93,6 +116,7 @@ async fn crash_expiration_becomes_uncertain_and_stale_report_is_fenced() {
         .unwrap()
         .unwrap();
     drop(first);
+    expire_lease_in_postgres(&url, &job.id).await;
 
     let recovered = PgJobQueue::connect(&url, true).await.unwrap();
     assert_eq!(

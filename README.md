@@ -340,6 +340,20 @@ network partition scenarios remain unverified.
 See [docs/MTLS_VERIFICATION.md](docs/MTLS_VERIFICATION.md) and
 [tests/zenoh_mtls_e2e.rs](tests/zenoh_mtls_e2e.rs).
 
+## PostgreSQL-authoritative job lease clock (v0.16)
+
+PostgreSQL queue claims, expiry recovery and fenced job completion now use
+the **database server clock** within SQL, not the coordinator host clock.
+This prevents skewed active/standby coordinators from changing lease
+expiration decisions. The existing `now_ms` API argument remains for
+compatibility but is ignored in the PostgreSQL backend (not SQLite).
+Tests cover forward/backward host-clock skew and database-side expiry.
+
+This does not replace PostgreSQL HA, operational clock synchronization,
+host-level fault injection or external-system fencing.
+
+See [docs/LEASE_CLOCK.md](docs/LEASE_CLOCK.md).
+
 ## Production work still required
 
 1. Certificate-backed TLS/mTLS handshakes on separate deployed hosts, plus certificate rotation and revocation.
