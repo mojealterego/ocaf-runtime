@@ -13,6 +13,7 @@ use std::time::Duration;
 use rusqlite::{params, Connection, TransactionBehavior};
 
 use super::RpcError;
+use crate::cluster::leadership::PgLeader;
 use crate::cluster::replay::PgReplay;
 
 const MAX_REPLAY_ENTRIES: i64 = 4_096;
@@ -34,6 +35,12 @@ impl ReplayBackend {
 
     pub(super) fn postgres(db: PgReplay) -> Self {
         Self::Postgres(db)
+    }
+
+    pub(super) fn bind_leader(&mut self, leader: Arc<PgLeader>) {
+        if let Self::Postgres(db) = self {
+            *db = db.clone().with_leader(leader);
+        }
     }
 
     pub(super) async fn reserve(
