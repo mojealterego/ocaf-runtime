@@ -1,0 +1,22 @@
+// TEMPLATE ONLY. Replace DNS and all certificate paths.
+{
+  mode: "client",
+  connect: { endpoints: ["tls/coordinator.example.com:7447"] },
+  scouting: {
+    multicast: { enabled: false },
+    gossip: { enabled: false },
+  },
+  transport: {
+    link: {
+      protocols: ["tls"],
+      tls: {
+        root_ca_certificate: "/REPLACE/ca.pem",
+        connect_private_key: "/REPLACE/agent-key.pem",
+        connect_certificate: "/REPLACE/agent-cert.pem",
+        enable_mtls: true,
+        verify_name_on_connect: true,
+        close_link_on_expiration: true,
+      },
+    },
+  },
+}
