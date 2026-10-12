@@ -88,7 +88,8 @@ async fn real_zenoh_worker_runs_under_shared_postgres_leadership_and_state() -> 
         ),
         executor,
         HashSet::from(["demo_echo".into()]),
-    )?;
+    )?
+    .with_cluster_pure_tools(HashSet::from(["demo_echo".into()]))?;
     worker.heartbeat().await?;
     let job_id = uuid::Uuid::new_v4().to_string();
     let submitted = submitter
