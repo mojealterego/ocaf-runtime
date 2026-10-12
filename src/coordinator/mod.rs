@@ -4,6 +4,8 @@
 //! boundary. The directory is only an *availability hint*: it does not
 //! attest that remote executors are running, and routing is not a
 //! distributed job lock, consensus election or side-effect guarantee.
+pub mod leadership;
+
 use std::collections::HashSet;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
