@@ -1,7 +1,7 @@
 //! Authenticated capability coordinator for a trusted network.
 //! HMAC provides integrity, NOT confidentiality. An operator must configure
 //! Zenoh TLS/mTLS before using this on non-loopback addresses.
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -57,6 +57,7 @@ fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
         anyhow::bail!("configure between 1 and 64 authenticated peers");
     }
     let mut peers = HashMap::with_capacity(parsed.len());
+    let mut seen_keys = HashSet::new();
     for (node, entry) in parsed {
         let secret = B64
             .decode(&entry.key_b64)
@@ -66,6 +67,9 @@ fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
             .map_err(|_| anyhow::anyhow!("peer key for {node} must be 32 bytes"))?;
         if key == [0; 32] || entry.allowed_tools.is_empty() {
             anyhow::bail!("invalid empty/zero peer credentials or ACL for {node}");
+        }
+        if !seen_keys.insert(key) {
+            anyhow::bail!("each coordinator peer must have a unique secret");
         }
         peers.insert(node, PeerPolicy::new(key, entry.allowed_tools));
     }
