@@ -456,7 +456,10 @@ impl PgJobQueue {
         if json.len() > MAX_ARGS {
             return Err(JobError::Invalid);
         }
-        let epoch = leader.fencing_epoch().await.map_err(|_| JobError::Storage)?;
+        let epoch = leader
+            .fencing_epoch()
+            .await
+            .map_err(|_| JobError::Storage)?;
         if lease.leader_epoch != epoch {
             return Err(JobError::StaleLease);
         }
@@ -479,8 +482,13 @@ impl PgJobQueue {
                    (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT
                  FOR UPDATE",
                 &[
-                    &lease.id, &lease.worker_id, &lease.tool, &attempt,
-                    &lease.lease_token, &deadline, &epoch,
+                    &lease.id,
+                    &lease.worker_id,
+                    &lease.tool,
+                    &attempt,
+                    &lease.lease_token,
+                    &deadline,
+                    &epoch,
                 ],
             )
             .await
@@ -507,8 +515,14 @@ impl PgJobQueue {
                  ON CONFLICT(job_id) DO NOTHING
                  RETURNING committed_at_ms",
                 &[
-                    &lease.id, &lease.worker_id, &lease.tool, &attempt,
-                    &lease.lease_token, &deadline, &epoch, &json,
+                    &lease.id,
+                    &lease.worker_id,
+                    &lease.tool,
+                    &attempt,
+                    &lease.lease_token,
+                    &deadline,
+                    &epoch,
+                    &json,
                 ],
             )
             .await
