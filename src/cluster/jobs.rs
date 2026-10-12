@@ -125,6 +125,7 @@ impl PgJobQueue {
                  seq BIGSERIAL PRIMARY KEY,
                  id TEXT NOT NULL UNIQUE,
                  owner TEXT NOT NULL,
+                 cluster_id TEXT NOT NULL DEFAULT '',
                  tool TEXT NOT NULL,
                  args TEXT NOT NULL,
                  retry_safe BOOLEAN NOT NULL DEFAULT FALSE,
@@ -141,6 +142,8 @@ impl PgJobQueue {
              );
              ALTER TABLE ocaf_pg_jobs_v1
                ADD COLUMN IF NOT EXISTS leader_epoch BIGINT NOT NULL DEFAULT 0;
+             ALTER TABLE ocaf_pg_jobs_v1
+               ADD COLUMN IF NOT EXISTS cluster_id TEXT NOT NULL DEFAULT '';
              CREATE INDEX IF NOT EXISTS ocaf_pg_jobs_pending
                  ON ocaf_pg_jobs_v1(status,seq);
              CREATE INDEX IF NOT EXISTS ocaf_pg_jobs_expiration
@@ -209,13 +212,14 @@ impl PgJobQueue {
             return Err(JobError::Invalid);
         }
 
+        let cluster_id = self.cluster_id().unwrap_or("");
         let mut client = self.state.client.lock().await;
         let tx = client.transaction().await.map_err(storage)?;
         let inserted = tx
             .execute(
-                "INSERT INTO ocaf_pg_jobs_v1(id,owner,tool,args,retry_safe,max_attempts,status)
-             VALUES($1,$2,$3,$4,FALSE,1,'pending') ON CONFLICT(id) DO NOTHING",
-                &[&job.id, &owner, &job.tool, &args],
+                "INSERT INTO ocaf_pg_jobs_v1(id,owner,tool,args,cluster_id,retry_safe,max_attempts,status)
+             VALUES($1,$2,$3,$4,$5,FALSE,1,'pending') ON CONFLICT(id) DO NOTHING",
+                &[&job.id, &owner, &job.tool, &args, &cluster_id],
             )
             .await
             .map_err(storage)?;
@@ -230,14 +234,14 @@ impl PgJobQueue {
         }
         let row = tx
             .query_one(
-                "SELECT id,owner,tool,args,retry_safe,max_attempts,status,attempts,result,
+                "SELECT id,owner,tool,args,cluster_id,retry_safe,max_attempts,status,attempts,result,
              last_error,worker_id,lease_expires_at_ms FROM ocaf_pg_jobs_v1 WHERE id=$1 FOR UPDATE",
                 &[&job.id],
             )
             .await
             .map_err(storage)?;
         let stored_owner: String = row.get("owner");
-        if stored_owner != owner
+        if row.get::<_, String>("cluster_id") != cluster_id || stored_owner != owner
             || row.get::<_, String>("tool") != job.tool
             || serde_json::from_str::<Value>(&row.get::<_, String>("args"))
                 .map_err(|_| JobError::Storage)?
@@ -289,9 +293,9 @@ impl PgJobQueue {
         let item = tx
             .query_opt(
                 "SELECT id,tool,args,attempts FROM ocaf_pg_jobs_v1
-             WHERE status='pending' AND tool=ANY($1)
+             WHERE status='pending' AND tool=ANY($1) AND cluster_id=$2
              ORDER BY seq FOR UPDATE SKIP LOCKED LIMIT 1",
-                &[&tools],
+                &[&tools, &cluster_id],
             )
             .await
             .map_err(storage)?;
@@ -311,8 +315,8 @@ impl PgJobQueue {
                  worker_id=$3,lease_token=$4,leader_epoch=$6,
                  lease_expires_at_ms =
                    (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT + $5
-                 WHERE id=$1 RETURNING lease_expires_at_ms",
-                &[&id, &attempt, &worker, &token, &duration_ms, &generation],
+                 WHERE id=$1 AND cluster_id=$7 RETURNING lease_expires_at_ms",
+                &[&id, &attempt, &worker, &token, &duration_ms, &generation, &cluster_id],
             )
             .await
             .map_err(storage)?;
@@ -340,25 +344,48 @@ impl PgJobQueue {
     /// A single SQL statement transitions every expired lease and logs the
     /// uncertainty atomically. Re-running recovery never duplicates entries.
     pub async fn recover_expired(&self, _now_ms: u64) -> Result<RecoverySummary, JobError> {
-        let client = self.state.client.lock().await;
-        let rows = client
+        // A verified leader keeps graceful release serialized until commit.
+        // The transaction's epoch-row lock protects a concurrent takeover.
+        let guard = match &self.leader {
+            Some(leader) => Some(
+                leader
+                    .fence_transaction()
+                    .await
+                    .map_err(|_| JobError::Storage)?,
+            ),
+            None => None,
+        };
+        let generation = guard.as_ref().map_or(0, |value| value.epoch());
+        let cluster_id = self.cluster_id().unwrap_or("");
+        let mut client = self.state.client.lock().await;
+        let tx = client.transaction().await.map_err(storage)?;
+        self.check_epoch_in_transaction(&tx, cluster_id, generation)
+            .await?;
+        // Promoted leadership immediately makes predecessor leases
+        // uncertain, even if they have not yet expired. No automatic
+        // retry of a potentially effectful task is permitted.
+        let rows = tx
             .query(
                 "WITH moved AS (
                 UPDATE ocaf_pg_jobs_v1 SET status='uncertain',
-                last_error='expired remote lease; external outcome unknown',
+                last_error='lease expired or leader replaced; external outcome unknown',
                 worker_id=NULL,lease_token=NULL,lease_expires_at_ms=NULL
-                WHERE status='running' AND lease_expires_at_ms <=
-                  (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT
+                WHERE cluster_id=$1 AND status='running'
+                  AND (lease_expires_at_ms <=
+                     (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT
+                     OR ($2 > 0 AND leader_epoch <> $2))
                 RETURNING id
              )
              INSERT INTO ocaf_pg_job_audit_v1(job_id,actor,event,occurred_at_ms)
              SELECT id,'coordinator','uncertain',
                 (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT FROM moved
              RETURNING seq",
-                &[],
+                &[&cluster_id, &generation],
             )
             .await
             .map_err(storage)?;
+        tx.commit().await.map_err(storage)?;
+        drop(guard);
         Ok(RecoverySummary {
             retried: 0,
             uncertain: rows.len(),
@@ -427,7 +454,7 @@ impl PgJobQueue {
                      AND j.attempts=$4 AND j.lease_token=$5
                      AND j.lease_expires_at_ms=$6
                      AND j.leader_epoch=$7 AND e.epoch=$7
-                     AND j.status='running'
+                     AND j.status='running' AND j.cluster_id=$9
                      AND j.lease_expires_at_ms >
                        (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT
                  )",
@@ -439,6 +466,7 @@ impl PgJobQueue {
                     &lease.lease_token,
                     &deadline,
                     &lease.leader_epoch,
+                    &leader.cluster_id(),
                     &leader.cluster_id(),
                 ],
             )
@@ -493,7 +521,7 @@ impl PgJobQueue {
             .query_opt(
                 "SELECT id FROM ocaf_pg_jobs_v1 WHERE id=$1 AND worker_id=$2
                    AND tool=$3 AND attempts=$4 AND lease_token=$5
-                   AND lease_expires_at_ms=$6 AND leader_epoch=$7
+                   AND lease_expires_at_ms=$6 AND leader_epoch=$7 AND cluster_id=$8
                    AND status='running' AND lease_expires_at_ms >
                    (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT
                  FOR UPDATE",
@@ -505,6 +533,7 @@ impl PgJobQueue {
                     &lease.lease_token,
                     &deadline,
                     &epoch,
+                    &leader.cluster_id(),
                 ],
             )
             .await
@@ -525,7 +554,7 @@ impl PgJobQueue {
                  FROM ocaf_pg_jobs_v1
                  WHERE id=$1 AND worker_id=$2 AND tool=$3
                    AND attempts=$4 AND lease_token=$5
-                   AND lease_expires_at_ms=$6 AND leader_epoch=$7
+                   AND lease_expires_at_ms=$6 AND leader_epoch=$7 AND cluster_id=$9
                    AND status='running' AND lease_expires_at_ms >
                      (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT
                  ON CONFLICT(job_id) DO NOTHING
@@ -539,6 +568,7 @@ impl PgJobQueue {
                     &deadline,
                     &epoch,
                     &json,
+                    &leader.cluster_id(),
                 ],
             )
             .await
@@ -555,10 +585,10 @@ impl PgJobQueue {
                     "SELECT e.worker_id,e.tool,e.leader_epoch,e.effect,e.committed_at_ms
                      FROM ocaf_pg_fenced_effects_v1 e
                      JOIN ocaf_pg_jobs_v1 j ON j.id=e.job_id
-                     WHERE e.job_id=$1 AND j.status='running'
+                     WHERE e.job_id=$1 AND j.status='running' AND j.cluster_id=$2
                        AND j.lease_expires_at_ms >
                           (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT",
-                    &[&lease.id],
+                    &[&lease.id, &leader.cluster_id()],
                 )
                 .await
                 .map_err(storage)?;
@@ -602,9 +632,9 @@ impl PgJobQueue {
                 "SELECT a.seq,a.actor,a.event,a.occurred_at_ms
              FROM ocaf_pg_job_audit_v1 a
              JOIN ocaf_pg_jobs_v1 j ON a.job_id=j.id
-             WHERE a.job_id=$1 AND j.owner=$2
+             WHERE a.job_id=$1 AND j.owner=$2 AND j.cluster_id=$4
              ORDER BY a.seq ASC LIMIT $3",
-                &[&id, &owner, &limit],
+                &[&id, &owner, &limit, &self.cluster_id().unwrap_or("")],
             )
             .await
             .map_err(storage)?;
@@ -626,8 +656,8 @@ impl PgJobQueue {
             .query_opt(
                 "SELECT id,tool,args,retry_safe,max_attempts,status,attempts,result,
              last_error,worker_id,lease_expires_at_ms FROM ocaf_pg_jobs_v1
-             WHERE id=$1 AND owner=$2",
-                &[&id, &owner],
+             WHERE id=$1 AND owner=$2 AND cluster_id=$3",
+                &[&id, &owner, &self.cluster_id().unwrap_or("")],
             )
             .await
             .map_err(storage)?;
@@ -670,7 +700,7 @@ impl PgJobQueue {
              worker_id=NULL,lease_token=NULL,lease_expires_at_ms=NULL
              WHERE id=$1 AND status='running' AND worker_id=$2
                AND lease_token=$3 AND tool=$4 AND attempts=$5
-               AND leader_epoch=$9
+               AND leader_epoch=$9 AND cluster_id=$10
                AND lease_expires_at_ms >
                  (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT",
                 &[
@@ -683,6 +713,7 @@ impl PgJobQueue {
                     &result,
                     &error,
                     &generation,
+                    &cluster_id,
                 ],
             )
             .await
