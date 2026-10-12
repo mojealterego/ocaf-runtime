@@ -180,8 +180,10 @@ async fn main() -> anyhow::Result<()> {
                         })?,
                 },
                 Ok("submit") => RpcAction::SubmitJob {
-                    id: env::var("OCAF_JOB_ID")
-                        .unwrap_or_else(|_| uuid::Uuid::new_v4().to_string()),
+                    // An implicit new UUID on each CLI restart can execute
+                    // the same external action twice after an ambiguous
+                    // network outage. Require stable caller-supplied UUID.
+                    id: require("OCAF_JOB_ID")?,
                     tool: "demo_echo".into(),
                     args: json!({
                         "message": env::var("OCAF_MESSAGE")
