@@ -87,7 +87,6 @@ fn from_row(row: &Row) -> Result<JobRecord, JobError> {
     })
 }
 
-
 impl PgJobQueue {
     /// On remote networks SSL must be required; explicitly permitted local
     /// tests may use a loopback PostgreSQL service without TLS.
