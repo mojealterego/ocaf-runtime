@@ -171,14 +171,15 @@ fn prior_protocol_journal_cannot_silently_adopt_an_unverified_namespace() {
         );
         INSERT INTO sink_epochs_v1(one,epoch,expires_at_ms)
         VALUES(1,5,1800000001000);",
-    ).unwrap();
+    )
+    .unwrap();
     drop(old);
     let keys = SinkKeys::new("controller", CONTROLLER, "workeraa", WORKER)
         .unwrap()
         .with_cluster_id("cluster-a")
         .unwrap();
     assert!(matches!(
-        EffectSink::open(&file,"demo-sink", keys),
+        EffectSink::open(&file, "demo-sink", keys),
         Err(ocaf_runtime::sink::SinkError::Invalid)
     ));
 }
