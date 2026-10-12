@@ -60,13 +60,24 @@ fn prometheus(snapshot: &ClusterSnapshot, health: ClusterHealth) -> String {
 async fn main() -> anyhow::Result<()> {
     let mut format = "json";
     let mut no_fail = false;
-    for arg in env::args().skip(1) {
+    let mut node = None;
+    let mut args = env::args().skip(1);
+    while let Some(arg) = args.next() {
         match arg.as_str() {
             "--json" => format = "json",
             "--prometheus" => format = "prometheus",
             "--no-fail" => no_fail = true,
-            _ => anyhow::bail!("unknown option; use --json, --prometheus or --no-fail"),
+            "--node" => {
+                if node.is_some() {
+                    anyhow::bail!("only one --node selector is supported");
+                }
+                node = Some(args.next().ok_or_else(|| anyhow::anyhow!("--node requires an ID"))?);
+            }
+            _ => anyhow::bail!("unknown option; use --json, --prometheus, --no-fail or --node <ID>"),
         }
+    }
+    if format == "prometheus" && node.is_some() {
+        anyhow::bail!("--node is supported only with --json; no dynamic Prometheus labels");
     }
 
     let dsn = required("OCAF_CLUSTER_PG_DSN")?;
@@ -82,7 +93,17 @@ async fn main() -> anyhow::Result<()> {
 
     match format {
         "prometheus" => print!("{}", prometheus(&report.snapshot, report.health)),
-        _ => println!("{}", serde_json::to_string_pretty(&report)?),
+        _ => {
+            if let Some(node_id) = node {
+                let observation = monitor.node_health(&node_id).await?;
+                println!("{}", serde_json::to_string_pretty(&serde_json::json!({
+                    "report": report,
+                    "node": observation,
+                }))?);
+            } else {
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            }
+        }
     }
 
     // Hooks for cron, systemd and external alert/metrics pipelines:
