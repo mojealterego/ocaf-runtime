@@ -65,10 +65,7 @@ impl ZenohRpcServer {
                 // PostgreSQL leader session during request execution.
                 // This fences replies, not side effects from in-flight tools.
                 let result = match result {
-                    Ok(reply_bytes) => gateway
-                        .verify_current_leader()
-                        .await
-                        .map(|()| reply_bytes),
+                    Ok(reply_bytes) => gateway.verify_current_leader().await.map(|()| reply_bytes),
                     Err(error) => Err(error),
                 };
                 match result {
