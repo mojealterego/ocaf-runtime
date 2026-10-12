@@ -27,6 +27,9 @@ All private key paths are temporary and used solely by the test process.
 5. A client trusting only the distinct CA must reject the server's
    certificate chain, even though the JSON5 preflight accepts the
    structurally valid configuration.
+6. Even when the CA is trusted, a server certificate whose IP
+   subject-alternative name does not match the actual 127.0.0.1
+   endpoint must fail the real Zenoh connection handshake.
 
 If an assertion fails, CI returns a failed status. The separate
 `tests/transport_policy.rs` suite continues to exercise the
