@@ -1,0 +1,24 @@
+[Unit]
+Description=OCAF cluster health collector
+Documentation=https://github.com/mojealterego/ocaf-runtime/blob/main/docs/OBSERVABILITY.md
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=ocaf
+Group=ocaf
+WorkingDirectory=/var/lib/ocaf
+EnvironmentFile=/etc/ocaf/cluster.env
+ExecStart=/usr/local/bin/ocaf-cluster-health --json
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+UMask=0077
