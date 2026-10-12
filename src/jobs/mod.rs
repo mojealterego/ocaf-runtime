@@ -426,11 +426,7 @@ impl JobStore {
 
     /// Mark an ambiguous external side-effecting attempt as terminal
     /// uncertain. A stale lease holder cannot commit this transition.
-    pub async fn mark_uncertain(
-        &self,
-        job: &LeasedJob,
-        now_ms: u64,
-    ) -> Result<(), JobError> {
+    pub async fn mark_uncertain(&self, job: &LeasedJob, now_ms: u64) -> Result<(), JobError> {
         let now = checked_time(now_ms)?;
         let job = job.clone();
         self.run(move |conn| {
