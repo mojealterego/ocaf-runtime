@@ -21,7 +21,8 @@ deliberately limited to **free, enabled tools without special permissions**.
 | SQLite WAL replay journal / expiration / bounded concurrency | Implemented; mandatory in RPC server CLI |
 | Two-session Zenoh TCP integration test | Automated test |
 | TLS/mTLS transport | Operator-configured (not programmatically enforced) |
-| Durable admission (at-most-once within TTL) | Implemented with SQLite; not exactly-once execution |\n| Durable result cache, cross-host coordination, agent lifecycle | Not implemented |
+| Durable admission (at-most-once within TTL) | Implemented with SQLite; not exactly-once execution |
+| Durable result cache, cross-host coordination, agent lifecycle | Not implemented |
 | L402 Lightning payments and cryptographic payment validation | Not implemented |
 | Untrusted executable tool sandbox and production rate limiting | Not implemented |
 
@@ -104,7 +105,14 @@ plaintext loopback-only and must not be used as production settings.
 - The body bytes are base64-encoded inside a JSON envelope and signed
   using per-peer HMAC-SHA256. Both sides verify the signature and ID
   binding. No arbitrary tool code is transferred.
-- The library can use volatile replay protection, but the RPC server CLI\n  requires an absolute `OCAF_REPLAY_DB_PATH` and uses durable SQLite WAL.\n  It commits an admission claim before execution; repeating a signed request\n  ID after restart is rejected within its TTL window. It is **not exactly-once\n  execution**. If the server crashes after admission but before a tool finishes,\n  the outcome may be unknown and retries with the same ID are denied.\n  SQLite is intended for a single host or replicas sharing the same on-disk\n  filesystem; **it is not a cross-host consensus or distributed database**.
+- The library can use volatile replay protection, but the RPC server CLI
+  requires an absolute `OCAF_REPLAY_DB_PATH` and uses durable SQLite WAL.
+  It commits an admission claim before execution; repeating a signed request
+  ID after restart is rejected within its TTL window. It is **not exactly-once
+  execution**. If the server crashes after admission but before a tool finishes,
+  the outcome may be unknown and retries with the same ID are denied.
+  SQLite is intended for a single host or replicas sharing the same on-disk
+  filesystem; **it is not a cross-host consensus or distributed database**.
 - Size limits: 64 KiB frame, 32 KiB body; maximum request TTL: 30 s.
 - Do not send personal/private data over the demo's plaintext transport.
 
