@@ -1,7 +1,7 @@
 //! Uniform coordinator RPC job API backed by local SQLite or shared PostgreSQL.
-use serde_json::Value;
 use crate::cluster::jobs::PgJobQueue;
 use crate::jobs::{JobError, JobRecord, JobSpec, JobStore, LeasedJob, RecoverySummary};
+use serde_json::Value;
 
 pub(super) enum JobBackend {
     Sqlite(JobStore),
@@ -9,14 +9,22 @@ pub(super) enum JobBackend {
 }
 
 impl JobBackend {
-    pub(super) async fn submit_owned(&self, owner: &str, job: JobSpec) -> Result<JobRecord, JobError> {
+    pub(super) async fn submit_owned(
+        &self,
+        owner: &str,
+        job: JobSpec,
+    ) -> Result<JobRecord, JobError> {
         match self {
             Self::Sqlite(db) => db.submit_owned(owner, job).await,
             Self::Postgres(db) => db.submit_owned(owner, job).await,
         }
     }
 
-    pub(super) async fn get_owned(&self, owner: &str, id: &str) -> Result<Option<JobRecord>, JobError> {
+    pub(super) async fn get_owned(
+        &self,
+        owner: &str,
+        id: &str,
+    ) -> Result<Option<JobRecord>, JobError> {
         match self {
             Self::Sqlite(db) => db.get_owned(owner, id).await,
             Self::Postgres(db) => db.get_owned(owner, id).await,
@@ -55,7 +63,12 @@ impl JobBackend {
         }
     }
 
-    pub(super) async fn fail(&self, lease: &LeasedJob, reason: &str, now: u64) -> Result<(), JobError> {
+    pub(super) async fn fail(
+        &self,
+        lease: &LeasedJob,
+        reason: &str,
+        now: u64,
+    ) -> Result<(), JobError> {
         match self {
             Self::Sqlite(db) => db.fail(lease, reason, now).await,
             Self::Postgres(db) => db.fail(lease, reason, now).await,
