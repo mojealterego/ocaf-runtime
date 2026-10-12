@@ -226,7 +226,10 @@ async fn cancelled_epoch_publication_drops_the_leader_session_and_unlocks() {
         }
         tokio::time::sleep(Duration::from_millis(20)).await;
     }
-    assert!(acquired, "test precondition: leader acquired its advisory lock");
+    assert!(
+        acquired,
+        "test precondition: leader acquired its advisory lock"
+    );
     attempt.abort();
     assert!(attempt.await.is_err());
     db.batch_execute("ROLLBACK").await.unwrap();
@@ -239,7 +242,10 @@ async fn cancelled_epoch_publication_drops_the_leader_session_and_unlocks() {
         }
         tokio::time::sleep(Duration::from_millis(20)).await;
     }
-    assert!(promoted, "cancellation must not strand a session advisory lock");
+    assert!(
+        promoted,
+        "cancellation must not strand a session advisory lock"
+    );
     assert!(active.try_acquire().await.is_err());
     standby.release().await.unwrap();
     driver.abort();
