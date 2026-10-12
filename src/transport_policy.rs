@@ -28,7 +28,7 @@ fn valid_loopback_endpoint(endpoint: &str) -> bool {
     let Some((host, port)) = address.rsplit_once(':') else {
         return false;
     };
-    if port.parse::<u16>().is_err_or(|parsed| parsed == 0) {
+    if !port.parse::<u16>().is_ok_and(|parsed| parsed > 0) {
         return false;
     }
     let host = host.trim_start_matches('[').trim_end_matches(']');
