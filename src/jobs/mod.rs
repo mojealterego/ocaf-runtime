@@ -284,11 +284,7 @@ impl JobStore {
 
     /// Atomically bind a remote job UUID to its authenticated submitter.
     /// An unrelated submitter may neither claim the ID nor read its result.
-    pub async fn submit_owned(
-        &self,
-        owner: &str,
-        spec: JobSpec,
-    ) -> Result<JobRecord, JobError> {
+    pub async fn submit_owned(&self, owner: &str, spec: JobSpec) -> Result<JobRecord, JobError> {
         validate_worker(owner)?;
         self.submit_inner(spec, Some(owner.to_owned())).await
     }
@@ -336,14 +332,16 @@ impl JobStore {
             if let Some(owner) = owner {
                 tx.execute(
                     "INSERT OR IGNORE INTO job_owners_v1(job_id,owner) VALUES (?1,?2)",
-                    params![spec.id,owner],
+                    params![spec.id, owner],
                 )
                 .map_err(|_| JobError::Storage)?;
-                let saved: String = tx.query_row(
-                    "SELECT owner FROM job_owners_v1 WHERE job_id=?1",
-                    params![spec.id],
-                    |row| row.get(0),
-                ).map_err(|_| JobError::Storage)?;
+                let saved: String = tx
+                    .query_row(
+                        "SELECT owner FROM job_owners_v1 WHERE job_id=?1",
+                        params![spec.id],
+                        |row| row.get(0),
+                    )
+                    .map_err(|_| JobError::Storage)?;
                 if saved != owner {
                     return Err(JobError::Conflict);
                 }
@@ -595,25 +593,25 @@ impl JobStore {
 
     /// Return a job only when the caller owns its remote submission ID.
     /// Unowned legacy/local jobs are not visible over this interface.
-    pub async fn get_owned(
-        &self,
-        owner: &str,
-        id: &str,
-    ) -> Result<Option<JobRecord>, JobError> {
+    pub async fn get_owned(&self, owner: &str, id: &str) -> Result<Option<JobRecord>, JobError> {
         validate_worker(owner)?;
         let owner = owner.to_owned();
         let id = id.to_owned();
         self.run(move |conn| {
-            let saved: Option<String> = conn.query_row(
-                "SELECT owner FROM job_owners_v1 WHERE job_id=?1",
-                params![id],
-                |row| row.get(0),
-            ).optional().map_err(|_| JobError::Storage)?;
+            let saved: Option<String> = conn
+                .query_row(
+                    "SELECT owner FROM job_owners_v1 WHERE job_id=?1",
+                    params![id],
+                    |row| row.get(0),
+                )
+                .optional()
+                .map_err(|_| JobError::Storage)?;
             if saved.as_deref() != Some(owner.as_str()) {
                 return Ok(None);
             }
             load_record(conn, &id)
-        }).await
+        })
+        .await
     }
 
     pub async fn get(&self, id: &str) -> Result<Option<JobRecord>, JobError> {
