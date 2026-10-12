@@ -98,7 +98,10 @@ ACLs, and exercise competing workers.
 ## Operational requirements
 
 Keep the SQLite database and its WAL/SHM files on a reliable **local disk**
-and restrict OS file and directory permissions. Do not share this DB across
+and restrict OS file and directory permissions. On Unix, the job-store opener
+creates the SQLite file with mode `0600` and tightens permissions of an
+existing database; this is not a substitute for a private parent directory
+or secure backups. Do not share this DB across
 multiple hosts on a network filesystem. Each process requires write access
 to the same SQLite file for on-host work stealing. Set alerts for stuck
 `uncertain` jobs and storage errors, and create a documented reconciliation
