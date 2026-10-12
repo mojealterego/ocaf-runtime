@@ -5,16 +5,22 @@ use ocaf_runtime::cluster::leadership::{PgLeader, PgLeaderError};
 
 fn dsn() -> Option<String> {
     let value = std::env::var("OCAF_TEST_PG_DSN").ok();
-    assert!(value.is_some() || std::env::var("OCAF_REQUIRE_PG_TESTS").is_err(),
-        "CI requires a live PostgreSQL instance");
+    assert!(
+        value.is_some() || std::env::var("OCAF_REQUIRE_PG_TESTS").is_err(),
+        "CI requires a live PostgreSQL instance"
+    );
     value
 }
 
 #[tokio::test]
 async fn only_one_connection_is_leader_across_independent_clients() {
     let Some(url) = dsn() else { return };
-    let a = PgLeader::connect(&url, "ocaf-test-main", true).await.unwrap();
-    let b = PgLeader::connect(&url, "ocaf-test-main", true).await.unwrap();
+    let a = PgLeader::connect(&url, "ocaf-test-main", true)
+        .await
+        .unwrap();
+    let b = PgLeader::connect(&url, "ocaf-test-main", true)
+        .await
+        .unwrap();
     assert!(a.try_acquire().await.unwrap());
     assert!(!b.try_acquire().await.unwrap());
     assert!(a.verify().await.is_ok());
@@ -27,8 +33,12 @@ async fn only_one_connection_is_leader_across_independent_clients() {
 #[tokio::test]
 async fn loss_of_session_unblocks_new_leader_without_lease_timeout() {
     let Some(url) = dsn() else { return };
-    let a = PgLeader::connect(&url, "ocaf-test-crash", true).await.unwrap();
-    let b = PgLeader::connect(&url, "ocaf-test-crash", true).await.unwrap();
+    let a = PgLeader::connect(&url, "ocaf-test-crash", true)
+        .await
+        .unwrap();
+    let b = PgLeader::connect(&url, "ocaf-test-crash", true)
+        .await
+        .unwrap();
     assert!(a.try_acquire().await.unwrap());
     assert!(!b.try_acquire().await.unwrap());
     drop(a);
@@ -40,7 +50,10 @@ async fn loss_of_session_unblocks_new_leader_without_lease_timeout() {
         }
         tokio::time::sleep(std::time::Duration::from_millis(20)).await;
     }
-    assert!(promoted, "leader session death must release the advisory lock");
+    assert!(
+        promoted,
+        "leader session death must release the advisory lock"
+    );
     b.release().await.unwrap();
 }
 
@@ -61,7 +74,10 @@ async fn transport_downgrade_to_plain_remote_database_is_rejected() {
         "host=example.org user=nobody dbname=postgres sslmode=disable",
         "cluster-1",
         true,
-    ).await.err().expect("remote plaintext denied");
+    )
+    .await
+    .err()
+    .expect("remote plaintext denied");
     assert!(matches!(err, PgLeaderError::UnsafeTransport));
 }
 
@@ -71,6 +87,9 @@ async fn invalid_cluster_identity_fails_closed() {
         "host=127.0.0.1 user=nobody dbname=postgres sslmode=disable",
         "",
         true,
-    ).await.err().expect("invalid identity");
+    )
+    .await
+    .err()
+    .expect("invalid identity");
     assert!(matches!(err, PgLeaderError::InvalidCluster));
 }
