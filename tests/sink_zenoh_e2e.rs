@@ -29,9 +29,21 @@ async fn separate_zenoh_receiver_fences_postgres_leader_takeover() -> anyhow::Re
         r#"{{mode:"client",connect:{{endpoints:["tcp/127.0.0.1:{port}"]}},scouting:{{multicast:{{enabled:false}}}}}}"#
     ))
     .map_err(|e| anyhow::anyhow!("{e}"))?;
-    let server_session = Arc::new(zenoh::open(peer_cfg).await?);
-    let controller_session = Arc::new(zenoh::open(cli_cfg.clone()).await?);
-    let worker_session = Arc::new(zenoh::open(cli_cfg).await?);
+    let server_session = Arc::new(
+        zenoh::open(peer_cfg)
+            .await
+            .map_err(|e| anyhow::anyhow!("sink server Zenoh open: {e}"))?,
+    );
+    let controller_session = Arc::new(
+        zenoh::open(cli_cfg.clone())
+            .await
+            .map_err(|e| anyhow::anyhow!("sink controller Zenoh open: {e}"))?,
+    );
+    let worker_session = Arc::new(
+        zenoh::open(cli_cfg)
+            .await
+            .map_err(|e| anyhow::anyhow!("sink worker Zenoh open: {e}"))?,
+    );
     let dir = tempfile::tempdir()?;
     let sink = Arc::new(EffectSink::open(
         &dir.path().join("effect_sink.sqlite"),
