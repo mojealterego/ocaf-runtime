@@ -133,3 +133,15 @@ fn invalid_zero_port_encodings_cannot_bypass_loopback_policy() {
     let config = loopback_config("tcp", "127.0.0.1").replace(":7447", ":0000");
     assert!(validate_zenoh_config(&config, true).is_err());
 }
+
+#[test]
+fn zenoh_config_file_reader_rejects_oversize_files_before_parsing() {
+    use ocaf_runtime::transport_policy::read_zenoh_config;
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("zenoh.json5");
+    std::fs::write(&path, "x".repeat(70_000)).unwrap();
+    assert!(matches!(
+        read_zenoh_config(&path),
+        Err(TransportPolicyError::Malformed)
+    ));
+}
