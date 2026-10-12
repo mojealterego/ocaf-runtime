@@ -55,6 +55,16 @@ pub struct ClusterSnapshot {
     pub jobs_running_expired: u64,
 }
 
+/// Owner-restricted operator view of one registered node; no tool ACLs,
+/// signing credentials, addresses or job contents are included.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct NodeHealth {
+    pub node_id: String,
+    pub observed_at_ms: u64,
+    pub expires_at_ms: u64,
+    pub alive: bool,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ClusterReport {
     pub health: ClusterHealth,
@@ -241,6 +251,35 @@ impl PgClusterMonitor {
             jobs_running_expired: read_count(&row, 9)?,
         })
     }
+    /// Resolve a single node's signed-heartbeat expiry from the shared
+    /// directory. Uses the database clock; no user-controlled time input.
+    pub async fn node_health(&self, node_id: &str) -> Result<Option<NodeHealth>, PgLeaderError> {
+        crate::rpc::validate_node_id(node_id).map_err(|_| PgLeaderError::InvalidCluster)?;
+        let row = tokio::time::timeout(
+            Duration::from_secs(5),
+            self.client.query_opt(
+                "SELECT node_id,expires_at_ms,
+                    (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT
+                 FROM ocaf_pg_nodes_v1 WHERE node_id=$1",
+                &[&node_id],
+            ),
+        )
+        .await
+        .map_err(|_| PgLeaderError::Database)?
+        .map_err(|_| PgLeaderError::Database)?;
+        row.map(|row| {
+            let expires: i64 = row.get(1);
+            let observed: i64 = row.get(2);
+            Ok(NodeHealth {
+                node_id: row.get(0),
+                observed_at_ms: u64::try_from(observed).map_err(|_| PgLeaderError::Database)?,
+                expires_at_ms: u64::try_from(expires).map_err(|_| PgLeaderError::Database)?,
+                alive: expires > observed,
+            })
+        })
+        .transpose()
+    }
+
 }
 
 impl Drop for PgClusterMonitor {
