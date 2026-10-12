@@ -4,6 +4,7 @@ pub mod coordinator;
 pub mod executor;
 pub mod jobs;
 pub mod metrics;
+pub mod ops;
 pub mod registry;
 pub mod rpc;
 pub mod runtime;
