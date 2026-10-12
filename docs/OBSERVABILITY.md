@@ -25,8 +25,9 @@ inconsistency across related counts. An advisory-lock view is still a
 point-in-time observation and is **not** an external fencing token.
 
 The monitor is read-only and does not initialize tables. It requires an
-**already provisioned OCAF PostgreSQL cluster** with the `ocaf_pg_nodes_v1`
-and `ocaf_pg_jobs_v1` tables. Database errors or missing tables are
+**already provisioned OCAF PostgreSQL cluster** with the `ocaf_pg_nodes_v2`
+and `ocaf_pg_jobs_v1` tables. The v1 global membership directory is
+preserved for audit but not queried by this v0.26 monitor. Database errors or missing tables are
 returned as failures — never converted to a fictitious healthy state.
 
 ## Usage
@@ -102,9 +103,12 @@ on its own and does not add a durable incident manager.
   and establish an operator-owned retention plan.
 - Advisory leader count is a PostgreSQL view, not a statement that the
   Zenoh listener is reachable or that the coordinator completed startup.
-- Counts are scoped to the configured PostgreSQL database/schema,
-  **not tenant-isolated by `OCAF_CLUSTER_ID`**. Keep independent
-  security domains in separate databases or schemas.
+- Since v0.26, job and agent *metadata* counters are filtered by
+  `OCAF_CLUSTER_ID`, and node inspection requires the same cluster
+  namespace. PostgreSQL users remain highly privileged: cluster
+  filtering in application SQL is **not** a substitute for DB-role
+  isolation. Retain dedicated databases or schemas for independent
+  security domains until PostgreSQL row-level permissions are enforced.
 - PostgreSQL itself remains a possible single point of failure unless
   you deploy, test and operate its high-availability infrastructure.
 - The monitor doesn't provide distributed tracing, exact network

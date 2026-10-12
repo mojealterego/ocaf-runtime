@@ -1,5 +1,21 @@
 # OCAF Runtime 0.25.0 — production hardening and operator runbook
 
+## v0.26 upgrade notice
+
+After upgrading all coordinators to v0.26, the live capability
+directory is stored in `ocaf_pg_nodes_v2`, `ocaf_pg_tools_v2`
+and `ocaf_pg_cursor_v2`, keyed by `cluster_id`. The old v1
+membership tables are **not migrated or deleted automatically**.
+A coordinator promoted by PostgreSQL fencing starts with an empty v2
+directory until signed agent heartbeats replenish the cluster.
+Do not run mixed v0.25/v0.26 coordinator versions in one cluster,
+because their directories are intentionally incompatible. Preserve
+the original v1 tables and replay journal until an operator has
+reconciled agent registration, outstanding jobs and effects.
+Run `migrations/v0.26_directory_preflight.sql` against a reviewed
+database to assess both table generations without modifying rows.
+See [FINAL_ACCEPTANCE.md](FINAL_ACCEPTANCE.md).
+
 ## Scope and guarantees
 
 Version 0.25 adds a read-only, cluster-scoped **job** health probe,
@@ -90,13 +106,16 @@ rejected before connecting to PostgreSQL.
 Pending backlog and expired agents are warnings by default.
 Thresholds are positive and bounded to 1–1,000,000.
 
-Jobs metrics are scoped to the requested cluster ID.
-**Known limitation:** agent/node membership and routing v1 tables
-are presently global within a shared PostgreSQL database. Agent
-counts and per-node lookups are not tenant-isolated and must not be
-presented as proof of cluster-local agent membership.
-Use a dedicated PostgreSQL database per independent tenant
-until this limitation is eliminated.
+Since v0.26 **both jobs and registered agents** in the v2 directory
+are scoped to the selected cluster ID. Read-only monitoring
+counts and per-node lookup queries use the same namespace.
+Prior v1 global tables are intentionally not imported automatically:
+their original cluster identity cannot be inferred. Preserve those
+tables, re-register authenticated agents under the elected leader,
+and verify the namespace before permitting traffic. Database roles,
+secrets, and workload identity still require strong isolation;
+namespace-scoped SQL does not provide independent PostgreSQL tenants
+or replace database row-level access controls.
 
 Enable the health timer with `systemctl enable --now
 ocaf-cluster-health.timer`. A timer only runs the probe:

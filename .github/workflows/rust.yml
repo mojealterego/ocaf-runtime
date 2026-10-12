@@ -39,6 +39,8 @@ jobs:
         run: cargo clippy --all-targets --no-default-features -- -D warnings
       - name: Tests (core only)
         run: cargo test --no-default-features
+      - name: Final security acceptance (cluster isolation and fencing)
+        run: cargo test --no-default-features --test final_security_acceptance -- --test-threads=1
       - name: Operational health (PostgreSQL and CLI)
         run: cargo test --no-default-features --test production_health --test health_cli
       - name: Network chaos (real PostgreSQL via loopback fault proxy)

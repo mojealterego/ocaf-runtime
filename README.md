@@ -513,6 +513,27 @@ Deployment templates, health timer, alarm thresholds, migration
 preflight, rollback and remaining risks are in
 [docs/PRODUCTION_OPERATIONS.md](docs/PRODUCTION_OPERATIONS.md).
 
+## Final development acceptance (v0.26)
+
+The v0.26 security regression suite validates isolated PostgreSQL
+agent capability directories with **composite cluster/node identity**,
+namespace-specific routing cursors and transactional fencing of
+directory writes. A cluster cannot read another cluster's capability
+memberships or consume its round-robin state merely because both use
+the same PostgreSQL primary. The read-only cluster health probe now
+counts and looks up agents only within the selected namespace.
+
+The v1 membership tables are **not automatically imported** into the v2
+cluster-aware tables because their original cluster ownership cannot be
+proved from the rows. On upgrade, agents must re-register via signed
+heartbeats under an elected leader or operators must perform a
+validated offline migration. Operators must retain the old tables and
+backups until the change is verified. See
+[docs/FINAL_ACCEPTANCE.md](docs/FINAL_ACCEPTANCE.md) for the tested
+claims, migration, security limitations and **conditional GO/NO-GO**
+criteria. A green GitHub Actions run is not physical multi-host
+production certification.
+
 ## Production work still required
 
 1. Certificate-backed TLS/mTLS handshakes on separate deployed hosts, plus certificate rotation and revocation.
