@@ -32,7 +32,13 @@ impl ToolExecutor for Hangs {
 struct TestOnlyVerifier;
 #[async_trait::async_trait]
 impl AuthVerifier for TestOnlyVerifier {
-    async fn verify(&self, _: &str, _: &AuthContext, _: u64, _: &[String]) -> Result<(), AuthError> {
+    async fn verify(
+        &self,
+        _: &str,
+        _: &AuthContext,
+        _: u64,
+        _: &[String],
+    ) -> Result<(), AuthError> {
         Ok(())
     }
 }
@@ -82,7 +88,10 @@ fn fake_auth() -> AuthContext {
 async fn free_tool_accepts_missing_authentication() {
     let runtime = OcafRuntime::new(0);
     runtime.register(manifest(), Echo).await.unwrap();
-    let output = runtime.execute(request(None, json!({"message":"ok"}))).await.unwrap();
+    let output = runtime
+        .execute(request(None, json!({"message":"ok"})))
+        .await
+        .unwrap();
     assert_eq!(output.output, json!({"answer":"ok"}));
     assert_eq!(runtime.metrics.snapshot().await.successful_calls, 1);
 }
@@ -94,7 +103,9 @@ async fn forged_nonempty_payment_fields_do_not_authorize_paid_tool() {
     paid.cost_sats = 25;
     runtime.register(paid, Echo).await.unwrap();
     assert!(matches!(
-        runtime.execute(request(Some(fake_auth()), json!({"message":"ok"}))).await,
+        runtime
+            .execute(request(Some(fake_auth()), json!({"message":"ok"})))
+            .await,
         Err(RuntimeError::AuthRequired(_))
     ));
     assert_eq!(runtime.remaining_budget_sats(), 100);
@@ -108,7 +119,9 @@ async fn permissioned_tool_denied_without_authorizer_even_if_free() {
     restricted.permissions.push("file:write".into());
     runtime.register(restricted, Echo).await.unwrap();
     assert!(matches!(
-        runtime.execute(request(Some(fake_auth()), json!({"message":"ok"}))).await,
+        runtime
+            .execute(request(Some(fake_auth()), json!({"message":"ok"})))
+            .await,
         Err(RuntimeError::AuthRequired(_))
     ));
 }
@@ -120,7 +133,9 @@ async fn disabled_tool_must_not_execute() {
     disabled.enabled = false;
     runtime.register(disabled, Echo).await.unwrap();
     assert!(matches!(
-        runtime.execute(request(None, json!({"message":"ok"}))).await,
+        runtime
+            .execute(request(None, json!({"message":"ok"})))
+            .await,
         Err(RuntimeError::ToolDisabled(_))
     ));
 }
@@ -144,7 +159,9 @@ async fn output_schema_rejects_nonconforming_result() {
     });
     runtime.register(invalid_output, Echo).await.unwrap();
     assert!(matches!(
-        runtime.execute(request(None, json!({"message":"ok"}))).await,
+        runtime
+            .execute(request(None, json!({"message":"ok"})))
+            .await,
         Err(RuntimeError::InvalidOutput(_))
     ));
 }
@@ -154,11 +171,16 @@ async fn executor_failure_updates_metrics() {
     let runtime = OcafRuntime::new(0);
     runtime.register(manifest(), Fails).await.unwrap();
     assert!(matches!(
-        runtime.execute(request(None, json!({"message":"ok"}))).await,
+        runtime
+            .execute(request(None, json!({"message":"ok"})))
+            .await,
         Err(RuntimeError::ToolExecution(_))
     ));
     let m = runtime.metrics.snapshot().await;
-    assert_eq!((m.total_calls,m.failed_calls,m.successful_calls),(1,1,0));
+    assert_eq!(
+        (m.total_calls, m.failed_calls, m.successful_calls),
+        (1, 1, 0)
+    );
 }
 
 #[tokio::test]
@@ -168,7 +190,9 @@ async fn budget_is_refunded_on_execution_error() {
     paid.cost_sats = 25;
     runtime.register(paid, Fails).await.unwrap();
     assert!(matches!(
-        runtime.execute(request(Some(fake_auth()), json!({"message":"ok"}))).await,
+        runtime
+            .execute(request(Some(fake_auth()), json!({"message":"ok"})))
+            .await,
         Err(RuntimeError::ToolExecution(_))
     ));
     assert_eq!(runtime.remaining_budget_sats(), 25);
@@ -182,7 +206,9 @@ async fn timed_out_tool_refunds_budget_and_records_failure() {
     paid.timeout_ms = 10;
     runtime.register(paid, Hangs).await.unwrap();
     assert!(matches!(
-        runtime.execute(request(Some(fake_auth()), json!({"message":"ok"}))).await,
+        runtime
+            .execute(request(Some(fake_auth()), json!({"message":"ok"})))
+            .await,
         Err(RuntimeError::Timeout)
     ));
     assert_eq!(runtime.remaining_budget_sats(), 25);
@@ -216,7 +242,9 @@ async fn zero_timeout_manifest_is_rejected() {
 async fn missing_tool_is_counted_as_failure() {
     let runtime = OcafRuntime::new(0);
     assert!(matches!(
-        runtime.execute(request(None, json!({"message":"ok"}))).await,
+        runtime
+            .execute(request(None, json!({"message":"ok"})))
+            .await,
         Err(RuntimeError::ToolNotFound(_))
     ));
     assert_eq!(runtime.metrics.snapshot().await.failed_calls, 1);
