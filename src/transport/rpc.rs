@@ -192,16 +192,18 @@ impl ResilientZenohRpcClient {
     }
 
     pub async fn request(&self, action: RpcAction) -> anyhow::Result<RpcReply> {
-        self.policy.run(&action, || {
-            let config = self.config.clone();
-            let action = action.clone();
-            async move {
-                let session = zenoh::open(config)
-                    .await
-                    .map_err(|e| error("Zenoh reconnect", e))?;
-                request_over_session(&session, &self.protocol, action).await
-            }
-        }).await
+        self.policy
+            .run(&action, || {
+                let config = self.config.clone();
+                let action = action.clone();
+                async move {
+                    let session = zenoh::open(config)
+                        .await
+                        .map_err(|e| error("Zenoh reconnect", e))?;
+                    request_over_session(&session, &self.protocol, action).await
+                }
+            })
+            .await
     }
 }
 
@@ -229,29 +231,29 @@ async fn request_over_session(
     protocol: &RpcClient,
     action: RpcAction,
 ) -> anyhow::Result<RpcReply> {
-        let (request, body) = protocol
-            .prepare(action, 5_000)
-            .map_err(|e| error("prepare signed RPC", e))?;
-        let key = rpc_key(protocol.remote_id());
-        let replies = session
-            .get(key.as_str())
-            .payload(body)
-            .timeout(RPC_TIMEOUT)
-            .await
-            .map_err(|e| error("Zenoh get", e))?;
-        let reply = tokio::time::timeout(RPC_TIMEOUT, replies.recv_async())
-            .await
-            .map_err(|e| error("Zenoh RPC timed out", e))?
-            .map_err(|e| error("Zenoh RPC reply unavailable", e))?;
+    let (request, body) = protocol
+        .prepare(action, 5_000)
+        .map_err(|e| error("prepare signed RPC", e))?;
+    let key = rpc_key(protocol.remote_id());
+    let replies = session
+        .get(key.as_str())
+        .payload(body)
+        .timeout(RPC_TIMEOUT)
+        .await
+        .map_err(|e| error("Zenoh get", e))?;
+    let reply = tokio::time::timeout(RPC_TIMEOUT, replies.recv_async())
+        .await
+        .map_err(|e| error("Zenoh RPC timed out", e))?
+        .map_err(|e| error("Zenoh RPC reply unavailable", e))?;
 
-        let sample = reply
-            .result()
-            .map_err(|_| anyhow::anyhow!("remote RPC was rejected"))?;
-        let payload = sample.payload();
-        if payload.len() > MAX_FRAME_BYTES {
-            anyhow::bail!("remote reply exceeds RPC frame size");
-        }
-        protocol
-            .read_reply(payload.to_bytes().as_ref(), &request)
-            .map_err(|e| error("verify signed response", e))
+    let sample = reply
+        .result()
+        .map_err(|_| anyhow::anyhow!("remote RPC was rejected"))?;
+    let payload = sample.payload();
+    if payload.len() > MAX_FRAME_BYTES {
+        anyhow::bail!("remote reply exceeds RPC frame size");
     }
+    protocol
+        .read_reply(payload.to_bytes().as_ref(), &request)
+        .map_err(|e| error("verify signed response", e))
+}
