@@ -88,7 +88,7 @@ async fn crash_expiration_becomes_uncertain_and_stale_report_is_fenced() {
         .await
         .unwrap();
     let lease = first
-        .claim_permitted("worker-a", NOW, 1_000, &["echo".into()])
+        .claim_permitted("worker-a", NOW, 1_000, &[job.tool.clone()])
         .await
         .unwrap()
         .unwrap();
