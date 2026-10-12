@@ -76,9 +76,13 @@ schema privileges or configure PostgreSQL HA.
 `ocaf-cluster-health` opens its own bounded read-only PostgreSQL
 session. It does **not** acquire the advisory leader lock.
 Each invocation emits **one JSON report** with
-`health`, `alerts` and `snapshot`. A critical result or failed
-DB connection exits nonzero; warnings exit zero unless
-`OCAF_HEALTH_FAIL_ON_WARNING=1` is set.
+`health`, `alerts` and `snapshot`, or static-label Prometheus
+measurements when `--prometheus` is selected. The existing CLI exit
+contract is **0 healthy, 1 warning, 2 critical**; inaccessible DB
+also fails closed. Use `--no-fail` only for a protected passive
+metrics/textfile collector. Use `--node <ID> --json` for a privileged
+per-node lookup; this is not tenant-isolated. An unknown option is
+rejected before connecting to PostgreSQL.
 
 `leader_sessions=0` is **critical**, and
 `jobs_running_expired>0` and `jobs_uncertain>0`

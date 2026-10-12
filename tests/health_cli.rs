@@ -12,6 +12,7 @@ async fn probe_reports_missing_leadership_and_recovers_without_leaking_database_
     let cluster = format!("health_cli_{}", uuid::Uuid::new_v4().simple());
     let probe = || {
         Command::new(env!("CARGO_BIN_EXE_ocaf-cluster-health"))
+            .args(["--json", "--no-fail"])
             .env("OCAF_CLUSTER_PG_DSN", &dsn)
             .env("OCAF_CLUSTER_ID", &cluster)
             .env("OCAF_ALLOW_INSECURE_LOOPBACK", "1")
@@ -26,7 +27,7 @@ async fn probe_reports_missing_leadership_and_recovers_without_leaking_database_
         .await
         .unwrap();
     let before = probe();
-    assert!(!before.status.success());
+    assert!(before.status.success());
     let report: serde_json::Value = serde_json::from_slice(&before.stdout).unwrap();
     assert_eq!(report["health"], "critical");
     let leader = PgLeader::connect(&dsn, &cluster, true).await.unwrap();
@@ -50,6 +51,7 @@ async fn probe_reports_missing_leadership_and_recovers_without_leaking_database_
         std::fs::write(&file, &dsn).unwrap();
         std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o600)).unwrap();
         let from_file = Command::new(env!("CARGO_BIN_EXE_ocaf-cluster-health"))
+            .arg("--no-fail")
             .env_remove("OCAF_CLUSTER_PG_DSN")
             .env("OCAF_CLUSTER_PG_DSN_FILE", &file)
             .env("OCAF_CLUSTER_ID", &cluster)
