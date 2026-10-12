@@ -1,6 +1,6 @@
 # OCAF Runtime — Rust / Tokio / Zenoh
 
-**Status: experimental signed Zenoh RPC, shared PostgreSQL job queue and cross-host advisory leadership primitives; full coordinator HA and replicated storage are not implemented.**
+**Status: experimental PostgreSQL-backed active/passive coordinator, signed Zenoh RPC and durable distributed jobs. Production-certified HA is not established.**
 
 OCAF provides an async local tool registry and execution engine, plus a
 **real Zenoh query/reply protocol** for pairwise authenticated agent calls.
@@ -27,9 +27,11 @@ deliberately limited to **free, enabled tools without special permissions**.
 | Authenticated agent membership, 15-second leases, capability routing | Implemented (single-host coordinator) |
 | Signed remote job submit/pull/finish and owner-only results | Implemented; single coordinator |
 | On-host coordinator active/passive leadership | Implemented with exclusive OS file lock and standby takeover |
-| PostgreSQL cross-host session advisory leadership | Implemented as separate library primitive; NOT yet service-integrated |
+| PostgreSQL cross-host advisory leadership | Integrated into opt-in active/passive coordinator service |
 | Shared PostgreSQL remote job queue | Experimental, role-restricted and transactional; opt-in only |
-| Cross-host coordinator failover / replicated consensus | Not implemented |
+| Shared PostgreSQL replay and agent directory | Implemented for opt-in PostgreSQL cluster mode |
+| Cross-host active/passive process promotion | Experimental; requires a shared PostgreSQL primary and external stable endpoint |
+| Built-in PostgreSQL replication / Raft consensus | Not implemented |
 | L402 Lightning payments and cryptographic payment validation | Not implemented |
 | Untrusted executable tool sandbox and production rate limiting | Not implemented |
 
@@ -207,28 +209,37 @@ replicated multi-server cluster.
 See [docs/HA.md](docs/HA.md) for configuration, security acceptance tests,
 limits, and the next cross-host architecture milestones.
 
-## PostgreSQL distributed coordination foundations (v0.10)
+## PostgreSQL active/passive coordinator (v0.11)
 
-The `cluster::leadership::PgLeader` API supplies **cross-host leader
-exclusion** using a PostgreSQL session advisory lock. Independent hosts
-using one database and one cluster key cannot simultaneously acquire it.
-A dead PostgreSQL session releases ownership. The same release introduces
-`cluster::jobs::PgJobQueue`, which uses PostgreSQL transactions and
-`FOR UPDATE SKIP LOCKED` for atomic job claims and persists owners, lease
-tokens and results. The signed RPC gateway can opt into this queue using
-`with_postgres_job_db` and the coordinator CLI can enable it explicitly
-with `OCAF_EXPERIMENTAL_PG_JOBS=1` and `OCAF_PG_JOBS_DSN`.
+Set `OCAF_CLUSTER_MODE=postgres` to enable the standalone coordinator's
+PostgreSQL-backed path. The gateway stores its replay ledger, capability
+directory and remote-job queue in a **single shared PostgreSQL primary**,
+while a dedicated session advisory lock elects one active coordinator
+across hosts. The standby does not open its Zenoh listener until the
+database lock is available. A per-request leadership check and periodic
+monitor terminate the service on detected loss of leadership.
 
-**This is not yet a production multi-host cluster.** The coordinator CLI
-still uses local SQLite for replay prevention and membership, and it
-does **not** activate PostgreSQL leader election in its serving path.
-Until those are migrated and serving is fenced on leadership loss, using
-multiple simultaneous coordinator hosts is unsupported. PostgreSQL
-failover/replication must also be provided and tested externally.
+Local SQLite mode remains available unchanged. The PostgreSQL cluster
+mode requires `OCAF_CLUSTER_ID`, `OCAF_CLUSTER_PG_DSN`, existing secure
+Zenoh and peer settings, and `OCAF_COORDINATOR_MODE=active` or `standby`.
+Neither `OCAF_COORDINATOR_LOCK_PATH` nor local SQLite paths are required
+in this mode. There is **no automatic migration** of existing SQLite
+data.
 
-CI uses a real PostgreSQL 16 service for cross-connection regression
-tests. See [docs/POSTGRES_CLUSTER.md](docs/POSTGRES_CLUSTER.md) for the
-deployment boundary and the remaining cross-host safety requirements.
+Real PostgreSQL integration tests check concurrent leadership, atomic
+job claims, shared replay rejection, capability expiry, signed gateway
+routing, loss-of-leadership denial and real Zenoh-to-PostgreSQL job
+execution.
+
+**Production gaps:** PostgreSQL HA/failover and replication, a stable
+network endpoint for promoted nodes, actual multi-host outage
+injection, operational PKI testing, strong external-effect fencing,
+certificate rotation and independent security review. The runtime
+does not supply Raft or eliminate the possibility of
+`uncertain` external side effects.
+
+See [docs/POSTGRES_CLUSTER.md](docs/POSTGRES_CLUSTER.md) for deployment
+configuration, acceptance tests and threat boundaries.
 
 ## Production work still required
 
