@@ -121,10 +121,7 @@ mod tests {
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
-            std::fs::set_permissions(
-                &path,
-                std::fs::Permissions::from_mode(0o600)
-            ).unwrap();
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
         }
         assert!(load_peers(&path).is_err());
     }
