@@ -321,6 +321,25 @@ retry semantics and a real Zenoh server starting after the client.
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for security assumptions,
 commands and remaining machine-level verification work.
 
+## Cryptographic Zenoh mTLS integration gates (v0.15)
+
+The full-feature integration suite now constructs temporary private
+certification authorities and certificates with OpenSSL, validates the
+operator's TLS-only configuration with the exact CLI preflight, and
+executes **real signed Zenoh RPC over mutually authenticated TLS**.
+It rejects clients presenting certificates issued by a different CA
+and clients trusting an unrelated server CA. Test credentials are
+generated at runtime, **never committed** as long-lived secrets.
+
+This checks actual TLS handshakes rather than configuration shape
+alone. However, CI still runs on one loopback host, not on physically
+separate machines; operational PKI trust, certificate rotation,
+revocation, DNS failover, live PostgreSQL failover and multi-host
+network partition scenarios remain unverified.
+
+See [docs/MTLS_VERIFICATION.md](docs/MTLS_VERIFICATION.md) and
+[tests/zenoh_mtls_e2e.rs](tests/zenoh_mtls_e2e.rs).
+
 ## Production work still required
 
 1. Certificate-backed TLS/mTLS handshakes on separate deployed hosts, plus certificate rotation and revocation.
