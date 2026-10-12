@@ -61,6 +61,16 @@ impl ZenohRpcServer {
                     Some(_) => Err(RpcError::FrameTooLarge),
                     None => Err(RpcError::Malformed),
                 };
+                // Drop a completed reply if the coordinator lost its
+                // PostgreSQL leader session during request execution.
+                // This fences replies, not side effects from in-flight tools.
+                let result = match result {
+                    Ok(reply_bytes) => gateway
+                        .verify_current_leader()
+                        .await
+                        .map(|()| reply_bytes),
+                    Err(error) => Err(error),
+                };
                 match result {
                     Ok(reply_bytes) => {
                         if let Err(err) = query.reply(reply_key, reply_bytes).await {
