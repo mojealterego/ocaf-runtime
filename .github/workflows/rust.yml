@@ -39,7 +39,11 @@ jobs:
         run: cargo clippy --all-targets --no-default-features -- -D warnings
       - name: Tests (core only)
         run: cargo test --no-default-features
+      - name: Network chaos (real PostgreSQL via loopback fault proxy)
+        run: cargo test --no-default-features --test postgres_network_chaos -- --test-threads=1
       - name: Tests (Zenoh)
         run: cargo test
+      - name: Transport chaos (Zenoh and PostgreSQL takeover)
+        run: cargo test --test zenoh_chaos_takeover -- --test-threads=1
       - name: Clippy (full Zenoh)
         run: cargo clippy --all-targets -- -D warnings

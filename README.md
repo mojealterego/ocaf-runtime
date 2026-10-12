@@ -474,6 +474,22 @@ pre-0.23 leader-managed records requires explicit operator review.
 Deployment, migration, tests and physical HA limitations:
 [docs/HA_FAILOVER.md](docs/HA_FAILOVER.md).
 
+## Network and infrastructure chaos scenarios (v0.24)
+
+The new deterministic loopback-only TCP fault-injection proxy tests genuine
+PostgreSQL socket partitions and deliberately unresponsive handshakes. A
+separate real-Zenoh transport test simulates coordinator host disappearance,
+PostgreSQL leader-session termination and reconnect of a freshly signed
+client to the replacement coordinator. GitHub Actions now has explicit
+chaos stages in addition to complete core and Zenoh regression tests.
+
+These are **separate sockets/process-like service sessions on one CI host**,
+not multi-host networking or a replicated-PostgreSQL partition test. No
+production multi-host or dual-primary availability guarantees follow from
+these checks. See [docs/CHAOS_ENGINEERING.md](docs/CHAOS_ENGINEERING.md)
+for scenario details, expected invariants and a physical-host acceptance
+matrix to complete before production approval.
+
 ## Production work still required
 
 1. Certificate-backed TLS/mTLS handshakes on separate deployed hosts, plus certificate rotation and revocation.
