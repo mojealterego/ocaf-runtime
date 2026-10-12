@@ -111,7 +111,11 @@ cargo run --bin ocaf-coordinator
 
 The two coordinator instances must use **identical cluster IDs, peer
 policies, node IDs, shared PostgreSQL DSN and compatible secure Zenoh
-transport configuration**. For distinct physical hosts, each host needs
+transport configuration**. **Provision a dedicated PostgreSQL database or
+schema per security domain/cluster.** The shared replay and membership
+tables do not implement tenant or cluster namespaces; mixing unrelated
+clusters in one set of tables is unsupported and could expose discovery
+or exhaust the global replay admission capacity. For distinct physical hosts, each host needs
 appropriate listener certificates and a client discovery strategy or
 an externally managed stable virtual endpoint. DNS names, external
 load balancers, host fencing and PostgreSQL failover are not managed by
