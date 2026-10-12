@@ -22,8 +22,8 @@ struct PeerConfig {
 }
 
 fn env_required(name: &str) -> anyhow::Result<String> {
-    let value = env::var(name)
-        .map_err(|_| anyhow::anyhow!("missing required configuration: {name}"))?;
+    let value =
+        env::var(name).map_err(|_| anyhow::anyhow!("missing required configuration: {name}"))?;
     if value.is_empty() {
         anyhow::bail!("empty configuration: {name}");
     }
@@ -58,9 +58,11 @@ fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
     }
     let mut peers = HashMap::with_capacity(parsed.len());
     for (node, entry) in parsed {
-        let secret = B64.decode(&entry.key_b64)
+        let secret = B64
+            .decode(&entry.key_b64)
             .map_err(|_| anyhow::anyhow!("invalid peer key for {node}"))?;
-        let key: [u8; 32] = secret.try_into()
+        let key: [u8; 32] = secret
+            .try_into()
             .map_err(|_| anyhow::anyhow!("peer key for {node} must be 32 bytes"))?;
         if key == [0; 32] || entry.allowed_tools.is_empty() {
             anyhow::bail!("invalid empty/zero peer credentials or ACL for {node}");
@@ -84,19 +86,16 @@ async fn main() -> anyhow::Result<()> {
     let config = zenoh::Config::from_file(zenoh_config)
         .map_err(|err| anyhow::anyhow!("cannot load Zenoh config: {err}"))?;
 
-    let gateway = RpcGateway::with_sqlite_replay(
-        &node_id,
-        OcafRuntime::new(0),
-        peers,
-        64,
-        &replay,
-    )?
-    .with_coordinator_db(&membership)?;
+    let gateway =
+        RpcGateway::with_sqlite_replay(&node_id, OcafRuntime::new(0), peers, 64, &replay)?
+            .with_coordinator_db(&membership)?;
     let session = Arc::new(
         zenoh::open(config)
             .await
             .map_err(|err| anyhow::anyhow!("Zenoh open: {err}"))?,
     );
     tracing::info!(node = %node_id, "OCAF authenticated coordinator active");
-    ZenohRpcServer::new(session, Arc::new(gateway)).serve().await
+    ZenohRpcServer::new(session, Arc::new(gateway))
+        .serve()
+        .await
 }
