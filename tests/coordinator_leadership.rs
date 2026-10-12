@@ -1,6 +1,6 @@
+use ocaf_runtime::coordinator::leadership::{LeaderGuard, LeadershipError};
 use std::fs;
 use std::time::Duration;
-use ocaf_runtime::coordinator::leadership::{LeaderGuard, LeadershipError};
 
 #[test]
 fn single_active_coordinator_and_takeover_after_release() {
@@ -24,13 +24,16 @@ async fn standby_promotes_after_leader_crashes_and_retains_job_journal() {
     let primary = LeaderGuard::try_acquire(&path).unwrap().unwrap();
     let store = JobStore::open(&db).unwrap();
     let id = uuid::Uuid::new_v4().to_string();
-    store.submit(JobSpec {
-        id: id.clone(),
-        tool: "echo".into(),
-        args: serde_json::json!({"message": "survives"}),
-        retry_safe: false,
-        max_attempts: 1,
-    }).await.unwrap();
+    store
+        .submit(JobSpec {
+            id: id.clone(),
+            tool: "echo".into(),
+            args: serde_json::json!({"message": "survives"}),
+            retry_safe: false,
+            max_attempts: 1,
+        })
+        .await
+        .unwrap();
     drop(store);
 
     let standby_path = path.clone();
@@ -41,12 +44,24 @@ async fn standby_promotes_after_leader_crashes_and_retains_job_journal() {
         while !join.is_finished() {
             tokio::time::sleep(Duration::from_millis(10)).await;
         }
-    }).await.is_err());
+    })
+    .await
+    .is_err());
     drop(primary);
-    let standby = tokio::time::timeout(Duration::from_secs(2), join).await.unwrap().unwrap().unwrap();
+    let standby = tokio::time::timeout(Duration::from_secs(2), join)
+        .await
+        .unwrap()
+        .unwrap()
+        .unwrap();
     assert!(LeaderGuard::try_acquire(&path).unwrap().is_none());
     assert_eq!(
-        JobStore::open(&db).unwrap().get(&id).await.unwrap().unwrap().status,
+        JobStore::open(&db)
+            .unwrap()
+            .get(&id)
+            .await
+            .unwrap()
+            .unwrap()
+            .status,
         JobStatus::Pending
     );
     drop(standby);
@@ -81,5 +96,8 @@ fn leader_lock_file_is_owner_only() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("lock");
     let _lock = LeaderGuard::try_acquire(&path).unwrap().unwrap();
-    assert_eq!(fs::metadata(path).unwrap().permissions().mode() & 0o777, 0o600);
+    assert_eq!(
+        fs::metadata(path).unwrap().permissions().mode() & 0o777,
+        0o600
+    );
 }
