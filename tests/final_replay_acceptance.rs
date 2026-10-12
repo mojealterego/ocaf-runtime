@@ -72,13 +72,10 @@ async fn identical_rpc_request_ids_are_unique_per_cluster_and_stale_generation_i
         .reserve("coord", "worker", &next, NOW + 4000, NOW)
         .await
         .unwrap();
-    assert_eq!(
-        journal_b
-            .reserve("coord", "worker", &next, NOW + 4000, NOW)
-            .await
-            .is_ok(),
-        true
-    );
+    assert!(journal_b
+        .reserve("coord", "worker", &next, NOW + 4000, NOW)
+        .await
+        .is_ok());
     successor.release().await.unwrap();
     b.release().await.unwrap();
 }
