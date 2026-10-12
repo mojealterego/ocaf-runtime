@@ -326,9 +326,8 @@ impl RpcGateway {
     /// Attach a persistent membership directory. This is a single-host
     /// coordination component, not a replicated distributed scheduler.
     pub fn with_coordinator_db(mut self, db_path: &Path) -> Result<Self, RpcError> {
-        self.coordinator = Some(
-            CoordinatorStore::open(db_path).map_err(|_| RpcError::Unavailable)?,
-        );
+        self.coordinator =
+            Some(CoordinatorStore::open(db_path).map_err(|_| RpcError::Unavailable)?);
         Ok(self)
     }
 
@@ -444,7 +443,8 @@ impl RpcGateway {
                 (RpcStatus::Ok, json!(public))
             }
             RpcAction::Heartbeat { tools } => {
-                let result = self.coordinator
+                let result = self
+                    .coordinator
                     .as_ref()
                     .ok_or(RpcError::Unavailable)?
                     .heartbeat(&request.sender, &tools, now)
@@ -453,7 +453,8 @@ impl RpcGateway {
                 (RpcStatus::Ok, json!(result))
             }
             RpcAction::Resolve { tool } => {
-                let result = self.coordinator
+                let result = self
+                    .coordinator
                     .as_ref()
                     .ok_or(RpcError::Unavailable)?
                     .resolve(&tool, now)
