@@ -332,12 +332,16 @@ impl JobStore {
         lease_ms: u64,
         tools: &[String],
     ) -> Result<Option<LeasedJob>, JobError> {
-        if tools.is_empty() || tools.len() > 64
-            || tools.iter().any(|name| !crate::coordinator::validate_tool_name(name))
+        if tools.is_empty()
+            || tools.len() > 64
+            || tools
+                .iter()
+                .any(|name| !crate::coordinator::validate_tool_name(name))
         {
             return Err(JobError::Invalid);
         }
-        self.claim_filtered(worker, now_ms, lease_ms, Some(tools.to_vec())).await
+        self.claim_filtered(worker, now_ms, lease_ms, Some(tools.to_vec()))
+            .await
     }
 
     async fn claim_filtered(
@@ -363,22 +367,19 @@ impl JobStore {
                 )
             } else {
                 "SELECT id, tool, args, attempts FROM jobs_v1
-                 WHERE status='pending' ORDER BY seq LIMIT 1".into()
+                 WHERE status='pending' ORDER BY seq LIMIT 1"
+                    .into()
             };
             let arguments = allowed.as_deref().unwrap_or_default();
             let row = tx
-                .query_row(
-                    &sql,
-                    rusqlite::params_from_iter(arguments.iter()),
-                    |row| {
-                        Ok((
-                            row.get::<_, String>(0)?,
-                            row.get::<_, String>(1)?,
-                            row.get::<_, String>(2)?,
-                            row.get::<_, i64>(3)?,
-                        ))
-                    },
-                )
+                .query_row(&sql, rusqlite::params_from_iter(arguments.iter()), |row| {
+                    Ok((
+                        row.get::<_, String>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, String>(2)?,
+                        row.get::<_, i64>(3)?,
+                    ))
+                })
                 .optional()
                 .map_err(|_| JobError::Storage)?;
             let Some((id, tool, args, previous_attempts)) = row else {
