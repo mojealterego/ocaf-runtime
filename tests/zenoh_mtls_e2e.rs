@@ -252,3 +252,39 @@ async fn untrusted_ca_and_rogue_client_certificate_are_rejected() -> anyhow::Res
     drop(server);
     Ok(())
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn trusted_ca_with_wrong_server_ip_san_is_rejected() -> anyhow::Result<()> {
+    let mut certs = pki()?;
+    let dir = certs._dir.path();
+    let wrong_extensions = dir.join("wrong-ip-extensions.cnf");
+    let wrong_cert = dir.join("wrong-ip-cert.pem");
+    std::fs::write(
+        &wrong_extensions,
+        "basicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature,keyEncipherment\nextendedKeyUsage=serverAuth\nsubjectAltName=IP:127.0.0.2\n",
+    )?;
+    let ca_key = dir.join("trusted-ca-key.pem");
+    let server_csr = dir.join("coordinator.csr");
+    openssl(&[
+        "x509", "-req", "-in", file(&server_csr),
+        "-CA", file(&certs.ca), "-CAkey", file(&ca_key),
+        "-CAcreateserial", "-out", file(&wrong_cert),
+        "-days", "2", "-sha256", "-extfile", file(&wrong_extensions),
+    ])?;
+    certs.server_cert = wrong_cert;
+    let port = available_port()?;
+    let listener = zenoh::open(config(port, &certs, true, false, false)?)
+        .await
+        .map_err(|e| anyhow::anyhow!("bad SAN test server failed to start: {e}"))?;
+    let mismatched = tokio::time::timeout(
+        Duration::from_secs(6),
+        zenoh::open(config(port, &certs, false, false, false)?),
+    )
+    .await?;
+    assert!(
+        mismatched.is_err(),
+        "a trusted CA must not bypass server IP subject-alternative-name verification"
+    );
+    drop(listener);
+    Ok(())
+}
