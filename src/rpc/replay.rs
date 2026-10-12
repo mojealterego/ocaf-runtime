@@ -45,7 +45,10 @@ impl ReplayBackend {
         now_ms: u64,
     ) -> Result<(), RpcError> {
         match self {
-            Self::Postgres(db) => db.reserve(node, sender, request_id, expires_at_ms, now_ms).await,
+            Self::Postgres(db) => {
+                db.reserve(node, sender, request_id, expires_at_ms, now_ms)
+                    .await
+            }
             Self::Volatile(seen) => {
                 let mut seen = seen.lock().map_err(|_| RpcError::Unavailable)?;
                 seen.retain(|_, expiry| *expiry >= now_ms);
