@@ -57,9 +57,9 @@ impl RemoteJobWorker {
     /// epochs even after passing point-in-time ValidateLease.
     pub fn with_cluster_pure_tools(mut self, tools: HashSet<String>) -> Result<Self> {
         if tools.len() > 64
-            || tools.iter().any(|tool| {
-                !validate_tool_name(tool) || !self.allowed_tools.contains(tool)
-            })
+            || tools
+                .iter()
+                .any(|tool| !validate_tool_name(tool) || !self.allowed_tools.contains(tool))
         {
             bail!("cluster pure-tool policy must be a subset of the worker allowlist");
         }

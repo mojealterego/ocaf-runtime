@@ -133,12 +133,9 @@ async fn main() -> anyhow::Result<()> {
             } else {
                 pure_list.split(',').map(str::to_owned).collect()
             };
-            let worker = RemoteJobWorker::new(
-                client,
-                runtime,
-                HashSet::from(["demo_echo".into()]),
-            )?
-            .with_cluster_pure_tools(pure_tools)?;
+            let worker =
+                RemoteJobWorker::new(client, runtime, HashSet::from(["demo_echo".into()]))?
+                    .with_cluster_pure_tools(pure_tools)?;
             let mut heartbeat = tokio::time::interval(Duration::from_secs(5));
             let mut polling = tokio::time::interval(Duration::from_millis(500));
             loop {
