@@ -138,6 +138,19 @@ machines or shared network storage. The leader lock inode must never be
 unlinked, and local storage must have a private parent directory. See
 [HA.md](HA.md).
 
+## PostgreSQL cluster primitives (v0.10)
+
+The experimental `cluster::leadership::PgLeader` component acquires a
+PostgreSQL session advisory lock on a dedicated connection, rejects
+unencrypted remote connections and fails closed on session errors. The
+`PgJobQueue` component provides shared, transactional remote-job claims
+and lease-fenced results across independent PostgreSQL connections.
+However, the coordinator CLI still uses its original local SQLite replay
+and membership stores, so **automatic cross-host coordinator failover is
+not available**. PostgreSQL replication, mTLS database client identity,
+leadership-loss fencing of live Zenoh serving, and real multi-host chaos
+tests remain outstanding. See [POSTGRES_CLUSTER.md](POSTGRES_CLUSTER.md).
+
 ## Keys
 
 Generate a distinct, cryptographically random 32-byte key per two-peer
