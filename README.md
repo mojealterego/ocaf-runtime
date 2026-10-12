@@ -1,6 +1,6 @@
 # OCAF Runtime — Rust / Tokio / Zenoh
 
-**Status: experimental signed distributed RPC, durable local jobs and authenticated agent directory; not production hardened.**
+**Status: experimental signed Zenoh RPC, authenticated agent directory and pull-based distributed job dispatch backed by a single-host SQLite coordinator; not production hardened.**
 
 OCAF provides an async local tool registry and execution engine, plus a
 **real Zenoh query/reply protocol** for pairwise authenticated agent calls.
@@ -25,7 +25,8 @@ deliberately limited to **free, enabled tools without special permissions**.
 | Durable admission (at-most-once within TTL) | Implemented with SQLite; not exactly-once execution |
 | SQLite job queue, worker lease/fencing, restart recovery | Implemented for one host |
 | Authenticated agent membership, 15-second leases, capability routing | Implemented (single-host coordinator) |
-| Replicated distributed scheduler, durable cross-host job dispatch | Not implemented |
+| Signed remote job submit/pull/finish and owner-only results | Implemented; single coordinator |
+| Replicated coordinator, distributed consensus and HA failover | Not implemented |
 | L402 Lightning payments and cryptographic payment validation | Not implemented |
 | Untrusted executable tool sandbox and production rate limiting | Not implemented |
 
@@ -104,7 +105,8 @@ plaintext loopback-only and must not be used as production settings.
 
 - Fixed keyspace: `ocaf/v1/nodes/{target-node}/rpc`.
 - `RpcRequest` includes version, UUID correlation ID, sender,
-  recipient, issuance time, short TTL and `Discover` / `Execute`.
+  recipient, issuance time, short TTL and signed discovery, execution,
+  coordinator and job control actions.
 - The body bytes are base64-encoded inside a JSON envelope and signed
   using per-peer HMAC-SHA256. Both sides verify the signature and ID
   binding. No arbitrary tool code is transferred.
@@ -135,8 +137,8 @@ reclaimed; otherwise they become `uncertain` pending manual investigation.
 
 **A lease does not provide exactly-once side effects.** Mark jobs
 `retry_safe` only when operations are actually idempotent. This is
-single-host orchestration, not cluster consensus, and there is no general
-remote job submission API at this stage.
+single-host orchestration, not cluster consensus. As of v0.8, a separate
+**signed, role-restricted remote job API** uses this SQLite store.
 
 See [docs/JOBS.md](docs/JOBS.md) for API examples, persistence guarantees,
 operating requirements and remaining architectural work.
@@ -157,10 +159,32 @@ enforce verified Zenoh TLS/mTLS for non-loopback deployments.
 See [docs/COORDINATOR.md](docs/COORDINATOR.md) for the separate daemon,
 peer provisioning, acceptance tests, and important non-production limitations.
 
+## Distributed job orchestration (v0.8)
+
+The coordinator now accepts signed `SubmitJob` from explicitly designated
+submitters, assigns queued work via `ClaimJob` to allowlisted remote workers,
+and accepts fenced `FinishJob` reports. Only the original authenticated
+submitter can retrieve its result through `GetJob`. Distinct submitter and
+worker permissions are configured in `OCAF_PEERS_FILE`.
+
+The `ocaf-rpc-node` CLI now supports `OCAF_ROLE=worker` (polling executor)
+and `OCAF_ACTION=submit` / `OCAF_ACTION=status` in client mode. The
+coordinator requires `OCAF_JOBS_DB_PATH` in addition to the previous two
+SQLite paths.
+
+Remote jobs are limited to one attempt, are never retried automatically
+after ambiguous failures, and may enter the terminal `uncertain` state.
+HMAC authenticates peers but does not encrypt job arguments or results.
+There is **no replicated scheduler, enforced TLS/mTLS or exactly-once side
+effect guarantee**.
+
+See [docs/DISTRIBUTED_JOBS.md](docs/DISTRIBUTED_JOBS.md) for the complete
+protocol, role ACLs, local demo and security boundaries.
+
 ## Production work still required
 
 1. Enforced TLS/mTLS identity and secure configuration verification.
-2. Replicated coordinator and real cross-host job dispatch with external-effect fencing.
+2. Replicated job broker/coordinator, external-effect fencing and real high availability.
 3. Signed plugin supply chain, sandbox and capability isolation.
 4. Secret manager integration, peer/key rotation, revocation and quotas.
 5. Distributed traces, fault injection, property tests and benchmarks.
