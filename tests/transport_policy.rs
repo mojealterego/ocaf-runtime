@@ -127,3 +127,9 @@ fn malformed_json_and_excessive_config_size_are_rejected() {
         Err(TransportPolicyError::Malformed)
     ));
 }
+
+#[test]
+fn invalid_zero_port_encodings_cannot_bypass_loopback_policy() {
+    let config = loopback_config("tcp", "127.0.0.1").replace(":7447", ":0000");
+    assert!(validate_zenoh_config(&config, true).is_err());
+}
