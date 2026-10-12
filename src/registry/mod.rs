@@ -35,7 +35,9 @@ fn schema_uses_external_refs(schema: &Value) -> bool {
     match schema {
         Value::Object(map) => map.iter().any(|(key, value)| {
             if key == "$ref" || key == "$dynamicRef" || key == "$recursiveRef" {
-                value.as_str().is_none_or(|reference| !reference.starts_with('#'))
+                value
+                    .as_str()
+                    .is_none_or(|reference| !reference.starts_with('#'))
             } else {
                 schema_uses_external_refs(value)
             }
@@ -75,14 +77,20 @@ impl ToolRegistry {
         T: ToolExecutor + 'static,
     {
         if manifest.name.trim().is_empty() {
-            return Err(RegistryError::InvalidManifest("name must not be empty".into()));
+            return Err(RegistryError::InvalidManifest(
+                "name must not be empty".into(),
+            ));
         }
         if manifest.timeout_ms == 0 {
             return Err(RegistryError::InvalidManifest(
                 "timeout_ms must be greater than zero".into(),
             ));
         }
-        if manifest.permissions.iter().any(|permission| permission.trim().is_empty()) {
+        if manifest
+            .permissions
+            .iter()
+            .any(|permission| permission.trim().is_empty())
+        {
             return Err(RegistryError::InvalidManifest(
                 "permissions must not contain empty entries".into(),
             ));
@@ -105,8 +113,13 @@ impl ToolRegistry {
     }
 
     pub async fn list(&self) -> Vec<ToolManifest> {
-        let mut tools: Vec<_> = self.tools.read().await.values()
-            .map(|entry| entry.manifest.clone()).collect();
+        let mut tools: Vec<_> = self
+            .tools
+            .read()
+            .await
+            .values()
+            .map(|entry| entry.manifest.clone())
+            .collect();
         tools.sort_by(|a, b| a.name.cmp(&b.name));
         tools
     }
