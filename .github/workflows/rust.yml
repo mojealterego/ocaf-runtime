@@ -1,7 +1,7 @@
 name: Rust CI
 on:
   push:
-    branches: ["main", "audit/**"]
+    branches: ["main"]
   pull_request:
 
 permissions:
@@ -24,3 +24,5 @@ jobs:
         run: cargo test --no-default-features
       - name: Tests (Zenoh)
         run: cargo test
+      - name: Clippy (full Zenoh)
+        run: cargo clippy --all-targets -- -D warnings
