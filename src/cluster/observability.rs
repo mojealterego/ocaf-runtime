@@ -87,9 +87,13 @@ impl AlertPolicy {
         uncertain_threshold: u64,
         expired_agents_threshold: u64,
     ) -> Result<Self, PgLeaderError> {
-        if [pending_threshold, uncertain_threshold, expired_agents_threshold]
-            .iter()
-            .any(|v| !(1..=1_000_000).contains(v))
+        if [
+            pending_threshold,
+            uncertain_threshold,
+            expired_agents_threshold,
+        ]
+        .iter()
+        .any(|v| !(1..=1_000_000).contains(v))
         {
             return Err(PgLeaderError::InvalidCluster);
         }
@@ -143,14 +147,21 @@ impl AlertPolicy {
                 severity: ClusterHealth::Warning,
             });
         }
-        let health = if alerts.iter().any(|alert| alert.severity == ClusterHealth::Critical) {
+        let health = if alerts
+            .iter()
+            .any(|alert| alert.severity == ClusterHealth::Critical)
+        {
             ClusterHealth::Critical
         } else if alerts.is_empty() {
             ClusterHealth::Healthy
         } else {
             ClusterHealth::Warning
         };
-        ClusterReport { health, snapshot, alerts }
+        ClusterReport {
+            health,
+            snapshot,
+            alerts,
+        }
     }
 }
 
@@ -170,7 +181,11 @@ impl PgClusterMonitor {
     ) -> Result<Self, PgLeaderError> {
         let leader_key = cluster_key(cluster_id)?;
         let (client, connection) = open_database(dsn, allow_insecure_loopback).await?;
-        Ok(Self { client, connection, leader_key })
+        Ok(Self {
+            client,
+            connection,
+            leader_key,
+        })
     }
 
     /// One read-only PostgreSQL query obtains all counters using a database
