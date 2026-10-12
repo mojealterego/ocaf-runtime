@@ -6,3 +6,5 @@ pub mod jobs;
 
 pub mod directory;
 pub mod replay;
+
+pub mod observability;
