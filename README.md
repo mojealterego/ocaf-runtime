@@ -19,6 +19,7 @@ deliberately limited to **free, enabled tools without special permissions**.
 | Pairwise HMAC-SHA256 authenticated request/response | Implemented |
 | Exact tool allowlist and signed tool discovery | Implemented |
 | SQLite WAL replay journal / expiration / bounded concurrency | Implemented; mandatory in RPC server CLI |
+| Authenticated peer-specific RPC rate limit | Default 64/s; tunable through PeerPolicy |
 | Two-session Zenoh TCP integration test | Automated test |
 | TLS/mTLS transport | Operator-configured (not programmatically enforced) |
 | Durable admission (at-most-once within TTL) | Implemented with SQLite; not exactly-once execution |
@@ -113,6 +114,9 @@ plaintext loopback-only and must not be used as production settings.
   the outcome may be unknown and retries with the same ID are denied.
   SQLite is intended for a single host or replicas sharing the same on-disk
   filesystem; **it is not a cross-host consensus or distributed database**.
+- Per-peer authenticated RPC quota defaults to 64 requests/s per gateway;
+  `PeerPolicy::with_rate_limit` can set an explicit 1–10,000 requests/s.
+  Quotas are fixed-window and per-process, not globally synchronized.
 - Size limits: 64 KiB frame, 32 KiB body; maximum request TTL: 30 s.
 - Do not send personal/private data over the demo's plaintext transport.
 
