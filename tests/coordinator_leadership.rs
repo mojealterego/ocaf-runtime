@@ -159,3 +159,14 @@ fn killed_coordinator_process_releases_kernel_lock_for_standby() {
         "kernel lock was not released after process death"
     );
 }
+
+#[cfg(unix)]
+#[test]
+fn coordinator_refuses_shared_world_writable_lock_directory() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o777)).unwrap();
+    let result = LeaderGuard::try_acquire(&dir.path().join("leader.lock"));
+    std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+    assert!(result.is_err(), "world-writable leader lock directory permits inode replacement");
+}
