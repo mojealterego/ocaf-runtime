@@ -11,6 +11,7 @@ use std::time::Duration;
 use base64::engine::general_purpose::STANDARD as B64;
 use base64::Engine as _;
 use ocaf_runtime::coordinator::leadership::LeaderGuard;
+use ocaf_runtime::cluster::leadership::PgLeader;
 use ocaf_runtime::rpc::{PeerPolicy, RpcGateway};
 use ocaf_runtime::runtime::OcafRuntime;
 use ocaf_runtime::transport::rpc::ZenohRpcServer;
@@ -90,10 +91,78 @@ fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
     Ok(peers)
 }
 
+/// Opt-in multi-host coordinator path. All security-critical state lives on
+/// the same PostgreSQL primary, and serving is tied to an active advisory
+/// leader. PostgreSQL HA, VIP/load balancer and certificate operations are
+/// separate operator responsibilities.
+async fn run_postgres_cluster(node_id: &str) -> anyhow::Result<()> {
+    let dsn = env_required("OCAF_CLUSTER_PG_DSN")?;
+    let cluster_id = env_required("OCAF_CLUSTER_ID")?;
+    let allow_loopback = env::var("OCAF_ALLOW_INSECURE_LOOPBACK").as_deref() == Ok("1");
+
+    let peers = load_peers(&absolute_path("OCAF_PEERS_FILE")?)?;
+    let source = read_zenoh_config(&absolute_path("OCAF_ZENOH_CONFIG")?)?;
+    validate_zenoh_config(&source, allow_loopback)?;
+    let config = zenoh::Config::from_json5(&source)
+        .map_err(|err| anyhow::anyhow!("cannot parse vetted Zenoh config: {err}"))?;
+
+    let leader = Arc::new(PgLeader::connect(&dsn, &cluster_id, allow_loopback).await?);
+    let mode = env::var("OCAF_COORDINATOR_MODE").unwrap_or_else(|_| "active".into());
+    match mode.as_str() {
+        "active" => {
+            if !leader.try_acquire().await? {
+                anyhow::bail!("another coordinator owns PostgreSQL cluster leadership");
+            }
+        }
+        "standby" => {
+            tracing::info!("standby awaits PostgreSQL cluster leadership");
+            leader.acquire_standby(Duration::from_millis(250)).await?;
+        }
+        _ => anyhow::bail!("OCAF_COORDINATOR_MODE must be active or standby"),
+    }
+    leader.verify().await?;
+    let gateway = RpcGateway::new(node_id, OcafRuntime::new(0), peers, 64)?
+        .with_postgres_replay(&dsn, allow_loopback).await?
+        .with_postgres_coordinator(&dsn, allow_loopback).await?
+        .with_postgres_job_db(&dsn, allow_loopback).await?
+        .with_pg_leader(Arc::clone(&leader));
+
+    let session = Arc::new(zenoh::open(config).await
+        .map_err(|err| anyhow::anyhow!("Zenoh open: {err}"))?);
+    let server = ZenohRpcServer::new(session, Arc::new(gateway));
+    tracing::info!(node=%node_id, cluster=%cluster_id, "PostgreSQL coordinator leader serving");
+
+    // If the session dies or PostgreSQL stops responding, destroy the
+    // queryable and terminate rather than serving from a stale host.
+    let watch = async {
+        loop {
+            tokio::time::sleep(Duration::from_millis(500)).await;
+            leader.verify().await?;
+        }
+        #[allow(unreachable_code)]
+        Ok::<(), ocaf_runtime::cluster::leadership::PgLeaderError>(())
+    };
+    tokio::select! {
+        result = server.serve() => result,
+        result = watch => {
+            match result {
+                Ok(()) => anyhow::bail!("leader monitor unexpectedly stopped"),
+                Err(err) => anyhow::bail!("PostgreSQL leadership lost; coordinator stopped: {err}"),
+            }
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
     let node_id = env_required("OCAF_COORDINATOR_NODE_ID")?;
+    if env::var("OCAF_CLUSTER_MODE").as_deref() == Ok("postgres") {
+        return run_postgres_cluster(&node_id).await;
+    }
+    if env::var("OCAF_CLUSTER_MODE").is_ok() {
+        anyhow::bail!("OCAF_CLUSTER_MODE must be postgres when specified");
+    }
     let replay = absolute_path("OCAF_REPLAY_DB_PATH")?;
     let membership = absolute_path("OCAF_COORDINATOR_DB_PATH")?;
     let jobs = absolute_path("OCAF_JOBS_DB_PATH")?;
