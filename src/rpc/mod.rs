@@ -107,6 +107,11 @@ pub enum RpcAction {
     GetJob {
         id: String,
     },
+    /// Owner-private, metadata-only PostgreSQL job history.
+    GetJobAudit {
+        id: String,
+        limit: usize,
+    },
     ClaimJob,
     FinishJob {
         lease: LeasedJob,
@@ -161,12 +166,20 @@ impl RpcRequest {
                 validate_capabilities(tools).map_err(|_| RpcError::Malformed)?;
             }
             RpcAction::GetJob { .. }
+            | RpcAction::GetJobAudit { .. }
             | RpcAction::ClaimJob
             | RpcAction::FinishJob { .. }
             | RpcAction::Discover => {}
         }
-        if let RpcAction::SubmitJob { id, .. } | RpcAction::GetJob { id } = &action {
+        if let RpcAction::SubmitJob { id, .. }
+            | RpcAction::GetJob { id }
+            | RpcAction::GetJobAudit { id, .. } = &action {
             if Uuid::parse_str(id).is_err() {
+                return Err(RpcError::Malformed);
+            }
+        }
+        if let RpcAction::GetJobAudit { limit, .. } = &action {
+            if !(1..=100).contains(limit) {
                 return Err(RpcError::Malformed);
             }
         }
@@ -196,8 +209,13 @@ impl RpcRequest {
                 return Err(RpcError::Malformed);
             }
         }
-        if let RpcAction::GetJob { id } = &self.action {
+        if let RpcAction::GetJob { id } | RpcAction::GetJobAudit { id, .. } = &self.action {
             if Uuid::parse_str(id).is_err() {
+                return Err(RpcError::Malformed);
+            }
+        }
+        if let RpcAction::GetJobAudit { limit, .. } = &self.action {
+            if !(1..=100).contains(limit) {
                 return Err(RpcError::Malformed);
             }
         }
@@ -557,7 +575,7 @@ impl RpcGateway {
                     return Err(RpcError::Unauthorized);
                 }
             }
-            RpcAction::GetJob { .. } => {
+            RpcAction::GetJob { .. } | RpcAction::GetJobAudit { .. } => {
                 if self.jobs.is_none() {
                     return Err(RpcError::Unavailable);
                 }
@@ -666,6 +684,15 @@ impl RpcGateway {
                     .await
                     .map_err(|_| RpcError::Unavailable)?;
                 (RpcStatus::Ok, json!(record))
+            }
+            RpcAction::GetJobAudit { id, limit } => {
+                let history = self.jobs
+                    .as_ref()
+                    .ok_or(RpcError::Unavailable)?
+                    .audit_owned(&request.sender, &id, limit)
+                    .await
+                    .map_err(|_| RpcError::Unavailable)?;
+                (RpcStatus::Ok, json!(history))
             }
             RpcAction::ClaimJob => {
                 let store = self.jobs.as_ref().ok_or(RpcError::Unavailable)?;
