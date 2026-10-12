@@ -21,10 +21,13 @@ use tokio::sync::Semaphore;
 use uuid::Uuid;
 
 use crate::coordinator::{validate_capabilities, validate_tool_name, CoordinatorStore};
+use crate::cluster::jobs::PgJobQueue;
 use crate::jobs::{JobError, JobSpec, JobStore, LeasedJob};
 use crate::runtime::{OcafRuntime, RuntimeError, ToolCallRequest};
 
 mod replay;
+mod job_backend;
+use job_backend::JobBackend;
 use replay::ReplayBackend;
 
 pub const PROTOCOL_VERSION: u16 = 1;
@@ -342,7 +345,7 @@ pub struct RpcGateway {
     rates: Mutex<HashMap<String, (u64, u32)>>,
     concurrency: Semaphore,
     coordinator: Option<CoordinatorStore>,
-    jobs: Option<JobStore>,
+    jobs: Option<JobBackend>,
 }
 
 impl RpcGateway {
@@ -402,7 +405,24 @@ impl RpcGateway {
 
     /// Opt in to a durable, single-coordinator SQLite queue.
     pub fn with_job_db(mut self, path: &Path) -> Result<Self, RpcError> {
-        self.jobs = Some(JobStore::open(path).map_err(|_| RpcError::Unavailable)?);
+        self.jobs = Some(JobBackend::Sqlite(JobStore::open(path).map_err(|_| RpcError::Unavailable)?));
+        Ok(self)
+    }
+
+    /// Shared PostgreSQL queue. Transactions are serialized by the database
+    /// across independent coordinator hosts. This alone does not replicate
+    /// the replay ledger or discovery directory; full cluster failover
+    /// requires those components and distributed leadership to be wired too.
+    pub async fn with_postgres_job_db(
+        mut self,
+        dsn: &str,
+        allow_insecure_loopback: bool,
+    ) -> Result<Self, RpcError> {
+        self.jobs = Some(JobBackend::Postgres(
+            PgJobQueue::connect(dsn, allow_insecure_loopback)
+                .await
+                .map_err(|_| RpcError::Unavailable)?,
+        ));
         Ok(self)
     }
 
