@@ -105,7 +105,7 @@ async fn main() -> anyhow::Result<()> {
     let gateway =
         RpcGateway::with_sqlite_replay(&node_id, OcafRuntime::new(0), peers, 64, &replay)?
             .with_coordinator_db(&membership)?
-    .with_job_db(&jobs)?;
+            .with_job_db(&jobs)?;
     let session = Arc::new(
         zenoh::open(config)
             .await
