@@ -152,12 +152,16 @@ async fn main() -> anyhow::Result<()> {
         // Only the job journal is shared. Replay and membership still use
         // local SQLite, so this opt-in is NOT cross-host coordinator HA.
         if env::var("OCAF_EXPERIMENTAL_PG_JOBS").as_deref() != Ok("1") {
-            anyhow::bail!("PostgreSQL job backend is experimental; OCAF_EXPERIMENTAL_PG_JOBS=1 is required");
+            anyhow::bail!(
+                "PostgreSQL job backend is experimental; OCAF_EXPERIMENTAL_PG_JOBS=1 is required"
+            );
         }
-        gateway.with_postgres_job_db(
-            &dsn,
-            env::var("OCAF_ALLOW_INSECURE_LOOPBACK").as_deref() == Ok("1"),
-        ).await?
+        gateway
+            .with_postgres_job_db(
+                &dsn,
+                env::var("OCAF_ALLOW_INSECURE_LOOPBACK").as_deref() == Ok("1"),
+            )
+            .await?
     } else {
         gateway.with_job_db(&jobs)?
     };
