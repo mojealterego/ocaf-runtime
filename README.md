@@ -91,9 +91,9 @@ certificates in the deployment environment. The in-process HMAC
 authenticator offers integrity and peer-key authentication, **not**
 confidentiality.
 
-Without `OCAF_ZENOH_CONFIG` the RPC CLI refuses to start unless
-`OCAF_ALLOW_INSECURE_TRANSPORT=1` is explicitly set. This fallback is
-intended solely for isolated development, not production.
+The RPC CLI **requires** `OCAF_ZENOH_CONFIG` and does not silently
+fall back to Zenoh network defaults. Example configuration files are
+plaintext loopback-only and must not be used as production settings.
 
 ## Wire contract
 
