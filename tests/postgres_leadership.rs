@@ -250,3 +250,44 @@ async fn cancelled_epoch_publication_drops_the_leader_session_and_unlocks() {
     standby.release().await.unwrap();
     driver.abort();
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn verified_epoch_guard_serializes_graceful_handover() {
+    use std::sync::Arc;
+    use std::time::Duration;
+
+    let Some(url) = dsn() else { return };
+    let cluster = format!("guard_{}", uuid::Uuid::new_v4().simple());
+    let active = Arc::new(PgLeader::connect(&url, &cluster, true).await.unwrap());
+    let standby = PgLeader::connect(&url, &cluster, true).await.unwrap();
+    assert!(active.try_acquire().await.unwrap());
+    let guard = active.fence_transaction().await.unwrap();
+    assert_eq!(guard.epoch(), active_epoch_for_test(&cluster, &url).await);
+    let releasing = Arc::clone(&active);
+    let release = tokio::spawn(async move { releasing.release().await });
+    tokio::time::sleep(Duration::from_millis(30)).await;
+    assert!(!release.is_finished());
+    assert!(!standby.try_acquire().await.unwrap());
+    drop(guard);
+    release.await.unwrap().unwrap();
+    assert!(standby.try_acquire().await.unwrap());
+    standby.release().await.unwrap();
+}
+
+async fn active_epoch_for_test(cluster: &str, dsn: &str) -> i64 {
+    let (client, connection) = tokio_postgres::connect(dsn, tokio_postgres::NoTls)
+        .await
+        .unwrap();
+    let task = tokio::spawn(async move {
+        let _ = connection.await;
+    });
+    let row = client
+        .query_one(
+            "SELECT epoch FROM ocaf_pg_leader_epochs_v1 WHERE cluster_id=$1",
+            &[&cluster],
+        )
+        .await
+        .unwrap();
+    task.abort();
+    row.get(0)
+}

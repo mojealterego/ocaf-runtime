@@ -31,6 +31,21 @@ pub enum PgLeaderError {
 /// A dedicated connection: session advisory locks cannot be safely used
 /// with transaction-pooling proxies or a connection pool that can swap
 /// the backend session.
+/// A locally held, verified leader epoch guard. Holding this guard
+/// prevents graceful release/reacquisition on this same PgLeader until
+/// the caller has completed its database transaction. Different leader
+/// processes are serialized by the PostgreSQL epoch row itself.
+pub struct PgEpochGuard<'a> {
+    _transition: tokio::sync::MutexGuard<'a, ()>,
+    epoch: i64,
+}
+
+impl PgEpochGuard<'_> {
+    pub fn epoch(&self) -> i64 {
+        self.epoch
+    }
+}
+
 pub struct PgLeader {
     client: Client,
     connection: JoinHandle<()>,
@@ -267,6 +282,24 @@ impl PgLeader {
             return Err(PgLeaderError::Database);
         }
         Ok(epoch)
+    }
+
+    /// Hold the verified leadership generation during a cooperating
+    /// PostgreSQL sink transaction. A graceful release on this leader
+    /// cannot overtake that transaction while its guard remains alive.
+    /// Database-session loss still requires the transaction's own epoch
+    /// lock and deadline checks; no arbitrary remote sink is protected.
+    pub async fn fence_transaction(&self) -> Result<PgEpochGuard<'_>, PgLeaderError> {
+        let transition = self.transition.lock().await;
+        self.verify_locked().await?;
+        let epoch = self.epoch.load(Ordering::SeqCst);
+        if epoch <= 0 {
+            return Err(PgLeaderError::Database);
+        }
+        Ok(PgEpochGuard {
+            _transition: transition,
+            epoch,
+        })
     }
 
     /// Only the dedicated PostgreSQL backend holding the *exact advisory

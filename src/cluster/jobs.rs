@@ -456,10 +456,14 @@ impl PgJobQueue {
         if json.len() > MAX_ARGS {
             return Err(JobError::Invalid);
         }
-        let epoch = leader
-            .fencing_epoch()
+        // Keep graceful election/release serialized with this local sink
+        // transaction; the durable epoch-row share lock also serializes
+        // election publication from *other* coordinator processes.
+        let epoch_guard = leader
+            .fence_transaction()
             .await
             .map_err(|_| JobError::Storage)?;
+        let epoch = epoch_guard.epoch();
         if lease.leader_epoch != epoch {
             return Err(JobError::StaleLease);
         }
@@ -558,6 +562,7 @@ impl PgJobQueue {
             (false, row.get::<_, i64>(4))
         };
         tx.commit().await.map_err(storage)?;
+        drop(epoch_guard);
         Ok(FencedEffectReceipt {
             job_id: lease.id.clone(),
             leader_epoch: epoch,

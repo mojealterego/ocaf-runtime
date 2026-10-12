@@ -47,3 +47,11 @@ and externally enforced fencing protocols remain required.
 A privileged DBA can modify rows, so use least-privilege migrations,
 restricted application roles, audit and backups. The API is opt-in,
 rather than silently rerouting existing remote tools into this store.
+
+## Local release serialization
+
+The sink additionally holds a verified `PgEpochGuard` for its
+transaction's duration. Graceful leader release on that same coordinator
+cannot race ahead of its local effect commit. Another coordinator's
+publication of a successor epoch is ordered by the PostgreSQL epoch row
+share lock. This does not extend to effects stored outside PostgreSQL.
