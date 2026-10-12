@@ -1,4 +1,4 @@
-# OCAF 0.10 — PostgreSQL-backed cluster foundations
+# OCAF 0.11 — PostgreSQL-backed coordinator and active/passive service
 
 **Status: experimental; v0.11 now integrates shared replay, membership, job queue and leader-gated serving. It is not a production-certified multi-host HA system.** This release
 adds (1) PostgreSQL session advisory leadership across independent
@@ -56,29 +56,24 @@ initial schema setup and to read/write its own job records; production
 deployment should move schema migrations to a separate privileged role
 and use a least-privileged runtime account.
 
-### IMPORTANT: still no automatic cross-host failover
+### Coexistence with the legacy single-host mode
 
-For the legacy SQLite mode, **do not run two active OCAF coordinator services on separate machines.**
-The CLI currently retains **local** SQLite replay and capability
-membership stores, and its active/passive guard remains a local OS
-file lock. This is intentional: activating a cluster leader while
-critical security state is not yet shared would risk split-brain,
-replay regression and diverging discovery. The new PostgreSQL
-leader primitive is provided as a library and is not yet wired as
-the authoritative service election mechanism.
+For the legacy SQLite mode, **do not run two active OCAF coordinators
+on separate machines**. That mode intentionally preserves local replay,
+membership and OS-file leader election. The separate **v0.11 cluster
+mode** migrates all three journals to PostgreSQL and binds serving to a
+live PostgreSQL session leader.
 
-To reach real coordinator HA, the next release must move *all* state
-(replay journal, membership and job state) into a shared transactional
-backend, bind server serving to an actively monitored PostgreSQL
-leadership session, test the loss-of-leadership shutdown path, and
-configure a stable/virtual Zenoh endpoint or client failover strategy.
-PostgreSQL itself requires separately engineered replication,
-failover, backup and recovery; this library does not implement Raft.
+Neither mode provides certified production HA. For cross-host cluster
+deployment the operator still needs reliable database failover, a
+stable client routing endpoint, proper Zenoh TLS/mTLS verification,
+external fencing and crash/network-partition testing. A PostgreSQL
+session advisory lock is **not** a fencing token recognized by an
+external payment system, file server or arbitrary side-effecting tool.
 
 The same limitations on exactly-once external effects, worker
-attestation, per-tenant isolation, audit retention and end-to-end
-certificate rotation remain. PostgreSQL advisory locks are NOT
-fencing tokens recognized by unrelated external systems.
+attestation, tenant isolation, audit retention and certificate rotation
+remain.
 
 ## CI evidence
 
