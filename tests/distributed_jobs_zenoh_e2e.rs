@@ -31,15 +31,18 @@ async fn three_real_zenoh_sessions_submit_claim_execute_and_persist() -> anyhow:
     ))
     .map_err(|e| anyhow::anyhow!("client config: {e}"))?;
     let coordinator_session = Arc::new(
-        zenoh::open(coordinator_config).await
+        zenoh::open(coordinator_config)
+            .await
             .map_err(|e| anyhow::anyhow!("coordinator: {e}"))?,
     );
     let worker_session = Arc::new(
-        zenoh::open(client_config.clone()).await
+        zenoh::open(client_config.clone())
+            .await
             .map_err(|e| anyhow::anyhow!("worker: {e}"))?,
     );
     let submitter_session = Arc::new(
-        zenoh::open(client_config).await
+        zenoh::open(client_config)
+            .await
             .map_err(|e| anyhow::anyhow!("submitter: {e}"))?,
     );
     let peers = HashMap::from([
@@ -96,7 +99,10 @@ async fn three_real_zenoh_sessions_submit_claim_execute_and_persist() -> anyhow:
     let stored = JobStore::open(&queue)?.get(&job_id).await?.unwrap();
     assert_eq!(stored.status, JobStatus::Succeeded);
     assert_eq!(stored.attempts, 1);
-    assert_eq!(stored.result.unwrap()["message"], "processed: distributed round trip");
+    assert_eq!(
+        stored.result.unwrap()["message"],
+        "processed: distributed round trip"
+    );
     handle.abort();
     Ok(())
 }
