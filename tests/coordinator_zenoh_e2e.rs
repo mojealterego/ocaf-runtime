@@ -8,9 +8,12 @@ use std::time::Duration;
 use ocaf_runtime::rpc::{PeerPolicy, RpcAction, RpcClient, RpcGateway, RpcStatus};
 use ocaf_runtime::runtime::OcafRuntime;
 use ocaf_runtime::transport::rpc::{ZenohRpcClient, ZenohRpcServer};
+use ocaf_runtime::transport::{pricing_tool_manifest, EchoTool};
+use serde_json::json;
 
 const WORKER_KEY: [u8; 32] = [0x23; 32];
 const CLIENT_KEY: [u8; 32] = [0x34; 32];
+const EXECUTION_KEY: [u8; 32] = [0x56; 32];
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn signed_remote_agent_registers_and_client_discovers_it_over_real_tcp() -> anyhow::Result<()>
@@ -45,11 +48,11 @@ async fn signed_remote_agent_registers_and_client_discovers_it_over_real_tcp() -
     let policy = HashMap::from([
         (
             "worker-a".into(),
-            PeerPolicy::new(WORKER_KEY, vec!["echo".into()]),
+            PeerPolicy::new(WORKER_KEY, vec!["demo_echo".into()]),
         ),
         (
             "client-c".into(),
-            PeerPolicy::new(CLIENT_KEY, vec!["echo".into()]),
+            PeerPolicy::new(CLIENT_KEY, vec!["demo_echo".into()]),
         ),
     ]);
     let gateway = RpcGateway::with_sqlite_replay(
@@ -63,6 +66,16 @@ async fn signed_remote_agent_registers_and_client_discovers_it_over_real_tcp() -
 
     let server = ZenohRpcServer::new(coordinator, Arc::new(gateway));
     let task = tokio::spawn(async move { server.serve().await });
+
+    let runtime = OcafRuntime::new(0);
+    runtime.register(pricing_tool_manifest(), EchoTool).await?;
+    let worker_acl = HashMap::from([(
+        "client-c".into(),
+        PeerPolicy::new(EXECUTION_KEY, vec!["demo_echo".into()]),
+    )]);
+    let worker_gateway = RpcGateway::new("worker-a", runtime, worker_acl, 8)?;
+    let worker_server = ZenohRpcServer::new(Arc::clone(&worker), Arc::new(worker_gateway));
+    let worker_task = tokio::spawn(async move { worker_server.serve().await });
     tokio::time::sleep(Duration::from_millis(400)).await;
 
     let agent = ZenohRpcClient::new(worker, RpcClient::new("worker-a", "coord", WORKER_KEY)?);
@@ -70,7 +83,7 @@ async fn signed_remote_agent_registers_and_client_discovers_it_over_real_tcp() -
 
     let ping = agent
         .request(RpcAction::Heartbeat {
-            tools: vec!["echo".into()],
+            tools: vec!["demo_echo".into()],
         })
         .await?;
     assert_eq!(ping.status, RpcStatus::Ok);
@@ -78,11 +91,27 @@ async fn signed_remote_agent_registers_and_client_discovers_it_over_real_tcp() -
 
     let routed = client
         .request(RpcAction::Resolve {
-            tool: "echo".into(),
+            tool: "demo_echo".into(),
         })
         .await?;
     assert_eq!(routed.status, RpcStatus::Ok);
     assert_eq!(routed.output["node_id"], "worker-a");
+
+    // The coordinator never transports a peer key or executes the task.
+    // The requester separately authenticates to the selected worker.
+    let execution = ZenohRpcClient::new(
+        Arc::clone(&requester),
+        RpcClient::new("client-c", "worker-a", EXECUTION_KEY)?,
+    );
+    let result = execution
+        .request(RpcAction::Execute {
+            tool: "demo_echo".into(),
+            args: json!({"message": "coordinated RPC"}),
+        })
+        .await?;
+    assert_eq!(result.status, RpcStatus::Ok);
+    assert_eq!(result.output["message"], "processed: coordinated RPC");
+    worker_task.abort();
     task.abort();
     Ok(())
 }
