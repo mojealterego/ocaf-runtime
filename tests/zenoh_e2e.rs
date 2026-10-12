@@ -40,7 +40,7 @@ fn manifest() -> ToolManifest {
 /// Exercises two independent Zenoh sessions via real TCP on a loopback port.
 /// This proves actual Zenoh query/reply and signed RPC, not TLS or cross-host
 /// production readiness.
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn two_zenoh_sessions_exchange_authenticated_rpc_over_tcp() -> anyhow::Result<()> {
     let socket = TcpListener::bind("127.0.0.1:0")?;
     let port = socket.local_addr()?.port();
