@@ -1,6 +1,6 @@
-use std::path::Path;
 use ocaf_runtime::jobs::{JobError, JobSpec, JobStatus, JobStore};
 use serde_json::json;
+use std::path::Path;
 use uuid::Uuid;
 
 fn spec(retry_safe: bool, max_attempts: u32) -> JobSpec {
@@ -23,11 +23,21 @@ async fn persistent_queue_survives_restart_and_stores_results() {
     let path = dir.path().join("jobs.sqlite");
     let store = open(&path);
     let job = spec(false, 1);
-    assert_eq!(store.submit(job.clone()).await.unwrap().status, JobStatus::Pending);
-    let lease = store.claim("worker-a", 10_000, 2_000).await.unwrap().unwrap();
+    assert_eq!(
+        store.submit(job.clone()).await.unwrap().status,
+        JobStatus::Pending
+    );
+    let lease = store
+        .claim("worker-a", 10_000, 2_000)
+        .await
+        .unwrap()
+        .unwrap();
     assert_eq!(lease.id, job.id);
     assert_eq!(lease.attempt, 1);
-    store.succeed(&lease, json!({"output":"completed"}), 10_100).await.unwrap();
+    store
+        .succeed(&lease, json!({"output":"completed"}), 10_100)
+        .await
+        .unwrap();
     drop(store);
 
     let restarted = open(&path);
@@ -35,7 +45,11 @@ async fn persistent_queue_survives_restart_and_stores_results() {
     assert_eq!(persisted.status, JobStatus::Succeeded);
     assert_eq!(persisted.attempts, 1);
     assert_eq!(persisted.result, Some(json!({"output":"completed"})));
-    assert!(restarted.claim("worker-b", 20_000, 2_000).await.unwrap().is_none());
+    assert!(restarted
+        .claim("worker-b", 20_000, 2_000)
+        .await
+        .unwrap()
+        .is_none());
 }
 
 #[tokio::test]
@@ -48,7 +62,10 @@ async fn repeated_submission_is_idempotent_only_when_payload_matches() {
     assert_eq!(duplicate.status, JobStatus::Pending);
     let mut altered = job;
     altered.args = json!({"message":"different"});
-    assert!(matches!(store.submit(altered).await, Err(JobError::Conflict)));
+    assert!(matches!(
+        store.submit(altered).await,
+        Err(JobError::Conflict)
+    ));
 }
 
 #[tokio::test]
@@ -73,15 +90,27 @@ async fn stale_lease_cannot_complete_reassigned_work() {
     store.submit(job.clone()).await.unwrap();
     let first = store.claim("worker-a", 10_000, 100).await.unwrap().unwrap();
     assert_eq!(store.recover_expired(10_101).await.unwrap().retried, 1);
-    let second = store.claim("worker-b", 10_102, 1_000).await.unwrap().unwrap();
+    let second = store
+        .claim("worker-b", 10_102, 1_000)
+        .await
+        .unwrap()
+        .unwrap();
     assert_eq!(second.attempt, 2);
     assert_ne!(first.lease_token, second.lease_token);
     assert!(matches!(
-        store.succeed(&first, json!({"wrong":"stale"}), 10_103).await,
+        store
+            .succeed(&first, json!({"wrong":"stale"}), 10_103)
+            .await,
         Err(JobError::StaleLease)
     ));
-    store.succeed(&second, json!({"ok":true}), 10_200).await.unwrap();
-    assert_eq!(store.get(&job.id).await.unwrap().unwrap().status, JobStatus::Succeeded);
+    store
+        .succeed(&second, json!({"ok":true}), 10_200)
+        .await
+        .unwrap();
+    assert_eq!(
+        store.get(&job.id).await.unwrap().unwrap().status,
+        JobStatus::Succeeded
+    );
 }
 
 #[tokio::test]
@@ -95,12 +124,19 @@ async fn unsafe_to_retry_job_becomes_uncertain_after_crash() {
     drop(store);
     let restarted = open(&path);
     assert_eq!(restarted.recover_expired(5_101).await.unwrap().uncertain, 1);
-    assert_eq!(restarted.get(&job.id).await.unwrap().unwrap().status, JobStatus::Uncertain);
+    assert_eq!(
+        restarted.get(&job.id).await.unwrap().unwrap().status,
+        JobStatus::Uncertain
+    );
     assert!(matches!(
         restarted.succeed(&lease, json!({}), 5_102).await,
         Err(JobError::StaleLease)
     ));
-    assert!(restarted.claim("worker-b", 5_102, 100).await.unwrap().is_none());
+    assert!(restarted
+        .claim("worker-b", 5_102, 100)
+        .await
+        .unwrap()
+        .is_none());
 }
 
 #[tokio::test]
@@ -115,7 +151,10 @@ async fn safe_retry_budget_exhaustion_becomes_uncertain_not_success() {
     assert_eq!(second.attempt, 2);
     assert_ne!(first.lease_token, second.lease_token);
     assert_eq!(store.recover_expired(1_203).await.unwrap().uncertain, 1);
-    assert_eq!(store.get(&job.id).await.unwrap().unwrap().status, JobStatus::Uncertain);
+    assert_eq!(
+        store.get(&job.id).await.unwrap().unwrap().status,
+        JobStatus::Uncertain
+    );
 }
 
 #[tokio::test]
@@ -128,7 +167,10 @@ async fn heartbeat_extends_lease_but_stale_heartbeat_is_denied() {
     store.heartbeat(&first, 1_100, 300).await.unwrap();
     assert_eq!(store.recover_expired(1_201).await.unwrap().retried, 0);
     assert_eq!(store.recover_expired(1_401).await.unwrap().retried, 1);
-    assert!(matches!(store.heartbeat(&first, 1_402, 300).await, Err(JobError::StaleLease)));
+    assert!(matches!(
+        store.heartbeat(&first, 1_402, 300).await,
+        Err(JobError::StaleLease)
+    ));
 }
 
 #[tokio::test]
@@ -137,27 +179,63 @@ async fn completed_tool_failures_are_retried_only_if_explicitly_safe() {
     let store = open(&dir.path().join("jobs.sqlite"));
     let job = spec(true, 2);
     store.submit(job.clone()).await.unwrap();
-    let first = store.claim("worker-a", 1_000, 1_000).await.unwrap().unwrap();
-    store.fail(&first, "transient failure", 1_050).await.unwrap();
-    assert_eq!(store.get(&job.id).await.unwrap().unwrap().status, JobStatus::Pending);
-    let second = store.claim("worker-b", 1_100, 1_000).await.unwrap().unwrap();
-    store.fail(&second, "permanent failure", 1_200).await.unwrap();
-    assert_eq!(store.get(&job.id).await.unwrap().unwrap().status, JobStatus::Failed);
-    assert!(store.claim("worker-c", 1_201, 1_000).await.unwrap().is_none());
+    let first = store
+        .claim("worker-a", 1_000, 1_000)
+        .await
+        .unwrap()
+        .unwrap();
+    store
+        .fail(&first, "transient failure", 1_050)
+        .await
+        .unwrap();
+    assert_eq!(
+        store.get(&job.id).await.unwrap().unwrap().status,
+        JobStatus::Pending
+    );
+    let second = store
+        .claim("worker-b", 1_100, 1_000)
+        .await
+        .unwrap()
+        .unwrap();
+    store
+        .fail(&second, "permanent failure", 1_200)
+        .await
+        .unwrap();
+    assert_eq!(
+        store.get(&job.id).await.unwrap().unwrap().status,
+        JobStatus::Failed
+    );
+    assert!(store
+        .claim("worker-c", 1_201, 1_000)
+        .await
+        .unwrap()
+        .is_none());
 }
 
 #[tokio::test]
 async fn invalid_specs_and_storage_failure_are_denied() {
     let dir = tempfile::tempdir().unwrap();
-    assert!(matches!(JobStore::open(&dir.path().join("missing").join("jobs.sqlite")), Err(JobError::Storage)));
+    assert!(matches!(
+        JobStore::open(&dir.path().join("missing").join("jobs.sqlite")),
+        Err(JobError::Storage)
+    ));
     let store = open(&dir.path().join("jobs.sqlite"));
     let mut job = spec(false, 2);
-    assert!(matches!(store.submit(job.clone()).await, Err(JobError::Invalid)));
+    assert!(matches!(
+        store.submit(job.clone()).await,
+        Err(JobError::Invalid)
+    ));
     job.retry_safe = true;
     job.max_attempts = 0;
-    assert!(matches!(store.submit(job.clone()).await, Err(JobError::Invalid)));
+    assert!(matches!(
+        store.submit(job.clone()).await,
+        Err(JobError::Invalid)
+    ));
     job.max_attempts = 3;
     job.id = "not-a-uuid".into();
     assert!(matches!(store.submit(job).await, Err(JobError::Invalid)));
-    assert!(matches!(store.claim("worker-a", 1000, 0).await, Err(JobError::Invalid)));
+    assert!(matches!(
+        store.claim("worker-a", 1000, 0).await,
+        Err(JobError::Invalid)
+    ));
 }
