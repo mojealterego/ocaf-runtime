@@ -38,10 +38,16 @@ async fn independent_connections_share_one_fenced_durable_job() {
         b.claim_permitted("worker-b", NOW, 5_000, &allowed),
     );
     let claims: Vec<_> = [x.unwrap(), y.unwrap()].into_iter().flatten().collect();
-    assert_eq!(claims.len(), 1, "one job must not be assigned to two workers");
+    assert_eq!(
+        claims.len(),
+        1,
+        "one job must not be assigned to two workers"
+    );
     let lease = &claims[0];
     assert_eq!(lease.id, s.id);
-    b.succeed(lease, json!({"echo":"done"}), NOW + 1).await.unwrap();
+    b.succeed(lease, json!({"echo":"done"}), NOW + 1)
+        .await
+        .unwrap();
 
     let rec = a.get_owned("submitter-a", &s.id).await.unwrap().unwrap();
     assert_eq!(rec.status, JobStatus::Succeeded);
@@ -77,18 +83,37 @@ async fn crash_expiration_becomes_uncertain_and_stale_report_is_fenced() {
     let Some(url) = dsn() else { return };
     let first = PgJobQueue::connect(&url, true).await.unwrap();
     let job = spec();
-    first.submit_owned("submitter-a", job.clone()).await.unwrap();
-    let lease = first.claim_permitted("worker-a", NOW, 1_000, &["echo".into()])
-        .await.unwrap().unwrap();
+    first
+        .submit_owned("submitter-a", job.clone())
+        .await
+        .unwrap();
+    let lease = first
+        .claim_permitted("worker-a", NOW, 1_000, &["echo".into()])
+        .await
+        .unwrap()
+        .unwrap();
     drop(first);
 
     let recovered = PgJobQueue::connect(&url, true).await.unwrap();
-    assert_eq!(recovered.recover_expired(NOW + 1_001).await.unwrap().uncertain, 1);
+    assert_eq!(
+        recovered
+            .recover_expired(NOW + 1_001)
+            .await
+            .unwrap()
+            .uncertain,
+        1
+    );
     assert!(matches!(
-        recovered.succeed(&lease, json!({"forged":true}), NOW + 1_002).await,
+        recovered
+            .succeed(&lease, json!({"forged":true}), NOW + 1_002)
+            .await,
         Err(JobError::StaleLease)
     ));
-    let record = recovered.get_owned("submitter-a", &job.id).await.unwrap().unwrap();
+    let record = recovered
+        .get_owned("submitter-a", &job.id)
+        .await
+        .unwrap()
+        .unwrap();
     assert_eq!(record.status, JobStatus::Uncertain);
     assert_eq!(record.attempts, 1);
 }
@@ -99,6 +124,8 @@ async fn postgres_transport_downgrade_is_denied_by_default() {
         "host=example.org dbname=postgres user=nobody sslmode=disable",
         false,
     )
-    .await.err().expect("plaintext remote database denied");
+    .await
+    .err()
+    .expect("plaintext remote database denied");
     assert!(matches!(err, JobError::Invalid));
 }
