@@ -46,7 +46,8 @@ pub struct JobSpec {
     pub max_attempts: u32,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum JobStatus {
     Pending,
     Running,
@@ -68,7 +69,7 @@ impl JobStatus {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JobRecord {
     pub id: String,
     pub tool: String,
@@ -245,6 +246,11 @@ impl JobStore {
                  lease_token TEXT,
                  lease_expires_at_ms INTEGER
              );
+             CREATE TABLE IF NOT EXISTS job_owners_v1 (
+                 job_id TEXT PRIMARY KEY NOT NULL,
+                 owner TEXT NOT NULL,
+                 FOREIGN KEY(job_id) REFERENCES jobs_v1(id)
+             );
              CREATE INDEX IF NOT EXISTS idx_jobs_pending
                  ON jobs_v1(status, seq);
              CREATE INDEX IF NOT EXISTS idx_jobs_leases
@@ -273,6 +279,25 @@ impl JobStore {
     /// Identical job submissions return the existing record, while a UUID
     /// collision with changed arguments or retry policy is rejected.
     pub async fn submit(&self, spec: JobSpec) -> Result<JobRecord, JobError> {
+        self.submit_inner(spec, None).await
+    }
+
+    /// Atomically bind a remote job UUID to its authenticated submitter.
+    /// An unrelated submitter may neither claim the ID nor read its result.
+    pub async fn submit_owned(
+        &self,
+        owner: &str,
+        spec: JobSpec,
+    ) -> Result<JobRecord, JobError> {
+        validate_worker(owner)?;
+        self.submit_inner(spec, Some(owner.to_owned())).await
+    }
+
+    async fn submit_inner(
+        &self,
+        spec: JobSpec,
+        owner: Option<String>,
+    ) -> Result<JobRecord, JobError> {
         if Uuid::parse_str(&spec.id).is_err()
             || spec.tool.is_empty()
             || spec.tool.len() > MAX_TOOL_NAME_BYTES
@@ -307,6 +332,21 @@ impl JobStore {
                 || existing.max_attempts != spec.max_attempts
             {
                 return Err(JobError::Conflict);
+            }
+            if let Some(owner) = owner {
+                tx.execute(
+                    "INSERT OR IGNORE INTO job_owners_v1(job_id,owner) VALUES (?1,?2)",
+                    params![spec.id,owner],
+                )
+                .map_err(|_| JobError::Storage)?;
+                let saved: String = tx.query_row(
+                    "SELECT owner FROM job_owners_v1 WHERE job_id=?1",
+                    params![spec.id],
+                    |row| row.get(0),
+                ).map_err(|_| JobError::Storage)?;
+                if saved != owner {
+                    return Err(JobError::Conflict);
+                }
             }
             tx.commit().map_err(|_| JobError::Storage)?;
             Ok(existing)
@@ -551,6 +591,29 @@ impl JobStore {
             Ok(RecoverySummary { retried, uncertain })
         })
         .await
+    }
+
+    /// Return a job only when the caller owns its remote submission ID.
+    /// Unowned legacy/local jobs are not visible over this interface.
+    pub async fn get_owned(
+        &self,
+        owner: &str,
+        id: &str,
+    ) -> Result<Option<JobRecord>, JobError> {
+        validate_worker(owner)?;
+        let owner = owner.to_owned();
+        let id = id.to_owned();
+        self.run(move |conn| {
+            let saved: Option<String> = conn.query_row(
+                "SELECT owner FROM job_owners_v1 WHERE job_id=?1",
+                params![id],
+                |row| row.get(0),
+            ).optional().map_err(|_| JobError::Storage)?;
+            if saved.as_deref() != Some(owner.as_str()) {
+                return Ok(None);
+            }
+            load_record(conn, &id)
+        }).await
     }
 
     pub async fn get(&self, id: &str) -> Result<Option<JobRecord>, JobError> {
