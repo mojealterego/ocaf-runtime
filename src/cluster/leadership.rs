@@ -135,18 +135,19 @@ impl PgLeader {
         // Epochs are durable on the same PostgreSQL primary as the coordinator
         // security state. Schema provisioning is a separate operator duty in
         // least-privileged production deployments.
-        if tokio::time::timeout(
-            Duration::from_secs(5),
-            client.batch_execute(
-                "CREATE TABLE IF NOT EXISTS ocaf_pg_leader_epochs_v1 (
-                    cluster_id TEXT PRIMARY KEY,
-                    epoch BIGINT NOT NULL CHECK (epoch > 0)
-                )",
-            ),
-        )
-        .await
-        .is_err_or(|result| result.is_err())
-        {
+        if !matches!(
+            tokio::time::timeout(
+                Duration::from_secs(5),
+                client.batch_execute(
+                    "CREATE TABLE IF NOT EXISTS ocaf_pg_leader_epochs_v1 (
+                        cluster_id TEXT PRIMARY KEY,
+                        epoch BIGINT NOT NULL CHECK (epoch > 0)
+                    )",
+                ),
+            )
+            .await,
+            Ok(Ok(()))
+        ) {
             task.abort();
             return Err(PgLeaderError::Database);
         }
