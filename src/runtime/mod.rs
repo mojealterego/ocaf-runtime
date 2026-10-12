@@ -67,11 +67,17 @@ struct BudgetReservation {
 impl BudgetReservation {
     fn reserve(budget: Arc<AtomicU64>, cost_sats: u64) -> Result<Self, RuntimeError> {
         if cost_sats != 0 {
-            budget.fetch_update(Ordering::AcqRel, Ordering::Acquire, |available| {
-                available.checked_sub(cost_sats)
-            }).map_err(|_| RuntimeError::BudgetExceeded)?;
+            budget
+                .fetch_update(Ordering::AcqRel, Ordering::Acquire, |available| {
+                    available.checked_sub(cost_sats)
+                })
+                .map_err(|_| RuntimeError::BudgetExceeded)?;
         }
-        Ok(Self { budget, cost_sats, committed: false })
+        Ok(Self {
+            budget,
+            cost_sats,
+            committed: false,
+        })
     }
 
     fn commit(&mut self) {
@@ -144,7 +150,10 @@ impl OcafRuntime {
         request: &ToolCallRequest,
         start: Instant,
     ) -> Result<ToolCallResult, RuntimeError> {
-        let tool = self.registry.resolve(&request.tool).await
+        let tool = self
+            .registry
+            .resolve(&request.tool)
+            .await
             .ok_or_else(|| RuntimeError::ToolNotFound(request.tool.clone()))?;
 
         let manifest = &tool.manifest;
@@ -168,14 +177,14 @@ impl OcafRuntime {
                 request.auth.as_ref(),
                 self.auth_verifier.as_ref(),
             ),
-        ).await.map_err(|_| RuntimeError::Timeout)?;
+        )
+        .await
+        .map_err(|_| RuntimeError::Timeout)?;
 
         auth_result.map_err(|error| RuntimeError::AuthRequired(error.to_string()))?;
 
-        let mut reservation = BudgetReservation::reserve(
-            Arc::clone(&self.budget_sats),
-            manifest.cost_sats,
-        )?;
+        let mut reservation =
+            BudgetReservation::reserve(Arc::clone(&self.budget_sats), manifest.cost_sats)?;
 
         let ctx = ExecutionContext {
             agent_id: "unattributed".to_string(),
@@ -183,10 +192,10 @@ impl OcafRuntime {
             correlation_id: request.call_id.clone(),
         };
 
-        let output = tokio::time::timeout(
-            timeout,
-            tool.executor.execute(request.args.clone(), &ctx),
-        ).await.map_err(|_| RuntimeError::Timeout)??;
+        let output =
+            tokio::time::timeout(timeout, tool.executor.execute(request.args.clone(), &ctx))
+                .await
+                .map_err(|_| RuntimeError::Timeout)??;
 
         if !tool.output_validator.is_valid(&output) {
             return Err(RuntimeError::InvalidOutput(
