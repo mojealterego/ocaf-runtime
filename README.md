@@ -263,13 +263,41 @@ not establish physical cross-host failover, distributed partition safety,
 production mTLS validation or exactly-once external effects.
 See [docs/RESILIENCE.md](docs/RESILIENCE.md).
 
+## Cluster observability and operator controls (v0.13)
+
+The new **read-only operator CLI**, `ocaf-cluster-health`, collects
+PostgreSQL-clock snapshots of advisory leader sessions, live/expired
+agent heartbeat leases, durable jobs by status, and expired running
+leases. It prints **JSON reports or label-free Prometheus-style metrics**
+to stdout and returns 0 (healthy), 1 (warning), or 2 (critical).
+`--no-fail` preserves collection success exit codes for external
+exporters. Alert thresholds are configurable through environment
+variables. `--node <ID>` reports a single agent's lease status only
+in protected JSON output.
+
+The CLI does not expose HTTP and does not publish signing keys,
+job arguments, results, tool ACLs, or lease tokens. It requires a
+provisioned cluster database and operator-approved PostgreSQL
+credentials. The cluster ID selects the **advisory leader key**, not
+a tenant namespace; use an isolated PostgreSQL database or schema
+for each trust domain.
+
+This is **operational visibility, not automatic repair**. Heartbeat
+leases do not prove that workers are reachable; PostgreSQL advisory
+locks do not prove client routing works; and external notifications,
+database replication and host/network-partition chaos testing remain
+operator responsibilities.
+
+See [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md) for usage, thresholds,
+exit codes, safeguards and CI coverage.
+
 ## Production work still required
 
 1. Certificate-backed TLS/mTLS handshake tests on deployed hosts, plus key rotation and revocation.
 2. Replicated job broker/coordinator, external-effect fencing and real **cross-host** high availability.
 3. Signed plugin supply chain, sandbox and capability isolation.
 4. Secret manager integration, peer/key rotation, revocation and quotas.
-5. Distributed traces, fault injection, property tests and benchmarks.
+5. Distributed traces, whole-host/partition fault injection, property tests and benchmarks.
 6. Real L402 payment verification **only after** independent security review.
 
 There are **no substantiated sub-millisecond latency claims** for this
