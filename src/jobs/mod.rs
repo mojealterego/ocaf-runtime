@@ -199,6 +199,25 @@ impl JobStore {
         if path.as_os_str().is_empty() {
             return Err(JobError::Invalid);
         }
+        #[cfg(unix)]
+        {
+            use std::fs::{OpenOptions, Permissions};
+            use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
+            if let Ok(metadata) = std::fs::symlink_metadata(path) {
+                if metadata.file_type().is_symlink() {
+                    return Err(JobError::Storage);
+                }
+            }
+            let _file = OpenOptions::new()
+                .read(true)
+                .write(true)
+                .create(true)
+                .mode(0o600)
+                .open(path)
+                .map_err(|_| JobError::Storage)?;
+            std::fs::set_permissions(path, Permissions::from_mode(0o600))
+                .map_err(|_| JobError::Storage)?;
+        }
         let conn = Connection::open(path).map_err(|_| JobError::Storage)?;
         conn.busy_timeout(Duration::from_secs(5))
             .map_err(|_| JobError::Storage)?;
