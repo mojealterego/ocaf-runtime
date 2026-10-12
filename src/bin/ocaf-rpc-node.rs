@@ -2,7 +2,7 @@
 //! For a production deployment, load a vetted Zenoh TLS/mTLS configuration.
 //! A shared HMAC key authenticates messages but does not encrypt payloads.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::env;
 use std::path::Path;
 use std::sync::Arc;
@@ -10,6 +10,7 @@ use std::time::Duration;
 
 use base64::engine::general_purpose::STANDARD as B64;
 use base64::Engine as _;
+use ocaf_runtime::jobs::remote::RemoteJobWorker;
 use ocaf_runtime::rpc::{PeerPolicy, RpcAction, RpcClient, RpcGateway, RpcStatus};
 use ocaf_runtime::runtime::OcafRuntime;
 use ocaf_runtime::transport::rpc::{ZenohRpcClient, ZenohRpcServer};
@@ -112,6 +113,31 @@ async fn main() -> anyhow::Result<()> {
             }
             served?;
         }
+        "worker" => {
+            let runtime = OcafRuntime::new(0);
+            runtime.register(pricing_tool_manifest(), EchoTool).await?;
+            let protocol = RpcClient::new(&node_id, &peer_id, key)?;
+            let client = ZenohRpcClient::new(session, protocol);
+            let worker = RemoteJobWorker::new(
+                client, runtime, HashSet::from(["demo_echo".into()])
+            )?;
+            let mut heartbeat = tokio::time::interval(Duration::from_secs(5));
+            let mut polling = tokio::time::interval(Duration::from_millis(500));
+            loop {
+                tokio::select! {
+                    _ = heartbeat.tick() => {
+                        if let Err(error) = worker.heartbeat().await {
+                            tracing::warn!(error = %error, "remote worker heartbeat rejected");
+                        }
+                    }
+                    _ = polling.tick() => {
+                        if let Err(error) = worker.poll_once().await {
+                            tracing::warn!(error = %error, "remote job claim/execution failed");
+                        }
+                    }
+                }
+            }
+        }
         "client" => {
             let protocol = RpcClient::new(&node_id, &peer_id, key)?;
             let client = ZenohRpcClient::new(session, protocol);
@@ -122,6 +148,15 @@ async fn main() -> anyhow::Result<()> {
                 },
                 Ok("resolve") => RpcAction::Resolve {
                     tool: env::var("OCAF_TOOL").unwrap_or_else(|_| "demo_echo".into()),
+                },
+                Ok("submit") => RpcAction::SubmitJob {
+                    id: env::var("OCAF_JOB_ID")
+                        .unwrap_or_else(|_| uuid::Uuid::new_v4().to_string()),
+                    tool: "demo_echo".into(),
+                    args: json!({
+                        "message": env::var("OCAF_MESSAGE")
+                            .unwrap_or_else(|_| "durable distributed job".into())
+                    }),
                 },
                 Ok("call") | Err(_) => RpcAction::Execute {
                     tool: "demo_echo".into(),
@@ -135,7 +170,7 @@ async fn main() -> anyhow::Result<()> {
                 anyhow::bail!("remote tool call failed: {:?}", reply.status);
             }
         }
-        other => anyhow::bail!("unknown OCAF_ROLE: {other} (expected server or client)"),
+        other => anyhow::bail!("unknown OCAF_ROLE: {other} (expected server, worker or client)"),
     }
     Ok(())
 }
