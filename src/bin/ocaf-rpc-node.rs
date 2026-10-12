@@ -4,6 +4,7 @@
 
 use std::collections::HashMap;
 use std::env;
+use std::path::Path;
 use std::sync::Arc;
 
 use base64::engine::general_purpose::STANDARD as B64;
@@ -63,7 +64,17 @@ async fn main() -> anyhow::Result<()> {
             // The peer may invoke ONLY the demo echo tool, not arbitrary local tools.
             let peers =
                 HashMap::from([(peer_id, PeerPolicy::new(key, vec!["demo_echo".to_string()]))]);
-            let gateway = Arc::new(RpcGateway::new(&node_id, runtime, peers, 16)?);
+            let db_path = require("OCAF_REPLAY_DB_PATH")?;
+            if !Path::new(&db_path).is_absolute() {
+                anyhow::bail!("OCAF_REPLAY_DB_PATH must be an absolute path");
+            }
+            let gateway = Arc::new(RpcGateway::with_sqlite_replay(
+                &node_id,
+                runtime,
+                peers,
+                16,
+                Path::new(&db_path),
+            )?);
             tracing::info!(node = %node_id, "Authenticated RPC queryable is active");
             ZenohRpcServer::new(session, gateway).serve().await?;
         }
