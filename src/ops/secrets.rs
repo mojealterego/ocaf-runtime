@@ -84,3 +84,43 @@ pub fn load_env_secret(name: &str, max_bytes: usize) -> anyhow::Result<String> {
     };
     resolve_sources(value.as_deref(), file.as_deref().map(Path::new), max_bytes)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn refuses_conflicting_sources_and_truncation() {
+        assert!(resolve_sources(None, None, 128).is_err());
+        assert!(resolve_sources(Some("public"), Some(Path::new("/no-file")), 128).is_err());
+        assert!(resolve_sources(Some(""), None, 128).is_err());
+        assert!(resolve_sources(Some("longsecret"), None, 4).is_err());
+        assert_eq!(
+            resolve_sources(Some("short-value\n"), None, 128).unwrap(),
+            "short-value"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn private_file_rejects_symlink_world_permissions_and_relative_paths() {
+        use std::os::unix::fs::{symlink,PermissionsExt};
+        let dir = tempfile::tempdir().unwrap();
+        let original = dir.path().join("private.txt");
+        std::fs::write(&original, "private-value").unwrap();
+        std::fs::set_permissions(
+            &original,
+            std::fs::Permissions::from_mode(0o600),
+        ).unwrap();
+        assert_eq!(read_private_text(&original, 64).unwrap(), "private-value");
+        let symlink_path = dir.path().join("linked");
+        symlink(&original, &symlink_path).unwrap();
+        assert!(read_private_text(&symlink_path, 64).is_err());
+        std::fs::set_permissions(
+            &original,
+            std::fs::Permissions::from_mode(0o644),
+        ).unwrap();
+        assert!(read_private_text(&original, 64).is_err());
+        assert!(read_private_text(Path::new("relative-file"), 64).is_err());
+        assert!(read_private_text(dir.path(), 64).is_err());
+    }
+}

@@ -4,15 +4,7 @@
 use std::env;
 
 use ocaf_runtime::cluster::observability::{AlertPolicy, ClusterHealth, PgClusterMonitor};
-
-fn mandatory(name: &str) -> anyhow::Result<String> {
-    let value =
-        env::var(name).map_err(|_| anyhow::anyhow!("missing environment setting: {name}"))?;
-    if value.is_empty() {
-        anyhow::bail!("empty environment setting: {name}");
-    }
-    Ok(value)
-}
+use ocaf_runtime::ops::secrets::load_env_secret;
 
 fn threshold(name: &str, default: u64) -> anyhow::Result<u64> {
     match env::var(name) {
@@ -32,7 +24,7 @@ fn threshold(name: &str, default: u64) -> anyhow::Result<u64> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let dsn = mandatory("OCAF_CLUSTER_PG_DSN")?;
+    let dsn = load_env_secret("OCAF_CLUSTER_PG_DSN", 4096)?;
     let cluster = mandatory("OCAF_CLUSTER_ID")?;
     let insecure = env::var("OCAF_ALLOW_INSECURE_LOOPBACK").as_deref() == Ok("1");
     let policy = AlertPolicy::new(

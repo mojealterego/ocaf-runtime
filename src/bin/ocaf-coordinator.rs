@@ -13,6 +13,7 @@ use base64::Engine as _;
 use ocaf_runtime::cluster::jobs::PgJobQueue;
 use ocaf_runtime::cluster::leadership::PgLeader;
 use ocaf_runtime::coordinator::leadership::LeaderGuard;
+use ocaf_runtime::ops::secrets::{load_env_secret, read_private_text};
 use ocaf_runtime::rpc::{PeerPolicy, RpcGateway};
 use ocaf_runtime::runtime::OcafRuntime;
 use ocaf_runtime::transport::rpc::ZenohRpcServer;
@@ -51,18 +52,7 @@ fn absolute_path(name: &str) -> anyhow::Result<PathBuf> {
 }
 
 fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
-    let meta = fs::symlink_metadata(path)?;
-    if !meta.is_file() || meta.len() > 32_768 {
-        anyhow::bail!("peer configuration must be a regular file of at most 32 KiB");
-    }
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        if meta.permissions().mode() & 0o077 != 0 {
-            anyhow::bail!("peer configuration must be owner-only (chmod 600)");
-        }
-    }
-    let raw = fs::read_to_string(path)?;
+    let raw = read_private_text(path, 32_768)?;
     let parsed: HashMap<String, PeerConfig> = serde_json::from_str(&raw)
         .map_err(|_| anyhow::anyhow!("invalid peer configuration JSON"))?;
     if parsed.is_empty() || parsed.len() > 64 {
@@ -109,7 +99,7 @@ fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
 /// PostgreSQL connections and a fresh Zenoh queryable only *after* election.
 /// The process remains alive during a database outage but does not serve.
 async fn run_postgres_cluster(node_id: &str) -> anyhow::Result<()> {
-    let dsn = env_required("OCAF_CLUSTER_PG_DSN")?;
+    let dsn = load_env_secret("OCAF_CLUSTER_PG_DSN", 4096)?;
     let cluster_id = env_required("OCAF_CLUSTER_ID")?;
     let allow_loopback = env::var("OCAF_ALLOW_INSECURE_LOOPBACK").as_deref() == Ok("1");
 

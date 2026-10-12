@@ -42,5 +42,34 @@ async fn probe_reports_missing_leadership_and_recovers_without_leaking_database_
     assert!(!payload.contains("OCAF_CLUSTER_PG_DSN"));
     let parsed: serde_json::Value = serde_json::from_str(&payload).unwrap();
     assert_eq!(parsed["snapshot"]["leader_sessions"], 1);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("health-db-credential");
+        std::fs::write(&file, &dsn).unwrap();
+        std::fs::set_permissions(
+            &file,
+            std::fs::Permissions::from_mode(0o600),
+        ).unwrap();
+        let from_file = Command::new(env!("CARGO_BIN_EXE_ocaf-cluster-health"))
+            .env_remove("OCAF_CLUSTER_PG_DSN")
+            .env("OCAF_CLUSTER_PG_DSN_FILE", &file)
+            .env("OCAF_CLUSTER_ID", &cluster)
+            .env("OCAF_ALLOW_INSECURE_LOOPBACK", "1")
+            .output()
+            .unwrap();
+        assert!(from_file.status.success());
+        assert!(!String::from_utf8_lossy(&from_file.stdout).contains(&dsn));
+        let both = Command::new(env!("CARGO_BIN_EXE_ocaf-cluster-health"))
+            .env("OCAF_CLUSTER_PG_DSN", &dsn)
+            .env("OCAF_CLUSTER_PG_DSN_FILE", &file)
+            .env("OCAF_CLUSTER_ID", &cluster)
+            .env("OCAF_ALLOW_INSECURE_LOOPBACK", "1")
+            .output()
+            .unwrap();
+        assert!(!both.status.success());
+        assert!(!String::from_utf8_lossy(&both.stderr).contains(&dsn));
+    }
     leader.release().await.unwrap();
 }
