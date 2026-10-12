@@ -1,6 +1,6 @@
 # OCAF 0.10 — PostgreSQL-backed cluster foundations
 
-**Status: experimental, not production multi-host HA.** This release
+**Status: experimental; v0.11 now integrates shared replay, membership, job queue and leader-gated serving. It is not a production-certified multi-host HA system.** This release
 adds (1) PostgreSQL session advisory leadership across independent
 connections and (2) a globally shared PostgreSQL remote-job queue
 behind the existing signed Zenoh RPC gateway. Both are tested against a
@@ -58,7 +58,7 @@ and use a least-privileged runtime account.
 
 ### IMPORTANT: still no automatic cross-host failover
 
-**Do not run two active OCAF coordinator services on separate machines.**
+For the legacy SQLite mode, **do not run two active OCAF coordinator services on separate machines.**
 The CLI currently retains **local** SQLite replay and capability
 membership stores, and its active/passive guard remains a local OS
 file lock. This is intentional: activating a cluster leader while
@@ -94,3 +94,79 @@ and stale lease rejection.
 `tests/postgres_rpc_e2e.rs` verifies the existing signed RPC gateway
 can submit through one PostgreSQL connection and execute/report/read
 the job through a second gateway connection.
+
+
+## OCAF 0.11 — opt-in active/passive coordinator with shared security state
+
+Version 0.11 adds **shared PostgreSQL replay admission** and a
+**shared PostgreSQL agent capability directory** alongside the durable
+PostgreSQL job queue. All three use transactional storage in the same
+PostgreSQL primary. The service exposes a separate deployment mode:
+
+```bash
+OCAF_CLUSTER_MODE=postgres
+OCAF_COORDINATOR_NODE_ID=coord
+OCAF_CLUSTER_ID=production_cluster_1
+OCAF_CLUSTER_PG_DSN='host=db.example.com port=5432 user=ocaf dbname=ocaf sslmode=require'
+OCAF_COORDINATOR_MODE=active       # or standby
+OCAF_PEERS_FILE=/etc/ocaf/peers.json
+OCAF_ZENOH_CONFIG=/etc/ocaf/coordinator.json5
+cargo run --bin ocaf-coordinator
+```
+
+The two coordinator instances must use **identical cluster IDs, peer
+policies, node IDs, shared PostgreSQL DSN and compatible secure Zenoh
+transport configuration**. For distinct physical hosts, each host needs
+appropriate listener certificates and a client discovery strategy or
+an externally managed stable virtual endpoint. DNS names, external
+load balancers, host fencing and PostgreSQL failover are not managed by
+OCAF.
+
+This mode does not read the local SQLite replay, membership or job paths,
+and does not need a local coordinator lock file. Legacy deployment
+continues to require its prior SQLite settings and OS lock. It is
+important not to configure both modes simultaneously by accident.
+
+### Leadership and safe promotion
+
+- A PostgreSQL session advisory lock is acquired before any Zenoh
+  queryable or gateway is opened. `OCAF_COORDINATOR_MODE=active` fails
+  on an existing leader; `standby` blocks until the original
+  PostgreSQL session releases the lock.
+- The leader has a dedicated PostgreSQL connection that is **not**
+  transaction-pooled. The application checks this session before
+  accepting each RPC request and approximately every 500 ms during
+  operation. The coordinator stops serving on detected leadership or
+  database connectivity loss.
+- In-flight RPC tasks already spawned when leadership is lost can
+  finish or fail independently. Shared PostgreSQL transactions enforce
+  uniqueness and lease fencing, but **external effects are not
+  exactly-once**. Operators still must reconcile `uncertain` jobs.
+- Replay protection is now global to all coordinator instances sharing
+  the database, with a transaction-level advisory mutex guarding
+  duplicate admission, expiration purge and a bounded replay ledger.
+- Membership heartbeats and capability replacement are atomic, with
+  leases evaluated against coordinator reception time. Round-robin
+  selection uses a transactional shared cursor. These records survive
+  changes of process and machine as long as PostgreSQL remains
+  available.
+
+### Explicit exclusions
+
+**OCAF 0.11 is an experimental active/passive multi-host service
+integration, not certified production high availability.** The tests
+use independent DB connections and three Zenoh TCP sessions on one
+CI host, not separately provisioned physical machines or real TLS
+certificate handshakes. An operator must separately deploy and verify
+PostgreSQL replication/failover, network discovery, secure certificate
+provisioning, backup/restore, secret rotation, monitoring, hard server
+fencing and fault-injection tests.
+
+Do not use `OCAF_ALLOW_INSECURE_LOOPBACK=1` outside single-machine
+development. Encrypted PostgreSQL does not automatically secure
+Zenoh; the Zenoh CLI security preflight remains mandatory.
+
+See `tests/postgres_coordinator_state.rs` for cross-connection
+authentication, replay and capability lease regressions, and
+`tests/postgres_zenoh_e2e.rs` for end-to-end authenticated job
+execution through the PostgreSQL-controlled gateway.
