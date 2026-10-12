@@ -17,7 +17,7 @@ fn dsn() -> Option<String> {
 fn spec() -> JobSpec {
     JobSpec {
         id: uuid::Uuid::new_v4().to_string(),
-        tool: "echo".into(),
+        tool: format!("echo_{}", uuid::Uuid::new_v4().simple()),
         args: json!({"message":"remote job"}),
         retry_safe: false,
         max_attempts: 1,
@@ -32,7 +32,7 @@ async fn independent_connections_share_one_fenced_durable_job() {
     let s = spec();
     a.submit_owned("submitter-a", s.clone()).await.unwrap();
 
-    let allowed = vec!["echo".into()];
+    let allowed = vec![s.tool.clone()];
     let (x, y) = tokio::join!(
         a.claim_permitted("worker-a", NOW, 5_000, &allowed),
         b.claim_permitted("worker-b", NOW, 5_000, &allowed),
