@@ -459,6 +459,21 @@ cluster ID, and a maximum 15-second permit window before signing.
 Legacy unscoped v1 permits are rejected. See
 [docs/SINK_IDENTITY.md](docs/SINK_IDENTITY.md) for migration and caveats.
 
+## Automatic PostgreSQL HA failover and namespace isolation (v0.23)
+
+New `OCAF_COORDINATOR_MODE=ha` reconnects and re-elects a verified
+PostgreSQL leader after a service interruption; standbys remain unable
+to serve while un-elected. On promotion, previous-epoch worker leases
+are **immediately quarantined as uncertain**, never auto-retried.
+A periodic fenced sweep reconciles expired remote leases independently
+of worker polling. The shared job queue now scopes operations by
+`cluster_id`, preventing unrelated clusters on one database from
+claiming or recovering each other's jobs. Schema migration for
+pre-0.23 leader-managed records requires explicit operator review.
+
+Deployment, migration, tests and physical HA limitations:
+[docs/HA_FAILOVER.md](docs/HA_FAILOVER.md).
+
 ## Production work still required
 
 1. Certificate-backed TLS/mTLS handshakes on separate deployed hosts, plus certificate rotation and revocation.
