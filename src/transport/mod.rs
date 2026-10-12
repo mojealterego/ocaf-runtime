@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use serde_json::Value;
+use std::sync::Arc;
 
 use crate::executor::{ExecutionContext, ToolError, ToolExecutor};
 use crate::registry::ToolManifest;
@@ -27,7 +27,9 @@ pub struct EchoTool;
 #[async_trait::async_trait]
 impl ToolExecutor for EchoTool {
     async fn execute(&self, args: Value, _ctx: &ExecutionContext) -> Result<Value, ToolError> {
-        let message = args.get("message").and_then(|v| v.as_str())
+        let message = args
+            .get("message")
+            .and_then(|v| v.as_str())
             .ok_or_else(|| ToolError::Validation("message must be a string".into()))?;
         Ok(serde_json::json!({
             "status": "ok",
