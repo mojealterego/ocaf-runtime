@@ -1,65 +1,87 @@
-# OmniContext Agent Framework (OCAF) - Rust + Zenoh Runtime
+# OCAF Runtime — Rust / Tokio / optional Zenoh
 
-Ekosystem agentowy nowej generacji z dynamicznym ładowaniem narzędzi, ekonomią M2M (L402) i komunikacją sub-milisekundową.
+**Status: experimental.** This repository provides an in-process tool
+registry and execution core. Zenoh currently opens a session only.
+It does **not** yet expose a working distributed tool RPC protocol,
+dynamic code loading, Lightning payments, or production L402 verification.
 
-## Architektura
+## Components
 
-### Faza 1: Silnik Podstawowy + Szyna Zenoh
-- **Runtime**: Rust + Tokio (zero-GC, deterministyczne)
-- **Transport**: Eclipse Zenoh (<1 ms IPC/LAN)
-- **Queryables**: Registry discovery + tool execution
-- **L402**: Wbudowana autoryzacja i rozliczanie M2M
+| Module | Function |
+| --- | --- |
+| `registry` | Register tools, reject duplicates, compile local-only JSON Schemas |
+| `executor` | Async tool executor interface and execution context |
+| `runtime` | Input/output validation, authorizer gate, timeout, atomic budget escrow |
+| `auth` | Pluggable verification contract, **deny-by-default** implementation |
+| `metrics` | Success/failure counters and total elapsed microseconds |
+| `transport` | Optional Zenoh session opening and a local echo demo |
 
-## Struktury Kluczowe
+## Security boundaries
 
-### ToolSchema
-```rust
-pub struct ToolSchema {
-    pub name: String,
-    pub description: String,
-    pub input_schema: serde_json::Value,  // JSON Schema 2020-12
-    pub cost_sats: u64,  // L402 pricing
-}
-```
+- **Paid tools and permissioned tools are rejected by default**, even if
+  non-empty macaroon, preimage, invoice and nonce strings are supplied.
+- Only a production implementation of `AuthVerifier` that validates
+  cryptographic signatures, caveats, payment preimages/payment hashes,
+  invoice bindings, identity, replay and revocation rules may authorize
+  sensitive calls. **No such provider is included.**
+- Free tools without permissions can run without credentials.
+  They are therefore **public within the invoking process**. Do not
+  expose them remotely without authentication or network access controls.
+- JSON Schema input and output checks are enabled; external `$ref`
+  references are rejected. Registration compiles validators in memory.
+- Budgets are reserved atomically and refunded on failure, timeout or
+  task cancellation; a successful tool commits the charge.
+  This is **local resource accounting, not real Lightning settlement**.
+- The runtime does not yet enforce authenticated agent identities,
+  durable deduplication, exactly-once execution, sandboxed tools, tool
+  provenance, trusted remote transport, or per-agent rate limits.
 
-### OcafAgent
-```rust
-pub struct OcafAgent {
-    pub agent_id: String,
-    pub session: Arc<zenoh::Session>,
-    pub budget_sats: Arc<RwLock<u64>>,
-}
-```
-
-## Przepływ Wykonania
-
-1. **Discovery**: Agent odbiera listę narzędzi przez Zenoh Queryable (<100 µs)
-2. **Authorization**: Sprawdzenie L402 challenge (invoice + macaroon)
-3. **Payment**: Automatyczna negocjacja budżetu M2M
-4. **Execution**: Wywołanie narzędzia z preimage validation
-
-## Budowanie
+## Build & test
 
 ```bash
-cargo build --release
+cargo fmt --all -- --check
+cargo clippy --all-targets --no-default-features -- -D warnings
+cargo test --no-default-features
+cargo test
 cargo run
 ```
 
-## Benchmarki Opóźnień
+By default, Cargo compiles the optional Zenoh transport. For core-only
+development, use `--no-default-features`. The demo uses a free local
+echo tool and does not simulate a paid L402 transaction.
 
-- Zenoh discovery: < 500 µs
-- L402 negotiation: < 1 ms total
-- Tool execution round-trip: < 5 ms (na SHM/LAN)
+## Example
 
-## Roadmapa
+```rust
+use ocaf_runtime::runtime::{OcafRuntime, ToolCallRequest};
+// Implement ToolExecutor, declare a valid ToolManifest, then:
+// runtime.register(manifest, executor).await?;
+// runtime.execute(ToolCallRequest { ... }).await?;
+```
 
-- **Faza 1** ✓ Silnik Zenoh + L402
-- **Faza 2**: Dynamic Tool Loading + JSON Schema resolver
-- **Faza 3**: OAuth 2.1 + PKCE bridge
-- **Faza 4**: Firecracker sandbox integration
-- **Faza 5**: Enterprise RAG connector
-- **Faza 6**: OWASP ASI compliance
+The example is illustrative; see `src/main.rs` and
+`tests/runtime_regressions.rs` for executable examples.
 
-## Licencja
+## Roadmap / acceptance criteria
 
-MIT
+1. **Core correctness:** CI-green compile, formatting, lint, regression
+   tests, schema validation, permission and budget invariants.
+2. **Zenoh RPC:** explicit wire protocol, tool discovery, request/reply,
+   connection security, cancellation semantics and integration tests.
+3. **L402:** Lightning-node integration, valid invoices, signed macaroons,
+   payment-hash/preimage verification, replay/caveat/revocation tests.
+4. **Dynamic tools:** signed manifests, sandboxed execution and resource
+   quotas; avoid unsandboxed loading of untrusted code.
+5. **Operability:** tracing/OTel, latency distribution benchmarks with
+   hardware/network profiles, fuzzing, dependency audit and SLOs.
+6. **Production release:** documented threat model, deployment hardening,
+   versioned API and reproducible release artifacts.
+
+**No sub-millisecond latency claims are made without reproducible
+benchmarks**. Rust/Tokio/Zenoh alone do not establish that bound.
+
+## Licensing
+
+The package declares `MIT` in Cargo.toml. A standalone `LICENSE`
+file and explicit redistribution policy should be confirmed by the
+repository owner before publishing artifacts.

@@ -1,25 +1,24 @@
 [package]
 name = "ocaf_runtime"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 publish = false
 license = "MIT"
-
-description = "OmniContext Agent Framework runtime with dynamic tool loading and L402-aware execution"
+description = "OmniContext Agent Framework runtime core with fail-closed authorization"
 
 [features]
 default = ["zenoh"]
-zenoh = []
+zenoh = ["dep:zenoh"]
 full = ["zenoh"]
 
 [dependencies]
 async-trait = "0.1"
 anyhow = "1.0"
+jsonschema = "0.33"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "1.0"
 tokio = { version = "1.38", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-uuid = { version = "1.8", features = ["v4", "serde"] }
-zenoh = { version = "1.10", features = ["full"] }
+zenoh = { version = "1.10", optional = true }

@@ -1,15 +1,13 @@
+use crate::registry::ToolManifest;
+use serde_json::Value;
 use std::sync::Arc;
 use std::time::Duration;
-
-use serde_json::Value;
 use thiserror::Error;
-
-use crate::registry::ToolManifest;
 
 #[derive(Debug, Clone)]
 pub struct ExecutionContext {
+    /// Identity is not authenticated until a production auth provider is added.
     pub agent_id: String,
-    pub budget_sats: Arc<tokio::sync::RwLock<u64>>,
     pub deadline_ms: u64,
     pub correlation_id: String,
 }
@@ -28,26 +26,32 @@ pub enum ToolError {
 
 #[async_trait::async_trait]
 pub trait ToolExecutor: Send + Sync {
-    async fn execute(
-        &self,
-        args: Value,
-        ctx: &ExecutionContext,
-    ) -> Result<Value, ToolError>;
+    async fn execute(&self, args: Value, ctx: &ExecutionContext) -> Result<Value, ToolError>;
 }
 
+#[derive(Clone)]
 pub struct ToolHandle {
     pub manifest: ToolManifest,
     pub executor: Arc<dyn ToolExecutor>,
+    pub input_validator: Arc<jsonschema::Validator>,
+    pub output_validator: Arc<jsonschema::Validator>,
 }
 
 impl ToolHandle {
-    pub fn new<T>(manifest: ToolManifest, executor: T) -> Self
+    pub fn new<T>(
+        manifest: ToolManifest,
+        executor: T,
+        input_validator: Arc<jsonschema::Validator>,
+        output_validator: Arc<jsonschema::Validator>,
+    ) -> Self
     where
         T: ToolExecutor + 'static,
     {
         Self {
             manifest,
             executor: Arc::new(executor),
+            input_validator,
+            output_validator,
         }
     }
 }
