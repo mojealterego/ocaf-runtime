@@ -13,7 +13,7 @@ pub struct ZenohTransport {
 
 impl ZenohTransport {
     pub async fn connect() -> anyhow::Result<Self> {
-        let session = Arc::new(zenoh::open(zenoh::Config::default()).await?);
+        let session = Arc::new(zenoh::open(zenoh::Config::default()).await.map_err(|error| anyhow::anyhow!("failed to open Zenoh session: {error}"))?);
         Ok(Self { session })
     }
 
