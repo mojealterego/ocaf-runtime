@@ -321,6 +321,10 @@ impl EffectSink {
                  one INTEGER PRIMARY KEY CHECK(one=1),
                  sink_id TEXT NOT NULL
              );
+             CREATE TABLE IF NOT EXISTS sink_namespaces_v2 (
+                 one INTEGER PRIMARY KEY CHECK(one=1),
+                 cluster_id TEXT NOT NULL
+             );
              CREATE TABLE IF NOT EXISTS sink_epochs_v1 (
                  one INTEGER PRIMARY KEY CHECK(one=1),
                  epoch INTEGER NOT NULL CHECK(epoch>0),
@@ -360,6 +364,23 @@ impl EffectSink {
             )
             .map_err(|_| SinkError::Storage)?;
         if existing != sink_id {
+            return Err(SinkError::Invalid);
+        }
+        // A journal cannot be reused for another cluster with coincident
+        // epoch numbers, even if its sink ID is identical.
+        tx.execute(
+            "INSERT OR IGNORE INTO sink_namespaces_v2(one,cluster_id) VALUES(1,?1)",
+            params![keys.cluster_id],
+        )
+        .map_err(|_| SinkError::Storage)?;
+        let stored_cluster: String = tx
+            .query_row(
+                "SELECT cluster_id FROM sink_namespaces_v2 WHERE one=1",
+                [],
+                |row| row.get(0),
+            )
+            .map_err(|_| SinkError::Storage)?;
+        if stored_cluster != keys.cluster_id {
             return Err(SinkError::Invalid);
         }
         tx.commit().map_err(|_| SinkError::Storage)?;
