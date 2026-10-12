@@ -34,7 +34,9 @@ impl PgReplay {
             .map_err(|_| RpcError::Unavailable)?;
         client
             .batch_execute(
-                "CREATE TABLE IF NOT EXISTS ocaf_pg_replay_v1 (
+                "BEGIN;
+            SELECT pg_advisory_xact_lock(574123456);
+            CREATE TABLE IF NOT EXISTS ocaf_pg_replay_v1 (
                 node TEXT NOT NULL,
                 sender TEXT NOT NULL,
                 request_id TEXT NOT NULL,
@@ -42,7 +44,8 @@ impl PgReplay {
                 PRIMARY KEY(node, sender, request_id)
             );
             CREATE INDEX IF NOT EXISTS ocaf_pg_replay_expiry
-                ON ocaf_pg_replay_v1(expires_at_ms);",
+                ON ocaf_pg_replay_v1(expires_at_ms);
+            COMMIT;",
             )
             .await
             .map_err(|_| RpcError::Unavailable)?;
