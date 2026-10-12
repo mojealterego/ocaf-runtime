@@ -1,8 +1,8 @@
+use crate::registry::ToolManifest;
+use serde_json::Value;
 use std::sync::Arc;
 use std::time::Duration;
-use serde_json::Value;
 use thiserror::Error;
-use crate::registry::ToolManifest;
 
 #[derive(Debug, Clone)]
 pub struct ExecutionContext {
@@ -47,7 +47,12 @@ impl ToolHandle {
     where
         T: ToolExecutor + 'static,
     {
-        Self { manifest, executor: Arc::new(executor), input_validator, output_validator }
+        Self {
+            manifest,
+            executor: Arc::new(executor),
+            input_validator,
+            output_validator,
+        }
     }
 }
 
