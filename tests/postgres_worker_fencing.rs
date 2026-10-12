@@ -203,16 +203,11 @@ async fn postgres_leader_rejects_a_local_sqlite_job_backend_in_both_orders() {
         PeerPolicy::new(OWNER_KEY, vec!["demo_echo".into()]).allow_job_submission(),
     )]);
 
-    let legacy = RpcGateway::new(
-        "fence-coord",
-        OcafRuntime::new(0),
-        peers.clone(),
-        16,
-    )
-    .unwrap()
-    .with_job_db(&path)
-    .unwrap()
-    .with_pg_leader(Arc::clone(&leader));
+    let legacy = RpcGateway::new("fence-coord", OcafRuntime::new(0), peers.clone(), 16)
+        .unwrap()
+        .with_job_db(&path)
+        .unwrap()
+        .with_pg_leader(Arc::clone(&leader));
 
     let request = RpcRequest::new(
         "fence-owner",
