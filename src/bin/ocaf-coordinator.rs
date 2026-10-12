@@ -236,13 +236,13 @@ async fn serve_postgres_generation(
         result = server.serve() => result,
         result = watch => {
             match result {
-                Ok(()) => anyhow::bail!("leader monitor unexpectedly stopped"),
+                Ok(()) => Err(anyhow::anyhow!("leader monitor unexpectedly stopped")),
                 Err(err) => Err(anyhow::anyhow!("PostgreSQL leadership lost: {err}")),
             }
         },
         result = sweep => {
             match result {
-                Ok(()) => anyhow::bail!("lease recovery sweep unexpectedly stopped"),
+                Ok(()) => Err(anyhow::anyhow!("lease recovery sweep unexpectedly stopped")),
                 Err(err) => Err(anyhow::anyhow!("PostgreSQL recovery failed: {err}")),
             }
         }
