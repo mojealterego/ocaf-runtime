@@ -179,3 +179,68 @@ async fn changed_database_epoch_fences_a_still_connected_old_leader() {
     standby.release().await.unwrap();
     task.abort();
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn cancelled_epoch_publication_drops_the_leader_session_and_unlocks() {
+    use std::sync::Arc;
+    use std::time::Duration;
+
+    let Some(url) = dsn() else { return };
+    let cluster = format!("cancel_{}", uuid::Uuid::new_v4().simple());
+    let active = Arc::new(PgLeader::connect(&url, &cluster, true).await.unwrap());
+    let standby = PgLeader::connect(&url, &cluster, true).await.unwrap();
+    let backend_pid = active.backend_pid().await.unwrap();
+
+    let (db, connection) = tokio_postgres::connect(&url, tokio_postgres::NoTls)
+        .await
+        .unwrap();
+    let driver = tokio::spawn(async move {
+        let _ = connection.await;
+    });
+    db.batch_execute("BEGIN").await.unwrap();
+    db.execute(
+        "INSERT INTO ocaf_pg_leader_epochs_v1(cluster_id,epoch) VALUES($1,1)",
+        &[&cluster],
+    )
+    .await
+    .unwrap();
+
+    // Leader grabs the advisory lock but epoch INSERT waits on this
+    // uncommitted row. Aborting the task must close the session.
+    let candidate = Arc::clone(&active);
+    let attempt = tokio::spawn(async move { candidate.try_acquire().await });
+    let mut acquired = false;
+    for _ in 0..100 {
+        let row = db
+            .query_one(
+                "SELECT EXISTS(SELECT 1 FROM pg_locks
+                 WHERE locktype='advisory' AND mode='ExclusiveLock'
+                   AND granted AND pid=$1 AND objsubid=1)",
+                &[&backend_pid],
+            )
+            .await
+            .unwrap();
+        if row.get::<_, bool>(0) {
+            acquired = true;
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    assert!(acquired, "test precondition: leader acquired its advisory lock");
+    attempt.abort();
+    assert!(attempt.await.is_err());
+    db.batch_execute("ROLLBACK").await.unwrap();
+
+    let mut promoted = false;
+    for _ in 0..100 {
+        if standby.try_acquire().await.unwrap() {
+            promoted = true;
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    assert!(promoted, "cancellation must not strand a session advisory lock");
+    assert!(active.try_acquire().await.is_err());
+    standby.release().await.unwrap();
+    driver.abort();
+}

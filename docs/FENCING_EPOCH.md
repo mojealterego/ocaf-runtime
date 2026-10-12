@@ -57,3 +57,16 @@ SELECT, INSERT and UPDATE permissions on this table.
 
 Use isolated database trust domains and verified TLS for database and
 Zenoh. Test genuine multi-host network partitions before any HA claim.
+
+## Cancellation of asynchronous elections
+
+A dropped `try_acquire()` future can have acquired a PostgreSQL
+session lock even if its caller never saw the response. A transition
+guard now marks this PgLeader unusable and terminates its dedicated
+database connection whenever acquisition or release is cancelled or
+ends ambiguously. The regression test holds an epoch row uncommitted
+to block generation publication, cancels the active election after the
+advisory lock becomes visible, and checks that a standby can promote.
+
+The assertion concerns release of one database session's advisory lock,
+not network partition recovery or client routing.

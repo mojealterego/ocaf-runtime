@@ -43,6 +43,25 @@ pub struct PgLeader {
     transition: Mutex<()>,
 }
 
+/// Cancellation safety for session advisory operations. If an async
+/// acquisition or release is dropped while PostgreSQL may still be
+/// processing it, the dedicated session is closed immediately instead
+/// of risking an untracked or stacked lock.
+struct TransitionAbort<'a> {
+    leader: &'a PgLeader,
+    completed: bool,
+}
+
+impl Drop for TransitionAbort<'_> {
+    fn drop(&mut self) {
+        if !self.completed {
+            self.leader.held.store(false, Ordering::SeqCst);
+            self.leader.epoch.store(-1, Ordering::SeqCst);
+            self.leader.connection.abort();
+        }
+    }
+}
+
 fn loopback_hosts(config: &Config) -> bool {
     if config.get_hosts().is_empty()
         || config
@@ -182,6 +201,10 @@ impl PgLeader {
         if self.connection.is_finished() {
             return Err(PgLeaderError::Database);
         }
+        let mut cancellation = TransitionAbort {
+            leader: self,
+            completed: false,
+        };
         let row = tokio::time::timeout(
             Duration::from_secs(5),
             self.client
@@ -191,6 +214,7 @@ impl PgLeader {
         .map_err(|_| PgLeaderError::Database)?
         .map_err(|_| PgLeaderError::Database)?;
         if !row.get::<_, bool>(0) {
+            cancellation.completed = true;
             return Ok(false);
         }
 
@@ -225,6 +249,7 @@ impl PgLeader {
         }
         self.epoch.store(next_epoch, Ordering::SeqCst);
         self.held.store(true, Ordering::SeqCst);
+        cancellation.completed = true;
         Ok(true)
     }
 
@@ -307,6 +332,10 @@ impl PgLeader {
         // If acknowledgement is lost, the session becomes permanently
         // poisoned and is closed rather than risking re-entrant locking.
         self.epoch.store(-1, Ordering::SeqCst);
+        let mut cancellation = TransitionAbort {
+            leader: self,
+            completed: false,
+        };
         let result = tokio::time::timeout(
             Duration::from_secs(5),
             self.client
@@ -316,6 +345,7 @@ impl PgLeader {
         match result {
             Ok(Ok(row)) if row.get::<_, bool>(0) => {
                 self.epoch.store(0, Ordering::SeqCst);
+                cancellation.completed = true;
                 Ok(())
             }
             _ => {
