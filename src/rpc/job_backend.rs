@@ -94,5 +94,4 @@ impl JobBackend {
             Self::Postgres(db) => db.audit_owned(owner, id, limit).await,
         }
     }
-
 }
