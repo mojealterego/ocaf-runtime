@@ -68,7 +68,7 @@ impl BudgetReservation {
     fn reserve(budget: Arc<AtomicU64>, cost_sats: u64) -> Result<Self, RuntimeError> {
         if cost_sats != 0 {
             budget
-                .fetch_update(Ordering::AcqRel, Ordering::Acquire, |available| {
+                .try_update(Ordering::AcqRel, Ordering::Acquire, |available| {
                     available.checked_sub(cost_sats)
                 })
                 .map_err(|_| RuntimeError::BudgetExceeded)?;
