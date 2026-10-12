@@ -35,7 +35,10 @@ impl ZenohRpcServer {
     /// executions are not durable and may finish after shutdown.
     pub async fn serve(&self) -> anyhow::Result<()> {
         let key = rpc_key(self.gateway.node_id());
-        let queryable = self.session.declare_queryable(key.as_str()).await
+        let queryable = self
+            .session
+            .declare_queryable(key.as_str())
+            .await
             .map_err(|err| error("declare queryable", err))?;
         while let Ok(query) = queryable.recv_async().await {
             let gateway = Arc::clone(&self.gateway);
@@ -78,23 +81,32 @@ impl ZenohRpcClient {
     }
 
     pub async fn request(&self, action: RpcAction) -> anyhow::Result<RpcReply> {
-        let (request, body) = self.protocol.prepare(action, 5_000)
+        let (request, body) = self
+            .protocol
+            .prepare(action, 5_000)
             .map_err(|e| error("prepare signed RPC", e))?;
         let key = rpc_key(self.protocol.remote_id());
-        let replies = self.session.get(key.as_str())
+        let replies = self
+            .session
+            .get(key.as_str())
             .payload(body)
             .timeout(RPC_TIMEOUT)
-            .await.map_err(|e| error("Zenoh get", e))?;
-        let reply = tokio::time::timeout(RPC_TIMEOUT, replies.recv_async()).await
+            .await
+            .map_err(|e| error("Zenoh get", e))?;
+        let reply = tokio::time::timeout(RPC_TIMEOUT, replies.recv_async())
+            .await
             .map_err(|e| error("Zenoh RPC timed out", e))?
             .map_err(|e| error("Zenoh RPC reply unavailable", e))?;
 
-        let sample = reply.result().map_err(|_| anyhow::anyhow!("remote RPC was rejected"))?;
+        let sample = reply
+            .result()
+            .map_err(|_| anyhow::anyhow!("remote RPC was rejected"))?;
         let payload = sample.payload();
         if payload.len() > MAX_FRAME_BYTES {
             anyhow::bail!("remote reply exceeds RPC frame size");
         }
-        self.protocol.read_reply(payload.to_bytes().as_ref(), &request)
+        self.protocol
+            .read_reply(payload.to_bytes().as_ref(), &request)
             .map_err(|e| error("verify signed response", e))
     }
 }
