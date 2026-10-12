@@ -5,6 +5,8 @@
 //! Retries are only automatic when the trusted submitter explicitly marks
 //! a tool operation idempotent/retry-safe.
 pub mod worker;
+#[cfg(feature = "zenoh")]
+pub mod remote;
 
 use std::path::Path;
 use std::sync::{Arc, Mutex};
