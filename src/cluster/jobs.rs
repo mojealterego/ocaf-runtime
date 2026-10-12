@@ -33,6 +33,16 @@ pub struct PgJobQueue {
     state: Arc<PgConnection>,
 }
 
+/// Durable, owner-scoped, metadata-only journal entry. Payloads, result
+/// bodies, signing secrets and lease tokens are never copied into the audit.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct JobAuditEvent {
+    pub sequence: i64,
+    pub actor: String,
+    pub event: String,
+    pub occurred_at_ms: i64,
+}
+
 fn storage(_: tokio_postgres::Error) -> JobError {
     JobError::Storage
 }
@@ -125,6 +135,16 @@ impl PgJobQueue {
                  ON ocaf_pg_jobs_v1(status,seq);
              CREATE INDEX IF NOT EXISTS ocaf_pg_jobs_expiration
                  ON ocaf_pg_jobs_v1(status,lease_expires_at_ms);
+             CREATE TABLE IF NOT EXISTS ocaf_pg_job_audit_v1 (
+                 seq BIGSERIAL PRIMARY KEY,
+                 job_id TEXT NOT NULL REFERENCES ocaf_pg_jobs_v1(id),
+                 actor TEXT NOT NULL,
+                 event TEXT NOT NULL CHECK(event IN
+                    ('submitted','claimed','succeeded','failed','uncertain')),
+                 occurred_at_ms BIGINT NOT NULL
+             );
+             CREATE INDEX IF NOT EXISTS ocaf_pg_job_audit_lookup
+                 ON ocaf_pg_job_audit_v1(job_id,seq);
              COMMIT;",
             )
             .await
@@ -153,13 +173,20 @@ impl PgJobQueue {
 
         let mut client = self.state.client.lock().await;
         let tx = client.transaction().await.map_err(storage)?;
-        tx.execute(
+        let inserted = tx.execute(
             "INSERT INTO ocaf_pg_jobs_v1(id,owner,tool,args,retry_safe,max_attempts,status)
              VALUES($1,$2,$3,$4,FALSE,1,'pending') ON CONFLICT(id) DO NOTHING",
             &[&job.id, &owner, &job.tool, &args],
         )
         .await
         .map_err(storage)?;
+        if inserted == 1 {
+            tx.execute(
+                "INSERT INTO ocaf_pg_job_audit_v1(job_id,actor,event,occurred_at_ms)
+                 VALUES($1,$2,'submitted',(EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT)",
+                &[&job.id,&owner],
+            ).await.map_err(storage)?;
+        }
         let row = tx
             .query_one(
                 "SELECT id,owner,tool,args,retry_safe,max_attempts,status,attempts,result,
@@ -230,6 +257,11 @@ impl PgJobQueue {
         )
         .await
         .map_err(storage)?;
+        tx.execute(
+            "INSERT INTO ocaf_pg_job_audit_v1(job_id,actor,event,occurred_at_ms)
+             VALUES($1,$2,'claimed',(EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT)",
+            &[&id,&worker],
+        ).await.map_err(storage)?;
         tx.commit().await.map_err(storage)?;
         Ok(Some(LeasedJob {
             id,
@@ -242,23 +274,59 @@ impl PgJobQueue {
         }))
     }
 
+    /// A single SQL statement transitions every expired lease and logs the
+    /// uncertainty atomically. Re-running recovery never duplicates entries.
     pub async fn recover_expired(&self, now_ms: u64) -> Result<RecoverySummary, JobError> {
         let now = millis(now_ms)?;
         let client = self.state.client.lock().await;
-        let changed = client
-            .execute(
-                "UPDATE ocaf_pg_jobs_v1 SET status='uncertain',
-             last_error='expired remote lease; external outcome unknown',
-             worker_id=NULL,lease_token=NULL,lease_expires_at_ms=NULL
-             WHERE status='running' AND lease_expires_at_ms<=$1",
-                &[&now],
-            )
-            .await
-            .map_err(storage)?;
+        let rows = client.query(
+            "WITH moved AS (
+                UPDATE ocaf_pg_jobs_v1 SET status='uncertain',
+                last_error='expired remote lease; external outcome unknown',
+                worker_id=NULL,lease_token=NULL,lease_expires_at_ms=NULL
+                WHERE status='running' AND lease_expires_at_ms<=$1
+                RETURNING id
+             )
+             INSERT INTO ocaf_pg_job_audit_v1(job_id,actor,event,occurred_at_ms)
+             SELECT id,'coordinator','uncertain',
+                (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT FROM moved
+             RETURNING seq",
+            &[&now],
+        ).await.map_err(storage)?;
         Ok(RecoverySummary {
             retried: 0,
-            uncertain: usize::try_from(changed).map_err(|_| JobError::Storage)?,
+            uncertain: rows.len(),
         })
+    }
+
+    /// Read at most 100 metadata-only audit records for an authenticated
+    /// original submitter, never for a worker or an unrelated owner.
+    pub async fn audit_owned(
+        &self,
+        owner: &str,
+        id: &str,
+        limit: usize,
+    ) -> Result<Vec<JobAuditEvent>, JobError> {
+        validate_actor(owner)?;
+        if Uuid::parse_str(id).is_err() || !(1..=100).contains(&limit) {
+            return Err(JobError::Invalid);
+        }
+        let limit = i64::try_from(limit).map_err(|_| JobError::Invalid)?;
+        let client = self.state.client.lock().await;
+        let rows = client.query(
+            "SELECT a.seq,a.actor,a.event,a.occurred_at_ms
+             FROM ocaf_pg_job_audit_v1 a
+             JOIN ocaf_pg_jobs_v1 j ON a.job_id=j.id
+             WHERE a.job_id=$1 AND j.owner=$2
+             ORDER BY a.seq ASC LIMIT $3",
+            &[&id,&owner,&limit],
+        ).await.map_err(storage)?;
+        Ok(rows.into_iter().map(|row| JobAuditEvent {
+            sequence: row.get(0),
+            actor: row.get(1),
+            event: row.get(2),
+            occurred_at_ms: row.get(3),
+        }).collect())
     }
 
     pub async fn get_owned(&self, owner: &str, id: &str) -> Result<Option<JobRecord>, JobError> {
@@ -289,9 +357,9 @@ impl PgJobQueue {
             return Err(JobError::Invalid);
         }
         let attempt = i32::try_from(lease.attempt).map_err(|_| JobError::Invalid)?;
-        let client = self.state.client.lock().await;
-        let changed = client
-            .execute(
+        let mut client = self.state.client.lock().await;
+        let tx = client.transaction().await.map_err(storage)?;
+        let changed = tx.execute(
                 "UPDATE ocaf_pg_jobs_v1 SET status=$6,result=$7,last_error=$8,
              worker_id=NULL,lease_token=NULL,lease_expires_at_ms=NULL
              WHERE id=$1 AND status='running' AND worker_id=$2
@@ -314,6 +382,12 @@ impl PgJobQueue {
         if changed != 1 {
             return Err(JobError::StaleLease);
         }
+        tx.execute(
+            "INSERT INTO ocaf_pg_job_audit_v1(job_id,actor,event,occurred_at_ms)
+             VALUES($1,$2,$3,(EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT)",
+            &[&lease.id,&lease.worker_id,&status],
+        ).await.map_err(storage)?;
+        tx.commit().await.map_err(storage)?;
         Ok(())
     }
 
