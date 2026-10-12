@@ -116,6 +116,7 @@ export OCAF_NODE_ID=submitter
 export OCAF_PEER_ID=coord
 export OCAF_SHARED_KEY_B64="<SUBMITTER_32_BYTE_KEY_B64>"
 export OCAF_ZENOH_CONFIG=examples/insecure-local/client.json5
+export OCAF_ALLOW_INSECURE_LOOPBACK=1 # Unsafe loopback-only demonstration
 export OCAF_ACTION=submit
 export OCAF_MESSAGE="one durable remote job"
 export OCAF_JOB_ID="$(cat /proc/sys/kernel/random/uuid)" # Linux demo
