@@ -81,4 +81,18 @@ impl JobBackend {
             Self::Postgres(db) => db.mark_uncertain(lease, now).await,
         }
     }
+    /// Audit is currently backed by PostgreSQL only. A legacy SQLite
+    /// coordinator fails closed rather than fabricating audit history.
+    pub(super) async fn audit_owned(
+        &self,
+        owner: &str,
+        id: &str,
+        limit: usize,
+    ) -> Result<Vec<crate::cluster::jobs::JobAuditEvent>, JobError> {
+        match self {
+            Self::Sqlite(_) => Err(JobError::Invalid),
+            Self::Postgres(db) => db.audit_owned(owner, id, limit).await,
+        }
+    }
+
 }
