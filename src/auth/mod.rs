@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+/// Credential material is sensitive. The runtime never logs its contents.
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AuthContext {
     pub macaroon: String,
     pub preimage: String,
@@ -8,67 +10,73 @@ pub struct AuthContext {
     pub nonce: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct L402Challenge {
-    pub payment_required: bool,
-    pub invoice: String,
-    pub cost_sats: u64,
-    pub macaroon: String,
-    pub nonce: String,
+impl fmt::Debug for AuthContext {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AuthContext")
+            .field("macaroon", &"[REDACTED]")
+            .field("preimage", &"[REDACTED]")
+            .field("invoice", &"[REDACTED]")
+            .field("nonce", &"[REDACTED]")
+            .finish()
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum AuthError {
-    #[error("payment required for tool: {0}")]
-    PaymentRequired(String),
-    #[error("invalid macaroon token")]
-    InvalidMacaroon,
-    #[error("invalid preimage")]
-    InvalidPreimage,
-    #[error("challenge rejected")]
-    ChallengeRejected,
+    #[error("credential is required")]
+    MissingCredential,
+    #[error("no verified authorization provider is configured")]
+    VerificationUnavailable,
+    #[error("authorization was rejected")]
+    Denied,
+}
+
+/// Production implementations MUST verify macaroon signatures, payment hashes,
+/// invoice/payment context, caveats and replay policy before returning Ok(()).
+/// The built-in verifier deliberately does not accept paid or permissioned calls.
+#[async_trait::async_trait]
+pub trait AuthVerifier: Send + Sync {
+    async fn verify(
+        &self,
+        tool_name: &str,
+        credential: &AuthContext,
+        required_cost_sats: u64,
+        permissions: &[String],
+    ) -> Result<(), AuthError>;
+}
+
+pub struct DenyByDefaultVerifier;
+
+#[async_trait::async_trait]
+impl AuthVerifier for DenyByDefaultVerifier {
+    async fn verify(
+        &self,
+        _tool_name: &str,
+        _credential: &AuthContext,
+        _required_cost_sats: u64,
+        _permissions: &[String],
+    ) -> Result<(), AuthError> {
+        Err(AuthError::VerificationUnavailable)
+    }
 }
 
 pub struct AuthPolicy;
 
 impl AuthPolicy {
-    pub fn challenge_for(tool_name: &str, cost_sats: u64) -> L402Challenge {
-        L402Challenge {
-            payment_required: true,
-            invoice: format!("lnbc_{}_invoice", tool_name),
-            cost_sats,
-            macaroon: format!("macaroon_{}_token", tool_name),
-            nonce: uuid::Uuid::new_v4().to_string(),
-        }
-    }
-
-    pub fn validate(
+    pub async fn authorize(
         tool_name: &str,
+        required_cost_sats: u64,
+        permissions: &[String],
         auth: Option<&AuthContext>,
-        required_cost: u64,
+        verifier: &dyn AuthVerifier,
     ) -> Result<(), AuthError> {
-        if auth.is_none() && required_cost > 0 {
-            return Err(AuthError::PaymentRequired(tool_name.to_string()));
-        }
-
-        let auth = auth.ok_or_else(|| AuthError::PaymentRequired(tool_name.to_string()))?;
-
-        if auth.macaroon.trim().is_empty() {
-            return Err(AuthError::InvalidMacaroon);
-        }
-
-        if auth.preimage.trim().is_empty() {
-            return Err(AuthError::InvalidPreimage);
-        }
-
-        if auth.invoice.trim().is_empty() || auth.nonce.trim().is_empty() {
-            return Err(AuthError::ChallengeRejected);
-        }
-
-        if required_cost == 0 {
+        if required_cost_sats == 0 && permissions.is_empty() {
             return Ok(());
         }
 
-        Ok(())
+        let credential = auth.ok_or(AuthError::MissingCredential)?;
+        verifier
+            .verify(tool_name, credential, required_cost_sats, permissions)
+            .await
     }
 }
