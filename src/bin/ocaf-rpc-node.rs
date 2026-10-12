@@ -79,7 +79,9 @@ async fn main() -> anyhow::Result<()> {
             let coordinator_id = env::var("OCAF_COORDINATOR_NODE_ID").ok();
             let coordinator_key = env::var("OCAF_COORDINATOR_KEY_B64").ok();
             if coordinator_id.is_some() != coordinator_key.is_some() {
-                anyhow::bail!("OCAF_COORDINATOR_NODE_ID and OCAF_COORDINATOR_KEY_B64 must be set together");
+                anyhow::bail!(
+                    "OCAF_COORDINATOR_NODE_ID and OCAF_COORDINATOR_KEY_B64 must be set together"
+                );
             }
             let heartbeat_task = if let Some(coord_id) = coordinator_id {
                 let coord_key = load_key_env("OCAF_COORDINATOR_KEY_B64")?;
