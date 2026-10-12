@@ -12,9 +12,9 @@ use base64::engine::general_purpose::STANDARD as B64;
 use base64::Engine as _;
 use ocaf_runtime::coordinator::leadership::LeaderGuard;
 use ocaf_runtime::rpc::{PeerPolicy, RpcGateway};
-use ocaf_runtime::transport_policy::validate_zenoh_config;
 use ocaf_runtime::runtime::OcafRuntime;
 use ocaf_runtime::transport::rpc::ZenohRpcServer;
+use ocaf_runtime::transport_policy::validate_zenoh_config;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -98,23 +98,37 @@ async fn main() -> anyhow::Result<()> {
     let membership = absolute_path("OCAF_COORDINATOR_DB_PATH")?;
     let jobs = absolute_path("OCAF_JOBS_DB_PATH")?;
     let lock_path = absolute_path("OCAF_COORDINATOR_LOCK_PATH")?;
-    if replay == membership || replay == jobs || membership == jobs
-        || lock_path == replay || lock_path == membership || lock_path == jobs
+    if replay == membership
+        || replay == jobs
+        || membership == jobs
+        || lock_path == replay
+        || lock_path == membership
+        || lock_path == jobs
     {
         anyhow::bail!("leadership, coordinator, replay and job paths must be separate");
     }
     // A different lock directory could allow apparently identical leaders
     // to acquire different locks. Canonicalize the *parents* before serving.
-    let lock_parent = fs::canonicalize(lock_path.parent().ok_or_else(|| anyhow::anyhow!("lock parent missing"))?)?;
-    let jobs_parent = fs::canonicalize(jobs.parent().ok_or_else(|| anyhow::anyhow!("jobs parent missing"))?)?;
+    let lock_parent = fs::canonicalize(
+        lock_path
+            .parent()
+            .ok_or_else(|| anyhow::anyhow!("lock parent missing"))?,
+    )?;
+    let jobs_parent = fs::canonicalize(
+        jobs.parent()
+            .ok_or_else(|| anyhow::anyhow!("jobs parent missing"))?,
+    )?;
     if lock_parent != jobs_parent {
-        anyhow::bail!("coordinator leader lock must be in the same local directory as the job database");
+        anyhow::bail!(
+            "coordinator leader lock must be in the same local directory as the job database"
+        );
     }
 
     let mode = env::var("OCAF_COORDINATOR_MODE").unwrap_or_else(|_| "active".into());
     let _leader = match mode.as_str() {
-        "active" => LeaderGuard::try_acquire(&lock_path)?
-            .ok_or_else(|| anyhow::anyhow!("another coordinator already holds the exclusive lock"))?,
+        "active" => LeaderGuard::try_acquire(&lock_path)?.ok_or_else(|| {
+            anyhow::anyhow!("another coordinator already holds the exclusive lock")
+        })?,
         "standby" => {
             tracing::info!("coordinator standby waiting for exclusive local leadership");
             LeaderGuard::acquire_standby(&lock_path, Duration::from_millis(250)).await?
