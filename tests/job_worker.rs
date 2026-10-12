@@ -157,3 +157,32 @@ fn worker_rejects_empty_allowlist_or_invalid_worker_identity() {
     )
     .is_err());
 }
+
+#[tokio::test]
+async fn worker_recovers_expired_retry_safe_job_without_manual_supervisor_step() {
+    let dir = tempfile::tempdir().unwrap();
+    let store = JobStore::open(&dir.path().join("jobs.sqlite")).unwrap();
+    let runtime = OcafRuntime::new(0);
+    let calls = Arc::new(AtomicUsize::new(0));
+    runtime
+        .register(manifest("echo", 0, vec![], 100), Echo(Arc::clone(&calls)))
+        .await
+        .unwrap();
+    let mut work = job("echo");
+    work.retry_safe = true;
+    work.max_attempts = 2;
+    store.submit(work.clone()).await.unwrap();
+    let now = ocaf_runtime::rpc::now_ms().unwrap();
+    let _abandoned = store.claim("crashed-agent", now - 5_000, 100)
+        .await.unwrap().unwrap();
+    let worker = JobWorker::new(
+        store.clone(),
+        runtime,
+        "replacement-agent",
+        10_000,
+        HashSet::from(["echo".into()]),
+    ).unwrap();
+    assert_eq!(worker.run_once().await.unwrap(), Some(JobStatus::Succeeded));
+    assert_eq!(store.get(&work.id).await.unwrap().unwrap().attempts, 2);
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+}
