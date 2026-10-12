@@ -10,7 +10,24 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ocaf
+          POSTGRES_PASSWORD: ocaf_local_test_password
+          POSTGRES_DB: ocaf_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ocaf -d ocaf_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      OCAF_TEST_PG_DSN: "host=127.0.0.1 port=5432 user=ocaf password=ocaf_local_test_password dbname=ocaf_test sslmode=disable"
+      OCAF_REQUIRE_PG_TESTS: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
