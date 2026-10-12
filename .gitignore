@@ -14,3 +14,11 @@ Cargo.lock
 
 # Logs
 *.log
+
+# Durable RPC ledger and SQLite sidecars (never commit runtime state)
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
