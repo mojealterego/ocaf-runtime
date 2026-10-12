@@ -60,7 +60,7 @@ impl PgReplay {
         let tx = client.transaction().await.map_err(|_| RpcError::Unavailable)?;
         // Serialize the purge, duplicate admission and capacity bound
         // across concurrent connections. This is transaction-scoped.
-        tx.execute("SELECT pg_advisory_xact_lock($1)", &[&ADMISSION_LOCK])
+        tx.query_one("SELECT pg_advisory_xact_lock($1)", &[&ADMISSION_LOCK])
             .await.map_err(|_| RpcError::Unavailable)?;
         tx.execute("DELETE FROM ocaf_pg_replay_v1 WHERE expires_at_ms < $1", &[&now])
             .await.map_err(|_| RpcError::Unavailable)?;
