@@ -4,9 +4,9 @@ use std::net::TcpListener;
 use std::sync::Arc;
 use std::time::Duration;
 
+use ocaf_runtime::cluster::jobs::PgJobQueue;
 use ocaf_runtime::jobs::remote::RemoteJobWorker;
 use ocaf_runtime::jobs::JobStatus;
-use ocaf_runtime::cluster::jobs::PgJobQueue;
 use ocaf_runtime::rpc::{PeerPolicy, RpcAction, RpcClient, RpcGateway, RpcStatus};
 use ocaf_runtime::runtime::OcafRuntime;
 use ocaf_runtime::transport::rpc::{ZenohRpcClient, ZenohRpcServer};
@@ -68,7 +68,8 @@ async fn real_zenoh_remote_worker_executes_shared_postgres_job() -> anyhow::Resu
         &dir.path().join("replay.sqlite"),
     )?
     .with_coordinator_db(&dir.path().join("members.sqlite"))?
-    .with_postgres_job_db(&pg, true).await?;
+    .with_postgres_job_db(&pg, true)
+    .await?;
     let server = ZenohRpcServer::new(coordinator_session, Arc::new(gateway));
     let handle = tokio::spawn(async move { server.serve().await });
     tokio::time::sleep(Duration::from_millis(400)).await;
@@ -101,7 +102,11 @@ async fn real_zenoh_remote_worker_executes_shared_postgres_job() -> anyhow::Resu
 
     assert_eq!(worker.poll_once().await?, Some(JobStatus::Succeeded));
     assert_eq!(worker.poll_once().await?, None);
-    let stored = PgJobQueue::connect(&pg, true).await?.get_owned("submitter", &job_id).await?.unwrap();
+    let stored = PgJobQueue::connect(&pg, true)
+        .await?
+        .get_owned("submitter", &job_id)
+        .await?
+        .unwrap();
     assert_eq!(stored.status, JobStatus::Succeeded);
     assert_eq!(stored.attempts, 1);
     assert_eq!(
