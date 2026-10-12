@@ -1,9 +1,9 @@
 //! Real PostgreSQL operational snapshot and fail-closed leader detection.
+use ocaf_runtime::cluster::jobs::PgJobQueue;
 use ocaf_runtime::cluster::leadership::PgLeader;
 use ocaf_runtime::cluster::observability::{
     AlertPolicy, ClusterAlertCode, ClusterHealth, ClusterSnapshot, PgClusterMonitor,
 };
-use ocaf_runtime::cluster::jobs::PgJobQueue;
 use ocaf_runtime::jobs::JobSpec;
 use serde_json::json;
 
@@ -37,12 +37,30 @@ fn alert_thresholds_and_leadership_are_deterministic_and_bounded() {
     };
     let report = policy.evaluate(snapshot.clone());
     assert_eq!(report.health, ClusterHealth::Critical);
-    assert!(report.alerts.iter().any(|a| a.code == ClusterAlertCode::NoLeader));
-    assert!(report.alerts.iter().any(|a| a.code == ClusterAlertCode::PendingBacklog));
-    assert!(report.alerts.iter().any(|a| a.code == ClusterAlertCode::UncertainJobs));
-    assert!(report.alerts.iter().any(|a| a.code == ClusterAlertCode::ExpiredRunningJobs));
-    assert!(report.alerts.iter().any(|a| a.code == ClusterAlertCode::NoLiveAgents));
-    assert!(report.alerts.iter().any(|a| a.code == ClusterAlertCode::ExpiredAgents));
+    assert!(report
+        .alerts
+        .iter()
+        .any(|a| a.code == ClusterAlertCode::NoLeader));
+    assert!(report
+        .alerts
+        .iter()
+        .any(|a| a.code == ClusterAlertCode::PendingBacklog));
+    assert!(report
+        .alerts
+        .iter()
+        .any(|a| a.code == ClusterAlertCode::UncertainJobs));
+    assert!(report
+        .alerts
+        .iter()
+        .any(|a| a.code == ClusterAlertCode::ExpiredRunningJobs));
+    assert!(report
+        .alerts
+        .iter()
+        .any(|a| a.code == ClusterAlertCode::NoLiveAgents));
+    assert!(report
+        .alerts
+        .iter()
+        .any(|a| a.code == ClusterAlertCode::ExpiredAgents));
     assert!(!serde_json::to_string(&report).unwrap().contains("password"));
 
     let healthy = ClusterSnapshot {
@@ -68,7 +86,9 @@ fn alert_thresholds_and_leadership_are_deterministic_and_bounded() {
 async fn monitor_reads_real_db_clock_counts_and_postgres_advisory_leader() {
     let Some(dsn) = dsn() else { return };
     let cluster = format!("observe_{}", uuid::Uuid::new_v4().simple());
-    let monitor = PgClusterMonitor::connect(&dsn, &cluster, true).await.unwrap();
+    let monitor = PgClusterMonitor::connect(&dsn, &cluster, true)
+        .await
+        .unwrap();
     // Live metrics must not invent a leader before advisory lock acquisition.
     let empty = monitor.snapshot().await.unwrap();
     assert_eq!(empty.leader_sessions, 0);
@@ -90,8 +110,14 @@ async fn monitor_reads_real_db_clock_counts_and_postgres_advisory_leader() {
     queue.submit_owned("health-test", job).await.unwrap();
     let after = monitor.snapshot().await.unwrap();
     assert!(after.jobs_pending >= 1);
-    assert!(after.jobs_pending + after.jobs_running + after.jobs_succeeded
-        + after.jobs_failed + after.jobs_uncertain >= 1);
+    assert!(
+        after.jobs_pending
+            + after.jobs_running
+            + after.jobs_succeeded
+            + after.jobs_failed
+            + after.jobs_uncertain
+            >= 1
+    );
     let encoded = serde_json::to_string(&after).unwrap();
     assert!(!encoded.contains("DO_NOT_EMIT_SECRETS"));
     assert!(!encoded.contains("health-test"));
@@ -104,12 +130,20 @@ async fn monitor_reads_real_db_clock_counts_and_postgres_advisory_leader() {
 async fn monitor_rejects_plaintext_remote_postgres_and_bad_cluster_names() {
     let err = PgClusterMonitor::connect(
         "host=public.example.com user=guest sslmode=disable",
-        "monitor", true,
-    ).await.err().expect("remote insecure database denied");
+        "monitor",
+        true,
+    )
+    .await
+    .err()
+    .expect("remote insecure database denied");
     assert!(err.to_string().contains("transport"));
     let err = PgClusterMonitor::connect(
         "host=127.0.0.1 user=guest sslmode=disable",
-        "not/a/cluster", true,
-    ).await.err().expect("invalid cluster denied before network call");
+        "not/a/cluster",
+        true,
+    )
+    .await
+    .err()
+    .expect("invalid cluster denied before network call");
     assert!(err.to_string().contains("cluster"));
 }
