@@ -1,6 +1,6 @@
 # OCAF Runtime — Rust / Tokio / Zenoh
 
-**Status: experimental signed Zenoh RPC, authenticated agent directory and pull-based distributed job dispatch backed by a single-host SQLite coordinator; not production hardened.**
+**Status: experimental signed Zenoh RPC, durable cross-process job dispatch and single-host active/passive coordinator failover; not production hardened.**
 
 OCAF provides an async local tool registry and execution engine, plus a
 **real Zenoh query/reply protocol** for pairwise authenticated agent calls.
@@ -21,12 +21,13 @@ deliberately limited to **free, enabled tools without special permissions**.
 | SQLite WAL replay journal / expiration / bounded concurrency | Implemented; mandatory in RPC server CLI |
 | Authenticated peer-specific RPC rate limit | Default 64/s; tunable through PeerPolicy |
 | Two-session Zenoh TCP integration test | Automated test |
-| TLS/mTLS transport | Operator-configured (not programmatically enforced) |
+| TLS/mTLS transport policy | Fail-closed CLI preflight; requires TLS-only/mTLS settings and certificate files |
 | Durable admission (at-most-once within TTL) | Implemented with SQLite; not exactly-once execution |
 | SQLite job queue, worker lease/fencing, restart recovery | Implemented for one host |
 | Authenticated agent membership, 15-second leases, capability routing | Implemented (single-host coordinator) |
 | Signed remote job submit/pull/finish and owner-only results | Implemented; single coordinator |
-| Replicated coordinator, distributed consensus and HA failover | Not implemented |
+| On-host coordinator active/passive leadership | Implemented with exclusive OS file lock and standby takeover |
+| Cross-host replicated coordinator / consensus | Not implemented |
 | L402 Lightning payments and cryptographic payment validation | Not implemented |
 | Untrusted executable tool sandbox and production rate limiting | Not implemented |
 
@@ -64,6 +65,7 @@ export OCAF_ROLE=server
 export OCAF_NODE_ID=agent-b
 export OCAF_PEER_ID=agent-a
 export OCAF_ZENOH_CONFIG=examples/insecure-local/server.json5
+export OCAF_ALLOW_INSECURE_LOOPBACK=1 # Local-only unsafe demo
 export OCAF_REPLAY_DB_PATH="$(pwd)/ocaf-replay.sqlite"
 cargo run --bin ocaf-rpc-node
 ```
@@ -75,6 +77,7 @@ export OCAF_ROLE=client
 export OCAF_NODE_ID=agent-a
 export OCAF_PEER_ID=agent-b
 export OCAF_ZENOH_CONFIG=examples/insecure-local/client.json5
+export OCAF_ALLOW_INSECURE_LOOPBACK=1 # Local-only unsafe demo
 export OCAF_ACTION=discover
 cargo run --bin ocaf-rpc-node
 export OCAF_ACTION=call
@@ -97,9 +100,15 @@ certificates in the deployment environment. The in-process HMAC
 authenticator offers integrity and peer-key authentication, **not**
 confidentiality.
 
-The RPC CLI **requires** `OCAF_ZENOH_CONFIG` and does not silently
-fall back to Zenoh network defaults. Example configuration files are
-plaintext loopback-only and must not be used as production settings.
+Both RPC and coordinator CLIs **require** `OCAF_ZENOH_CONFIG` and run a
+fail-closed transport policy validator. Secure mode requires explicit
+TLS-only endpoints/protocol whitelist and mTLS certificate settings.
+Plaintext TCP is permitted only with the explicit development flag
+`OCAF_ALLOW_INSECURE_LOOPBACK=1` and literal loopback endpoints;
+non-loopback TCP is rejected even with that flag. These checks do not
+replace actual Zenoh certificate handshake verification. See
+[docs/HA.md](docs/HA.md) and [examples/secure-mtls](examples/secure-mtls).
+
 
 ## Wire contract
 
@@ -181,10 +190,25 @@ effect guarantee**.
 See [docs/DISTRIBUTED_JOBS.md](docs/DISTRIBUTED_JOBS.md) for the complete
 protocol, role ACLs, local demo and security boundaries.
 
+## Local active/passive coordinator and transport preflight (v0.9)
+
+The coordinator now requires an absolute `OCAF_COORDINATOR_LOCK_PATH`
+in the same local directory as its SQLite job database. It refuses to
+serve without exclusive ownership of the process-held OS file lock.
+A second coordinator started with `OCAF_COORDINATOR_MODE=standby`
+waits and promotes after the original leader releases the lock, including
+abnormal process exit. Both instances must share the **same local host,
+local disk, endpoint, databases and node identity**; external process
+supervision is required. This is not HA for a failed machine or a
+replicated multi-server cluster.
+
+See [docs/HA.md](docs/HA.md) for configuration, security acceptance tests,
+limits, and the next cross-host architecture milestones.
+
 ## Production work still required
 
-1. Enforced TLS/mTLS identity and secure configuration verification.
-2. Replicated job broker/coordinator, external-effect fencing and real high availability.
+1. Certificate-backed TLS/mTLS handshake tests on deployed hosts, plus key rotation and revocation.
+2. Replicated job broker/coordinator, external-effect fencing and real **cross-host** high availability.
 3. Signed plugin supply chain, sandbox and capability isolation.
 4. Secret manager integration, peer/key rotation, revocation and quotas.
 5. Distributed traces, fault injection, property tests and benchmarks.
