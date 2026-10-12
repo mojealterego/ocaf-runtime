@@ -197,7 +197,9 @@ struct PartialSideEffect(Arc<AtomicUsize>);
 impl ToolExecutor for PartialSideEffect {
     async fn execute(&self, _: Value, _: &ExecutionContext) -> Result<Value, ToolError> {
         self.0.fetch_add(1, Ordering::SeqCst);
-        Err(ToolError::Execution("effect happened before failure".into()))
+        Err(ToolError::Execution(
+            "effect happened before failure".into(),
+        ))
     }
 }
 
@@ -208,7 +210,10 @@ async fn ambiguous_tool_failure_is_uncertain_for_non_retry_safe_job() {
     let runtime = OcafRuntime::new(0);
     let effects = Arc::new(AtomicUsize::new(0));
     runtime
-        .register(manifest("side_effect", 0, vec![], 100), PartialSideEffect(Arc::clone(&effects)))
+        .register(
+            manifest("side_effect", 0, vec![], 100),
+            PartialSideEffect(Arc::clone(&effects)),
+        )
         .await
         .unwrap();
     let task = job("side_effect");
@@ -219,9 +224,13 @@ async fn ambiguous_tool_failure_is_uncertain_for_non_retry_safe_job() {
         "worker-a",
         10_000,
         HashSet::from(["side_effect".into()]),
-    ).unwrap();
+    )
+    .unwrap();
     assert_eq!(worker.run_once().await.unwrap(), Some(JobStatus::Uncertain));
-    assert_eq!(store.get(&task.id).await.unwrap().unwrap().status, JobStatus::Uncertain);
+    assert_eq!(
+        store.get(&task.id).await.unwrap().unwrap().status,
+        JobStatus::Uncertain
+    );
     assert_eq!(effects.load(Ordering::SeqCst), 1);
     assert_eq!(worker.run_once().await.unwrap(), None);
 }
