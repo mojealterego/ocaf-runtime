@@ -675,6 +675,10 @@ impl RpcClient {
         Ok(reply)
     }
 
+    pub fn local_id(&self) -> &str {
+        &self.node_id
+    }
+
     pub fn remote_id(&self) -> &str {
         &self.remote_id
     }
