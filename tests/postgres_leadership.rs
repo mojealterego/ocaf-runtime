@@ -168,7 +168,10 @@ async fn changed_database_epoch_fences_a_still_connected_old_leader() {
         .unwrap(),
         1
     );
-    assert!(matches!(active.verify().await, Err(PgLeaderError::Database)));
+    assert!(matches!(
+        active.verify().await,
+        Err(PgLeaderError::Database)
+    ));
     assert!(!standby.try_acquire().await.unwrap());
     active.release().await.unwrap();
     assert!(standby.try_acquire().await.unwrap());
