@@ -130,7 +130,7 @@ async fn signed_audit_is_private_even_if_other_peer_knows_job_uuid() {
         &REQUESTER_KEY,
         RpcAction::SubmitJob {
             id: id.clone(),
-            tool: "echo".into(),
+            tool: tool.clone(),
             args: json!({"secret":"never audit this"}),
         },
     )
