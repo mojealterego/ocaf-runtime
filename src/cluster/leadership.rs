@@ -157,6 +157,20 @@ impl PgLeader {
     /// A leader must keep proving the original session is alive. If this
     /// returns an error, immediately cease serving: the advisory lock may
     /// already have been handed to a standby.
+    /// Report the PostgreSQL server session PID for diagnostics and
+    /// controlled failure-injection tests. This value is not a fencing
+    /// token and must never authorize a remote workload.
+    pub async fn backend_pid(&self) -> Result<i32, PgLeaderError> {
+        let row = tokio::time::timeout(
+            Duration::from_secs(5),
+            self.client.query_one("SELECT pg_backend_pid()", &[]),
+        )
+        .await
+        .map_err(|_| PgLeaderError::Database)?
+        .map_err(|_| PgLeaderError::Database)?;
+        Ok(row.get(0))
+    }
+
     pub async fn verify(&self) -> Result<(), PgLeaderError> {
         if !self.held.load(Ordering::SeqCst) || self.connection.is_finished() {
             return Err(PgLeaderError::Database);
