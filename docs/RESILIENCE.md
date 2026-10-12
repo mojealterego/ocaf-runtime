@@ -29,6 +29,12 @@ Unrelated submitters receive an empty event list and worker-only
 identities are denied. The existing legacy SQLite RPC backend currently
 rejects the audit request; no fabricated log is returned.
 
+To inspect the original submitter's audit in the provided RPC client CLI,
+set `OCAF_ROLE=client`, `OCAF_ACTION=audit`, `OCAF_JOB_ID=<uuid>` and
+optionally `OCAF_AUDIT_LIMIT=50` (1–100). Use exactly the same
+HMAC-authenticated submitter identity and vetted Zenoh TLS configuration
+as the original submission.
+
 ## Controlled failure injection
 
 `tests/postgres_chaos.rs` uses a real PostgreSQL server to:
