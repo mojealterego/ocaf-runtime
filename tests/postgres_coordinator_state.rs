@@ -202,7 +202,10 @@ async fn standby_gateway_fails_closed_before_accepting_signed_requests() {
     leader.release().await.unwrap();
     // Verify the already-active gateway before any reply is emitted,
     // not only at request admission.
-    assert!(matches!(active.verify_current_leader().await, Err(RpcError::Unavailable)));
+    assert!(matches!(
+        active.verify_current_leader().await,
+        Err(RpcError::Unavailable)
+    ));
     assert!(matches!(
         send(
             &active,
