@@ -432,6 +432,22 @@ a general-purpose external side-effect protocol.
 
 See [docs/EFFECT_BOUNDARY.md](docs/EFFECT_BOUNDARY.md).
 
+## Independent authenticated effect receiver (v0.21)
+
+New standalone `ocaf-effect-sink` executable owns an **independent
+SQLite event journal** and a separate signed Zenoh RPC destination.
+Trusted controllers publish short-lived, monotonic leadership epochs;
+worker writes require a separately controller-signed, job-and-payload-
+bound permit, the current epoch, a valid local activation window and
+durable nonce/idempotency checks. This supports independent delivery
+and acknowledgement of *journal events*; it does **not** atomically
+fence arbitrary third-party APIs or prove externally visible
+side effects have completed.
+
+See [docs/INDEPENDENT_SINK.md](docs/INDEPENDENT_SINK.md) for
+configuration, identity/key isolation, security guarantees, CI
+coverage and current split-brain limitations.
+
 ## Production work still required
 
 1. Certificate-backed TLS/mTLS handshakes on separate deployed hosts, plus certificate rotation and revocation.
