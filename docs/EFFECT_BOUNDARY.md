@@ -36,3 +36,14 @@ manifest's free/permissionless status is not evidence of purity.
 No physical multi-host network partition or independent downstream
 side-effect sink has yet been verified; this must not be described
 as production HA or exactly-once external effects.
+
+## Builder-order and backend downgrade regression
+
+If `RpcGateway::with_pg_leader` is called before
+`with_postgres_job_db`, the queue now inherits the same leader
+automatically. Attaching a local SQLite queue *after* a PostgreSQL
+leader is rejected at construction; attaching it before the leader
+causes signed request processing to fail closed with `Unavailable`.
+Thus no valid cluster leader may silently admit epoch-zero job leases
+because an application chained its gateway builders in a different
+order. PostgreSQL integration tests verify both construction orders.

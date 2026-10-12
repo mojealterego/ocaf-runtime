@@ -20,6 +20,13 @@ use super::{JobStatus, LeasedJob};
 const REMOTE_LEASE_MS: u64 = 30_000;
 const TIMEOUT_MARGIN_MS: u64 = 4_000;
 
+/// No remotely executed tool is proven pure by a free price or an empty
+/// manifest permission set. A positive fencing generation therefore
+/// requires the operator's separate explicit purity allowlist.
+fn can_run_in_cluster(epoch: i64, tool: &str, approved: &HashSet<String>) -> bool {
+    epoch == 0 || (epoch > 0 && approved.contains(tool))
+}
+
 pub struct RemoteJobWorker {
     client: ZenohRpcClient,
     runtime: OcafRuntime,
@@ -116,7 +123,7 @@ impl RemoteJobWorker {
             // In cluster mode, a pre-execution lease check alone cannot
             // fence external effects after a coordinator failover. Unsafe
             // tools are rejected before the runtime invokes their executor.
-            (lease.leader_epoch == 0 || self.cluster_pure_tools.contains(&lease.tool))
+            can_run_in_cluster(lease.leader_epoch, &lease.tool, &self.cluster_pure_tools)
                 && tool.manifest.enabled
                 && tool.manifest.cost_sats == 0
                 && tool.manifest.permissions.is_empty()

@@ -479,6 +479,9 @@ impl RpcGateway {
 
     /// Opt in to a durable, single-coordinator SQLite queue.
     pub fn with_job_db(mut self, path: &Path) -> Result<Self, RpcError> {
+        if self.leader.is_some() {
+            return Err(RpcError::Malformed);
+        }
         self.jobs = Some(JobBackend::Sqlite(
             JobStore::open(path).map_err(|_| RpcError::Unavailable)?,
         ));
@@ -533,6 +536,13 @@ impl RpcGateway {
     /// coordinator after detectable leader loss.
     pub async fn verify_current_leader(&self) -> Result<(), RpcError> {
         if let Some(leader) = &self.leader {
+            if self
+                .jobs
+                .as_ref()
+                .is_some_and(|backend| !backend.is_epoch_fenced())
+            {
+                return Err(RpcError::Unavailable);
+            }
             leader.verify().await.map_err(|_| RpcError::Unavailable)?;
         }
         Ok(())

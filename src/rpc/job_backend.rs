@@ -12,6 +12,13 @@ pub(super) enum JobBackend {
 }
 
 impl JobBackend {
+    pub(super) fn is_epoch_fenced(&self) -> bool {
+        match self {
+            Self::Postgres(db) => db.is_epoch_fenced(),
+            Self::Sqlite(_) => false,
+        }
+    }
+
     pub(super) fn with_leader(self, leader: Arc<PgLeader>) -> Self {
         match self {
             Self::Postgres(db) => Self::Postgres(db.with_leader(leader)),

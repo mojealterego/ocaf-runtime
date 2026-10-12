@@ -183,6 +183,12 @@ impl PgJobQueue {
         self
     }
 
+    /// Prevent a gateway that owns a cluster leader from accidentally
+    /// accepting job work through an unfenced standalone database.
+    pub(crate) fn is_epoch_fenced(&self) -> bool {
+        self.leader.is_some()
+    }
+
     pub async fn submit_owned(&self, owner: &str, job: JobSpec) -> Result<JobRecord, JobError> {
         validate_actor(owner)?;
         if Uuid::parse_str(&job.id).is_err()
