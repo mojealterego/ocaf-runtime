@@ -1,6 +1,6 @@
 [package]
 name = "ocaf_runtime"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 publish = false
 license = "MIT"
@@ -14,6 +14,10 @@ full = ["zenoh"]
 [dependencies]
 async-trait = "0.1"
 anyhow = "1.0"
+base64 = "0.22"
+hmac = "0.12"
+sha2 = "0.10"
+uuid = { version = "1", features = ["v4"] }
 jsonschema = "0.33"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
