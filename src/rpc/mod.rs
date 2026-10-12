@@ -732,7 +732,11 @@ impl RpcGateway {
                     .await
                     .map_err(|_| RpcError::Unavailable)?;
                 (
-                    if valid { RpcStatus::Ok } else { RpcStatus::Failed },
+                    if valid {
+                        RpcStatus::Ok
+                    } else {
+                        RpcStatus::Failed
+                    },
                     json!({"valid": valid}),
                 )
             }

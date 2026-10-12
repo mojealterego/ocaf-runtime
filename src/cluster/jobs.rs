@@ -242,10 +242,16 @@ impl PgJobQueue {
         // PostgreSQL, not a potentially skewed coordinator host, owns lease time.
         let duration_ms = i64::try_from(lease_ms).map_err(|_| JobError::Invalid)?;
         let generation = match &self.leader {
-            Some(leader) => leader.fencing_epoch().await.map_err(|_| JobError::Storage)?,
+            Some(leader) => leader
+                .fencing_epoch()
+                .await
+                .map_err(|_| JobError::Storage)?,
             None => 0,
         };
-        let cluster_id = self.leader.as_ref().map_or("", |leader| leader.cluster_id());
+        let cluster_id = self
+            .leader
+            .as_ref()
+            .map_or("", |leader| leader.cluster_id());
         let mut client = self.state.client.lock().await;
         let tx = client.transaction().await.map_err(storage)?;
         self.check_epoch_in_transaction(&tx, cluster_id, generation)
@@ -339,7 +345,11 @@ impl PgJobQueue {
         epoch: i64,
     ) -> Result<(), JobError> {
         if self.leader.is_none() {
-            return if epoch == 0 { Ok(()) } else { Err(JobError::StaleLease) };
+            return if epoch == 0 {
+                Ok(())
+            } else {
+                Err(JobError::StaleLease)
+            };
         }
         if epoch <= 0 {
             return Err(JobError::StaleLease);
@@ -362,7 +372,10 @@ impl PgJobQueue {
     /// transactional guard at a third-party external-effect sink.
     pub async fn validate_current_lease(&self, lease: &LeasedJob) -> Result<bool, JobError> {
         let leader = self.leader.as_ref().ok_or(JobError::Invalid)?;
-        let current = leader.fencing_epoch().await.map_err(|_| JobError::Storage)?;
+        let current = leader
+            .fencing_epoch()
+            .await
+            .map_err(|_| JobError::Storage)?;
         if lease.leader_epoch <= 0 || lease.leader_epoch != current {
             return Ok(false);
         }
@@ -468,13 +481,19 @@ impl PgJobQueue {
         }
         let attempt = i32::try_from(lease.attempt).map_err(|_| JobError::Invalid)?;
         let generation = match &self.leader {
-            Some(leader) => leader.fencing_epoch().await.map_err(|_| JobError::Storage)?,
+            Some(leader) => leader
+                .fencing_epoch()
+                .await
+                .map_err(|_| JobError::Storage)?,
             None => 0,
         };
         if lease.leader_epoch != generation {
             return Err(JobError::StaleLease);
         }
-        let cluster_id = self.leader.as_ref().map_or("", |leader| leader.cluster_id());
+        let cluster_id = self
+            .leader
+            .as_ref()
+            .map_or("", |leader| leader.cluster_id());
         let mut client = self.state.client.lock().await;
         let tx = client.transaction().await.map_err(storage)?;
         self.check_epoch_in_transaction(&tx, cluster_id, generation)

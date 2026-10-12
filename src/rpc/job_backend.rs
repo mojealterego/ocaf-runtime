@@ -19,10 +19,7 @@ impl JobBackend {
         }
     }
 
-    pub(super) async fn validate_current_lease(
-        &self,
-        lease: &LeasedJob,
-    ) -> Result<bool, JobError> {
+    pub(super) async fn validate_current_lease(&self, lease: &LeasedJob) -> Result<bool, JobError> {
         match self {
             Self::Postgres(db) => db.validate_current_lease(lease).await,
             Self::Sqlite(_) => Err(JobError::Invalid),
