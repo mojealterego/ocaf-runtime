@@ -100,7 +100,7 @@ async fn independent_clusters_cannot_claim_or_recover_each_others_jobs() {
     .unwrap();
     assert!(qb.get_owned("owner", &id).await.unwrap().is_none());
     assert!(qb
-        .claim_permitted("worker", 0, 30_000, &[tool.clone()])
+        .claim_permitted("worker", 0, 30_000, std::slice::from_ref(&tool))
         .await
         .unwrap()
         .is_none());
@@ -173,7 +173,10 @@ async fn forced_postgres_backend_loss_promotes_a_fresh_session_and_fences_old_wo
         }
         tokio::time::sleep(Duration::from_millis(20)).await;
     }
-    assert!(promoted, "standby should acquire election after backend termination");
+    assert!(
+        promoted,
+        "standby should acquire election after backend termination"
+    );
     let db2 = PgJobQueue::connect(&url, true)
         .await
         .unwrap()
