@@ -135,8 +135,10 @@ impl PgReplay {
             return Err(RpcError::Replay);
         }
         let count = tx
-            .query_one("SELECT count(*) FROM ocaf_pg_replay_v2 WHERE cluster_id=$1",
-                &[&self.cluster_id])
+            .query_one(
+                "SELECT count(*) FROM ocaf_pg_replay_v2 WHERE cluster_id=$1",
+                &[&self.cluster_id],
+            )
             .await
             .map_err(|_| RpcError::Unavailable)?;
         if count.get::<_, i64>(0) >= MAX_REPLAY_ENTRIES {
