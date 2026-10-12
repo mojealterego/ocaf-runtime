@@ -60,6 +60,9 @@ impl JobWorker {
     /// Recovery should be invoked by the supervisor before claiming work.
     pub async fn run_once(&self) -> Result<Option<JobStatus>, JobError> {
         let started = wallclock_ms()?;
+        // A restarted worker reconciles expired claims before claiming
+        // further jobs. Non-idempotent/unsafe work remains "uncertain".
+        self.store.recover_expired(started).await?;
         let job = match self
             .store
             .claim(&self.worker_id, started, self.lease_ms)
