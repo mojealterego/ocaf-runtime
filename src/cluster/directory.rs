@@ -32,7 +32,9 @@ impl PgDirectory {
             .map_err(|_| CoordinatorError::Storage)?;
         client
             .batch_execute(
-                "CREATE TABLE IF NOT EXISTS ocaf_pg_nodes_v1(
+                "BEGIN;
+            SELECT pg_advisory_xact_lock(574123456);
+            CREATE TABLE IF NOT EXISTS ocaf_pg_nodes_v1(
                 node_id TEXT PRIMARY KEY NOT NULL,
                 expires_at_ms BIGINT NOT NULL
             );
@@ -47,7 +49,8 @@ impl PgDirectory {
                 last_node TEXT NOT NULL
             );
             INSERT INTO ocaf_pg_cursor_v1(singleton,last_node)
-                VALUES (1,'') ON CONFLICT(singleton) DO NOTHING;",
+                VALUES (1,'') ON CONFLICT(singleton) DO NOTHING;
+            COMMIT;",
             )
             .await
             .map_err(|_| CoordinatorError::Storage)?;
