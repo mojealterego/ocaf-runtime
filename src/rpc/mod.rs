@@ -20,13 +20,13 @@ use sha2::Sha256;
 use tokio::sync::Semaphore;
 use uuid::Uuid;
 
-use crate::coordinator::{validate_capabilities, validate_tool_name, CoordinatorStore};
 use crate::cluster::jobs::PgJobQueue;
+use crate::coordinator::{validate_capabilities, validate_tool_name, CoordinatorStore};
 use crate::jobs::{JobError, JobSpec, JobStore, LeasedJob};
 use crate::runtime::{OcafRuntime, RuntimeError, ToolCallRequest};
 
-mod replay;
 mod job_backend;
+mod replay;
 use job_backend::JobBackend;
 use replay::ReplayBackend;
 
@@ -405,7 +405,9 @@ impl RpcGateway {
 
     /// Opt in to a durable, single-coordinator SQLite queue.
     pub fn with_job_db(mut self, path: &Path) -> Result<Self, RpcError> {
-        self.jobs = Some(JobBackend::Sqlite(JobStore::open(path).map_err(|_| RpcError::Unavailable)?));
+        self.jobs = Some(JobBackend::Sqlite(
+            JobStore::open(path).map_err(|_| RpcError::Unavailable)?,
+        ));
         Ok(self)
     }
 
