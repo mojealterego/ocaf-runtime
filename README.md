@@ -1,6 +1,6 @@
 # OCAF Runtime — Rust / Tokio / Zenoh
 
-**Status: working experimental distributed RPC prototype; not production hardened.**
+**Status: experimental authenticated distributed RPC and crash-resistant local job processing; not production hardened.**
 
 OCAF provides an async local tool registry and execution engine, plus a
 **real Zenoh query/reply protocol** for pairwise authenticated agent calls.
@@ -23,7 +23,8 @@ deliberately limited to **free, enabled tools without special permissions**.
 | Two-session Zenoh TCP integration test | Automated test |
 | TLS/mTLS transport | Operator-configured (not programmatically enforced) |
 | Durable admission (at-most-once within TTL) | Implemented with SQLite; not exactly-once execution |
-| Durable result cache, cross-host coordination, agent lifecycle | Not implemented |
+| SQLite job queue, worker lease/fencing, restart recovery | Implemented for one host |
+| Distributed scheduler, cross-host coordination and agent lifecycle | Not implemented |
 | L402 Lightning payments and cryptographic payment validation | Not implemented |
 | Untrusted executable tool sandbox and production rate limiting | Not implemented |
 
@@ -122,10 +123,27 @@ plaintext loopback-only and must not be used as production settings.
 
 See [docs/SECURITY.md](docs/SECURITY.md) for threat model and limitations.
 
+## Durable local jobs (v0.6)
+
+The `JobStore` module implements persistent FIFO work admission on SQLite
+with UUID-based idempotent submission, atomic claims, lease fencing,
+result persistence and retry policies. `JobWorker` integrates claims with
+the existing runtime and requires an explicit tool allowlist; paid and
+permissioned tools remain blocked. Expired safe-to-retry jobs can be
+reclaimed; otherwise they become `uncertain` pending manual investigation.
+
+**A lease does not provide exactly-once side effects.** Mark jobs
+`retry_safe` only when operations are actually idempotent. This is
+single-host orchestration, not cluster consensus, and there is no general
+remote job submission API at this stage.
+
+See [docs/JOBS.md](docs/JOBS.md) for API examples, persistence guarantees,
+operating requirements and remaining architectural work.
+
 ## Production work still required
 
 1. Enforced TLS/mTLS identity and secure configuration verification.
-2. Persistent result journal, recoverable distributed job execution and cross-host consensus.
+2. Replicated durable job scheduling, external-effect fencing and cross-host consensus.
 3. Signed plugin supply chain, sandbox and capability isolation.
 4. Secret manager integration, peer/key rotation, revocation and quotas.
 5. Distributed traces, fault injection, property tests and benchmarks.
