@@ -15,6 +15,7 @@ use ocaf_runtime::rpc::{PeerPolicy, RpcAction, RpcClient, RpcGateway, RpcStatus}
 use ocaf_runtime::runtime::OcafRuntime;
 use ocaf_runtime::transport::rpc::{ZenohRpcClient, ZenohRpcServer};
 use ocaf_runtime::transport::{pricing_tool_manifest, EchoTool, ZenohTransport};
+use ocaf_runtime::transport_policy::validate_zenoh_config;
 use serde_json::json;
 
 fn require(name: &str) -> anyhow::Result<String> {
@@ -44,7 +45,13 @@ fn load_zenoh_config() -> anyhow::Result<zenoh::Config> {
     // No implicit network config: operator must explicitly select the
     // reviewed endpoint/transport topology.
     let path = require("OCAF_ZENOH_CONFIG")?;
-    zenoh::Config::from_file(path).map_err(|e| anyhow::anyhow!("cannot load Zenoh config: {e}"))
+    let source = std::fs::read_to_string(path)?;
+    validate_zenoh_config(
+        &source,
+        env::var("OCAF_ALLOW_INSECURE_LOOPBACK").as_deref() == Ok("1"),
+    )?;
+    zenoh::Config::from_json5(&source)
+        .map_err(|e| anyhow::anyhow!("cannot parse vetted Zenoh config: {e}"))
 }
 
 #[tokio::main]
