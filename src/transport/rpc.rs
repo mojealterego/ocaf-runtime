@@ -6,6 +6,7 @@
 
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::Semaphore;
 
 use crate::rpc::{RpcAction, RpcClient, RpcError, RpcGateway, RpcReply, MAX_FRAME_BYTES};
 
@@ -35,15 +36,24 @@ impl ZenohRpcServer {
     /// executions are not durable and may finish after shutdown.
     pub async fn serve(&self) -> anyhow::Result<()> {
         let key = rpc_key(self.gateway.node_id());
+        let ingress = Arc::new(Semaphore::new(64));
         let queryable = self
             .session
             .declare_queryable(key.as_str())
             .await
             .map_err(|err| error("declare queryable", err))?;
         while let Ok(query) = queryable.recv_async().await {
+            let permit = match Arc::clone(&ingress).try_acquire_owned() {
+                Ok(permit) => permit,
+                Err(_) => {
+                    let _ = query.reply_err("rejected").await;
+                    continue;
+                }
+            };
             let gateway = Arc::clone(&self.gateway);
             let reply_key = key.clone();
             tokio::spawn(async move {
+                let _permit = permit;
                 let result = match query.payload() {
                     Some(body) if body.len() <= MAX_FRAME_BYTES => {
                         gateway.handle(body.to_bytes().as_ref()).await
