@@ -81,7 +81,7 @@ async fn abruptly_terminated_leader_session_promotes_standby_without_replaying_w
         id:job_id,limit:20,
     })).await.unwrap();
     assert_eq!(history.output.as_array().unwrap().len(),1);
-    client.close().await.unwrap();
+    drop(client);
     task.abort();
     standby.release().await.unwrap();
 }
