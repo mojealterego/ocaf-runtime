@@ -6,7 +6,8 @@
 //! without elevated permissions.
 
 use std::collections::{HashMap, HashSet};
-use std::sync::{Arc, Mutex};
+use std::path::Path;
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use base64::engine::general_purpose::STANDARD as B64;
@@ -21,12 +22,14 @@ use uuid::Uuid;
 
 use crate::runtime::{OcafRuntime, RuntimeError, ToolCallRequest};
 
+mod replay;
+use replay::ReplayBackend;
+
 pub const PROTOCOL_VERSION: u16 = 1;
 pub const MAX_FRAME_BYTES: usize = 65_536;
 const MAX_BODY_BYTES: usize = 32_768;
 const MAX_REQUEST_TTL_MS: u64 = 30_000;
 const FUTURE_CLOCK_SKEW_MS: u64 = 5_000;
-const MAX_REPLAY_ENTRIES: usize = 4_096;
 type HmacSha256 = Hmac<Sha256>;
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
@@ -244,7 +247,7 @@ pub struct RpcGateway {
     node_id: String,
     runtime: OcafRuntime,
     peers: HashMap<String, PeerPolicy>,
-    seen: Mutex<HashMap<(String, String), u64>>,
+    seen: ReplayBackend,
     concurrency: Semaphore,
 }
 
@@ -269,9 +272,27 @@ impl RpcGateway {
             node_id: node_id.into(),
             runtime,
             peers,
-            seen: Mutex::new(HashMap::new()),
+            seen: ReplayBackend::volatile(),
             concurrency: Semaphore::new(max_concurrent_calls),
         })
+    }
+
+    /// Persist signed request admission to an on-disk SQLite ledger before
+    /// invoking any tool. A storage failure rejects requests rather than
+    /// silently falling back to an in-memory replay cache.
+    ///
+    /// This enforces at-most-once admission within request validity windows,
+    /// not exactly-once completion of arbitrary external side effects.
+    pub fn with_sqlite_replay(
+        node_id: &str,
+        runtime: OcafRuntime,
+        peers: HashMap<String, PeerPolicy>,
+        max_concurrent_calls: usize,
+        db_path: &Path,
+    ) -> Result<Self, RpcError> {
+        let mut gateway = Self::new(node_id, runtime, peers, max_concurrent_calls)?;
+        gateway.seen = ReplayBackend::sqlite(db_path)?;
+        Ok(gateway)
     }
 
     pub fn runtime(&self) -> &OcafRuntime {
@@ -322,22 +343,19 @@ impl RpcGateway {
 
         let _permit = self.concurrency.try_acquire().map_err(|_| RpcError::Busy)?;
 
-        {
-            let mut seen = self.seen.lock().map_err(|_| RpcError::Unavailable)?;
-            seen.retain(|_, expires| *expires >= now);
-            let k = (request.sender.clone(), request.request_id.clone());
-            if seen.contains_key(&k) {
-                return Err(RpcError::Replay);
-            }
-            if seen.len() >= MAX_REPLAY_ENTRIES {
-                return Err(RpcError::Busy);
-            }
-            let expires = request
-                .issued_at_ms
-                .saturating_add(request.ttl_ms)
-                .saturating_add(FUTURE_CLOCK_SKEW_MS);
-            seen.insert(k, expires);
-        }
+        let expires = request
+            .issued_at_ms
+            .saturating_add(request.ttl_ms)
+            .saturating_add(FUTURE_CLOCK_SKEW_MS);
+        self.seen
+            .reserve(
+                &self.node_id,
+                &request.sender,
+                &request.request_id,
+                expires,
+                now,
+            )
+            .await?;
 
         let (status, output) = match request.action {
             RpcAction::Discover => {
