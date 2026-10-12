@@ -99,3 +99,29 @@ async fn main() -> anyhow::Result<()> {
         .serve()
         .await
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rejects_shared_identity_secrets_between_two_distinct_peers() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("peers.json");
+        let encoded = B64.encode([42u8; 32]);
+        let config = serde_json::json!({
+            "node-a": {"key_b64": encoded, "allowed_tools": ["echo"]},
+            "node-b": {"key_b64": encoded, "allowed_tools": ["echo"]}
+        });
+        std::fs::write(&path, serde_json::to_string(&config).unwrap()).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(
+                &path,
+                std::fs::Permissions::from_mode(0o600)
+            ).unwrap();
+        }
+        assert!(load_peers(&path).is_err());
+    }
+}
