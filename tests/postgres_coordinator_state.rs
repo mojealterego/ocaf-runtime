@@ -90,3 +90,23 @@ async fn malformed_capabilities_fail_closed_in_PostgreSQL_store() {
     assert!(directory.heartbeat("valid-peer",&["echo".into(),"echo".into()],NOW).await.is_err());
     assert_eq!(directory.resolve("",NOW).await.err().is_some(),true);
 }
+
+#[tokio::test]
+async fn standby_gateway_fails_closed_before_accepting_signed_requests() {
+    use std::sync::Arc;
+    use ocaf_runtime::cluster::leadership::PgLeader;
+    let Some(dsn)=dsn() else {return};
+    let leader=Arc::new(PgLeader::connect(&dsn,"pg-leader-gate",true).await.unwrap());
+    let standby=Arc::new(PgLeader::connect(&dsn,"pg-leader-gate",true).await.unwrap());
+    assert!(leader.try_acquire().await.unwrap());
+    assert!(!standby.try_acquire().await.unwrap());
+    let active=gateway(&dsn,"pg-gated-node").await.with_pg_leader(Arc::clone(&leader));
+    let passive=gateway(&dsn,"pg-gated-node").await.with_pg_leader(Arc::clone(&standby));
+    let msg=payload("pg-gated-node",RpcAction::Discover);
+    assert!(matches!(send(&passive,&msg,NOW).await,Err(RpcError::Unavailable)));
+    assert_eq!(send(&active,&msg,NOW).await.unwrap().status,RpcStatus::Ok);
+    leader.release().await.unwrap();
+    assert!(matches!(send(&active,&payload("pg-gated-node",RpcAction::Discover),NOW+1).await,Err(RpcError::Unavailable)));
+    assert!(standby.try_acquire().await.unwrap());
+    assert_eq!(send(&passive,&payload("pg-gated-node",RpcAction::Discover),NOW+2).await.unwrap().status,RpcStatus::Ok);
+}
