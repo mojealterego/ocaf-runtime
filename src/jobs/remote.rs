@@ -103,11 +103,13 @@ impl RemoteJobWorker {
                 Ok(result) => RemoteJobOutcome::Succeeded {
                     output: result.output,
                 },
-                Err(RuntimeError::InvalidInput(_)
-                | RuntimeError::ToolNotFound(_)
-                | RuntimeError::ToolDisabled(_)
-                | RuntimeError::AuthRequired(_)
-                | RuntimeError::BudgetExceeded) => RemoteJobOutcome::Failed,
+                Err(
+                    RuntimeError::InvalidInput(_)
+                    | RuntimeError::ToolNotFound(_)
+                    | RuntimeError::ToolDisabled(_)
+                    | RuntimeError::AuthRequired(_)
+                    | RuntimeError::BudgetExceeded,
+                ) => RemoteJobOutcome::Failed,
                 Err(_) => RemoteJobOutcome::Uncertain,
             }
         };
