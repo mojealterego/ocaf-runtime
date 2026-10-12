@@ -6,6 +6,11 @@ publish = false
 license = "MIT"
 description = "OmniContext Agent Framework runtime core with fail-closed authorization"
 
+[[bin]]
+name = "ocaf-rpc-node"
+path = "src/bin/ocaf-rpc-node.rs"
+required-features = ["zenoh"]
+
 [features]
 default = ["zenoh"]
 zenoh = ["dep:zenoh"]
