@@ -87,3 +87,12 @@ impl LeaderGuard {
         }
     }
 }
+
+impl Drop for LeaderGuard {
+    fn drop(&mut self) {
+        // Releasing explicitly avoids relying on the timing of file
+        // descriptor close for same-process active/standby handover.
+        // After abnormal process death the kernel still releases the lock.
+        let _ = FileExt::unlock(&self._lock);
+    }
+}
