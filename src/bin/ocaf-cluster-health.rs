@@ -1,49 +1,131 @@
-//! Read-only, JSON-only operational probe. The exit code is nonzero for an
-//! unavailable leader or database, making it suitable for a systemd timer.
-//! Do not expose this process as an unauthenticated public HTTP endpoint.
+//! Read-only operator diagnostics. No unprotected HTTP listener is opened.
+//! Database credentials and transport TLS policy protect access to metrics.
 use std::env;
 
-use ocaf_runtime::cluster::observability::{AlertPolicy, ClusterHealth, PgClusterMonitor};
+use ocaf_runtime::cluster::observability::{
+    AlertPolicy, ClusterHealth, ClusterSnapshot, PgClusterMonitor,
+};
 use ocaf_runtime::ops::secrets::load_env_secret;
+
+fn required(name: &str) -> anyhow::Result<String> {
+    let value =
+        env::var(name).map_err(|_| anyhow::anyhow!("missing required operator setting: {name}"))?;
+    if value.is_empty() {
+        anyhow::bail!("empty operator setting: {name}");
+    }
+    Ok(value)
+}
 
 fn threshold(name: &str, default: u64) -> anyhow::Result<u64> {
     match env::var(name) {
-        Ok(value) => {
-            let number = value
-                .parse::<u64>()
-                .map_err(|_| anyhow::anyhow!("{name} must be an unsigned number"))?;
-            if !(1..=1_000_000).contains(&number) {
-                anyhow::bail!("{name} must be in the range 1..=1000000");
-            }
-            Ok(number)
-        }
+        Ok(raw) => raw
+            .parse::<u64>()
+            .map_err(|_| anyhow::anyhow!("{name} must be a positive integer")),
         Err(env::VarError::NotPresent) => Ok(default),
-        Err(_) => anyhow::bail!("{name} is not valid UTF-8"),
+        Err(_) => anyhow::bail!("invalid value for {name}"),
     }
+}
+
+/// Prometheus/OpenMetrics-style numeric samples, printed to stdout for
+/// a protected collector/textfile-exporter. No dynamic labels/identities.
+fn prometheus(snapshot: &ClusterSnapshot, health: ClusterHealth) -> String {
+    let measurements = [
+        ("leader_sessions", snapshot.leader_sessions),
+        ("agents_live", snapshot.agents_live),
+        ("agents_expired", snapshot.agents_expired),
+        ("jobs_pending", snapshot.jobs_pending),
+        ("jobs_running", snapshot.jobs_running),
+        ("jobs_succeeded", snapshot.jobs_succeeded),
+        ("jobs_failed", snapshot.jobs_failed),
+        ("jobs_uncertain", snapshot.jobs_uncertain),
+        ("jobs_running_expired", snapshot.jobs_running_expired),
+    ];
+    let mut output = String::new();
+    for (name, count) in measurements {
+        output.push_str(&format!(
+            "# TYPE ocaf_cluster_{name} gauge\nocaf_cluster_{name} {count}\n"
+        ));
+    }
+    let health_level = match health {
+        ClusterHealth::Healthy => 0,
+        ClusterHealth::Warning => 1,
+        ClusterHealth::Critical => 2,
+    };
+    output.push_str(&format!(
+        "# TYPE ocaf_cluster_health_level gauge\nocaf_cluster_health_level {health_level}\n"
+    ));
+    output
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let dsn = load_env_secret("OCAF_CLUSTER_PG_DSN", 4096)?;
-    let cluster = env::var("OCAF_CLUSTER_ID")
-        .map_err(|_| anyhow::anyhow!("missing OCAF_CLUSTER_ID setting"))?;
-    if cluster.is_empty() {
-        anyhow::bail!("empty OCAF_CLUSTER_ID setting");
+    let mut format = "json";
+    let mut no_fail = false;
+    let mut node = None;
+    let mut args = env::args().skip(1);
+    while let Some(arg) = args.next() {
+        match arg.as_str() {
+            "--json" => format = "json",
+            "--prometheus" => format = "prometheus",
+            "--no-fail" => no_fail = true,
+            "--node" => {
+                if node.is_some() {
+                    anyhow::bail!("only one --node selector is supported");
+                }
+                node = Some(
+                    args.next()
+                        .ok_or_else(|| anyhow::anyhow!("--node requires an ID"))?,
+                );
+            }
+            _ => {
+                anyhow::bail!("unknown option; use --json, --prometheus, --no-fail or --node <ID>")
+            }
+        }
     }
-    let insecure = env::var("OCAF_ALLOW_INSECURE_LOOPBACK").as_deref() == Ok("1");
+    if format == "prometheus" && node.is_some() {
+        anyhow::bail!("--node is supported only with --json; no dynamic Prometheus labels");
+    }
+
+    let dsn = load_env_secret("OCAF_CLUSTER_PG_DSN", 4096)?;
+    let cluster = required("OCAF_CLUSTER_ID")?;
+    let allow_loopback = env::var("OCAF_ALLOW_INSECURE_LOOPBACK").as_deref() == Ok("1");
     let policy = AlertPolicy::new(
         threshold("OCAF_ALERT_PENDING_THRESHOLD", 100)?,
         threshold("OCAF_ALERT_UNCERTAIN_THRESHOLD", 1)?,
         threshold("OCAF_ALERT_EXPIRED_AGENTS_THRESHOLD", 1)?,
     )?;
-    let probe = PgClusterMonitor::connect(&dsn, &cluster, insecure).await?;
-    let report = probe.report(policy).await?;
-    println!("{}", serde_json::to_string(&report)?);
-    let fail_warning = env::var("OCAF_HEALTH_FAIL_ON_WARNING").as_deref() == Ok("1");
-    if report.health == ClusterHealth::Critical
-        || (fail_warning && report.health == ClusterHealth::Warning)
-    {
-        anyhow::bail!("OCAF cluster operational probe returned an unhealthy status");
+    let monitor = PgClusterMonitor::connect(&dsn, &cluster, allow_loopback).await?;
+    let report = policy.evaluate(monitor.snapshot().await?);
+
+    match format {
+        "prometheus" => print!("{}", prometheus(&report.snapshot, report.health)),
+        _ => {
+            if let Some(node_id) = node {
+                let observation = monitor.node_health(&node_id).await?;
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&serde_json::json!({
+                        "report": report,
+                        "node": observation,
+                    }))?
+                );
+            } else {
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            }
+        }
+    }
+
+    // Hooks for cron, systemd and external alert/metrics pipelines:
+    // 0 healthy, 1 warning, 2 critical; --no-fail prints without alert exit.
+    if !no_fail {
+        let code = match report.health {
+            ClusterHealth::Healthy => 0,
+            ClusterHealth::Warning => 1,
+            ClusterHealth::Critical => 2,
+        };
+        if code != 0 {
+            std::process::exit(code);
+        }
     }
     Ok(())
 }
