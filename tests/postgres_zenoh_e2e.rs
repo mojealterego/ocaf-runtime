@@ -64,9 +64,12 @@ async fn real_zenoh_worker_runs_under_shared_postgres_leadership_and_state() -> 
     let leader = Arc::new(PgLeader::connect(&pg, &cluster_id, true).await?);
     assert!(leader.try_acquire().await?);
     let gateway = RpcGateway::new("coord", OcafRuntime::new(0), peers, 16)?
-        .with_postgres_replay(&pg, true).await?
-        .with_postgres_coordinator(&pg, true).await?
-        .with_postgres_job_db(&pg, true).await?
+        .with_postgres_replay(&pg, true)
+        .await?
+        .with_postgres_coordinator(&pg, true)
+        .await?
+        .with_postgres_job_db(&pg, true)
+        .await?
         .with_pg_leader(Arc::clone(&leader));
     let server = ZenohRpcServer::new(coordinator_session, Arc::new(gateway));
     let handle = tokio::spawn(async move { server.serve().await });
@@ -114,9 +117,10 @@ async fn real_zenoh_worker_runs_under_shared_postgres_leadership_and_state() -> 
     leader.release().await?;
     // The queryable is still reachable, but its gateway has lost
     // leadership and must reject all further signed client requests.
-    assert!(submitter.request(RpcAction::GetJob {
-        id: job_id,
-    }).await.is_err());
+    assert!(submitter
+        .request(RpcAction::GetJob { id: job_id })
+        .await
+        .is_err());
     handle.abort();
     Ok(())
 }
