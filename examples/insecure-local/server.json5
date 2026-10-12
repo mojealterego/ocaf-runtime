@@ -2,5 +2,6 @@
 {
   mode: "peer",
   listen: { endpoints: ["tcp/127.0.0.1:7447"] },
-  scouting: { multicast: { enabled: false } },
+  scouting: { multicast: { enabled: false }, gossip: { enabled: false } },
+  transport: { link: { protocols: ["tcp"] } },
 }
