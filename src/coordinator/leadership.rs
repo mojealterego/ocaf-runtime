@@ -33,6 +33,15 @@ impl LeaderGuard {
         if !path.is_absolute() || path.file_name().is_none() {
             return Err(LeadershipError::InvalidPath);
         }
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let parent = path.parent().ok_or(LeadershipError::InvalidPath)?;
+            let meta = std::fs::metadata(parent).map_err(|_| LeadershipError::Io)?;
+            if !meta.is_dir() || meta.permissions().mode() & 0o022 != 0 {
+                return Err(LeadershipError::InvalidPath);
+            }
+        }
         if let Ok(meta) = std::fs::symlink_metadata(path) {
             if !meta.file_type().is_file() {
                 return Err(LeadershipError::InvalidPath);
@@ -49,7 +58,7 @@ impl LeaderGuard {
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
-            std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600))
+            lock.set_permissions(std::fs::Permissions::from_mode(0o600))
                 .map_err(|_| LeadershipError::Io)?;
         }
         match lock.try_lock_exclusive() {
