@@ -279,7 +279,6 @@ impl PgClusterMonitor {
         })
         .transpose()
     }
-
 }
 
 impl Drop for PgClusterMonitor {
