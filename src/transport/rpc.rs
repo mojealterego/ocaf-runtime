@@ -251,7 +251,7 @@ async fn request_over_session(
         if payload.len() > MAX_FRAME_BYTES {
             anyhow::bail!("remote reply exceeds RPC frame size");
         }
-        self.protocol
+        protocol
             .read_reply(payload.to_bytes().as_ref(), &request)
             .map_err(|e| error("verify signed response", e))
     }
