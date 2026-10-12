@@ -7,8 +7,8 @@ use ocaf_runtime::cluster::observability::{
 };
 
 fn required(name: &str) -> anyhow::Result<String> {
-    let value = env::var(name)
-        .map_err(|_| anyhow::anyhow!("missing required operator setting: {name}"))?;
+    let value =
+        env::var(name).map_err(|_| anyhow::anyhow!("missing required operator setting: {name}"))?;
     if value.is_empty() {
         anyhow::bail!("empty operator setting: {name}");
     }
@@ -41,7 +41,9 @@ fn prometheus(snapshot: &ClusterSnapshot, health: ClusterHealth) -> String {
     ];
     let mut output = String::new();
     for (name, count) in measurements {
-        output.push_str(&format!("# TYPE ocaf_cluster_{name} gauge\nocaf_cluster_{name} {count}\n"));
+        output.push_str(&format!(
+            "# TYPE ocaf_cluster_{name} gauge\nocaf_cluster_{name} {count}\n"
+        ));
     }
     let health_level = match health {
         ClusterHealth::Healthy => 0,
