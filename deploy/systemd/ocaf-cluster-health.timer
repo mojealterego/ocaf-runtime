@@ -1,0 +1,13 @@
+[Unit]
+Description=Periodically sample OCAF cluster health
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=30s
+AccuracySec=5s
+RandomizedDelaySec=5s
+Persistent=true
+Unit=ocaf-cluster-health.service
+
+[Install]
+WantedBy=timers.target
