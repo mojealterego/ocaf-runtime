@@ -1,0 +1,26 @@
+name: Rust CI
+on:
+  push:
+    branches: ["main", "audit/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Formatting
+        run: cargo fmt --all -- --check
+      - name: Clippy (core only)
+        run: cargo clippy --all-targets --no-default-features -- -D warnings
+      - name: Tests (core only)
+        run: cargo test --no-default-features
+      - name: Tests (Zenoh)
+        run: cargo test
