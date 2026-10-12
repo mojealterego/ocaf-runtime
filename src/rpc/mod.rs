@@ -96,6 +96,9 @@ pub enum RpcAction {
         tool: String,
         args: Value,
     },
+    GetJob {
+        id: String,
+    },
     ClaimJob,
     FinishJob {
         lease: LeasedJob,
@@ -149,9 +152,9 @@ impl RpcRequest {
             RpcAction::Heartbeat { tools } => {
                 validate_capabilities(tools).map_err(|_| RpcError::Malformed)?;
             }
-            RpcAction::ClaimJob | RpcAction::FinishJob { .. } | RpcAction::Discover => {}
+            RpcAction::GetJob { .. } | RpcAction::ClaimJob | RpcAction::FinishJob { .. } | RpcAction::Discover => {}
         }
-        if let RpcAction::SubmitJob { id, .. } = &action {
+        if let RpcAction::SubmitJob { id, .. } | RpcAction::GetJob { id } = &action {
             if Uuid::parse_str(id).is_err() {
                 return Err(RpcError::Malformed);
             }
@@ -179,6 +182,11 @@ impl RpcRequest {
         }
         if let RpcAction::SubmitJob { id, tool, .. } = &self.action {
             if Uuid::parse_str(id).is_err() || !validate_tool_name(tool) {
+                return Err(RpcError::Malformed);
+            }
+        }
+        if let RpcAction::GetJob { id } = &self.action {
+            if Uuid::parse_str(id).is_err() {
                 return Err(RpcError::Malformed);
             }
         }
@@ -481,6 +489,14 @@ impl RpcGateway {
                     return Err(RpcError::Unauthorized);
                 }
             }
+            RpcAction::GetJob { .. } => {
+                if self.jobs.is_none() {
+                    return Err(RpcError::Unavailable);
+                }
+                if !peer.job_submitter {
+                    return Err(RpcError::Unauthorized);
+                }
+            }
             RpcAction::ClaimJob => {
                 if self.jobs.is_none() {
                     return Err(RpcError::Unavailable);
@@ -565,13 +581,22 @@ impl RpcGateway {
                     .jobs
                     .as_ref()
                     .ok_or(RpcError::Unavailable)?
-                    .submit(spec)
+                    .submit_owned(&request.sender, spec)
                     .await;
                 match result {
                     Ok(job) => (RpcStatus::Ok, json!({"job_id":job.id})),
                     Err(JobError::Storage) => return Err(RpcError::Unavailable),
                     Err(_) => (RpcStatus::Failed, Value::Null),
                 }
+            }
+            RpcAction::GetJob { id } => {
+                let record = self.jobs
+                    .as_ref()
+                    .ok_or(RpcError::Unavailable)?
+                    .get_owned(&request.sender, &id)
+                    .await
+                    .map_err(|_| RpcError::Unavailable)?;
+                (RpcStatus::Ok, json!(record))
             }
             RpcAction::ClaimJob => {
                 let store = self.jobs.as_ref().ok_or(RpcError::Unavailable)?;
