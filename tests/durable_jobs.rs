@@ -239,3 +239,21 @@ async fn invalid_specs_and_storage_failure_are_denied() {
         Err(JobError::Invalid)
     ));
 }
+
+#[tokio::test]
+async fn two_independent_sqlite_connections_atomically_claim_only_once() {
+    let dir = tempfile::tempdir().unwrap();
+    let db = dir.path().join("jobs.sqlite");
+    let first = open(&db);
+    let second = open(&db);
+    let job = spec(true, 2);
+    first.submit(job.clone()).await.unwrap();
+
+    let (a, b) = tokio::join!(
+        first.claim("worker-a", 10_000, 2_000),
+        second.claim("worker-b", 10_000, 2_000)
+    );
+    let admitted = usize::from(a.unwrap().is_some()) + usize::from(b.unwrap().is_some());
+    assert_eq!(admitted, 1);
+    assert_eq!(first.get(&job.id).await.unwrap().unwrap().status, JobStatus::Running);
+}
