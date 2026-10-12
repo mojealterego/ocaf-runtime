@@ -90,6 +90,10 @@ impl ZenohRpcClient {
         Self { session, protocol }
     }
 
+    pub fn local_id(&self) -> &str {
+        self.protocol.local_id()
+    }
+
     pub async fn request(&self, action: RpcAction) -> anyhow::Result<RpcReply> {
         let (request, body) = self
             .protocol
