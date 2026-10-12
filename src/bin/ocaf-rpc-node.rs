@@ -15,7 +15,8 @@ use ocaf_runtime::transport::{pricing_tool_manifest, EchoTool, ZenohTransport};
 use serde_json::json;
 
 fn require(name: &str) -> anyhow::Result<String> {
-    let value = env::var(name).map_err(|_| anyhow::anyhow!("missing required environment variable: {name}"))?;
+    let value = env::var(name)
+        .map_err(|_| anyhow::anyhow!("missing required environment variable: {name}"))?;
     if value.is_empty() {
         anyhow::bail!("empty environment variable: {name}");
     }
@@ -24,9 +25,11 @@ fn require(name: &str) -> anyhow::Result<String> {
 
 fn load_key() -> anyhow::Result<[u8; 32]> {
     let secret = require("OCAF_SHARED_KEY_B64")?;
-    let decoded = B64.decode(secret.as_bytes())
+    let decoded = B64
+        .decode(secret.as_bytes())
         .map_err(|_| anyhow::anyhow!("OCAF_SHARED_KEY_B64 is not valid base64"))?;
-    let key: [u8; 32] = decoded.try_into()
+    let key: [u8; 32] = decoded
+        .try_into()
         .map_err(|_| anyhow::anyhow!("OCAF_SHARED_KEY_B64 must decode to exactly 32 bytes"))?;
     if key == [0; 32] {
         anyhow::bail!("all-zero shared key is forbidden");
@@ -65,10 +68,8 @@ async fn main() -> anyhow::Result<()> {
             let runtime = OcafRuntime::new(0);
             runtime.register(pricing_tool_manifest(), EchoTool).await?;
             // The peer may invoke ONLY the demo echo tool, not arbitrary local tools.
-            let peers = HashMap::from([(
-                peer_id,
-                PeerPolicy::new(key, vec!["demo_echo".to_string()]),
-            )]);
+            let peers =
+                HashMap::from([(peer_id, PeerPolicy::new(key, vec!["demo_echo".to_string()]))]);
             let gateway = Arc::new(RpcGateway::new(&node_id, runtime, peers, 16)?);
             tracing::info!(node = %node_id, "Authenticated RPC queryable is active");
             ZenohRpcServer::new(session, gateway).serve().await?;
