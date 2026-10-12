@@ -398,7 +398,7 @@ impl PgJobQueue {
                 WHERE cluster_id=$1 AND status='running'
                   AND (lease_expires_at_ms <=
                      (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT
-                     OR ($2 > 0 AND leader_epoch <> $2))
+                     OR ($2::BIGINT > 0 AND leader_epoch <> $2::BIGINT))
                 RETURNING id
              )
              INSERT INTO ocaf_pg_job_audit_v1(job_id,actor,event,occurred_at_ms)
