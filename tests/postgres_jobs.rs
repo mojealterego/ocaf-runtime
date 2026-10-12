@@ -118,14 +118,9 @@ async fn crash_expiration_becomes_uncertain_and_stale_report_is_fenced() {
     expire_lease_in_postgres(&url, &job.id).await;
 
     let recovered = PgJobQueue::connect(&url, true).await.unwrap();
-    assert_eq!(
-        recovered
-            .recover_expired(NOW + 1_001)
-            .await
-            .unwrap()
-            .uncertain,
-        1
-    );
+    // Other concurrently running PostgreSQL tests may also expire jobs.
+    // The assertions below check this UUID rather than a global count.
+    recovered.recover_expired(NOW + 1_001).await.unwrap();
     assert!(matches!(
         recovered
             .succeed(&lease, json!({"forged":true}), NOW + 1_002)
