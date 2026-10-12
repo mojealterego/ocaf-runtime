@@ -165,3 +165,21 @@ impl RemoteJobWorker {
         Ok(Some(status))
     }
 }
+
+#[cfg(test)]
+mod cluster_pure_policy_tests {
+    use super::*;
+
+    #[test]
+    fn any_unreviewed_cluster_tool_is_denied_but_legacy_local_mode_is_unchanged() {
+        let approved = HashSet::new();
+        assert!(!can_run_in_cluster(1, "demo_echo", &approved));
+        assert!(!can_run_in_cluster(999, "demo_echo", &approved));
+        assert!(!can_run_in_cluster(-1, "demo_echo", &approved));
+        assert!(can_run_in_cluster(0, "demo_echo", &approved));
+        let approved = HashSet::from(["demo_echo".to_string()]);
+        assert!(can_run_in_cluster(1, "demo_echo", &approved));
+        assert!(!can_run_in_cluster(1, "unreviewed_write", &approved));
+        assert!(!can_run_in_cluster(-1, "demo_echo", &approved));
+    }
+}

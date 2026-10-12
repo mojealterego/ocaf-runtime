@@ -187,3 +187,55 @@ async fn attaching_postgres_jobs_after_the_leader_still_fences_every_claim() {
     assert_eq!(verified.output["valid"], true);
     leader.release().await.unwrap();
 }
+
+#[tokio::test]
+async fn postgres_leader_rejects_a_local_sqlite_job_backend_in_both_orders() {
+    use ocaf_runtime::rpc::RpcError;
+
+    let Some(url) = dsn() else { return };
+    let cluster = format!("no_sqlite_{}", uuid::Uuid::new_v4().simple());
+    let leader = Arc::new(PgLeader::connect(&url, &cluster, true).await.unwrap());
+    assert!(leader.try_acquire().await.unwrap());
+    let tmp = tempfile::tempdir().unwrap();
+    let path = tmp.path().join("jobs.sqlite");
+    let peers = HashMap::from([(
+        "fence-owner".to_string(),
+        PeerPolicy::new(OWNER_KEY, vec!["demo_echo".into()]).allow_job_submission(),
+    )]);
+
+    let legacy = RpcGateway::new(
+        "fence-coord",
+        OcafRuntime::new(0),
+        peers.clone(),
+        16,
+    )
+    .unwrap()
+    .with_job_db(&path)
+    .unwrap()
+    .with_pg_leader(Arc::clone(&leader));
+
+    let request = RpcRequest::new(
+        "fence-owner",
+        "fence-coord",
+        CLOCK,
+        5000,
+        RpcAction::SubmitJob {
+            id: uuid::Uuid::new_v4().to_string(),
+            tool: "demo_echo".into(),
+            args: json!({}),
+        },
+    )
+    .unwrap();
+    let frame = SignedFrame::seal(&request, &OWNER_KEY).unwrap();
+    assert!(matches!(
+        legacy.handle_at(&frame, CLOCK).await,
+        Err(RpcError::Unavailable)
+    ));
+
+    let reverse = RpcGateway::new("fence-coord", OcafRuntime::new(0), peers, 16)
+        .unwrap()
+        .with_pg_leader(Arc::clone(&leader))
+        .with_job_db(&path);
+    assert!(matches!(reverse, Err(RpcError::Malformed)));
+    leader.release().await.unwrap();
+}
