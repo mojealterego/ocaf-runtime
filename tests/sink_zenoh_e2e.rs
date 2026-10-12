@@ -96,6 +96,33 @@ async fn separate_zenoh_receiver_fences_postgres_leader_takeover() -> anyhow::Re
             &effect,
         )
         .await?;
+    // A worker cannot exchange a forged attempt, tool or lease token
+    // for a valid signed external-effect capability.
+    let mut forged = lease.clone();
+    forged.lease_token = uuid::Uuid::new_v4().to_string();
+    assert!(controller
+        .issue_permit_for_lease(
+            &queue,
+            &previous,
+            &forged,
+            ocaf_runtime::rpc::now_ms()? + 5_000,
+            &effect,
+        )
+        .await
+        .is_err());
+    forged = lease.clone();
+    forged.attempt += 1;
+    assert!(controller
+        .issue_permit_for_lease(
+            &queue,
+            &previous,
+            &forged,
+            ocaf_runtime::rpc::now_ms()? + 5_000,
+            &effect,
+        )
+        .await
+        .is_err());
+
     let committed = worker
         .request(SinkAction::Apply {
             permit: token.clone(),
