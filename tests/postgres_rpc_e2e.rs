@@ -21,15 +21,15 @@ fn dsn() -> Option<String> {
     value
 }
 
-async fn gateway(url: &str) -> RpcGateway {
+async fn gateway(url: &str, tool: &str) -> RpcGateway {
     let peers = HashMap::from([
         (
             "requester".into(),
-            PeerPolicy::new(REQUESTER_KEY, vec!["echo".into()]).allow_job_submission(),
+            PeerPolicy::new(REQUESTER_KEY, vec![tool.into()]).allow_job_submission(),
         ),
         (
             "worker".into(),
-            PeerPolicy::new(WORKER_KEY, vec!["echo".into()]).allow_job_worker(),
+            PeerPolicy::new(WORKER_KEY, vec![tool.into()]).allow_job_worker(),
         ),
     ]);
     RpcGateway::new("coord", OcafRuntime::new(0), peers, 32)
@@ -54,8 +54,9 @@ async fn request(
 #[tokio::test]
 async fn independent_gateways_round_trip_one_persistent_remote_job() {
     let Some(url) = dsn() else { return };
-    let first = gateway(&url).await;
-    let second = gateway(&url).await;
+    let tool = format!("rpc_{}", uuid::Uuid::new_v4().simple());
+    let first = gateway(&url, &tool).await;
+    let second = gateway(&url, &tool).await;
     let id = uuid::Uuid::new_v4().to_string();
     let submitted = request(
         &first,
@@ -63,7 +64,7 @@ async fn independent_gateways_round_trip_one_persistent_remote_job() {
         &REQUESTER_KEY,
         RpcAction::SubmitJob {
             id: id.clone(),
-            tool: "echo".into(),
+            tool: tool.clone(),
             args: json!({"message":"cluster"}),
         },
     )
@@ -101,19 +102,20 @@ async fn independent_gateways_round_trip_one_persistent_remote_job() {
 #[tokio::test]
 async fn signed_audit_is_private_even_if_other_peer_knows_job_uuid() {
     let Some(url) = dsn() else { return };
-    let original = gateway(&url).await;
+    let tool = format!("audit_rpc_{}", uuid::Uuid::new_v4().simple());
+    let original = gateway(&url, &tool).await;
     let mut peers = HashMap::from([
         (
             "requester".into(),
-            PeerPolicy::new(REQUESTER_KEY, vec!["echo".into()]).allow_job_submission(),
+            PeerPolicy::new(REQUESTER_KEY, vec![tool.clone()]).allow_job_submission(),
         ),
         (
             "worker".into(),
-            PeerPolicy::new(WORKER_KEY, vec!["echo".into()]).allow_job_worker(),
+            PeerPolicy::new(WORKER_KEY, vec![tool.clone()]).allow_job_worker(),
         ),
         (
             "other".into(),
-            PeerPolicy::new([0xC7; 32], vec!["echo".into()]).allow_job_submission(),
+            PeerPolicy::new([0xC7; 32], vec![tool.clone()]).allow_job_submission(),
         ),
     ]);
     let other = RpcGateway::new("coord", OcafRuntime::new(0), std::mem::take(&mut peers), 32)
