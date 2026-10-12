@@ -70,7 +70,7 @@ async fn membership_replaces_capabilities_and_expires_across_connections() {
 }
 
 #[tokio::test]
-async fn PostgreSQL_duplicate_signed_frame_across_gateways_cannot_mutate_membership() {
+async fn postgres_duplicate_signed_frame_across_gateways_cannot_mutate_membership() {
     let Some(dsn)=dsn() else{return};
     let a=gateway(&dsn,"pg-replay-heartbeat").await;
     let b=gateway(&dsn,"pg-replay-heartbeat").await;
@@ -82,7 +82,7 @@ async fn PostgreSQL_duplicate_signed_frame_across_gateways_cannot_mutate_members
 }
 
 #[tokio::test]
-async fn malformed_capabilities_fail_closed_in_PostgreSQL_store() {
+async fn malformed_capabilities_fail_closed_in_postgresql_store() {
     let Some(dsn)=dsn() else{return};
     let directory=PgDirectory::connect(&dsn,true).await.unwrap();
     assert!(directory.heartbeat("invalid/peer",&["echo".into()],NOW).await.is_err());
