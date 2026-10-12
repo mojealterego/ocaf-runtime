@@ -128,3 +128,62 @@ async fn promoted_leader_rejects_old_generation_worker_report() {
     assert!(status.output["result"].is_null());
     second.release().await.unwrap();
 }
+
+#[tokio::test]
+async fn attaching_postgres_jobs_after_the_leader_still_fences_every_claim() {
+    let Some(url) = dsn() else { return };
+    let cluster = format!("late_bind_{}", uuid::Uuid::new_v4().simple());
+    let tool = format!("tool_{}", uuid::Uuid::new_v4().simple());
+    let leader = Arc::new(PgLeader::connect(&url, &cluster, true).await.unwrap());
+    assert!(leader.try_acquire().await.unwrap());
+
+    // This previously installed an unfenced PostgreSQL queue (epoch zero).
+    let gateway = RpcGateway::new(
+        "fence-coord",
+        OcafRuntime::new(0),
+        HashMap::from([
+            (
+                "fence-owner".into(),
+                PeerPolicy::new(OWNER_KEY, vec![tool.clone()]).allow_job_submission(),
+            ),
+            (
+                "fence-worker".into(),
+                PeerPolicy::new(WORKER_KEY, vec![tool.clone()]).allow_job_worker(),
+            ),
+        ]),
+        16,
+    )
+    .unwrap()
+    .with_pg_leader(Arc::clone(&leader))
+    .with_postgres_job_db(&url, true)
+    .await
+    .unwrap();
+
+    let job = uuid::Uuid::new_v4().to_string();
+    let submitted = request(
+        &gateway,
+        "fence-owner",
+        &OWNER_KEY,
+        RpcAction::SubmitJob {
+            id: job,
+            tool,
+            args: json!({}),
+        },
+    )
+    .await;
+    assert_eq!(submitted.status, RpcStatus::Ok);
+    let result = request(&gateway, "fence-worker", &WORKER_KEY, RpcAction::ClaimJob).await;
+    let lease: LeasedJob = serde_json::from_value(result.output).unwrap();
+    assert_eq!(lease.leader_epoch, leader.fencing_epoch().await.unwrap());
+    assert!(lease.leader_epoch > 0);
+    let verified = request(
+        &gateway,
+        "fence-worker",
+        &WORKER_KEY,
+        RpcAction::ValidateLease { lease },
+    )
+    .await;
+    assert_eq!(verified.status, RpcStatus::Ok);
+    assert_eq!(verified.output["valid"], true);
+    leader.release().await.unwrap();
+}
