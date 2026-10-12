@@ -1,7 +1,7 @@
 pub mod auth;
+pub mod coordinator;
 pub mod executor;
 pub mod jobs;
-pub mod coordinator;
 pub mod metrics;
 pub mod registry;
 pub mod rpc;
