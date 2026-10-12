@@ -101,3 +101,54 @@ fn leader_lock_file_is_owner_only() {
         0o600
     );
 }
+
+#[cfg(unix)]
+#[test]
+fn child_holds_leader_lock_for_crash_test() {
+    let Ok(lock_file) = std::env::var("OCAF_CHILD_LOCK_FILE") else {
+        return;
+    };
+    let ready = std::env::var("OCAF_CHILD_LOCK_READY").unwrap();
+    let _guard = LeaderGuard::try_acquire(std::path::Path::new(&lock_file))
+        .unwrap().unwrap();
+    fs::write(ready, b"locked").unwrap();
+    std::thread::sleep(Duration::from_secs(20));
+}
+
+#[cfg(unix)]
+#[test]
+fn killed_coordinator_process_releases_kernel_lock_for_standby() {
+    use std::process::{Command, Stdio};
+
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("coordinator.lock");
+    let ready = dir.path().join("child-ready");
+    let mut child = Command::new(std::env::current_exe().unwrap())
+        .arg("--exact")
+        .arg("child_holds_leader_lock_for_crash_test")
+        .arg("--nocapture")
+        .env("OCAF_CHILD_LOCK_FILE", &path)
+        .env("OCAF_CHILD_LOCK_READY", &ready)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .unwrap();
+
+    let mut acquired = false;
+    for _ in 0..200 {
+        if ready.is_file() {
+            acquired = true;
+            break;
+        }
+        if child.try_wait().unwrap().is_some() {
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    let blocked = LeaderGuard::try_acquire(&path).unwrap().is_none();
+    child.kill().unwrap();
+    child.wait().unwrap();
+    assert!(acquired && blocked, "child failed to obtain the original exclusive lock");
+    let standby = LeaderGuard::try_acquire(&path).unwrap();
+    assert!(standby.is_some(), "kernel lock was not released after process death");
+}
