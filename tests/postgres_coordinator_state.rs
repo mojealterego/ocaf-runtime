@@ -5,7 +5,6 @@ use ocaf_runtime::rpc::{
     PeerPolicy, RpcAction, RpcError, RpcGateway, RpcReply, RpcRequest, RpcStatus, SignedFrame,
 };
 use ocaf_runtime::runtime::OcafRuntime;
-use serde_json::Value;
 use std::collections::HashMap;
 
 const NOW: u64 = 1_800_000_000_000;
@@ -160,7 +159,7 @@ async fn malformed_capabilities_fail_closed_in_postgresql_store() {
         .heartbeat("valid-peer", &["echo".into(), "echo".into()], NOW)
         .await
         .is_err());
-    assert_eq!(directory.resolve("", NOW).await.err().is_some(), true);
+    assert!(directory.resolve("", NOW).await.is_err());
 }
 
 #[tokio::test]
