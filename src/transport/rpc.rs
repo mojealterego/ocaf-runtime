@@ -80,6 +80,131 @@ impl ZenohRpcServer {
     }
 }
 
+/// Operators may automatically repeat only reads or submission with a
+/// caller-supplied, stable UUID. In particular, Execute, ClaimJob,
+/// FinishJob and Heartbeat cannot safely be reissued after a lost reply.
+pub fn can_retry_rpc_action(action: &RpcAction) -> bool {
+    matches!(
+        action,
+        RpcAction::Discover
+            | RpcAction::Resolve { .. }
+            | RpcAction::GetJob { .. }
+            | RpcAction::GetJobAudit { .. }
+            | RpcAction::SubmitJob { .. }
+    )
+}
+
+/// Strictly bounded reconnect attempts. No retry loop is infinite and each
+/// attempt (opening a new Zenoh session AND RPC exchange) has a timeout.
+#[derive(Debug, Clone, Copy)]
+pub struct ReconnectPolicy {
+    attempts: u8,
+    initial_delay: Duration,
+    max_delay: Duration,
+    attempt_timeout: Duration,
+}
+
+impl Default for ReconnectPolicy {
+    fn default() -> Self {
+        Self {
+            attempts: 4,
+            initial_delay: Duration::from_millis(250),
+            max_delay: Duration::from_secs(1),
+            attempt_timeout: Duration::from_secs(9),
+        }
+    }
+}
+
+impl ReconnectPolicy {
+    pub fn new(
+        attempts: u8,
+        initial_delay: Duration,
+        max_delay: Duration,
+        attempt_timeout: Duration,
+    ) -> anyhow::Result<Self> {
+        if !(1..=8).contains(&attempts)
+            || initial_delay.is_zero()
+            || initial_delay > max_delay
+            || max_delay > Duration::from_secs(5)
+            || attempt_timeout.is_zero()
+            || attempt_timeout > Duration::from_secs(30)
+        {
+            anyhow::bail!("invalid bounded RPC reconnection policy");
+        }
+        Ok(Self {
+            attempts,
+            initial_delay,
+            max_delay,
+            attempt_timeout,
+        })
+    }
+
+    /// The operation is invoked with a freshly constructed signed request on
+    /// each attempt. SubmitJob MUST retain the original job UUID and payload.
+    /// Returned signed RPC replies (including application errors) are never
+    /// retried: only failure to obtain a verified reply is retried.
+    pub async fn run<F, Fut, T>(&self, action: &RpcAction, mut operation: F) -> anyhow::Result<T>
+    where
+        F: FnMut() -> Fut,
+        Fut: std::future::Future<Output = anyhow::Result<T>>,
+    {
+        let allowed_attempts = if can_retry_rpc_action(action) {
+            self.attempts
+        } else {
+            1
+        };
+        let mut delay = self.initial_delay;
+        for index in 0..allowed_attempts {
+            let result = tokio::time::timeout(self.attempt_timeout, operation()).await;
+            match result {
+                Ok(Ok(value)) => return Ok(value),
+                Ok(Err(err)) if index + 1 == allowed_attempts => return Err(err),
+                Err(_) if index + 1 == allowed_attempts => {
+                    anyhow::bail!("RPC reconnection attempt timed out");
+                }
+                _ => {
+                    tokio::time::sleep(delay).await;
+                    delay = delay.saturating_mul(2).min(self.max_delay);
+                }
+            }
+        }
+        unreachable!("at least one RPC attempt is required")
+    }
+}
+
+/// Recreates the entire Zenoh transport/session for each bounded attempt,
+/// allowing clients to connect after an active/passive coordinator switch.
+/// The caller MUST have validated this configuration with the CLI security
+/// preflight; HMAC alone does not encrypt network traffic.
+pub struct ResilientZenohRpcClient {
+    config: zenoh::Config,
+    protocol: RpcClient,
+    policy: ReconnectPolicy,
+}
+
+impl ResilientZenohRpcClient {
+    pub fn new(config: zenoh::Config, protocol: RpcClient, policy: ReconnectPolicy) -> Self {
+        Self {
+            config,
+            protocol,
+            policy,
+        }
+    }
+
+    pub async fn request(&self, action: RpcAction) -> anyhow::Result<RpcReply> {
+        self.policy.run(&action, || {
+            let config = self.config.clone();
+            let action = action.clone();
+            async move {
+                let session = zenoh::open(config)
+                    .await
+                    .map_err(|e| error("Zenoh reconnect", e))?;
+                request_over_session(&session, &self.protocol, action).await
+            }
+        }).await
+    }
+}
+
 pub struct ZenohRpcClient {
     session: Arc<zenoh::Session>,
     protocol: RpcClient,
@@ -95,13 +220,20 @@ impl ZenohRpcClient {
     }
 
     pub async fn request(&self, action: RpcAction) -> anyhow::Result<RpcReply> {
-        let (request, body) = self
-            .protocol
+        request_over_session(&self.session, &self.protocol, action).await
+    }
+}
+
+async fn request_over_session(
+    session: &zenoh::Session,
+    protocol: &RpcClient,
+    action: RpcAction,
+) -> anyhow::Result<RpcReply> {
+        let (request, body) = protocol
             .prepare(action, 5_000)
             .map_err(|e| error("prepare signed RPC", e))?;
-        let key = rpc_key(self.protocol.remote_id());
-        let replies = self
-            .session
+        let key = rpc_key(protocol.remote_id());
+        let replies = session
             .get(key.as_str())
             .payload(body)
             .timeout(RPC_TIMEOUT)
@@ -123,4 +255,3 @@ impl ZenohRpcClient {
             .read_reply(payload.to_bytes().as_ref(), &request)
             .map_err(|e| error("verify signed response", e))
     }
-}
