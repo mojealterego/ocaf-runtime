@@ -103,29 +103,71 @@ async fn signed_audit_is_private_even_if_other_peer_knows_job_uuid() {
     let Some(url) = dsn() else { return };
     let original = gateway(&url).await;
     let mut peers = HashMap::from([
-        ("requester".into(),
-            PeerPolicy::new(REQUESTER_KEY, vec!["echo".into()]).allow_job_submission()),
-        ("worker".into(),
-            PeerPolicy::new(WORKER_KEY, vec!["echo".into()]).allow_job_worker()),
-        ("other".into(),
-            PeerPolicy::new([0xC7;32], vec!["echo".into()]).allow_job_submission()),
+        (
+            "requester".into(),
+            PeerPolicy::new(REQUESTER_KEY, vec!["echo".into()]).allow_job_submission(),
+        ),
+        (
+            "worker".into(),
+            PeerPolicy::new(WORKER_KEY, vec!["echo".into()]).allow_job_worker(),
+        ),
+        (
+            "other".into(),
+            PeerPolicy::new([0xC7; 32], vec!["echo".into()]).allow_job_submission(),
+        ),
     ]);
     let other = RpcGateway::new("coord", OcafRuntime::new(0), std::mem::take(&mut peers), 32)
-        .unwrap().with_postgres_job_db(&url,true).await.unwrap();
-    let id=uuid::Uuid::new_v4().to_string();
-    request(&original,"requester",&REQUESTER_KEY,RpcAction::SubmitJob{
-        id:id.clone(),tool:"echo".into(),args:json!({"secret":"never audit this"})
-    }).await;
-    let audit=request(&original,"requester",&REQUESTER_KEY,
-        RpcAction::GetJobAudit{id:id.clone(),limit:20}).await;
-    assert_eq!(audit.status,RpcStatus::Ok);
-    assert_eq!(audit.output.as_array().unwrap().len(),1);
-    assert_eq!(audit.output[0]["event"],"submitted");
-    let other_audit=request(&other,"other",&[0xC7;32],
-        RpcAction::GetJobAudit{id:id.clone(),limit:20}).await;
+        .unwrap()
+        .with_postgres_job_db(&url, true)
+        .await
+        .unwrap();
+    let id = uuid::Uuid::new_v4().to_string();
+    request(
+        &original,
+        "requester",
+        &REQUESTER_KEY,
+        RpcAction::SubmitJob {
+            id: id.clone(),
+            tool: "echo".into(),
+            args: json!({"secret":"never audit this"}),
+        },
+    )
+    .await;
+    let audit = request(
+        &original,
+        "requester",
+        &REQUESTER_KEY,
+        RpcAction::GetJobAudit {
+            id: id.clone(),
+            limit: 20,
+        },
+    )
+    .await;
+    assert_eq!(audit.status, RpcStatus::Ok);
+    assert_eq!(audit.output.as_array().unwrap().len(), 1);
+    assert_eq!(audit.output[0]["event"], "submitted");
+    let other_audit = request(
+        &other,
+        "other",
+        &[0xC7; 32],
+        RpcAction::GetJobAudit {
+            id: id.clone(),
+            limit: 20,
+        },
+    )
+    .await;
     assert_eq!(other_audit.output, json!([]));
-    let unauthorized=RpcRequest::new("worker","coord",TIME,5000,
-        RpcAction::GetJobAudit{id,limit:20}).unwrap();
-    let frame=SignedFrame::seal(&unauthorized,&WORKER_KEY).unwrap();
-    assert!(matches!(original.handle_at(&frame,TIME).await, Err(ocaf_runtime::rpc::RpcError::Unauthorized)));
+    let unauthorized = RpcRequest::new(
+        "worker",
+        "coord",
+        TIME,
+        5000,
+        RpcAction::GetJobAudit { id, limit: 20 },
+    )
+    .unwrap();
+    let frame = SignedFrame::seal(&unauthorized, &WORKER_KEY).unwrap();
+    assert!(matches!(
+        original.handle_at(&frame, TIME).await,
+        Err(ocaf_runtime::rpc::RpcError::Unauthorized)
+    ));
 }
