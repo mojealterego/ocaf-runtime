@@ -19,6 +19,10 @@
   bounded HMAC frame/body sizes and concurrency limit.
 - Replies are signed with the appropriate peer secret and the client
   validates sender, recipient, protocol version and correlation ID.
+- Trusted local jobs use SQLite WAL, idempotent UUID submission, atomic lease
+  claims, worker fencing tokens, bounded retry counts and explicit uncertain
+  state after unsafe or exhausted expired work. Jobs run through the
+  same runtime authorization pathway; no arbitrary remote submission API.
 - Runtime enforces JSON Schema validation, execution timeouts,
   cancellation-aware atomic budget accounting and controlled errors.
 
@@ -36,6 +40,8 @@
 | Real L402 payment authorization | Not implemented | Verified invoice/hash/macaroon/caveats, ledger, replay protection |
 | Tool isolation | Tools run in the same OS process | sandbox, seccomp, capability boundaries and quotas |
 | End-to-end trace/observability | Basic in-process metrics | OpenTelemetry, audit log and incident response |
+| Queue failover | Single-host SQLite, not replicated cluster storage | Replicated coordinator, fencing at external services |
+| Expired worker external side effects | Journal fencing prevents stale commits, not external writes | Transactional outbox, external fencing and idempotency |
 | Multi-router trust | Not independently verified | mTLS Zenoh config and authenticated router topology |
 
 **HMAC signs; it does not encrypt**. A Zenoh config file being present
@@ -70,6 +76,17 @@ replicas across separate hosts. Keep the database and WAL sidecars private,
 exclude them from backups that leak customer metadata, and size capacity
 for a maximum of 4,096 live journal entries (full => fail closed).
 
+## Job queue boundaries
+
+The experimental `JobStore` and `JobWorker` modules persist local
+work, results, attempts, leases and recovery status in SQLite. They
+are **not** exposed as unauthenticated remote RPC endpoints. Only a
+trusted publisher can decide that an operation is retry-safe; marking
+an operation retry-safe is not a generic guarantee of idempotency.
+A stale lease token can never commit a result to this journal, but the
+stale worker might still mutate an external system. See
+[docs/JOBS.md](JOBS.md) for operational constraints and recovery policy.
+
 ## Keys
 
 Generate a distinct, cryptographically random 32-byte key per two-peer
@@ -82,7 +99,7 @@ not part of this implementation.
 
 1. A complete mutual TLS deployment test with unauthorized peers blocked.
 2. Extend the admission ledger into a transactional result/outbox journal and simulate process crashes.
-3. Per-peer economic budgets, distributed quotas and structured audited denials.
+3. Cluster job coordination, external effect fencing, per-tenant budgets and structured audited denials.
 4. Sandbox integration for untrusted tools and bounded CPU/memory/network.
 5. Dependency and supply-chain audits, fuzzing of signed envelope parser.
 6. Cross-machine test under network disruption, latency and packet loss.
