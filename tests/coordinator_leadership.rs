@@ -110,7 +110,8 @@ fn child_holds_leader_lock_for_crash_test() {
     };
     let ready = std::env::var("OCAF_CHILD_LOCK_READY").unwrap();
     let _guard = LeaderGuard::try_acquire(std::path::Path::new(&lock_file))
-        .unwrap().unwrap();
+        .unwrap()
+        .unwrap();
     fs::write(ready, b"locked").unwrap();
     std::thread::sleep(Duration::from_secs(20));
 }
@@ -148,7 +149,13 @@ fn killed_coordinator_process_releases_kernel_lock_for_standby() {
     let blocked = LeaderGuard::try_acquire(&path).unwrap().is_none();
     child.kill().unwrap();
     child.wait().unwrap();
-    assert!(acquired && blocked, "child failed to obtain the original exclusive lock");
+    assert!(
+        acquired && blocked,
+        "child failed to obtain the original exclusive lock"
+    );
     let standby = LeaderGuard::try_acquire(&path).unwrap();
-    assert!(standby.is_some(), "kernel lock was not released after process death");
+    assert!(
+        standby.is_some(),
+        "kernel lock was not released after process death"
+    );
 }
