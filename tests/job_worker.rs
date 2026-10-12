@@ -53,12 +53,21 @@ async fn worker_executes_validated_local_tool_and_persists_output() {
     let store = JobStore::open(&dir.path().join("jobs.sqlite")).unwrap();
     let runtime = OcafRuntime::new(0);
     let calls = Arc::new(AtomicUsize::new(0));
-    runtime.register(manifest("echo", 0, vec![], 100), Echo(Arc::clone(&calls))).await.unwrap();
+    runtime
+        .register(manifest("echo", 0, vec![], 100), Echo(Arc::clone(&calls)))
+        .await
+        .unwrap();
     let work = job("echo");
     store.submit(work.clone()).await.unwrap();
 
-    let worker = JobWorker::new(store.clone(), runtime, "agent-worker",
-        10_000, HashSet::from(["echo".to_string()])).unwrap();
+    let worker = JobWorker::new(
+        store.clone(),
+        runtime,
+        "agent-worker",
+        10_000,
+        HashSet::from(["echo".to_string()]),
+    )
+    .unwrap();
     assert_eq!(worker.run_once().await.unwrap(), Some(JobStatus::Succeeded));
     let record = store.get(&work.id).await.unwrap().unwrap();
     assert_eq!(record.result, Some(json!({"echo":"one"})));
@@ -72,16 +81,30 @@ async fn worker_cannot_bypass_local_authorization_for_paid_or_privileged_tools()
     let store = JobStore::open(&dir.path().join("jobs.sqlite")).unwrap();
     let runtime = OcafRuntime::new(100);
     let calls = Arc::new(AtomicUsize::new(0));
-    runtime.register(manifest("paid", 5, vec![], 100), Echo(Arc::clone(&calls))).await.unwrap();
-    runtime.register(manifest("privileged", 0, vec!["network:write".into()], 100),
-        Echo(Arc::clone(&calls))).await.unwrap();
+    runtime
+        .register(manifest("paid", 5, vec![], 100), Echo(Arc::clone(&calls)))
+        .await
+        .unwrap();
+    runtime
+        .register(
+            manifest("privileged", 0, vec!["network:write".into()], 100),
+            Echo(Arc::clone(&calls)),
+        )
+        .await
+        .unwrap();
     let first = job("paid");
     let second = job("privileged");
     store.submit(first.clone()).await.unwrap();
     store.submit(second.clone()).await.unwrap();
 
-    let worker = JobWorker::new(store.clone(), runtime.clone(), "agent-worker",
-        10_000, HashSet::from(["paid".into(), "privileged".into()])).unwrap();
+    let worker = JobWorker::new(
+        store.clone(),
+        runtime.clone(),
+        "agent-worker",
+        10_000,
+        HashSet::from(["paid".into(), "privileged".into()]),
+    )
+    .unwrap();
     assert_eq!(worker.run_once().await.unwrap(), Some(JobStatus::Failed));
     assert_eq!(worker.run_once().await.unwrap(), Some(JobStatus::Failed));
     assert_eq!(calls.load(Ordering::SeqCst), 0);
@@ -94,11 +117,20 @@ async fn worker_rejects_tool_timeout_longer_than_lease_safety_margin() {
     let store = JobStore::open(&dir.path().join("jobs.sqlite")).unwrap();
     let runtime = OcafRuntime::new(0);
     let calls = Arc::new(AtomicUsize::new(0));
-    runtime.register(manifest("slow", 0, vec![], 9_500), Echo(Arc::clone(&calls))).await.unwrap();
+    runtime
+        .register(manifest("slow", 0, vec![], 9_500), Echo(Arc::clone(&calls)))
+        .await
+        .unwrap();
     store.submit(job("slow")).await.unwrap();
 
-    let worker = JobWorker::new(store, runtime, "agent-worker",
-        10_000, HashSet::from(["slow".into()])).unwrap();
+    let worker = JobWorker::new(
+        store,
+        runtime,
+        "agent-worker",
+        10_000,
+        HashSet::from(["slow".into()]),
+    )
+    .unwrap();
     assert_eq!(worker.run_once().await.unwrap(), Some(JobStatus::Failed));
     assert_eq!(calls.load(Ordering::SeqCst), 0);
 }
@@ -108,8 +140,20 @@ fn worker_rejects_empty_allowlist_or_invalid_worker_identity() {
     let dir = tempfile::tempdir().unwrap();
     let store = JobStore::open(&dir.path().join("jobs.sqlite")).unwrap();
     let runtime = OcafRuntime::new(0);
-    assert!(JobWorker::new(store.clone(), runtime.clone(), "valid",
-        10_000, HashSet::new()).is_err());
-    assert!(JobWorker::new(store, runtime, "../../worker", 10_000,
-        HashSet::from(["echo".into()])).is_err());
+    assert!(JobWorker::new(
+        store.clone(),
+        runtime.clone(),
+        "valid",
+        10_000,
+        HashSet::new()
+    )
+    .is_err());
+    assert!(JobWorker::new(
+        store,
+        runtime,
+        "../../worker",
+        10_000,
+        HashSet::from(["echo".into()])
+    )
+    .is_err());
 }
