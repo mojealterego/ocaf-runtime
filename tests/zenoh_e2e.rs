@@ -55,10 +55,14 @@ async fn two_zenoh_sessions_exchange_authenticated_rpc_over_tcp() -> anyhow::Res
     )).map_err(|e| anyhow::anyhow!("client config: {e}"))?;
 
     let server_session = Arc::new(
-        zenoh::open(server_cfg).await.map_err(|e| anyhow::anyhow!("open server: {e}"))?,
+        zenoh::open(server_cfg)
+            .await
+            .map_err(|e| anyhow::anyhow!("open server: {e}"))?,
     );
     let client_session = Arc::new(
-        zenoh::open(client_cfg).await.map_err(|e| anyhow::anyhow!("open client: {e}"))?,
+        zenoh::open(client_cfg)
+            .await
+            .map_err(|e| anyhow::anyhow!("open client: {e}"))?,
     );
 
     let runtime = OcafRuntime::new(0);
@@ -81,10 +85,12 @@ async fn two_zenoh_sessions_exchange_authenticated_rpc_over_tcp() -> anyhow::Res
     assert_eq!(discovered.status, RpcStatus::Ok);
     assert_eq!(discovered.output[0]["name"], "echo");
 
-    let executed = client.request(RpcAction::Execute {
-        tool: "echo".into(),
-        args: json!({"message":"end-to-end"}),
-    }).await?;
+    let executed = client
+        .request(RpcAction::Execute {
+            tool: "echo".into(),
+            args: json!({"message":"end-to-end"}),
+        })
+        .await?;
     assert_eq!(executed.status, RpcStatus::Ok);
     assert_eq!(executed.output, json!({"echo":"end-to-end"}));
 
