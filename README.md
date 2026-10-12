@@ -391,6 +391,26 @@ not atomic fencing by arbitrary external services.
 
 See [docs/WORKER_FENCING.md](docs/WORKER_FENCING.md).
 
+## Transactional PostgreSQL effect sink (v0.19)
+
+The signed worker RPC now offers an **explicit, opt-in PostgreSQL-local**
+`ApplyFencedEffect` operation, separate from arbitrary external tools.
+Inside a single PostgreSQL transaction, the coordinator locks the
+current leadership generation and the exact running job lease before
+inserting an immutable, one-per-job JSON effect. Duplicate identical
+attempts return the original commit timestamp; altered payloads or
+stale/expired leases are rejected. The sink stores no HMAC keys or
+raw lease tokens and does not expose full payloads in its receipt.
+
+This **demonstrates and enforces fencing for writes to this one database
+table only**. It does not authorize or atomically fence external HTTP,
+email, payments, filesystem access or arbitrary model/tool execution.
+Those systems each require an independent transactional fencing adapter.
+The experimental runtime creates the new table on startup; migrations
+and least-privilege roles still need production hardening.
+
+See [docs/FENCED_EFFECTS.md](docs/FENCED_EFFECTS.md).
+
 ## Production work still required
 
 1. Certificate-backed TLS/mTLS handshakes on separate deployed hosts, plus certificate rotation and revocation.

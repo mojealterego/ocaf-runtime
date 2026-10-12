@@ -44,6 +44,16 @@ pub struct JobAuditEvent {
     pub occurred_at_ms: i64,
 }
 
+/// Result of applying a concrete, durable PostgreSQL-local effect.
+/// No lease secret or effect payload is returned to the caller.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct FencedEffectReceipt {
+    pub job_id: String,
+    pub leader_epoch: i64,
+    pub applied: bool,
+    pub committed_at_ms: i64,
+}
+
 fn storage(_: tokio_postgres::Error) -> JobError {
     JobError::Storage
 }
@@ -145,6 +155,14 @@ impl PgJobQueue {
              );
              CREATE INDEX IF NOT EXISTS ocaf_pg_job_audit_lookup
                  ON ocaf_pg_job_audit_v1(job_id,seq);
+             CREATE TABLE IF NOT EXISTS ocaf_pg_fenced_effects_v1 (
+                 job_id TEXT PRIMARY KEY REFERENCES ocaf_pg_jobs_v1(id),
+                 worker_id TEXT NOT NULL,
+                 tool TEXT NOT NULL,
+                 leader_epoch BIGINT NOT NULL CHECK(leader_epoch > 0),
+                 effect TEXT NOT NULL,
+                 committed_at_ms BIGINT NOT NULL
+             );
              COMMIT;",
             )
             .await
@@ -415,6 +433,123 @@ impl PgJobQueue {
             .await
             .map_err(storage)?;
         Ok(row.get::<_, bool>(0))
+    }
+
+    /// Apply a *PostgreSQL-local* effect once and atomically gate it on
+    /// live leadership, the stored job lease, the current epoch and server
+    /// clock. This does not protect arbitrary external HTTP/file/API effects.
+    pub async fn apply_fenced_effect(
+        &self,
+        lease: &LeasedJob,
+        effect: Value,
+    ) -> Result<FencedEffectReceipt, JobError> {
+        let leader = self.leader.as_ref().ok_or(JobError::Invalid)?;
+        if lease.leader_epoch <= 0
+            || Uuid::parse_str(&lease.id).is_err()
+            || Uuid::parse_str(&lease.lease_token).is_err()
+            || validate_actor(&lease.worker_id).is_err()
+            || !crate::coordinator::validate_tool_name(&lease.tool)
+        {
+            return Err(JobError::Invalid);
+        }
+        let json = serde_json::to_string(&effect).map_err(|_| JobError::Invalid)?;
+        if json.len() > MAX_ARGS {
+            return Err(JobError::Invalid);
+        }
+        let epoch = leader.fencing_epoch().await.map_err(|_| JobError::Storage)?;
+        if lease.leader_epoch != epoch {
+            return Err(JobError::StaleLease);
+        }
+        let attempt = i32::try_from(lease.attempt).map_err(|_| JobError::Invalid)?;
+        let deadline = i64::try_from(lease.lease_expires_at_ms).map_err(|_| JobError::Invalid)?;
+
+        let mut client = self.state.client.lock().await;
+        let tx = client.transaction().await.map_err(storage)?;
+        self.check_epoch_in_transaction(&tx, leader.cluster_id(), epoch)
+            .await?;
+
+        // Lock the job against concurrent finish/recovery before checking
+        // the complete identity. A forged lease can never authorize a sink.
+        let job = tx
+            .query_opt(
+                "SELECT id FROM ocaf_pg_jobs_v1 WHERE id=$1 AND worker_id=$2
+                   AND tool=$3 AND attempts=$4 AND lease_token=$5
+                   AND lease_expires_at_ms=$6 AND leader_epoch=$7
+                   AND status='running' AND lease_expires_at_ms >
+                   (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT
+                 FOR UPDATE",
+                &[
+                    &lease.id, &lease.worker_id, &lease.tool, &attempt,
+                    &lease.lease_token, &deadline, &epoch,
+                ],
+            )
+            .await
+            .map_err(storage)?;
+        if job.is_none() {
+            return Err(JobError::StaleLease);
+        }
+
+        // Recheck the lease deadline INSIDE the effect INSERT statement.
+        // The unique job ID forms the idempotency key. No external network
+        // request can be made within this narrow transactional primitive.
+        let inserted = tx
+            .query_opt(
+                "INSERT INTO ocaf_pg_fenced_effects_v1
+                   (job_id,worker_id,tool,leader_epoch,effect,committed_at_ms)
+                 SELECT id,worker_id,tool,leader_epoch,$8,
+                   (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT
+                 FROM ocaf_pg_jobs_v1
+                 WHERE id=$1 AND worker_id=$2 AND tool=$3
+                   AND attempts=$4 AND lease_token=$5
+                   AND lease_expires_at_ms=$6 AND leader_epoch=$7
+                   AND status='running' AND lease_expires_at_ms >
+                     (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT
+                 ON CONFLICT(job_id) DO NOTHING
+                 RETURNING committed_at_ms",
+                &[
+                    &lease.id, &lease.worker_id, &lease.tool, &attempt,
+                    &lease.lease_token, &deadline, &epoch, &json,
+                ],
+            )
+            .await
+            .map_err(storage)?;
+
+        let (applied, committed_at_ms) = if let Some(row) = inserted {
+            (true, row.get::<_, i64>(0))
+        } else {
+            // Only an existing identical effect while this *same* lease
+            // remains live is an idempotent retry. A different payload,
+            // epoch or worker may not overwrite the previously applied row.
+            let stored = tx
+                .query_opt(
+                    "SELECT e.worker_id,e.tool,e.leader_epoch,e.effect,e.committed_at_ms
+                     FROM ocaf_pg_fenced_effects_v1 e
+                     JOIN ocaf_pg_jobs_v1 j ON j.id=e.job_id
+                     WHERE e.job_id=$1 AND j.status='running'
+                       AND j.lease_expires_at_ms >
+                          (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT",
+                    &[&lease.id],
+                )
+                .await
+                .map_err(storage)?;
+            let row = stored.ok_or(JobError::StaleLease)?;
+            let old: String = row.get(3);
+            if row.get::<_, String>(0) != lease.worker_id
+                || row.get::<_, String>(1) != lease.tool
+                || row.get::<_, i64>(2) != epoch
+                || serde_json::from_str::<Value>(&old).map_err(|_| JobError::Storage)? != effect
+            {
+                return Err(JobError::Conflict);
+            }
+            (false, row.get::<_, i64>(4))
+        };
+        tx.commit().await.map_err(storage)?;
+        Ok(FencedEffectReceipt {
+            job_id: lease.id.clone(),
+            leader_epoch: epoch,
+            applied,
+            committed_at_ms,
+        })
     }
 
     /// Read at most 100 metadata-only audit records for an authenticated

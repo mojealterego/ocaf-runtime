@@ -1,7 +1,7 @@
 //! Uniform coordinator RPC job API backed by local SQLite or shared PostgreSQL.
 use std::sync::Arc;
 
-use crate::cluster::jobs::PgJobQueue;
+use crate::cluster::jobs::{FencedEffectReceipt, PgJobQueue};
 use crate::cluster::leadership::PgLeader;
 use crate::jobs::{JobError, JobRecord, JobSpec, JobStore, LeasedJob, RecoverySummary};
 use serde_json::Value;
@@ -22,6 +22,17 @@ impl JobBackend {
     pub(super) async fn validate_current_lease(&self, lease: &LeasedJob) -> Result<bool, JobError> {
         match self {
             Self::Postgres(db) => db.validate_current_lease(lease).await,
+            Self::Sqlite(_) => Err(JobError::Invalid),
+        }
+    }
+
+    pub(super) async fn apply_fenced_effect(
+        &self,
+        lease: &LeasedJob,
+        effect: Value,
+    ) -> Result<FencedEffectReceipt, JobError> {
+        match self {
+            Self::Postgres(db) => db.apply_fenced_effect(lease, effect).await,
             Self::Sqlite(_) => Err(JobError::Invalid),
         }
     }

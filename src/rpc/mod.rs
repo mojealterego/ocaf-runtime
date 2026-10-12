@@ -116,6 +116,11 @@ pub enum RpcAction {
     ValidateLease {
         lease: LeasedJob,
     },
+    /// Opt-in PostgreSQL-local effect sink; no generic external tool call.
+    ApplyFencedEffect {
+        lease: LeasedJob,
+        effect: Value,
+    },
     FinishJob {
         lease: LeasedJob,
         outcome: RemoteJobOutcome,
@@ -172,6 +177,7 @@ impl RpcRequest {
             | RpcAction::GetJobAudit { .. }
             | RpcAction::ClaimJob
             | RpcAction::ValidateLease { .. }
+            | RpcAction::ApplyFencedEffect { .. }
             | RpcAction::FinishJob { .. }
             | RpcAction::Discover => {}
         }
@@ -608,7 +614,9 @@ impl RpcGateway {
                     return Err(RpcError::Unauthorized);
                 }
             }
-            RpcAction::ValidateLease { lease } | RpcAction::FinishJob { lease, .. } => {
+            RpcAction::ValidateLease { lease }
+            | RpcAction::ApplyFencedEffect { lease, .. }
+            | RpcAction::FinishJob { lease, .. } => {
                 if self.jobs.is_none() {
                     return Err(RpcError::Unavailable);
                 }
@@ -739,6 +747,17 @@ impl RpcGateway {
                     },
                     json!({"valid": valid}),
                 )
+            }
+            RpcAction::ApplyFencedEffect { lease, effect } => {
+                if self.leader.is_none() {
+                    return Err(RpcError::Unavailable);
+                }
+                let store = self.jobs.as_ref().ok_or(RpcError::Unavailable)?;
+                match store.apply_fenced_effect(&lease, effect).await {
+                    Ok(receipt) => (RpcStatus::Ok, json!(receipt)),
+                    Err(JobError::Storage) => return Err(RpcError::Unavailable),
+                    Err(_) => (RpcStatus::Failed, Value::Null),
+                }
             }
             RpcAction::FinishJob { lease, outcome } => {
                 let store = self.jobs.as_ref().ok_or(RpcError::Unavailable)?;
