@@ -72,9 +72,16 @@ Required environment variables for `ocaf-coordinator`:
 - `OCAF_REPLAY_DB_PATH`: absolute SQLite replay-ledger file path.
 - `OCAF_COORDINATOR_DB_PATH`: absolute SQLite membership file path.
 - `OCAF_JOBS_DB_PATH`: separate absolute SQLite queue file path (v0.8).
+- `OCAF_COORDINATOR_LOCK_PATH`: separate absolute OS leadership file path,
+  in the **same canonical local directory** as jobs SQLite (v0.9).
+- `OCAF_COORDINATOR_MODE`: `active` (fail fast on contention) or
+  `standby` (promote after kernel lock release).
 
 Use separate SQLite filenames and a private parent directory. The CLI
-does not silently revert to an in-memory replay journal.
+does not silently revert to an in-memory replay journal. Since v0.9,
+all network CLIs also require TLS-only/mTLS preflight, unless an operator
+explicitly opts into plaintext **loopback-only** development with
+`OCAF_ALLOW_INSECURE_LOOPBACK=1`. See [HA.md](HA.md).
 
 Peer file format (illustrative; replace placeholders with independent,
 securely generated 32-byte keys):
@@ -140,8 +147,10 @@ peer credentials.
   executor actually implements them.
 - Health is a time-limited *heartbeat hint*, not a measured end-to-end
   execution probe. Slow/unreachable nodes can still be returned.
-- This coordinator persists state on **one host only**; it is not
-  replicated consensus and is a single point of failure.
+- This coordinator persists state on **one host only**. In v0.9 it can
+  promote a local standby process after a leader crash, but it is not
+  replicated consensus and the **machine/disk is still a single point
+  of failure**.
 - Route responses do not reserve or transfer job leases. The separate v0.8
   `SubmitJob`/`ClaimJob`/`FinishJob` interface does transfer signed
   assignments between machines, but remains bound to one coordinator
