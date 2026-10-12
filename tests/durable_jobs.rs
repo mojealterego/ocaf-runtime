@@ -260,3 +260,14 @@ async fn two_independent_sqlite_connections_atomically_claim_only_once() {
         JobStatus::Running
     );
 }
+
+#[cfg(unix)]
+#[test]
+fn job_database_file_is_private_on_unix() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("jobs.sqlite");
+    let _store = open(&path);
+    let mode = std::fs::metadata(path).unwrap().permissions().mode() & 0o777;
+    assert_eq!(mode, 0o600, "job arguments/results must not be world-readable");
+}
