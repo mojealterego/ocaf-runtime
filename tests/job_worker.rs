@@ -190,3 +190,38 @@ async fn worker_recovers_expired_retry_safe_job_without_manual_supervisor_step()
     assert_eq!(store.get(&work.id).await.unwrap().unwrap().attempts, 2);
     assert_eq!(calls.load(Ordering::SeqCst), 1);
 }
+
+struct PartialSideEffect(Arc<AtomicUsize>);
+
+#[async_trait::async_trait]
+impl ToolExecutor for PartialSideEffect {
+    async fn execute(&self, _: Value, _: &ExecutionContext) -> Result<Value, ToolError> {
+        self.0.fetch_add(1, Ordering::SeqCst);
+        Err(ToolError::Execution("effect happened before failure".into()))
+    }
+}
+
+#[tokio::test]
+async fn ambiguous_tool_failure_is_uncertain_for_non_retry_safe_job() {
+    let dir = tempfile::tempdir().unwrap();
+    let store = JobStore::open(&dir.path().join("jobs.sqlite")).unwrap();
+    let runtime = OcafRuntime::new(0);
+    let effects = Arc::new(AtomicUsize::new(0));
+    runtime
+        .register(manifest("side_effect", 0, vec![], 100), PartialSideEffect(Arc::clone(&effects)))
+        .await
+        .unwrap();
+    let task = job("side_effect");
+    store.submit(task.clone()).await.unwrap();
+    let worker = JobWorker::new(
+        store.clone(),
+        runtime,
+        "worker-a",
+        10_000,
+        HashSet::from(["side_effect".into()]),
+    ).unwrap();
+    assert_eq!(worker.run_once().await.unwrap(), Some(JobStatus::Uncertain));
+    assert_eq!(store.get(&task.id).await.unwrap().unwrap().status, JobStatus::Uncertain);
+    assert_eq!(effects.load(Ordering::SeqCst), 1);
+    assert_eq!(worker.run_once().await.unwrap(), None);
+}
