@@ -14,7 +14,7 @@ use ocaf_runtime::coordinator::leadership::LeaderGuard;
 use ocaf_runtime::rpc::{PeerPolicy, RpcGateway};
 use ocaf_runtime::runtime::OcafRuntime;
 use ocaf_runtime::transport::rpc::ZenohRpcServer;
-use ocaf_runtime::transport_policy::validate_zenoh_config;
+use ocaf_runtime::transport_policy::{read_zenoh_config, validate_zenoh_config};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -137,7 +137,7 @@ async fn main() -> anyhow::Result<()> {
     };
     let peers = load_peers(&absolute_path("OCAF_PEERS_FILE")?)?;
     let zenoh_config = env_required("OCAF_ZENOH_CONFIG")?;
-    let source = fs::read_to_string(&zenoh_config)?;
+    let source = read_zenoh_config(Path::new(&zenoh_config))?;
     validate_zenoh_config(
         &source,
         env::var("OCAF_ALLOW_INSECURE_LOOPBACK").as_deref() == Ok("1"),
