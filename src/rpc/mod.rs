@@ -81,12 +81,26 @@ pub fn now_ms() -> Result<u64, RpcError> {
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum RpcAction {
     Discover,
-    Execute { tool: String, args: Value },
-    Heartbeat { tools: Vec<String> },
-    Resolve { tool: String },
-    SubmitJob { id: String, tool: String, args: Value },
+    Execute {
+        tool: String,
+        args: Value,
+    },
+    Heartbeat {
+        tools: Vec<String>,
+    },
+    Resolve {
+        tool: String,
+    },
+    SubmitJob {
+        id: String,
+        tool: String,
+        args: Value,
+    },
     ClaimJob,
-    FinishJob { lease: LeasedJob, outcome: RemoteJobOutcome },
+    FinishJob {
+        lease: LeasedJob,
+        outcome: RemoteJobOutcome,
+    },
 }
 
 /// A remote worker is trusted to report whether an execution was completed,
@@ -547,10 +561,12 @@ impl RpcGateway {
                     retry_safe: false,
                     max_attempts: 1,
                 };
-                let result = self.jobs
+                let result = self
+                    .jobs
                     .as_ref()
                     .ok_or(RpcError::Unavailable)?
-                    .submit(spec).await;
+                    .submit(spec)
+                    .await;
                 match result {
                     Ok(job) => (RpcStatus::Ok, json!({"job_id":job.id})),
                     Err(JobError::Storage) => return Err(RpcError::Unavailable),
@@ -559,17 +575,26 @@ impl RpcGateway {
             }
             RpcAction::ClaimJob => {
                 let store = self.jobs.as_ref().ok_or(RpcError::Unavailable)?;
-                store.recover_expired(now).await.map_err(|_| RpcError::Unavailable)?;
+                store
+                    .recover_expired(now)
+                    .await
+                    .map_err(|_| RpcError::Unavailable)?;
                 let tools: Vec<String> = peer.allowed_tools.iter().cloned().collect();
-                let claim = store.claim_permitted(&request.sender, now, 30_000, &tools)
-                    .await.map_err(|_| RpcError::Unavailable)?;
+                let claim = store
+                    .claim_permitted(&request.sender, now, 30_000, &tools)
+                    .await
+                    .map_err(|_| RpcError::Unavailable)?;
                 (RpcStatus::Ok, json!(claim))
             }
             RpcAction::FinishJob { lease, outcome } => {
                 let store = self.jobs.as_ref().ok_or(RpcError::Unavailable)?;
                 let result = match outcome {
-                    RemoteJobOutcome::Succeeded { output } => store.succeed(&lease, output, now).await,
-                    RemoteJobOutcome::Failed => store.fail(&lease, "worker rejected or failed", now).await,
+                    RemoteJobOutcome::Succeeded { output } => {
+                        store.succeed(&lease, output, now).await
+                    }
+                    RemoteJobOutcome::Failed => {
+                        store.fail(&lease, "worker rejected or failed", now).await
+                    }
                     RemoteJobOutcome::Uncertain => store.mark_uncertain(&lease, now).await,
                 };
                 match result {
