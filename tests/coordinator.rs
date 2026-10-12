@@ -15,7 +15,10 @@ const C: [u8; 32] = [0xC3; 32];
 
 fn peers() -> HashMap<String, PeerPolicy> {
     HashMap::from([
-        ("worker-a".into(), PeerPolicy::new(A, vec!["echo".into(), "image".into()])),
+        (
+            "worker-a".into(),
+            PeerPolicy::new(A, vec!["echo".into(), "image".into()]),
+        ),
         ("worker-b".into(), PeerPolicy::new(B, vec!["echo".into()])),
         ("client-c".into(), PeerPolicy::new(C, vec!["echo".into()])),
     ])
@@ -121,7 +124,12 @@ async fn direct_coordinator_store_expires_nodes_and_persists_across_restart() {
 
     let restarted = CoordinatorStore::open(&path).unwrap();
     assert_eq!(
-        restarted.resolve("echo", NOW + 14_999).await.unwrap().unwrap().node_id,
+        restarted
+            .resolve("echo", NOW + 14_999)
+            .await
+            .unwrap()
+            .unwrap()
+            .node_id,
         "worker-a"
     );
     assert_eq!(restarted.resolve("echo", NOW + 15_000).await.unwrap(), None);
@@ -131,8 +139,14 @@ async fn direct_coordinator_store_expires_nodes_and_persists_across_restart() {
 async fn coordinator_routes_round_robin_among_live_nodes() {
     let dir = tempfile::tempdir().unwrap();
     let store = CoordinatorStore::open(&dir.path().join("members.sqlite")).unwrap();
-    store.heartbeat("worker-a", &["echo".into()], NOW).await.unwrap();
-    store.heartbeat("worker-b", &["echo".into()], NOW).await.unwrap();
+    store
+        .heartbeat("worker-a", &["echo".into()], NOW)
+        .await
+        .unwrap();
+    store
+        .heartbeat("worker-b", &["echo".into()], NOW)
+        .await
+        .unwrap();
     let mut ids = vec![];
     for _ in 0..4 {
         ids.push(store.resolve("echo", NOW).await.unwrap().unwrap().node_id);
@@ -153,7 +167,9 @@ async fn coordinator_rejects_invalid_capabilities_and_fails_closed_on_bad_storag
         Err(CoordinatorError::Invalid)
     ));
     assert!(matches!(
-        store.heartbeat("worker-a", &["echo".into(), "echo".into()], NOW).await,
+        store
+            .heartbeat("worker-a", &["echo".into(), "echo".into()], NOW)
+            .await,
         Err(CoordinatorError::Invalid)
     ));
     assert!(matches!(
@@ -223,7 +239,12 @@ async fn heartbeat_renewal_replaces_capabilities_atomically() {
         .unwrap();
     assert!(store.resolve("echo", NOW + 1000).await.unwrap().is_none());
     assert_eq!(
-        store.resolve("image", NOW + 1000).await.unwrap().unwrap().node_id,
+        store
+            .resolve("image", NOW + 1000)
+            .await
+            .unwrap()
+            .unwrap()
+            .node_id,
         "worker-a"
     );
 }
