@@ -21,6 +21,7 @@ use tokio::sync::Semaphore;
 use uuid::Uuid;
 
 use crate::coordinator::{validate_capabilities, validate_tool_name, CoordinatorStore};
+use crate::jobs::{JobError, JobSpec, JobStore, LeasedJob};
 use crate::runtime::{OcafRuntime, RuntimeError, ToolCallRequest};
 
 mod replay;
@@ -83,6 +84,19 @@ pub enum RpcAction {
     Execute { tool: String, args: Value },
     Heartbeat { tools: Vec<String> },
     Resolve { tool: String },
+    SubmitJob { id: String, tool: String, args: Value },
+    ClaimJob,
+    FinishJob { lease: LeasedJob, outcome: RemoteJobOutcome },
+}
+
+/// A remote worker is trusted to report whether an execution was completed,
+/// definitively rejected before execution, or ambiguous.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum RemoteJobOutcome {
+    Succeeded { output: Value },
+    Failed,
+    Uncertain,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -111,7 +125,9 @@ impl RpcRequest {
             return Err(RpcError::Malformed);
         }
         match &action {
-            RpcAction::Execute { tool, .. } | RpcAction::Resolve { tool } => {
+            RpcAction::Execute { tool, .. }
+            | RpcAction::Resolve { tool }
+            | RpcAction::SubmitJob { tool, .. } => {
                 if !validate_tool_name(tool) {
                     return Err(RpcError::Malformed);
                 }
@@ -119,7 +135,12 @@ impl RpcRequest {
             RpcAction::Heartbeat { tools } => {
                 validate_capabilities(tools).map_err(|_| RpcError::Malformed)?;
             }
-            RpcAction::Discover => {}
+            RpcAction::ClaimJob | RpcAction::FinishJob { .. } | RpcAction::Discover => {}
+        }
+        if let RpcAction::SubmitJob { id, .. } = &action {
+            if Uuid::parse_str(id).is_err() {
+                return Err(RpcError::Malformed);
+            }
         }
         Ok(Self {
             version: PROTOCOL_VERSION,
@@ -141,6 +162,11 @@ impl RpcRequest {
             || self.ttl_ms > MAX_REQUEST_TTL_MS
         {
             return Err(RpcError::Malformed);
+        }
+        if let RpcAction::SubmitJob { id, tool, .. } = &self.action {
+            if Uuid::parse_str(id).is_err() || !validate_tool_name(tool) {
+                return Err(RpcError::Malformed);
+            }
         }
         if self.recipient != recipient {
             return Err(RpcError::WrongRecipient);
@@ -240,6 +266,8 @@ pub struct PeerPolicy {
     key: [u8; 32],
     allowed_tools: HashSet<String>,
     requests_per_second: u32,
+    job_submitter: bool,
+    job_worker: bool,
 }
 
 impl PeerPolicy {
@@ -248,6 +276,8 @@ impl PeerPolicy {
             key,
             allowed_tools: allowed_tools.into_iter().collect(),
             requests_per_second: DEFAULT_PEER_RATE_PER_SECOND,
+            job_submitter: false,
+            job_worker: false,
         }
     }
 
@@ -260,6 +290,18 @@ impl PeerPolicy {
         }
         self.requests_per_second = requests_per_second;
         Ok(self)
+    }
+
+    /// Explicitly authorize this peer to submit free, single-attempt work.
+    pub fn allow_job_submission(mut self) -> Self {
+        self.job_submitter = true;
+        self
+    }
+
+    /// Explicitly authorize this peer to claim and report queued work.
+    pub fn allow_job_worker(mut self) -> Self {
+        self.job_worker = true;
+        self
     }
 
     fn permits(&self, tool: &str) -> bool {
@@ -275,6 +317,7 @@ pub struct RpcGateway {
     rates: Mutex<HashMap<String, (u64, u32)>>,
     concurrency: Semaphore,
     coordinator: Option<CoordinatorStore>,
+    jobs: Option<JobStore>,
 }
 
 impl RpcGateway {
@@ -302,6 +345,7 @@ impl RpcGateway {
             rates: Mutex::new(HashMap::new()),
             concurrency: Semaphore::new(max_concurrent_calls),
             coordinator: None,
+            jobs: None,
         })
     }
 
@@ -328,6 +372,12 @@ impl RpcGateway {
     pub fn with_coordinator_db(mut self, db_path: &Path) -> Result<Self, RpcError> {
         self.coordinator =
             Some(CoordinatorStore::open(db_path).map_err(|_| RpcError::Unavailable)?);
+        Ok(self)
+    }
+
+    /// Opt in to a durable, single-coordinator SQLite queue.
+    pub fn with_job_db(mut self, path: &Path) -> Result<Self, RpcError> {
+        self.jobs = Some(JobStore::open(path).map_err(|_| RpcError::Unavailable)?);
         Ok(self)
     }
 
@@ -409,6 +459,33 @@ impl RpcGateway {
                     return Err(RpcError::Unauthorized);
                 }
             }
+            RpcAction::SubmitJob { id, tool, .. } => {
+                if self.jobs.is_none() {
+                    return Err(RpcError::Unavailable);
+                }
+                if !peer.job_submitter || !peer.permits(tool) || Uuid::parse_str(id).is_err() {
+                    return Err(RpcError::Unauthorized);
+                }
+            }
+            RpcAction::ClaimJob => {
+                if self.jobs.is_none() {
+                    return Err(RpcError::Unavailable);
+                }
+                if !peer.job_worker || peer.allowed_tools.is_empty() {
+                    return Err(RpcError::Unauthorized);
+                }
+            }
+            RpcAction::FinishJob { lease, .. } => {
+                if self.jobs.is_none() {
+                    return Err(RpcError::Unavailable);
+                }
+                if !peer.job_worker
+                    || lease.worker_id != request.sender
+                    || !peer.permits(&lease.tool)
+                {
+                    return Err(RpcError::Unauthorized);
+                }
+            }
             RpcAction::Discover => {}
         }
 
@@ -461,6 +538,45 @@ impl RpcGateway {
                     .await
                     .map_err(|_| RpcError::Unavailable)?;
                 (RpcStatus::Ok, json!(result))
+            }
+            RpcAction::SubmitJob { id, tool, args } => {
+                let spec = JobSpec {
+                    id,
+                    tool,
+                    args,
+                    retry_safe: false,
+                    max_attempts: 1,
+                };
+                let result = self.jobs
+                    .as_ref()
+                    .ok_or(RpcError::Unavailable)?
+                    .submit(spec).await;
+                match result {
+                    Ok(job) => (RpcStatus::Ok, json!({"job_id":job.id})),
+                    Err(JobError::Storage) => return Err(RpcError::Unavailable),
+                    Err(_) => (RpcStatus::Failed, Value::Null),
+                }
+            }
+            RpcAction::ClaimJob => {
+                let store = self.jobs.as_ref().ok_or(RpcError::Unavailable)?;
+                store.recover_expired(now).await.map_err(|_| RpcError::Unavailable)?;
+                let tools: Vec<String> = peer.allowed_tools.iter().cloned().collect();
+                let claim = store.claim_permitted(&request.sender, now, 30_000, &tools)
+                    .await.map_err(|_| RpcError::Unavailable)?;
+                (RpcStatus::Ok, json!(claim))
+            }
+            RpcAction::FinishJob { lease, outcome } => {
+                let store = self.jobs.as_ref().ok_or(RpcError::Unavailable)?;
+                let result = match outcome {
+                    RemoteJobOutcome::Succeeded { output } => store.succeed(&lease, output, now).await,
+                    RemoteJobOutcome::Failed => store.fail(&lease, "worker rejected or failed", now).await,
+                    RemoteJobOutcome::Uncertain => store.mark_uncertain(&lease, now).await,
+                };
+                match result {
+                    Ok(()) => (RpcStatus::Ok, Value::Null),
+                    Err(JobError::Storage) => return Err(RpcError::Unavailable),
+                    Err(_) => (RpcStatus::Failed, Value::Null),
+                }
             }
             RpcAction::Execute { tool, args } => {
                 // No AuthContext is accepted over RPC. Remote privileged/paid tools
