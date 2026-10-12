@@ -92,3 +92,23 @@ async fn isolated_receiver_rejects_correctly_signed_cross_cluster_and_unbound_to
     let mutated = serde_json::to_vec(&tampered).unwrap();
     assert_ne!(mutated, serde_json::to_vec(&SignedFrame::open::<SinkPermit>(&signed_permit,&CONTROLLER).unwrap()).unwrap());
 }
+
+#[test]
+fn sink_journal_keeps_original_cluster_namespace_across_restarts() {
+    let tmp = tempfile::tempdir().unwrap();
+    let file = tmp.path().join("namespace.sqlite");
+    let a = SinkKeys::new("controller", CONTROLLER, "workeraa", WORKER)
+        .unwrap()
+        .with_cluster_id("cluster-a")
+        .unwrap();
+    let old = EffectSink::open(&file, "demo-sink", a).unwrap();
+    drop(old);
+    let b = SinkKeys::new("controller", CONTROLLER, "workeraa", WORKER)
+        .unwrap()
+        .with_cluster_id("cluster-b")
+        .unwrap();
+    assert!(matches!(
+        EffectSink::open(&file, "demo-sink", b),
+        Err(ocaf_runtime::sink::SinkError::Invalid)
+    ));
+}
