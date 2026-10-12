@@ -25,7 +25,11 @@ fn threshold(name: &str, default: u64) -> anyhow::Result<u64> {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let dsn = load_env_secret("OCAF_CLUSTER_PG_DSN", 4096)?;
-    let cluster = mandatory("OCAF_CLUSTER_ID")?;
+    let cluster = env::var("OCAF_CLUSTER_ID")
+        .map_err(|_| anyhow::anyhow!("missing OCAF_CLUSTER_ID setting"))?;
+    if cluster.is_empty() {
+        anyhow::bail!("empty OCAF_CLUSTER_ID setting");
+    }
     let insecure = env::var("OCAF_ALLOW_INSECURE_LOOPBACK").as_deref() == Ok("1");
     let policy = AlertPolicy::new(
         threshold("OCAF_ALERT_PENDING_THRESHOLD", 100)?,
