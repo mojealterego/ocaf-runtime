@@ -1,5 +1,6 @@
 pub mod auth;
 pub mod coordinator;
+pub mod cluster;
 pub mod executor;
 pub mod jobs;
 pub mod metrics;
