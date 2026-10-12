@@ -108,6 +108,12 @@ This does **not** establish:
 - workload certificate revocation, live certificate rotation or real
   TLS/mTLS handshakes in a deployed cluster.
 
+Version 0.10 adds a **separate** PostgreSQL advisory leadership API and a
+shared PostgreSQL remote-job backend. Neither replaces this CLI's local
+SQLite replay and membership journals or activates cross-host coordinator
+failover. See [POSTGRES_CLUSTER.md](POSTGRES_CLUSTER.md) for the precise
+experimental boundary.
+
 The next architecture milestone is replacing single-host coordination
 storage with a replicated transactional backend, introducing a
 consensus-safe fencing token at the external resource, and running
