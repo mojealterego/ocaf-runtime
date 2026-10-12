@@ -79,21 +79,27 @@ async fn operator_can_inspect_one_node_without_exposing_capabilities() {
     PgJobQueue::connect(&url, true).await.unwrap();
     let node = format!("observer_{}", uuid::Uuid::new_v4().simple());
     let now = ocaf_runtime::rpc::now_ms().unwrap();
-    dir.heartbeat(&node, &["sensitive_tool".into()], now).await.unwrap();
+    dir.heartbeat(&node, &["sensitive_tool".into()], now)
+        .await
+        .unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_ocaf-cluster-health"))
         .args(["--json", "--no-fail", "--node", &node])
         .env("OCAF_CLUSTER_PG_DSN", &url)
         .env("OCAF_CLUSTER_ID", "node_observer")
         .env("OCAF_ALLOW_INSECURE_LOOPBACK", "1")
-        .output().unwrap();
+        .output()
+        .unwrap();
     assert!(output.status.success(), "{:?}", output.stderr);
     let body: Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(body["node"]["node_id"], node);
     assert_eq!(body["node"]["alive"], true);
-    assert!(body["report"]["snapshot"]["observed_at_ms"].as_u64().is_some());
+    assert!(body["report"]["snapshot"]["observed_at_ms"]
+        .as_u64()
+        .is_some());
     assert!(!String::from_utf8_lossy(&output.stdout).contains("sensitive_tool"));
     let rejected = Command::new(env!("CARGO_BIN_EXE_ocaf-cluster-health"))
-        .args(["--prometheus","--node",&node])
-        .output().unwrap();
+        .args(["--prometheus", "--node", &node])
+        .output()
+        .unwrap();
     assert!(!rejected.status.success());
 }
