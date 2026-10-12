@@ -494,11 +494,13 @@ impl RpcGateway {
         dsn: &str,
         allow_insecure_loopback: bool,
     ) -> Result<Self, RpcError> {
-        self.jobs = Some(JobBackend::Postgres(
-            PgJobQueue::connect(dsn, allow_insecure_loopback)
-                .await
-                .map_err(|_| RpcError::Unavailable)?,
-        ));
+        let mut queue = PgJobQueue::connect(dsn, allow_insecure_loopback)
+            .await
+            .map_err(|_| RpcError::Unavailable)?;
+        if let Some(leader) = &self.leader {
+            queue = queue.with_leader(Arc::clone(leader));
+        }
+        self.jobs = Some(JobBackend::Postgres(queue));
         Ok(self)
     }
 
