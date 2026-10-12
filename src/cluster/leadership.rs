@@ -61,20 +61,10 @@ fn lock_key(cluster: &str) -> i64 {
     i64::from_be_bytes(hash[..8].try_into().expect("digest length >= 8"))
 }
 
-impl PgLeader {
-    pub async fn connect(
-        dsn: &str,
-        cluster: &str,
-        allow_insecure_loopback: bool,
-    ) -> Result<Self, PgLeaderError> {
-        if cluster.is_empty()
-            || cluster.len() > 64
-            || !cluster
-                .bytes()
-                .all(|ch| ch.is_ascii_alphanumeric() || ch == b'-' || ch == b'_')
-        {
-            return Err(PgLeaderError::InvalidCluster);
-        }
+pub(crate) async fn open_database(
+    dsn: &str,
+    allow_insecure_loopback: bool,
+) -> Result<(Client, JoinHandle<()>), PgLeaderError> {
         let config = Config::from_str(dsn).map_err(|_| PgLeaderError::UnsafeTransport)?;
         let local = config.get_ssl_mode() == SslMode::Disable
             && allow_insecure_loopback
@@ -84,7 +74,7 @@ impl PgLeader {
             return Err(PgLeaderError::UnsafeTransport);
         }
 
-        let (client, task) = if local {
+        let result = if local {
             let (client, connection) =
                 tokio::time::timeout(Duration::from_secs(5), config.connect(NoTls))
                     .await
@@ -113,8 +103,27 @@ impl PgLeader {
                     tracing::warn!(error = %err, "PostgreSQL leader connection lost");
                 }
             });
-            (client, task)
+
         };
+        Ok(result)
+
+}
+
+impl PgLeader {
+    pub async fn connect(
+        dsn: &str,
+        cluster: &str,
+        allow_insecure_loopback: bool,
+    ) -> Result<Self, PgLeaderError> {
+        if cluster.is_empty()
+            || cluster.len() > 64
+            || !cluster
+                .bytes()
+                .all(|ch| ch.is_ascii_alphanumeric() || ch == b'-' || ch == b'_')
+        {
+            return Err(PgLeaderError::InvalidCluster);
+        }
+        let (client, task) = open_database(dsn, allow_insecure_loopback).await?;
 
         Ok(Self {
             client,
