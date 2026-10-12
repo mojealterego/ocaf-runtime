@@ -11,6 +11,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use thiserror::Error;
 use uuid::Uuid;
@@ -80,7 +81,8 @@ pub struct JobRecord {
     pub lease_expires_at_ms: Option<u64>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct LeasedJob {
     pub id: String,
     pub tool: String,
@@ -318,6 +320,33 @@ impl JobStore {
         now_ms: u64,
         lease_ms: u64,
     ) -> Result<Option<LeasedJob>, JobError> {
+        self.claim_filtered(worker, now_ms, lease_ms, None).await
+    }
+
+    /// Atomic claim restricted to a worker's authenticated, administrator
+    /// configured tool allowlist. Never take an unrelated queued task.
+    pub async fn claim_permitted(
+        &self,
+        worker: &str,
+        now_ms: u64,
+        lease_ms: u64,
+        tools: &[String],
+    ) -> Result<Option<LeasedJob>, JobError> {
+        if tools.is_empty() || tools.len() > 64
+            || tools.iter().any(|name| !crate::coordinator::validate_tool_name(name))
+        {
+            return Err(JobError::Invalid);
+        }
+        self.claim_filtered(worker, now_ms, lease_ms, Some(tools.to_vec())).await
+    }
+
+    async fn claim_filtered(
+        &self,
+        worker: &str,
+        now_ms: u64,
+        lease_ms: u64,
+        allowed: Option<Vec<String>>,
+    ) -> Result<Option<LeasedJob>, JobError> {
         validate_worker(worker)?;
         let expires = checked_lease(now_ms, lease_ms)?;
         let worker = worker.to_owned();
@@ -325,11 +354,22 @@ impl JobStore {
             let tx = conn
                 .transaction_with_behavior(TransactionBehavior::Immediate)
                 .map_err(|_| JobError::Storage)?;
+            let sql = if let Some(ref tools) = allowed {
+                format!(
+                    "SELECT id, tool, args, attempts FROM jobs_v1
+                     WHERE status='pending' AND tool IN ({})
+                     ORDER BY seq LIMIT 1",
+                    vec!["?"; tools.len()].join(",")
+                )
+            } else {
+                "SELECT id, tool, args, attempts FROM jobs_v1
+                 WHERE status='pending' ORDER BY seq LIMIT 1".into()
+            };
+            let arguments = allowed.as_deref().unwrap_or_default();
             let row = tx
                 .query_row(
-                    "SELECT id, tool, args, attempts FROM jobs_v1
-                     WHERE status = 'pending' ORDER BY seq LIMIT 1",
-                    [],
+                    &sql,
+                    rusqlite::params_from_iter(arguments.iter()),
                     |row| {
                         Ok((
                             row.get::<_, String>(0)?,
