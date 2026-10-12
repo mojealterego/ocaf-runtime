@@ -45,7 +45,9 @@ async fn identical_rpc_request_ids_are_unique_per_cluster_and_stale_generation_i
         .unwrap();
 
     assert!(matches!(
-        journal_a.reserve("coord", "worker", &nonce, NOW + 4000, NOW).await,
+        journal_a
+            .reserve("coord", "worker", &nonce, NOW + 4000, NOW)
+            .await,
         Err(RpcError::Replay)
     ));
     assert!(matches!(
