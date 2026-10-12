@@ -139,10 +139,13 @@ impl PgLeader {
             tokio::time::timeout(
                 Duration::from_secs(5),
                 client.batch_execute(
-                    "CREATE TABLE IF NOT EXISTS ocaf_pg_leader_epochs_v1 (
-                        cluster_id TEXT PRIMARY KEY,
-                        epoch BIGINT NOT NULL CHECK (epoch > 0)
-                    )",
+                    "BEGIN;
+                     SELECT pg_advisory_xact_lock(574123456);
+                     CREATE TABLE IF NOT EXISTS ocaf_pg_leader_epochs_v1 (
+                         cluster_id TEXT PRIMARY KEY,
+                         epoch BIGINT NOT NULL CHECK (epoch > 0)
+                     );
+                     COMMIT;",
                 ),
             )
             .await,
