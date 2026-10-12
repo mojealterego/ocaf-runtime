@@ -255,5 +255,8 @@ async fn two_independent_sqlite_connections_atomically_claim_only_once() {
     );
     let admitted = usize::from(a.unwrap().is_some()) + usize::from(b.unwrap().is_some());
     assert_eq!(admitted, 1);
-    assert_eq!(first.get(&job.id).await.unwrap().unwrap().status, JobStatus::Running);
+    assert_eq!(
+        first.get(&job.id).await.unwrap().unwrap().status,
+        JobStatus::Running
+    );
 }
