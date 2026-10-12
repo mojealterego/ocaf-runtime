@@ -48,10 +48,7 @@ async fn probe_reports_missing_leadership_and_recovers_without_leaking_database_
         let dir = tempfile::tempdir().unwrap();
         let file = dir.path().join("health-db-credential");
         std::fs::write(&file, &dsn).unwrap();
-        std::fs::set_permissions(
-            &file,
-            std::fs::Permissions::from_mode(0o600),
-        ).unwrap();
+        std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o600)).unwrap();
         let from_file = Command::new(env!("CARGO_BIN_EXE_ocaf-cluster-health"))
             .env_remove("OCAF_CLUSTER_PG_DSN")
             .env("OCAF_CLUSTER_PG_DSN_FILE", &file)

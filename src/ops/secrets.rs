@@ -103,22 +103,16 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn private_file_rejects_symlink_world_permissions_and_relative_paths() {
-        use std::os::unix::fs::{symlink,PermissionsExt};
+        use std::os::unix::fs::{symlink, PermissionsExt};
         let dir = tempfile::tempdir().unwrap();
         let original = dir.path().join("private.txt");
         std::fs::write(&original, "private-value").unwrap();
-        std::fs::set_permissions(
-            &original,
-            std::fs::Permissions::from_mode(0o600),
-        ).unwrap();
+        std::fs::set_permissions(&original, std::fs::Permissions::from_mode(0o600)).unwrap();
         assert_eq!(read_private_text(&original, 64).unwrap(), "private-value");
         let symlink_path = dir.path().join("linked");
         symlink(&original, &symlink_path).unwrap();
         assert!(read_private_text(&symlink_path, 64).is_err());
-        std::fs::set_permissions(
-            &original,
-            std::fs::Permissions::from_mode(0o644),
-        ).unwrap();
+        std::fs::set_permissions(&original, std::fs::Permissions::from_mode(0o644)).unwrap();
         assert!(read_private_text(&original, 64).is_err());
         assert!(read_private_text(Path::new("relative-file"), 64).is_err());
         assert!(read_private_text(dir.path(), 64).is_err());
