@@ -1,0 +1,6 @@
+// PLAINTEXT LOCAL DEMO ONLY. Configure authenticated TLS for sensitive use.
+{
+  mode: "client",
+  connect: { endpoints: ["tcp/127.0.0.1:7447"] },
+  scouting: { multicast: { enabled: false } },
+}
