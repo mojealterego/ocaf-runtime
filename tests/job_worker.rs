@@ -173,15 +173,19 @@ async fn worker_recovers_expired_retry_safe_job_without_manual_supervisor_step()
     work.max_attempts = 2;
     store.submit(work.clone()).await.unwrap();
     let now = ocaf_runtime::rpc::now_ms().unwrap();
-    let _abandoned = store.claim("crashed-agent", now - 5_000, 100)
-        .await.unwrap().unwrap();
+    let _abandoned = store
+        .claim("crashed-agent", now - 5_000, 100)
+        .await
+        .unwrap()
+        .unwrap();
     let worker = JobWorker::new(
         store.clone(),
         runtime,
         "replacement-agent",
         10_000,
         HashSet::from(["echo".into()]),
-    ).unwrap();
+    )
+    .unwrap();
     assert_eq!(worker.run_once().await.unwrap(), Some(JobStatus::Succeeded));
     assert_eq!(store.get(&work.id).await.unwrap().unwrap().attempts, 2);
     assert_eq!(calls.load(Ordering::SeqCst), 1);
