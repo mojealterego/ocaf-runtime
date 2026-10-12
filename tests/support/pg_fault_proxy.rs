@@ -43,11 +43,8 @@ fn pg_port(dsn: &str) -> anyhow::Result<u16> {
 impl PgFaultProxy {
     pub async fn bind(dsn: &str) -> anyhow::Result<Self> {
         let backend_port = pg_port(dsn)?;
-        let listener = TcpListener::bind(SocketAddr::new(
-            IpAddr::V4(Ipv4Addr::LOCALHOST),
-            0,
-        ))
-        .await?;
+        let listener =
+            TcpListener::bind(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 0)).await?;
         let port = listener.local_addr()?.port();
         let mode = Arc::new(AtomicU8::new(MODE_FORWARD));
         let killed = Arc::new(AtomicUsize::new(0));
@@ -126,7 +123,8 @@ impl PgFaultProxy {
     }
 
     fn signal_drop(&self) {
-        self.drop_tx.send_modify(|epoch| *epoch = epoch.wrapping_add(1));
+        self.drop_tx
+            .send_modify(|epoch| *epoch = epoch.wrapping_add(1));
     }
 }
 

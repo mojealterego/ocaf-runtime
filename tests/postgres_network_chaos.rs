@@ -74,7 +74,11 @@ async fn network_partition_drops_leadership_fences_worker_and_allows_fresh_elect
     assert!(!db2.validate_current_lease(&leased).await.unwrap());
     assert_eq!(db2.recover_expired(0).await.unwrap().uncertain, 1);
     assert_eq!(
-        db2.get_owned("owner", &job.id).await.unwrap().unwrap().status,
+        db2.get_owned("owner", &job.id)
+            .await
+            .unwrap()
+            .unwrap()
+            .status,
         JobStatus::Uncertain
     );
     assert!(db1.submit_owned("owner", spec()).await.is_err());
