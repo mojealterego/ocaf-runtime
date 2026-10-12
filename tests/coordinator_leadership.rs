@@ -173,3 +173,19 @@ fn coordinator_refuses_shared_world_writable_lock_directory() {
         "world-writable leader lock directory permits inode replacement"
     );
 }
+
+#[test]
+fn dropping_local_leader_releases_lock_for_immediate_successor_repeatedly() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("repeat.lock");
+    for _ in 0..40 {
+        let leader = LeaderGuard::try_acquire(&path).unwrap().expect("lock not free");
+        assert!(LeaderGuard::try_acquire(&path).unwrap().is_none());
+        drop(leader);
+        assert!(
+            LeaderGuard::try_acquire(&path).unwrap().is_some(),
+            "released lock was not available for immediate takeover"
+        );
+        // The guard from the assertion is dropped at the end of the statement.
+    }
+}
