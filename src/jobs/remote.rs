@@ -24,6 +24,9 @@ pub struct RemoteJobWorker {
     client: ZenohRpcClient,
     runtime: OcafRuntime,
     allowed_tools: HashSet<String>,
+    /// Only an operator-vetted, side-effect-free tool may run under a
+    /// positive leadership generation without a sink-level adapter.
+    cluster_pure_tools: HashSet<String>,
     node_id: String,
 }
 
@@ -44,8 +47,24 @@ impl RemoteJobWorker {
             client,
             runtime,
             allowed_tools,
+            cluster_pure_tools: HashSet::new(),
             node_id,
         })
+    }
+
+    /// Explicitly opt in proven side-effect-free tools for clustered
+    /// execution. The worker refuses arbitrary tools under positive
+    /// epochs even after passing point-in-time ValidateLease.
+    pub fn with_cluster_pure_tools(mut self, tools: HashSet<String>) -> Result<Self> {
+        if tools.len() > 64
+            || tools.iter().any(|tool| {
+                !validate_tool_name(tool) || !self.allowed_tools.contains(tool)
+            })
+        {
+            bail!("cluster pure-tool policy must be a subset of the worker allowlist");
+        }
+        self.cluster_pure_tools = tools;
+        Ok(self)
     }
 
     /// Publish the worker's local capability list. Coordinator ACLs must
@@ -75,6 +94,7 @@ impl RemoteJobWorker {
         if lease.worker_id != self.node_id
             || !self.allowed_tools.contains(&lease.tool)
             || lease.lease_token.is_empty()
+            || lease.leader_epoch < 0
         {
             bail!("coordinator returned unauthorised job lease");
         }
@@ -93,7 +113,11 @@ impl RemoteJobWorker {
         }
         let maybe_tool = self.runtime.registry.resolve(&lease.tool).await;
         let runnable = maybe_tool.as_ref().is_some_and(|tool| {
-            tool.manifest.enabled
+            // In cluster mode, a pre-execution lease check alone cannot
+            // fence external effects after a coordinator failover. Unsafe
+            // tools are rejected before the runtime invokes their executor.
+            (lease.leader_epoch == 0 || self.cluster_pure_tools.contains(&lease.tool))
+                && tool.manifest.enabled
                 && tool.manifest.cost_sats == 0
                 && tool.manifest.permissions.is_empty()
                 && tool

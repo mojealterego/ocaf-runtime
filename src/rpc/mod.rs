@@ -330,6 +330,7 @@ pub struct PeerPolicy {
     requests_per_second: u32,
     job_submitter: bool,
     job_worker: bool,
+    effect_writer: bool,
 }
 
 impl PeerPolicy {
@@ -340,6 +341,7 @@ impl PeerPolicy {
             requests_per_second: DEFAULT_PEER_RATE_PER_SECOND,
             job_submitter: false,
             job_worker: false,
+            effect_writer: false,
         }
     }
 
@@ -363,6 +365,14 @@ impl PeerPolicy {
     /// Explicitly authorize this peer to claim and report queued work.
     pub fn allow_job_worker(mut self) -> Self {
         self.job_worker = true;
+        self
+    }
+
+    /// Grants the explicitly reviewed right to commit a transactional
+    /// PostgreSQL-local effect. Job-worker capability alone is not enough.
+    /// This must be combined with allow_job_worker() and a tool ACL.
+    pub fn allow_fenced_effect_writes(mut self) -> Self {
+        self.effect_writer = true;
         self
     }
 
@@ -396,7 +406,10 @@ impl RpcGateway {
         }
         for (peer_id, peer) in &peers {
             validate_node_id(peer_id)?;
-            if peer.key == [0; 32] || peer.allowed_tools.iter().any(|tool| tool.is_empty()) {
+            if peer.key == [0; 32]
+                || peer.allowed_tools.iter().any(|tool| tool.is_empty())
+                || (peer.effect_writer && !peer.job_worker)
+            {
                 return Err(RpcError::Malformed);
             }
         }
@@ -554,6 +567,12 @@ impl RpcGateway {
 
         match &request.action {
             RpcAction::Execute { tool, .. } => {
+                // A free, manifest-permissionless tool is not necessarily
+                // side-effect-free. In cluster mode the coordinator must
+                // never start an unleased, unfenced runtime execution.
+                if self.leader.is_some() {
+                    return Err(RpcError::Unauthorized);
+                }
                 if !peer.permits(tool) {
                     return Err(RpcError::Unauthorized);
                 }
@@ -614,13 +633,23 @@ impl RpcGateway {
                     return Err(RpcError::Unauthorized);
                 }
             }
-            RpcAction::ValidateLease { lease }
-            | RpcAction::ApplyFencedEffect { lease, .. }
-            | RpcAction::FinishJob { lease, .. } => {
+            RpcAction::ValidateLease { lease } | RpcAction::FinishJob { lease, .. } => {
                 if self.jobs.is_none() {
                     return Err(RpcError::Unavailable);
                 }
                 if !peer.job_worker
+                    || lease.worker_id != request.sender
+                    || !peer.permits(&lease.tool)
+                {
+                    return Err(RpcError::Unauthorized);
+                }
+            }
+            RpcAction::ApplyFencedEffect { lease, .. } => {
+                if self.jobs.is_none() {
+                    return Err(RpcError::Unavailable);
+                }
+                if !peer.job_worker
+                    || !peer.effect_writer
                     || lease.worker_id != request.sender
                     || !peer.permits(&lease.tool)
                 {

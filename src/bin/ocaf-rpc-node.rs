@@ -127,8 +127,18 @@ async fn main() -> anyhow::Result<()> {
             runtime.register(pricing_tool_manifest(), EchoTool).await?;
             let protocol = RpcClient::new(&node_id, &peer_id, key)?;
             let client = ZenohRpcClient::new(session, protocol);
-            let worker =
-                RemoteJobWorker::new(client, runtime, HashSet::from(["demo_echo".into()]))?;
+            let pure_list = env::var("OCAF_CLUSTER_PURE_TOOLS").unwrap_or_default();
+            let pure_tools: HashSet<String> = if pure_list.is_empty() {
+                HashSet::new()
+            } else {
+                pure_list.split(',').map(str::to_owned).collect()
+            };
+            let worker = RemoteJobWorker::new(
+                client,
+                runtime,
+                HashSet::from(["demo_echo".into()]),
+            )?
+            .with_cluster_pure_tools(pure_tools)?;
             let mut heartbeat = tokio::time::interval(Duration::from_secs(5));
             let mut polling = tokio::time::interval(Duration::from_millis(500));
             loop {

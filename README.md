@@ -411,6 +411,27 @@ and least-privilege roles still need production hardening.
 
 See [docs/FENCED_EFFECTS.md](docs/FENCED_EFFECTS.md).
 
+## Fail-closed cluster execution & effect privileges (v0.20)
+
+Cluster-mode coordinators now **reject direct RPC Execute**, even for
+nominally free, allowlisted tools: a tool manifest cannot prove
+that its executor has no external side effects. Standalone RPC
+execution remains available. Transactional `ApplyFencedEffect` is now
+**default deny** and requires a separate per-peer
+`write_effects: true` permission *in addition to* `worker_jobs: true`.
+Existing worker configurations cannot write to the sink by accident.
+
+Cluster remote workers also refuse to run any ordinary tool under a
+positive leader generation unless its name is explicitly included in
+`OCAF_CLUSTER_PURE_TOOLS`, a comma-separated allowlist vetted by the
+operator as actually side-effect-free. An unset variable denies all
+such clustered tool execution; trusted demo `demo_echo` can be enabled
+via `OCAF_CLUSTER_PURE_TOOLS=demo_echo`. An incorrectly classified
+tool can still cause unfenced effects; this is a safety boundary, not
+a general-purpose external side-effect protocol.
+
+See [docs/EFFECT_BOUNDARY.md](docs/EFFECT_BOUNDARY.md).
+
 ## Production work still required
 
 1. Certificate-backed TLS/mTLS handshakes on separate deployed hosts, plus certificate rotation and revocation.

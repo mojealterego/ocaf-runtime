@@ -27,6 +27,9 @@ struct PeerConfig {
     submit_jobs: bool,
     #[serde(default)]
     worker_jobs: bool,
+    /// An additional, separately audited capability (default deny).
+    #[serde(default)]
+    write_effects: bool,
 }
 
 fn env_required(name: &str) -> anyhow::Result<String> {
@@ -85,6 +88,12 @@ fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
         }
         if entry.worker_jobs {
             policy = policy.allow_job_worker();
+        }
+        if entry.write_effects {
+            if !entry.worker_jobs {
+                anyhow::bail!("write_effects requires worker_jobs for {node}");
+            }
+            policy = policy.allow_fenced_effect_writes();
         }
         peers.insert(node, policy);
     }

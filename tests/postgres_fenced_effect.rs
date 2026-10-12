@@ -32,7 +32,9 @@ async fn gateway(dsn: &str, tool: &str, leader: Arc<PgLeader>) -> RpcGateway {
             ),
             (
                 "effects-worker".into(),
-                PeerPolicy::new(WORKER_KEY, vec![tool.into()]).allow_job_worker(),
+                PeerPolicy::new(WORKER_KEY, vec![tool.into()])
+                    .allow_job_worker()
+                    .allow_fenced_effect_writes(),
             ),
         ]),
         16,
