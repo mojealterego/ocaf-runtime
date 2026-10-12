@@ -103,10 +103,9 @@ pub(crate) async fn open_database(
                     tracing::warn!(error = %err, "PostgreSQL leader connection lost");
                 }
             });
-
+            (client, task)
         };
         Ok(result)
-
 }
 
 impl PgLeader {
