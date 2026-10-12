@@ -118,9 +118,8 @@ async fn main() -> anyhow::Result<()> {
             runtime.register(pricing_tool_manifest(), EchoTool).await?;
             let protocol = RpcClient::new(&node_id, &peer_id, key)?;
             let client = ZenohRpcClient::new(session, protocol);
-            let worker = RemoteJobWorker::new(
-                client, runtime, HashSet::from(["demo_echo".into()])
-            )?;
+            let worker =
+                RemoteJobWorker::new(client, runtime, HashSet::from(["demo_echo".into()]))?;
             let mut heartbeat = tokio::time::interval(Duration::from_secs(5));
             let mut polling = tokio::time::interval(Duration::from_millis(500));
             loop {
