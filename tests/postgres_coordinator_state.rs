@@ -101,7 +101,8 @@ async fn membership_replaces_capabilities_and_expires_across_connections() {
         node
     );
     assert_eq!(b.resolve(&tool, NOW + NODE_LEASE_MS).await.unwrap(), None);
-    a.heartbeat(&node, &["another".into()], NOW + NODE_LEASE_MS + 1)
+    let replacement = format!("replacement_{}", uuid::Uuid::new_v4().simple());
+    a.heartbeat(&node, std::slice::from_ref(&replacement), NOW + NODE_LEASE_MS + 1)
         .await
         .unwrap();
     assert_eq!(
@@ -109,7 +110,7 @@ async fn membership_replaces_capabilities_and_expires_across_connections() {
         None
     );
     assert_eq!(
-        b.resolve("another", NOW + NODE_LEASE_MS + 1)
+        b.resolve(&replacement, NOW + NODE_LEASE_MS + 1)
             .await
             .unwrap()
             .unwrap()
