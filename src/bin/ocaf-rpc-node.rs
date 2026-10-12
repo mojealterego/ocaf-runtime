@@ -163,7 +163,9 @@ async fn main() -> anyhow::Result<()> {
                     limit: env::var("OCAF_AUDIT_LIMIT")
                         .unwrap_or_else(|_| "50".into())
                         .parse::<usize>()
-                        .map_err(|_| anyhow::anyhow!("OCAF_AUDIT_LIMIT must be an integer between 1 and 100"))?,
+                        .map_err(|_| {
+                            anyhow::anyhow!("OCAF_AUDIT_LIMIT must be an integer between 1 and 100")
+                        })?,
                 },
                 Ok("submit") => RpcAction::SubmitJob {
                     id: env::var("OCAF_JOB_ID")
