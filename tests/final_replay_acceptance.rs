@@ -51,24 +51,32 @@ async fn identical_rpc_request_ids_are_unique_per_cluster_and_stale_generation_i
         Err(RpcError::Replay)
     ));
     assert!(matches!(
-        journal_b.reserve("coord", "worker", &nonce, NOW + 4000, NOW).await,
+        journal_b
+            .reserve("coord", "worker", &nonce, NOW + 4000, NOW)
+            .await,
         Err(RpcError::Replay)
     ));
 
     a.release().await.unwrap();
     assert!(successor.try_acquire().await.unwrap());
     let next = uuid::Uuid::new_v4().to_string();
-    assert!(journal_a.reserve("coord", "worker", &next, NOW + 4000, NOW)
-        .await.is_err());
+    assert!(journal_a
+        .reserve("coord", "worker", &next, NOW + 4000, NOW)
+        .await
+        .is_err());
     let replacement = PgReplay::connect(&url, true)
         .await
         .unwrap()
         .with_leader(Arc::clone(&successor));
-    replacement.reserve("coord", "worker", &next, NOW + 4000, NOW)
-        .await.unwrap();
+    replacement
+        .reserve("coord", "worker", &next, NOW + 4000, NOW)
+        .await
+        .unwrap();
     assert_eq!(
-        journal_b.reserve("coord", "worker", &next, NOW + 4000, NOW)
-            .await.is_ok(),
+        journal_b
+            .reserve("coord", "worker", &next, NOW + 4000, NOW)
+            .await
+            .is_ok(),
         true
     );
     successor.release().await.unwrap();
