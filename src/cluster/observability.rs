@@ -200,7 +200,7 @@ impl PgClusterMonitor {
         })
     }
 
-    /// One read-only PostgreSQL query obtains all counters using a database
+    /// One read-only PostgreSQL query obtains strictly cluster-scoped counters using a database
     /// clock. A missing table or dead database makes the command fail closed.
     /// Advisory lock discovery via pg_locks is a snapshot, not an external
     /// fencing guarantee; no raw client-supplied time can skew lease counts.
@@ -218,10 +218,10 @@ impl PgClusterMonitor {
                        AND mode='ExclusiveLock' AND objsubid=1
                        AND classid=(($1::BIGINT >> 32) & 4294967295)::OID
                        AND objid=($1::BIGINT & 4294967295)::OID),
-                    (SELECT count(*)::BIGINT FROM ocaf_pg_nodes_v1
-                     WHERE expires_at_ms>clock.now_ms),
-                    (SELECT count(*)::BIGINT FROM ocaf_pg_nodes_v1
-                     WHERE expires_at_ms<=clock.now_ms),
+                    (SELECT count(*)::BIGINT FROM ocaf_pg_nodes_v2
+                     WHERE cluster_id=$2 AND expires_at_ms>clock.now_ms),
+                    (SELECT count(*)::BIGINT FROM ocaf_pg_nodes_v2
+                     WHERE cluster_id=$2 AND expires_at_ms<=clock.now_ms),
                     (SELECT count(*)::BIGINT FROM ocaf_pg_jobs_v1 WHERE cluster_id=$2 AND status='pending'),
                     (SELECT count(*)::BIGINT FROM ocaf_pg_jobs_v1 WHERE cluster_id=$2 AND status='running'),
                     (SELECT count(*)::BIGINT FROM ocaf_pg_jobs_v1 WHERE cluster_id=$2 AND status='succeeded'),
@@ -268,8 +268,8 @@ impl PgClusterMonitor {
             self.client.query_opt(
                 "SELECT node_id,expires_at_ms,
                     (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT
-                 FROM ocaf_pg_nodes_v1 WHERE node_id=$1",
-                &[&node_id],
+                 FROM ocaf_pg_nodes_v2 WHERE cluster_id=$2 AND node_id=$1",
+                &[&node_id, &self.cluster_id],
             ),
         )
         .await

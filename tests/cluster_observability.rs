@@ -158,9 +158,12 @@ async fn per_node_health_uses_database_clock_and_no_capability_or_secret_payload
     let monitor = PgClusterMonitor::connect(&dsn, &cluster, true)
         .await
         .unwrap();
+    let leader = std::sync::Arc::new(PgLeader::connect(&dsn, &cluster, true).await.unwrap());
+    assert!(leader.try_acquire().await.unwrap());
     let directory = ocaf_runtime::cluster::directory::PgDirectory::connect(&dsn, true)
         .await
-        .unwrap();
+        .unwrap()
+        .with_leader(std::sync::Arc::clone(&leader));
     let node = format!("node_{}", uuid::Uuid::new_v4().simple());
     let now_ms = ocaf_runtime::rpc::now_ms().unwrap();
     directory
@@ -180,4 +183,5 @@ async fn per_node_health_uses_database_clock_and_no_capability_or_secret_payload
         .await
         .unwrap()
         .is_none());
+    leader.release().await.unwrap();
 }

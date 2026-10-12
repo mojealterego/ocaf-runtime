@@ -1,5 +1,7 @@
 //! Uniform RPC capability directory for local or shared backing stores.
 use crate::cluster::directory::PgDirectory;
+use crate::cluster::leadership::PgLeader;
+use std::sync::Arc;
 use crate::coordinator::{CoordinatorError, CoordinatorStore, NodeRoute};
 
 pub(super) enum DirectoryBackend {
@@ -8,6 +10,12 @@ pub(super) enum DirectoryBackend {
 }
 
 impl DirectoryBackend {
+    pub(super) fn with_leader(self, leader: Arc<PgLeader>) -> Self {
+        match self {
+            Self::Postgres(db) => Self::Postgres(db.with_leader(leader)),
+            old => old,
+        }
+    }
     pub(super) async fn heartbeat(
         &self,
         node: &str,

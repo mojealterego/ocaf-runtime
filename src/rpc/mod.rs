@@ -514,6 +514,9 @@ impl RpcGateway {
         if let Some(jobs) = self.jobs.take() {
             self.jobs = Some(jobs.with_leader(Arc::clone(&leader)));
         }
+        if let Some(directory) = self.coordinator.take() {
+            self.coordinator = Some(directory.with_leader(Arc::clone(&leader)));
+        }
         self.leader = Some(leader);
         self
     }

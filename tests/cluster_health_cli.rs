@@ -75,7 +75,17 @@ fn operator_cli_rejects_unrecognized_flags_before_opening_database() {
 #[tokio::test]
 async fn operator_can_inspect_one_node_without_exposing_capabilities() {
     let Some(url) = dsn() else { return };
-    let dir = PgDirectory::connect(&url, true).await.unwrap();
+    let name = "node_observer";
+    let leader = std::sync::Arc::new(
+        ocaf_runtime::cluster::leadership::PgLeader::connect(&url, name, true)
+            .await
+            .unwrap(),
+    );
+    assert!(leader.try_acquire().await.unwrap());
+    let dir = PgDirectory::connect(&url, true)
+        .await
+        .unwrap()
+        .with_leader(std::sync::Arc::clone(&leader));
     PgJobQueue::connect(&url, true).await.unwrap();
     let node = format!("observer_{}", uuid::Uuid::new_v4().simple());
     let now = ocaf_runtime::rpc::now_ms().unwrap();
@@ -102,4 +112,5 @@ async fn operator_can_inspect_one_node_without_exposing_capabilities() {
         .output()
         .unwrap();
     assert!(!rejected.status.success());
+    leader.release().await.unwrap();
 }
