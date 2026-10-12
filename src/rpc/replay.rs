@@ -67,7 +67,7 @@ impl ReplayBackend {
     }
 }
 
-struct SqliteReplayLedger {
+pub(super) struct SqliteReplayLedger {
     connection: Mutex<Connection>,
 }
 
