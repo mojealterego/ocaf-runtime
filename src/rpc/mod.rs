@@ -7,7 +7,7 @@
 
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use base64::engine::general_purpose::STANDARD as B64;
@@ -30,6 +30,8 @@ pub const MAX_FRAME_BYTES: usize = 65_536;
 const MAX_BODY_BYTES: usize = 32_768;
 const MAX_REQUEST_TTL_MS: u64 = 30_000;
 const FUTURE_CLOCK_SKEW_MS: u64 = 5_000;
+const RATE_WINDOW_MS: u64 = 1_000;
+const DEFAULT_PEER_RATE_PER_SECOND: u32 = 64;
 type HmacSha256 = Hmac<Sha256>;
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
@@ -228,6 +230,7 @@ impl SignedFrame {
 pub struct PeerPolicy {
     key: [u8; 32],
     allowed_tools: HashSet<String>,
+    requests_per_second: u32,
 }
 
 impl PeerPolicy {
@@ -235,7 +238,19 @@ impl PeerPolicy {
         Self {
             key,
             allowed_tools: allowed_tools.into_iter().collect(),
+            requests_per_second: DEFAULT_PEER_RATE_PER_SECOND,
         }
+    }
+
+    /// Limit the number of authenticated RPC messages in each one-second
+    /// fixed window. Limits are in-memory per gateway instance (not global
+    /// across multiple hosts).
+    pub fn with_rate_limit(mut self, requests_per_second: u32) -> Result<Self, RpcError> {
+        if requests_per_second == 0 || requests_per_second > 10_000 {
+            return Err(RpcError::Malformed);
+        }
+        self.requests_per_second = requests_per_second;
+        Ok(self)
     }
 
     fn permits(&self, tool: &str) -> bool {
@@ -248,6 +263,7 @@ pub struct RpcGateway {
     runtime: OcafRuntime,
     peers: HashMap<String, PeerPolicy>,
     seen: ReplayBackend,
+    rates: Mutex<HashMap<String, (u64, u32)>>,
     concurrency: Semaphore,
 }
 
@@ -273,6 +289,7 @@ impl RpcGateway {
             runtime,
             peers,
             seen: ReplayBackend::volatile(),
+            rates: Mutex::new(HashMap::new()),
             concurrency: Semaphore::new(max_concurrent_calls),
         })
     }
@@ -319,6 +336,21 @@ impl RpcGateway {
             .ok_or(RpcError::Unauthorized)?;
         let request: RpcRequest = SignedFrame::open(message, &peer.key)?;
         request.check(&self.node_id, now)?;
+
+        // Count authenticated messages before manifest lookup or discovery,
+        // so a compromised but authenticated peer cannot enumerate resources
+        // without an independent per-peer quota.
+        {
+            let mut rates = self.rates.lock().map_err(|_| RpcError::Unavailable)?;
+            let window = rates.entry(request.sender.clone()).or_insert((now, 0));
+            if now < window.0 || now.saturating_sub(window.0) >= RATE_WINDOW_MS {
+                *window = (now, 0);
+            }
+            if window.1 >= peer.requests_per_second {
+                return Err(RpcError::Busy);
+            }
+            window.1 += 1;
+        }
 
         match &request.action {
             RpcAction::Execute { tool, .. } => {
