@@ -158,3 +158,27 @@ fn sink_journal_keeps_original_cluster_namespace_across_restarts() {
         Err(ocaf_runtime::sink::SinkError::Invalid)
     ));
 }
+
+#[test]
+fn prior_protocol_journal_cannot_silently_adopt_an_unverified_namespace() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join("legacy.sqlite");
+    let old = rusqlite::Connection::open(&file).unwrap();
+    old.execute_batch(
+        "CREATE TABLE sink_epochs_v1 (
+            one INTEGER PRIMARY KEY, epoch INTEGER NOT NULL,
+            expires_at_ms INTEGER NOT NULL
+        );
+        INSERT INTO sink_epochs_v1(one,epoch,expires_at_ms)
+        VALUES(1,5,1800000001000);",
+    ).unwrap();
+    drop(old);
+    let keys = SinkKeys::new("controller", CONTROLLER, "workeraa", WORKER)
+        .unwrap()
+        .with_cluster_id("cluster-a")
+        .unwrap();
+    assert!(matches!(
+        EffectSink::open(&file,"demo-sink", keys),
+        Err(ocaf_runtime::sink::SinkError::Invalid)
+    ));
+}

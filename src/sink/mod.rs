@@ -368,20 +368,39 @@ impl EffectSink {
         }
         // A journal cannot be reused for another cluster with coincident
         // epoch numbers, even if its sink ID is identical.
-        tx.execute(
-            "INSERT OR IGNORE INTO sink_namespaces_v2(one,cluster_id) VALUES(1,?1)",
-            params![keys.cluster_id],
-        )
-        .map_err(|_| SinkError::Storage)?;
-        let stored_cluster: String = tx
+        let stored_cluster: Option<String> = tx
             .query_row(
                 "SELECT cluster_id FROM sink_namespaces_v2 WHERE one=1",
                 [],
                 |row| row.get(0),
             )
+            .optional()
             .map_err(|_| SinkError::Storage)?;
-        if stored_cluster != keys.cluster_id {
-            return Err(SinkError::Invalid);
+        match stored_cluster {
+            Some(existing) if existing != keys.cluster_id => return Err(SinkError::Invalid),
+            Some(_) => {}
+            None => {
+                // A v1 journal does not record its original cluster ID.
+                // Never silently relabel its durable events/epochs using
+                // whichever namespace an operator supplies at startup.
+                let legacy_rows: i64 = tx
+                    .query_row(
+                        "SELECT (SELECT COUNT(*) FROM sink_epochs_v1)
+                              + (SELECT COUNT(*) FROM sink_effects_v1)
+                              + (SELECT COUNT(*) FROM sink_replay_v1)",
+                        [],
+                        |row| row.get(0),
+                    )
+                    .map_err(|_| SinkError::Storage)?;
+                if legacy_rows != 0 {
+                    return Err(SinkError::Invalid);
+                }
+                tx.execute(
+                    "INSERT INTO sink_namespaces_v2(one,cluster_id) VALUES(1,?1)",
+                    params![keys.cluster_id],
+                )
+                .map_err(|_| SinkError::Storage)?;
+            }
         }
         tx.commit().map_err(|_| SinkError::Storage)?;
         Ok(Self {

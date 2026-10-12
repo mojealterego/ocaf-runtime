@@ -79,3 +79,17 @@ must still be unique for each identity and separate from other clusters.
 Selecting a key file avoids exposing the raw secret in process
 environment variables, but does not offer automatic zero-downtime
 rotation or protect against a compromised host.
+
+## Legacy v1 journal migration is deliberately fail-closed
+
+A database with existing v1 replay/epoch/effect rows but no durable
+cluster namespace cannot be safely auto-assigned to whichever cluster
+ID happens to be configured during startup. Protocol v2 rejects this
+legacy journal. To retain the old state, stop the sink, take a verified
+backup, establish the original cluster identity from operator records
+and perform an explicitly reviewed offline namespace migration.
+Otherwise deploy a freshly initialized sink under a new sink identity
+after carefully reconciling prior effect acknowledgements. Do **not**
+simply delete the SQLite database or bypass the namespace check:
+that can erase the only evidence of previous effects and permit
+duplicate downstream work.
