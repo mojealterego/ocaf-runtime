@@ -1,24 +1,26 @@
+# One-shot probe reports JSON to journald; require monitored alerts.
 [Unit]
-Description=OCAF cluster health collector
-Documentation=https://github.com/mojealterego/ocaf-runtime/blob/main/docs/OBSERVABILITY.md
-Wants=network-online.target
+Description=OCAF cluster PostgreSQL operational health probe
 After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=oneshot
 User=ocaf
 Group=ocaf
-WorkingDirectory=/var/lib/ocaf
-EnvironmentFile=/etc/ocaf/cluster.env
-ExecStart=/usr/local/bin/ocaf-cluster-health --json
-NoNewPrivileges=true
-PrivateTmp=true
+Environment=OCAF_CLUSTER_PG_DSN_FILE=/etc/ocaf/pg-dsn
+EnvironmentFile=/etc/ocaf/coordinator.env
+ExecStart=/usr/local/bin/ocaf-cluster-health
+TimeoutStartSec=12s
+NoNewPrivileges=yes
+PrivateTmp=yes
 ProtectSystem=strict
-ProtectHome=true
-ProtectKernelTunables=true
-ProtectKernelModules=true
-ProtectControlGroups=true
-RestrictSUIDSGID=true
-LockPersonality=true
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
 CapabilityBoundingSet=
+AmbientCapabilities=
 UMask=0077

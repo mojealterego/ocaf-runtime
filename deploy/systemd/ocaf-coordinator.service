@@ -1,36 +1,41 @@
+# Install under /etc/systemd/system after reviewing all absolute paths.
+# Environment file must contain only configuration, not secret values.
 [Unit]
-Description=OCAF authenticated PostgreSQL leader/standby coordinator
-Documentation=https://github.com/mojealterego/ocaf-runtime/blob/main/docs/DEPLOYMENT.md
+Description=OCAF PostgreSQL high-availability coordinator
+Documentation=https://github.com/mojealterego/ocaf-runtime
 Wants=network-online.target
 After=network-online.target
-StartLimitIntervalSec=120
+StartLimitIntervalSec=60
 StartLimitBurst=5
 
 [Service]
-Type=exec
+Type=simple
 User=ocaf
 Group=ocaf
-WorkingDirectory=/var/lib/ocaf
 Environment=OCAF_CLUSTER_MODE=postgres
-Environment=OCAF_COORDINATOR_MODE=standby
-EnvironmentFile=/etc/ocaf/cluster.env
+Environment=OCAF_COORDINATOR_MODE=ha
+Environment=OCAF_CLUSTER_PG_DSN_FILE=/etc/ocaf/pg-dsn
+EnvironmentFile=/etc/ocaf/coordinator.env
 ExecStart=/usr/local/bin/ocaf-coordinator
 Restart=on-failure
-RestartSec=5
-TimeoutStopSec=10
-NoNewPrivileges=true
-PrivateTmp=true
+RestartSec=3s
+TimeoutStopSec=20s
+NoNewPrivileges=yes
+PrivateTmp=yes
 ProtectSystem=strict
-ProtectHome=true
-ProtectKernelTunables=true
-ProtectKernelModules=true
-ProtectControlGroups=true
-RestrictSUIDSGID=true
-LockPersonality=true
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
 CapabilityBoundingSet=
+AmbientCapabilities=
 UMask=0077
-TasksMax=1024
-MemoryMax=2G
+LimitNOFILE=4096
+MemoryMax=1G
+TasksMax=128
 
 [Install]
 WantedBy=multi-user.target

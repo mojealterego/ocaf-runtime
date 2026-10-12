@@ -490,6 +490,29 @@ these checks. See [docs/CHAOS_ENGINEERING.md](docs/CHAOS_ENGINEERING.md)
 for scenario details, expected invariants and a physical-host acceptance
 matrix to complete before production approval.
 
+## Production operations: scoped health and secure configuration (v0.25)
+
+`ocaf-cluster-health` is a **read-only PostgreSQL** health command. It
+outputs a single JSON report containing leader counts, alerts and bounded
+aggregates; no job payloads, signing secrets, identities or raw DSN are
+returned. A missing leader or an unavailable database is **not reported as
+healthy** (nonzero exit for critical/unavailable). Job counters are
+scoped to the configured `OCAF_CLUSTER_ID`. Note that v1 agent
+membership currently remains **database-global**, including per-node
+lookups; do not regard its agent counts as tenant-isolated.
+
+For the coordinator and health CLI, `OCAF_CLUSTER_PG_DSN_FILE`
+is accepted as an alternative to the original `OCAF_CLUSTER_PG_DSN`.
+The private file must be an absolute, regular, service-user-owned
+mode-0600 file on Unix; file and environment credential sources cannot
+be enabled simultaneously. The coordinator's peer JSON file now uses
+the same secure descriptor reader, rejecting symlink swaps and
+over-permissive files. This does not implement live credential rotation.
+
+Deployment templates, health timer, alarm thresholds, migration
+preflight, rollback and remaining risks are in
+[docs/PRODUCTION_OPERATIONS.md](docs/PRODUCTION_OPERATIONS.md).
+
 ## Production work still required
 
 1. Certificate-backed TLS/mTLS handshakes on separate deployed hosts, plus certificate rotation and revocation.

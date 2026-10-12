@@ -1,12 +1,11 @@
 [Unit]
-Description=Periodically sample OCAF cluster health
+Description=Check OCAF coordinator PostgreSQL health regularly
 
 [Timer]
-OnBootSec=1min
+OnBootSec=15s
 OnUnitActiveSec=30s
 AccuracySec=5s
-RandomizedDelaySec=5s
-Persistent=true
+Persistent=false
 Unit=ocaf-cluster-health.service
 
 [Install]

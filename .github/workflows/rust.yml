@@ -39,6 +39,8 @@ jobs:
         run: cargo clippy --all-targets --no-default-features -- -D warnings
       - name: Tests (core only)
         run: cargo test --no-default-features
+      - name: Operational health (PostgreSQL and CLI)
+        run: cargo test --no-default-features --test production_health --test health_cli
       - name: Network chaos (real PostgreSQL via loopback fault proxy)
         run: cargo test --no-default-features --test postgres_network_chaos -- --test-threads=1
       - name: Tests (Zenoh)
