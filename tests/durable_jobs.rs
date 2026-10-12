@@ -269,5 +269,8 @@ fn job_database_file_is_private_on_unix() {
     let path = dir.path().join("jobs.sqlite");
     let _store = open(&path);
     let mode = std::fs::metadata(path).unwrap().permissions().mode() & 0o777;
-    assert_eq!(mode, 0o600, "job arguments/results must not be world-readable");
+    assert_eq!(
+        mode, 0o600,
+        "job arguments/results must not be world-readable"
+    );
 }
