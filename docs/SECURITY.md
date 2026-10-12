@@ -20,6 +20,12 @@
 - Versioned envelopes, UUID request IDs, short validity windows, clock
   skew checks, durable SQLite replay admission (RPC CLI), bounded replay cache,
   bounded HMAC frame/body sizes and concurrency limit.
+- The v0.9 CLI transport preflight enforces explicit Zenoh TLS-only/mTLS
+  settings and existence/permissions of credential files; plaintext is
+  rejected except opted-in loopback, with multicast/gossip disabled.
+- Single-host coordinator active/passive process ownership uses an
+  exclusive OS file lock that is released on process death. Local standby
+  promotes only after obtaining that lock.
 - Replies are signed with the appropriate peer secret and the client
   validates sender, recipient, protocol version and correlation ID.
 - Trusted local jobs use SQLite WAL, idempotent UUID submission, atomic lease
@@ -34,7 +40,7 @@
 
 | Threat / property | Current state | Required production control |
 | --- | --- | --- |
-| Passive traffic observation | Plain Zenoh TCP leaks payload contents | TLS/mTLS, encrypted overlay, private network |
+| Passive traffic observation | CLI refuses plaintext except explicitly opted-in loopback; library users must enforce transport themselves | Real TLS/mTLS handshake tests, cert lifecycle and endpoint validation |
 | Credential theft on disk/memory | Key is read from environment; no hardware protection | Secret manager, ephemeral credential issuance, rotation |
 | Replays after process restart | SQLite WAL journal committed before execution in RPC server CLI | Verify durable storage, backups and local filesystem semantics |
 | Unauthorized execution by authorized peer | Exact allowlist limits tools; allowed code may still perform side effects | Sandboxed tools, fine-grained capability policy and quotas |
@@ -44,7 +50,7 @@
 | Real L402 payment authorization | Not implemented | Verified invoice/hash/macaroon/caveats, ledger, replay protection |
 | Tool isolation | Tools run in the same OS process | sandbox, seccomp, capability boundaries and quotas |
 | End-to-end trace/observability | Basic in-process metrics | OpenTelemetry, audit log and incident response |
-| Queue failover | Single-host SQLite, not replicated cluster storage | Replicated coordinator, fencing at external services |
+| Queue failover | On-host active/passive lock and takeover; single-host SQLite | Cross-host replicated coordinator, fencing at external services |
 | Agent membership / discovery | Durable SQLite membership with 15-second expiry and signed RPC | Replicated directory, endpoint attestation and active health probes |
 | Remote node identity | Signed HMAC key possession, no transport certificate enforcement | Workload mTLS and certificate rotation/revocation |
 | Expired worker external side effects | Journal fencing prevents stale commits, not external writes | Transactional outbox, external fencing and idempotency |
@@ -121,6 +127,16 @@ non-idempotent jobs become `uncertain` and require operator reconciliation.
 The coordinator is a single point of failure, no network confidentiality
 is provided without independently configured transport security, and
 remote workers are not sandboxed or attested.
+
+## Active/passive lock boundary (v0.9)
+
+The coordinator CLI requires `OCAF_COORDINATOR_LOCK_PATH`. A single
+active process holds an OS-exclusive lock; a local standby waits without
+opening its Zenoh session or SQLite stores until that lock releases.
+This protects multiple **processes on one host**, not split-brain across
+machines or shared network storage. The leader lock inode must never be
+unlinked, and local storage must have a private parent directory. See
+[HA.md](HA.md).
 
 ## Keys
 
