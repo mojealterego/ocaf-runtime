@@ -152,7 +152,10 @@ impl RpcRequest {
             RpcAction::Heartbeat { tools } => {
                 validate_capabilities(tools).map_err(|_| RpcError::Malformed)?;
             }
-            RpcAction::GetJob { .. } | RpcAction::ClaimJob | RpcAction::FinishJob { .. } | RpcAction::Discover => {}
+            RpcAction::GetJob { .. }
+            | RpcAction::ClaimJob
+            | RpcAction::FinishJob { .. }
+            | RpcAction::Discover => {}
         }
         if let RpcAction::SubmitJob { id, .. } | RpcAction::GetJob { id } = &action {
             if Uuid::parse_str(id).is_err() {
@@ -590,7 +593,8 @@ impl RpcGateway {
                 }
             }
             RpcAction::GetJob { id } => {
-                let record = self.jobs
+                let record = self
+                    .jobs
                     .as_ref()
                     .ok_or(RpcError::Unavailable)?
                     .get_owned(&request.sender, &id)
