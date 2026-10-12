@@ -158,6 +158,13 @@ async fn main() -> anyhow::Result<()> {
                 Ok("status") => RpcAction::GetJob {
                     id: require("OCAF_JOB_ID")?,
                 },
+                Ok("audit") => RpcAction::GetJobAudit {
+                    id: require("OCAF_JOB_ID")?,
+                    limit: env::var("OCAF_AUDIT_LIMIT")
+                        .unwrap_or_else(|_| "50".into())
+                        .parse::<usize>()
+                        .map_err(|_| anyhow::anyhow!("OCAF_AUDIT_LIMIT must be an integer between 1 and 100"))?,
+                },
                 Ok("submit") => RpcAction::SubmitJob {
                     id: env::var("OCAF_JOB_ID")
                         .unwrap_or_else(|_| uuid::Uuid::new_v4().to_string()),
