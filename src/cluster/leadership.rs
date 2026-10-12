@@ -55,10 +55,20 @@ fn loopback_hosts(config: &Config) -> bool {
     })
 }
 
-fn lock_key(cluster: &str) -> i64 {
-    // Fixed namespace, deterministic across hosts/architectures.
+/// Validate identity and derive the same advisory key on every host.
+pub(crate) fn cluster_key(cluster: &str) -> Result<i64, PgLeaderError> {
+    if cluster.is_empty()
+        || cluster.len() > 64
+        || !cluster
+            .bytes()
+            .all(|ch| ch.is_ascii_alphanumeric() || ch == b'-' || ch == b'_')
+    {
+        return Err(PgLeaderError::InvalidCluster);
+    }
     let hash = Sha256::digest(format!("ocaf.cluster.leader.v1:{cluster}").as_bytes());
-    i64::from_be_bytes(hash[..8].try_into().expect("digest length >= 8"))
+    Ok(i64::from_be_bytes(
+        hash[..8].try_into().expect("digest length >= 8"),
+    ))
 }
 
 pub(crate) async fn open_database(
@@ -114,20 +124,13 @@ impl PgLeader {
         cluster: &str,
         allow_insecure_loopback: bool,
     ) -> Result<Self, PgLeaderError> {
-        if cluster.is_empty()
-            || cluster.len() > 64
-            || !cluster
-                .bytes()
-                .all(|ch| ch.is_ascii_alphanumeric() || ch == b'-' || ch == b'_')
-        {
-            return Err(PgLeaderError::InvalidCluster);
-        }
+        let key = cluster_key(cluster)?;
         let (client, task) = open_database(dsn, allow_insecure_loopback).await?;
 
         Ok(Self {
             client,
             connection: task,
-            key: lock_key(cluster),
+            key,
             held: AtomicBool::new(false),
         })
     }
