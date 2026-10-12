@@ -48,11 +48,11 @@ fn manifest() -> ToolManifest {
 
 async fn gateway(path: &Path, counter: Arc<AtomicUsize>) -> Result<RpcGateway, RpcError> {
     let runtime = OcafRuntime::new(0);
-    runtime.register(manifest(), CountingEcho(counter)).await.unwrap();
-    let peers = HashMap::from([(
-        "client-a".into(),
-        PeerPolicy::new(KEY, vec!["echo".into()]),
-    )]);
+    runtime
+        .register(manifest(), CountingEcho(counter))
+        .await
+        .unwrap();
+    let peers = HashMap::from([("client-a".into(), PeerPolicy::new(KEY, vec!["echo".into()]))]);
     RpcGateway::with_sqlite_replay("server-b", runtime, peers, 8, path)
 }
 
@@ -66,7 +66,8 @@ fn signed_request() -> Vec<u8> {
             tool: "echo".into(),
             args: json!({"message":"once"}),
         },
-    ).unwrap();
+    )
+    .unwrap();
     SignedFrame::seal(&req, &KEY).unwrap()
 }
 
@@ -82,7 +83,10 @@ async fn persistent_replay_survives_gateway_restart() {
     drop(first);
 
     let restarted = gateway(&db, Arc::clone(&count)).await.unwrap();
-    assert!(matches!(restarted.handle_at(&request, NOW).await, Err(RpcError::Replay)));
+    assert!(matches!(
+        restarted.handle_at(&request, NOW).await,
+        Err(RpcError::Replay)
+    ));
     assert_eq!(count.load(Ordering::SeqCst), 1);
 }
 
@@ -130,11 +134,15 @@ async fn bad_signature_cannot_poison_the_persistent_replay_journal() {
             tool: "echo".into(),
             args: json!({"message":"legitimate"}),
         },
-    ).unwrap();
+    )
+    .unwrap();
     let forged = SignedFrame::seal(&request, &WRONG_KEY).unwrap();
     let legitimate = SignedFrame::seal(&request, &KEY).unwrap();
 
-    assert!(matches!(gateway.handle_at(&forged, NOW).await, Err(RpcError::Unauthorized)));
+    assert!(matches!(
+        gateway.handle_at(&forged, NOW).await,
+        Err(RpcError::Unauthorized)
+    ));
     assert!(gateway.handle_at(&legitimate, NOW).await.is_ok());
     assert_eq!(count.load(Ordering::SeqCst), 1);
 }
@@ -149,8 +157,12 @@ async fn rebooted_gateway_still_denies_replay_after_remote_tool_failed() {
         "server-b",
         NOW,
         5000,
-        RpcAction::Execute { tool: "echo".into(), args: json!({"message":7}) },
-    ).unwrap();
+        RpcAction::Execute {
+            tool: "echo".into(),
+            args: json!({"message":7}),
+        },
+    )
+    .unwrap();
     let payload = SignedFrame::seal(&req, &KEY).unwrap();
     let first = gateway(&db, Arc::clone(&count)).await.unwrap();
     let reply = first.handle_at(&payload, NOW).await.unwrap();
@@ -159,7 +171,10 @@ async fn rebooted_gateway_still_denies_replay_after_remote_tool_failed() {
     drop(first);
 
     let restarted = gateway(&db, Arc::clone(&count)).await.unwrap();
-    assert!(matches!(restarted.handle_at(&payload, NOW).await, Err(RpcError::Replay)));
+    assert!(matches!(
+        restarted.handle_at(&payload, NOW).await,
+        Err(RpcError::Replay)
+    ));
     assert_eq!(count.load(Ordering::SeqCst), 0);
     // A new UUID is a distinct request, even if its tool and arguments match.
     req.request_id = uuid::Uuid::new_v4().to_string();
