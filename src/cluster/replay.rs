@@ -32,8 +32,9 @@ impl PgReplay {
         let (client, task) = open_database(dsn, allow_loopback)
             .await
             .map_err(|_| RpcError::Unavailable)?;
-        client.batch_execute(
-            "CREATE TABLE IF NOT EXISTS ocaf_pg_replay_v1 (
+        client
+            .batch_execute(
+                "CREATE TABLE IF NOT EXISTS ocaf_pg_replay_v1 (
                 node TEXT NOT NULL,
                 sender TEXT NOT NULL,
                 request_id TEXT NOT NULL,
@@ -42,8 +43,15 @@ impl PgReplay {
             );
             CREATE INDEX IF NOT EXISTS ocaf_pg_replay_expiry
                 ON ocaf_pg_replay_v1(expires_at_ms);",
-        ).await.map_err(|_| RpcError::Unavailable)?;
-        Ok(Self { state: Arc::new(Connection {client: Mutex::new(client), task}) })
+            )
+            .await
+            .map_err(|_| RpcError::Unavailable)?;
+        Ok(Self {
+            state: Arc::new(Connection {
+                client: Mutex::new(client),
+                task,
+            }),
+        })
     }
 
     pub async fn reserve(
@@ -57,31 +65,46 @@ impl PgReplay {
         let expiry = i64::try_from(expires_at_ms).map_err(|_| RpcError::Unavailable)?;
         let now = i64::try_from(now_ms).map_err(|_| RpcError::Unavailable)?;
         let mut client = self.state.client.lock().await;
-        let tx = client.transaction().await.map_err(|_| RpcError::Unavailable)?;
+        let tx = client
+            .transaction()
+            .await
+            .map_err(|_| RpcError::Unavailable)?;
         // Serialize the purge, duplicate admission and capacity bound
         // across concurrent connections. This is transaction-scoped.
         tx.query_one("SELECT pg_advisory_xact_lock($1)", &[&ADMISSION_LOCK])
-            .await.map_err(|_| RpcError::Unavailable)?;
-        tx.execute("DELETE FROM ocaf_pg_replay_v1 WHERE expires_at_ms < $1", &[&now])
-            .await.map_err(|_| RpcError::Unavailable)?;
-        let duplicate = tx.query_one(
-            "SELECT EXISTS(SELECT 1 FROM ocaf_pg_replay_v1
+            .await
+            .map_err(|_| RpcError::Unavailable)?;
+        tx.execute(
+            "DELETE FROM ocaf_pg_replay_v1 WHERE expires_at_ms < $1",
+            &[&now],
+        )
+        .await
+        .map_err(|_| RpcError::Unavailable)?;
+        let duplicate = tx
+            .query_one(
+                "SELECT EXISTS(SELECT 1 FROM ocaf_pg_replay_v1
              WHERE node=$1 AND sender=$2 AND request_id=$3)",
-            &[&node,&sender,&request_id]
-        ).await.map_err(|_| RpcError::Unavailable)?;
-        if duplicate.get::<_,bool>(0) {
+                &[&node, &sender, &request_id],
+            )
+            .await
+            .map_err(|_| RpcError::Unavailable)?;
+        if duplicate.get::<_, bool>(0) {
             return Err(RpcError::Replay);
         }
-        let count = tx.query_one("SELECT count(*) FROM ocaf_pg_replay_v1",&[])
-            .await.map_err(|_| RpcError::Unavailable)?;
-        if count.get::<_,i64>(0) >= MAX_REPLAY_ENTRIES {
+        let count = tx
+            .query_one("SELECT count(*) FROM ocaf_pg_replay_v1", &[])
+            .await
+            .map_err(|_| RpcError::Unavailable)?;
+        if count.get::<_, i64>(0) >= MAX_REPLAY_ENTRIES {
             return Err(RpcError::Busy);
         }
         tx.execute(
             "INSERT INTO ocaf_pg_replay_v1(node,sender,request_id,expires_at_ms)
              VALUES ($1,$2,$3,$4)",
-            &[&node,&sender,&request_id,&expiry]
-        ).await.map_err(|_| RpcError::Unavailable)?;
+            &[&node, &sender, &request_id, &expiry],
+        )
+        .await
+        .map_err(|_| RpcError::Unavailable)?;
         tx.commit().await.map_err(|_| RpcError::Unavailable)?;
         Ok(())
     }
