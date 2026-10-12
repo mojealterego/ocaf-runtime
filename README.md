@@ -1,6 +1,6 @@
 # OCAF Runtime — Rust / Tokio / Zenoh
 
-**Status: experimental signed Zenoh RPC, durable cross-process job dispatch and single-host active/passive coordinator failover; not production hardened.**
+**Status: experimental signed Zenoh RPC, shared PostgreSQL job queue and cross-host advisory leadership primitives; full coordinator HA and replicated storage are not implemented.**
 
 OCAF provides an async local tool registry and execution engine, plus a
 **real Zenoh query/reply protocol** for pairwise authenticated agent calls.
@@ -27,7 +27,9 @@ deliberately limited to **free, enabled tools without special permissions**.
 | Authenticated agent membership, 15-second leases, capability routing | Implemented (single-host coordinator) |
 | Signed remote job submit/pull/finish and owner-only results | Implemented; single coordinator |
 | On-host coordinator active/passive leadership | Implemented with exclusive OS file lock and standby takeover |
-| Cross-host replicated coordinator / consensus | Not implemented |
+| PostgreSQL cross-host session advisory leadership | Implemented as separate library primitive; NOT yet service-integrated |
+| Shared PostgreSQL remote job queue | Experimental, role-restricted and transactional; opt-in only |
+| Cross-host coordinator failover / replicated consensus | Not implemented |
 | L402 Lightning payments and cryptographic payment validation | Not implemented |
 | Untrusted executable tool sandbox and production rate limiting | Not implemented |
 
@@ -204,6 +206,29 @@ replicated multi-server cluster.
 
 See [docs/HA.md](docs/HA.md) for configuration, security acceptance tests,
 limits, and the next cross-host architecture milestones.
+
+## PostgreSQL distributed coordination foundations (v0.10)
+
+The `cluster::leadership::PgLeader` API supplies **cross-host leader
+exclusion** using a PostgreSQL session advisory lock. Independent hosts
+using one database and one cluster key cannot simultaneously acquire it.
+A dead PostgreSQL session releases ownership. The same release introduces
+`cluster::jobs::PgJobQueue`, which uses PostgreSQL transactions and
+`FOR UPDATE SKIP LOCKED` for atomic job claims and persists owners, lease
+tokens and results. The signed RPC gateway can opt into this queue using
+`with_postgres_job_db` and the coordinator CLI can enable it explicitly
+with `OCAF_EXPERIMENTAL_PG_JOBS=1` and `OCAF_PG_JOBS_DSN`.
+
+**This is not yet a production multi-host cluster.** The coordinator CLI
+still uses local SQLite for replay prevention and membership, and it
+does **not** activate PostgreSQL leader election in its serving path.
+Until those are migrated and serving is fenced on leadership loss, using
+multiple simultaneous coordinator hosts is unsupported. PostgreSQL
+failover/replication must also be provided and tested externally.
+
+CI uses a real PostgreSQL 16 service for cross-connection regression
+tests. See [docs/POSTGRES_CLUSTER.md](docs/POSTGRES_CLUSTER.md) for the
+deployment boundary and the remaining cross-host safety requirements.
 
 ## Production work still required
 
