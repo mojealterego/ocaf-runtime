@@ -5,6 +5,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use ocaf_runtime::cluster::jobs::PgJobQueue;
+use ocaf_runtime::cluster::leadership::PgLeader;
 use ocaf_runtime::jobs::remote::RemoteJobWorker;
 use ocaf_runtime::jobs::JobStatus;
 use ocaf_runtime::rpc::{PeerPolicy, RpcAction, RpcClient, RpcGateway, RpcStatus};
@@ -17,13 +18,12 @@ const SUBMIT_KEY: [u8; 32] = [0x71; 32];
 const WORKER_KEY: [u8; 32] = [0x72; 32];
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn real_zenoh_remote_worker_executes_shared_postgres_job() -> anyhow::Result<()> {
+async fn real_zenoh_worker_runs_under_shared_postgres_leadership_and_state() -> anyhow::Result<()> {
     let pg = match std::env::var("OCAF_TEST_PG_DSN") {
         Ok(value) => value,
         Err(_) if std::env::var("OCAF_REQUIRE_PG_TESTS").is_err() => return Ok(()),
         Err(_) => anyhow::bail!("CI requires a PostgreSQL database"),
     };
-    let dir = tempfile::tempdir()?;
     let sock = TcpListener::bind("127.0.0.1:0")?;
     let port = sock.local_addr()?.port();
     drop(sock);
@@ -60,16 +60,14 @@ async fn real_zenoh_remote_worker_executes_shared_postgres_job() -> anyhow::Resu
             PeerPolicy::new(WORKER_KEY, vec!["demo_echo".into()]).allow_job_worker(),
         ),
     ]);
-    let gateway = RpcGateway::with_sqlite_replay(
-        "coord",
-        OcafRuntime::new(0),
-        peers,
-        16,
-        &dir.path().join("replay.sqlite"),
-    )?
-    .with_coordinator_db(&dir.path().join("members.sqlite"))?
-    .with_postgres_job_db(&pg, true)
-    .await?;
+    let cluster_id = format!("zenoh_{}", uuid::Uuid::new_v4().simple());
+    let leader = Arc::new(PgLeader::connect(&pg, &cluster_id, true).await?);
+    assert!(leader.try_acquire().await?);
+    let gateway = RpcGateway::new("coord", OcafRuntime::new(0), peers, 16)?
+        .with_postgres_replay(&pg, true).await?
+        .with_postgres_coordinator(&pg, true).await?
+        .with_postgres_job_db(&pg, true).await?
+        .with_pg_leader(Arc::clone(&leader));
     let server = ZenohRpcServer::new(coordinator_session, Arc::new(gateway));
     let handle = tokio::spawn(async move { server.serve().await });
     tokio::time::sleep(Duration::from_millis(400)).await;
@@ -113,6 +111,12 @@ async fn real_zenoh_remote_worker_executes_shared_postgres_job() -> anyhow::Resu
         stored.result.unwrap()["message"],
         "processed: distributed round trip"
     );
+    leader.release().await?;
+    // The queryable is still reachable, but its gateway has lost
+    // leadership and must reject all further signed client requests.
+    assert!(submitter.request(RpcAction::GetJob {
+        id: job_id,
+    }).await.is_err());
     handle.abort();
     Ok(())
 }
