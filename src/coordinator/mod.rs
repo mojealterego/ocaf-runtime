@@ -44,9 +44,9 @@ fn sql_time(value: u64) -> Result<i64, CoordinatorError> {
 pub fn validate_tool_name(name: &str) -> bool {
     !name.is_empty()
         && name.len() <= 128
-        && name.bytes().all(|b| {
-            b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b'.' | b':')
-        })
+        && name
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b'.' | b':'))
 }
 
 pub fn validate_capabilities(tools: &[String]) -> Result<(), CoordinatorError> {
@@ -145,7 +145,9 @@ impl CoordinatorStore {
             return Err(CoordinatorError::Invalid);
         }
         validate_capabilities(tools)?;
-        let expires_at_ms = now_ms.checked_add(NODE_LEASE_MS).ok_or(CoordinatorError::Invalid)?;
+        let expires_at_ms = now_ms
+            .checked_add(NODE_LEASE_MS)
+            .ok_or(CoordinatorError::Invalid)?;
         let expires = sql_time(expires_at_ms)?;
         let node_id = node_id.to_owned();
         let tools = tools.to_vec();
