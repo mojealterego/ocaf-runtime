@@ -30,22 +30,27 @@ fn automatic_retry_is_strictly_limited_to_read_only_or_idempotent_jobs() {
             "safe operation must be retryable"
         );
     }
+    let lease = ocaf_runtime::jobs::LeasedJob {
+        id: id.clone(),
+        tool: "demo_echo".into(),
+        args: serde_json::json!({}),
+        attempt: 1,
+        worker_id: "worker".into(),
+        lease_token: "token".into(),
+        lease_expires_at_ms: 100,
+        leader_epoch: 0,
+    };
     for action in [
         RpcAction::Execute {
             tool: "demo_echo".into(),
             args: serde_json::json!({}),
         },
         RpcAction::ClaimJob,
+        RpcAction::ValidateLease {
+            lease: lease.clone(),
+        },
         RpcAction::FinishJob {
-            lease: ocaf_runtime::jobs::LeasedJob {
-                id: id.clone(),
-                tool: "demo_echo".into(),
-                args: serde_json::json!({}),
-                attempt: 1,
-                worker_id: "worker".into(),
-                lease_token: "token".into(),
-                lease_expires_at_ms: 100,
-            },
+            lease,
             outcome: RemoteJobOutcome::Uncertain,
         },
         RpcAction::Heartbeat {
