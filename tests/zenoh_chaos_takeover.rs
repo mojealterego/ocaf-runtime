@@ -113,7 +113,7 @@ async fn zenoh_coordinator_host_loss_and_postgres_takeover_preserve_job_and_retr
         .await?
         .get(0);
     assert!(terminated);
-    let promoted = tokio::time::timeout(Duration::from_secs(5), async {
+    tokio::time::timeout(Duration::from_secs(5), async {
         loop {
             if b.try_acquire().await? {
                 break Ok::<(), anyhow::Error>(());
@@ -122,7 +122,6 @@ async fn zenoh_coordinator_host_loss_and_postgres_takeover_preserve_job_and_retr
         }
     })
     .await??;
-    assert_eq!(promoted, ());
     assert!(b.fencing_epoch().await? > epoch_a);
     assert!(a.verify().await.is_err());
 
