@@ -132,7 +132,10 @@ async fn signed_sink_commits_once_and_never_replaces_a_different_payload() {
     .await;
     assert_eq!(duplicate.status, RpcStatus::Ok);
     assert_eq!(duplicate.output["applied"], false);
-    assert_eq!(duplicate.output["committed_at_ms"], first.output["committed_at_ms"]);
+    assert_eq!(
+        duplicate.output["committed_at_ms"],
+        first.output["committed_at_ms"]
+    );
 
     let conflict = send(
         &gateway,
