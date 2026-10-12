@@ -71,6 +71,7 @@ Required environment variables for `ocaf-coordinator`:
 - `OCAF_ZENOH_CONFIG`: reviewed Zenoh JSON5 network configuration.
 - `OCAF_REPLAY_DB_PATH`: absolute SQLite replay-ledger file path.
 - `OCAF_COORDINATOR_DB_PATH`: absolute SQLite membership file path.
+- `OCAF_JOBS_DB_PATH`: separate absolute SQLite queue file path (v0.8).
 
 Use separate SQLite filenames and a private parent directory. The CLI
 does not silently revert to an in-memory replay journal.
@@ -82,7 +83,8 @@ securely generated 32-byte keys):
 {
   "agent-a": {
     "key_b64": "<BASE64_32_BYTE_KEY_A>",
-    "allowed_tools": ["demo_echo"]
+    "allowed_tools": ["demo_echo"],
+    "worker_jobs": true
   },
   "client-c": {
     "key_b64": "<BASE64_32_BYTE_KEY_C>",
@@ -119,6 +121,11 @@ For manual test operations, `ocaf-rpc-node` in client mode supports
 (default `demo_echo`). Set `OCAF_PEER_ID` to the coordinator ID and
 `OCAF_SHARED_KEY_B64` to the key configured for that requesting node.
 
+Job execution across machines is implemented separately in v0.8 via an
+explicitly authorized pull-worker interface. The capability directory
+still provides routing hints rather than transactional task reservation;
+see [DISTRIBUTED_JOBS.md](DISTRIBUTED_JOBS.md).
+
 ## Security and production gaps
 
 **Important:** HMAC authenticates payload integrity; it does **not**
@@ -135,8 +142,10 @@ peer credentials.
   execution probe. Slow/unreachable nodes can still be returned.
 - This coordinator persists state on **one host only**; it is not
   replicated consensus and is a single point of failure.
-- Route responses do not reserve or transfer job leases, and there is
-  no transactional cross-host exactly-once dispatch.
+- Route responses do not reserve or transfer job leases. The separate v0.8
+  `SubmitJob`/`ClaimJob`/`FinishJob` interface does transfer signed
+  assignments between machines, but remains bound to one coordinator
+  database and cannot guarantee exactly-once external effects.
 - The SQLite directory must be on a reliable local filesystem, secured
   along with WAL/SHM files; do not place it on generic network shares.
 - Operator must implement certificate rotation, secure key provisioning,
