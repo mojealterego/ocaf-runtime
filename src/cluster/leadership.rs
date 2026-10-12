@@ -38,15 +38,20 @@ pub struct PgLeader {
 }
 
 fn loopback_hosts(config: &Config) -> bool {
-    if config.get_hosts().is_empty() || config.get_hostaddrs().iter().any(|addr| !addr.is_loopback()) {
+    if config.get_hosts().is_empty()
+        || config
+            .get_hostaddrs()
+            .iter()
+            .any(|addr| !addr.is_loopback())
+    {
         return false;
     }
-    config.get_hosts().iter().all(|host| {
-        match host {
-            Host::Tcp(name) => name == "localhost" || name.parse::<IpAddr>().is_ok_and(|addr| addr.is_loopback()),
-            #[cfg(unix)]
-            Host::Unix(_) => true,
+    config.get_hosts().iter().all(|host| match host {
+        Host::Tcp(name) => {
+            name == "localhost" || name.parse::<IpAddr>().is_ok_and(|addr| addr.is_loopback())
         }
+        #[cfg(unix)]
+        Host::Unix(_) => true,
     })
 }
 
@@ -64,7 +69,9 @@ impl PgLeader {
     ) -> Result<Self, PgLeaderError> {
         if cluster.is_empty()
             || cluster.len() > 64
-            || !cluster.bytes().all(|ch| ch.is_ascii_alphanumeric() || ch == b'-' || ch == b'_')
+            || !cluster
+                .bytes()
+                .all(|ch| ch.is_ascii_alphanumeric() || ch == b'-' || ch == b'_')
         {
             return Err(PgLeaderError::InvalidCluster);
         }
@@ -78,13 +85,11 @@ impl PgLeader {
         }
 
         let (client, task) = if local {
-            let (client, connection) = tokio::time::timeout(
-                Duration::from_secs(5),
-                config.connect(NoTls),
-            )
-            .await
-            .map_err(|_| PgLeaderError::Database)?
-            .map_err(|_| PgLeaderError::Database)?;
+            let (client, connection) =
+                tokio::time::timeout(Duration::from_secs(5), config.connect(NoTls))
+                    .await
+                    .map_err(|_| PgLeaderError::Database)?
+                    .map_err(|_| PgLeaderError::Database)?;
             let task = tokio::spawn(async move {
                 if let Err(err) = connection.await {
                     tracing::warn!(error = %err, "PostgreSQL leader connection lost");
@@ -98,13 +103,11 @@ impl PgLeader {
                 .build()
                 .map_err(|_| PgLeaderError::UnsafeTransport)?;
             let connector = postgres_native_tls::MakeTlsConnector::new(connector);
-            let (client, connection) = tokio::time::timeout(
-                Duration::from_secs(5),
-                config.connect(connector),
-            )
-            .await
-            .map_err(|_| PgLeaderError::Database)?
-            .map_err(|_| PgLeaderError::Database)?;
+            let (client, connection) =
+                tokio::time::timeout(Duration::from_secs(5), config.connect(connector))
+                    .await
+                    .map_err(|_| PgLeaderError::Database)?
+                    .map_err(|_| PgLeaderError::Database)?;
             let task = tokio::spawn(async move {
                 if let Err(err) = connection.await {
                     tracing::warn!(error = %err, "PostgreSQL leader connection lost");
@@ -130,7 +133,8 @@ impl PgLeader {
         }
         let row = tokio::time::timeout(
             Duration::from_secs(5),
-            self.client.query_one("SELECT pg_try_advisory_lock($1)", &[&self.key]),
+            self.client
+                .query_one("SELECT pg_try_advisory_lock($1)", &[&self.key]),
         )
         .await
         .map_err(|_| PgLeaderError::Database)?
@@ -149,13 +153,10 @@ impl PgLeader {
         if !self.held.load(Ordering::SeqCst) || self.connection.is_finished() {
             return Err(PgLeaderError::Database);
         }
-        tokio::time::timeout(
-            Duration::from_secs(5),
-            self.client.simple_query("SELECT 1"),
-        )
-        .await
-        .map_err(|_| PgLeaderError::Database)?
-        .map_err(|_| PgLeaderError::Database)?;
+        tokio::time::timeout(Duration::from_secs(5), self.client.simple_query("SELECT 1"))
+            .await
+            .map_err(|_| PgLeaderError::Database)?
+            .map_err(|_| PgLeaderError::Database)?;
         Ok(())
     }
 
@@ -165,7 +166,8 @@ impl PgLeader {
         }
         let row = tokio::time::timeout(
             Duration::from_secs(5),
-            self.client.query_one("SELECT pg_advisory_unlock($1)", &[&self.key]),
+            self.client
+                .query_one("SELECT pg_advisory_unlock($1)", &[&self.key]),
         )
         .await
         .map_err(|_| PgLeaderError::Database)?
