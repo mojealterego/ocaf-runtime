@@ -109,13 +109,31 @@ impl JobWorker {
                 Err(error) => {
                     // Do not store potentially sensitive error messages in
                     // the job ledger. Preserve only a stable diagnostic.
-                    let reason = match error {
-                        crate::runtime::RuntimeError::Timeout => "tool timeout",
-                        crate::runtime::RuntimeError::InvalidInput(_) => "invalid input",
-                        crate::runtime::RuntimeError::InvalidOutput(_) => "invalid output",
-                        _ => "tool execution failed",
-                    };
-                    self.store.fail(&job, reason, wallclock_ms()?).await?;
+                    use crate::runtime::RuntimeError;
+                    let definitely_pre_execution = matches!(
+                        error,
+                        RuntimeError::InvalidInput(_)
+                            | RuntimeError::ToolNotFound(_)
+                            | RuntimeError::ToolDisabled(_)
+                            | RuntimeError::AuthRequired(_)
+                            | RuntimeError::BudgetExceeded
+                    );
+                    if !definitely_pre_execution
+                        && !self
+                            .store
+                            .get(&job.id)
+                            .await?
+                            .ok_or(JobError::Storage)?
+                            .retry_safe
+                    {
+                        // A timed-out or failed external tool may have made
+                        // irreversible changes before returning an error.
+                        self.store.mark_uncertain(&job, wallclock_ms()?).await?;
+                    } else {
+                        self.store
+                            .fail(&job, "validated execution failure", wallclock_ms()?)
+                            .await?;
+                    }
                 }
             }
         }
