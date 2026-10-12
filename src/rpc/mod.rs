@@ -20,19 +20,19 @@ use sha2::Sha256;
 use tokio::sync::Semaphore;
 use uuid::Uuid;
 
+use crate::cluster::directory::PgDirectory;
 use crate::cluster::jobs::PgJobQueue;
 use crate::cluster::leadership::PgLeader;
-use crate::cluster::directory::PgDirectory;
 use crate::cluster::replay::PgReplay;
 use crate::coordinator::{validate_capabilities, validate_tool_name, CoordinatorStore};
 use crate::jobs::{JobError, JobSpec, JobStore, LeasedJob};
 use crate::runtime::{OcafRuntime, RuntimeError, ToolCallRequest};
 
-mod job_backend;
 mod directory_backend;
+mod job_backend;
 mod replay;
-use job_backend::JobBackend;
 use directory_backend::DirectoryBackend;
+use job_backend::JobBackend;
 use replay::ReplayBackend;
 
 pub const PROTOCOL_VERSION: u16 = 1;
@@ -417,9 +417,7 @@ impl RpcGateway {
         dsn: &str,
         allow_insecure_loopback: bool,
     ) -> Result<Self, RpcError> {
-        self.seen = ReplayBackend::postgres(
-            PgReplay::connect(dsn, allow_insecure_loopback).await?,
-        );
+        self.seen = ReplayBackend::postgres(PgReplay::connect(dsn, allow_insecure_loopback).await?);
         Ok(self)
     }
 
