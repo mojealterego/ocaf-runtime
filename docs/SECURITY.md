@@ -12,7 +12,7 @@
 - Node IDs are strict alphanumeric, underscore and hyphen; routing paths
   cannot contain wildcard or path delimiters.
 - Versioned envelopes, UUID request IDs, short validity windows, clock
-  skew checks, in-memory replay detection, bounded replay cache,
+  skew checks, durable SQLite replay admission (RPC CLI), bounded replay cache,
   bounded HMAC frame/body sizes and concurrency limit.
 - Replies are signed with the appropriate peer secret and the client
   validates sender, recipient, protocol version and correlation ID.
@@ -25,9 +25,9 @@
 | --- | --- | --- |
 | Passive traffic observation | Plain Zenoh TCP leaks payload contents | TLS/mTLS, encrypted overlay, private network |
 | Credential theft on disk/memory | Key is read from environment; no hardware protection | Secret manager, ephemeral credential issuance, rotation |
-| Replays after process restart | In-memory cache is lost | Durable idempotency store and TTL ledger |
+| Replays after process restart | SQLite WAL journal committed before execution in RPC server CLI | Verify durable storage, backups and local filesystem semantics |
 | Unauthorized execution by authorized peer | Exact allowlist limits tools; allowed code may still perform side effects | Sandboxed tools, fine-grained capability policy and quotas |
-| Duplicate execution when response is lost | Client has no exactly-once guarantee | Transactional deduplication/outbox, operation tokens |
+| Duplicate execution when response is lost | Same request ID is refused even after restart, but outcome is unknown after crash | Durable results, transactional outbox and per-tool idempotency |
 | Network denial of service | Bounded frames/concurrency; not full network DDoS defense | Edge controls, per-peer rate limits and backpressure |
 | Agent identity | Pairwise shared secret authenticates a peer possessing that key | Workload PKI, mTLS identity binding, key rotation |
 | Real L402 payment authorization | Not implemented | Verified invoice/hash/macaroon/caveats, ledger, replay protection |
@@ -40,6 +40,33 @@ does not prove that TLS/mTLS is enabled; deployments must independently
 verify the actual transport security. The demo configuration files in
 `examples/insecure-local` are plaintext loopback-only.
 
+## Durable replay journal (v0.5.0)
+
+The RPC server CLI requires `OCAF_REPLAY_DB_PATH` to point to an absolute,
+writable SQLite database path. Startup fails if the database cannot be
+initialized; it never falls back to the volatile in-memory implementation.
+The runtime records each signed request's recipient, sender, UUID and
+expiration before invoking a tool. Claims use an IMMEDIATE SQLite transaction
+and a unique composite key. Journal mode is WAL with synchronous FULL.
+
+The `RpcGateway::new` library constructor still uses an in-memory cache
+for explicitly embedded deployments and tests; use
+`RpcGateway::with_sqlite_replay` for crash-resistant admission checks.
+
+Guarantee: at most one **admitted attempt** per (node, peer, UUID) within
+the authenticated request's validity window on a single shared SQLite
+database. This does **not** guarantee that the underlying tool ran,
+completed, or committed its own external side effects. A crash can leave
+the result unknown and the same UUID blocked. The journal does not store
+tool inputs, outputs, or session secrets.
+
+The SQLite file is **not** a distributed consensus store and must not be
+placed on unreliable shared network filesystems. Use a proper distributed
+database and transactional processing protocol before deploying active
+replicas across separate hosts. Keep the database and WAL sidecars private,
+exclude them from backups that leak customer metadata, and size capacity
+for a maximum of 4,096 live journal entries (full => fail closed).
+
 ## Keys
 
 Generate a distinct, cryptographically random 32-byte key per two-peer
@@ -51,7 +78,7 @@ not part of this implementation.
 ## Future security acceptance gates
 
 1. A complete mutual TLS deployment test with unauthorized peers blocked.
-2. Durable replay ledger and idempotency with simulated crashes.
+2. Extend the admission ledger into a transactional result/outbox journal and simulate process crashes.
 3. Per-peer budgets, rate limits and structured audited denials.
 4. Sandbox integration for untrusted tools and bounded CPU/memory/network.
 5. Dependency and supply-chain audits, fuzzing of signed envelope parser.
