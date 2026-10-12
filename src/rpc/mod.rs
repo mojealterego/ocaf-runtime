@@ -20,6 +20,7 @@ use sha2::Sha256;
 use tokio::sync::Semaphore;
 use uuid::Uuid;
 
+use crate::coordinator::{validate_capabilities, validate_tool_name, CoordinatorStore};
 use crate::runtime::{OcafRuntime, RuntimeError, ToolCallRequest};
 
 mod replay;
@@ -80,6 +81,8 @@ pub fn now_ms() -> Result<u64, RpcError> {
 pub enum RpcAction {
     Discover,
     Execute { tool: String, args: Value },
+    Heartbeat { tools: Vec<String> },
+    Resolve { tool: String },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -107,10 +110,16 @@ impl RpcRequest {
         if ttl_ms == 0 || ttl_ms > MAX_REQUEST_TTL_MS {
             return Err(RpcError::Malformed);
         }
-        if let RpcAction::Execute { tool, .. } = &action {
-            if tool.is_empty() || tool.len() > 128 {
-                return Err(RpcError::Malformed);
+        match &action {
+            RpcAction::Execute { tool, .. } | RpcAction::Resolve { tool } => {
+                if !validate_tool_name(tool) {
+                    return Err(RpcError::Malformed);
+                }
             }
+            RpcAction::Heartbeat { tools } => {
+                validate_capabilities(tools).map_err(|_| RpcError::Malformed)?;
+            }
+            RpcAction::Discover => {}
         }
         Ok(Self {
             version: PROTOCOL_VERSION,
@@ -265,6 +274,7 @@ pub struct RpcGateway {
     seen: ReplayBackend,
     rates: Mutex<HashMap<String, (u64, u32)>>,
     concurrency: Semaphore,
+    coordinator: Option<CoordinatorStore>,
 }
 
 impl RpcGateway {
@@ -291,6 +301,7 @@ impl RpcGateway {
             seen: ReplayBackend::volatile(),
             rates: Mutex::new(HashMap::new()),
             concurrency: Semaphore::new(max_concurrent_calls),
+            coordinator: None,
         })
     }
 
@@ -310,6 +321,15 @@ impl RpcGateway {
         let mut gateway = Self::new(node_id, runtime, peers, max_concurrent_calls)?;
         gateway.seen = ReplayBackend::sqlite(db_path)?;
         Ok(gateway)
+    }
+
+    /// Attach a persistent membership directory. This is a single-host
+    /// coordination component, not a replicated distributed scheduler.
+    pub fn with_coordinator_db(mut self, db_path: &Path) -> Result<Self, RpcError> {
+        self.coordinator = Some(
+            CoordinatorStore::open(db_path).map_err(|_| RpcError::Unavailable)?,
+        );
+        Ok(self)
     }
 
     pub fn runtime(&self) -> &OcafRuntime {
@@ -370,6 +390,26 @@ impl RpcGateway {
                     return Err(RpcError::Unauthorized);
                 }
             }
+            RpcAction::Heartbeat { tools } => {
+                if self.coordinator.is_none() {
+                    return Err(RpcError::Unavailable);
+                }
+                validate_capabilities(tools).map_err(|_| RpcError::Malformed)?;
+                if tools.iter().any(|tool| !peer.permits(tool)) {
+                    return Err(RpcError::Unauthorized);
+                }
+            }
+            RpcAction::Resolve { tool } => {
+                if self.coordinator.is_none() {
+                    return Err(RpcError::Unavailable);
+                }
+                if !validate_tool_name(tool) {
+                    return Err(RpcError::Malformed);
+                }
+                if !peer.permits(tool) {
+                    return Err(RpcError::Unauthorized);
+                }
+            }
             RpcAction::Discover => {}
         }
 
@@ -402,6 +442,24 @@ impl RpcGateway {
                     })
                     .collect();
                 (RpcStatus::Ok, json!(public))
+            }
+            RpcAction::Heartbeat { tools } => {
+                let result = self.coordinator
+                    .as_ref()
+                    .ok_or(RpcError::Unavailable)?
+                    .heartbeat(&request.sender, &tools, now)
+                    .await
+                    .map_err(|_| RpcError::Unavailable)?;
+                (RpcStatus::Ok, json!(result))
+            }
+            RpcAction::Resolve { tool } => {
+                let result = self.coordinator
+                    .as_ref()
+                    .ok_or(RpcError::Unavailable)?
+                    .resolve(&tool, now)
+                    .await
+                    .map_err(|_| RpcError::Unavailable)?;
+                (RpcStatus::Ok, json!(result))
             }
             RpcAction::Execute { tool, args } => {
                 // No AuthContext is accepted over RPC. Remote privileged/paid tools
