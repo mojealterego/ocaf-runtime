@@ -102,7 +102,9 @@ impl PgJobQueue {
                 })?;
         client
             .batch_execute(
-                "CREATE TABLE IF NOT EXISTS ocaf_pg_jobs_v1 (
+                "BEGIN;
+             SELECT pg_advisory_xact_lock(574123456);
+             CREATE TABLE IF NOT EXISTS ocaf_pg_jobs_v1 (
                  seq BIGSERIAL PRIMARY KEY,
                  id TEXT NOT NULL UNIQUE,
                  owner TEXT NOT NULL,
@@ -122,7 +124,8 @@ impl PgJobQueue {
              CREATE INDEX IF NOT EXISTS ocaf_pg_jobs_pending
                  ON ocaf_pg_jobs_v1(status,seq);
              CREATE INDEX IF NOT EXISTS ocaf_pg_jobs_expiration
-                 ON ocaf_pg_jobs_v1(status,lease_expires_at_ms);",
+                 ON ocaf_pg_jobs_v1(status,lease_expires_at_ms);
+             COMMIT;",
             )
             .await
             .map_err(storage)?;
