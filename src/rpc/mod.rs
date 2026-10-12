@@ -499,10 +499,19 @@ impl RpcGateway {
         self.handle_at(message, now_ms()?).await
     }
 
-    pub async fn handle_at(&self, message: &[u8], now: u64) -> Result<Vec<u8>, RpcError> {
+    /// A late-stage leadership check is also required immediately before
+    /// emitting a signed reply. This cannot prevent an already started
+    /// external side effect; it only avoids confirming work from a stale
+    /// coordinator after detectable leader loss.
+    pub async fn verify_current_leader(&self) -> Result<(), RpcError> {
         if let Some(leader) = &self.leader {
             leader.verify().await.map_err(|_| RpcError::Unavailable)?;
         }
+        Ok(())
+    }
+
+    pub async fn handle_at(&self, message: &[u8], now: u64) -> Result<Vec<u8>, RpcError> {
+        self.verify_current_leader().await?;
         // Parse only the caller identity from untrusted data before HMAC verification.
         // Every field remains untrusted until the peer-specific MAC is verified.
         let (raw, _) = SignedFrame::unpack(message)?;
