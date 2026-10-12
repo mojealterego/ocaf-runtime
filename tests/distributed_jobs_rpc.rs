@@ -136,7 +136,7 @@ async fn crash_expiration_marks_unsafe_remote_work_uncertain() {
     call(&gateway,"requester",&SUBMIT_KEY,submit(&id),NOW).await.unwrap();
     let lease = claim(&gateway, NOW+1).await;
     drop(gateway);
-    let recovered = gateway(&path);
+    let recovered = self::gateway(&path);
     let next = call(&recovered,"worker",&WORKER_KEY,RpcAction::ClaimJob,NOW+61_000).await.unwrap();
     assert_eq!(next.output,Value::Null);
     let stored=JobStore::open(&path).unwrap().get(&id).await.unwrap().unwrap();
