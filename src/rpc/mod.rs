@@ -21,6 +21,7 @@ use tokio::sync::Semaphore;
 use uuid::Uuid;
 
 use crate::cluster::jobs::PgJobQueue;
+use crate::cluster::leadership::PgLeader;
 use crate::cluster::directory::PgDirectory;
 use crate::cluster::replay::PgReplay;
 use crate::coordinator::{validate_capabilities, validate_tool_name, CoordinatorStore};
@@ -350,6 +351,7 @@ pub struct RpcGateway {
     concurrency: Semaphore,
     coordinator: Option<DirectoryBackend>,
     jobs: Option<JobBackend>,
+    leader: Option<Arc<PgLeader>>,
 }
 
 impl RpcGateway {
@@ -378,6 +380,7 @@ impl RpcGateway {
             concurrency: Semaphore::new(max_concurrent_calls),
             coordinator: None,
             jobs: None,
+            leader: None,
         })
     }
 
@@ -459,6 +462,14 @@ impl RpcGateway {
         Ok(self)
     }
 
+    /// Only the current PostgreSQL advisory leader is allowed to process
+    /// signed RPC. Called by cluster coordinator with a dedicated leader
+    /// session, not by the legacy single-host SQLite service.
+    pub fn with_pg_leader(mut self, leader: Arc<PgLeader>) -> Self {
+        self.leader = Some(leader);
+        self
+    }
+
     pub fn runtime(&self) -> &OcafRuntime {
         &self.runtime
     }
@@ -472,6 +483,9 @@ impl RpcGateway {
     }
 
     pub async fn handle_at(&self, message: &[u8], now: u64) -> Result<Vec<u8>, RpcError> {
+        if let Some(leader) = &self.leader {
+            leader.verify().await.map_err(|_| RpcError::Unavailable)?;
+        }
         // Parse only the caller identity from untrusted data before HMAC verification.
         // Every field remains untrusted until the peer-specific MAC is verified.
         let (raw, _) = SignedFrame::unpack(message)?;
