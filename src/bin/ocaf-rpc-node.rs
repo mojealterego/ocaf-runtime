@@ -148,6 +148,9 @@ async fn main() -> anyhow::Result<()> {
                 Ok("resolve") => RpcAction::Resolve {
                     tool: env::var("OCAF_TOOL").unwrap_or_else(|_| "demo_echo".into()),
                 },
+                Ok("status") => RpcAction::GetJob {
+                    id: require("OCAF_JOB_ID")?,
+                },
                 Ok("submit") => RpcAction::SubmitJob {
                     id: env::var("OCAF_JOB_ID")
                         .unwrap_or_else(|_| uuid::Uuid::new_v4().to_string()),
