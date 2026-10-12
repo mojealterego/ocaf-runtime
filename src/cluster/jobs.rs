@@ -54,7 +54,9 @@ pub struct FencedEffectReceipt {
     pub committed_at_ms: i64,
 }
 
-fn storage(_: tokio_postgres::Error) -> JobError {
+fn storage(err: tokio_postgres::Error) -> JobError {
+    #[cfg(debug_assertions)]
+    eprintln!("HA PostgreSQL integration diagnostics: {err}");
     JobError::Storage
 }
 
