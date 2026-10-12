@@ -12,7 +12,7 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
 
     let transport = ZenohTransport::connect().await?;
-    tracing::info!("Zenoh session initialized: {:?}", transport.session().id());
+    tracing::info!("Zenoh session initialized: {:?}", transport.session().zid());
 
     let runtime = OcafRuntime::new(1_000);
     runtime.register(pricing_tool_manifest(), EchoTool).await?;
