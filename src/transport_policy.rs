@@ -32,10 +32,7 @@ fn valid_loopback_endpoint(endpoint: &str) -> bool {
         return false;
     }
     let host = host.trim_start_matches('[').trim_end_matches(']');
-    host == "localhost"
-        || host
-            .parse::<IpAddr>()
-            .is_ok_and(|ip| ip.is_loopback())
+    host == "localhost" || host.parse::<IpAddr>().is_ok_and(|ip| ip.is_loopback())
 }
 
 fn file_exists(config: &Value, key: &str, private: bool) -> bool {
@@ -75,7 +72,10 @@ pub fn validate_zenoh_config(
         return Err(TransportPolicyError::Malformed);
     }
     let root: Value = json5::from_str(source).map_err(|_| TransportPolicyError::Malformed)?;
-    let mode = root.get("mode").and_then(Value::as_str).ok_or(TransportPolicyError::Unsafe)?;
+    let mode = root
+        .get("mode")
+        .and_then(Value::as_str)
+        .ok_or(TransportPolicyError::Unsafe)?;
     if !matches!(mode, "peer" | "router" | "client") {
         return Err(TransportPolicyError::Unsafe);
     }
@@ -131,13 +131,19 @@ pub fn validate_zenoh_config(
     {
         return Err(TransportPolicyError::Unsafe);
     }
-    if root.pointer("/listen/endpoints").and_then(Value::as_array).is_some_and(|v| !v.is_empty())
+    if root
+        .pointer("/listen/endpoints")
+        .and_then(Value::as_array)
+        .is_some_and(|v| !v.is_empty())
         && (!file_exists(tls, "listen_private_key", true)
             || !file_exists(tls, "listen_certificate", false))
     {
         return Err(TransportPolicyError::Unsafe);
     }
-    if root.pointer("/connect/endpoints").and_then(Value::as_array).is_some_and(|v| !v.is_empty())
+    if root
+        .pointer("/connect/endpoints")
+        .and_then(Value::as_array)
+        .is_some_and(|v| !v.is_empty())
         && (!file_exists(tls, "connect_private_key", true)
             || !file_exists(tls, "connect_certificate", false))
     {
