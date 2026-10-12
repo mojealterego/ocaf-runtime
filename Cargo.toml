@@ -11,6 +11,11 @@ name = "ocaf-rpc-node"
 path = "src/bin/ocaf-rpc-node.rs"
 required-features = ["zenoh"]
 
+[[bin]]
+name = "ocaf-coordinator"
+path = "src/bin/ocaf-coordinator.rs"
+required-features = ["zenoh"]
+
 [features]
 default = ["zenoh"]
 zenoh = ["dep:zenoh"]
