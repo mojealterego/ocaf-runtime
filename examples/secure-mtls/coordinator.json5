@@ -1,0 +1,23 @@
+// TEMPLATE ONLY. Replace paths and certificates; use a real CA.
+// Do not use a production listener until you verify mTLS handshakes.
+{
+  mode: "peer",
+  listen: { endpoints: ["tls/0.0.0.0:7447"] },
+  scouting: {
+    multicast: { enabled: false },
+    gossip: { enabled: false },
+  },
+  transport: {
+    link: {
+      protocols: ["tls"],
+      tls: {
+        root_ca_certificate: "/REPLACE/ca.pem",
+        listen_private_key: "/REPLACE/coordinator-key.pem",
+        listen_certificate: "/REPLACE/coordinator-cert.pem",
+        enable_mtls: true,
+        verify_name_on_connect: true,
+        close_link_on_expiration: true,
+      },
+    },
+  },
+}
