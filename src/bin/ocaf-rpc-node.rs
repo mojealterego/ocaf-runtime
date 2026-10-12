@@ -38,17 +38,11 @@ fn load_key() -> anyhow::Result<[u8; 32]> {
 }
 
 fn load_zenoh_config() -> anyhow::Result<zenoh::Config> {
-    if let Ok(path) = env::var("OCAF_ZENOH_CONFIG") {
-        return zenoh::Config::from_file(path)
-            .map_err(|e| anyhow::anyhow!("cannot load Zenoh config: {e}"));
-    }
-    if env::var("OCAF_ALLOW_INSECURE_TRANSPORT").as_deref() == Ok("1") {
-        eprintln!("WARNING: Zenoh transport is not encrypted; use only on trusted local networks.");
-        return Ok(zenoh::Config::default());
-    }
-    anyhow::bail!(
-        "OCAF_ZENOH_CONFIG is required; explicit insecure local demo requires OCAF_ALLOW_INSECURE_TRANSPORT=1"
-    )
+    // No implicit network config: operator must explicitly select the
+    // reviewed endpoint/transport topology.
+    let path = require("OCAF_ZENOH_CONFIG")?;
+    zenoh::Config::from_file(path)
+        .map_err(|e| anyhow::anyhow!("cannot load Zenoh config: {e}"))
 }
 
 #[tokio::main]
