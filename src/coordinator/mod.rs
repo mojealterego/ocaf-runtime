@@ -218,15 +218,16 @@ impl CoordinatorStore {
                          ORDER BY n.node_id",
                     )
                     .map_err(|_| CoordinatorError::Storage)?;
-                stmt.query_map(params![tool, now], |row| {
-                    Ok(NodeRoute {
-                        node_id: row.get(0)?,
-                        expires_at_ms: row.get::<_, i64>(1)? as u64,
+                let rows = stmt
+                    .query_map(params![tool, now], |row| {
+                        Ok(NodeRoute {
+                            node_id: row.get(0)?,
+                            expires_at_ms: row.get::<_, i64>(1)? as u64,
+                        })
                     })
-                })
-                .map_err(|_| CoordinatorError::Storage)?
-                .collect::<Result<Vec<_>, _>>()
-                .map_err(|_| CoordinatorError::Storage)?
+                    .map_err(|_| CoordinatorError::Storage)?;
+                rows.collect::<Result<Vec<_>, _>>()
+                    .map_err(|_| CoordinatorError::Storage)?
             };
             let selected = routes
                 .iter()
