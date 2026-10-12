@@ -423,6 +423,35 @@ impl JobStore {
         .await
     }
 
+    /// Mark an ambiguous external side-effecting attempt as terminal
+    /// uncertain. A stale lease holder cannot commit this transition.
+    pub async fn mark_uncertain(
+        &self,
+        job: &LeasedJob,
+        now_ms: u64,
+    ) -> Result<(), JobError> {
+        let now = checked_time(now_ms)?;
+        let job = job.clone();
+        self.run(move |conn| {
+            let changed = conn
+                .execute(
+                    "UPDATE jobs_v1 SET status='uncertain',
+                        last_error='external outcome unknown',
+                        worker_id=NULL, lease_token=NULL,
+                        lease_expires_at_ms=NULL
+                     WHERE id=?1 AND status='running' AND worker_id=?2
+                       AND lease_token=?3 AND lease_expires_at_ms>?4",
+                    params![job.id, job.worker_id, job.lease_token, now],
+                )
+                .map_err(|_| JobError::Storage)?;
+            if changed != 1 {
+                return Err(JobError::StaleLease);
+            }
+            Ok(())
+        })
+        .await
+    }
+
     pub async fn fail(&self, job: &LeasedJob, reason: &str, now_ms: u64) -> Result<(), JobError> {
         if reason.is_empty() || reason.len() > 1024 {
             return Err(JobError::Invalid);
