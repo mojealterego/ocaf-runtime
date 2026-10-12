@@ -87,8 +87,6 @@ fn from_row(row: &Row) -> Result<JobRecord, JobError> {
     })
 }
 
-const SELECT_RECORD: &str = "SELECT id,tool,args,retry_safe,max_attempts,status,attempts,result,
- last_error,worker_id,lease_expires_at_ms FROM ocaf_pg_jobs_v1 WHERE id=$1";
 
 impl PgJobQueue {
     /// On remote networks SSL must be required; explicitly permitted local
