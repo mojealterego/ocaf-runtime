@@ -1,11 +1,11 @@
 use std::sync::Arc;
-
 use serde_json::Value;
 
-use crate::auth::AuthContext;
 use crate::executor::{ExecutionContext, ToolError, ToolExecutor};
 use crate::registry::ToolManifest;
 
+/// Only opens a Zenoh session. Tool discovery, pub/sub and remote execution
+/// still require explicit protocol integration.
 #[derive(Debug, Clone)]
 pub struct ZenohTransport {
     session: Arc<zenoh::Session>,
@@ -13,12 +13,12 @@ pub struct ZenohTransport {
 
 impl ZenohTransport {
     pub async fn connect() -> anyhow::Result<Self> {
-        let session = Arc::new(zenoh::open(zenoh::Config::default()).res().await?);
+        let session = Arc::new(zenoh::open(zenoh::Config::default()).await?);
         Ok(Self { session })
     }
 
     pub fn session(&self) -> Arc<zenoh::Session> {
-        self.session.clone()
+        Arc::clone(&self.session)
     }
 }
 
@@ -26,12 +26,9 @@ pub struct EchoTool;
 
 #[async_trait::async_trait]
 impl ToolExecutor for EchoTool {
-    async fn execute(
-        &self,
-        args: Value,
-        _ctx: &ExecutionContext,
-    ) -> Result<Value, ToolError> {
-        let message = args.get("message").and_then(|v| v.as_str()).unwrap_or("hello");
+    async fn execute(&self, args: Value, _ctx: &ExecutionContext) -> Result<Value, ToolError> {
+        let message = args.get("message").and_then(|v| v.as_str())
+            .ok_or_else(|| ToolError::Validation("message must be a string".into()))?;
         Ok(serde_json::json!({
             "status": "ok",
             "message": format!("processed: {}", message),
@@ -40,37 +37,30 @@ impl ToolExecutor for EchoTool {
     }
 }
 
+/// This is a FREE local demonstration. It does not request, issue or validate
+/// a Lightning invoice or an L402 credential.
 pub fn pricing_tool_manifest() -> ToolManifest {
     ToolManifest {
-        name: "pricing_tool".to_string(),
-        description: "Returns a deterministic echo payload for the runtime demo".to_string(),
+        name: "demo_echo".to_string(),
+        description: "Returns a deterministic echo payload in the local runtime".to_string(),
         input_schema: serde_json::json!({
             "type": "object",
-            "properties": {
-                "message": { "type": "string" }
-            },
-            "required": ["message"]
+            "properties": {"message": {"type": "string"}},
+            "required": ["message"],
+            "additionalProperties": false
         }),
         output_schema: serde_json::json!({
             "type": "object",
             "properties": {
-                "status": { "type": "string" },
-                "message": { "type": "string" },
-                "received": { "type": "object" }
-            }
+                "status": {"type": "string"},
+                "message": {"type": "string"},
+                "received": {"type": "object"}
+            },
+            "required": ["status", "message", "received"]
         }),
-        cost_sats: 25,
-        permissions: vec!["tool:echo".to_string()],
+        cost_sats: 0,
+        permissions: vec![],
         timeout_ms: 250,
         enabled: true,
-    }
-}
-
-pub fn sample_auth() -> AuthContext {
-    AuthContext {
-        macaroon: "demo-macaroon".to_string(),
-        preimage: "demo-preimage".to_string(),
-        invoice: "lnbc_demo_invoice".to_string(),
-        nonce: "demo-nonce".to_string(),
     }
 }
