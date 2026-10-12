@@ -28,9 +28,9 @@ local file — back it up and restrict filesystem access.
 2. The trusted controller must separately authorize an exact job ID,
    specific worker identity, epoch, expiration and SHA-256 hash of the
    JSON effect. A `SinkPermit` is signed with the controller secret.
-   `ZenohSinkClient::issue_permit` obtains the generation through
-   `PgLeader::fencing_epoch` but the caller must independently enforce
-   original job ACLs before issuing this capability.
+   In v0.22, `ZenohSinkClient::issue_permit_for_lease` additionally
+   verifies the exact running PostgreSQL job lease, tool, attempt,
+   nonce fingerprint, epoch and cluster namespace before signing.
 3. The worker sends an authenticated `Apply` request carrying that
    controller-signed permit and an exact JSON body. Neither merely
    knowing the worker secret nor holding a stale lease can fabricate
@@ -52,6 +52,7 @@ Set:
 
 ```sh
 OCAF_SINK_ID=external-sink-a
+OCAF_SINK_CLUSTER_ID=<same-as-OCAF_CLUSTER_ID>
 OCAF_SINK_DB_PATH=/var/lib/ocaf-sink/events.sqlite
 OCAF_SINK_CONTROLLER_ID=controller-a
 OCAF_SINK_WORKER_ID=worker-a

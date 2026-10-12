@@ -5,7 +5,9 @@ use std::time::Duration;
 
 use tokio::sync::Semaphore;
 
+use crate::cluster::jobs::PgJobQueue;
 use crate::cluster::leadership::PgLeader;
+use crate::jobs::LeasedJob;
 use crate::rpc::{now_ms, validate_node_id, SignedFrame, MAX_FRAME_BYTES};
 use crate::sink::{EffectSink, SinkAction, SinkError, SinkPermit, SinkRequest, SinkResponse};
 
@@ -139,25 +141,46 @@ impl ZenohSinkClient {
             .checked_add(validity_ms)
             .ok_or_else(|| anyhow::anyhow!("activation clock overflow"))?;
         self.request(SinkAction::ActivateEpoch {
+            cluster_id: leader.cluster_id().to_owned(),
             epoch,
             expires_at_ms,
         })
         .await
     }
 
-    /// Trusted controller issues a bounded, payload-bound permit for one
-    /// job and one named worker. Distribution is caller-specific and must
-    /// only occur after job ACL and leader verification.
-    pub async fn issue_permit(
+    /// Issue a short-lived capability only for a verified, currently
+    /// running PostgreSQL job lease. Neither an arbitrary UUID nor a
+    /// forged worker/attempt/token may be used to obtain a permit.
+    /// Any subsequent failover is fenced at the sink on activation or
+    /// authorization expiry, not by this point-in-time check alone.
+    pub async fn issue_permit_for_lease(
         &self,
+        queue: &PgJobQueue,
         leader: &PgLeader,
-        worker: &str,
-        job_id: &str,
+        lease: &LeasedJob,
         expires_at_ms: u64,
         effect: &serde_json::Value,
     ) -> anyhow::Result<Vec<u8>> {
+        if queue.cluster_id() != Some(leader.cluster_id()) {
+            anyhow::bail!("sink permit queue belongs to another leader cluster");
+        }
         let epoch = leader.fencing_epoch().await?;
-        let token = SinkPermit::new(&self.sink_id, worker, job_id, epoch, expires_at_ms, effect)?;
+        let now = now_ms()?;
+        if lease.leader_epoch != epoch
+            || expires_at_ms <= now
+            || expires_at_ms > now.saturating_add(15_000)
+            || expires_at_ms > lease.lease_expires_at_ms
+            || !queue.validate_current_lease(lease).await?
+        {
+            anyhow::bail!("sink effect permit denied: stale or unverified lease");
+        }
+        let token = SinkPermit::from_lease(
+            &self.sink_id,
+            leader.cluster_id(),
+            lease,
+            expires_at_ms,
+            effect,
+        )?;
         Ok(SignedFrame::seal(&token, &self.key)?)
     }
 }

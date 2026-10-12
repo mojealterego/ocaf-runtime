@@ -67,7 +67,8 @@ async fn main() -> anyhow::Result<()> {
         key("OCAF_SINK_CONTROLLER_KEY_B64")?,
         &required("OCAF_SINK_WORKER_ID")?,
         key("OCAF_SINK_WORKER_KEY_B64")?,
-    )?;
+    )?
+    .with_cluster_id(&required("OCAF_SINK_CLUSTER_ID")?)?;
     let config_path = absolute("OCAF_ZENOH_CONFIG")?;
     let source = read_zenoh_config(&config_path)?;
     let allow_loopback = env::var("OCAF_ALLOW_INSECURE_LOOPBACK").as_deref() == Ok("1");

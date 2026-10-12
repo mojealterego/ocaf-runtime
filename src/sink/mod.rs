@@ -23,9 +23,10 @@ use sha2::{Digest, Sha256};
 use thiserror::Error;
 use uuid::Uuid;
 
+use crate::jobs::LeasedJob;
 use crate::rpc::{now_ms, validate_node_id, RpcError, SignedFrame, MAX_FRAME_BYTES};
 
-pub const SINK_VERSION: u16 = 1;
+pub const SINK_VERSION: u16 = 2;
 const MAX_WIRE: usize = 100_000;
 const MAX_EFFECT: usize = 8192;
 const MAX_TTL_MS: u64 = 5_000;
@@ -53,6 +54,7 @@ impl From<RpcError> for SinkError {
 #[derive(Clone)]
 pub struct SinkKeys {
     controller_id: String,
+    cluster_id: String,
     controller_key: [u8; 32],
     worker_id: String,
     worker_key: [u8; 32],
@@ -76,10 +78,21 @@ impl SinkKeys {
         }
         Ok(Self {
             controller_id: controller_id.to_owned(),
+            cluster_id: String::new(),
             controller_key,
             worker_id: worker_id.to_owned(),
             worker_key,
         })
+    }
+
+    /// Mandatory namespace pinning: prevent a sink with the same ID or
+    /// epoch counter from accepting permits issued for a different cluster.
+    pub fn with_cluster_id(mut self, cluster_id: &str) -> Result<Self, SinkError> {
+        if validate_node_id(cluster_id).is_err() {
+            return Err(SinkError::Invalid);
+        }
+        self.cluster_id = cluster_id.to_owned();
+        Ok(self)
     }
 
     fn for_sender(&self, sender: &str) -> Result<&[u8; 32], SinkError> {
@@ -98,7 +111,11 @@ impl SinkKeys {
 pub enum SinkAction {
     /// Lease the receiver's epoch for at most 15 seconds. The caller must
     /// have checked its leadership with the authoritative coordinator.
-    ActivateEpoch { epoch: i64, expires_at_ms: u64 },
+    ActivateEpoch {
+        cluster_id: String,
+        epoch: i64,
+        expires_at_ms: u64,
+    },
     /// Commit a JSON event only if a controller-signed permit and current
     /// local activation both agree with this signed worker identity.
     Apply { permit: Vec<u8>, effect: Value },
@@ -163,8 +180,13 @@ impl SinkRequest {
 pub struct SinkPermit {
     pub version: u16,
     pub sink_id: String,
+    pub cluster_id: String,
     pub worker: String,
     pub job_id: String,
+    pub tool: String,
+    pub attempt: u32,
+    /// SHA256 of the unpredictable lease token; never persist/transmit token.
+    pub lease_fingerprint: String,
     pub epoch: i64,
     pub expires_at_ms: u64,
     pub payload_hash: String,
@@ -179,28 +201,42 @@ fn payload_hash(value: &Value) -> Result<String, SinkError> {
 }
 
 impl SinkPermit {
-    pub fn new(
+    /// Bind a one-job effect authorization to a particular lease attempt
+    /// and trust domain. This constructor only encodes the verified claim:
+    /// the signing controller MUST call validate_current_lease first.
+    pub fn from_lease(
         sink_id: &str,
-        worker: &str,
-        job_id: &str,
-        epoch: i64,
+        cluster_id: &str,
+        lease: &LeasedJob,
         expires_at_ms: u64,
         effect: &Value,
     ) -> Result<Self, SinkError> {
         if validate_node_id(sink_id).is_err()
-            || validate_node_id(worker).is_err()
-            || Uuid::parse_str(job_id).is_err()
-            || epoch <= 0
+            || validate_node_id(cluster_id).is_err()
+            || validate_node_id(&lease.worker_id).is_err()
+            || !crate::coordinator::validate_tool_name(&lease.tool)
+            || Uuid::parse_str(&lease.id).is_err()
+            || Uuid::parse_str(&lease.lease_token).is_err()
+            || lease.attempt == 0
+            || lease.leader_epoch <= 0
             || expires_at_ms == 0
+            || expires_at_ms > lease.lease_expires_at_ms
         {
             return Err(SinkError::Invalid);
         }
+        let lease_fingerprint = B64.encode(Sha256::digest(
+            format!("ocaf/sink/lease/v2/{}", lease.lease_token).as_bytes(),
+        ));
         Ok(Self {
             version: SINK_VERSION,
             sink_id: sink_id.to_owned(),
-            worker: worker.to_owned(),
-            job_id: job_id.to_owned(),
-            epoch,
+            cluster_id: cluster_id.to_owned(),
+            worker: lease.worker_id.clone(),
+            job_id: lease.id.clone(),
+            tool: lease.tool.clone(),
+            attempt: lease.attempt,
+            lease_fingerprint,
+            epoch: lease.leader_epoch,
             expires_at_ms,
             payload_hash: payload_hash(effect)?,
         })
@@ -249,7 +285,10 @@ pub struct EffectSink {
 
 impl EffectSink {
     pub fn open(path: &Path, sink_id: &str, keys: SinkKeys) -> Result<Self, SinkError> {
-        if validate_node_id(sink_id).is_err() || path.as_os_str().is_empty() {
+        if validate_node_id(sink_id).is_err()
+            || keys.cluster_id.is_empty()
+            || path.as_os_str().is_empty()
+        {
             return Err(SinkError::Invalid);
         }
         #[cfg(unix)]
@@ -414,10 +453,12 @@ impl EffectSink {
 
         let result = match req.action {
             SinkAction::ActivateEpoch {
+                cluster_id,
                 epoch,
                 expires_at_ms,
             } => {
-                if req.sender != self.keys.controller_id
+                if cluster_id != self.keys.cluster_id
+                    || req.sender != self.keys.controller_id
                     || epoch <= 0
                     || !(u64::try_from(now).map_err(|_| SinkError::Invalid)?
                         ..=u64::try_from(now)
@@ -481,7 +522,13 @@ impl EffectSink {
         if data.len() > MAX_EFFECT
             || permit.version != SINK_VERSION
             || permit.sink_id != self.sink_id
+            || permit.cluster_id != self.keys.cluster_id
             || permit.worker != worker
+            || !crate::coordinator::validate_tool_name(&permit.tool)
+            || permit.attempt == 0
+            || B64
+                .decode(&permit.lease_fingerprint)
+                .is_err_or(|bytes| bytes.len() != 32)
             || Uuid::parse_str(&permit.job_id).is_err()
             || permit.epoch <= 0
             || permit.expires_at_ms <= u64::try_from(now).map_err(|_| SinkError::Invalid)?

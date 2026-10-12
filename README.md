@@ -448,6 +448,17 @@ See [docs/INDEPENDENT_SINK.md](docs/INDEPENDENT_SINK.md) for
 configuration, identity/key isolation, security guarantees, CI
 coverage and current split-brain limitations.
 
+## Cluster-scoped verified sink permits (v0.22)
+
+Sink protocol v2 requires an explicit `OCAF_SINK_CLUSTER_ID`, and
+receiver permits now cryptographically bind the target cluster, specific
+PostgreSQL job tool, attempt and SHA-256 fingerprint of its unpredictable
+lease token. The `ZenohSinkClient::issue_permit_for_lease` safe issuance
+path checks *the actual current PostgreSQL lease*, the attached leader
+cluster ID, and a maximum 15-second permit window before signing.
+Legacy unscoped v1 permits are rejected. See
+[docs/SINK_IDENTITY.md](docs/SINK_IDENTITY.md) for migration and caveats.
+
 ## Production work still required
 
 1. Certificate-backed TLS/mTLS handshakes on separate deployed hosts, plus certificate rotation and revocation.

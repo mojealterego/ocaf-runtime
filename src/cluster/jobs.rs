@@ -189,6 +189,12 @@ impl PgJobQueue {
         self.leader.is_some()
     }
 
+    /// Namespace of the attached PostgreSQL leader, if any. The trusted
+    /// permit issuer uses this to prevent signing from a mismatched queue.
+    pub fn cluster_id(&self) -> Option<&str> {
+        self.leader.as_ref().map(|leader| leader.cluster_id())
+    }
+
     pub async fn submit_owned(&self, owner: &str, job: JobSpec) -> Result<JobRecord, JobError> {
         validate_actor(owner)?;
         if Uuid::parse_str(&job.id).is_err()

@@ -10,17 +10,41 @@ use serde_json::json;
 const NOW: u64 = 1_800_000_000_000;
 const CONTROLLER: [u8; 32] = [0x31; 32];
 const WORKER: [u8; 32] = [0x32; 32];
+const CLUSTER: &str = "unit-cluster";
+
+fn fake_lease(job_id: &str, epoch: i64) -> ocaf_runtime::jobs::LeasedJob {
+    ocaf_runtime::jobs::LeasedJob {
+        id: job_id.to_owned(),
+        tool: "unit_echo".into(),
+        args: json!({}),
+        attempt: 1,
+        worker_id: "worker".into(),
+        lease_token: uuid::Uuid::new_v4().to_string(),
+        lease_expires_at_ms: NOW + 30_000,
+        leader_epoch: epoch,
+    }
+}
 
 fn sink(path: &std::path::Path) -> EffectSink {
     EffectSink::open(
         path,
         "remote-sink",
-        SinkKeys::new("controller", CONTROLLER, "worker", WORKER).unwrap(),
+        SinkKeys::new("controller", CONTROLLER, "worker", WORKER)
+            .unwrap()
+            .with_cluster_id(CLUSTER)
+            .unwrap(),
     )
     .unwrap()
 }
 fn permit(job: &str, epoch: i64, effect: &serde_json::Value) -> Vec<u8> {
-    let token = SinkPermit::new("remote-sink", "worker", job, epoch, NOW + 30_000, effect).unwrap();
+    let token = SinkPermit::from_lease(
+        "remote-sink",
+        CLUSTER,
+        &fake_lease(job, epoch),
+        NOW + 30_000,
+        effect,
+    )
+    .unwrap();
     SignedFrame::seal(&token, &CONTROLLER).unwrap()
 }
 async fn request(
@@ -40,6 +64,7 @@ async fn activate(sink: &EffectSink, epoch: i64) -> SinkResponse {
         "controller",
         &CONTROLLER,
         SinkAction::ActivateEpoch {
+            cluster_id: CLUSTER.into(),
             epoch,
             expires_at_ms: NOW + 15_000,
         },
@@ -120,6 +145,7 @@ async fn invalid_worker_controller_and_tampered_permit_fail_closed() {
         "worker",
         &WORKER,
         SinkAction::ActivateEpoch {
+            cluster_id: CLUSTER.into(),
             epoch: 1,
             expires_at_ms: NOW + 5_000,
         },
@@ -169,6 +195,7 @@ async fn invalid_worker_controller_and_tampered_permit_fail_closed() {
         NOW,
         5000,
         SinkAction::ActivateEpoch {
+            cluster_id: CLUSTER.into(),
             epoch: 2,
             expires_at_ms: NOW + 5000,
         },
@@ -199,6 +226,7 @@ async fn epoch_activation_expires_even_when_signed_worker_permit_is_still_valid(
         NOW,
         5000,
         SinkAction::ActivateEpoch {
+            cluster_id: CLUSTER.into(),
             epoch: 23,
             expires_at_ms: NOW + 1_000,
         },
@@ -243,7 +271,10 @@ async fn a_sink_database_cannot_be_relabelled_to_another_sink_identity() {
         EffectSink::open(
             &path,
             "different-sink",
-            SinkKeys::new("controller", CONTROLLER, "worker", WORKER).unwrap()
+            SinkKeys::new("controller", CONTROLLER, "worker", WORKER)
+                .unwrap()
+                .with_cluster_id(CLUSTER)
+                .unwrap()
         ),
         Err(ocaf_runtime::sink::SinkError::Invalid)
     ));

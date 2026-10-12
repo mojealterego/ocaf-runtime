@@ -5,7 +5,9 @@ use std::net::TcpListener;
 use std::sync::Arc;
 use std::time::Duration;
 
+use ocaf_runtime::cluster::jobs::PgJobQueue;
 use ocaf_runtime::cluster::leadership::PgLeader;
+use ocaf_runtime::jobs::JobSpec;
 use ocaf_runtime::sink::{EffectSink, SinkAction, SinkKeys, SinkStatus};
 use ocaf_runtime::transport::sink::{ZenohSinkClient, ZenohSinkServer};
 use serde_json::json;
@@ -45,10 +47,12 @@ async fn separate_zenoh_receiver_fences_postgres_leader_takeover() -> anyhow::Re
             .map_err(|e| anyhow::anyhow!("sink worker Zenoh open: {e}"))?,
     );
     let dir = tempfile::tempdir()?;
+    let cluster = format!("sink_remote_{}", uuid::Uuid::new_v4().simple());
     let sink = Arc::new(EffectSink::open(
         &dir.path().join("effect_sink.sqlite"),
         "standalone-sink",
-        SinkKeys::new("leader", CONTROLLER, "worker", WORKER)?,
+        SinkKeys::new("leader", CONTROLLER, "worker", WORKER)?
+            .with_cluster_id(&cluster)?,
     )?);
     let server = ZenohSinkServer::new(server_session, sink);
     let serving = tokio::spawn(async move { server.serve().await });
@@ -57,19 +61,36 @@ async fn separate_zenoh_receiver_fences_postgres_leader_takeover() -> anyhow::Re
     let controller =
         ZenohSinkClient::new(controller_session, "standalone-sink", "leader", CONTROLLER)?;
     let worker = ZenohSinkClient::new(worker_session, "standalone-sink", "worker", WORKER)?;
-    let cluster = format!("sink_remote_{}", uuid::Uuid::new_v4().simple());
-    let previous = PgLeader::connect(&pg, &cluster, true).await?;
+    let previous = Arc::new(PgLeader::connect(&pg, &cluster, true).await?);
     let next = PgLeader::connect(&pg, &cluster, true).await?;
     assert!(previous.try_acquire().await?);
+    let queue = PgJobQueue::connect(&pg, true)
+        .await?
+        .with_leader(Arc::clone(&previous));
     let activation = controller.activate_from_leader(&previous, 10_000).await?;
     assert_eq!(activation.status, SinkStatus::Ok);
     let id = uuid::Uuid::new_v4().to_string();
+    let tool = format!("sink_task_{}", uuid::Uuid::new_v4().simple());
+    queue.submit_owned(
+        "sink-owner",
+        JobSpec {
+            id: id.clone(),
+            tool: tool.clone(),
+            args: json!({}),
+            retry_safe: false,
+            max_attempts: 1,
+        },
+    ).await?;
+    let lease = queue
+        .claim_permitted("worker", ocaf_runtime::rpc::now_ms()?, 30_000, &[tool])
+        .await?
+        .ok_or_else(|| anyhow::anyhow!("test job not claimable"))?;
     let effect = json!({"remote_event":"committed"});
     let token = controller
-        .issue_permit(
+        .issue_permit_for_lease(
+            &queue,
             &previous,
-            "worker",
-            &id,
+            &lease,
             ocaf_runtime::rpc::now_ms()? + 10_000,
             &effect,
         )
