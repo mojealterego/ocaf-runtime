@@ -41,8 +41,7 @@ fn load_zenoh_config() -> anyhow::Result<zenoh::Config> {
     // No implicit network config: operator must explicitly select the
     // reviewed endpoint/transport topology.
     let path = require("OCAF_ZENOH_CONFIG")?;
-    zenoh::Config::from_file(path)
-        .map_err(|e| anyhow::anyhow!("cannot load Zenoh config: {e}"))
+    zenoh::Config::from_file(path).map_err(|e| anyhow::anyhow!("cannot load Zenoh config: {e}"))
 }
 
 #[tokio::main]
