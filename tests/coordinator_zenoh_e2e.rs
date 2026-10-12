@@ -79,7 +79,10 @@ async fn signed_remote_agent_registers_and_client_discovers_it_over_real_tcp() -
     tokio::time::sleep(Duration::from_millis(400)).await;
 
     let agent = ZenohRpcClient::new(worker, RpcClient::new("worker-a", "coord", WORKER_KEY)?);
-    let client = ZenohRpcClient::new(Arc::clone(&requester), RpcClient::new("client-c", "coord", CLIENT_KEY)?);
+    let client = ZenohRpcClient::new(
+        Arc::clone(&requester),
+        RpcClient::new("client-c", "coord", CLIENT_KEY)?,
+    );
 
     let ping = agent
         .request(RpcAction::Heartbeat {
