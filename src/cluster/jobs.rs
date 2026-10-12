@@ -6,14 +6,14 @@
 
 use std::sync::Arc;
 
+use serde_json::Value;
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 use tokio_postgres::{Client, Row};
 use uuid::Uuid;
-use serde_json::Value;
 
-use crate::jobs::{JobError, JobRecord, JobSpec, JobStatus, LeasedJob, RecoverySummary};
 use super::leadership::{open_database, PgLeaderError};
+use crate::jobs::{JobError, JobRecord, JobSpec, JobStatus, LeasedJob, RecoverySummary};
 
 const MAX_ARGS: usize = 32_768;
 
@@ -42,8 +42,11 @@ fn millis(value: u64) -> Result<i64, JobError> {
 }
 
 fn validate_actor(actor: &str) -> Result<(), JobError> {
-    if actor.is_empty() || actor.len() > 64
-        || !actor.bytes().all(|ch| ch.is_ascii_alphanumeric() || ch == b'-' || ch == b'_')
+    if actor.is_empty()
+        || actor.len() > 64
+        || !actor
+            .bytes()
+            .all(|ch| ch.is_ascii_alphanumeric() || ch == b'-' || ch == b'_')
     {
         return Err(JobError::Invalid);
     }
@@ -73,10 +76,14 @@ fn from_row(row: &Row) -> Result<JobRecord, JobError> {
         max_attempts: u32::try_from(max_attempts).map_err(|_| JobError::Storage)?,
         status,
         attempts: u32::try_from(attempts).map_err(|_| JobError::Storage)?,
-        result: result.map(|v| serde_json::from_str(&v).map_err(|_| JobError::Storage)).transpose()?,
+        result: result
+            .map(|v| serde_json::from_str(&v).map_err(|_| JobError::Storage))
+            .transpose()?,
         last_error: row.get("last_error"),
         worker_id: row.get("worker_id"),
-        lease_expires_at_ms: expiry.map(|v| u64::try_from(v).map_err(|_| JobError::Storage)).transpose()?,
+        lease_expires_at_ms: expiry
+            .map(|v| u64::try_from(v).map_err(|_| JobError::Storage))
+            .transpose()?,
     })
 }
 
@@ -87,13 +94,18 @@ impl PgJobQueue {
     /// On remote networks SSL must be required; explicitly permitted local
     /// tests may use a loopback PostgreSQL service without TLS.
     pub async fn connect(dsn: &str, allow_insecure_loopback: bool) -> Result<Self, JobError> {
-        let (client, task) = open_database(dsn, allow_insecure_loopback).await
-            .map_err(|e| match e {
-                PgLeaderError::UnsafeTransport | PgLeaderError::InvalidCluster => JobError::Invalid,
-                PgLeaderError::Database => JobError::Storage,
-            })?;
-        client.batch_execute(
-            "CREATE TABLE IF NOT EXISTS ocaf_pg_jobs_v1 (
+        let (client, task) =
+            open_database(dsn, allow_insecure_loopback)
+                .await
+                .map_err(|e| match e {
+                    PgLeaderError::UnsafeTransport | PgLeaderError::InvalidCluster => {
+                        JobError::Invalid
+                    }
+                    PgLeaderError::Database => JobError::Storage,
+                })?;
+        client
+            .batch_execute(
+                "CREATE TABLE IF NOT EXISTS ocaf_pg_jobs_v1 (
                  seq BIGSERIAL PRIMARY KEY,
                  id TEXT NOT NULL UNIQUE,
                  owner TEXT NOT NULL,
@@ -113,10 +125,15 @@ impl PgJobQueue {
              CREATE INDEX IF NOT EXISTS ocaf_pg_jobs_pending
                  ON ocaf_pg_jobs_v1(status,seq);
              CREATE INDEX IF NOT EXISTS ocaf_pg_jobs_expiration
-                 ON ocaf_pg_jobs_v1(status,lease_expires_at_ms);"
-        ).await.map_err(storage)?;
+                 ON ocaf_pg_jobs_v1(status,lease_expires_at_ms);",
+            )
+            .await
+            .map_err(storage)?;
         Ok(Self {
-            state: Arc::new(PgConnection { client: Mutex::new(client), task }),
+            state: Arc::new(PgConnection {
+                client: Mutex::new(client),
+                task,
+            }),
         })
     }
 
@@ -140,16 +157,23 @@ impl PgJobQueue {
             "INSERT INTO ocaf_pg_jobs_v1(id,owner,tool,args,retry_safe,max_attempts,status)
              VALUES($1,$2,$3,$4,FALSE,1,'pending') ON CONFLICT(id) DO NOTHING",
             &[&job.id, &owner, &job.tool, &args],
-        ).await.map_err(storage)?;
-        let row = tx.query_one(
-            "SELECT id,owner,tool,args,retry_safe,max_attempts,status,attempts,result,
+        )
+        .await
+        .map_err(storage)?;
+        let row = tx
+            .query_one(
+                "SELECT id,owner,tool,args,retry_safe,max_attempts,status,attempts,result,
              last_error,worker_id,lease_expires_at_ms FROM ocaf_pg_jobs_v1 WHERE id=$1 FOR UPDATE",
-            &[&job.id],
-        ).await.map_err(storage)?;
+                &[&job.id],
+            )
+            .await
+            .map_err(storage)?;
         let stored_owner: String = row.get("owner");
-        if stored_owner != owner || row.get::<_, String>("tool") != job.tool
+        if stored_owner != owner
+            || row.get::<_, String>("tool") != job.tool
             || serde_json::from_str::<Value>(&row.get::<_, String>("args"))
-                .map_err(|_| JobError::Storage)? != job.args
+                .map_err(|_| JobError::Storage)?
+                != job.args
         {
             return Err(JobError::Conflict);
         }
@@ -171,19 +195,24 @@ impl PgJobQueue {
         if !(100..=300_000).contains(&lease_ms)
             || tools.is_empty()
             || tools.len() > 64
-            || tools.iter().any(|t| !crate::coordinator::validate_tool_name(t))
+            || tools
+                .iter()
+                .any(|t| !crate::coordinator::validate_tool_name(t))
         {
             return Err(JobError::Invalid);
         }
         let expires = millis(now_ms.checked_add(lease_ms).ok_or(JobError::Invalid)?)?;
         let mut client = self.state.client.lock().await;
         let tx = client.transaction().await.map_err(storage)?;
-        let item = tx.query_opt(
-            "SELECT id,tool,args,attempts FROM ocaf_pg_jobs_v1
+        let item = tx
+            .query_opt(
+                "SELECT id,tool,args,attempts FROM ocaf_pg_jobs_v1
              WHERE status='pending' AND tool=ANY($1)
              ORDER BY seq FOR UPDATE SKIP LOCKED LIMIT 1",
-            &[&tools],
-        ).await.map_err(storage)?;
+                &[&tools],
+            )
+            .await
+            .map_err(storage)?;
         let Some(row) = item else {
             tx.commit().await.map_err(storage)?;
             return Ok(None);
@@ -197,8 +226,10 @@ impl PgJobQueue {
         tx.execute(
             "UPDATE ocaf_pg_jobs_v1 SET status='running',attempts=$2,
              worker_id=$3,lease_token=$4,lease_expires_at_ms=$5 WHERE id=$1",
-            &[&id,&attempt,&worker,&token,&expires],
-        ).await.map_err(storage)?;
+            &[&id, &attempt, &worker, &token, &expires],
+        )
+        .await
+        .map_err(storage)?;
         tx.commit().await.map_err(storage)?;
         Ok(Some(LeasedJob {
             id,
@@ -214,25 +245,34 @@ impl PgJobQueue {
     pub async fn recover_expired(&self, now_ms: u64) -> Result<RecoverySummary, JobError> {
         let now = millis(now_ms)?;
         let client = self.state.client.lock().await;
-        let changed = client.execute(
-            "UPDATE ocaf_pg_jobs_v1 SET status='uncertain',
+        let changed = client
+            .execute(
+                "UPDATE ocaf_pg_jobs_v1 SET status='uncertain',
              last_error='expired remote lease; external outcome unknown',
              worker_id=NULL,lease_token=NULL,lease_expires_at_ms=NULL
              WHERE status='running' AND lease_expires_at_ms<=$1",
-            &[&now],
-        ).await.map_err(storage)?;
-        Ok(RecoverySummary { retried: 0, uncertain: usize::try_from(changed).map_err(|_| JobError::Storage)? })
+                &[&now],
+            )
+            .await
+            .map_err(storage)?;
+        Ok(RecoverySummary {
+            retried: 0,
+            uncertain: usize::try_from(changed).map_err(|_| JobError::Storage)?,
+        })
     }
 
     pub async fn get_owned(&self, owner: &str, id: &str) -> Result<Option<JobRecord>, JobError> {
         validate_actor(owner)?;
         let client = self.state.client.lock().await;
-        let row = client.query_opt(
-            "SELECT id,tool,args,retry_safe,max_attempts,status,attempts,result,
+        let row = client
+            .query_opt(
+                "SELECT id,tool,args,retry_safe,max_attempts,status,attempts,result,
              last_error,worker_id,lease_expires_at_ms FROM ocaf_pg_jobs_v1
              WHERE id=$1 AND owner=$2",
-            &[&id,&owner],
-        ).await.map_err(storage)?;
+                &[&id, &owner],
+            )
+            .await
+            .map_err(storage)?;
         row.as_ref().map(from_row).transpose()
     }
 
@@ -250,31 +290,63 @@ impl PgJobQueue {
         }
         let attempt = i32::try_from(lease.attempt).map_err(|_| JobError::Invalid)?;
         let client = self.state.client.lock().await;
-        let changed = client.execute(
-            "UPDATE ocaf_pg_jobs_v1 SET status=$6,result=$7,last_error=$8,
+        let changed = client
+            .execute(
+                "UPDATE ocaf_pg_jobs_v1 SET status=$6,result=$7,last_error=$8,
              worker_id=NULL,lease_token=NULL,lease_expires_at_ms=NULL
              WHERE id=$1 AND status='running' AND worker_id=$2
                AND lease_token=$3 AND tool=$4 AND attempts=$5
                AND lease_expires_at_ms>$9",
-            &[&lease.id,&lease.worker_id,&lease.lease_token,&lease.tool,
-              &attempt,&status,&result,&error,&now],
-        ).await.map_err(storage)?;
+                &[
+                    &lease.id,
+                    &lease.worker_id,
+                    &lease.lease_token,
+                    &lease.tool,
+                    &attempt,
+                    &status,
+                    &result,
+                    &error,
+                    &now,
+                ],
+            )
+            .await
+            .map_err(storage)?;
         if changed != 1 {
             return Err(JobError::StaleLease);
         }
         Ok(())
     }
 
-    pub async fn succeed(&self, lease: &LeasedJob, output: Value, now_ms: u64) -> Result<(), JobError> {
+    pub async fn succeed(
+        &self,
+        lease: &LeasedJob,
+        output: Value,
+        now_ms: u64,
+    ) -> Result<(), JobError> {
         let result = serde_json::to_string(&output).map_err(|_| JobError::Invalid)?;
-        self.finish(lease, now_ms, "succeeded", Some(result), None).await
+        self.finish(lease, now_ms, "succeeded", Some(result), None)
+            .await
     }
 
     pub async fn fail(&self, lease: &LeasedJob, _: &str, now_ms: u64) -> Result<(), JobError> {
-        self.finish(lease, now_ms, "failed", None, Some("remote worker reported failure")).await
+        self.finish(
+            lease,
+            now_ms,
+            "failed",
+            None,
+            Some("remote worker reported failure"),
+        )
+        .await
     }
 
     pub async fn mark_uncertain(&self, lease: &LeasedJob, now_ms: u64) -> Result<(), JobError> {
-        self.finish(lease, now_ms, "uncertain", None, Some("external outcome unknown")).await
+        self.finish(
+            lease,
+            now_ms,
+            "uncertain",
+            None,
+            Some("external outcome unknown"),
+        )
+        .await
     }
 }
