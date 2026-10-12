@@ -26,9 +26,55 @@ fn absolute(name: &str) -> anyhow::Result<PathBuf> {
     }
     Ok(path)
 }
+/// Read an owner-only key file via its descriptor, refusing a final
+/// symlink on Unix. The payload is bounded and never logged.
+fn read_private_secret(path: &Path) -> anyhow::Result<String> {
+    use std::io::Read;
+    if !path.is_absolute() {
+        anyhow::bail!("sink secret file path must be absolute");
+    }
+    let mut options = fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.custom_flags(libc::O_NOFOLLOW);
+    }
+    let file = options.open(path)?;
+    let meta = file.metadata()?;
+    if !meta.is_file() || meta.len() == 0 || meta.len() > 256 {
+        anyhow::bail!("sink secret file must be a nonempty regular file <=256 bytes");
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::{MetadataExt, PermissionsExt};
+        if meta.permissions().mode() & 0o077 != 0
+            || meta.uid() != unsafe { libc::geteuid() }
+        {
+            anyhow::bail!("sink secret file must be owned by service user and chmod 600");
+        }
+    }
+    let mut data = String::new();
+    file.take(257).read_to_string(&mut data)?;
+    if data.len() > 256 {
+        anyhow::bail!("sink secret file exceeds size limit");
+    }
+    Ok(data.trim().to_owned())
+}
 fn key(name: &str) -> anyhow::Result<[u8; 32]> {
+    let file_key = format!(
+        "{}_FILE",
+        name.strip_suffix("_B64")
+            .ok_or_else(|| anyhow::anyhow!("invalid secret variable name"))?
+    );
+    let encoded = match (env::var(name).ok(), env::var(&file_key).ok()) {
+        (Some(_), Some(_)) => anyhow::bail!("{name} conflicts with {file_key}"),
+        (Some(value), None) => value,
+        (None, Some(path)) => read_private_secret(Path::new(&path))?,
+        (None, None) => anyhow::bail!("configure either {name} or {file_key}"),
+    };
     let raw = B64
-        .decode(required(name)?)
+        .decode(encoded)
         .map_err(|_| anyhow::anyhow!("invalid base64 secret: {name}"))?;
     let key: [u8; 32] = raw
         .try_into()
@@ -83,4 +129,28 @@ async fn main() -> anyhow::Result<()> {
     );
     tracing::info!(sink_id=%id, "independent effect receiver serving");
     ZenohSinkServer::new(session, sink).serve().await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(unix)]
+    #[test]
+    fn sink_secret_files_must_be_private_and_cannot_be_symlinks() {
+        use std::os::unix::fs::{symlink, PermissionsExt};
+        let dir = tempfile::tempdir().unwrap();
+        let real = dir.path().join("controller.key");
+        std::fs::write(&real, B64.encode([47u8; 32])).unwrap();
+        std::fs::set_permissions(&real, std::fs::Permissions::from_mode(0o600)).unwrap();
+        assert_eq!(read_private_secret(&real).unwrap(), B64.encode([47u8; 32]));
+        std::fs::set_permissions(&real, std::fs::Permissions::from_mode(0o644)).unwrap();
+        assert!(read_private_secret(&real).is_err());
+        std::fs::set_permissions(&real, std::fs::Permissions::from_mode(0o600)).unwrap();
+        let link = dir.path().join("alias.key");
+        symlink(&real, &link).unwrap();
+        assert!(read_private_secret(&link).is_err());
+        let relative = Path::new("controller.key");
+        assert!(read_private_secret(relative).is_err());
+    }
 }

@@ -58,3 +58,24 @@ window expires. The maximum window remains 15 seconds.
 Receiver journal idempotency covers this one JSON event store, not
 arbitrary third-party effects. Physical multi-host partition and
 certificate lifecycle tests remain required before production HA.
+
+## Optional owner-only key files
+
+The sink executable accepts either the original base64-valued key
+environment variable or an explicit private-key **file** variable,
+never both simultaneously:
+
+```sh
+OCAF_SINK_CONTROLLER_KEY_FILE=/etc/ocaf-sink/controller.key
+OCAF_SINK_WORKER_KEY_FILE=/etc/ocaf-sink/worker.key
+```
+
+Each file contains a single base64-encoded 32-byte key, optionally
+terminated by a newline. On Unix, opening uses `O_NOFOLLOW` on the
+final component, requires a regular file of at most 256 bytes,
+owner-only permissions, and the effective service-user UID. Relative
+paths, symlinks and group/world-readable files are rejected. The keys
+must still be unique for each identity and separate from other clusters.
+Selecting a key file avoids exposing the raw secret in process
+environment variables, but does not offer automatic zero-downtime
+rotation or protect against a compromised host.
