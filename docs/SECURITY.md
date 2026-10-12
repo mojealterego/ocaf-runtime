@@ -138,18 +138,25 @@ machines or shared network storage. The leader lock inode must never be
 unlinked, and local storage must have a private parent directory. See
 [HA.md](HA.md).
 
-## PostgreSQL cluster primitives (v0.10)
+## PostgreSQL cluster mode (v0.11)
 
-The experimental `cluster::leadership::PgLeader` component acquires a
-PostgreSQL session advisory lock on a dedicated connection, rejects
-unencrypted remote connections and fails closed on session errors. The
-`PgJobQueue` component provides shared, transactional remote-job claims
-and lease-fenced results across independent PostgreSQL connections.
-However, the coordinator CLI still uses its original local SQLite replay
-and membership stores, so **automatic cross-host coordinator failover is
-not available**. PostgreSQL replication, mTLS database client identity,
-leadership-loss fencing of live Zenoh serving, and real multi-host chaos
-tests remain outstanding. See [POSTGRES_CLUSTER.md](POSTGRES_CLUSTER.md).
+The opt-in PostgreSQL coordinator moves **all** state needed for signed
+remote job control (replay admission, live capability membership and
+job records) to a shared PostgreSQL primary. A dedicated PostgreSQL
+advisory leader session elects the serving coordinator. The gateway
+verifies leadership before accepting signed RPC requests, while the
+process monitors connectivity and stops serving after detecting loss of
+the leader session. Database-backed replay admission is transactional
+across processes; the directory and job queue also use transactions.
+
+This is **not** a safety proof for untrusted remote side effects. In-flight
+RPC tasks can still overlap leadership changes, and the advisory lock is
+not an external fencing token. Real production deployment requires
+independent database replication/failover, a stable network route to
+the promoted node, validated Zenoh mTLS handshakes, workload identity
+attestation, tested key rotation, strong external-effect fencing and
+network partition chaos tests. Existing SQLite mode retains its
+local-only semantics. See [POSTGRES_CLUSTER.md](POSTGRES_CLUSTER.md).
 
 ## Keys
 
