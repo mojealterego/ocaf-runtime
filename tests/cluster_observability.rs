@@ -152,19 +152,29 @@ async fn monitor_rejects_plaintext_remote_postgres_and_bad_cluster_names() {
 async fn per_node_health_uses_database_clock_and_no_capability_or_secret_payload() {
     let Some(dsn) = dsn() else { return };
     let cluster = format!("observe_node_{}", uuid::Uuid::new_v4().simple());
-    let monitor = PgClusterMonitor::connect(&dsn, &cluster, true).await.unwrap();
+    let monitor = PgClusterMonitor::connect(&dsn, &cluster, true)
+        .await
+        .unwrap();
     let directory = ocaf_runtime::cluster::directory::PgDirectory::connect(&dsn, true)
-        .await.unwrap();
+        .await
+        .unwrap();
     let node = format!("node_{}", uuid::Uuid::new_v4().simple());
     let now_ms = ocaf_runtime::rpc::now_ms().unwrap();
-    directory.heartbeat(&node, &["private_tool".to_string()], now_ms)
-        .await.unwrap();
+    directory
+        .heartbeat(&node, &["private_tool".to_string()], now_ms)
+        .await
+        .unwrap();
     let observed = monitor.node_health(&node).await.unwrap().unwrap();
     assert_eq!(observed.node_id, node);
     assert!(observed.alive);
     assert!(observed.expires_at_ms > observed.observed_at_ms);
-    assert!(!serde_json::to_string(&observed).unwrap().contains("private_tool"));
+    assert!(!serde_json::to_string(&observed)
+        .unwrap()
+        .contains("private_tool"));
     assert!(monitor.node_health("invalid/node/id").await.is_err());
-    assert!(monitor.node_health(&format!("missing_{}", uuid::Uuid::new_v4().simple()))
-        .await.unwrap().is_none());
+    assert!(monitor
+        .node_health(&format!("missing_{}", uuid::Uuid::new_v4().simple()))
+        .await
+        .unwrap()
+        .is_none());
 }
