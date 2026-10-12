@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use ocaf_runtime::executor::{ExecutionContext, ToolError, ToolExecutor};
 use ocaf_runtime::registry::ToolManifest;
 use ocaf_runtime::rpc::{
-    PeerPolicy, RpcAction, RpcError, RpcGateway, RpcReply, RpcRequest, RpcStatus,
-    SignedFrame, MAX_FRAME_BYTES,
+    PeerPolicy, RpcAction, RpcError, RpcGateway, RpcReply, RpcRequest, RpcStatus, SignedFrame,
+    MAX_FRAME_BYTES,
 };
 use ocaf_runtime::runtime::OcafRuntime;
 use serde_json::{json, Value};
@@ -46,9 +46,18 @@ fn manifest(name: &str, price: u64, permissions: Vec<String>) -> ToolManifest {
 
 async fn fixture() -> RpcGateway {
     let runtime = OcafRuntime::new(500);
-    runtime.register(manifest("echo", 0, vec![]), Echo).await.unwrap();
-    runtime.register(manifest("paid", 25, vec![]), Echo).await.unwrap();
-    runtime.register(manifest("restricted", 0, vec!["fs:write".into()]), Echo).await.unwrap();
+    runtime
+        .register(manifest("echo", 0, vec![]), Echo)
+        .await
+        .unwrap();
+    runtime
+        .register(manifest("paid", 25, vec![]), Echo)
+        .await
+        .unwrap();
+    runtime
+        .register(manifest("restricted", 0, vec!["fs:write".into()]), Echo)
+        .await
+        .unwrap();
 
     let peers = HashMap::from([(
         "agent-a".to_string(),
@@ -91,7 +100,10 @@ async fn signed_remote_execution_runs_whitelisted_free_tool() {
 async fn tampered_hmac_is_rejected_before_execution() {
     let gateway = fixture().await;
     let bytes = SignedFrame::seal(&request("echo"), &BAD_KEY).unwrap();
-    assert!(matches!(gateway.handle_at(&bytes, NOW).await, Err(RpcError::Unauthorized)));
+    assert!(matches!(
+        gateway.handle_at(&bytes, NOW).await,
+        Err(RpcError::Unauthorized)
+    ));
     assert_eq!(gateway.runtime().metrics.snapshot().await.total_calls, 0);
 }
 
@@ -100,7 +112,10 @@ async fn a_reused_request_id_is_rejected() {
     let gateway = fixture().await;
     let bytes = SignedFrame::seal(&request("echo"), &KEY).unwrap();
     assert!(gateway.handle_at(&bytes, NOW).await.is_ok());
-    assert!(matches!(gateway.handle_at(&bytes, NOW).await, Err(RpcError::Replay)));
+    assert!(matches!(
+        gateway.handle_at(&bytes, NOW).await,
+        Err(RpcError::Replay)
+    ));
     assert_eq!(gateway.runtime().metrics.snapshot().await.total_calls, 1);
 }
 
@@ -108,18 +123,30 @@ async fn a_reused_request_id_is_rejected() {
 async fn expired_and_future_requests_are_rejected() {
     let gateway = fixture().await;
     let expired = SignedFrame::seal(&request("echo"), &KEY).unwrap();
-    assert!(matches!(gateway.handle_at(&expired, NOW + 5_001).await, Err(RpcError::Expired)));
+    assert!(matches!(
+        gateway.handle_at(&expired, NOW + 5_001).await,
+        Err(RpcError::Expired)
+    ));
     let future = SignedFrame::seal(&request("echo"), &KEY).unwrap();
-    assert!(matches!(gateway.handle_at(&future, NOW - 5_001).await, Err(RpcError::Expired)));
+    assert!(matches!(
+        gateway.handle_at(&future, NOW - 5_001).await,
+        Err(RpcError::Expired)
+    ));
 }
 
 #[tokio::test]
 async fn sender_must_be_allowlisted_for_tool() {
     let gateway = fixture().await;
     let mut req = request("echo");
-    req.action = RpcAction::Execute { tool: "not-listed".into(), args: json!({}) };
+    req.action = RpcAction::Execute {
+        tool: "not-listed".into(),
+        args: json!({}),
+    };
     let bytes = SignedFrame::seal(&req, &KEY).unwrap();
-    assert!(matches!(gateway.handle_at(&bytes, NOW).await, Err(RpcError::Unauthorized)));
+    assert!(matches!(
+        gateway.handle_at(&bytes, NOW).await,
+        Err(RpcError::Unauthorized)
+    ));
 }
 
 #[tokio::test]
@@ -127,7 +154,10 @@ async fn remote_paid_and_permissioned_tools_are_blocked_even_with_valid_peer_sig
     let gateway = fixture().await;
     for tool in ["paid", "restricted"] {
         let bytes = SignedFrame::seal(&request(tool), &KEY).unwrap();
-        assert!(matches!(gateway.handle_at(&bytes, NOW).await, Err(RpcError::Unauthorized)));
+        assert!(matches!(
+            gateway.handle_at(&bytes, NOW).await,
+            Err(RpcError::Unauthorized)
+        ));
     }
     assert_eq!(gateway.runtime().remaining_budget_sats(), 500);
 }
@@ -138,13 +168,16 @@ async fn request_for_different_node_is_rejected() {
     let mut req = request("echo");
     req.recipient = "agent-c".into();
     let bytes = SignedFrame::seal(&req, &KEY).unwrap();
-    assert!(matches!(gateway.handle_at(&bytes, NOW).await, Err(RpcError::WrongRecipient)));
+    assert!(matches!(
+        gateway.handle_at(&bytes, NOW).await,
+        Err(RpcError::WrongRecipient)
+    ));
 }
 
 #[tokio::test]
 async fn signed_discovery_only_exposes_permitted_safe_tools() {
     let gateway = fixture().await;
-    let req = RpcRequest::new("agent-a","agent-b", NOW, 5_000, RpcAction::Discover).unwrap();
+    let req = RpcRequest::new("agent-a", "agent-b", NOW, 5_000, RpcAction::Discover).unwrap();
     let reply = invoke(&gateway, &req).await.unwrap();
     assert_eq!(reply.status, RpcStatus::Ok);
     let tools = reply.output.as_array().unwrap();
@@ -164,7 +197,7 @@ fn changing_signed_response_fails_verification() {
     };
     let mut signed = SignedFrame::seal(&req, &KEY).unwrap();
     let i = signed.iter().position(|b| *b == b'=').unwrap_or(1);
-    signed[i] = if signed[i] == b'a' {b'b'} else {b'a'};
+    signed[i] = if signed[i] == b'a' { b'b' } else { b'a' };
     assert!(SignedFrame::open::<RpcReply>(&signed, &KEY).is_err());
 }
 
@@ -183,7 +216,10 @@ async fn unknown_sender_is_rejected_without_fallback_key() {
     let mut req = request("echo");
     req.sender = "intruder".into();
     let bytes = SignedFrame::seal(&req, &KEY).unwrap();
-    assert!(matches!(gateway.handle_at(&bytes, NOW).await, Err(RpcError::Unauthorized)));
+    assert!(matches!(
+        gateway.handle_at(&bytes, NOW).await,
+        Err(RpcError::Unauthorized)
+    ));
 }
 
 #[test]
@@ -195,7 +231,7 @@ fn forbidden_node_identifiers_are_rejected() {
 #[test]
 fn reply_verification_checks_caller_target_and_correlation() {
     use ocaf_runtime::rpc::RpcClient;
-    let client = RpcClient::new("agent-a","agent-b",KEY).unwrap();
+    let client = RpcClient::new("agent-a", "agent-b", KEY).unwrap();
     let request = request("echo");
     let response = RpcReply {
         version: 1,
@@ -206,5 +242,8 @@ fn reply_verification_checks_caller_target_and_correlation() {
         output: json!({}),
     };
     let signed = SignedFrame::seal(&response, &KEY).unwrap();
-    assert!(matches!(client.read_reply(&signed, &request), Err(RpcError::InvalidReply)));
+    assert!(matches!(
+        client.read_reply(&signed, &request),
+        Err(RpcError::InvalidReply)
+    ));
 }
