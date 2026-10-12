@@ -157,7 +157,20 @@ fn load_record(conn: &Connection, id: &str) -> Result<Option<JobRecord>, JobErro
         )
         .optional()
         .map_err(|_| JobError::Storage)?;
-    let Some((id, tool, args, retry_safe, max_attempts, status, attempts, result, last_error, worker_id, expires)) = raw else {
+    let Some((
+        id,
+        tool,
+        args,
+        retry_safe,
+        max_attempts,
+        status,
+        attempts,
+        result,
+        last_error,
+        worker_id,
+        expires,
+    )) = raw
+    else {
         return Ok(None);
     };
     Ok(Some(JobRecord {
@@ -330,8 +343,7 @@ impl JobStore {
                 attempt,
                 worker_id: worker,
                 lease_token: token,
-                lease_expires_at_ms: u64::try_from(expires)
-                    .map_err(|_| JobError::Storage)?,
+                lease_expires_at_ms: u64::try_from(expires).map_err(|_| JobError::Storage)?,
             }))
         })
         .await
@@ -390,12 +402,7 @@ impl JobStore {
         .await
     }
 
-    pub async fn fail(
-        &self,
-        job: &LeasedJob,
-        reason: &str,
-        now_ms: u64,
-    ) -> Result<(), JobError> {
+    pub async fn fail(&self, job: &LeasedJob, reason: &str, now_ms: u64) -> Result<(), JobError> {
         if reason.is_empty() || reason.len() > 1024 {
             return Err(JobError::Invalid);
         }
@@ -426,10 +433,7 @@ impl JobStore {
     /// Expired running operations are either requeued if explicitly declared
     /// retry-safe AND under max_attempts, or marked uncertain. The latter
     /// requires manual reconciliation of external effects.
-    pub async fn recover_expired(
-        &self,
-        now_ms: u64,
-    ) -> Result<RecoverySummary, JobError> {
+    pub async fn recover_expired(&self, now_ms: u64) -> Result<RecoverySummary, JobError> {
         let now = checked_time(now_ms)?;
         self.run(move |conn| {
             let tx = conn
