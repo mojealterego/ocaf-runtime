@@ -4,9 +4,9 @@
 //! not stop external side effects already started by an expired worker.
 //! Retries are only automatic when the trusted submitter explicitly marks
 //! a tool operation idempotent/retry-safe.
-pub mod worker;
 #[cfg(feature = "zenoh")]
 pub mod remote;
+pub mod worker;
 
 use std::path::Path;
 use std::sync::{Arc, Mutex};
