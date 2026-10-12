@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::env;
 use std::path::Path;
 use std::sync::Arc;
+use std::time::Duration;
 
 use base64::engine::general_purpose::STANDARD as B64;
 use base64::Engine as _;
@@ -24,14 +25,14 @@ fn require(name: &str) -> anyhow::Result<String> {
     Ok(value)
 }
 
-fn load_key() -> anyhow::Result<[u8; 32]> {
-    let secret = require("OCAF_SHARED_KEY_B64")?;
+fn load_key_env(name: &str) -> anyhow::Result<[u8; 32]> {
+    let secret = require(name)?;
     let decoded = B64
         .decode(secret.as_bytes())
-        .map_err(|_| anyhow::anyhow!("OCAF_SHARED_KEY_B64 is not valid base64"))?;
+        .map_err(|_| anyhow::anyhow!("{name} is not valid base64"))?;
     let key: [u8; 32] = decoded
         .try_into()
-        .map_err(|_| anyhow::anyhow!("OCAF_SHARED_KEY_B64 must decode to exactly 32 bytes"))?;
+        .map_err(|_| anyhow::anyhow!("{name} must decode to exactly 32 bytes"))?;
     if key == [0; 32] {
         anyhow::bail!("all-zero shared key is forbidden");
     }
@@ -52,7 +53,7 @@ async fn main() -> anyhow::Result<()> {
     let role = require("OCAF_ROLE")?;
     let node_id = require("OCAF_NODE_ID")?;
     let peer_id = require("OCAF_PEER_ID")?;
-    let key = load_key()?;
+    let key = load_key_env("OCAF_SHARED_KEY_B64")?;
     let config = load_zenoh_config()?;
     let transport = ZenohTransport::connect_with_config(config).await?;
     let session = transport.session();
@@ -75,8 +76,39 @@ async fn main() -> anyhow::Result<()> {
                 16,
                 Path::new(&db_path),
             )?);
+            let coordinator_id = env::var("OCAF_COORDINATOR_NODE_ID").ok();
+            let coordinator_key = env::var("OCAF_COORDINATOR_KEY_B64").ok();
+            if coordinator_id.is_some() != coordinator_key.is_some() {
+                anyhow::bail!("OCAF_COORDINATOR_NODE_ID and OCAF_COORDINATOR_KEY_B64 must be set together");
+            }
+            let heartbeat_task = if let Some(coord_id) = coordinator_id {
+                let coord_key = load_key_env("OCAF_COORDINATOR_KEY_B64")?;
+                let protocol = RpcClient::new(&node_id, &coord_id, coord_key)?;
+                let reporter = ZenohRpcClient::new(Arc::clone(&session), protocol);
+                Some(tokio::spawn(async move {
+                    // Avoid advertising until the local queryable has started.
+                    tokio::time::sleep(Duration::from_millis(750)).await;
+                    loop {
+                        if let Err(error) = reporter
+                            .request(RpcAction::Heartbeat {
+                                tools: vec!["demo_echo".into()],
+                            })
+                            .await
+                        {
+                            tracing::warn!(error = %error, "coordinator heartbeat failed");
+                        }
+                        tokio::time::sleep(Duration::from_secs(5)).await;
+                    }
+                }))
+            } else {
+                None
+            };
             tracing::info!(node = %node_id, "Authenticated RPC queryable is active");
-            ZenohRpcServer::new(session, gateway).serve().await?;
+            let served = ZenohRpcServer::new(session, gateway).serve().await;
+            if let Some(task) = heartbeat_task {
+                task.abort();
+            }
+            served?;
         }
         "client" => {
             let protocol = RpcClient::new(&node_id, &peer_id, key)?;
