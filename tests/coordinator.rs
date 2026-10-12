@@ -194,17 +194,21 @@ async fn expired_heartbeats_cannot_resolve_even_if_old_data_was_persisted() {
         gateway.handle_at(&original, NOW + 1).await,
         Err(RpcError::Replay)
     ));
-    let routed = call(
-        &gateway,
+    // Use a fresh signed lookup; the old heartbeat must expire even though
+    // the new requester message itself is still within its own TTL.
+    let fresh = RpcRequest::new(
         "client-c",
-        &C,
+        "coordinator",
+        NOW + 15_000,
+        5_000,
         RpcAction::Resolve {
             tool: "echo".into(),
         },
-        NOW + 15_000,
     )
-    .await
     .unwrap();
+    let bytes = SignedFrame::seal(&fresh, &C).unwrap();
+    let signed = gateway.handle_at(&bytes, NOW + 15_000).await.unwrap();
+    let routed: RpcReply = SignedFrame::open(&signed, &C).unwrap();
     assert_eq!(routed.output, json!(null));
 }
 
