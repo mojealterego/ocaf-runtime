@@ -25,7 +25,8 @@
 - Trusted local jobs use SQLite WAL, idempotent UUID submission, atomic lease
   claims, worker fencing tokens, bounded retry counts and explicit uncertain
   state after unsafe or exhausted expired work. Jobs run through the
-  same runtime authorization pathway; no arbitrary remote submission API.
+  same runtime authorization pathway. Since v0.8 a dedicated signed remote
+  job API exists, with separate explicit submitter/worker roles.
 - Runtime enforces JSON Schema validation, execution timeouts,
   cancellation-aware atomic budget accounting and controlled errors.
 
@@ -89,19 +90,37 @@ can register only their own sender identity and authorized tool names.
 Requester capability lookups are individually permission-checked and
 rotate fairly across live heartbeat entries. A heartbeat is a claim of
 availability, **not proof of a healthy tool executor**. The coordinator
-is still a single host, and route responses do not implement job-lease
-transfer or reserve work. See [docs/COORDINATOR.md](COORDINATOR.md).
+is still a single host. Capability lookup responses do not implement
+job-lease transfer, but the separate signed job RPC does provide fenced
+remote assignment on the coordinator's single-host SQLite queue. See
+[COORDINATOR.md](COORDINATOR.md) and
+[DISTRIBUTED_JOBS.md](DISTRIBUTED_JOBS.md).
 
 ## Job queue boundaries
 
 The experimental `JobStore` and `JobWorker` modules persist local
 work, results, attempts, leases and recovery status in SQLite. They
-are **not** exposed as unauthenticated remote RPC endpoints. Only a
-trusted publisher can decide that an operation is retry-safe; marking
+are exposed over RPC **only after peer HMAC verification and explicit
+job role and tool ACL checks**. Submitter ownership is persisted so an
+unrelated peer cannot read another submitter's results or take over its
+UUID. Remote jobs are single-attempt and non-retryable by construction.
+Only a trusted local publisher can decide that an operation is retry-safe; marking
 an operation retry-safe is not a generic guarantee of idempotency.
 A stale lease token can never commit a result to this journal, but the
 stale worker might still mutate an external system. See
 [docs/JOBS.md](JOBS.md) for operational constraints and recovery policy.
+
+## Distributed worker boundaries (v0.8)
+
+The remote worker pulls work with its coordinator-specific signing key and
+executes it only through the existing, deny-by-default runtime. Work is
+restricted to enabled free tools with no special permissions. A 30-second
+coordinator-issued lease and worker identity are checked before result
+storage; malformed or forged reports fail closed. In ambiguous failures,
+non-idempotent jobs become `uncertain` and require operator reconciliation.
+The coordinator is a single point of failure, no network confidentiality
+is provided without independently configured transport security, and
+remote workers are not sandboxed or attested.
 
 ## Keys
 
