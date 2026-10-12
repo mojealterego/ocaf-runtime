@@ -106,6 +106,7 @@ async fn real_zenoh_worker_runs_under_shared_postgres_leadership_and_state() -> 
     assert_eq!(worker.poll_once().await?, None);
     let stored = PgJobQueue::connect(&pg, true)
         .await?
+        .with_leader(Arc::clone(&leader))
         .get_owned("submitter", &job_id)
         .await?
         .unwrap();
