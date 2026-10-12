@@ -6,8 +6,8 @@ use std::env;
 use ocaf_runtime::cluster::observability::{AlertPolicy, ClusterHealth, PgClusterMonitor};
 
 fn mandatory(name: &str) -> anyhow::Result<String> {
-    let value = env::var(name)
-        .map_err(|_| anyhow::anyhow!("missing environment setting: {name}"))?;
+    let value =
+        env::var(name).map_err(|_| anyhow::anyhow!("missing environment setting: {name}"))?;
     if value.is_empty() {
         anyhow::bail!("empty environment setting: {name}");
     }
