@@ -375,6 +375,22 @@ partitions and database failover are not certified.
 
 See [docs/FENCING_EPOCH.md](docs/FENCING_EPOCH.md).
 
+## Remote-worker epoch pre-execution checks (v0.18)
+
+A PostgreSQL cluster leader's checked, monotonic fencing generation is
+now embedded in signed job leases, persisted in the queue, and checked
+before worker execution via signed `ValidateLease`. The coordinator
+also holds the epoch row lock throughout claim and completion state
+transitions. Expired and previous-generation completions are rejected.
+
+Local SQLite and standalone PostgreSQL retain generation zero and their
+existing behavior. **Update clustered workers and coordinators together**:
+cluster lease JSON now includes `leader_epoch`, requiring compatible
+worker software. This is a point-in-time coordinator authorization,
+not atomic fencing by arbitrary external services.
+
+See [docs/WORKER_FENCING.md](docs/WORKER_FENCING.md).
+
 ## Production work still required
 
 1. Certificate-backed TLS/mTLS handshakes on separate deployed hosts, plus certificate rotation and revocation.

@@ -12,7 +12,7 @@ use tokio::task::JoinHandle;
 use tokio_postgres::{Client, Row};
 use uuid::Uuid;
 
-use super::leadership::{open_database, PgLeaderError};
+use super::leadership::{open_database, PgLeader, PgLeaderError};
 use crate::jobs::{JobError, JobRecord, JobSpec, JobStatus, LeasedJob, RecoverySummary};
 
 const MAX_ARGS: usize = 32_768;
@@ -31,6 +31,7 @@ impl Drop for PgConnection {
 #[derive(Clone)]
 pub struct PgJobQueue {
     state: Arc<PgConnection>,
+    leader: Option<Arc<PgLeader>>,
 }
 
 /// Durable, owner-scoped, metadata-only journal entry. Payloads, result
@@ -125,8 +126,11 @@ impl PgJobQueue {
                  last_error TEXT,
                  worker_id TEXT,
                  lease_token TEXT,
-                 lease_expires_at_ms BIGINT
+                 lease_expires_at_ms BIGINT,
+                 leader_epoch BIGINT NOT NULL DEFAULT 0
              );
+             ALTER TABLE ocaf_pg_jobs_v1
+               ADD COLUMN IF NOT EXISTS leader_epoch BIGINT NOT NULL DEFAULT 0;
              CREATE INDEX IF NOT EXISTS ocaf_pg_jobs_pending
                  ON ocaf_pg_jobs_v1(status,seq);
              CREATE INDEX IF NOT EXISTS ocaf_pg_jobs_expiration
@@ -150,7 +154,15 @@ impl PgJobQueue {
                 client: Mutex::new(client),
                 task,
             }),
+            leader: None,
         })
+    }
+
+    /// Bind the current coordinator authority; the standalone queue uses
+    /// the legacy unfenced generation (zero).
+    pub fn with_leader(mut self, leader: Arc<PgLeader>) -> Self {
+        self.leader = Some(leader);
+        self
     }
 
     pub async fn submit_owned(&self, owner: &str, job: JobSpec) -> Result<JobRecord, JobError> {
@@ -229,8 +241,15 @@ impl PgJobQueue {
         }
         // PostgreSQL, not a potentially skewed coordinator host, owns lease time.
         let duration_ms = i64::try_from(lease_ms).map_err(|_| JobError::Invalid)?;
+        let generation = match &self.leader {
+            Some(leader) => leader.fencing_epoch().await.map_err(|_| JobError::Storage)?,
+            None => 0,
+        };
+        let cluster_id = self.leader.as_ref().map_or("", |leader| leader.cluster_id());
         let mut client = self.state.client.lock().await;
         let tx = client.transaction().await.map_err(storage)?;
+        self.check_epoch_in_transaction(&tx, cluster_id, generation)
+            .await?;
         let item = tx
             .query_opt(
                 "SELECT id,tool,args,attempts FROM ocaf_pg_jobs_v1
@@ -253,11 +272,11 @@ impl PgJobQueue {
         let updated = tx
             .query_one(
                 "UPDATE ocaf_pg_jobs_v1 SET status='running',attempts=$2,
-                 worker_id=$3,lease_token=$4,
+                 worker_id=$3,lease_token=$4,leader_epoch=$6,
                  lease_expires_at_ms =
                    (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT + $5
                  WHERE id=$1 RETURNING lease_expires_at_ms",
-                &[&id, &attempt, &worker, &token, &duration_ms],
+                &[&id, &attempt, &worker, &token, &duration_ms, &generation],
             )
             .await
             .map_err(storage)?;
@@ -278,6 +297,7 @@ impl PgJobQueue {
             worker_id: worker.into(),
             lease_token: token,
             lease_expires_at_ms: u64::try_from(expires).map_err(|_| JobError::Storage)?,
+            leader_epoch: generation,
         }))
     }
 
@@ -307,6 +327,81 @@ impl PgJobQueue {
             retried: 0,
             uncertain: rows.len(),
         })
+    }
+
+    /// Hold a shared lock on the durable epoch row until the transaction
+    /// commits. A newly elected leader cannot publish a new generation
+    /// halfway through an old coordinator's claim or finish transition.
+    async fn check_epoch_in_transaction(
+        &self,
+        tx: &tokio_postgres::Transaction<'_>,
+        cluster_id: &str,
+        epoch: i64,
+    ) -> Result<(), JobError> {
+        if self.leader.is_none() {
+            return if epoch == 0 { Ok(()) } else { Err(JobError::StaleLease) };
+        }
+        if epoch <= 0 {
+            return Err(JobError::StaleLease);
+        }
+        let row = tx
+            .query_opt(
+                "SELECT epoch FROM ocaf_pg_leader_epochs_v1
+                 WHERE cluster_id=$1 FOR SHARE",
+                &[&cluster_id],
+            )
+            .await
+            .map_err(storage)?;
+        if row.is_none_or(|row| row.get::<_, i64>(0) != epoch) {
+            return Err(JobError::StaleLease);
+        }
+        Ok(())
+    }
+
+    /// Point-in-time signed worker admission. This check is not a
+    /// transactional guard at a third-party external-effect sink.
+    pub async fn validate_current_lease(&self, lease: &LeasedJob) -> Result<bool, JobError> {
+        let leader = self.leader.as_ref().ok_or(JobError::Invalid)?;
+        let current = leader.fencing_epoch().await.map_err(|_| JobError::Storage)?;
+        if lease.leader_epoch <= 0 || lease.leader_epoch != current {
+            return Ok(false);
+        }
+        if Uuid::parse_str(&lease.id).is_err()
+            || !crate::coordinator::validate_tool_name(&lease.tool)
+            || validate_actor(&lease.worker_id).is_err()
+        {
+            return Ok(false);
+        }
+        let attempt = i32::try_from(lease.attempt).map_err(|_| JobError::Invalid)?;
+        let deadline = i64::try_from(lease.lease_expires_at_ms).map_err(|_| JobError::Invalid)?;
+        let client = self.state.client.lock().await;
+        let row = client
+            .query_one(
+                "SELECT EXISTS (
+                   SELECT 1 FROM ocaf_pg_jobs_v1 j
+                   JOIN ocaf_pg_leader_epochs_v1 e ON e.cluster_id=$8
+                   WHERE j.id=$1 AND j.worker_id=$2 AND j.tool=$3
+                     AND j.attempts=$4 AND j.lease_token=$5
+                     AND j.lease_expires_at_ms=$6
+                     AND j.leader_epoch=$7 AND e.epoch=$7
+                     AND j.status='running'
+                     AND j.lease_expires_at_ms >
+                       (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT
+                 )",
+                &[
+                    &lease.id,
+                    &lease.worker_id,
+                    &lease.tool,
+                    &attempt,
+                    &lease.lease_token,
+                    &deadline,
+                    &lease.leader_epoch,
+                    &leader.cluster_id(),
+                ],
+            )
+            .await
+            .map_err(storage)?;
+        Ok(row.get::<_, bool>(0))
     }
 
     /// Read at most 100 metadata-only audit records for an authenticated
@@ -372,14 +467,25 @@ impl PgJobQueue {
             return Err(JobError::Invalid);
         }
         let attempt = i32::try_from(lease.attempt).map_err(|_| JobError::Invalid)?;
+        let generation = match &self.leader {
+            Some(leader) => leader.fencing_epoch().await.map_err(|_| JobError::Storage)?,
+            None => 0,
+        };
+        if lease.leader_epoch != generation {
+            return Err(JobError::StaleLease);
+        }
+        let cluster_id = self.leader.as_ref().map_or("", |leader| leader.cluster_id());
         let mut client = self.state.client.lock().await;
         let tx = client.transaction().await.map_err(storage)?;
+        self.check_epoch_in_transaction(&tx, cluster_id, generation)
+            .await?;
         let changed = tx
             .execute(
                 "UPDATE ocaf_pg_jobs_v1 SET status=$6,result=$7,last_error=$8,
              worker_id=NULL,lease_token=NULL,lease_expires_at_ms=NULL
              WHERE id=$1 AND status='running' AND worker_id=$2
                AND lease_token=$3 AND tool=$4 AND attempts=$5
+               AND leader_epoch=$9
                AND lease_expires_at_ms >
                  (EXTRACT(EPOCH FROM clock_timestamp())*1000)::BIGINT",
                 &[
@@ -391,6 +497,7 @@ impl PgJobQueue {
                     &status,
                     &result,
                     &error,
+                    &generation,
                 ],
             )
             .await

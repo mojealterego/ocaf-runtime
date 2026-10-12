@@ -1,5 +1,8 @@
 //! Uniform coordinator RPC job API backed by local SQLite or shared PostgreSQL.
+use std::sync::Arc;
+
 use crate::cluster::jobs::PgJobQueue;
+use crate::cluster::leadership::PgLeader;
 use crate::jobs::{JobError, JobRecord, JobSpec, JobStore, LeasedJob, RecoverySummary};
 use serde_json::Value;
 
@@ -9,6 +12,23 @@ pub(super) enum JobBackend {
 }
 
 impl JobBackend {
+    pub(super) fn with_leader(self, leader: Arc<PgLeader>) -> Self {
+        match self {
+            Self::Postgres(db) => Self::Postgres(db.with_leader(leader)),
+            other => other,
+        }
+    }
+
+    pub(super) async fn validate_current_lease(
+        &self,
+        lease: &LeasedJob,
+    ) -> Result<bool, JobError> {
+        match self {
+            Self::Postgres(db) => db.validate_current_lease(lease).await,
+            Self::Sqlite(_) => Err(JobError::Invalid),
+        }
+    }
+
     pub(super) async fn submit_owned(
         &self,
         owner: &str,

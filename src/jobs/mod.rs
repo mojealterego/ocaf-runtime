@@ -95,6 +95,12 @@ pub struct LeasedJob {
     /// Unique fencing token. Old workers cannot commit after lease rotation.
     pub lease_token: String,
     pub lease_expires_at_ms: u64,
+    /// Leader generation is zero outside a PostgreSQL HA coordinator.
+    #[serde(default, skip_serializing_if = "epoch_is_zero")]
+    pub leader_epoch: i64,
+}
+fn epoch_is_zero(epoch: &i64) -> bool {
+    *epoch == 0
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -447,6 +453,7 @@ impl JobStore {
                 worker_id: worker,
                 lease_token: token,
                 lease_expires_at_ms: u64::try_from(expires).map_err(|_| JobError::Storage)?,
+                leader_epoch: 0,
             }))
         })
         .await

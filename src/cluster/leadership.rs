@@ -256,6 +256,10 @@ impl PgLeader {
     /// Return the durable leader generation after checking the actual lock.
     /// This is a token for future cooperating downstream fencing; obtaining
     /// it does NOT itself fence arbitrary external side effects.
+    pub fn cluster_id(&self) -> &str {
+        &self.cluster_id
+    }
+
     pub async fn fencing_epoch(&self) -> Result<i64, PgLeaderError> {
         self.verify().await?;
         let epoch = self.epoch.load(Ordering::SeqCst);

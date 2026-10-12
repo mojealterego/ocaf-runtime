@@ -113,6 +113,9 @@ pub enum RpcAction {
         limit: usize,
     },
     ClaimJob,
+    ValidateLease {
+        lease: LeasedJob,
+    },
     FinishJob {
         lease: LeasedJob,
         outcome: RemoteJobOutcome,
@@ -168,6 +171,7 @@ impl RpcRequest {
             RpcAction::GetJob { .. }
             | RpcAction::GetJobAudit { .. }
             | RpcAction::ClaimJob
+            | RpcAction::ValidateLease { .. }
             | RpcAction::FinishJob { .. }
             | RpcAction::Discover => {}
         }
@@ -483,6 +487,9 @@ impl RpcGateway {
     /// signed RPC. Called by cluster coordinator with a dedicated leader
     /// session, not by the legacy single-host SQLite service.
     pub fn with_pg_leader(mut self, leader: Arc<PgLeader>) -> Self {
+        if let Some(jobs) = self.jobs.take() {
+            self.jobs = Some(jobs.with_leader(Arc::clone(&leader)));
+        }
         self.leader = Some(leader);
         self
     }
@@ -601,7 +608,7 @@ impl RpcGateway {
                     return Err(RpcError::Unauthorized);
                 }
             }
-            RpcAction::FinishJob { lease, .. } => {
+            RpcAction::ValidateLease { lease } | RpcAction::FinishJob { lease, .. } => {
                 if self.jobs.is_none() {
                     return Err(RpcError::Unavailable);
                 }
@@ -717,6 +724,17 @@ impl RpcGateway {
                     .await
                     .map_err(|_| RpcError::Unavailable)?;
                 (RpcStatus::Ok, json!(claim))
+            }
+            RpcAction::ValidateLease { lease } => {
+                let store = self.jobs.as_ref().ok_or(RpcError::Unavailable)?;
+                let valid = store
+                    .validate_current_lease(&lease)
+                    .await
+                    .map_err(|_| RpcError::Unavailable)?;
+                (
+                    if valid { RpcStatus::Ok } else { RpcStatus::Failed },
+                    json!({"valid": valid}),
+                )
             }
             RpcAction::FinishJob { lease, outcome } => {
                 let store = self.jobs.as_ref().ok_or(RpcError::Unavailable)?;

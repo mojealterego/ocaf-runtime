@@ -78,6 +78,19 @@ impl RemoteJobWorker {
         {
             bail!("coordinator returned unauthorised job lease");
         }
+        // A signed claim must be checked against the current leader epoch
+        // immediately before execution. A transport error fails closed.
+        if lease.leader_epoch > 0 {
+            let verified = self
+                .client
+                .request(RpcAction::ValidateLease {
+                    lease: lease.clone(),
+                })
+                .await?;
+            if verified.status != RpcStatus::Ok || verified.output["valid"] != true {
+                bail!("coordinator lease was fenced before execution");
+            }
+        }
         let maybe_tool = self.runtime.registry.resolve(&lease.tool).await;
         let runnable = maybe_tool.as_ref().is_some_and(|tool| {
             tool.manifest.enabled
