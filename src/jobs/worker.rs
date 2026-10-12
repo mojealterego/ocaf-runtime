@@ -84,7 +84,11 @@ impl JobWorker {
 
         if !allowed {
             self.store
-                .fail(&job, "job worker policy or lease safety margin denied", wallclock_ms()?)
+                .fail(
+                    &job,
+                    "job worker policy or lease safety margin denied",
+                    wallclock_ms()?,
+                )
                 .await?;
         } else {
             let request = ToolCallRequest {
@@ -95,7 +99,9 @@ impl JobWorker {
             };
             match self.runtime.execute(request).await {
                 Ok(result) => {
-                    self.store.succeed(&job, result.output, wallclock_ms()?).await?;
+                    self.store
+                        .succeed(&job, result.output, wallclock_ms()?)
+                        .await?;
                 }
                 Err(error) => {
                     // Do not store potentially sensitive error messages in
