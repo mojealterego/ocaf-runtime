@@ -48,9 +48,7 @@ fn read_private_secret(path: &Path) -> anyhow::Result<String> {
     #[cfg(unix)]
     {
         use std::os::unix::fs::{MetadataExt, PermissionsExt};
-        if meta.permissions().mode() & 0o077 != 0
-            || meta.uid() != unsafe { libc::geteuid() }
-        {
+        if meta.permissions().mode() & 0o077 != 0 || meta.uid() != unsafe { libc::geteuid() } {
             anyhow::bail!("sink secret file must be owned by service user and chmod 600");
         }
     }
