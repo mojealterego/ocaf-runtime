@@ -152,13 +152,13 @@ async fn unsafe_execute_may_not_be_automatically_reissued_after_lost_reply() {
         tool: "demo_echo".into(),
         args: serde_json::json!({}),
     };
-    assert!(p
+    let result: anyhow::Result<()> = p
         .run(&action, move || {
             counter.fetch_add(1, Ordering::SeqCst);
             async { anyhow::bail!("result might have committed") }
         })
-        .await
-        .is_err());
+        .await;
+    assert!(result.is_err());
     assert_eq!(attempts.load(Ordering::SeqCst), 1);
 }
 
