@@ -172,8 +172,9 @@ impl RpcRequest {
             | RpcAction::Discover => {}
         }
         if let RpcAction::SubmitJob { id, .. }
-            | RpcAction::GetJob { id }
-            | RpcAction::GetJobAudit { id, .. } = &action {
+        | RpcAction::GetJob { id }
+        | RpcAction::GetJobAudit { id, .. } = &action
+        {
             if Uuid::parse_str(id).is_err() {
                 return Err(RpcError::Malformed);
             }
@@ -686,7 +687,8 @@ impl RpcGateway {
                 (RpcStatus::Ok, json!(record))
             }
             RpcAction::GetJobAudit { id, limit } => {
-                let history = self.jobs
+                let history = self
+                    .jobs
                     .as_ref()
                     .ok_or(RpcError::Unavailable)?
                     .audit_owned(&request.sender, &id, limit)
