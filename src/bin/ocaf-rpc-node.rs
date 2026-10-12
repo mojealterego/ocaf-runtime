@@ -13,7 +13,9 @@ use base64::Engine as _;
 use ocaf_runtime::jobs::remote::RemoteJobWorker;
 use ocaf_runtime::rpc::{PeerPolicy, RpcAction, RpcClient, RpcGateway, RpcStatus};
 use ocaf_runtime::runtime::OcafRuntime;
-use ocaf_runtime::transport::rpc::{ZenohRpcClient, ZenohRpcServer};
+use ocaf_runtime::transport::rpc::{
+    ReconnectPolicy, ResilientZenohRpcClient, ZenohRpcClient, ZenohRpcServer,
+};
 use ocaf_runtime::transport::{pricing_tool_manifest, EchoTool, ZenohTransport};
 use ocaf_runtime::transport_policy::{read_zenoh_config, validate_zenoh_config};
 use serde_json::json;
@@ -63,11 +65,10 @@ async fn main() -> anyhow::Result<()> {
     let peer_id = require("OCAF_PEER_ID")?;
     let key = load_key_env("OCAF_SHARED_KEY_B64")?;
     let config = load_zenoh_config()?;
-    let transport = ZenohTransport::connect_with_config(config).await?;
-    let session = transport.session();
 
     match role.as_str() {
         "server" => {
+            let session = ZenohTransport::connect_with_config(config).await?.session();
             let runtime = OcafRuntime::new(0);
             runtime.register(pricing_tool_manifest(), EchoTool).await?;
             // The peer may invoke ONLY the demo echo tool, not arbitrary local tools.
@@ -121,6 +122,7 @@ async fn main() -> anyhow::Result<()> {
             served?;
         }
         "worker" => {
+            let session = ZenohTransport::connect_with_config(config).await?.session();
             let runtime = OcafRuntime::new(0);
             runtime.register(pricing_tool_manifest(), EchoTool).await?;
             let protocol = RpcClient::new(&node_id, &peer_id, key)?;
@@ -146,7 +148,17 @@ async fn main() -> anyhow::Result<()> {
         }
         "client" => {
             let protocol = RpcClient::new(&node_id, &peer_id, key)?;
-            let client = ZenohRpcClient::new(session, protocol);
+            let attempts = env::var("OCAF_RECONNECT_ATTEMPTS")
+                .unwrap_or_else(|_| "4".to_string())
+                .parse::<u8>()
+                .map_err(|_| anyhow::anyhow!("OCAF_RECONNECT_ATTEMPTS must be 1 through 8"))?;
+            let reconnect = ReconnectPolicy::new(
+                attempts,
+                Duration::from_millis(250),
+                Duration::from_secs(1),
+                Duration::from_secs(9),
+            )?;
+            let client = ResilientZenohRpcClient::new(config, protocol, reconnect);
             let action = match env::var("OCAF_ACTION").as_deref() {
                 Ok("discover") => RpcAction::Discover,
                 Ok("heartbeat") => RpcAction::Heartbeat {
