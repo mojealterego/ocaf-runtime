@@ -241,6 +241,28 @@ does not supply Raft or eliminate the possibility of
 See [docs/POSTGRES_CLUSTER.md](docs/POSTGRES_CLUSTER.md) for deployment
 configuration, acceptance tests and threat boundaries.
 
+## Transactional audit and crash fault injection (v0.12)
+
+The PostgreSQL job backend now records metadata-only submission, claim,
+completion and crash-recovery events in the same transaction as the
+associated job-state transition. Signed `GetJobAudit { id, limit }` allows
+an authenticated original submitter (not a worker or another submitter)
+to inspect at most 100 audit entries. The log does **not** contain tool
+inputs, outputs, credentials or raw lease tokens. Legacy SQLite mode
+rejects this audit operation instead of inventing audit history.
+
+PostgreSQL fault-injection tests terminate the active leader's actual
+database backend using `pg_terminate_backend`, verify standby
+promotion, deny requests through the previous leader and ensure the
+submitted task and replay-admission record survive the promotion.
+A separate test verifies stale completion cannot turn an expired,
+`uncertain` job into a successful one.
+
+These are PostgreSQL **session-failure** experiments run in CI; they do
+not establish physical cross-host failover, distributed partition safety,
+production mTLS validation or exactly-once external effects.
+See [docs/RESILIENCE.md](docs/RESILIENCE.md).
+
 ## Production work still required
 
 1. Certificate-backed TLS/mTLS handshake tests on deployed hosts, plus key rotation and revocation.
