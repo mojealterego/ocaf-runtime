@@ -94,12 +94,15 @@ async fn monitor_reads_real_db_clock_counts_and_postgres_advisory_leader() {
     assert_eq!(empty.leader_sessions, 0);
     assert!(empty.observed_at_ms > 1_700_000_000_000);
 
-    let leader = PgLeader::connect(&dsn, &cluster, true).await.unwrap();
+    let leader = std::sync::Arc::new(PgLeader::connect(&dsn, &cluster, true).await.unwrap());
     assert!(leader.try_acquire().await.unwrap());
     let current = monitor.snapshot().await.unwrap();
     assert_eq!(current.leader_sessions, 1);
 
-    let queue = PgJobQueue::connect(&dsn, true).await.unwrap();
+    let queue = PgJobQueue::connect(&dsn, true)
+        .await
+        .unwrap()
+        .with_leader(std::sync::Arc::clone(&leader));
     let job = JobSpec {
         id: uuid::Uuid::new_v4().to_string(),
         tool: format!("health_{}", uuid::Uuid::new_v4().simple()),

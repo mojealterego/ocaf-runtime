@@ -181,6 +181,7 @@ pub struct PgClusterMonitor {
     client: Client,
     connection: JoinHandle<()>,
     leader_key: i64,
+    cluster_id: String,
 }
 
 impl PgClusterMonitor {
@@ -195,6 +196,7 @@ impl PgClusterMonitor {
             client,
             connection,
             leader_key,
+            cluster_id: cluster_id.to_owned(),
         })
     }
 
@@ -220,15 +222,15 @@ impl PgClusterMonitor {
                      WHERE expires_at_ms>clock.now_ms),
                     (SELECT count(*)::BIGINT FROM ocaf_pg_nodes_v1
                      WHERE expires_at_ms<=clock.now_ms),
-                    (SELECT count(*)::BIGINT FROM ocaf_pg_jobs_v1 WHERE status='pending'),
-                    (SELECT count(*)::BIGINT FROM ocaf_pg_jobs_v1 WHERE status='running'),
-                    (SELECT count(*)::BIGINT FROM ocaf_pg_jobs_v1 WHERE status='succeeded'),
-                    (SELECT count(*)::BIGINT FROM ocaf_pg_jobs_v1 WHERE status='failed'),
-                    (SELECT count(*)::BIGINT FROM ocaf_pg_jobs_v1 WHERE status='uncertain'),
+                    (SELECT count(*)::BIGINT FROM ocaf_pg_jobs_v1 WHERE cluster_id=$2 AND status='pending'),
+                    (SELECT count(*)::BIGINT FROM ocaf_pg_jobs_v1 WHERE cluster_id=$2 AND status='running'),
+                    (SELECT count(*)::BIGINT FROM ocaf_pg_jobs_v1 WHERE cluster_id=$2 AND status='succeeded'),
+                    (SELECT count(*)::BIGINT FROM ocaf_pg_jobs_v1 WHERE cluster_id=$2 AND status='failed'),
+                    (SELECT count(*)::BIGINT FROM ocaf_pg_jobs_v1 WHERE cluster_id=$2 AND status='uncertain'),
                     (SELECT count(*)::BIGINT FROM ocaf_pg_jobs_v1
-                     WHERE status='running' AND lease_expires_at_ms<=clock.now_ms)
+                     WHERE cluster_id=$2 AND status='running' AND lease_expires_at_ms<=clock.now_ms)
                  FROM clock",
-                &[&self.leader_key],
+                &[&self.leader_key, &self.cluster_id],
             ),
         )
         .await
@@ -251,6 +253,12 @@ impl PgClusterMonitor {
             jobs_running_expired: read_count(&row, 9)?,
         })
     }
+    /// Operator report, using only DB-owned clock and per-cluster job counts.
+    /// Missing leadership is an unhealthy result, not an empty-success.
+    pub async fn report(&self, policy: AlertPolicy) -> Result<ClusterReport, PgLeaderError> {
+        Ok(policy.evaluate(self.snapshot().await?))
+    }
+
     /// Resolve a single node's signed-heartbeat expiry from the shared
     /// directory. Uses the database clock; no user-controlled time input.
     pub async fn node_health(&self, node_id: &str) -> Result<Option<NodeHealth>, PgLeaderError> {

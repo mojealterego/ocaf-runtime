@@ -1,10 +1,14 @@
 [package]
 name = "ocaf_runtime"
-version = "0.24.0"
+version = "0.25.0"
 edition = "2021"
 publish = false
 license = "MIT"
 description = "OmniContext Agent Framework runtime core with fail-closed authorization"
+
+[[bin]]
+name = "ocaf-cluster-health"
+path = "src/bin/ocaf-cluster-health.rs"
 
 [[bin]]
 name = "ocaf-effect-sink"
