@@ -4,6 +4,7 @@
 //! requires TLS-only protocol whitelisting and mTLS material. It does NOT
 //! replace Zenoh's actual certificate chain validation and TLS handshake.
 
+use std::io::Read;
 use std::net::IpAddr;
 use std::path::Path;
 
@@ -18,6 +19,20 @@ pub enum TransportPolicyError {
     Malformed,
     #[error("Zenoh configuration violates the required transport security policy")]
     Unsafe,
+}
+
+/// Bound network configuration reads before JSON5 parsing. Never attempt to
+/// load arbitrarily large or binary operator-supplied config into memory.
+pub fn read_zenoh_config(path: &Path) -> Result<String, TransportPolicyError> {
+    let file = std::fs::File::open(path).map_err(|_| TransportPolicyError::Malformed)?;
+    let mut source = String::new();
+    file.take((MAX_CONFIG_BYTES + 1) as u64)
+        .read_to_string(&mut source)
+        .map_err(|_| TransportPolicyError::Malformed)?;
+    if source.len() > MAX_CONFIG_BYTES {
+        return Err(TransportPolicyError::Malformed);
+    }
+    Ok(source)
 }
 
 fn valid_loopback_endpoint(endpoint: &str) -> bool {
