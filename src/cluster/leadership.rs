@@ -65,47 +65,47 @@ pub(crate) async fn open_database(
     dsn: &str,
     allow_insecure_loopback: bool,
 ) -> Result<(Client, JoinHandle<()>), PgLeaderError> {
-        let config = Config::from_str(dsn).map_err(|_| PgLeaderError::UnsafeTransport)?;
-        let local = config.get_ssl_mode() == SslMode::Disable
-            && allow_insecure_loopback
-            && loopback_hosts(&config);
-        let secure = config.get_ssl_mode() == SslMode::Require;
-        if !local && !secure {
-            return Err(PgLeaderError::UnsafeTransport);
-        }
+    let config = Config::from_str(dsn).map_err(|_| PgLeaderError::UnsafeTransport)?;
+    let local = config.get_ssl_mode() == SslMode::Disable
+        && allow_insecure_loopback
+        && loopback_hosts(&config);
+    let secure = config.get_ssl_mode() == SslMode::Require;
+    if !local && !secure {
+        return Err(PgLeaderError::UnsafeTransport);
+    }
 
-        let result = if local {
-            let (client, connection) =
-                tokio::time::timeout(Duration::from_secs(5), config.connect(NoTls))
-                    .await
-                    .map_err(|_| PgLeaderError::Database)?
-                    .map_err(|_| PgLeaderError::Database)?;
-            let task = tokio::spawn(async move {
-                if let Err(err) = connection.await {
-                    tracing::warn!(error = %err, "PostgreSQL leader connection lost");
-                }
-            });
-            (client, task)
-        } else {
-            // Native TLS verifies the server's chain and DNS name by default.
-            // PostgreSQL sslmode=require prevents fallback to plaintext.
-            let connector = native_tls::TlsConnector::builder()
-                .build()
-                .map_err(|_| PgLeaderError::UnsafeTransport)?;
-            let connector = postgres_native_tls::MakeTlsConnector::new(connector);
-            let (client, connection) =
-                tokio::time::timeout(Duration::from_secs(5), config.connect(connector))
-                    .await
-                    .map_err(|_| PgLeaderError::Database)?
-                    .map_err(|_| PgLeaderError::Database)?;
-            let task = tokio::spawn(async move {
-                if let Err(err) = connection.await {
-                    tracing::warn!(error = %err, "PostgreSQL leader connection lost");
-                }
-            });
-            (client, task)
-        };
-        Ok(result)
+    let result = if local {
+        let (client, connection) =
+            tokio::time::timeout(Duration::from_secs(5), config.connect(NoTls))
+                .await
+                .map_err(|_| PgLeaderError::Database)?
+                .map_err(|_| PgLeaderError::Database)?;
+        let task = tokio::spawn(async move {
+            if let Err(err) = connection.await {
+                tracing::warn!(error = %err, "PostgreSQL leader connection lost");
+            }
+        });
+        (client, task)
+    } else {
+        // Native TLS verifies the server's chain and DNS name by default.
+        // PostgreSQL sslmode=require prevents fallback to plaintext.
+        let connector = native_tls::TlsConnector::builder()
+            .build()
+            .map_err(|_| PgLeaderError::UnsafeTransport)?;
+        let connector = postgres_native_tls::MakeTlsConnector::new(connector);
+        let (client, connection) =
+            tokio::time::timeout(Duration::from_secs(5), config.connect(connector))
+                .await
+                .map_err(|_| PgLeaderError::Database)?
+                .map_err(|_| PgLeaderError::Database)?;
+        let task = tokio::spawn(async move {
+            if let Err(err) = connection.await {
+                tracing::warn!(error = %err, "PostgreSQL leader connection lost");
+            }
+        });
+        (client, task)
+    };
+    Ok(result)
 }
 
 impl PgLeader {
