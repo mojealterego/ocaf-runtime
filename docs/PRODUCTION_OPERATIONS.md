@@ -4,12 +4,16 @@
 
 After upgrading all coordinators to v0.26, the live capability
 directory is stored in `ocaf_pg_nodes_v2`, `ocaf_pg_tools_v2`
-and `ocaf_pg_cursor_v2`, keyed by `cluster_id`. The old v1
+and `ocaf_pg_cursor_v2`, keyed by `cluster_id`. The
+PostgreSQL signed-RPC replay journal also uses
+`ocaf_pg_replay_v2` with cluster-keyed uniqueness and capacity. The old v1
 membership tables are **not migrated or deleted automatically**.
 A coordinator promoted by PostgreSQL fencing starts with an empty v2
 directory until signed agent heartbeats replenish the cluster.
 Do not run mixed v0.25/v0.26 coordinator versions in one cluster,
-because their directories are intentionally incompatible. Preserve
+because their directories and replay journals are intentionally
+incompatible. Quiesce traffic and allow old signed request TTLs
+to elapse before re-enabling submissions. Preserve
 the original v1 tables and replay journal until an operator has
 reconciled agent registration, outstanding jobs and effects.
 Run `migrations/v0.26_directory_preflight.sql` against a reviewed

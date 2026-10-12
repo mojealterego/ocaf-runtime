@@ -516,9 +516,10 @@ preflight, rollback and remaining risks are in
 ## Final development acceptance (v0.26)
 
 The v0.26 security regression suite validates isolated PostgreSQL
-agent capability directories with **composite cluster/node identity**,
+replay journals and agent capability directories with **composite cluster/node identity**,
 namespace-specific routing cursors and transactional fencing of
-directory writes. A cluster cannot read another cluster's capability
+directory writes. A cluster cannot consume another cluster's replay-nonce quota
+or read another cluster's capability
 memberships or consume its round-robin state merely because both use
 the same PostgreSQL primary. The read-only cluster health probe now
 counts and looks up agents only within the selected namespace.

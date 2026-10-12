@@ -41,6 +41,8 @@ jobs:
         run: cargo test --no-default-features
       - name: Final security acceptance (cluster isolation and fencing)
         run: cargo test --no-default-features --test final_security_acceptance -- --test-threads=1
+      - name: Final replay acceptance (cluster isolation and nonce fencing)
+        run: cargo test --no-default-features --test final_replay_acceptance -- --test-threads=1
       - name: Operational health (PostgreSQL and CLI)
         run: cargo test --no-default-features --test production_health --test health_cli
       - name: Network chaos (real PostgreSQL via loopback fault proxy)
