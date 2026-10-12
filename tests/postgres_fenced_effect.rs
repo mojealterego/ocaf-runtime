@@ -233,8 +233,7 @@ async fn a_job_worker_without_explicit_effect_permission_cannot_write_sink() {
         OcafRuntime::new(0),
         HashMap::from([(
             "effects-worker".to_string(),
-            PeerPolicy::new(WORKER_KEY, vec![tool])
-                .allow_job_worker(),
+            PeerPolicy::new(WORKER_KEY, vec![tool]).allow_job_worker(),
         )]),
         16,
     )
