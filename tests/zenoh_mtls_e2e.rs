@@ -47,10 +47,23 @@ fn make_ca(dir: &Path, name: &str) -> anyhow::Result<(PathBuf, PathBuf)> {
     let ca = dir.join(format!("{name}.pem"));
     let key = dir.join(format!("{name}-key.pem"));
     openssl(&[
-        "req", "-new", "-x509", "-newkey", "rsa:2048", "-nodes",
-        "-sha256", "-days", "2", "-keyout", file(&key), "-out", file(&ca),
-        "-subj", &format!("/CN=ocaf-{name}"),
-        "-addext", "basicConstraints=critical,CA:TRUE",
+        "req",
+        "-new",
+        "-x509",
+        "-newkey",
+        "rsa:2048",
+        "-nodes",
+        "-sha256",
+        "-days",
+        "2",
+        "-keyout",
+        file(&key),
+        "-out",
+        file(&ca),
+        "-subj",
+        &format!("/CN=ocaf-{name}"),
+        "-addext",
+        "basicConstraints=critical,CA:TRUE",
     ])?;
     Ok((ca, key))
 }
@@ -67,9 +80,17 @@ fn sign(
     let cert = dir.join(format!("{name}.pem"));
     let extensions = dir.join(format!("{name}-extensions.cnf"));
     openssl(&[
-        "req", "-new", "-newkey", "rsa:2048", "-nodes",
-        "-keyout", file(&key), "-out", file(&csr),
-        "-subj", &format!("/CN=ocaf-{name}"),
+        "req",
+        "-new",
+        "-newkey",
+        "rsa:2048",
+        "-nodes",
+        "-keyout",
+        file(&key),
+        "-out",
+        file(&csr),
+        "-subj",
+        &format!("/CN=ocaf-{name}"),
     ])?;
     let extensions_text = if server {
         "basicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature,keyEncipherment\nextendedKeyUsage=serverAuth\nsubjectAltName=IP:127.0.0.1\n"
@@ -78,10 +99,22 @@ fn sign(
     };
     std::fs::write(&extensions, extensions_text)?;
     openssl(&[
-        "x509", "-req", "-in", file(&csr),
-        "-CA", file(ca), "-CAkey", file(ca_key),
-        "-CAcreateserial", "-out", file(&cert),
-        "-days", "2", "-sha256", "-extfile", file(&extensions),
+        "x509",
+        "-req",
+        "-in",
+        file(&csr),
+        "-CA",
+        file(ca),
+        "-CAkey",
+        file(ca_key),
+        "-CAcreateserial",
+        "-out",
+        file(&cert),
+        "-days",
+        "2",
+        "-sha256",
+        "-extfile",
+        file(&extensions),
     ])?;
     Ok((key, cert))
 }
@@ -95,13 +128,23 @@ fn pki() -> anyhow::Result<TestPki> {
     let (rogue_key, rogue_cert) = sign(dir.path(), "rogue-client", &other_ca, &other_key, false)?;
     Ok(TestPki {
         _dir: dir,
-        ca, other_ca, server_key, server_cert, client_key, client_cert,
-        rogue_key, rogue_cert,
+        ca,
+        other_ca,
+        server_key,
+        server_cert,
+        client_key,
+        client_cert,
+        rogue_key,
+        rogue_cert,
     })
 }
 
 fn config(
-    port: u16, pki: &TestPki, server: bool, rogue_client: bool, wrong_ca: bool,
+    port: u16,
+    pki: &TestPki,
+    server: bool,
+    rogue_client: bool,
+    wrong_ca: bool,
 ) -> anyhow::Result<zenoh::Config> {
     let endpoint = format!("tls/127.0.0.1:{port}");
     let ca = if wrong_ca { &pki.other_ca } else { &pki.ca };
@@ -150,26 +193,29 @@ async fn trusted_mutual_tls_and_signed_rpc_round_trip() -> anyhow::Result<()> {
     let certs = pki()?;
     let port = available_port()?;
     let server = Arc::new(
-        zenoh::open(config(port, &certs, true, false, false)?).await
+        zenoh::open(config(port, &certs, true, false, false)?)
+            .await
             .map_err(|e| anyhow::anyhow!("open TLS coordinator: {e}"))?,
     );
     let gateway = Arc::new(RpcGateway::new(
-        "coord", OcafRuntime::new(0),
-        HashMap::from([(
-            "client".to_string(),
-            PeerPolicy::new(HMAC_KEY, vec![]),
-        )]), 8,
+        "coord",
+        OcafRuntime::new(0),
+        HashMap::from([("client".to_string(), PeerPolicy::new(HMAC_KEY, vec![]))]),
+        8,
     )?);
     let service = ZenohRpcServer::new(server, gateway);
     let handle = tokio::spawn(async move { service.serve().await });
     tokio::time::sleep(Duration::from_millis(200)).await;
 
     let client = Arc::new(
-        zenoh::open(config(port, &certs, false, false, false)?).await
+        zenoh::open(config(port, &certs, false, false, false)?)
+            .await
             .map_err(|e| anyhow::anyhow!("trusted client failed mTLS: {e}"))?,
     );
     let protocol = RpcClient::new("client", "coord", HMAC_KEY)?;
-    let reply = ZenohRpcClient::new(client, protocol).request(RpcAction::Discover).await?;
+    let reply = ZenohRpcClient::new(client, protocol)
+        .request(RpcAction::Discover)
+        .await?;
     assert_eq!(reply.status, RpcStatus::Ok);
     handle.abort();
     Ok(())
@@ -179,7 +225,8 @@ async fn trusted_mutual_tls_and_signed_rpc_round_trip() -> anyhow::Result<()> {
 async fn untrusted_ca_and_rogue_client_certificate_are_rejected() -> anyhow::Result<()> {
     let certs = pki()?;
     let port = available_port()?;
-    let server = zenoh::open(config(port, &certs, true, false, false)?).await
+    let server = zenoh::open(config(port, &certs, true, false, false)?)
+        .await
         .map_err(|e| anyhow::anyhow!("TLS server failed: {e}"))?;
 
     // A real handshake must reject a valid-looking client with an
@@ -187,15 +234,20 @@ async fn untrusted_ca_and_rogue_client_certificate_are_rejected() -> anyhow::Res
     let rogue = tokio::time::timeout(
         Duration::from_secs(6),
         zenoh::open(config(port, &certs, false, true, false)?),
-    ).await?;
-    assert!(rogue.is_err(), "server must reject a rogue client certificate");
+    )
+    .await?;
+    assert!(
+        rogue.is_err(),
+        "server must reject a rogue client certificate"
+    );
 
     // Likewise an otherwise valid client must reject a server chain that
     // does not terminate in its configured trusted CA.
     let wrong_trust = tokio::time::timeout(
         Duration::from_secs(6),
         zenoh::open(config(port, &certs, false, false, true)?),
-    ).await?;
+    )
+    .await?;
     assert!(wrong_trust.is_err(), "client must reject an untrusted CA");
     drop(server);
     Ok(())
