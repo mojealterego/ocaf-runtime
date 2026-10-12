@@ -71,9 +71,14 @@ async fn main() -> anyhow::Result<()> {
                 if node.is_some() {
                     anyhow::bail!("only one --node selector is supported");
                 }
-                node = Some(args.next().ok_or_else(|| anyhow::anyhow!("--node requires an ID"))?);
+                node = Some(
+                    args.next()
+                        .ok_or_else(|| anyhow::anyhow!("--node requires an ID"))?,
+                );
             }
-            _ => anyhow::bail!("unknown option; use --json, --prometheus, --no-fail or --node <ID>"),
+            _ => {
+                anyhow::bail!("unknown option; use --json, --prometheus, --no-fail or --node <ID>")
+            }
         }
     }
     if format == "prometheus" && node.is_some() {
@@ -96,10 +101,13 @@ async fn main() -> anyhow::Result<()> {
         _ => {
             if let Some(node_id) = node {
                 let observation = monitor.node_health(&node_id).await?;
-                println!("{}", serde_json::to_string_pretty(&serde_json::json!({
-                    "report": report,
-                    "node": observation,
-                }))?);
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&serde_json::json!({
+                        "report": report,
+                        "node": observation,
+                    }))?
+                );
             } else {
                 println!("{}", serde_json::to_string_pretty(&report)?);
             }
