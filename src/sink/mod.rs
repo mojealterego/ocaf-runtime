@@ -547,9 +547,9 @@ impl EffectSink {
             || permit.worker != worker
             || !crate::coordinator::validate_tool_name(&permit.tool)
             || permit.attempt == 0
-            || B64
+            || !B64
                 .decode(&permit.lease_fingerprint)
-                .is_err_or(|bytes| bytes.len() != 32)
+                .is_ok_and(|bytes| bytes.len() == 32)
             || Uuid::parse_str(&permit.job_id).is_err()
             || permit.epoch <= 0
             || permit.expires_at_ms <= u64::try_from(now).map_err(|_| SinkError::Invalid)?
