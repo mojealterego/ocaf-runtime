@@ -82,6 +82,9 @@ Coordinator (with a private, configured `OCAF_PEERS_FILE`):
 ```bash
 export OCAF_COORDINATOR_NODE_ID=coord
 export OCAF_ZENOH_CONFIG=examples/insecure-local/server.json5
+export OCAF_ALLOW_INSECURE_LOOPBACK=1 # Unsafe loopback-only demonstration
+export OCAF_COORDINATOR_LOCK_PATH=/absolute/private/path/leader.lock
+export OCAF_COORDINATOR_MODE=active
 export OCAF_PEERS_FILE=/absolute/private/path/peers.json
 export OCAF_REPLAY_DB_PATH=/absolute/private/path/replay.sqlite
 export OCAF_COORDINATOR_DB_PATH=/absolute/private/path/members.sqlite
@@ -97,6 +100,7 @@ export OCAF_NODE_ID=worker-a
 export OCAF_PEER_ID=coord
 export OCAF_SHARED_KEY_B64="<WORKER_32_BYTE_KEY_B64>"
 export OCAF_ZENOH_CONFIG=examples/insecure-local/client.json5
+export OCAF_ALLOW_INSECURE_LOOPBACK=1 # Unsafe loopback-only demonstration
 cargo run --bin ocaf-rpc-node
 ```
 
@@ -144,8 +148,9 @@ authenticated identity as the original submitter.
   These sample files are intended for loopback tests only. Deploying
   across hosts requires separately verified TLS/mTLS or an encrypted
   private overlay; this application does **not enforce TLS itself**.
-- The coordinator remains a **single point of failure**. Database
-  replication, multi-region fault tolerance, independent worker
+- The coordinator supports active/passive **process** takeover on the
+  same host, but the machine/disk remains a **single point of failure**.
+  Database replication, multi-region fault tolerance, independent worker
   recovery, global quotas and production-grade audit logs remain open.
 
 ## Verification
@@ -158,6 +163,10 @@ claim ACL, lease-token fencing and crash expiry.
 coordinator, worker and submitter sessions over loopback TCP, executing a
 real registered echo tool and inspecting the persisted result. This
 does **not** establish a production multi-host or mTLS deployment.
+
+As of v0.9 both CLI programs validate Zenoh security settings before
+opening a session. The coordinator must hold an exclusive local leader
+lock. Read [HA.md](HA.md) for required environment variables and limits.
 
 ## Next production gates
 
