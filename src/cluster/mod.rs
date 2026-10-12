@@ -3,3 +3,6 @@
 pub mod leadership;
 
 pub mod jobs;
+
+pub mod replay;
+pub mod directory;
