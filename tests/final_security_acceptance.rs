@@ -69,7 +69,10 @@ async fn same_named_agents_are_isolated_and_stale_leader_cannot_modify_new_gener
 
     a.release().await.unwrap();
     assert!(replacement.try_acquire().await.unwrap());
-    assert!(da.heartbeat("shared-worker", &["tool_a".into()], NOW + 2).await.is_err());
+    assert!(da
+        .heartbeat("shared-worker", &["tool_a".into()], NOW + 2)
+        .await
+        .is_err());
     assert!(da.resolve("tool_a", NOW + 2).await.is_err());
 
     let refreshed = PgDirectory::connect(&url, true)
@@ -80,7 +83,11 @@ async fn same_named_agents_are_isolated_and_stale_leader_cannot_modify_new_gener
         .heartbeat("shared-worker", &["tool_c".into()], NOW + 2)
         .await
         .unwrap();
-    assert!(refreshed.resolve("tool_a", NOW + 3).await.unwrap().is_none());
+    assert!(refreshed
+        .resolve("tool_a", NOW + 3)
+        .await
+        .unwrap()
+        .is_none());
     assert!(db.resolve("tool_b", NOW + 3).await.unwrap().is_some());
     replacement.release().await.unwrap();
     b.release().await.unwrap();

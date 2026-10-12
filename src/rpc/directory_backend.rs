@@ -1,8 +1,8 @@
 //! Uniform RPC capability directory for local or shared backing stores.
 use crate::cluster::directory::PgDirectory;
 use crate::cluster::leadership::PgLeader;
-use std::sync::Arc;
 use crate::coordinator::{CoordinatorError, CoordinatorStore, NodeRoute};
+use std::sync::Arc;
 
 pub(super) enum DirectoryBackend {
     Sqlite(CoordinatorStore),
