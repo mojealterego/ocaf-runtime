@@ -179,7 +179,9 @@ fn dropping_local_leader_releases_lock_for_immediate_successor_repeatedly() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("repeat.lock");
     for _ in 0..40 {
-        let leader = LeaderGuard::try_acquire(&path).unwrap().expect("lock not free");
+        let leader = LeaderGuard::try_acquire(&path)
+            .unwrap()
+            .expect("lock not free");
         assert!(LeaderGuard::try_acquire(&path).unwrap().is_none());
         drop(leader);
         assert!(
