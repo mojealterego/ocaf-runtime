@@ -708,14 +708,16 @@ async fn signed_tenant_isolation_survives_concurrent_execution() {
             let (path, hash) = fake_engine(&local, &print);
             PinnedWasmtime::new(path, hash).expect("sealed fake engine")
         };
-        let approved = WasmToolExecutor::from_signed_manifest(
-            pinned, module, &manifest, &signature, &public
-        )
-        .expect("approved per-tenant tool");
+        let approved =
+            WasmToolExecutor::from_signed_manifest(pinned, module, &manifest, &signature, &public)
+                .expect("approved per-tenant tool");
         let runtime = OcafRuntime::new(0)
             .with_tenant_namespace(&format!("tenant-{label}"))
             .expect("strict tenant namespace");
-        runtime.register_signed_wasi(approved).await.expect("register signed tool");
+        runtime
+            .register_signed_wasi(approved)
+            .await
+            .expect("register signed tool");
         tenants.push(runtime);
     }
 
@@ -740,8 +742,14 @@ async fn signed_tenant_isolation_survives_concurrent_execution() {
         );
         assert_eq!(a.expect("tenant a").output, json!({"tenant":"a"}));
         assert_eq!(b.expect("tenant b").output, json!({"tenant":"b"}));
-        assert!(runtime_a.execute_authenticated_peer(request_b, "agent-2").await.is_err());
-        assert!(runtime_b.execute_authenticated_peer(request_a, "agent-2").await.is_err());
+        assert!(runtime_a
+            .execute_authenticated_peer(request_b, "agent-2")
+            .await
+            .is_err());
+        assert!(runtime_b
+            .execute_authenticated_peer(request_a, "agent-2")
+            .await
+            .is_err());
     }
 }
 
