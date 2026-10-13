@@ -739,10 +739,12 @@ i rzeczywiste TLS channel-binding wymagają odrębnej
 weryfikacji i implementacji. Patrz
 [docs/RPC_CERT_IDENTITY_036.md](docs/RPC_CERT_IDENTITY_036.md).
 
-## Nowa pełna Roadmapa: wszystkie 26 plików PDF
+## Pełna Roadmapa: 26 plików PDF + 4 dodatkowe wersje badań
 
-**[OCAF Full Ecosystem Roadmap — priorytety 0.36–0.84](docs/ROADMAP_FULL_ECOSYSTEM_2026.md)**
-zawiera wszystkie rozdziały 1–33 rozszerzonej dokumentacji, moduły
+**[OCAF Full Ecosystem Roadmap — priorytety 0.36–0.94](docs/ROADMAP_FULL_ECOSYSTEM_2026.md)**
+obejmuje 26 dokumentów wcześniejszych i 4 dodatkowe pliki PDF
+(zawierające wersjonowane powtórzenia i rozszerzenia), rozdziały 1–33,
+nowe eksperymenty 2027–2033 oraz moduły
 wiedzy, pamięć, bezpieczeństwo, ekonomię, Agents Builder
 (Cloud/Desktop/Mobile Code & No-Code), OmniMath oraz
 **każdy wyspecjalizowany rój agentowy**. Etapy mają
@@ -769,4 +771,25 @@ CRL/OCSP i odbioru na niezależnych hostach.
 
 Procedura: [docs/TLS_PEER_IDENTITY_037.md](docs/TLS_PEER_IDENTITY_037.md).
 **Produkcja: NO-GO**. Plan wszystkich rojów bez zmian:
-[Roadmapa 0.36–0.84](docs/ROADMAP_FULL_ECOSYSTEM_2026.md).
+[Roadmapa 0.36–0.94](docs/ROADMAP_FULL_ECOSYSTEM_2026.md).
+
+## Aktualizacja roadmapy przed etapem 0.38 (2026-10-13)
+
+**Dokumentacja planistyczna zaktualizowana; etapu 0.38 jeszcze nie
+zaimplementowano.** Priorytety **0.36–0.94** obejmują rdzeń,
+wszystkie wyspecjalizowane roje (0.56–0.71), platformy budowania
+agentów, weryfikację oraz nowe badania OmniProof-STARK,
+OmniMacro, OmniMarket-L402+, OmniSubstrate, proof-carrying RSI,
+OmniThermo-Governor, neuromorfikę, wetware, optykę i kryptografię
+topologiczną — z oddzieleniem hipotez od sprawdzonych wdrożeń.
+
+**Następny etap: 0.38 — WASI sandbox default-deny**.
+Szczegółowa kolejność techniczna, zależności, modele zagrożeń
+oraz negatywne testy:
+[docs/PRIORITY_038_EXECUTION_CONTRACT.md](docs/PRIORITY_038_EXECUTION_CONTRACT.md).
+Nie mylić `ToolExecutor` z izolacją obcego kodu ani
+`tokio::timeout` z limitem CPU/RAM. Żaden obcy kod nie dostanie
+praw hosta, plików ani sieci wyłącznie na podstawie deklaracji agenta.
+
+**Plan aktualny:** [docs/ROADMAP_FULL_ECOSYSTEM_2026.md](docs/ROADMAP_FULL_ECOSYSTEM_2026.md).
+**Status wdrożeniowy:** Stage 0.38 NOT STARTED; Production **NO-GO**.
