@@ -478,8 +478,11 @@ echo '"healthy"'
         json!("healthy")
     );
     let observed = fs::read_to_string(status_file).expect("recorded Linux child limits");
-    assert_eq!(observed.trim(), "1:0", "child must have no_new_privs and no core");
-
+    assert_eq!(
+        observed.trim(),
+        "1:0",
+        "child must have no_new_privs and no core"
+    );
 }
 
 #[tokio::test]
