@@ -66,3 +66,84 @@ binary escaping its group, arbitrary native syscalls, or host compromise.
 Kernel-level seccomp/cgroups/namespaces and Firecracker/eBPF are scoped to
 0.39. Tests in this stage are implementation evidence, not third-party
 attestation and not a production security certification.
+
+## Rozszerzenie 0.38 — anti-TOCTOU, awarie i dowody z hosta
+
+### Niezmienność wykonywanego silnika
+
+`PinnedWasmtime` otwiera plik binarny przez `O_NOFOLLOW`, sprawdza
+`fstat` otwartego deskryptora (plik zwykły, jeden hardlink,
+root/effective-UID owner, brak zapisu grupy/świata, executable, rozmiar),
+kopiuje dokładne bajty do anonimowego Linux `memfd`, oblicza SHA-256
+w trakcie kopiowania i zakłada `F_SEAL_WRITE/GROW/SHRINK/SEAL`.
+Proces potomny wywołuje **uszczelnioną kopię** przez
+`/proc/self/fd/N`, a nie ponownie otwartą ścieżkę. Deskryptor
+jest `CLOEXEC` w koordynatorze; tryb jest odblokowany tylko
+po `fork` w procesie potomnym. Brak `memfd`, brak dostępu
+do `/proc/self/fd` lub błąd seal oznacza odmowę startu,
+bez awaryjnego fallbacku do mutowalnej ścieżki.
+
+Wymagania operacyjne: Linux z `memfd_create`, `F_ADD_SEALS`
+i działającym `/proc/self/fd`, administrowana instalacja Wasmtime.
+Nie zastępuje to ochrony konta usługi, kluczy i innych binariów.
+
+### Restart koordynatora / SIGKILL
+
+Dziecko otrzymuje `PR_SET_PDEATHSIG=SIGKILL`, z kontrolą PID
+rodzica po `prctl`. Sygnał dotyczy *bezpośredniego* potomka;
+nie jest dziedziczony przez dalsze procesy. Wdrożenie pod
+`deploy/systemd/ocaf-coordinator-wasi.service.example` oferuje
+`KillMode=control-group` oraz limity systemd `MemoryMax`,
+`CPUQuota`, `TasksMax` i osobny `PrivateTmp`. **Jest to
+szablon, a nie potwierdzona konfiguracja żadnego hosta.**
+Wdrożenie, crash test i potwierdzenie rzeczywistego cgroup v2
+wymagają docelowego serwera z operatorem systemd.
+
+### Powtarzalny hostowy soak i artefakt dowodowy
+
+`scripts/wasi_host_acceptance.py` uruchamia pełny zestaw
+`wasi_sandbox` na rzeczywistym silniku wskazanym przez
+`OCAF_TEST_WASMTIME`, wielokrotnie i z timeoutem.
+Tworzy wersjonowany raport JSON (SHA-256 silnika, commit,
+czas, próbki RSS/fd/PID, wynik testów, obecność nowych
+katalogów tymczasowych). Dane `/proc` są **próbkowane**:
+sumowanie RSS współdzieli strony; krótkich pików nie gwarantuje
+uchwycić. Nie jest to dokładny miernik cgroup `memory.peak`.
+Niczego nie usuwa z hosta i nie przesyła kluczy ani sekretów.
+
+CI używa dwóch cykli jako smoke soak; artefakt
+`wasi-host-acceptance` przechowuje raport dla audytu.
+Powtórzenie na docelowym hoście z realnym cgroup,
+przy obciążeniu oraz długotrwałym run, jest osobnym gate'em.
+
+Przykład operatora (po instalacji zatwierdzonego Wasmtime):
+
+```bash
+export OCAF_TEST_WASMTIME=/opt/ocaf/wasmtime/wasmtime
+export OCAF_TEST_WASMTIME_SHA256='<approved-real-binary-sha256>'
+python3 scripts/wasi_host_acceptance.py \
+  --cycles 100 --timeout 120 \
+  --max-rss-kib 1572864 --max-fds 512 --max-processes 128 \
+  --report /var/lib/ocaf/wasi-soak-acceptance.json
+```
+
+Limity w przykładzie to **parametry do zatwierdzenia przez
+operatora**, nie pomiary konkretnego hosta ani gwarancja.
+Produkcja wymaga osobnej oceny peak RSS i cgroup `memory.peak`,
+kontroli wspólnych tenantów, przeciążenia, restartu,
+partition recovery i effect-fencing.
+
+### Macierz dostępu do zamknięcia GO
+
+| Dostęp / dowód | Potrzebny do | Stan |
+| --- | --- | --- |
+| GitHub push i Actions | Implementacja, jednostkowe testy, realny Wasmtime CI i artefakt smoke | Dostępny; końcowy SHA wymaga zielonych przebiegów |
+| Operator Linux x86_64, systemd+cgroup v2, SSH/console z prawem wdrożenia | Faktyczne `MemoryMax`, `CPUQuota`, `TasksMax`, SIGKILL restart, chaos, pomiary | **Brak dostępu do hosta** |
+| Rzeczywiste wielodzierżawne środowisko staging z TLS/mTLS | Próby krzyżowe, awarie RPC, obciążenie na wielu maszynach | **Brak potwierdzonego środowiska** |
+| Opiekun podpisów Ed25519 / trust anchor (bez podawania kluczy prywatnych w czacie) | Wymuszenie rotacji i odebrania zaufania w każdym węźle | Procedura do wykonania przez operatora |
+| Niezależny ekspert bezpieczeństwa | Threat modeling, audyt kernel escape/side channel, sign-off | **Nieprzeprowadzony** |
+
+**Zasada odbioru:** nawet przy pełnym CI GREEN status produkcyjny
+pozostaje **NO-GO**, dopóki dowody z realnej infrastruktury i
+niezależny podpisany protokół akceptacji nie zostaną zatwierdzone.
+Etap 0.39 nie jest automatycznie rozpoczynany.
