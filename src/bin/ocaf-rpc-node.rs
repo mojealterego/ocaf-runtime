@@ -64,6 +64,23 @@ fn signed_rpc_client(node_id: &str, remote_id: &str, key: [u8; 32]) -> anyhow::R
     }
 }
 
+#[cfg(feature = "tls-bound")]
+fn tls_client_settings(
+) -> anyhow::Result<(std::net::SocketAddr, String, Arc<rustls::ClientConfig>)> {
+    let cert_path = Path::new(&require("OCAF_TLS_CLIENT_CERT_FILE")?).to_path_buf();
+    let key_path = Path::new(&require("OCAF_TLS_CLIENT_KEY_FILE")?).to_path_buf();
+    let ca_path = Path::new(&require("OCAF_TLS_SERVER_CA_FILE")?).to_path_buf();
+    let cert = read_private_text(&cert_path, 32_768)?;
+    let key = read_private_text(&key_path, 16_384)?;
+    let ca = read_private_text(&ca_path, 131_072)?;
+    let address: std::net::SocketAddr = require("OCAF_TLS_RPC_ADDRESS")?
+        .parse()
+        .map_err(|_| anyhow::anyhow!("invalid explicit TLS RPC address"))?;
+    let server_dns = require("OCAF_TLS_RPC_SERVER_DNS")?;
+    let config = client_config(cert.as_bytes(), key.as_bytes(), ca.as_bytes())?;
+    Ok((address, server_dns, Arc::new(config)))
+}
+
 fn load_zenoh_config() -> anyhow::Result<zenoh::Config> {
     // No implicit network config: operator must explicitly select the
     // reviewed endpoint/transport topology.
@@ -157,25 +174,40 @@ async fn main() -> anyhow::Result<()> {
             served?;
         }
         "worker" => {
-            anyhow::ensure!(
-                !tls_mode,
-                "TLS-bound worker mode is not implemented; refusing insecure Zenoh fallback"
-            );
-            let config = load_zenoh_config()?;
-            let session = ZenohTransport::connect_with_config(config).await?.session();
             let runtime = OcafRuntime::new(0);
             runtime.register(pricing_tool_manifest(), EchoTool).await?;
             let protocol = signed_rpc_client(&node_id, &peer_id, key)?;
-            let client = ZenohRpcClient::new(session, protocol);
             let pure_list = env::var("OCAF_CLUSTER_PURE_TOOLS").unwrap_or_default();
             let pure_tools: HashSet<String> = if pure_list.is_empty() {
                 HashSet::new()
             } else {
                 pure_list.split(',').map(str::to_owned).collect()
             };
-            let worker =
-                RemoteJobWorker::new(client, runtime, HashSet::from(["demo_echo".into()]))?
-                    .with_cluster_pure_tools(pure_tools)?;
+            let allowed = HashSet::from(["demo_echo".into()]);
+            let worker = if tls_mode {
+                #[cfg(feature = "tls-bound")]
+                {
+                    let (address, server_dns, config) = tls_client_settings()?;
+                    RemoteJobWorker::new_tls_bound(
+                        protocol,
+                        address,
+                        server_dns,
+                        config,
+                        runtime,
+                        allowed,
+                    )?
+                }
+                #[cfg(not(feature = "tls-bound"))]
+                {
+                    anyhow::bail!("TLS-bound worker requires compile-time tls-bound feature");
+                }
+            } else {
+                let config = load_zenoh_config()?;
+                let session = ZenohTransport::connect_with_config(config).await?.session();
+                let client = ZenohRpcClient::new(session, protocol);
+                RemoteJobWorker::new(client, runtime, allowed)?
+            }
+            .with_cluster_pure_tools(pure_tools)?;
             let mut heartbeat = tokio::time::interval(Duration::from_secs(5));
             let mut polling = tokio::time::interval(Duration::from_millis(500));
             loop {
@@ -245,24 +277,8 @@ async fn main() -> anyhow::Result<()> {
             let reply = if tls_mode {
                 #[cfg(feature = "tls-bound")]
                 {
-                    let cert = read_private_text(
-                        Path::new(&require("OCAF_TLS_CLIENT_CERT_FILE")?),
-                        32_768,
-                    )?;
-                    let key = read_private_text(
-                        Path::new(&require("OCAF_TLS_CLIENT_KEY_FILE")?),
-                        16_384,
-                    )?;
-                    let ca = read_private_text(
-                        Path::new(&require("OCAF_TLS_SERVER_CA_FILE")?),
-                        131_072,
-                    )?;
-                    let address: std::net::SocketAddr = require("OCAF_TLS_RPC_ADDRESS")?
-                        .parse()
-                        .map_err(|_| anyhow::anyhow!("invalid explicit TLS RPC address"))?;
-                    let server_name = require("OCAF_TLS_RPC_SERVER_DNS")?;
-                    let tls = client_config(cert.as_bytes(), key.as_bytes(), ca.as_bytes())?;
-                    tls_request(address, &server_name, Arc::new(tls), &protocol, action).await?
+                    let (address, server_dns, config) = tls_client_settings()?;
+                    tls_request(address, &server_dns, config, &protocol, action).await?
                 }
                 #[cfg(not(feature = "tls-bound"))]
                 {
