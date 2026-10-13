@@ -29,7 +29,8 @@ fn read_chain(pem: &[u8], limit: usize) -> anyhow::Result<Vec<CertificateDer<'st
         !pem.is_empty() && pem.len() <= limit,
         "TLS certificate material out of bounds"
     );
-    let certificates = CertificateDer::pem_slice_iter(pem).collect::<Vec<_>>();
+    let certificates = CertificateDer::pem_slice_iter(pem)
+        .collect::<Result<Vec<_>, _>>()?;
     anyhow::ensure!(
         !certificates.is_empty() && certificates.len() <= 16,
         "TLS certificate chain invalid"
