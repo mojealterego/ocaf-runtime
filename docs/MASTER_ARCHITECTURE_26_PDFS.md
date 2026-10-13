@@ -172,3 +172,13 @@ Supply Chain → commit w **main** → sprawdzony status CI →
 aktualizacja README i dokumentacji. Żadnych dodatkowych gałęzi,
 żadnego deklarowania wykonania bez artefaktów i testów.
 **Aktualna decyzja produkcyjna: NO-GO.**
+
+
+## Superseded by full ecosystem scope (26 PDFs)
+
+The provisional **0.36–0.50** planning boundary above is superseded by
+[ROADMAP_FULL_ECOSYSTEM_2026.md](ROADMAP_FULL_ECOSYSTEM_2026.md).
+The full roadmap includes **all identified specialized swarms and
+research tracks**, not just the initial 0.40/0.50 runtime/platform
+targets. Each item retains an implementation/test/acceptance gate.
+The stage numbers are roadmap IDs, not published Cargo versions.

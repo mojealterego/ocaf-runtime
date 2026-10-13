@@ -28,9 +28,11 @@ use crate::coordinator::{validate_capabilities, validate_tool_name, CoordinatorS
 use crate::jobs::{JobError, JobSpec, JobStore, LeasedJob};
 use crate::runtime::{OcafRuntime, RuntimeError, ToolCallRequest};
 
+mod cert_identity;
 mod directory_backend;
 mod job_backend;
 mod replay;
+use cert_identity::PinnedCertificate;
 use directory_backend::DirectoryBackend;
 use job_backend::JobBackend;
 use replay::ReplayBackend;
@@ -147,6 +149,10 @@ pub struct RpcRequest {
     pub issued_at_ms: u64,
     pub ttl_ms: u64,
     pub action: RpcAction,
+    /// Optional certificate-private-key proof over the exact immutable request
+    /// UUID, timestamp, recipient and action. Never trust an unsigned claim.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub certificate_proof_b64: Option<String>,
 }
 
 impl RpcRequest {
@@ -202,6 +208,7 @@ impl RpcRequest {
             issued_at_ms,
             ttl_ms,
             action,
+            certificate_proof_b64: None,
         })
     }
 
@@ -334,6 +341,7 @@ struct KeyRotation {
 pub struct PeerPolicy {
     key: [u8; 32],
     rotation: Option<KeyRotation>,
+    certificate_identity: Option<PinnedCertificate>,
     allowed_tools: HashSet<String>,
     requests_per_second: u32,
     job_submitter: bool,
@@ -346,12 +354,29 @@ impl PeerPolicy {
         Self {
             key,
             rotation: None,
+            certificate_identity: None,
             allowed_tools: allowed_tools.into_iter().collect(),
             requests_per_second: DEFAULT_PEER_RATE_PER_SECOND,
             job_submitter: false,
             job_worker: false,
             effect_writer: false,
         }
+    }
+
+    /// Require a signature with a private key corresponding to a pre-pinned
+    /// X.509 leaf certificate, in addition to HMAC. The caller MUST
+    /// independently verify the trust chain, EKU/SAN and revocation of this
+    /// leaf using the PKI gate. This is NOT a TLS exporter/channel binding.
+    pub fn with_pinned_certificate(
+        mut self,
+        cert_pem: &[u8],
+        expected_sha256: &str,
+    ) -> Result<Self, RpcError> {
+        self.certificate_identity = Some(PinnedCertificate::from_pem(
+            cert_pem,
+            expected_sha256,
+        )?);
+        Ok(self)
     }
 
     /// Stage a strictly bounded HMAC secret rollover for this exact RPC
@@ -634,6 +659,15 @@ impl RpcGateway {
             .ok_or(RpcError::Unauthorized)?;
         let (request, verified_key) = peer.authenticate(message, now)?;
         request.check(&self.node_id, now)?;
+        // Certificate PoP is enforced before any replay admission, rate
+        // allocation, tool lookup, or external side effect.
+        if let Some(bound_certificate) = &peer.certificate_identity {
+            bound_certificate.verify(&request)?;
+        } else if request.certificate_proof_b64.is_some() {
+            // A proof presented to an unbound peer policy is not trusted
+            // evidence of identity. Reject to prevent policy confusion.
+            return Err(RpcError::Unauthorized);
+        }
 
         // Count authenticated messages before manifest lookup or discovery,
         // so a compromised but authenticated peer cannot enumerate resources
@@ -924,6 +958,7 @@ pub struct RpcClient {
     node_id: String,
     remote_id: String,
     key: [u8; 32],
+    certificate_private_key_pem: Option<Vec<u8>>,
 }
 
 impl RpcClient {
@@ -937,7 +972,19 @@ impl RpcClient {
             node_id: node_id.into(),
             remote_id: remote_id.into(),
             key,
+            certificate_private_key_pem: None,
         })
+    }
+
+    /// Opt-in certificate proof for every newly prepared RPC request. The
+    /// key must be loaded from an owner-only, protected file. Client clones
+    /// hold independent copies of sensitive bytes; keep their lifetime short.
+    pub fn with_certificate_private_key(mut self, key_pem: Vec<u8>) -> Result<Self, RpcError> {
+        if key_pem.is_empty() || key_pem.len() > 16 * 1024 {
+            return Err(RpcError::Malformed);
+        }
+        self.certificate_private_key_pem = Some(key_pem);
+        Ok(self)
     }
 
     pub fn prepare(
@@ -945,7 +992,10 @@ impl RpcClient {
         action: RpcAction,
         ttl_ms: u64,
     ) -> Result<(RpcRequest, Vec<u8>), RpcError> {
-        let req = RpcRequest::new(&self.node_id, &self.remote_id, now_ms()?, ttl_ms, action)?;
+        let mut req = RpcRequest::new(&self.node_id, &self.remote_id, now_ms()?, ttl_ms, action)?;
+        if let Some(private_key) = &self.certificate_private_key_pem {
+            req = req.with_certificate_proof(private_key)?;
+        }
         let encoded = SignedFrame::seal(&req, &self.key)?;
         Ok((req, encoded))
     }

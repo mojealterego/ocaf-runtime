@@ -1770,6 +1770,7 @@ dependencies = [
  "jsonschema",
  "libc",
  "native-tls",
+ "openssl",
  "postgres-native-tls",
  "rusqlite",
  "serde",

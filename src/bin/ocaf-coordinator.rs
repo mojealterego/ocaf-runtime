@@ -32,6 +32,11 @@ struct PeerConfig {
     activate_at_ms: Option<u64>,
     #[serde(default)]
     retire_old_at_ms: Option<u64>,
+    /// Opt-in pinned leaf certificate proof for this RPC sender.
+    #[serde(default)]
+    certificate_pem_path: Option<PathBuf>,
+    #[serde(default)]
+    certificate_sha256: Option<String>,
     allowed_tools: Vec<String>,
     #[serde(default)]
     submit_jobs: bool,
@@ -68,6 +73,9 @@ fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
     }
     let mut peers = HashMap::with_capacity(parsed.len());
     let mut seen_keys = HashSet::new();
+    let mut seen_certificates = HashSet::new();
+    let require_certificate_proof =
+        env::var("OCAF_REQUIRE_PEER_CERT_POP").as_deref() == Ok("1");
     for (node, entry) in parsed {
         let secret = B64
             .decode(&entry.key_b64)
@@ -103,6 +111,26 @@ fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
                     .map_err(|_| anyhow::anyhow!("invalid peer rotation schedule for {node}"))?;
             }
             _ => anyhow::bail!("incomplete peer rotation configuration for {node}"),
+        }
+        match (entry.certificate_pem_path, entry.certificate_sha256) {
+            (None, None) => {
+                if require_certificate_proof {
+                    anyhow::bail!("peer certificate binding required for {node}");
+                }
+            }
+            (Some(cert_path), Some(pin)) => {
+                if !cert_path.is_absolute() {
+                    anyhow::bail!("peer certificate path must be absolute for {node}");
+                }
+                let pem = read_private_text(&cert_path, 16_384)?;
+                policy = policy
+                    .with_pinned_certificate(pem.as_bytes(), &pin)
+                    .map_err(|_| anyhow::anyhow!("invalid pinned certificate for {node}"))?;
+                if !seen_certificates.insert(pin) {
+                    anyhow::bail!("duplicate certificate identity across peers");
+                }
+            }
+            _ => anyhow::bail!("incomplete certificate identity configuration for {node}"),
         }
         if entry.submit_jobs {
             policy = policy.allow_job_submission();
@@ -370,6 +398,26 @@ async fn main() -> anyhow::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rejects_incomplete_certificate_identity_metadata() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("peers.json");
+        let config = serde_json::json!({
+            "agent": {
+                "key_b64": B64.encode([1u8; 32]),
+                "certificate_sha256": "a".repeat(64),
+                "allowed_tools": ["echo"]
+            }
+        });
+        std::fs::write(&path, config.to_string()).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+        }
+        assert!(load_peers(&path).is_err());
+    }
 
     #[test]
     fn rejects_incomplete_peer_rotation_metadata() {

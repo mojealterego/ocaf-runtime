@@ -717,3 +717,35 @@ priorytetów 0.36–0.50** znajdują się w
 [docs/MASTER_ARCHITECTURE_26_PDFS.md](docs/MASTER_ARCHITECTURE_26_PDFS.md).
 Przyjęto osobne cele odbioru dla bezpiecznego runtime (0.40)
 i rozszerzonej platformy (0.50). Produkcja pozostaje **NO-GO**.
+
+
+## Priorytet 0.36 — dodatkowy kryptograficzny dowód tożsamości agenta
+
+Opcjonalna brama certyfikatu X.509 wymaga od przypisanego agenta
+**zarówno poprawnego HMAC**, jak i podpisu żądania RPC kluczem
+prywatnym odpowiadającym certyfikatowi o odcisku SHA-256
+przypiętym w `OCAF_PEERS_FILE`. Weryfikacja podpisu następuje
+**przed** przyjęciem numeru replay, kontrolą stawek i wywołaniem
+narzędzia. Włączenie dla wszystkich agentów można wymusić przez
+`OCAF_REQUIRE_PEER_CERT_POP=1` na koordynatorze. Po stronie klienta
+`ocaf-rpc-node` używa `OCAF_RPC_CERT_KEY_FILE` ze
+ściśle chronionym kluczem prywatnym.
+
+**Ograniczenie:** to dowód posiadania klucza certyfikatu
+na poziomie wiadomości, **a nie** niezależnie zweryfikowane
+powiązanie z certyfikatem faktycznej sesji TLS Zenoh.
+Tożsamość transportowa, łańcuch CA, EKU, SAN, revocation
+i rzeczywiste TLS channel-binding wymagają odrębnej
+weryfikacji i implementacji. Patrz
+[docs/RPC_CERT_IDENTITY_036.md](docs/RPC_CERT_IDENTITY_036.md).
+
+## Nowa pełna Roadmapa: wszystkie 26 plików PDF
+
+**[OCAF Full Ecosystem Roadmap — priorytety 0.36–0.84](docs/ROADMAP_FULL_ECOSYSTEM_2026.md)**
+zawiera wszystkie rozdziały 1–33 rozszerzonej dokumentacji, moduły
+wiedzy, pamięć, bezpieczeństwo, ekonomię, Agents Builder
+(Cloud/Desktop/Mobile Code & No-Code), OmniMath oraz
+**każdy wyspecjalizowany rój agentowy**. Etapy mają
+mierzalne kryteria akceptacji. Dotychczasowa mapa 0.36–0.50
+jest nieaktualna i zostaje zastąpiona tą roadmapą.
+Stan wdrożenia produkcyjnego: **NO-GO**.

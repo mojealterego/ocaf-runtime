@@ -11,6 +11,7 @@ use std::time::Duration;
 use base64::engine::general_purpose::STANDARD as B64;
 use base64::Engine as _;
 use ocaf_runtime::jobs::remote::RemoteJobWorker;
+use ocaf_runtime::ops::secrets::read_private_text;
 use ocaf_runtime::rpc::{PeerPolicy, RpcAction, RpcClient, RpcGateway, RpcStatus};
 use ocaf_runtime::runtime::OcafRuntime;
 use ocaf_runtime::transport::rpc::{
@@ -41,6 +42,22 @@ fn load_key_env(name: &str) -> anyhow::Result<[u8; 32]> {
         anyhow::bail!("all-zero shared key is forbidden");
     }
     Ok(key)
+}
+
+fn signed_rpc_client(node_id: &str, remote_id: &str, key: [u8; 32]) -> anyhow::Result<RpcClient> {
+    let client = RpcClient::new(node_id, remote_id, key)?;
+    match env::var("OCAF_RPC_CERT_KEY_FILE") {
+        Ok(filename) => {
+            let path = Path::new(&filename);
+            if !path.is_absolute() {
+                anyhow::bail!("OCAF_RPC_CERT_KEY_FILE must be an absolute path");
+            }
+            let pem = read_private_text(path, 16_384)?;
+            Ok(client.with_certificate_private_key(pem.into_bytes())?)
+        }
+        Err(env::VarError::NotPresent) => Ok(client),
+        Err(error) => Err(anyhow::anyhow!("invalid RPC certificate key file environment: {error}")),
+    }
 }
 
 fn load_zenoh_config() -> anyhow::Result<zenoh::Config> {
@@ -94,7 +111,7 @@ async fn main() -> anyhow::Result<()> {
             }
             let heartbeat_task = if let Some(coord_id) = coordinator_id {
                 let coord_key = load_key_env("OCAF_COORDINATOR_KEY_B64")?;
-                let protocol = RpcClient::new(&node_id, &coord_id, coord_key)?;
+                let protocol = signed_rpc_client(&node_id, &coord_id, coord_key)?;
                 let reporter = ZenohRpcClient::new(Arc::clone(&session), protocol);
                 Some(tokio::spawn(async move {
                     // Avoid advertising until the local queryable has started.
@@ -125,7 +142,7 @@ async fn main() -> anyhow::Result<()> {
             let session = ZenohTransport::connect_with_config(config).await?.session();
             let runtime = OcafRuntime::new(0);
             runtime.register(pricing_tool_manifest(), EchoTool).await?;
-            let protocol = RpcClient::new(&node_id, &peer_id, key)?;
+            let protocol = signed_rpc_client(&node_id, &peer_id, key)?;
             let client = ZenohRpcClient::new(session, protocol);
             let pure_list = env::var("OCAF_CLUSTER_PURE_TOOLS").unwrap_or_default();
             let pure_tools: HashSet<String> = if pure_list.is_empty() {
@@ -154,7 +171,7 @@ async fn main() -> anyhow::Result<()> {
             }
         }
         "client" => {
-            let protocol = RpcClient::new(&node_id, &peer_id, key)?;
+            let protocol = signed_rpc_client(&node_id, &peer_id, key)?;
             let attempts = env::var("OCAF_RECONNECT_ATTEMPTS")
                 .unwrap_or_else(|_| "4".to_string())
                 .parse::<u8>()

@@ -47,6 +47,8 @@ jobs:
         run: cargo fmt --all -- --check
       - name: Clippy (core only)
         run: cargo clippy --locked --all-targets --no-default-features -- -D warnings
+      - name: X.509 leaf-key proof-of-possession and RPC sender acceptance
+        run: cargo test --locked --no-default-features --test rpc_cert_identity
       - name: HMAC peer key cutover and replay identity acceptance
         run: cargo test --locked --no-default-features --test rpc_key_rotation
       - name: Tests (core only)
