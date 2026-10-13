@@ -30,6 +30,10 @@ jobs:
       OCAF_REQUIRE_PG_TESTS: "1"
     steps:
       - uses: actions/checkout@v4
+      - name: Offline release precheck unit tests (Python 3.11+)
+        run: python3 -m unittest discover -s scripts/tests -v
+      - name: Release evidence inventory (development only; not a release gate)
+        run: python3 scripts/release_readiness.py --repo . --report-only
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy

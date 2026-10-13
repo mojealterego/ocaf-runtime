@@ -1,6 +1,6 @@
 # Rust
 target/
-Cargo.lock
+# Cargo.lock must be committed for reproducible release candidates.
 *.rs.bk
 .cargo/
 

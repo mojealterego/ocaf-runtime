@@ -552,3 +552,27 @@ production network conditions.
 
 The crate declares MIT licensing in `Cargo.toml`. License/redistribution
 status should be reviewed before public release.
+
+## Kontrola gotowości wydania (v0.27)
+
+Skrypt `scripts/release_readiness.py` sprawdza obecność i strukturę pliku
+`Cargo.lock` oraz kompletność, integralność SHA-256 i aktualność
+udokumentowanych dowodów operacyjnych. Niespełnione wymagania oznacza
+`NO_GO`. Zgodność formalna artefaktów nie stanowi certyfikacji
+bezpieczeństwa ani gotowości produkcyjnej. Ponieważ dotychczas w
+repozytorium nie zatwierdzono `Cargo.lock` i zewnętrznych dowodów
+wdrożeniowych, produkcyjne zatwierdzenie pozostaje zablokowane.
+
+Weryfikacja testów: `python3 -m unittest discover -s scripts/tests -v`.
+Pełne wymagania i sposób użycia: [docs/RELEASE_READINESS.md](docs/RELEASE_READINESS.md).
+
+## Prawa autorskie i kontakt
+
+**© 2026 MOJEALTEREGO — Andrzej Mikulski. Wszystkie prawa zastrzeżone.**
+
+**Email:** mojealterego21@gmail.com  
+**Tel.:** +48 455 575 337
+
+Nota o prawach autorskich nie zastępuje aktualnej deklaracji licencji MIT
+w `Cargo.toml`. Warunki dalszej dystrybucji wymagają spójnego ustalenia
+przed wydaniem produkcyjnym.
