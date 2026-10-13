@@ -65,6 +65,10 @@ jobs:
         run: cargo test --locked --no-default-features --features ha-probe --test ha_probe_cli --bin ocaf-ha-probe -- --test-threads=1
       - name: HA probe Clippy
         run: cargo clippy --locked --all-targets --no-default-features --features ha-probe -- -D warnings
+      - name: TLS 1.3 verified peer certificate to RPC sender binding (real handshake)
+        run: cargo test --locked --features tls-bound --test tls_bound_identity
+      - name: TLS-bound Clippy (all targets)
+        run: cargo clippy --locked --features tls-bound --all-targets -- -D warnings
       - name: Tests (Zenoh)
         run: cargo test --locked
       - name: Transport chaos (Zenoh and PostgreSQL takeover)

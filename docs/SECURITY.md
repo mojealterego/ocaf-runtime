@@ -203,3 +203,18 @@ verified TLS peer-certificate identity into this RPC gateway. An
 HMAC-authenticated `sender` is **not** proof that the caller has the
 corresponding X.509 SAN. Do not claim workload certificate binding.
 See [PEER_CREDENTIAL_ROTATION_035.md](PEER_CREDENTIAL_ROTATION_035.md).
+
+
+## Priority 0.37 — exclusive mTLS-bound RPC ingress
+
+Legacy Zenoh queryable RPC does not reveal the verified TLS leaf to the
+RPC gateway. The new `tls-bound` feature exposes a **separate TCP/TLS 1.3
+listener** that reads the WebPKI-verified client certificate from the
+same connection transporting the signed RPC request. It binds that
+leaf's DER SHA-256 to the specific sender's configured certificate pin
+and exact DNS SAN, then enforces HMAC, certificate PoP, replay limits
+and ACL. Selecting `OCAF_RPC_INGRESS=tls-bound` means no Zenoh RPC
+queryable will be declared *in that coordinator process*.
+CRL/OCSP, existing external Zenoh services, worker transport migration
+and certificate hot reload remain outside this implementation.
+Read [TLS_PEER_IDENTITY_037.md](TLS_PEER_IDENTITY_037.md). NO-GO.

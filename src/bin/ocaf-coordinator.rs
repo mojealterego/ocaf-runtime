@@ -4,7 +4,7 @@
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -17,6 +17,8 @@ use ocaf_runtime::ops::secrets::{load_env_secret, read_private_text};
 use ocaf_runtime::rpc::{PeerPolicy, RpcGateway};
 use ocaf_runtime::runtime::OcafRuntime;
 use ocaf_runtime::transport::rpc::ZenohRpcServer;
+#[cfg(feature = "tls-bound")]
+use ocaf_runtime::transport::tls_bound::{server_config, TlsBoundRpcServer};
 use ocaf_runtime::transport_policy::{read_zenoh_config, validate_zenoh_config};
 use serde::Deserialize;
 
@@ -37,6 +39,8 @@ struct PeerConfig {
     certificate_pem_path: Option<PathBuf>,
     #[serde(default)]
     certificate_sha256: Option<String>,
+    #[serde(default)]
+    tls_dns_san: Option<String>,
     allowed_tools: Vec<String>,
     #[serde(default)]
     submit_jobs: bool,
@@ -75,6 +79,7 @@ fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
     let mut seen_keys = HashSet::new();
     let mut seen_certificates = HashSet::new();
     let require_certificate_proof = env::var("OCAF_REQUIRE_PEER_CERT_POP").as_deref() == Ok("1");
+    let tls_mode = env::var("OCAF_RPC_INGRESS").as_deref() == Ok("tls-bound");
     for (node, entry) in parsed {
         let secret = B64
             .decode(&entry.key_b64)
@@ -131,6 +136,26 @@ fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
             }
             _ => anyhow::bail!("incomplete certificate identity configuration for {node}"),
         }
+        match entry.tls_dns_san {
+            Some(dns) => {
+                if !tls_mode {
+                    anyhow::bail!("TLS-bound peer identity cannot use legacy Zenoh RPC ingress");
+                }
+                #[cfg(feature = "tls-bound")]
+                {
+                    policy = policy
+                        .with_tls_dns_identity(&dns)
+                        .map_err(|_| anyhow::anyhow!("invalid TLS-bound SAN for {node}"))?;
+                }
+                #[cfg(not(feature = "tls-bound"))]
+                {
+                    let _ = dns;
+                    anyhow::bail!("TLS-bound ingress requires compile-time feature tls-bound");
+                }
+            }
+            None if tls_mode => anyhow::bail!("TLS-bound ingress requires peer certificate and DNS SAN for {node}"),
+            None => {}
+        }
         if entry.submit_jobs {
             policy = policy.allow_job_submission();
         }
@@ -148,6 +173,58 @@ fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
     Ok(peers)
 }
 
+fn ingress_config(allow_loopback: bool) -> anyhow::Result<zenoh::Config> {
+    match env::var("OCAF_RPC_INGRESS").as_deref() {
+        Ok("tls-bound") => {
+            // A tls-bound coordinator never creates a Zenoh session.
+            Ok(zenoh::Config::default())
+        }
+        Ok("zenoh") | Err(env::VarError::NotPresent) => {
+            let source = read_zenoh_config(&absolute_path("OCAF_ZENOH_CONFIG")?)?;
+            validate_zenoh_config(&source, allow_loopback)?;
+            zenoh::Config::from_json5(&source)
+                .map_err(|_| anyhow::anyhow!("cannot parse vetted Zenoh config"))
+        }
+        _ => anyhow::bail!("OCAF_RPC_INGRESS must be zenoh or tls-bound"),
+    }
+}
+
+/// Select exactly ONE ingress for the process. In TLS-bound mode Zenoh
+/// queryables are never advertised, preventing legacy HMAC-only fallback.
+async fn serve_gateway(
+    gateway: Arc<RpcGateway>,
+    config: zenoh::Config,
+) -> anyhow::Result<()> {
+    match env::var("OCAF_RPC_INGRESS").as_deref() {
+        Ok("tls-bound") => {
+            #[cfg(feature = "tls-bound")]
+            {
+                let cert = read_private_text(&absolute_path("OCAF_TLS_SERVER_CERT_FILE")?, 32_768)?;
+                let key = read_private_text(&absolute_path("OCAF_TLS_SERVER_KEY_FILE")?, 16_384)?;
+                let ca = read_private_text(&absolute_path("OCAF_TLS_CLIENT_CA_FILE")?, 131_072)?;
+                let config = server_config(cert.as_bytes(), key.as_bytes(), ca.as_bytes())?;
+                let bind = env_required("OCAF_TLS_RPC_BIND")?
+                    .parse::<std::net::SocketAddr>()
+                    .map_err(|_| anyhow::anyhow!("OCAF_TLS_RPC_BIND must be an explicit socket address"))?;
+                let listener = tokio::net::TcpListener::bind(bind).await?;
+                tracing::info!(address = %listener.local_addr()?, "Exclusive TLS 1.3-bound RPC ingress started");
+                TlsBoundRpcServer::new(listener, config, gateway)?.serve().await
+            }
+            #[cfg(not(feature = "tls-bound"))]
+            {
+                let _ = gateway;
+                let _ = config;
+                anyhow::bail!("TLS-bound ingress requires compile-time feature tls-bound");
+            }
+        }
+        Ok("zenoh") | Err(env::VarError::NotPresent) => {
+            let session = Arc::new(zenoh::open(config).await?);
+            ZenohRpcServer::new(session, gateway).serve().await
+        }
+        _ => anyhow::bail!("OCAF_RPC_INGRESS must be zenoh or tls-bound"),
+    }
+}
+
 /// Opt-in multi-host coordinator path. All security-critical state lives on
 /// the same PostgreSQL primary, and serving is tied to an active advisory
 /// leader. PostgreSQL HA, VIP/load balancer and certificate operations are
@@ -161,10 +238,7 @@ async fn run_postgres_cluster(node_id: &str) -> anyhow::Result<()> {
     let allow_loopback = env::var("OCAF_ALLOW_INSECURE_LOOPBACK").as_deref() == Ok("1");
 
     let peers = load_peers(&absolute_path("OCAF_PEERS_FILE")?)?;
-    let source = read_zenoh_config(&absolute_path("OCAF_ZENOH_CONFIG")?)?;
-    validate_zenoh_config(&source, allow_loopback)?;
-    let config = zenoh::Config::from_json5(&source)
-        .map_err(|err| anyhow::anyhow!("cannot parse vetted Zenoh config: {err}"))?;
+    let config = ingress_config(allow_loopback)?;
     let mode = env::var("OCAF_COORDINATOR_MODE").unwrap_or_else(|_| "active".into());
     match mode.as_str() {
         "active" | "standby" => {
@@ -253,12 +327,6 @@ async fn serve_postgres_generation(
         .await?
         .with_pg_leader(Arc::clone(&leader));
 
-    let session = Arc::new(
-        zenoh::open(config.clone())
-            .await
-            .map_err(|err| anyhow::anyhow!("Zenoh open: {err}"))?,
-    );
-    let server = ZenohRpcServer::new(session, Arc::new(gateway));
     tracing::info!(node=%node_id, cluster=%cluster_id, "PostgreSQL coordinator leader serving");
 
     let watch = async {
@@ -280,7 +348,7 @@ async fn serve_postgres_generation(
         Ok::<(), ocaf_runtime::jobs::JobError>(())
     };
     let result = tokio::select! {
-        result = server.serve() => result,
+        result = serve_gateway(Arc::new(gateway), config.clone()) => result,
         result = watch => {
             match result {
                 Ok(()) => Err(anyhow::anyhow!("leader monitor unexpectedly stopped")),
@@ -354,14 +422,9 @@ async fn main() -> anyhow::Result<()> {
         _ => anyhow::bail!("OCAF_COORDINATOR_MODE must be active or standby"),
     };
     let peers = load_peers(&absolute_path("OCAF_PEERS_FILE")?)?;
-    let zenoh_config = env_required("OCAF_ZENOH_CONFIG")?;
-    let source = read_zenoh_config(Path::new(&zenoh_config))?;
-    validate_zenoh_config(
-        &source,
+    let config = ingress_config(
         env::var("OCAF_ALLOW_INSECURE_LOOPBACK").as_deref() == Ok("1"),
     )?;
-    let config = zenoh::Config::from_json5(&source)
-        .map_err(|err| anyhow::anyhow!("cannot parse vetted Zenoh config: {err}"))?;
 
     let gateway =
         RpcGateway::with_sqlite_replay(&node_id, OcafRuntime::new(0), peers, 64, &replay)?
@@ -383,15 +446,8 @@ async fn main() -> anyhow::Result<()> {
     } else {
         gateway.with_job_db(&jobs)?
     };
-    let session = Arc::new(
-        zenoh::open(config)
-            .await
-            .map_err(|err| anyhow::anyhow!("Zenoh open: {err}"))?,
-    );
     tracing::info!(node = %node_id, "OCAF authenticated coordinator active");
-    ZenohRpcServer::new(session, Arc::new(gateway))
-        .serve()
-        .await
+    serve_gateway(Arc::new(gateway), config).await
 }
 
 #[cfg(test)]

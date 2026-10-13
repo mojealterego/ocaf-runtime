@@ -21,6 +21,10 @@ const MAX_SIGNATURE_BASE64: usize = 8192;
 #[derive(Clone)]
 pub(crate) struct PinnedCertificate {
     public_key: PKey<Public>,
+    #[cfg(feature = "tls-bound")]
+    cert_der_sha256: [u8; 32],
+    #[cfg(feature = "tls-bound")]
+    leaf: X509,
 }
 
 impl PinnedCertificate {
@@ -45,7 +49,52 @@ impl PinnedCertificate {
         if !matches!(public_key.id(), Id::EC | Id::RSA) {
             return Err(RpcError::Malformed);
         }
-        Ok(Self { public_key })
+        #[cfg(feature = "tls-bound")]
+        let cert_der_sha256: [u8; 32] = Sha256::digest(&der).into();
+        Ok(Self {
+            public_key,
+            #[cfg(feature = "tls-bound")]
+            cert_der_sha256,
+            #[cfg(feature = "tls-bound")]
+            leaf: cert,
+        })
+    }
+
+    #[cfg(feature = "tls-bound")]
+    pub(crate) fn verify_tls_leaf(&self, trusted_peer_der: &[u8]) -> Result<(), RpcError> {
+        // Transport certificate must be read only from the live rustls
+        // session AFTER WebPkiClientVerifier's trust/EKU checks.
+        use openssl::memcmp;
+        let presented: [u8; 32] = Sha256::digest(trusted_peer_der).into();
+        if !memcmp::eq(&self.cert_der_sha256, &presented) {
+            return Err(RpcError::Unauthorized);
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "tls-bound")]
+    pub(crate) fn verify_dns_san(&self, expected: &str) -> Result<(), RpcError> {
+        let expected = expected.to_ascii_lowercase();
+        if expected.is_empty()
+            || expected.len() > 253
+            || expected.contains('*')
+            || expected.starts_with('.')
+            || expected.ends_with('.')
+            || expected.split('.').any(|label| {
+                label.is_empty() || label.len() > 63 ||
+                !label.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-') ||
+                label.starts_with('-') || label.ends_with('-')
+            })
+        {
+            return Err(RpcError::Malformed);
+        }
+        let matched = self.leaf.subject_alt_names().is_some_and(|sans| {
+            sans.iter().any(|san| san.dnsname().is_some_and(|dns| dns.eq_ignore_ascii_case(&expected)))
+        });
+        if !matched {
+            return Err(RpcError::Unauthorized);
+        }
+        Ok(())
     }
 
     pub(crate) fn verify(&self, request: &RpcRequest) -> Result<(), RpcError> {

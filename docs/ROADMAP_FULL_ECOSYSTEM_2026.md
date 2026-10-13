@@ -48,7 +48,7 @@ traceability. Version numbers advance only after real release approvals.
 | ID | Scope/module | Deliverable | Gate | Evidence needed |
 |---|---|---|---|---|
 | 0.36 | Identity/RPC | Application-layer certificate private-key proof + HMAC and pinning | Implement (opt-in) | Existing CI tests; genuine transport TLS peer binding remains blocked |
-| 0.37 | Identity/RPC | Verified TLS peer identity/channel binding to RPC sender; PKI CA/EKU/SAN/revocation and rollover | P0 / NO-GO | Negative test with swapped TLS cert despite a valid HMAC and PoP |
+| 0.37 | Identity/RPC | Separate TLS 1.3-bound ingress verifies live session leaf against RPC sender pin and SAN; CRL/reload/worker migration remains | Implemented experimentally / NO-GO | Real handshake and swapped-cert tests in CI; external PKI/CRL and multi-host still pending |
 | 0.38 | Execution | Default-deny deterministic WASI runner for untrusted tool execution | P0 / NO-GO | No network/host FS, bounded CPU/memory/time, hostile payload tests |
 | 0.39 | Execution | Firecracker microVM broker + eBPF Aya controls + isolation attestations | P0 / NO-GO | Linux/KVM negative isolation, teardown, syscall/network constraints; mobile separate |
 | 0.40 | HA | Three physical host PostgreSQL HA, real leader fencing and failover | P0 / NO-GO | Host power loss, split-brain, former leader effect-writes rejected |
@@ -176,3 +176,22 @@ traceability. Version numbers advance only after real release approvals.
   stated mathematical and security hypotheses are actually verified.
 
 **Current production decision: NO-GO.**
+
+
+## Execution status — 0.37 (2026-10-13)
+
+Added opt-in TCP/mTLS ingress with actual certificate identity from
+the same TLS session as the RPC request. Unlike the Zenoh query API,
+the rustls handler exposes WebPKI-verified client certificates and
+maps them to configured RPC sender fingerprints and exact SANs.
+The new endpoint is **exclusive** with the legacy Zenoh queryable
+within `ocaf-coordinator`. End-to-end test uses distinct real
+client TLS certificates, including a valid HMAC+application PoP
+with the *wrong* mTLS certificate (must reject). CRL/OCSP,
+certificate renewal, migration of remote worker roles, real multi-host
+host isolation and external acceptance remain **open blockers**.
+See [TLS_PEER_IDENTITY_037.md](TLS_PEER_IDENTITY_037.md).
+
+The entire 0.38–0.84 roadmap, including *all specialized agent swarms*,
+remains mandatory scope. No experimental module is claimed complete
+merely because its architecture is described in the source PDFs.

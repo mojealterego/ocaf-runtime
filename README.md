@@ -749,3 +749,24 @@ wiedzy, pamięć, bezpieczeństwo, ekonomię, Agents Builder
 mierzalne kryteria akceptacji. Dotychczasowa mapa 0.36–0.50
 jest nieaktualna i zostaje zastąpiona tą roadmapą.
 Stan wdrożenia produkcyjnego: **NO-GO**.
+
+
+## Priorytet 0.37 — TLS 1.3: powiązanie rzeczywistego certyfikatu sesji z RPC
+
+Dodano opcjonalną bramę `tls-bound`, opartą o TCP + rustls/Tokio,
+która odczytuje certyfikat klienta **z zweryfikowanej sesji mTLS
+przenoszącej dane RPC**, a nie z informacji deklarowanych przez agenta.
+Następnie wymaga zgodności SHA-256 certyfikatu z przypisanym
+`sender`, poprawnego DNS SAN, HMAC i podpisu PoP z 0.36.
+
+`OCAF_RPC_INGRESS=tls-bound` uruchamia alternatywny listener i
+**nie otwiera żadnego queryable Zenoh** w danym procesie koordynatora.
+Funkcja jest opt-in (`--features tls-bound`); standardowe wdrożenia
+Zenoh nie uzyskują automatycznie tego mechanizmu. Wstępny klient CLI
+obsługuje ten transport; demo worker/server go nie obsługuje i
+zamiast fallbacku odmawia pracy. Brakuje automatycznej kontroli
+CRL/OCSP i odbioru na niezależnych hostach.
+
+Procedura: [docs/TLS_PEER_IDENTITY_037.md](docs/TLS_PEER_IDENTITY_037.md).
+**Produkcja: NO-GO**. Plan wszystkich rojów bez zmian:
+[Roadmapa 0.36–0.84](docs/ROADMAP_FULL_ECOSYSTEM_2026.md).

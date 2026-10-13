@@ -14,6 +14,8 @@ use ocaf_runtime::jobs::remote::RemoteJobWorker;
 use ocaf_runtime::ops::secrets::read_private_text;
 use ocaf_runtime::rpc::{PeerPolicy, RpcAction, RpcClient, RpcGateway, RpcStatus};
 use ocaf_runtime::runtime::OcafRuntime;
+#[cfg(feature = "tls-bound")]
+use ocaf_runtime::transport::tls_bound::{client_config, request as tls_request};
 use ocaf_runtime::transport::rpc::{
     ReconnectPolicy, ResilientZenohRpcClient, ZenohRpcClient, ZenohRpcServer,
 };
@@ -83,10 +85,11 @@ async fn main() -> anyhow::Result<()> {
     let node_id = require("OCAF_NODE_ID")?;
     let peer_id = require("OCAF_PEER_ID")?;
     let key = load_key_env("OCAF_SHARED_KEY_B64")?;
-    let config = load_zenoh_config()?;
-
+    let tls_mode = env::var("OCAF_RPC_INGRESS").as_deref() == Ok("tls-bound");
     match role.as_str() {
         "server" => {
+            anyhow::ensure!(!tls_mode, "TLS-bound worker/server mode is not available via demo node; use ocaf-coordinator");
+            let config = load_zenoh_config()?;
             let session = ZenohTransport::connect_with_config(config).await?.session();
             let runtime = OcafRuntime::new(0);
             runtime.register(pricing_tool_manifest(), EchoTool).await?;
@@ -141,6 +144,8 @@ async fn main() -> anyhow::Result<()> {
             served?;
         }
         "worker" => {
+            anyhow::ensure!(!tls_mode, "TLS-bound worker mode is not implemented; refusing insecure Zenoh fallback");
+            let config = load_zenoh_config()?;
             let session = ZenohTransport::connect_with_config(config).await?.session();
             let runtime = OcafRuntime::new(0);
             runtime.register(pricing_tool_manifest(), EchoTool).await?;
@@ -184,7 +189,6 @@ async fn main() -> anyhow::Result<()> {
                 Duration::from_secs(1),
                 Duration::from_secs(9),
             )?;
-            let client = ResilientZenohRpcClient::new(config, protocol, reconnect);
             let action = match env::var("OCAF_ACTION").as_deref() {
                 Ok("discover") => RpcAction::Discover,
                 Ok("heartbeat") => RpcAction::Heartbeat {
@@ -222,7 +226,27 @@ async fn main() -> anyhow::Result<()> {
                 },
                 Ok(other) => anyhow::bail!("unknown OCAF_ACTION: {other}"),
             };
-            let reply = client.request(action).await?;
+            let reply = if tls_mode {
+                #[cfg(feature = "tls-bound")]
+                {
+                    let cert = read_private_text(Path::new(&require("OCAF_TLS_CLIENT_CERT_FILE")?), 32_768)?;
+                    let key = read_private_text(Path::new(&require("OCAF_TLS_CLIENT_KEY_FILE")?), 16_384)?;
+                    let ca = read_private_text(Path::new(&require("OCAF_TLS_SERVER_CA_FILE")?), 131_072)?;
+                    let address: std::net::SocketAddr = require("OCAF_TLS_RPC_ADDRESS")?
+                        .parse().map_err(|_| anyhow::anyhow!("invalid explicit TLS RPC address"))?;
+                    let server_name = require("OCAF_TLS_RPC_SERVER_DNS")?;
+                    let tls = client_config(cert.as_bytes(), key.as_bytes(), ca.as_bytes())?;
+                    tls_request(address, &server_name, Arc::new(tls), &protocol, action).await?
+                }
+                #[cfg(not(feature = "tls-bound"))]
+                {
+                    anyhow::bail!("TLS-bound ingress requires compile-time feature tls-bound");
+                }
+            } else {
+                let config = load_zenoh_config()?;
+                let client = ResilientZenohRpcClient::new(config, protocol, reconnect);
+                client.request(action).await?
+            };
             println!("{}", serde_json::to_string_pretty(&reply)?);
             if reply.status != RpcStatus::Ok {
                 anyhow::bail!("remote tool call failed: {:?}", reply.status);

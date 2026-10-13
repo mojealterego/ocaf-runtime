@@ -1,4 +1,6 @@
 pub mod rpc;
+#[cfg(feature = "tls-bound")]
+pub mod tls_bound;
 pub mod sink;
 
 use serde_json::Value;

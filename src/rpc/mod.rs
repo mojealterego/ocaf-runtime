@@ -342,6 +342,8 @@ pub struct PeerPolicy {
     key: [u8; 32],
     rotation: Option<KeyRotation>,
     certificate_identity: Option<PinnedCertificate>,
+    #[cfg(feature = "tls-bound")]
+    tls_dns_identity: Option<String>,
     allowed_tools: HashSet<String>,
     requests_per_second: u32,
     job_submitter: bool,
@@ -355,6 +357,8 @@ impl PeerPolicy {
             key,
             rotation: None,
             certificate_identity: None,
+            #[cfg(feature = "tls-bound")]
+            tls_dns_identity: None,
             allowed_tools: allowed_tools.into_iter().collect(),
             requests_per_second: DEFAULT_PEER_RATE_PER_SECOND,
             job_submitter: false,
@@ -373,6 +377,17 @@ impl PeerPolicy {
         expected_sha256: &str,
     ) -> Result<Self, RpcError> {
         self.certificate_identity = Some(PinnedCertificate::from_pem(cert_pem, expected_sha256)?);
+        Ok(self)
+    }
+
+    /// Explicitly bind an RPC sender to a CA-verified mutual TLS certificate
+    /// obtained from the active TLS session. The pinned X.509 leaf MUST
+    /// contain the exact configured DNS SAN, not a wildcard or a CN fallback.
+    #[cfg(feature = "tls-bound")]
+    pub fn with_tls_dns_identity(mut self, exact_dns_san: &str) -> Result<Self, RpcError> {
+        let pinned = self.certificate_identity.as_ref().ok_or(RpcError::Malformed)?;
+        pinned.verify_dns_san(exact_dns_san)?;
+        self.tls_dns_identity = Some(exact_dns_san.to_owned());
         Ok(self)
     }
 
@@ -639,6 +654,41 @@ impl RpcGateway {
                 return Err(RpcError::Unavailable);
             }
             leader.verify().await.map_err(|_| RpcError::Unavailable)?;
+        }
+        Ok(())
+    }
+
+    /// Only the trusted TLS acceptor may pass this DER, obtained from the
+    /// handshake's peer_certificates() on the exact connection carrying the
+    /// RPC bytes. Never derive it from a caller-supplied payload or header.
+    #[cfg(feature = "tls-bound")]
+    pub(crate) async fn handle_verified_tls_at(
+        &self,
+        message: &[u8],
+        presented_certificate_der: &[u8],
+        now: u64,
+    ) -> Result<Vec<u8>, RpcError> {
+        let (raw, _) = SignedFrame::unpack(message)?;
+        let unverified: RpcRequest =
+            serde_json::from_slice(&raw).map_err(|_| RpcError::Malformed)?;
+        let peer = self.peers.get(&unverified.sender).ok_or(RpcError::Unauthorized)?;
+        if peer.tls_dns_identity.is_none() {
+            return Err(RpcError::Unauthorized);
+        }
+        let pinned = peer.certificate_identity.as_ref().ok_or(RpcError::Unauthorized)?;
+        pinned.verify_tls_leaf(presented_certificate_der)?;
+        self.handle_at(message, now).await
+    }
+
+    /// Reject startup of TLS-bound ingress unless every peer has a verified
+    /// per-sender leaf pin, an exact DNS SAN and HMAC policy. There can be
+    /// no legacy HMAC-only fallback on this listener.
+    #[cfg(feature = "tls-bound")]
+    pub fn validate_tls_bound_peers(&self) -> Result<(), RpcError> {
+        if self.peers.is_empty() || self.peers.values().any(|peer| {
+            peer.certificate_identity.is_none() || peer.tls_dns_identity.is_none()
+        }) {
+            return Err(RpcError::Unauthorized);
         }
         Ok(())
     }
