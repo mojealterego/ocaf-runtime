@@ -6,13 +6,13 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Arc;
 
-use ocaf_runtime::rpc::{PeerPolicy, RpcAction, RpcClient, RpcGateway, RpcStatus};
 use ocaf_runtime::jobs::remote::RemoteJobWorker;
-use ocaf_runtime::transport::{pricing_tool_manifest, EchoTool};
+use ocaf_runtime::rpc::{PeerPolicy, RpcAction, RpcClient, RpcGateway, RpcStatus};
 use ocaf_runtime::runtime::OcafRuntime;
 use ocaf_runtime::transport::tls_bound::{
     client_config, request, server_config, TlsBoundRpcServer,
 };
+use ocaf_runtime::transport::{pricing_tool_manifest, EchoTool};
 use sha2::{Digest, Sha256};
 
 const HMAC_KEY: [u8; 32] = [0x37; 32];
@@ -325,26 +325,39 @@ async fn tls_bound_worker_heartbeats_and_polls_through_actual_mtls_session() {
         OcafRuntime::new(0),
         HashMap::from([("agent-a".to_owned(), peer)]),
         8,
-    ).expect("gateway")
-    .with_coordinator_db(&directory).expect("directory")
-    .with_job_db(&jobs).expect("jobs");
+    )
+    .expect("gateway")
+    .with_coordinator_db(&directory)
+    .expect("directory")
+    .with_job_db(&jobs)
+    .expect("jobs");
 
     let server_tls = server_config(
         &material(&pki.server),
         &material(&pki.server_key),
         &material(&pki.root),
-    ).expect("server certificate");
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.expect("listen");
+    )
+    .expect("server certificate");
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("listen");
     let address = listener.local_addr().expect("address");
-    let server = TlsBoundRpcServer::new(listener, server_tls, Arc::new(gateway))
-        .expect("mTLS ingress");
+    let server =
+        TlsBoundRpcServer::new(listener, server_tls, Arc::new(gateway)).expect("mTLS ingress");
     let task = tokio::spawn(async move { server.serve().await });
 
     let (client_tls, protocol) = client(
-        &pki, &pki.client, &pki.client_key, &pki.root, &pki.client_key,
+        &pki,
+        &pki.client,
+        &pki.client_key,
+        &pki.root,
+        &pki.client_key,
     );
     let runtime = OcafRuntime::new(0);
-    runtime.register(pricing_tool_manifest(), EchoTool).await.expect("tool");
+    runtime
+        .register(pricing_tool_manifest(), EchoTool)
+        .await
+        .expect("tool");
     let worker = RemoteJobWorker::new_tls_bound(
         protocol,
         address,
@@ -352,7 +365,8 @@ async fn tls_bound_worker_heartbeats_and_polls_through_actual_mtls_session() {
         client_tls,
         runtime,
         HashSet::from(["demo_echo".into()]),
-    ).expect("trusted worker");
+    )
+    .expect("trusted worker");
     worker.heartbeat().await.expect("mTLS heartbeat and PoP");
     assert_eq!(worker.poll_once().await.expect("empty queue"), None);
     task.abort();
