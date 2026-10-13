@@ -5,17 +5,17 @@
 //! the result with a lease fencing token. The coordinator owns persistence.
 //! This is not a distributed exactly-once side-effect protocol.
 
+#[cfg(feature = "tls-bound")]
+use crate::rpc::{RpcClient, RpcReply};
+#[cfg(feature = "tls-bound")]
+use crate::transport::tls_bound;
+#[cfg(feature = "tls-bound")]
+use rustls::ClientConfig;
 use std::collections::HashSet;
 #[cfg(feature = "tls-bound")]
 use std::net::SocketAddr;
 #[cfg(feature = "tls-bound")]
 use std::sync::Arc;
-#[cfg(feature = "tls-bound")]
-use rustls::ClientConfig;
-#[cfg(feature = "tls-bound")]
-use crate::rpc::{RpcClient, RpcReply};
-#[cfg(feature = "tls-bound")]
-use crate::transport::tls_bound;
 
 use anyhow::{anyhow, bail, Result};
 use serde_json::from_value;
@@ -53,7 +53,12 @@ impl WorkerTransport {
         match self {
             Self::Zenoh(client) => client.request(action).await,
             #[cfg(feature = "tls-bound")]
-            Self::TlsBound { protocol, address, server_dns, config } => {
+            Self::TlsBound {
+                protocol,
+                address,
+                server_dns,
+                config,
+            } => {
                 tls_bound::request(*address, server_dns, Arc::clone(config), protocol, action).await
             }
         }
@@ -112,7 +117,12 @@ impl RemoteJobWorker {
         }
         let node_id = protocol.local_id().to_owned();
         Ok(Self {
-            client: WorkerTransport::TlsBound { protocol, address, server_dns, config },
+            client: WorkerTransport::TlsBound {
+                protocol,
+                address,
+                server_dns,
+                config,
+            },
             runtime,
             allowed_tools,
             cluster_pure_tools: HashSet::new(),
