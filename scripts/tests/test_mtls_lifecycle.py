@@ -47,7 +47,8 @@ class MtlsLifecycleTests(unittest.TestCase):
         self.openssl("req", "-new", "-newkey", "ec", "-pkeyopt", "ec_paramgen_curve:P-256",
                      "-nodes", "-keyout", key, "-out", csr, "-subj", f"/CN={name}")
         extensions.write_text("basicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature\n"
-                              f"extendedKeyUsage={eku}\nsubjectAltName={san}\n", encoding="ascii")
+                              f"extendedKeyUsage={eku}\n"
+                              + (f"subjectAltName={san}\n" if san else ""), encoding="ascii")
         self.openssl("x509", "-req", "-in", csr, "-CA", self.ca, "-CAkey", self.ca_key,
                      "-CAcreateserial", "-out", cert, "-days", "2", "-extfile", extensions)
         os.chmod(key, 0o600)
@@ -97,7 +98,7 @@ class MtlsLifecycleTests(unittest.TestCase):
             self.inspect(expected="other.example.test")
 
     def test_rejects_name_only_cn_without_san(self):
-        cert, key = self.generate_cert("no-san", "serverAuth", "DNS:unrelated.example.test")
+        cert, key = self.generate_cert("no-san", "serverAuth", "")
         with self.assertRaises(mtls.MtlsError):
             self.inspect(certificate=cert, key=key, expected="no-san")
 
@@ -110,6 +111,11 @@ class MtlsLifecycleTests(unittest.TestCase):
         link.symlink_to(self.server_key)
         with self.assertRaises(mtls.MtlsError):
             self.inspect(key=link)
+
+    def test_accepts_explicit_ip_san(self):
+        cert, key = self.generate_cert("server-ip", "serverAuth", "IP:127.0.0.1")
+        response = self.inspect(certificate=cert, key=key, expected_ip="127.0.0.1")
+        self.assertEqual(response["identity_kind"], "IP")
 
     def test_rejects_world_readable_key(self):
         os.chmod(self.server_key, 0o644)
