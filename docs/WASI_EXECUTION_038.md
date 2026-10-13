@@ -238,3 +238,16 @@ test potwierdza tylko obsługę lifecycle podprocesu;
 izolacja systemowa i eskalacja uprawnień pozostają poza
 granicą tego testu. Dowodem GREEN może być wyłącznie
 przebieg GitHub Actions odpowiadający końcowemu SHA.
+
+## Etap 0.38.8–0.38.9 — procesy i dowody odbioru
+
+[Macierz testów, ryzyk i warunków NO-GO](STAGE_038_8_9_ACCEPTANCE.md)
+opisuje utwardzenie Linux child (`process_group(0)`, `SIGKILL`
+całej grupy po zakończeniu lub anulowaniu, `no_new_privs` oraz
+wyłączone core dump), negatywne testy osieroconych procesów,
+stderr-bomb i mutacji parsera oraz uruchamianie całego testu
+`wasi_sandbox` przez przypięty prawdziwy Wasmtime w CI.
+Pozostają nierozwiązane: procesy umyślnie opuszczające grupę,
+brak kernelowej izolacji oraz pełnego resource-accounting,
+niezależne crash/soak i security review. **0.38 = PARTIAL; produkcja
+NO-GO** aż do udokumentowanego formalnego odbioru.
