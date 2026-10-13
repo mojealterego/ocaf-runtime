@@ -83,10 +83,10 @@ def patch(repo: Path, cargo_home: Path) -> None:
     include_file = config / "src/include.rs"
     include_source = include_file.read_text()
     include_pattern = re.compile(
-        r'(?s)Some\\("yaml"\\) => \\{\\s*'
-        r'let d = serde_yaml::Deserializer::from_str\\(&content\\);\\s*'
-        r'T::deserialize\\(d\\)\\.map_err\\(\\|e\\| zerror!\\("YAML error: \\{\\}", e\\)\\.into\\(\\)\\)\\s*'
-        r'\\},'
+        r'(?s)Some\("yaml"\) => \{\s*'
+        r'let d = serde_yaml::Deserializer::from_str\(&content\);\s*'
+        r'T::deserialize\(d\)\.map_err\(\|e\| zerror!\("YAML error: \{\}", e\)\.into\(\)\)\s*'
+        r'\},'
     )
     new_include, include_count = include_pattern.subn(
         'Some("yaml") | Some("yml") => bail!("YAML configuration disabled by OCAF; use JSON5"),',
