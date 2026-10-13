@@ -87,7 +87,9 @@ impl ReceiptSigner {
         for (index, pair) in signed
             .hmac_sha256_hex
             .as_bytes()
-            .as_chunks::<2>().0.iter()
+            .as_chunks::<2>()
+            .0
+            .iter()
             .enumerate()
         {
             decoded[index] = u8::from_str_radix(
