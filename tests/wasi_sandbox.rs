@@ -489,12 +489,16 @@ async fn wasi_guest_leader_receives_sigkill_on_parent_death() {
     let path = folder.path().join("guest-leader");
     fs::write(&path, script).expect("write guest leader");
     fs::set_permissions(&path, fs::Permissions::from_mode(0o700)).expect("chmod guest leader");
-    let actual = executor(path, digest(script), command_fixture("{}"), SandboxPolicy::default())
-        .execute(json!({}), &context())
-        .await
-        .expect("guest leader parent death policy");
+    let actual = executor(
+        path,
+        digest(script),
+        command_fixture("{}"),
+        SandboxPolicy::default(),
+    )
+    .execute(json!({}), &context())
+    .await
+    .expect("guest leader parent death policy");
     assert_eq!(actual, json!({"parent_death_signal": libc::SIGKILL}));
-
 }
 
 #[tokio::test]
