@@ -411,6 +411,26 @@ async fn cancelling_guest_kills_background_descendants() {
     );
 }
 
+/// Linux subprocess defense-in-depth: prevent gaining privileges via exec
+/// and suppress core files containing module input or runtime secrets.
+#[tokio::test]
+async fn wasi_guest_inherits_no_new_privileges_and_core_limit() {
+    let folder = tempfile::tempdir().expect("temp");
+    let probe = r#"
+nnp=0
+while read -r key value rest; do
+    if [ "$key" = "NoNewPrivs:" ] && [ "$value" = "1" ]; then nnp=1; fi
+done < /proc/self/status
+[ "$nnp" = "1" ] && [ "$(ulimit -c)" = "0" ] || exit 61
+printf '{"hardened":true}\\n'
+"#;
+    let (path, hash) = fake_engine(folder.path(), probe);
+    let result = executor(path, hash, command_fixture("{}"), SandboxPolicy::default())
+        .execute(json!({}), &context())
+        .await;
+    assert_eq!(result.expect("Linux child hardening policy"), json!({"hardened":true}));
+}
+
 #[tokio::test]
 async fn wasi_pool_exhaustion_rejects_without_waiting_for_unsafe_fallback() {
     let folder = tempfile::tempdir().expect("tmp");
