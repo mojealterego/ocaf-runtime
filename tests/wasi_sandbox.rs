@@ -225,6 +225,29 @@ fn digest_engine_and_policy_fail_closed() {
     assert!(PinnedWasmtime::new(path, hash).is_err());
 }
 
+/// The executable admitted for a signed tool cannot be writable by
+/// another local user or have multiple hard-link aliases.
+#[test]
+fn pinned_engine_rejects_writable_or_multiply_linked_source() {
+    let folder = tempfile::tempdir().expect("engine custody");
+    let (path, digest) = fake_engine(folder.path(), "printf '{}'");
+    let alias = folder.path().join("engine-alias");
+    fs::hard_link(&path, &alias).expect("add second hard link");
+    assert!(
+        PinnedWasmtime::new(path.clone(), digest).is_err(),
+        "engine with a second hard link must be rejected"
+    );
+    fs::remove_file(alias).expect("drop hard link");
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o777))
+        .expect("make group- and world-writable");
+    assert!(
+        PinnedWasmtime::new(path.clone(), digest).is_err(),
+        "group/world-writable executable must be rejected"
+    );
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o700)).expect("restore trusted mode");
+    PinnedWasmtime::new(path, digest).expect("sealed single-linked engine");
+}
+
 #[tokio::test]
 async fn json_wasi_adapter_integrates_with_runtime_validation() {
     let folder = tempfile::tempdir().expect("tmp");
