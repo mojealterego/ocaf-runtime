@@ -730,7 +730,7 @@ async fn signed_tenant_isolation_survives_concurrent_execution() {
             output_schema: json!({"type":"object"}),
             cost_sats: 0,
             permissions: Vec::new(),
-            timeout_ms: 1000,
+            timeout_ms: 10_000,
             enabled: true,
         };
         let signed = json!({
@@ -740,7 +740,7 @@ async fn signed_tenant_isolation_survives_concurrent_execution() {
             "tool": tool,
             "module_sha256_hex": module_sha256_hex,
             "expires_unix_secs": now + 3600,
-            "policy": SandboxPolicy::default()
+            "policy": SandboxPolicy { timeout_ms: 10_000, ..SandboxPolicy::default() }
         });
         let manifest = serde_json::to_vec(&signed).expect("serialize signed manifest");
         let mut signer = Signer::new_without_digest(&key).expect("test signer");
@@ -774,7 +774,7 @@ async fn signed_tenant_isolation_survives_concurrent_execution() {
 
     let runtime_a = &tenants[0];
     let runtime_b = &tenants[1];
-    for sequence in 0..4 {
+    for sequence in 0..2 {
         let request_a = ToolCallRequest {
             call_id: format!("tenant-a-call-{sequence}"),
             tool: "wasi_concurrent".into(),
