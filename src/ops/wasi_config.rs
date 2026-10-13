@@ -73,9 +73,8 @@ const SIGNED_WASI_REQUIRED_ENV: [&str; 6] = [
 /// Returns whether the complete signed WASI configuration was requested.
 /// Keep this pure so partial or misspelled bundles can be tested independently.
 fn signed_wasi_bundle_enabled(names: &HashSet<String>) -> Result<bool> {
-    let is_wasi_key = |name: &str| {
-        name.starts_with("OCAF_WASI_") || name.starts_with("OCAF_WASMTIME_")
-    };
+    let is_wasi_key =
+        |name: &str| name.starts_with("OCAF_WASI_") || name.starts_with("OCAF_WASMTIME_");
     let requested = names.iter().any(|name| is_wasi_key(name));
     if !requested {
         return Ok(false);
