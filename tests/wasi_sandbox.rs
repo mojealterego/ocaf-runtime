@@ -277,6 +277,37 @@ async fn timeout_kills_guest_process_and_rejects_result() {
 }
 
 #[tokio::test]
+async fn wasi_pool_exhaustion_rejects_without_waiting_for_unsafe_fallback() {
+    let folder = tempfile::tempdir().expect("tmp");
+    let ready = folder.path().join("guest-ready");
+    let shell = format!("echo ready > '{}'; exec /bin/sleep 5", ready.display());
+    let (path, hash) = fake_engine(folder.path(), &shell);
+    let policy = SandboxPolicy {
+        max_concurrent: 1,
+        timeout_ms: 1000,
+        ..SandboxPolicy::default()
+    };
+    let exec = executor(path, hash, command_fixture("{}"), policy);
+    let first = {
+        let cloned = exec.clone();
+        tokio::spawn(async move { cloned.execute(json!({}), &context()).await })
+    };
+    let mut observed = false;
+    for _ in 0..100 {
+        if ready.is_file() {
+            observed = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+    }
+    assert!(observed, "first guest never started");
+    let second = exec.execute(json!({}), &context()).await;
+    assert!(matches!(second, Err(ToolError::Validation(_))));
+    first.abort();
+    let _ = first.await;
+}
+
+#[tokio::test]
 async fn output_json_and_input_limits_enforced() {
     let folder = tempfile::tempdir().expect("tmp");
     let (path, hash) = fake_engine(folder.path(), "printf 'not-json\\n'");
