@@ -96,7 +96,9 @@ impl Drop for BudgetReservation {
 fn valid_principal_part(value: &str) -> bool {
     !value.is_empty()
         && value.len() <= 128
-        && value.bytes().all(|c| c.is_ascii_alphanumeric() || b"_-.".contains(&c))
+        && value
+            .bytes()
+            .all(|c| c.is_ascii_alphanumeric() || b"_-.".contains(&c))
 }
 
 #[derive(Clone)]
@@ -145,7 +147,9 @@ impl OcafRuntime {
     /// inbound JSON request). Required for signed WASI tenant isolation.
     pub fn with_tenant_namespace(mut self, tenant: &str) -> Result<Self, RuntimeError> {
         if !valid_principal_part(tenant) {
-            return Err(RuntimeError::AuthRequired("invalid tenant namespace".into()));
+            return Err(RuntimeError::AuthRequired(
+                "invalid tenant namespace".into(),
+            ));
         }
         self.tenant_namespace = Some(tenant.to_owned());
         Ok(self)
@@ -160,9 +164,13 @@ impl OcafRuntime {
         authenticated_sender: &str,
     ) -> Result<ToolCallResult, RuntimeError> {
         if !valid_principal_part(authenticated_sender) {
-            return Err(RuntimeError::AuthRequired("invalid authenticated sender".into()));
+            return Err(RuntimeError::AuthRequired(
+                "invalid authenticated sender".into(),
+            ));
         }
-        let principal = self.tenant_namespace.as_ref()
+        let principal = self
+            .tenant_namespace
+            .as_ref()
             .map(|tenant| format!("{tenant}:{authenticated_sender}"))
             .unwrap_or_else(|| "unattributed".to_owned());
         self.execute_attributed(request, &principal).await
@@ -175,11 +183,11 @@ impl OcafRuntime {
         &self,
         executor: crate::executor::wasi::WasmToolExecutor,
     ) -> Result<(), RegistryError> {
-        let manifest = executor.signed_tool_manifest()
-            .cloned()
-            .ok_or_else(|| RegistryError::InvalidManifest(
-                "WASI registration requires a signed publisher manifest".into()
-            ))?;
+        let manifest = executor.signed_tool_manifest().cloned().ok_or_else(|| {
+            RegistryError::InvalidManifest(
+                "WASI registration requires a signed publisher manifest".into(),
+            )
+        })?;
         self.registry.register(manifest, executor).await
     }
 
