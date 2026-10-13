@@ -164,8 +164,10 @@ fn digest_engine_and_policy_fail_closed() {
         SandboxPolicy::default()
     )
     .is_err());
-    let mut policy = SandboxPolicy::default();
-    policy.fuel = 0;
+    let policy = SandboxPolicy {
+        fuel: 0,
+        ..SandboxPolicy::default()
+    };
     assert!(WasmToolExecutor::new(
         engine,
         module,
@@ -218,8 +220,10 @@ async fn json_wasi_adapter_integrates_with_runtime_validation() {
 async fn stdout_bomb_is_rejected_without_host_log_leak() {
     let folder = tempfile::tempdir().expect("tmp");
     let (path, hash) = fake_engine(folder.path(), "exec /usr/bin/yes");
-    let mut policy = SandboxPolicy::default();
-    policy.max_output_bytes = 128;
+    let policy = SandboxPolicy {
+        max_output_bytes: 128,
+        ..SandboxPolicy::default()
+    };
     let result = executor(path, hash, command_fixture("{}"), policy)
         .execute(json!({}), &context())
         .await;
@@ -230,8 +234,10 @@ async fn stdout_bomb_is_rejected_without_host_log_leak() {
 async fn timeout_kills_guest_process_and_rejects_result() {
     let folder = tempfile::tempdir().expect("tmp");
     let (path, hash) = fake_engine(folder.path(), "exec /bin/sleep 2");
-    let mut policy = SandboxPolicy::default();
-    policy.timeout_ms = 30;
+    let policy = SandboxPolicy {
+        timeout_ms: 30,
+        ..SandboxPolicy::default()
+    };
     let result = executor(path, hash, command_fixture("{}"), policy)
         .execute(json!({}), &context())
         .await;
@@ -250,8 +256,10 @@ async fn output_json_and_input_limits_enforced() {
     ));
     let folder2 = tempfile::tempdir().expect("tmp");
     let (path2, hash2) = fake_engine(folder2.path(), "printf '{}\\n'");
-    let mut policy = SandboxPolicy::default();
-    policy.max_input_bytes = 32;
+    let policy = SandboxPolicy {
+        max_input_bytes: 32,
+        ..SandboxPolicy::default()
+    };
     let exec2 = executor(path2, hash2, command_fixture("{}"), policy);
     let result = exec2
         .execute(json!({"data":"a".repeat(100)}), &context())
