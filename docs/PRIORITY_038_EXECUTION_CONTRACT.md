@@ -1,6 +1,6 @@
 # OCAF — kontrakt wykonawczy etapu 0.38 (przed implementacją)
 
-**Stan na 2026-10-13:** PLAN / NOT IMPLEMENTED. Gałąź: `main` wyłącznie.
+**Stan początkowy (2026-10-13):** PLAN / NOT IMPLEMENTED. **Aktualny status:** PARTIALLY IMPLEMENTED / NO-GO. Gałąź: `main` wyłącznie. Zob. [implementacja i ADR](WASI_EXECUTION_038.md).
 **Cel:** bezpieczne uruchamianie niezaufanych narzędzi WebAssembly/WASI
 przez osobny adapter, bez bezpośredniego dostępu do zaufanego jądra
 OCAF, danych innych tenantów i uprawnień systemu hosta.
@@ -101,6 +101,7 @@ na podstawie wcześniejszych commitów.
 - „Dokument bez nazwy” (2026-10-13) zawiera demonstracyjne
   koncepcje Frontier; pseudokodu nie wolno uznać za implementację.
 
-**Warunek przejścia do implementacji:** potwierdzony stan HEAD i
-zaakceptowany ADR `0.38.1`. Ten dokument jest planem, nie
-ukończonym etapem 0.38.
+**Stan realizacji:** początkowy warunek startu został przekroczony:
+zaimplementowano ograniczony adapter WASIp1 oraz testy w
+[WASI_EXECUTION_038.md](WASI_EXECUTION_038.md). Nadal obowiązują
+pełne kryteria akceptacji powyżej. **0.38 PARTIAL, produkcja NO-GO.**
