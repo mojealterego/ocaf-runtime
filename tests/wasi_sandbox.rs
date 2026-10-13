@@ -5,8 +5,8 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 use ocaf_runtime::executor::wasi::{
-    manifest_signing_payload, validate_wasi_imports, PinnedWasmtime, ReceiptSigner,
-    SandboxPolicy, WasmToolExecutor,
+    manifest_signing_payload, validate_wasi_imports, PinnedWasmtime, ReceiptSigner, SandboxPolicy,
+    WasmToolExecutor,
 };
 use ocaf_runtime::executor::{ExecutionContext, ToolError, ToolExecutor};
 use ocaf_runtime::registry::ToolManifest;
