@@ -65,8 +65,8 @@ fn signed_rpc_client(node_id: &str, remote_id: &str, key: [u8; 32]) -> anyhow::R
 }
 
 #[cfg(feature = "tls-bound")]
-fn tls_client_settings(
-) -> anyhow::Result<(std::net::SocketAddr, String, Arc<rustls::ClientConfig>)> {
+fn tls_client_settings() -> anyhow::Result<(std::net::SocketAddr, String, Arc<rustls::ClientConfig>)>
+{
     let cert_path = Path::new(&require("OCAF_TLS_CLIENT_CERT_FILE")?).to_path_buf();
     let key_path = Path::new(&require("OCAF_TLS_CLIENT_KEY_FILE")?).to_path_buf();
     let ca_path = Path::new(&require("OCAF_TLS_SERVER_CA_FILE")?).to_path_buf();
@@ -189,12 +189,7 @@ async fn main() -> anyhow::Result<()> {
                 {
                     let (address, server_dns, config) = tls_client_settings()?;
                     RemoteJobWorker::new_tls_bound(
-                        protocol,
-                        address,
-                        server_dns,
-                        config,
-                        runtime,
-                        allowed,
+                        protocol, address, server_dns, config, runtime, allowed,
                     )?
                 }
                 #[cfg(not(feature = "tls-bound"))]
