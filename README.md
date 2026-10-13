@@ -775,15 +775,15 @@ Procedura: [docs/TLS_PEER_IDENTITY_037.md](docs/TLS_PEER_IDENTITY_037.md).
 
 ## Aktualizacja roadmapy przed etapem 0.38 (2026-10-13)
 
-**Dokumentacja planistyczna zaktualizowana; etapu 0.38 jeszcze nie
-zaimplementowano.** Priorytety **0.36–0.94** obejmują rdzeń,
+**Stan historyczny sprzed rozpoczęcia implementacji 0.38:**
+mapa drogowa została zaktualizowana przed wdrożeniem sandboxa. Priorytety **0.36–0.94** obejmują rdzeń,
 wszystkie wyspecjalizowane roje (0.56–0.71), platformy budowania
 agentów, weryfikację oraz nowe badania OmniProof-STARK,
 OmniMacro, OmniMarket-L402+, OmniSubstrate, proof-carrying RSI,
 OmniThermo-Governor, neuromorfikę, wetware, optykę i kryptografię
 topologiczną — z oddzieleniem hipotez od sprawdzonych wdrożeń.
 
-**Następny etap: 0.38 — WASI sandbox default-deny**.
+**Aktywny etap: 0.38 — WASI sandbox default-deny**.
 Szczegółowa kolejność techniczna, zależności, modele zagrożeń
 oraz negatywne testy:
 [docs/PRIORITY_038_EXECUTION_CONTRACT.md](docs/PRIORITY_038_EXECUTION_CONTRACT.md).
@@ -812,8 +812,11 @@ obejmują prawdziwy program WASIp1 i negatywne przypadki.
 Szczegóły, procedura i ograniczenia:
 [docs/WASI_EXECUTION_038.md](docs/WASI_EXECUTION_038.md).
 
-**0.38 ma status PARTIAL.** Pozostały podpisy manifestów,
-pełne powiązanie z remote workerami/tenantami, hardening
-hostowy, crash/teardown/soak/PKI oraz niezależny odbiór
-bezpieczeństwa. Dopóki te warunki nie zostaną wykazane,
-nie ma deklaracji ukończenia 0.38 ani gotowości produkcyjnej.
+**0.38 pozostaje PARTIAL / NO-GO.** Implementacja obejmuje teraz
+operatorowo podpisane manifesty Ed25519, przypisanie `tenant:agent`,
+worker TLS-bound, podpisy HMAC `ExecutionReceipt` oraz sprawdzanie
+plików konfiguracyjnych przy użyciu deskryptorów z `O_NOFOLLOW`
+i kontrolą uprawnień/inode (z testami negatywnymi). Nadal wymagane
+są niezależne testy odporności na awarie, obciążenie i wycieki,
+audyt hosta, rotacja kluczy/PKI oraz formalny odbiór bezpieczeństwa.
+Etap 0.39 nie został rozpoczęty; gotowości produkcyjnej nie potwierdzono.
