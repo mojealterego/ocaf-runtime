@@ -440,6 +440,45 @@ async fn publisher_signature_binds_module_tool_policy_and_principal() {
         json!({"signed":true})
     );
 
+    let signed_runtime = OcafRuntime::new(0)
+        .with_tenant_namespace("tenant-a")
+        .expect("configured tenant");
+    signed_runtime
+        .register_signed_wasi(exec.clone())
+        .await
+        .expect("signed-only registration");
+    assert!(signed_runtime
+        .register_signed_wasi(unsigned)
+        .await
+        .is_err());
+    let call = ToolCallRequest {
+        call_id: "signed-1".into(),
+        tool: "signed_wasi".into(),
+        args: json!({}),
+        auth: None,
+    };
+    assert!(signed_runtime.execute(call.clone()).await.is_err());
+    assert!(signed_runtime
+        .execute_authenticated_peer(call.clone(), "agent-2")
+        .await
+        .is_err());
+    assert_eq!(
+        signed_runtime
+            .execute_authenticated_peer(call.clone(), "agent-1")
+            .await
+            .expect("verified scoped RPC caller")
+            .output,
+        json!({"signed":true})
+    );
+    let other_tenant = OcafRuntime::new(0)
+        .with_tenant_namespace("tenant-b")
+        .expect("other tenant");
+    other_tenant.register_signed_wasi(exec.clone()).await.expect("register other tenant");
+    assert!(other_tenant
+        .execute_authenticated_peer(call, "agent-1")
+        .await
+        .is_err());
+
     let expired = json!({
         "schema_version": 1,
         "tenant_id": "tenant-a",
