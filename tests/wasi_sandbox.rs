@@ -386,7 +386,10 @@ async fn cancelling_guest_kills_background_descendants() {
         !matches!(suffix.chars().next(), Some('Z' | 'X'))
     }
 
-    assert!(running(pid), "background child was not alive before cancellation");
+    assert!(
+        running(pid),
+        "background child was not alive before cancellation"
+    );
     task.abort();
     let _ = task.await;
 
@@ -402,7 +405,10 @@ async fn cancelling_guest_kills_background_descendants() {
         // The RED test must clean up its fixture even on an expected failure.
         unsafe { libc::kill(pid as libc::pid_t, libc::SIGKILL) };
     }
-    assert!(stopped, "WASI cancellation left a live background descendant");
+    assert!(
+        stopped,
+        "WASI cancellation left a live background descendant"
+    );
 }
 
 #[tokio::test]
