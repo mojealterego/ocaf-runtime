@@ -49,6 +49,14 @@ jobs:
         run: cargo clippy --locked --all-targets --no-default-features -- -D warnings
       - name: Pinned Wasmtime 49.0.2 real WASI command acceptance
         run: bash scripts/wasmtime_acceptance.sh
+      - name: Upload reproducible WASI host resource evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasi-host-acceptance
+          path: wasi-host-acceptance.json
+          if-no-files-found: warn
+          retention-days: 30
       - name: X.509 leaf-key proof-of-possession and RPC sender acceptance
         run: cargo test --locked --no-default-features --test rpc_cert_identity
       - name: HMAC peer key cutover and replay identity acceptance
