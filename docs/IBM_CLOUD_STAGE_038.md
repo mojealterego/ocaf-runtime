@@ -156,3 +156,55 @@ Do tego czasu **0.38 PARTIAL / PRODUCTION NO-GO**, etap 0.39 zablokowany.
 - https://cloud.ibm.com/docs/vpc?topic=vpc-vpc-secure-management-bastion-server
 - https://cloud.ibm.com/docs/vpc?topic=vpc-vpc-reference
 - https://cloud.ibm.com/docs/vpc?topic=vpc-vpn-client-to-site-security-groups
+
+## 7. Bramka kosztowa i architektura kolejnych etapów
+
+Budżet IBM Cloud udostępniony przez właściciela nie jest automatycznie
+budżetem możliwym do wydania na każdy produkt. Przed zamówieniem czegokolwiek
+operator musi sprawdzić w konsoli **Manage → Billing and usage →
+Promotions and credits** datę wygaśnięcia, typ kredytu, kwalifikujące
+się usługi i ewentualny limit miesięczny:
+
+- https://cloud.ibm.com/docs/account?topic=account-applying-promo-codes
+- https://cloud.ibm.com/docs/account?topic=account-billusagefaqs
+
+Proponowana **początkowa bramka zatwierdzenia** tylko dla staging 0.38:
+`max_estimated_pilot_cost_usd = 500`. To limit planowania i ręcznej
+akceptacji kosztorysu, **nie rzeczywisty limit rozliczeniowy**.
+Środowisko i dane operatora są prywatne; do repozytorium nie
+wprowadzamy salda konta. Wycenę należy uzyskać dla profili i regionu
+`eu-de` w IBM Cloud Cost Estimator, z uwzględnieniem VSI, boot
+volumes, egress, floating IP, log storage i innych usług:
+
+- https://www.ibm.com/products/cloud/cloud-calculator
+
+Rozpocznij od jednej VSI `bx2-4x16` albo `bx4-4x16` (4 vCPU,
+16 GiB, jeśli profil oferowany w `eu-de`) na read-only preflight
+oraz lokalny 0.38 soak. Druga VSI jest potrzebna dopiero do
+wielo-węzłowej izolacji i partition/chaos. **Nie twórz ani
+nie uruchamiaj maszyn** bez audytu istniejących zasobów, kosztorysu
+i wyraźnej zgody na zasoby płatne.
+
+IBM Cloud spending notifications mogą wysyłać alerty przy 80%, 90%
+i 100% zadeklarowanego progu, ale **nie blokują naliczania opłat**:
+
+- https://cloud.ibm.com/docs/support?topic=support-spending
+- https://cloud.ibm.com/docs/account?topic=account-billusagefaqs
+
+**Pułapka architektury 0.39:** IBM Cloud oficjalnie **nie obsługuje
+nested virtualization na instancjach VSI**, więc testów
+Firecracker/KVM (`/dev/kvm`) nie wolno planować na tym samym rodzaju
+serwera, co testy WASIp1 0.38. Potrzebny będzie osobno dobrany
+**IBM Cloud Bare Metal Server for VPC** z dostępem do KVM,
+alternatywny zatwierdzony host fizyczny albo wariant bez microVM.
+Przed kosztem Bare Metal należy potwierdzić rzeczywistą dostępność
+`/dev/kvm` oraz cenę, licencje i warunki kredytów.
+Wyłączenie Bare Metal może **nie zatrzymać naliczania opłat**;
+właściwe zakończenie wymaga deprowizjonowania po odbiorze.
+
+- https://cloud.ibm.com/docs/vpc?topic=vpc-troubleshoot-enable-nested-virtualization
+- https://cloud.ibm.com/docs/vpc?topic=vpc-about-bare-metal-servers
+- https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-server-faq
+
+Wszystkie płatne operacje mają pozostać ręcznie zatwierdzane.
+Brak dostępu do konta IBM Cloud oznacza brak faktycznego wdrożenia.
