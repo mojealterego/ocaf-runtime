@@ -7,6 +7,34 @@ naruszania środowiska produkcyjnego.
 **Status:** projekt procedury. Nie uruchomiono żadnej instancji i nie
 nadano żadnych uprawnień IBM Cloud z poziomu repozytorium.
 
+## Istniejący kontekst IBM Cloud
+
+W osobnym prywatnym repozytorium `mojealterego/IBM-Cloud-automation`
+istnieje konfiguracja Code Engine/IAM dla regionu `eu-de`,
+grupy zasobów `Project-X`, projektu
+`ugm-agentic-control-plane` i profilu zaufanego
+`ugm-control-plane-runtime`. Dokument
+`docs/IMPLEMENTATION_STATUS.md` tego repozytorium opisuje
+region, grupę zasobów i profil jako wcześniej potwierdzone
+przez właściciela, lecz nie potwierdza żadnej **działającej VSI**
+ani wdrożenia OCAF.
+
+**Ważne:** IBM Code Engine dla kontrolera agentów
+to inny typ uruchomienia niż pełny host Linux/systemd.
+Testy cgroup v2, procesów potomnych, `SIGKILL` i
+hostowego OOM wymagają własnej maszyny
+**IBM Cloud Virtual Server for VPC (VSI)**. Nie uznawać
+istniejącego projektu Code Engine za maszynę testową.
+Nowy VSI powinien korzystać z istniejącej zatwierdzonej
+grupy `Project-X`, jeśli operator tak zdecyduje;
+nie wolno tworzyć jej drugi raz przez Terraform
+bez sprawdzenia istniejącego stanu.
+
+Dla pierwszej inspekcji w IBM Cloud kieruj polecenia
+do regionu `eu-de` (region pozostaje konfigurowalny):
+`ibmcloud target -r eu-de`, następnie
+`ibmcloud is instances`. Te polecenia nie tworzą zasobów.
+
 ## 1. Architektura
 
 1. **VPC staging** — istniejący lub wydzielony IBM Cloud VPC, prywatna
