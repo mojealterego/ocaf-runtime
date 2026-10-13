@@ -25,7 +25,13 @@ name = "ocaf-coordinator"
 path = "src/bin/ocaf-coordinator.rs"
 required-features = ["zenoh"]
 
+[[bin]]
+name = "ocaf-ha-probe"
+path = "src/bin/ocaf-ha-probe.rs"
+required-features = ["ha-probe"]
+
 [features]
+ha-probe = []
 default = ["zenoh"]
 zenoh = ["dep:zenoh"]
 full = ["zenoh"]

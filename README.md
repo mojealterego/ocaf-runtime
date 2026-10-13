@@ -640,3 +640,15 @@ sprawdza podpisane pochodzenie kompilacji i atestację SBOM dla konkretnego
 commita. Nie tworzy automatycznie tagów ani wydań. Dokumentacja:
 [docs/RELEASE_EVIDENCE_032.md](docs/RELEASE_EVIDENCE_032.md).
 **Stan wdrożenia produkcyjnego: NO-GO do czasu testów infrastrukturalnych.**
+
+
+## Priorytet 0.33 — testy PostgreSQL na trzech hostach
+
+Wprowadzono opt-in `ocaf-ha-probe` (`ha-probe`) oraz
+`scripts/ha_multihost_acceptance.py`: skrypt operatora weryfikuje
+w odizolowanej bazie na trzech hostach testowych wykluczanie liderów
+i monotoniczne epoki fencing. Kontrole CI obejmują tylko osobne
+procesy na jednym runnerze — nie są certyfikacją rzeczywistej
+infrastruktury. Dokumentacja:
+[docs/MULTIHOST_ACCEPTANCE_033.md](docs/MULTIHOST_ACCEPTANCE_033.md).
+**Produkcja pozostaje NO-GO.**

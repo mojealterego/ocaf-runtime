@@ -98,3 +98,14 @@ generation transfer.
 Only after all gates are evidenced can the system be designated
 production-accepted. Completion of six planned implementation
 milestones **does not make those external checks disappear**.
+
+
+## Priorytet 0.33 — instrumenty do testów niezależnych hostów
+
+`ocaf-ha-probe` i jawnie uruchamiany skrypt SSH pomagają zbierać
+wyniki wykluczania liderów PostgreSQL i wzrostu epok na trzech hostach
+w izolowanym środowisku testowym. CI sprawdza jedynie procesy na
+jednym runnerze. Testy awarii zasilania, split-brain PostgreSQL,
+rotacji mTLS, ochrony efektów zewnętrznych, sandboxingu i odtwarzania
+z kopii nie zostały przez to zastąpione.
+Zob. [MULTIHOST_ACCEPTANCE_033.md](MULTIHOST_ACCEPTANCE_033.md).

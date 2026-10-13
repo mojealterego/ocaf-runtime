@@ -94,3 +94,15 @@ implement PostgreSQL replication, Raft or distributed consensus.
 
 A green CI run proves only the listed test assertions, not successful
 physical-host validation.
+
+
+## Priority 0.33 — three-host PostgreSQL advisory election probe
+
+The opt-in `ocaf-ha-probe` and `scripts/ha_multihost_acceptance.py`
+check bounded lock exclusion and strictly increasing leader epochs from
+three operator-supplied staging SSH destinations. The test does not
+intentionally terminate any host, database or service. CI exercises
+separate processes on a single PostgreSQL runner only. This is not
+physical host isolation, Zenoh/mTLS certificate rotation, PostgreSQL
+HA fencing or live fault-injection acceptance. See
+[MULTIHOST_ACCEPTANCE_033.md](MULTIHOST_ACCEPTANCE_033.md).
