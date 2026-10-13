@@ -23,12 +23,7 @@ const MAX_IO_BYTES: usize = 64 * 1024;
 const MAX_MEMORY_BYTES: u64 = 64 * 1024 * 1024;
 const MAX_EXECUTION_MS: u64 = 10_000;
 const WASM_MAGIC_VERSION: &[u8; 8] = b"\0asm\x01\0\0\0";
-const ALLOWED_WASI_IMPORTS: &[&str] = &[
-    "fd_read",
-    "fd_write",
-    "fd_fdstat_get",
-    "proc_exit",
-];
+const ALLOWED_WASI_IMPORTS: &[&str] = &["fd_read", "fd_write", "fd_fdstat_get", "proc_exit"];
 
 fn rejected(reason: &str) -> ToolError {
     ToolError::Validation(reason.to_owned())
@@ -74,7 +69,9 @@ fn read_name<'a>(bytes: &'a [u8], cursor: &mut usize) -> Result<&'a str, ToolErr
 /// Wasmtime still performs the authoritative full Wasm binary validation.
 pub fn validate_wasi_imports(bytes: &[u8]) -> Result<(), ToolError> {
     if bytes.len() > MAX_MODULE_BYTES || !bytes.starts_with(WASM_MAGIC_VERSION) {
-        return Err(rejected("module size, wasm magic, or core version rejected"));
+        return Err(rejected(
+            "module size, wasm magic, or core version rejected",
+        ));
     }
     let mut cursor = WASM_MAGIC_VERSION.len();
     let mut seen_import_section = false;
@@ -99,7 +96,9 @@ pub fn validate_wasi_imports(bytes: &[u8]) -> Result<(), ToolError> {
             for _ in 0..count {
                 let namespace = read_name(&bytes[..end], &mut pos)?;
                 let name = read_name(&bytes[..end], &mut pos)?;
-                let kind = *bytes.get(pos).ok_or_else(|| rejected("truncated wasm import"))?;
+                let kind = *bytes
+                    .get(pos)
+                    .ok_or_else(|| rejected("truncated wasm import"))?;
                 pos += 1;
                 if kind != 0
                     || namespace != "wasi_snapshot_preview1"
@@ -166,8 +165,7 @@ impl SandboxPolicy {
 }
 
 fn hash_file(path: &Path) -> Result<[u8; 32], ToolError> {
-    let mut file = File::open(path)
-        .map_err(|_| rejected("pinned WASI engine is unavailable"))?;
+    let mut file = File::open(path).map_err(|_| rejected("pinned WASI engine is unavailable"))?;
     let mut hasher = Sha256::new();
     let mut buf = [0u8; 16_384];
     loop {
@@ -207,8 +205,13 @@ impl PinnedWasmtime {
         }
         let meta = fs::symlink_metadata(&self.executable)
             .map_err(|_| rejected("WASI engine metadata unavailable"))?;
-        if !meta.is_file() || meta.file_type().is_symlink() || meta.permissions().mode() & 0o111 == 0 {
-            return Err(rejected("WASI engine must be a regular executable, not a symlink"));
+        if !meta.is_file()
+            || meta.file_type().is_symlink()
+            || meta.permissions().mode() & 0o111 == 0
+        {
+            return Err(rejected(
+                "WASI engine must be a regular executable, not a symlink",
+            ));
         }
         if hash_file(&self.executable)? != self.sha256 {
             return Err(rejected("WASI engine digest mismatch"));
@@ -230,7 +233,10 @@ impl EphemeralModule {
             .create(&directory)
             .map_err(|_| rejected("cannot create private WASI workspace"))?;
         let module_path = directory.join("approved.wasm");
-        let owner = Self { directory, module_path };
+        let owner = Self {
+            directory,
+            module_path,
+        };
         let mut file = OpenOptions::new()
             .write(true)
             .create_new(true)
@@ -285,13 +291,16 @@ impl WasmToolExecutor {
     }
 
     async fn run(&self, args: Value, ctx: &ExecutionContext) -> Result<Value, ToolError> {
-        let _permit = self.permits.acquire().await
+        let _permit = self
+            .permits
+            .acquire()
+            .await
             .map_err(|_| rejected("WASI sandbox admission closed"))?;
         if ctx.deadline_ms == 0 {
             return Err(rejected("deadline is required"));
         }
-        let mut payload = serde_json::to_vec(&args)
-            .map_err(|_| rejected("WASI input is not serializable"))?;
+        let mut payload =
+            serde_json::to_vec(&args).map_err(|_| rejected("WASI input is not serializable"))?;
         if payload.len() >= self.policy.max_input_bytes {
             return Err(rejected("WASI input exceeds policy limit"));
         }
@@ -322,33 +331,48 @@ impl WasmToolExecutor {
             .stderr(Stdio::piped())
             .kill_on_drop(true);
 
-        let mut child = command.spawn()
+        let mut child = command
+            .spawn()
             .map_err(|_| ToolError::Execution("cannot start pinned WASI runtime".into()))?;
-        let mut stdin = child.stdin.take()
+        let mut stdin = child
+            .stdin
+            .take()
             .ok_or_else(|| ToolError::Execution("WASI stdin unavailable".into()))?;
-        let stdout = child.stdout.take()
+        let stdout = child
+            .stdout
+            .take()
             .ok_or_else(|| ToolError::Execution("WASI stdout unavailable".into()))?;
-        let stderr = child.stderr.take()
+        let stderr = child
+            .stderr
+            .take()
             .ok_or_else(|| ToolError::Execution("WASI stderr unavailable".into()))?;
 
         let limit = self.policy.max_output_bytes;
         let timeout = Duration::from_millis(self.policy.timeout_ms.min(ctx.deadline_ms));
         let completed = tokio::time::timeout(timeout, async {
             let send = async {
-                stdin.write_all(&payload).await
+                stdin
+                    .write_all(&payload)
+                    .await
                     .map_err(|_| ToolError::Execution("WASI stdin write failed".into()))?;
-                stdin.shutdown().await
+                stdin
+                    .shutdown()
+                    .await
                     .map_err(|_| ToolError::Execution("WASI stdin shutdown failed".into()))?;
                 Ok::<(), ToolError>(())
             };
             let output = read_bounded(stdout, limit);
             let error_output = read_bounded(stderr, limit);
             let exit = async {
-                child.wait().await
+                child
+                    .wait()
+                    .await
                     .map_err(|_| ToolError::Execution("WASI process wait failed".into()))
             };
             tokio::try_join!(send, output, error_output, exit)
-        }).await.map_err(|_| ToolError::Timeout)??;
+        })
+        .await
+        .map_err(|_| ToolError::Timeout)??;
 
         let ((), output, _stderr, status) = completed;
         if !status.success() {
@@ -373,7 +397,9 @@ where
     let mut result = Vec::new();
     let mut buffer = [0u8; 4096];
     loop {
-        let size = reader.read(&mut buffer).await
+        let size = reader
+            .read(&mut buffer)
+            .await
             .map_err(|_| ToolError::Execution("WASI output read failed".into()))?;
         if size == 0 {
             return Ok(result);
