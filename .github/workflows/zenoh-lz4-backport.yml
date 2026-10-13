@@ -1,5 +1,6 @@
 # Path-scoped, one-time security backport. No additional branches.
 # It commits to main ONLY after regenerating/compiling/testing the patched graph.
+# v0.30.1: rerun after fixing literal-newline TOML unit test fixtures.
 name: Backport Zenoh LZ4 Fix
 on:
   push:
