@@ -830,3 +830,7 @@ rzeczywistego Wasmtime. Zestaw kryteriów, reprodukcji i
 otwartych ryzyk: [docs/STAGE_038_8_9_ACCEPTANCE.md](docs/STAGE_038_8_9_ACCEPTANCE.md).
 **Etap 0.38 pozostaje PARTIAL / NO-GO** do niezależnego
 odbioru i wymaganego hostowego hardeningu.
+
+### 0.38 — host acceptance, sealed engine i dostęp operatora
+
+Signed WASIp1 wykonuje przypiętą kopię Wasmtime przez uszczelniony Linux `memfd` zamiast wykonywać mutowalną ścieżkę pliku; system Linux uzupełniają `PR_SET_PDEATHSIG`, grupy procesów i `no_new_privs`. `scripts/wasi_host_acceptance.py` dokumentuje wyniki testów obciążenia i obserwowane RSS/FD/PID w JSON. Konfiguracja hostowa systemd/cgroup to [szablon, nie wdrożenie](deploy/systemd/ocaf-coordinator-wasi.service.example). Kody, ograniczenia i braki dostępu: [dokumentacja odbioru](docs/STAGE_038_8_9_ACCEPTANCE.md). **0.38 PARTIAL / NO-GO, 0.39 zablokowany.**
