@@ -5,7 +5,7 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 use ocaf_runtime::executor::wasi::{
-    validate_wasi_imports, PinnedWasmtime, SandboxPolicy, WasmToolExecutor,
+    manifest_signing_payload, validate_wasi_imports, PinnedWasmtime, SandboxPolicy, WasmToolExecutor,
 };
 use ocaf_runtime::executor::{ExecutionContext, ToolError, ToolExecutor};
 use ocaf_runtime::registry::ToolManifest;
@@ -356,4 +356,105 @@ async fn real_wasmtime_cli_when_configured() {
         memory_exec.execute(json!({}), &context()).await,
         Err(ToolError::Execution(_)) | Err(ToolError::Timeout)
     ));
+}
+
+#[tokio::test]
+async fn publisher_signature_binds_module_tool_policy_and_principal() {
+    use openssl::pkey::PKey;
+    use openssl::sign::Signer;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let key = PKey::generate_ed25519().expect("ephemeral Ed25519 key");
+    let public = key.public_key_to_pem().expect("PEM public key");
+    let invalid_key = PKey::generate_ed25519().expect("different signer");
+    let other_public = invalid_key.public_key_to_pem().expect("other PEM");
+
+    let module = command_fixture(r#"{"signed":true}"#);
+    let module_hex = format!("{:x}", Sha256::digest(&module));
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("monotonic epoch")
+        .as_secs();
+    let tool = ToolManifest {
+        name: "signed_wasi".into(),
+        description: "signed fixture".into(),
+        input_schema: json!({"type":"object"}),
+        output_schema: json!({"type":"object"}),
+        cost_sats: 0,
+        permissions: Vec::new(),
+        timeout_ms: 1000,
+        enabled: true,
+    };
+    let document = json!({
+        "schema_version": 1,
+        "tenant_id": "tenant-a",
+        "agent_id": "agent-1",
+        "tool": tool,
+        "module_sha256_hex": module_hex,
+        "expires_unix_secs": now + 3600,
+        "policy": SandboxPolicy::default()
+    });
+    let json = serde_json::to_vec(&document).expect("manifest JSON");
+    let payload = manifest_signing_payload(&json).expect("domain-separated payload");
+    let mut signer = Signer::new_without_digest(&key).expect("Ed25519 signer");
+    let signature = signer.sign_oneshot_to_vec(&payload).expect("sign payload");
+
+    let folder = tempfile::tempdir().expect("tmp");
+    let (engine, engine_hash) = fake_engine(
+        folder.path(),
+        "printf '{\"signed\":true}\\n'",
+    );
+    let approved = PinnedWasmtime::new(engine.clone(), engine_hash).expect("pinned");
+    let exec = WasmToolExecutor::from_signed_manifest(
+        approved.clone(),
+        module.clone(),
+        &json,
+        &signature,
+        &public,
+    ).expect("valid publisher signature");
+    assert_eq!(exec.signed_tool_manifest().expect("manifest").name, "signed_wasi");
+
+    let unsigned = executor(
+        engine.clone(), engine_hash, module.clone(), SandboxPolicy::default()
+    );
+    assert!(unsigned.signed_tool_manifest().is_none());
+    assert!(WasmToolExecutor::from_signed_manifest(
+        approved.clone(), module.clone(), &json, &signature, &other_public
+    ).is_err());
+    let mut modified = json.clone();
+    modified.push(b' ');
+    assert!(WasmToolExecutor::from_signed_manifest(
+        approved.clone(), module.clone(), &modified, &signature, &public
+    ).is_err());
+    assert!(WasmToolExecutor::from_signed_manifest(
+        approved.clone(), command_fixture("{}"), &json, &signature, &public
+    ).is_err());
+
+    let mut context = context();
+    assert!(exec.execute(json!({}), &context).await.is_err());
+    context.agent_id = "tenant-b:agent-1".into();
+    assert!(exec.execute(json!({}), &context).await.is_err());
+    context.agent_id = "tenant-a:agent-1".into();
+    assert_eq!(
+        exec.execute(json!({}), &context).await.expect("authorized request"),
+        json!({"signed":true})
+    );
+
+    let expired = json!({
+        "schema_version": 1,
+        "tenant_id": "tenant-a",
+        "agent_id": "agent-1",
+        "tool": tool,
+        "module_sha256_hex": module_hex,
+        "expires_unix_secs": now - 1,
+        "policy": SandboxPolicy::default()
+    });
+    let expired_json = serde_json::to_vec(&expired).expect("expired manifest");
+    let mut expired_signer = Signer::new_without_digest(&key).expect("signer");
+    let expired_sig = expired_signer
+        .sign_oneshot_to_vec(&manifest_signing_payload(&expired_json).expect("payload"))
+        .expect("sign");
+    assert!(WasmToolExecutor::from_signed_manifest(
+        approved, module, &expired_json, &expired_sig, &public
+    ).is_err());
 }
