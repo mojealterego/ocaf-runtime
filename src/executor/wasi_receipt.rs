@@ -41,7 +41,9 @@ pub struct ReceiptSigner {
 impl ReceiptSigner {
     pub fn new(key: [u8; 32]) -> Result<Self, ToolError> {
         if key == [0; 32] {
-            return Err(ToolError::Validation("zero receipt signing key rejected".into()));
+            return Err(ToolError::Validation(
+                "zero receipt signing key rejected".into(),
+            ));
         }
         Ok(Self { key })
     }
@@ -70,13 +72,24 @@ impl ReceiptSigner {
 
     pub fn verify(&self, signed: &SignedExecutionReceipt) -> Result<(), ToolError> {
         if signed.hmac_sha256_hex.len() != 64
-            || !signed.hmac_sha256_hex.bytes().all(|v| v.is_ascii_hexdigit())
-            || signed.hmac_sha256_hex.bytes().any(|v| v.is_ascii_uppercase())
+            || !signed
+                .hmac_sha256_hex
+                .bytes()
+                .all(|v| v.is_ascii_hexdigit())
+            || signed
+                .hmac_sha256_hex
+                .bytes()
+                .any(|v| v.is_ascii_uppercase())
         {
             return Err(ToolError::Validation("invalid receipt MAC encoding".into()));
         }
         let mut decoded = [0u8; 32];
-        for (index, pair) in signed.hmac_sha256_hex.as_bytes().chunks_exact(2).enumerate() {
+        for (index, pair) in signed
+            .hmac_sha256_hex
+            .as_bytes()
+            .chunks_exact(2)
+            .enumerate()
+        {
             decoded[index] = u8::from_str_radix(
                 std::str::from_utf8(pair)
                     .map_err(|_| ToolError::Validation("invalid receipt MAC".into()))?,
