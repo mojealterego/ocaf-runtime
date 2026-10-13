@@ -650,6 +650,101 @@ async fn real_wasmtime_cli_when_configured() {
     ));
 }
 
+/// Two independently signed tenants execute concurrently without taking
+/// the other tenant's authenticated principal or observing its WASI output.
+/// When OCAF_TEST_WASMTIME is set, both workloads use the real pinned engine.
+#[tokio::test]
+async fn signed_tenant_isolation_survives_concurrent_execution() {
+    use openssl::pkey::PKey;
+    use openssl::sign::Signer;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let folder = tempfile::tempdir().expect("tenant test workspace");
+    let key = PKey::generate_ed25519().expect("test publisher");
+    let public = key.public_key_to_pem().expect("test public PEM");
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("epoch")
+        .as_secs();
+    let mut tenants = Vec::new();
+
+    for label in ["a", "b"] {
+        let tenant = format!("tenant-{label}");
+        let module = command_fixture(&format!(r#"{{"tenant":"{label}"}}"#));
+        let module_sha256_hex = format!("{:x}", Sha256::digest(&module));
+        let tool = ToolManifest {
+            name: "wasi_concurrent".into(),
+            description: "cross-tenant execution verification".into(),
+            input_schema: json!({"type":"object"}),
+            output_schema: json!({"type":"object"}),
+            cost_sats: 0,
+            permissions: Vec::new(),
+            timeout_ms: 1000,
+            enabled: true,
+        };
+        let signed = json!({
+            "schema_version": 1,
+            "tenant_id": tenant,
+            "agent_id": "agent-1",
+            "tool": tool,
+            "module_sha256_hex": module_sha256_hex,
+            "expires_unix_secs": now + 3600,
+            "policy": SandboxPolicy::default()
+        });
+        let manifest = serde_json::to_vec(&signed).expect("serialize signed manifest");
+        let mut signer = Signer::new_without_digest(&key).expect("test signer");
+        let signature = signer
+            .sign_oneshot_to_vec(&manifest_signing_payload(&manifest).expect("payload"))
+            .expect("sign tenant manifest");
+
+        let pinned = if let Ok(engine) = std::env::var("OCAF_TEST_WASMTIME") {
+            let path = PathBuf::from(engine);
+            let sha = digest(&fs::read(&path).expect("pinned real engine"));
+            PinnedWasmtime::new(path, sha).expect("sealed real engine")
+        } else {
+            let local = folder.path().join(label);
+            fs::create_dir(&local).expect("independent tenant fixture");
+            let print = format!("printf '{{\\\"tenant\\\":\\\"{label}\\\"}}\\\\n'");
+            let (path, hash) = fake_engine(&local, &print);
+            PinnedWasmtime::new(path, hash).expect("sealed fake engine")
+        };
+        let approved = WasmToolExecutor::from_signed_manifest(
+            pinned, module, &manifest, &signature, &public
+        )
+        .expect("approved per-tenant tool");
+        let runtime = OcafRuntime::new(0)
+            .with_tenant_namespace(&format!("tenant-{label}"))
+            .expect("strict tenant namespace");
+        runtime.register_signed_wasi(approved).await.expect("register signed tool");
+        tenants.push(runtime);
+    }
+
+    let runtime_a = &tenants[0];
+    let runtime_b = &tenants[1];
+    for sequence in 0..4 {
+        let request_a = ToolCallRequest {
+            call_id: format!("tenant-a-call-{sequence}"),
+            tool: "wasi_concurrent".into(),
+            args: json!({}),
+            auth: None,
+        };
+        let request_b = ToolCallRequest {
+            call_id: format!("tenant-b-call-{sequence}"),
+            tool: "wasi_concurrent".into(),
+            args: json!({}),
+            auth: None,
+        };
+        let (a, b) = tokio::join!(
+            runtime_a.execute_authenticated_peer(request_a.clone(), "agent-1"),
+            runtime_b.execute_authenticated_peer(request_b.clone(), "agent-1")
+        );
+        assert_eq!(a.expect("tenant a").output, json!({"tenant":"a"}));
+        assert_eq!(b.expect("tenant b").output, json!({"tenant":"b"}));
+        assert!(runtime_a.execute_authenticated_peer(request_b, "agent-2").await.is_err());
+        assert!(runtime_b.execute_authenticated_peer(request_a, "agent-2").await.is_err());
+    }
+}
+
 #[tokio::test]
 async fn publisher_signature_binds_module_tool_policy_and_principal() {
     use openssl::pkey::PKey;
