@@ -22,6 +22,7 @@ const MAX_MODULE_BYTES: usize = 1024 * 1024;
 const MAX_IO_BYTES: usize = 64 * 1024;
 const MAX_MEMORY_BYTES: u64 = 64 * 1024 * 1024;
 const MAX_EXECUTION_MS: u64 = 10_000;
+const MAX_FUEL: u64 = 50_000_000;
 const WASM_MAGIC_VERSION: &[u8; 8] = b"\0asm\x01\0\0\0";
 const ALLOWED_WASI_IMPORTS: &[&str] = &["fd_read", "fd_write", "fd_fdstat_get", "proc_exit"];
 
@@ -145,6 +146,7 @@ impl Default for SandboxPolicy {
 impl SandboxPolicy {
     fn validate(&self) -> Result<(), ToolError> {
         if self.fuel == 0
+            || self.fuel > MAX_FUEL
             || self.max_linear_memory_bytes == 0
             || self.max_linear_memory_bytes > MAX_MEMORY_BYTES
             || self.max_wasm_stack_bytes == 0
