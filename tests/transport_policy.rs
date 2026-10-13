@@ -29,6 +29,20 @@ fn plaintext_is_denied_by_default_and_cannot_bind_public_interfaces() {
 }
 
 #[test]
+fn plaintext_exception_accepts_only_literal_loopback_ip_addresses() {
+    // Hostnames are resolution-dependent, even when named "localhost".
+    assert!(matches!(
+        validate_zenoh_config(&loopback_config("tcp", "localhost"), true),
+        Err(TransportPolicyError::Unsafe)
+    ));
+    assert!(validate_zenoh_config(&loopback_config("tcp", "127.0.0.1"), true).is_ok());
+    assert!(validate_zenoh_config(&loopback_config("tcp", "[::1]"), true).is_ok());
+    assert!(validate_zenoh_config(&loopback_config("tcp", "[[::1]]"), true).is_err());
+    let decorated = loopback_config("tcp", "127.0.0.1").replace(":7447", ":7447#evil");
+    assert!(validate_zenoh_config(&decorated, true).is_err());
+}
+
+#[test]
 fn implicit_scouting_and_unrestricted_protocols_are_rejected() {
     let implicit = r#"{mode:"client",connect:{endpoints:["tcp/127.0.0.1:7447"]}}"#;
     assert!(validate_zenoh_config(implicit, true).is_err());

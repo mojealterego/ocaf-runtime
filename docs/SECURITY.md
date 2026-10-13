@@ -61,6 +61,14 @@ does not prove that TLS/mTLS is enabled; deployments must independently
 verify the actual transport security. The demo configuration files in
 `examples/insecure-local` are plaintext loopback-only.
 
+**Plaintext development exception:** With `OCAF_ALLOW_INSECURE_LOOPBACK=1`,
+Zenoh TCP endpoint hosts must be **numeric loopback IP literals**
+(e.g. `127.0.0.1` or `[::1]`). DNS names, including `localhost`,
+malformed IPv6 bracket forms, endpoint fragments and query parameters
+are rejected by the preflight. This deliberately fails closed against
+hostname resolution surprises; it does not make plaintext suitable
+for remote deployments. Use verified TLS/mTLS for all non-loopback links.
+
 ## Durable replay journal (v0.5.0)
 
 The RPC server CLI requires `OCAF_REPLAY_DB_PATH` to point to an absolute,

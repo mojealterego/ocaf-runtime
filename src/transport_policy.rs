@@ -39,15 +39,26 @@ fn valid_loopback_endpoint(endpoint: &str) -> bool {
     let Some(address) = endpoint.strip_prefix("tcp/") else {
         return false;
     };
-    let address = address.split(['#', '?']).next().unwrap_or_default();
+    // The development-only plaintext exception accepts precisely one
+    // numeric loopback socket address, not a DNS alias or endpoint options.
+    // A hostname (including "localhost") can be resolved through an
+    // operator-controlled hosts/DNS configuration and is not a literal IP.
+    if address.contains(['#', '?']) {
+        return false;
+    }
     let Some((host, port)) = address.rsplit_once(':') else {
         return false;
     };
     if !port.parse::<u16>().is_ok_and(|parsed| parsed > 0) {
         return false;
     }
-    let host = host.trim_start_matches('[').trim_end_matches(']');
-    host == "localhost" || host.parse::<IpAddr>().is_ok_and(|ip| ip.is_loopback())
+    // Strip exactly one balanced pair of IPv6 brackets. Unbalanced or
+    // nested brackets must not be normalized into apparently valid IPs.
+    let host = match host.strip_prefix('[') {
+        Some(inner) => inner.strip_suffix(']').unwrap_or(""),
+        None => host,
+    };
+    host.parse::<IpAddr>().is_ok_and(|ip| ip.is_loopback())
 }
 
 fn file_exists(config: &Value, key: &str, private: bool) -> bool {
