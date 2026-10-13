@@ -78,6 +78,23 @@ def patch(repo: Path, cargo_home: Path) -> None:
     assert matches == 1, "Zenoh YAML source API differs from audited release"
     assert "serde_yaml::" not in new
     config_src.write_text(new)
+    # The upstream include mechanism also accepts YAML and requires this
+    # parser; omit it entirely, not merely the root Config::from_file arm.
+    include_file = config / "src/include.rs"
+    include_source = include_file.read_text()
+    include_pattern = re.compile(
+        r'(?s)Some\\("yaml"\\) => \\{\\s*'
+        r'let d = serde_yaml::Deserializer::from_str\\(&content\\);\\s*'
+        r'T::deserialize\\(d\\)\\.map_err\\(\\|e\\| zerror!\\("YAML error: \\{\\}", e\\)\\.into\\(\\)\\)\\s*'
+        r'\\},'
+    )
+    new_include, include_count = include_pattern.subn(
+        'Some("yaml") | Some("yml") => bail!("YAML configuration disabled by OCAF; use JSON5"),',
+        include_source
+    )
+    assert include_count == 1, "Zenoh include YAML decoder differs from audited version"
+    assert "serde_yaml::" not in new_include
+    include_file.write_text(new_include)
     replace_normalized_dep(config / "Cargo.toml", "serde_yaml")
 
     tls = repo / "vendor/zenoh-link-tls"

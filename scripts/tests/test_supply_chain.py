@@ -166,6 +166,11 @@ class SupplyChainTests(unittest.TestCase):
             file = root / source_file
             file.parent.mkdir(parents=True)
             file.write_text(marker, encoding="utf-8")
+            if name == "zenoh-config":
+                (root / "src/include.rs").write_text(
+                    "YAML configuration disabled by OCAF",
+                    encoding="utf-8",
+                )
             (root / "Cargo.toml").write_text(
                 f'[package]\nname = "{name}"\nversion = "1.10.1"\n'
                 '[dependencies]\n'

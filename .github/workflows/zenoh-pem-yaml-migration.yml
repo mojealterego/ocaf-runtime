@@ -1,4 +1,5 @@
 # One-time, branchless root-owned security migration; commit only if CI passes.
+# Security regression: drop YAML decoder from recursive includes too.
 # Gate Zenoh-only test target so the --no-default-features core matrix still compiles.
 name: Zenoh PEM and YAML Migration
 on:

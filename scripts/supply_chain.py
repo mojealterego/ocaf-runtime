@@ -123,6 +123,9 @@ def inspect(repository: Path) -> dict[str, Any]:
             yaml_source = _read_regular(vendor_root / "src/lib.rs", 2 * MAX_MANIFEST_BYTES)
             if b"YAML configuration disabled by OCAF" not in yaml_source or b"serde_yaml::" in yaml_source:
                 raise PolicyError("unsafe YAML decoder not disabled")
+            include_source = _read_regular(vendor_root / "src/include.rs", 2 * MAX_MANIFEST_BYTES)
+            if b"YAML configuration disabled by OCAF" not in include_source or b"serde_yaml::" in include_source:
+                raise PolicyError("unsafe YAML include decoder not disabled")
         else:
             if "rustls-pemfile" in deps:
                 raise PolicyError("obsolete PEM decoder still required")
