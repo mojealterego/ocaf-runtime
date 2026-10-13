@@ -73,7 +73,27 @@ const SIGNED_WASI_REQUIRED_ENV: [&str; 6] = [
 /// Returns whether the complete signed WASI configuration was requested.
 /// Keep this pure so partial or misspelled bundles can be tested independently.
 fn signed_wasi_bundle_enabled(names: &HashSet<String>) -> Result<bool> {
-    Ok(names.contains("OCAF_WASI_MANIFEST_FILE"))
+    let is_wasi_key = |name: &str| {
+        name.starts_with("OCAF_WASI_") || name.starts_with("OCAF_WASMTIME_")
+    };
+    let requested = names.iter().any(|name| is_wasi_key(name));
+    if !requested {
+        return Ok(false);
+    }
+
+    // Reject unknown names as well as incomplete bundles. Otherwise a typo
+    // silently disables or weakens a security-sensitive deployment.
+    for name in names {
+        if is_wasi_key(name) && !SIGNED_WASI_REQUIRED_ENV.contains(&name.as_str()) {
+            bail!("unknown signed WASI configuration variable: {name}");
+        }
+    }
+    for required in SIGNED_WASI_REQUIRED_ENV {
+        if !names.contains(required) {
+            bail!("incomplete signed WASI configuration, missing {required}");
+        }
+    }
+    Ok(true)
 }
 
 fn lowercase_sha256(raw: &str) -> Result<[u8; 32]> {
