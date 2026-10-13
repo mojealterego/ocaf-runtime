@@ -51,7 +51,7 @@ thiserror = "1.0"
 tokio = { version = "1.38", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-zenoh = { version = "1.10", optional = true }
+zenoh = { version = "1.10", optional = true, default-features = false, features = ["transport_tcp", "transport_tls"] }
 
 [dev-dependencies]
 tempfile = "3"
