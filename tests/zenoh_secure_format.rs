@@ -1,3 +1,5 @@
+#![cfg(feature = "zenoh")]
+
 // Regression for the reviewed Zenoh v1.10.1 JSON5-only migration.
 // TLS and mTLS handshakes are tested by zenoh_mtls_e2e.
 #[test]
