@@ -336,6 +336,75 @@ async fn cancellation_reaps_guest_and_removes_private_workspace() {
     panic!("cancelled WASI subprocess or temporary module workspace was not cleaned up");
 }
 
+/// A cancelled guest must not leave a background process in its process
+/// group. Unlike a regular Wasmtime module, this shell fixture intentionally
+/// creates a descendant to exercise the subprocess supervisor boundary.
+#[tokio::test]
+async fn cancelling_guest_kills_background_descendants() {
+    let folder = tempfile::tempdir().expect("temporary fixture");
+    let descendant_pid_file = folder.path().join("descendant.pid");
+    let ready_file = folder.path().join("started");
+    let shell = format!(
+        "/bin/sleep 10 & echo \"$!\" > '{}'; echo ready > '{}'; wait",
+        descendant_pid_file.display(),
+        ready_file.display()
+    );
+    let (path, hash) = fake_engine(folder.path(), &shell);
+    let exec = executor(
+        path,
+        hash,
+        command_fixture("{}"),
+        SandboxPolicy {
+            timeout_ms: 10_000,
+            ..SandboxPolicy::default()
+        },
+    );
+    let mut ctx = context();
+    ctx.deadline_ms = 10_000;
+    let task = tokio::spawn(async move { exec.execute(json!({}), &ctx).await });
+    let mut pid = None;
+    for _ in 0..150 {
+        if ready_file.is_file() {
+            if let Ok(value) = fs::read_to_string(&descendant_pid_file) {
+                pid = value.trim().parse::<u32>().ok();
+                if pid.is_some() {
+                    break;
+                }
+            }
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+    }
+    let pid = pid.expect("guest started background child");
+
+    fn running(pid: u32) -> bool {
+        let Ok(stat) = fs::read_to_string(format!("/proc/{pid}/stat")) else {
+            return false;
+        };
+        let Some((_, suffix)) = stat.rsplit_once(") ") else {
+            return false;
+        };
+        !matches!(suffix.chars().next(), Some('Z' | 'X'))
+    }
+
+    assert!(running(pid), "background child was not alive before cancellation");
+    task.abort();
+    let _ = task.await;
+
+    let mut stopped = false;
+    for _ in 0..120 {
+        if !running(pid) {
+            stopped = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+    }
+    if !stopped {
+        // The RED test must clean up its fixture even on an expected failure.
+        unsafe { libc::kill(pid as libc::pid_t, libc::SIGKILL) };
+    }
+    assert!(stopped, "WASI cancellation left a live background descendant");
+}
+
 #[tokio::test]
 async fn wasi_pool_exhaustion_rejects_without_waiting_for_unsafe_fallback() {
     let folder = tempfile::tempdir().expect("tmp");
