@@ -255,8 +255,8 @@ impl WasiProcessGroup {
 impl Drop for WasiProcessGroup {
     fn drop(&mut self) {
         // Negative PID addresses the dedicated process group (never OCAF's).
-        // Ignore ESRCH when the whole group already exited. No descendants
-        // should retain privileges to setpgid or setsid under this policy.
+        // ESRCH is harmless when the group has already exited. Processes
+        // that escape to another group/session require stronger OS isolation.
         unsafe {
             libc::kill(-self.pgid, libc::SIGKILL);
         }
