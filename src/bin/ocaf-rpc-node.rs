@@ -14,11 +14,11 @@ use ocaf_runtime::jobs::remote::RemoteJobWorker;
 use ocaf_runtime::ops::secrets::read_private_text;
 use ocaf_runtime::rpc::{PeerPolicy, RpcAction, RpcClient, RpcGateway, RpcStatus};
 use ocaf_runtime::runtime::OcafRuntime;
-#[cfg(feature = "tls-bound")]
-use ocaf_runtime::transport::tls_bound::{client_config, request as tls_request};
 use ocaf_runtime::transport::rpc::{
     ReconnectPolicy, ResilientZenohRpcClient, ZenohRpcClient, ZenohRpcServer,
 };
+#[cfg(feature = "tls-bound")]
+use ocaf_runtime::transport::tls_bound::{client_config, request as tls_request};
 use ocaf_runtime::transport::{pricing_tool_manifest, EchoTool, ZenohTransport};
 use ocaf_runtime::transport_policy::{read_zenoh_config, validate_zenoh_config};
 use serde_json::json;
@@ -88,7 +88,10 @@ async fn main() -> anyhow::Result<()> {
     let tls_mode = env::var("OCAF_RPC_INGRESS").as_deref() == Ok("tls-bound");
     match role.as_str() {
         "server" => {
-            anyhow::ensure!(!tls_mode, "TLS-bound worker/server mode is not available via demo node; use ocaf-coordinator");
+            anyhow::ensure!(
+                !tls_mode,
+                "TLS-bound worker/server mode is not available via demo node; use ocaf-coordinator"
+            );
             let config = load_zenoh_config()?;
             let session = ZenohTransport::connect_with_config(config).await?.session();
             let runtime = OcafRuntime::new(0);
@@ -144,7 +147,10 @@ async fn main() -> anyhow::Result<()> {
             served?;
         }
         "worker" => {
-            anyhow::ensure!(!tls_mode, "TLS-bound worker mode is not implemented; refusing insecure Zenoh fallback");
+            anyhow::ensure!(
+                !tls_mode,
+                "TLS-bound worker mode is not implemented; refusing insecure Zenoh fallback"
+            );
             let config = load_zenoh_config()?;
             let session = ZenohTransport::connect_with_config(config).await?.session();
             let runtime = OcafRuntime::new(0);
@@ -229,11 +235,21 @@ async fn main() -> anyhow::Result<()> {
             let reply = if tls_mode {
                 #[cfg(feature = "tls-bound")]
                 {
-                    let cert = read_private_text(Path::new(&require("OCAF_TLS_CLIENT_CERT_FILE")?), 32_768)?;
-                    let key = read_private_text(Path::new(&require("OCAF_TLS_CLIENT_KEY_FILE")?), 16_384)?;
-                    let ca = read_private_text(Path::new(&require("OCAF_TLS_SERVER_CA_FILE")?), 131_072)?;
+                    let cert = read_private_text(
+                        Path::new(&require("OCAF_TLS_CLIENT_CERT_FILE")?),
+                        32_768,
+                    )?;
+                    let key = read_private_text(
+                        Path::new(&require("OCAF_TLS_CLIENT_KEY_FILE")?),
+                        16_384,
+                    )?;
+                    let ca = read_private_text(
+                        Path::new(&require("OCAF_TLS_SERVER_CA_FILE")?),
+                        131_072,
+                    )?;
                     let address: std::net::SocketAddr = require("OCAF_TLS_RPC_ADDRESS")?
-                        .parse().map_err(|_| anyhow::anyhow!("invalid explicit TLS RPC address"))?;
+                        .parse()
+                        .map_err(|_| anyhow::anyhow!("invalid explicit TLS RPC address"))?;
                     let server_name = require("OCAF_TLS_RPC_SERVER_DNS")?;
                     let tls = client_config(cert.as_bytes(), key.as_bytes(), ca.as_bytes())?;
                     tls_request(address, &server_name, Arc::new(tls), &protocol, action).await?

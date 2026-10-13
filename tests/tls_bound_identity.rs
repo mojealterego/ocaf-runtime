@@ -8,7 +8,9 @@ use std::sync::Arc;
 
 use ocaf_runtime::rpc::{PeerPolicy, RpcAction, RpcClient, RpcGateway, RpcStatus};
 use ocaf_runtime::runtime::OcafRuntime;
-use ocaf_runtime::transport::tls_bound::{client_config, request, server_config, TlsBoundRpcServer};
+use ocaf_runtime::transport::tls_bound::{
+    client_config, request, server_config, TlsBoundRpcServer,
+};
 use sha2::{Digest, Sha256};
 
 const HMAC_KEY: [u8; 32] = [0x37; 32];
@@ -28,8 +30,15 @@ struct TestPki {
 }
 
 fn openssl(args: &[&str]) {
-    let output = Command::new("openssl").args(args).output().expect("OpenSSL available");
-    assert!(output.status.success(), "PKI generation failed: {}", String::from_utf8_lossy(&output.stderr));
+    let output = Command::new("openssl")
+        .args(args)
+        .output()
+        .expect("OpenSSL available");
+    assert!(
+        output.status.success(),
+        "PKI generation failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
 }
 
 fn path(path: &Path) -> &str {
@@ -40,24 +49,54 @@ fn ca(dir: &Path, name: &str) -> (PathBuf, PathBuf) {
     let cert = dir.join(format!("{name}.pem"));
     let key = dir.join(format!("{name}.key"));
     openssl(&[
-        "req", "-x509", "-newkey", "ec", "-pkeyopt", "ec_paramgen_curve:P-256",
-        "-nodes", "-keyout", path(&key), "-out", path(&cert), "-days", "2",
-        "-subj", &format!("/CN={name}"),
-        "-addext", "basicConstraints=critical,CA:TRUE",
-        "-addext", "keyUsage=critical,keyCertSign,cRLSign",
+        "req",
+        "-x509",
+        "-newkey",
+        "ec",
+        "-pkeyopt",
+        "ec_paramgen_curve:P-256",
+        "-nodes",
+        "-keyout",
+        path(&key),
+        "-out",
+        path(&cert),
+        "-days",
+        "2",
+        "-subj",
+        &format!("/CN={name}"),
+        "-addext",
+        "basicConstraints=critical,CA:TRUE",
+        "-addext",
+        "keyUsage=critical,keyCertSign,cRLSign",
     ]);
     (cert, key)
 }
 
-fn sign(dir: &Path, name: &str, issuer: &Path, issuer_key: &Path, server: bool) -> (PathBuf, PathBuf) {
+fn sign(
+    dir: &Path,
+    name: &str,
+    issuer: &Path,
+    issuer_key: &Path,
+    server: bool,
+) -> (PathBuf, PathBuf) {
     let cert = dir.join(format!("{name}.pem"));
     let key = dir.join(format!("{name}.key"));
     let csr = dir.join(format!("{name}.csr"));
     let ext = dir.join(format!("{name}.ext"));
     openssl(&[
-        "req", "-new", "-newkey", "ec", "-pkeyopt", "ec_paramgen_curve:P-256",
-        "-nodes", "-keyout", path(&key), "-out", path(&csr),
-        "-subj", &format!("/CN={name}"),
+        "req",
+        "-new",
+        "-newkey",
+        "ec",
+        "-pkeyopt",
+        "ec_paramgen_curve:P-256",
+        "-nodes",
+        "-keyout",
+        path(&key),
+        "-out",
+        path(&csr),
+        "-subj",
+        &format!("/CN={name}"),
     ]);
     let text = if server {
         "basicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature\nextendedKeyUsage=serverAuth\nsubjectAltName=DNS:localhost\n"
@@ -70,9 +109,22 @@ fn sign(dir: &Path, name: &str, issuer: &Path, issuer_key: &Path, server: bool) 
     };
     std::fs::write(&ext, text).unwrap();
     openssl(&[
-        "x509", "-req", "-in", path(&csr), "-CA", path(issuer),
-        "-CAkey", path(issuer_key), "-CAcreateserial", "-out", path(&cert),
-        "-days", "2", "-sha256", "-extfile", path(&ext),
+        "x509",
+        "-req",
+        "-in",
+        path(&csr),
+        "-CA",
+        path(issuer),
+        "-CAkey",
+        path(issuer_key),
+        "-CAcreateserial",
+        "-out",
+        path(&cert),
+        "-days",
+        "2",
+        "-sha256",
+        "-extfile",
+        path(&ext),
     ]);
     (cert, key)
 }
@@ -85,7 +137,19 @@ fn fixture() -> TestPki {
     let (client, client_key) = sign(dir.path(), "agent-a", &root, &root_key, false);
     let (other, other_key) = sign(dir.path(), "agent-b", &root, &root_key, false);
     let (alien, alien_key) = sign(dir.path(), "alien", &alien_root, &alien_root_key, false);
-    TestPki { _dir: dir, root, alien_root, server, server_key, client, client_key, other, other_key, alien, alien_key }
+    TestPki {
+        _dir: dir,
+        root,
+        alien_root,
+        server,
+        server_key,
+        client,
+        client_key,
+        other,
+        other_key,
+        alien,
+        alien_key,
+    }
 }
 
 fn material(path: &Path) -> Vec<u8> {
@@ -97,17 +161,30 @@ fn pin(cert: &Path) -> String {
     format!("{:x}", Sha256::digest(openssl.to_der().unwrap()))
 }
 
-async fn start(pki: &TestPki) -> (std::net::SocketAddr, tokio::task::JoinHandle<anyhow::Result<()>>) {
+async fn start(
+    pki: &TestPki,
+) -> (
+    std::net::SocketAddr,
+    tokio::task::JoinHandle<anyhow::Result<()>>,
+) {
     let peer = PeerPolicy::new(HMAC_KEY, vec![])
         .with_pinned_certificate(&material(&pki.client), &pin(&pki.client))
         .unwrap()
         .with_tls_dns_identity("agent-a.test")
         .unwrap();
     let gateway = RpcGateway::new(
-        "coordinator", OcafRuntime::new(0),
-        HashMap::from([("agent-a".into(), peer)]), 8,
-    ).unwrap();
-    let config = server_config(&material(&pki.server), &material(&pki.server_key), &material(&pki.root)).unwrap();
+        "coordinator",
+        OcafRuntime::new(0),
+        HashMap::from([("agent-a".into(), peer)]),
+        8,
+    )
+    .unwrap();
+    let config = server_config(
+        &material(&pki.server),
+        &material(&pki.server_key),
+        &material(&pki.root),
+    )
+    .unwrap();
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let address = listener.local_addr().unwrap();
     let server = TlsBoundRpcServer::new(listener, config, Arc::new(gateway)).unwrap();
@@ -115,7 +192,13 @@ async fn start(pki: &TestPki) -> (std::net::SocketAddr, tokio::task::JoinHandle<
     (address, task)
 }
 
-fn client(pki: &TestPki, cert: &Path, key: &Path, server_ca: &Path, proof: &Path) -> (Arc<rustls::ClientConfig>, RpcClient) {
+fn client(
+    pki: &TestPki,
+    cert: &Path,
+    key: &Path,
+    server_ca: &Path,
+    proof: &Path,
+) -> (Arc<rustls::ClientConfig>, RpcClient) {
     let tls = client_config(&material(cert), &material(key), &material(server_ca)).unwrap();
     let rpc = RpcClient::new("agent-a", "coordinator", HMAC_KEY)
         .unwrap()
@@ -129,8 +212,16 @@ fn client(pki: &TestPki, cert: &Path, key: &Path, server_ca: &Path, proof: &Path
 async fn active_tls_leaf_matches_sender_pin_and_signed_rpc() {
     let pki = fixture();
     let (address, task) = start(&pki).await;
-    let (tls, rpc) = client(&pki, &pki.client, &pki.client_key, &pki.root, &pki.client_key);
-    let reply = request(address, "localhost", tls, &rpc, RpcAction::Discover).await.unwrap();
+    let (tls, rpc) = client(
+        &pki,
+        &pki.client,
+        &pki.client_key,
+        &pki.root,
+        &pki.client_key,
+    );
+    let reply = request(address, "localhost", tls, &rpc, RpcAction::Discover)
+        .await
+        .unwrap();
     assert_eq!(reply.status, RpcStatus::Ok);
     task.abort();
 }
@@ -140,7 +231,11 @@ async fn valid_hmac_and_pop_with_different_tls_cert_must_be_denied() {
     let pki = fixture();
     let (address, task) = start(&pki).await;
     let (tls, rpc) = client(&pki, &pki.other, &pki.other_key, &pki.root, &pki.client_key);
-    assert!(request(address, "localhost", tls, &rpc, RpcAction::Discover).await.is_err());
+    assert!(
+        request(address, "localhost", tls, &rpc, RpcAction::Discover)
+            .await
+            .is_err()
+    );
     task.abort();
 }
 
@@ -149,7 +244,11 @@ async fn untrusted_ca_certificate_rejected_before_signed_rpc_dispatch() {
     let pki = fixture();
     let (address, task) = start(&pki).await;
     let (tls, rpc) = client(&pki, &pki.alien, &pki.alien_key, &pki.root, &pki.client_key);
-    assert!(request(address, "localhost", tls, &rpc, RpcAction::Discover).await.is_err());
+    assert!(
+        request(address, "localhost", tls, &rpc, RpcAction::Discover)
+            .await
+            .is_err()
+    );
     task.abort();
 }
 
@@ -157,8 +256,18 @@ async fn untrusted_ca_certificate_rejected_before_signed_rpc_dispatch() {
 async fn wrong_server_hostname_rejected_even_with_valid_client_identity() {
     let pki = fixture();
     let (address, task) = start(&pki).await;
-    let (tls, rpc) = client(&pki, &pki.client, &pki.client_key, &pki.root, &pki.client_key);
-    assert!(request(address, "evil.example", tls, &rpc, RpcAction::Discover).await.is_err());
+    let (tls, rpc) = client(
+        &pki,
+        &pki.client,
+        &pki.client_key,
+        &pki.root,
+        &pki.client_key,
+    );
+    assert!(
+        request(address, "evil.example", tls, &rpc, RpcAction::Discover)
+            .await
+            .is_err()
+    );
     task.abort();
 }
 
@@ -166,10 +275,18 @@ async fn wrong_server_hostname_rejected_even_with_valid_client_identity() {
 async fn no_unpinned_legacy_hmac_peer_can_enable_tls_bound_listener() {
     let pki = fixture();
     let gateway = RpcGateway::new(
-        "coordinator", OcafRuntime::new(0),
-        HashMap::from([("agent-a".into(), PeerPolicy::new(HMAC_KEY, vec![]))]), 8,
-    ).unwrap();
-    let config = server_config(&material(&pki.server), &material(&pki.server_key), &material(&pki.root)).unwrap();
+        "coordinator",
+        OcafRuntime::new(0),
+        HashMap::from([("agent-a".into(), PeerPolicy::new(HMAC_KEY, vec![]))]),
+        8,
+    )
+    .unwrap();
+    let config = server_config(
+        &material(&pki.server),
+        &material(&pki.server_key),
+        &material(&pki.root),
+    )
+    .unwrap();
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     assert!(TlsBoundRpcServer::new(listener, config, Arc::new(gateway)).is_err());
 }
@@ -178,7 +295,13 @@ async fn no_unpinned_legacy_hmac_peer_can_enable_tls_bound_listener() {
 fn wrong_dns_san_rejected_before_server_start() {
     let pki = fixture();
     let peer = PeerPolicy::new(HMAC_KEY, vec![])
-        .with_pinned_certificate(&material(&pki.client), &pin(&pki.client)).unwrap();
+        .with_pinned_certificate(&material(&pki.client), &pin(&pki.client))
+        .unwrap();
     assert!(peer.with_tls_dns_identity("agent-b.test").is_err());
-    assert!(client_config(&material(&pki.client), &material(&pki.client_key), &material(&pki.alien_root)).is_ok());
+    assert!(client_config(
+        &material(&pki.client),
+        &material(&pki.client_key),
+        &material(&pki.alien_root)
+    )
+    .is_ok());
 }

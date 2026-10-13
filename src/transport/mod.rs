@@ -1,7 +1,7 @@
 pub mod rpc;
+pub mod sink;
 #[cfg(feature = "tls-bound")]
 pub mod tls_bound;
-pub mod sink;
 
 use serde_json::Value;
 use std::sync::Arc;

@@ -81,15 +81,22 @@ impl PinnedCertificate {
             || expected.starts_with('.')
             || expected.ends_with('.')
             || expected.split('.').any(|label| {
-                label.is_empty() || label.len() > 63 ||
-                !label.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-') ||
-                label.starts_with('-') || label.ends_with('-')
+                label.is_empty()
+                    || label.len() > 63
+                    || !label
+                        .bytes()
+                        .all(|b| b.is_ascii_alphanumeric() || b == b'-')
+                    || label.starts_with('-')
+                    || label.ends_with('-')
             })
         {
             return Err(RpcError::Malformed);
         }
         let matched = self.leaf.subject_alt_names().is_some_and(|sans| {
-            sans.iter().any(|san| san.dnsname().is_some_and(|dns| dns.eq_ignore_ascii_case(&expected)))
+            sans.iter().any(|san| {
+                san.dnsname()
+                    .is_some_and(|dns| dns.eq_ignore_ascii_case(&expected))
+            })
         });
         if !matched {
             return Err(RpcError::Unauthorized);

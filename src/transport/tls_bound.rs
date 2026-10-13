@@ -25,15 +25,23 @@ const MAX_LEAF_PEM_BYTES: usize = 32 * 1024;
 const MAX_KEY_PEM_BYTES: usize = 16 * 1024;
 
 fn read_chain(pem: &[u8], limit: usize) -> anyhow::Result<Vec<CertificateDer<'static>>> {
-    anyhow::ensure!(!pem.is_empty() && pem.len() <= limit, "TLS certificate material out of bounds");
-    let certificates = CertificateDer::pem_slice_iter(pem)
-        .collect::<Vec<_>>();
-    anyhow::ensure!(!certificates.is_empty() && certificates.len() <= 16, "TLS certificate chain invalid");
+    anyhow::ensure!(
+        !pem.is_empty() && pem.len() <= limit,
+        "TLS certificate material out of bounds"
+    );
+    let certificates = CertificateDer::pem_slice_iter(pem).collect::<Vec<_>>();
+    anyhow::ensure!(
+        !certificates.is_empty() && certificates.len() <= 16,
+        "TLS certificate chain invalid"
+    );
     Ok(certificates)
 }
 
 fn private_key(pem: &[u8]) -> anyhow::Result<PrivateKeyDer<'static>> {
-    anyhow::ensure!(!pem.is_empty() && pem.len() <= MAX_KEY_PEM_BYTES, "TLS private key out of bounds");
+    anyhow::ensure!(
+        !pem.is_empty() && pem.len() <= MAX_KEY_PEM_BYTES,
+        "TLS private key out of bounds"
+    );
     Ok(PrivateKeyDer::from_pem_slice(pem)?)
 }
 
@@ -52,10 +60,9 @@ pub fn server_config(
     server_key_pem: &[u8],
     trusted_client_ca_pem: &[u8],
 ) -> anyhow::Result<ServerConfig> {
-    let verifier = rustls::server::WebPkiClientVerifier::builder(
-        Arc::new(roots(trusted_client_ca_pem)?),
-    )
-    .build()?;
+    let verifier =
+        rustls::server::WebPkiClientVerifier::builder(Arc::new(roots(trusted_client_ca_pem)?))
+            .build()?;
     let mut config = ServerConfig::builder_with_protocol_versions(&[&rustls::version::TLS13])
         .with_client_cert_verifier(verifier)
         .with_single_cert(
@@ -90,9 +97,17 @@ pub struct TlsBoundRpcServer {
 }
 
 impl TlsBoundRpcServer {
-    pub fn new(listener: TcpListener, config: ServerConfig, gateway: Arc<RpcGateway>) -> anyhow::Result<Self> {
+    pub fn new(
+        listener: TcpListener,
+        config: ServerConfig,
+        gateway: Arc<RpcGateway>,
+    ) -> anyhow::Result<Self> {
         gateway.validate_tls_bound_peers()?;
-        Ok(Self { listener, acceptor: TlsAcceptor::from(Arc::new(config)), gateway })
+        Ok(Self {
+            listener,
+            acceptor: TlsAcceptor::from(Arc::new(config)),
+            gateway,
+        })
     }
 
     pub async fn serve(&self) -> anyhow::Result<()> {
@@ -107,7 +122,9 @@ impl TlsBoundRpcServer {
             let gateway = Arc::clone(&self.gateway);
             tokio::spawn(async move {
                 let _permit = permit;
-                if let Err(error) = tokio::time::timeout(LIMIT, serve_connection(tcp, acceptor, gateway)).await {
+                if let Err(error) =
+                    tokio::time::timeout(LIMIT, serve_connection(tcp, acceptor, gateway)).await
+                {
                     tracing::warn!(error = %error, "bounded TLS-bound RPC connection timed out");
                 }
             });
@@ -115,11 +132,7 @@ impl TlsBoundRpcServer {
     }
 }
 
-async fn serve_connection(
-    tcp: TcpStream,
-    acceptor: TlsAcceptor,
-    gateway: Arc<RpcGateway>,
-) {
+async fn serve_connection(tcp: TcpStream, acceptor: TlsAcceptor, gateway: Arc<RpcGateway>) {
     let Ok(mut connection) = acceptor.accept(tcp).await else {
         return;
     };
@@ -176,7 +189,10 @@ pub async fn request(
         let server_name = ServerName::try_from(remote_server_dns.to_string())?;
         let connector = TlsConnector::from(config);
         let mut tls = connector.connect(server_name, socket).await?;
-        anyhow::ensure!(tls.get_ref().1.alpn_protocol() == Some(ALPN), "unrecognized TLS application protocol");
+        anyhow::ensure!(
+            tls.get_ref().1.alpn_protocol() == Some(ALPN),
+            "unrecognized TLS application protocol"
+        );
         let (req, bytes) = client.prepare(action, 5_000)?;
         anyhow::ensure!(bytes.len() <= MAX_FRAME_BYTES, "RPC frame oversized");
         tls.write_u32(bytes.len() as u32).await?;
@@ -184,10 +200,14 @@ pub async fn request(
         tls.flush().await?;
         let status = tls.read_u8().await?;
         let len = tls.read_u32().await? as usize;
-        anyhow::ensure!(len <= MAX_FRAME_BYTES && len > 0, "RPC reply length invalid");
+        anyhow::ensure!(
+            len <= MAX_FRAME_BYTES && len > 0,
+            "RPC reply length invalid"
+        );
         let mut response = vec![0; len];
         tls.read_exact(&mut response).await?;
         anyhow::ensure!(status == 0, "remote RPC rejected");
         client.read_reply(&response, &req).map_err(Into::into)
-    }).await?
+    })
+    .await?
 }

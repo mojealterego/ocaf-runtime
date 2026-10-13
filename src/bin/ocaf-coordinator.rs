@@ -153,7 +153,9 @@ fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
                     anyhow::bail!("TLS-bound ingress requires compile-time feature tls-bound");
                 }
             }
-            None if tls_mode => anyhow::bail!("TLS-bound ingress requires peer certificate and DNS SAN for {node}"),
+            None if tls_mode => {
+                anyhow::bail!("TLS-bound ingress requires peer certificate and DNS SAN for {node}")
+            }
             None => {}
         }
         if entry.submit_jobs {
@@ -191,10 +193,7 @@ fn ingress_config(allow_loopback: bool) -> anyhow::Result<zenoh::Config> {
 
 /// Select exactly ONE ingress for the process. In TLS-bound mode Zenoh
 /// queryables are never advertised, preventing legacy HMAC-only fallback.
-async fn serve_gateway(
-    gateway: Arc<RpcGateway>,
-    config: zenoh::Config,
-) -> anyhow::Result<()> {
+async fn serve_gateway(gateway: Arc<RpcGateway>, config: zenoh::Config) -> anyhow::Result<()> {
     match env::var("OCAF_RPC_INGRESS").as_deref() {
         Ok("tls-bound") => {
             #[cfg(feature = "tls-bound")]
@@ -205,10 +204,14 @@ async fn serve_gateway(
                 let config = server_config(cert.as_bytes(), key.as_bytes(), ca.as_bytes())?;
                 let bind = env_required("OCAF_TLS_RPC_BIND")?
                     .parse::<std::net::SocketAddr>()
-                    .map_err(|_| anyhow::anyhow!("OCAF_TLS_RPC_BIND must be an explicit socket address"))?;
+                    .map_err(|_| {
+                        anyhow::anyhow!("OCAF_TLS_RPC_BIND must be an explicit socket address")
+                    })?;
                 let listener = tokio::net::TcpListener::bind(bind).await?;
                 tracing::info!(address = %listener.local_addr()?, "Exclusive TLS 1.3-bound RPC ingress started");
-                TlsBoundRpcServer::new(listener, config, gateway)?.serve().await
+                TlsBoundRpcServer::new(listener, config, gateway)?
+                    .serve()
+                    .await
             }
             #[cfg(not(feature = "tls-bound"))]
             {
@@ -422,9 +425,7 @@ async fn main() -> anyhow::Result<()> {
         _ => anyhow::bail!("OCAF_COORDINATOR_MODE must be active or standby"),
     };
     let peers = load_peers(&absolute_path("OCAF_PEERS_FILE")?)?;
-    let config = ingress_config(
-        env::var("OCAF_ALLOW_INSECURE_LOOPBACK").as_deref() == Ok("1"),
-    )?;
+    let config = ingress_config(env::var("OCAF_ALLOW_INSECURE_LOOPBACK").as_deref() == Ok("1"))?;
 
     let gateway =
         RpcGateway::with_sqlite_replay(&node_id, OcafRuntime::new(0), peers, 64, &replay)?

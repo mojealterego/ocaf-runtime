@@ -385,7 +385,10 @@ impl PeerPolicy {
     /// contain the exact configured DNS SAN, not a wildcard or a CN fallback.
     #[cfg(feature = "tls-bound")]
     pub fn with_tls_dns_identity(mut self, exact_dns_san: &str) -> Result<Self, RpcError> {
-        let pinned = self.certificate_identity.as_ref().ok_or(RpcError::Malformed)?;
+        let pinned = self
+            .certificate_identity
+            .as_ref()
+            .ok_or(RpcError::Malformed)?;
         pinned.verify_dns_san(exact_dns_san)?;
         self.tls_dns_identity = Some(exact_dns_san.to_owned());
         Ok(self)
@@ -671,11 +674,17 @@ impl RpcGateway {
         let (raw, _) = SignedFrame::unpack(message)?;
         let unverified: RpcRequest =
             serde_json::from_slice(&raw).map_err(|_| RpcError::Malformed)?;
-        let peer = self.peers.get(&unverified.sender).ok_or(RpcError::Unauthorized)?;
+        let peer = self
+            .peers
+            .get(&unverified.sender)
+            .ok_or(RpcError::Unauthorized)?;
         if peer.tls_dns_identity.is_none() {
             return Err(RpcError::Unauthorized);
         }
-        let pinned = peer.certificate_identity.as_ref().ok_or(RpcError::Unauthorized)?;
+        let pinned = peer
+            .certificate_identity
+            .as_ref()
+            .ok_or(RpcError::Unauthorized)?;
         pinned.verify_tls_leaf(presented_certificate_der)?;
         self.handle_at(message, now).await
     }
@@ -685,9 +694,12 @@ impl RpcGateway {
     /// no legacy HMAC-only fallback on this listener.
     #[cfg(feature = "tls-bound")]
     pub fn validate_tls_bound_peers(&self) -> Result<(), RpcError> {
-        if self.peers.is_empty() || self.peers.values().any(|peer| {
-            peer.certificate_identity.is_none() || peer.tls_dns_identity.is_none()
-        }) {
+        if self.peers.is_empty()
+            || self
+                .peers
+                .values()
+                .any(|peer| peer.certificate_identity.is_none() || peer.tls_dns_identity.is_none())
+        {
             return Err(RpcError::Unauthorized);
         }
         Ok(())
