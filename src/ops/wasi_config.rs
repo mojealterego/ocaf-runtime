@@ -1,6 +1,7 @@
 //! Controlled deployment of exactly one operator-approved WASIp1 tool.
 //! This loader is used by the coordinator and the TLS-bound remote worker.
 //! No tenant, manifest, module path or publisher key is read from RPC JSON.
+use std::collections::HashSet;
 use std::env;
 use std::fs::OpenOptions;
 use std::io::Read;
@@ -60,6 +61,21 @@ fn owner_only_file(name: &str, max_bytes: u64) -> Result<Vec<u8>> {
     read_operator_file(&p, name, max_bytes)
 }
 
+const SIGNED_WASI_REQUIRED_ENV: [&str; 6] = [
+    "OCAF_WASI_MANIFEST_FILE",
+    "OCAF_WASI_SIGNATURE_FILE",
+    "OCAF_WASI_PUBLISHER_KEY_FILE",
+    "OCAF_WASI_MODULE_FILE",
+    "OCAF_WASMTIME_EXECUTABLE",
+    "OCAF_WASMTIME_SHA256",
+];
+
+/// Returns whether the complete signed WASI configuration was requested.
+/// Keep this pure so partial or misspelled bundles can be tested independently.
+fn signed_wasi_bundle_enabled(names: &HashSet<String>) -> Result<bool> {
+    Ok(names.contains("OCAF_WASI_MANIFEST_FILE"))
+}
+
 fn lowercase_sha256(raw: &str) -> Result<[u8; 32]> {
     if raw.len() != 64
         || !raw.bytes().all(|b| b.is_ascii_hexdigit())
@@ -85,7 +101,10 @@ pub async fn runtime_from_env() -> Result<OcafRuntime> {
         runtime = runtime.with_tenant_namespace(value)?;
     }
 
-    if env::var("OCAF_WASI_MANIFEST_FILE").is_err() {
+    let config_names: HashSet<String> = env::vars_os()
+        .map(|(key, _)| key.to_string_lossy().into_owned())
+        .collect();
+    if !signed_wasi_bundle_enabled(&config_names)? {
         return Ok(runtime);
     }
     if namespace.is_none()
@@ -144,4 +163,36 @@ mod operator_file_tests {
         fs::write(&sealed, b"").expect("clear file");
         assert!(read_operator_file(&sealed, "TEST_MANIFEST", 16).is_err());
     }
+    #[test]
+    fn signed_wasi_bundle_requires_every_setting_and_rejects_misspelled_keys() {
+        let expected: HashSet<String> = SIGNED_WASI_REQUIRED_ENV
+            .iter()
+            .map(|key| (*key).to_owned())
+            .collect();
+        assert!(!signed_wasi_bundle_enabled(&HashSet::new()).expect("legacy unconfigured mode"));
+        assert!(signed_wasi_bundle_enabled(&expected).expect("complete operator bundle"));
+
+        for name in SIGNED_WASI_REQUIRED_ENV {
+            let mut incomplete = expected.clone();
+            incomplete.remove(name);
+            assert!(
+                signed_wasi_bundle_enabled(&incomplete).is_err(),
+                "missing {name} must abort deployment"
+            );
+        }
+
+        for wrong in ["OCAF_WASI_MANIFEST_FIEL", "OCAF_WASMTIME_SHA25"] {
+            let mut misspelled = expected.clone();
+            misspelled.insert(wrong.to_owned());
+            assert!(
+                signed_wasi_bundle_enabled(&misspelled).is_err(),
+                "unknown operator variable {wrong} must abort startup"
+            );
+        }
+
+        let mut unrelated = expected.clone();
+        unrelated.insert("OCAF_TEST_PG_DSN".to_owned());
+        assert!(signed_wasi_bundle_enabled(&unrelated).expect("unrelated environment is allowed"));
+    }
+
 }
