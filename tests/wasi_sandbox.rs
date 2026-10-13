@@ -326,7 +326,8 @@ async fn real_wasmtime_cli_when_configured() {
     let pinned = PinnedWasmtime::new(
         PathBuf::from(std::env::var("OCAF_TEST_WASMTIME").expect("checked above")),
         engine_digest,
-    ).expect("approved engine");
+    )
+    .expect("approved engine");
     let loop_module = infinite_loop_fixture();
     let loop_exec = WasmToolExecutor::new(
         pinned.clone(),
@@ -336,7 +337,8 @@ async fn real_wasmtime_cli_when_configured() {
             fuel: 10_000,
             ..SandboxPolicy::default()
         },
-    ).expect("bounded loop fixture");
+    )
+    .expect("bounded loop fixture");
     assert!(matches!(
         loop_exec.execute(json!({}), &context()).await,
         Err(ToolError::Execution(_)) | Err(ToolError::Timeout)
@@ -348,7 +350,8 @@ async fn real_wasmtime_cli_when_configured() {
         memory_module.clone(),
         digest(&memory_module),
         SandboxPolicy::default(),
-    ).expect("bounded memory fixture");
+    )
+    .expect("bounded memory fixture");
     assert!(matches!(
         memory_exec.execute(json!({}), &context()).await,
         Err(ToolError::Execution(_)) | Err(ToolError::Timeout)
