@@ -5,8 +5,8 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 use ocaf_runtime::executor::wasi::{
-    manifest_signing_payload, validate_wasi_imports, PinnedWasmtime, SandboxPolicy,
-    WasmToolExecutor,
+    manifest_signing_payload, validate_wasi_imports, PinnedWasmtime, ReceiptSigner,
+    SandboxPolicy, WasmToolExecutor,
 };
 use ocaf_runtime::executor::{ExecutionContext, ToolError, ToolExecutor};
 use ocaf_runtime::registry::ToolManifest;
@@ -461,6 +461,18 @@ async fn publisher_signature_binds_module_tool_policy_and_principal() {
             .expect("authorized request"),
         json!({"signed":true})
     );
+
+    let signing_key = ReceiptSigner::new([7u8; 32]).expect("operator receipt key");
+    let (verified_output, signed_receipt) = exec
+        .execute_with_receipt(json!({"request":1}), &context, &signing_key)
+        .await
+        .expect("execution attestation");
+    assert_eq!(verified_output, json!({"signed":true}));
+    signing_key.verify(&signed_receipt).expect("valid receipt");
+    let mut tampered = signed_receipt.clone();
+    tampered.receipt.agent_id = "attacker".into();
+    assert!(signing_key.verify(&tampered).is_err());
+    assert!(ReceiptSigner::new([0u8; 32]).is_err());
 
     let signed_runtime = OcafRuntime::new(0)
         .with_tenant_namespace("tenant-a")
