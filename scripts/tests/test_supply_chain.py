@@ -34,7 +34,7 @@ class SupplyChainTests(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
         (self.root / "Cargo.toml").write_text(
-            '[package]\\nname = "ocaf_runtime"\\nversion = "0.26.0"\\nedition = "2021"\\n',
+            '[package]\nname = "ocaf_runtime"\nversion = "0.26.0"\nedition = "2021"\n',
             encoding="utf-8",
         )
         self.lock = self.root / "Cargo.lock"

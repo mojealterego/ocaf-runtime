@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 ALLOWED_SOURCE = "registry+https://github.com/rust-lang/crates.io-index"
-CHECKSUM = re.compile(r"[0-9a-f]{64}\\Z")
+CHECKSUM = re.compile(r"[0-9a-f]{64}")
 MAX_MANIFEST_BYTES = 512 * 1024
 MAX_LOCK_BYTES = 8 * 1024 * 1024
 MAX_PACKAGES = 10_000
