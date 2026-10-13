@@ -637,3 +637,37 @@ where
         result.extend_from_slice(&buffer[..size]);
     }
 }
+
+#[cfg(test)]
+mod pinned_engine_tests {
+    use super::*;
+
+    #[test]
+    fn verified_engine_executes_from_immutable_sealed_memfd() {
+        let temp = tempfile::tempdir().expect("temp");
+        let path = temp.path().join("operator-engine");
+        let trusted = b"#!/bin/sh\\nprintf '{}\\n'\\n";
+        fs::write(&path, trusted).expect("create operator executable");
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o700))
+            .expect("approve executable");
+        let engine = PinnedWasmtime::new(path.clone(), sha256(trusted))
+            .expect("snapshot from approved engine");
+        let fd = engine.sealed.as_raw_fd();
+        let seals = unsafe { libc::fcntl(fd, libc::F_GET_SEALS) };
+        let required =
+            libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL;
+        assert_eq!(seals & required, required);
+        let flags = unsafe { libc::fcntl(fd, libc::F_GETFD) };
+        assert_ne!(flags & libc::FD_CLOEXEC, 0, "parent must not leak descriptor");
+        let snapshot_path = format!("/proc/self/fd/{fd}");
+        assert_eq!(fs::read(&snapshot_path).expect("read sealed snapshot"), trusted);
+        assert!(fs::write(&snapshot_path, b"evil replacement").is_err());
+
+        fs::write(&path, b"#!/bin/sh\\nexit 7\\n").expect("mutate origin");
+        assert!(engine.verify().is_err(), "changed source must be denied");
+        assert_eq!(
+            fs::read(&snapshot_path).expect("snapshot survives source mutation"),
+            trusted
+        );
+    }
+}
