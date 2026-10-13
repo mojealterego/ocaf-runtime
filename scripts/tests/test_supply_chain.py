@@ -50,17 +50,17 @@ class SupplyChainTests(unittest.TestCase):
         crate = self.root / "vendor/zenoh-transport"
         crate.mkdir(parents=True)
         (crate / "Cargo.toml").write_text(
-            '[package]\\nname = "zenoh-transport"\\nversion = "1.10.1"\\n'
-            '[dependencies.lz4_flex]\\nversion = "0.11.6"\\n',
+            '[package]\nname = "zenoh-transport"\nversion = "1.10.1"\n'
+            '[dependencies.lz4_flex]\nversion = "0.11.6"\n',
             encoding="utf-8",
         )
         with (self.root / "Cargo.toml").open("a", encoding="utf-8") as fh:
-            fh.write('\\n[patch.crates-io]\\nzenoh-transport = { path = "vendor/zenoh-transport" }\\n')
+            fh.write('\n[patch.crates-io]\nzenoh-transport = { path = "vendor/zenoh-transport" }\n')
         self.lock.write_text(self.lock.read_text(encoding="utf-8")
-            + '\\n[[package]]\\nname = "zenoh-transport"\\nversion = "1.10.1"\\n'
-            + '\\n[[package]]\\nname = "lz4_flex"\\nversion = "0.11.6"\\n'
-            + 'source = "registry+https://github.com/rust-lang/crates.io-index"\\n'
-            + 'checksum = "' + "b"*64 + '"\\n', encoding="utf-8")
+            + '\n[[package]]\nname = "zenoh-transport"\nversion = "1.10.1"\n'
+            + '\n[[package]]\nname = "lz4_flex"\nversion = "0.11.6"\n'
+            + 'source = "registry+https://github.com/rust-lang/crates.io-index"\n'
+            + 'checksum = "' + "b"*64 + '"\n', encoding="utf-8")
 
     def test_accepts_explicit_single_vendored_security_patch(self):
         self._create_reviewed_patch()
@@ -77,7 +77,7 @@ class SupplyChainTests(unittest.TestCase):
     def test_rejects_patched_manifest_without_local_package(self):
         self._create_reviewed_patch()
         self.lock.write_text(self.lock.read_text().replace(
-            '[[package]]\\nname = "zenoh-transport"\\nversion = "1.10.1"\\n', ""
+            '[[package]]\nname = "zenoh-transport"\nversion = "1.10.1"\n', ""
         ))
         with self.assertRaises(sc.PolicyError):
             sc.inspect(self.root)
@@ -85,7 +85,7 @@ class SupplyChainTests(unittest.TestCase):
     def test_rejects_arbitrary_extra_local_package(self):
         self._create_reviewed_patch()
         self.lock.write_text(self.lock.read_text()
-            + '\\n[[package]]\\nname = "injected"\\nversion = "1.0.0"\\n')
+            + '\n[[package]]\nname = "injected"\nversion = "1.0.0"\n')
         with self.assertRaises(sc.PolicyError):
             sc.inspect(self.root)
 
