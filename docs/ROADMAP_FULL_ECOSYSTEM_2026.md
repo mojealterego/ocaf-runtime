@@ -63,7 +63,7 @@ traceability. Version numbers advance only after real release approvals.
 |---|---|---|---|---|
 | 0.36 | Identity/RPC | Application-layer certificate private-key proof + HMAC and pinning | Implement (opt-in) | Existing CI tests; genuine transport TLS peer binding remains blocked |
 | 0.37 | Identity/RPC | Separate TLS 1.3-bound ingress verifies live session leaf against RPC sender pin and SAN; CRL/reload/worker migration remains | Implemented experimentally / NO-GO | Real handshake and swapped-cert tests in CI; external PKI/CRL and multi-host still pending |
-| 0.38 | Execution | Default-deny restricted WASI execution boundary (see [contract](PRIORITY_038_EXECUTION_CONTRACT.md)) | **NEXT / P0 / NOT STARTED** | Signed module, default-deny host imports/FS/network, bounded fuel/time/memory/output, adversarial integration tests; no production claim |
+| 0.38 | Execution | Restricted Wasmtime WASIp1 adapter (see [implementation](WASI_EXECUTION_038.md) and [acceptance contract](PRIORITY_038_EXECUTION_CONTRACT.md)) | **PARTIALLY IMPLEMENTED / P0 / NO-GO** | Operator-pinned Wasmtime CLI, signed-module policy still pending, deny-by-default imports, fuel/time/memory/output checks; actual E2E CI and threat review required |
 | 0.39 | Execution | Firecracker microVM broker + eBPF Aya controls + isolation attestations | P0 / NO-GO | Linux/KVM negative isolation, teardown, syscall/network constraints; mobile separate |
 | 0.40 | HA | Three physical host PostgreSQL HA, real leader fencing and failover | P0 / NO-GO | Host power loss, split-brain, former leader effect-writes rejected |
 | 0.41 | Reliability | Backup/restore, partition chaos, recovery and prolonged soak | P0 / NO-GO | RTO/RPO SLO, restore proof, job audit recovery, operator acceptance |
@@ -329,5 +329,33 @@ praw produkcyjnych przed bramkami bezpieczeństwa.
 Wszystkie specialist swarms 0.56–0.71 pozostają w mapie.
 Badania 0.85–0.94 nie odblokowują automatycznie wdrożenia.
 
-**Decyzja na koniec aktualizacji planu:** ROADMAP UPDATED /
+**History before implementation:** ROADMAP UPDATED /
 STAGE 0.38 NOT EXECUTED / PRODUCTION NO-GO.
+
+## Zmiana stanu — rozpoczęcie etapu 0.38 (2026-10-13)
+
+- `src/executor/wasi.rs`: pierwszy rzeczywisty, opcjonalny
+  (przez ręczną rejestrację `ToolExecutor`) Linux/WASIp1
+  subprocess adapter; żaden silnik Wasm nie jest ładowany
+  do procesu zaufanego koordynatora. Zewnętrzny `wasmtime`
+  musi być jawnie zainstalowany i przypięty digestem SHA-256.
+- `tests/wasi_sandbox.rs`: negative tests importów, policy,
+  digest, output/input bomb, timeout, schema integration oraz
+  prawdziwe WebAssembly w scenariuszu `OCAF_TEST_WASMTIME`.
+- `scripts/wasmtime_acceptance.sh` + Rust CI: pinned, upstream
+  Wasmtime 49.0.2 i test realnego Wasm/WASI z dodatkowym
+  testem wyczerpania fuel i limitu pamięci. Wynik końcowego
+  CI należy sprawdzać osobno po każdym następnym commicie.
+- `docs/WASI_EXECUTION_038.md`: ADR architektury, limity
+  egzekwowane w warstwie narzędziowej, model zaufania
+  oraz pozostałe blokery.
+
+**Ocena:** część 0.38.1–0.38.6/0.38.9 posiada kod i testy,
+ale 0.38.3 (formalnie podpisany manifest), 0.38.7 (pełne
+scoping/remote-worker), 0.38.8 (reliable teardown przy crash,
+resource accounting) oraz fizyczny host-isolation i audyt
+pozostają otwarte. `WASI` nie oznacza `Firecracker`.
+**Etap 0.38: PARTIAL / NO-GO; następny etap wymagany do
+zamknięcia: 0.38 security hardening and acceptance,
+dopiero potem 0.39.** Wszelkie przyszłe podpisanie bramki
+musi mieć evidence konkretnych artefaktów.
