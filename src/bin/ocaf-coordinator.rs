@@ -4,7 +4,7 @@
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -221,7 +221,11 @@ async fn serve_gateway(gateway: Arc<RpcGateway>, config: zenoh::Config) -> anyho
             }
         }
         Ok("zenoh") | Err(env::VarError::NotPresent) => {
-            let session = Arc::new(zenoh::open(config).await?);
+            let session = Arc::new(
+                zenoh::open(config)
+                    .await
+                    .map_err(|err| anyhow::anyhow!("Zenoh open: {err}"))?,
+            );
             ZenohRpcServer::new(session, gateway).serve().await
         }
         _ => anyhow::bail!("OCAF_RPC_INGRESS must be zenoh or tls-bound"),
