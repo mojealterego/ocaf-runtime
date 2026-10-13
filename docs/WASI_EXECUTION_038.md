@@ -216,3 +216,25 @@ ani uruchomienia podmienionego pliku Wasmtime między weryfikacją
 SHA-256 a `execve`. Operator musi chronić katalogi instalacyjne,
 zasób zaufanych kluczy i samą binarkę silnika. Niezależny audyt
 oraz próby izolacyjne nadal są wymagane przed odbiorem etapu 0.38.
+
+## Bramka konfiguracji i dowód anulowania — dalsze prace 0.38
+
+Loader `runtime_from_env` rozróżnia dwa jawne stany: wszystkie
+zmienne podpisanego pakietu WASI są nieobecne (legacy runtime bez
+rejestracji WASI) albo wszystkie sześć zmiennych jest obecnych.
+Częściowy pakiet, brak manifestu przy obecnym module, literówki
+w zmiennych zaczynających się od `OCAF_WASI_` lub
+`OCAF_WASMTIME_` oraz dodatkowe nierozpoznane zmienne z tych
+przestrzeni kończą inicjalizację błędem. Celem jest wykluczenie
+niejawnej degradacji konfiguracji podpisanego sandboxa.
+Bramka sprawdza nazwy; `required` i weryfikacja zawartości
+nadal sprawdzają niepuste wartości, digesty oraz tożsamość.
+
+`tests/wasi_sandbox.rs::cancellation_reaps_guest_and_removes_private_workspace`
+uruchamia realny proces potomny (kontrolny shell/sleep, nie
+silnik Wasmtime) i sprawdza, czy anulowanie przyszłości Tokio
+kończy proces oraz usuwa prywatny katalog tymczasowy. Ten
+test potwierdza tylko obsługę lifecycle podprocesu;
+izolacja systemowa i eskalacja uprawnień pozostają poza
+granicą tego testu. Dowodem GREEN może być wyłącznie
+przebieg GitHub Actions odpowiadający końcowemu SHA.
