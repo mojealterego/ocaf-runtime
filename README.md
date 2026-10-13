@@ -820,3 +820,13 @@ i kontrolą uprawnień/inode (z testami negatywnymi). Nadal wymagane
 są niezależne testy odporności na awarie, obciążenie i wycieki,
 audyt hosta, rotacja kluczy/PKI oraz formalny odbiór bezpieczeństwa.
 Etap 0.39 nie został rozpoczęty; gotowości produkcyjnej nie potwierdzono.
+
+## Odbiór bezpieczeństwa 0.38.8–0.38.9
+
+Dodano cleanup całej linuxowej grupy procesów WASI, blokadę
+eskalacji `no_new_privs`, `RLIMIT_CORE=0`, negatywne scenariusze
+stderr/descendant/zmienione moduły oraz rozszerzony test
+rzeczywistego Wasmtime. Zestaw kryteriów, reprodukcji i
+otwartych ryzyk: [docs/STAGE_038_8_9_ACCEPTANCE.md](docs/STAGE_038_8_9_ACCEPTANCE.md).
+**Etap 0.38 pozostaje PARTIAL / NO-GO** do niezależnego
+odbioru i wymaganego hostowego hardeningu.
