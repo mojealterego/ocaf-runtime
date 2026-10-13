@@ -85,46 +85,116 @@ Test z użyciem shell mock służy tylko kontroli
 Wszystkie wyniki liczą się jako PASS dopiero na
 **ostatecznym commicie** i po sprawdzeniu GitHub CI.
 
-## Przykład integracji (API)
+## Podpisany manifest i izolacja tożsamości — aktualizacja
 
-Operator dostarcza zatwierdzony plik `wasmtime` oraz
-oczekiwane `[u8; 32]` digests. Aplikacja:
+`src/executor/wasi_manifest.rs` wdraża **Ed25519**: niezależny
+zaufany klucz publiczny wydawcy wprowadzany przez operatora,
+podpis odłączony nad dosłownymi bajtami
+`OCAF-WASI-MANIFEST-V1\\0 || signed-json`. Powiązane pola to
+`schema_version=1`, `tenant_id`, `agent_id`, `tool`
+(łącznie z JSON Schema, ceną, ACL i limitem czasu),
+`module_sha256_hex`, `expires_unix_secs` i pełna
+`SandboxPolicy`. Parser JSON odrzuca nieznane pola manifestu;
+podpis, czas ważności, SHA-256 modułu i polityka
+są sprawdzane *przed* startem procesu oraz ponownie
+przed każdym wykonaniem.
 
-1. Odczytuje zatwierdzony moduł Wasm (limit rozmiaru).
-2. Tworzy `PinnedWasmtime::new(absolute_path, engine_sha)`.
-3. Tworzy `WasmToolExecutor::new(engine, module, module_sha,
-   SandboxPolicy::default())`.
-4. Rejestruje wynik w `OcafRuntime::register` z
-   **wyłącznie operatorowo zatwierdzonym** `ToolManifest`;
-   w szczególności `permissions`, `cost_sats`,
-   `timeout_ms` i `enabled` nie pochodzą z promptu.
-5. Uruchamia wywołanie przez `OcafRuntime::execute`.
-   Żadne niezaufane API nie powinno konstruować `SandboxPolicy`
-   ani `PinnedWasmtime`.
+Podpisane manifesty wykluczają `cost_sats > 0`,
+niepuste `permissions` i `enabled=false`; są przeznaczone
+wyłącznie do narzędzi nieuprzywilejowanych. Nadal istnieje
+jawny konstruktor `WasmToolExecutor::new` dla ręcznie
+zatwierdzonych lokalnych uruchomień; tylko ścieżka
+`OcafRuntime::register_signed_wasi` dopuszcza import z
+podpisanego manifestu w usługach sieciowych.
 
-Wystąpienie błędu modułu nie może skutkować fallbackiem do
-lokalnego uprzywilejowanego `ToolExecutor`.
+`OcafRuntime::with_tenant_namespace` ustala przestrzeń
+dzierżawcy wyłącznie z zaufanej konfiguracji. Po sprawdzeniu
+certyfikatu sesji TLS, PoP, HMAC i replay handler RPC przekazuje
+uwierzytelniony sender do
+`execute_authenticated_peer`. Executor dopuszcza tylko
+dosłowną zgodność `tenant:agent` z podpisanym manifestem.
+Nieznany tenant lub anonimowe `OcafRuntime::execute`
+zwracają odmowę w podpisanej ścieżce.
+Dla workerów zdalnych tożsamość wykonawcy wyprowadzana
+jest z identyfikatora lokalnego po weryfikacji dzierżawy.
 
-## Brakujące dowody i bloker produkcyjny
+## Podłączanie podpisanego narzędzia do sieci
 
-Ten etap dostarcza **ograniczony Linux/WASIp1 execution adapter**,
-ale nie wdraża jeszcze:
+Wspólny, operatorowy loader:
+`src/ops/wasi_config.rs`; komponenty korzystające:
+`ocaf-coordinator` oraz `ocaf-rpc-node` w trybie
+`OCAF_ROLE=worker`. Konfiguracja wymaga:
 
-1. Podpisanych przez zaufanego wydawcę manifestów/łańcucha
-   autoryzacji do automatycznego wyboru modułu.
-2. Polityki `tenant -> agent -> digest -> capability` w
-   zdalnym rejestrze MCP i migracji workerów przez nową granicę
-   wykonania (0.38.7).
-3. Cgroups v2 / namespace / seccomp / MAC, twardego
-   OS-owego limitu RSS ani ochrony przed błędami silnika
-   Wasmtime (plan 0.39: broker Firecracker/eBPF).
-4. Load/soak, destrukcyjnego chaos, zewnętrznych testów
-   eksfiltracji hosta, rotacji sygnatur, threat-review na
-   wielu hostach, potwierdzenia odporności supply-chain.
-5. Podpisanego `ExecutionReceipt`, bezpośredniego
-   propagowania pełnej tożsamości po TLS-bound RPC oraz
-   globalnych rozliczeń tenantów.
+| Zmienna środowiskowa | Zawartość |
+|---|---|
+| `OCAF_RPC_INGRESS` | dokładnie `tls-bound` |
+| `OCAF_REQUIRE_PEER_CERT_POP` | `1` |
+| `OCAF_TENANT_NAMESPACE` | zatwierdzona nazwa dzierżawcy |
+| `OCAF_WASI_MANIFEST_FILE` | ścieżka absolutna do JSON z podpisaną polityką |
+| `OCAF_WASI_SIGNATURE_FILE` | ścieżka absolutna do 64-bajtowego podpisu Ed25519 |
+| `OCAF_WASI_PUBLISHER_KEY_FILE` | ścieżka absolutna do PEM klucza publicznego wydawcy |
+| `OCAF_WASI_MODULE_FILE` | ścieżka absolutna do zatwierdzonego modułu .wasm |
+| `OCAF_WASMTIME_EXECUTABLE` | ścieżka absolutna do binarnego Wasmtime |
+| `OCAF_WASMTIME_SHA256` | 64 znaki lowercase SHA-256 binarium |
 
-**Decyzja: 0.38 = IMPLEMENTED PARTIALLY / REVIEW REQUIRED;
-production = NO-GO.** Nie awansować do 0.39 jako „0.38 DONE”
-bez podpisania brakujących bramek i wyników CI.
+Wszystkie pliki manifestu, podpisu, modułu i PEM muszą być
+własnością operatora, mieć uprawnienia tylko dla właściciela
+(np. `0600`), nie mogą być symlinkami ani hardlinkami.
+Binarium Wasmtime wymaga niezależnego bezpieczeństwa ścieżki,
+ochrony katalogów nadrzędnych i SHA-256. Brak któregokolwiek
+warunku powoduje odmowę startu, bez Zenoh fallbacku.
+Zdalny worker w wariancie TLS używa osobnej sesji mTLS
+do *każdego* `Heartbeat`, `ClaimJob`, `ValidateLease`
+i `FinishJob` bez automatycznego retry skutków.
+
+Do podpisu manifestu służy
+`scripts/sign_wasi_manifest.py --private-key <absolute-key> --manifest <absolute-json> --signature <absolute-output>`.
+Klucz prywatny Ed25519 musi pozostawać poza repozytorium
+i procesami agentów. Skrypt zapisuje wynik `0600`,
+odrzuca duplikaty nazw JSON i nie nadpisuje poprzedniego podpisu.
+Klucz wydawcy wymaga odrębnej procedury rotacji
+i audytu operatora.
+
+## Kryterium dowodu i podpisany ExecutionReceipt
+
+`src/executor/wasi_receipt.rs` implementuje oddzielny HMAC-SHA256
+dla typu `ExecutionReceipt`, zawierającego tenant/agent/tool,
+correlation ID, digest modułu, digest wejścia i wyjścia,
+czas zakończenia i czas trwania. Podpis przy pomocy
+`ReceiptSigner` wystawiany jest wyłącznie po pomyślnym
+`execute_with_receipt`; jego weryfikacja odrzuca zmiany pól
+i nieprawidłowy MAC. Ta metoda jest **opcjonalnym API
+evidence**, nie dowodem semantycznej poprawności wyniku ani
+zapisem do trwałego dziennika PostgreSQL. Ostateczny odbiór
+wymaga osobnego audytu i kontroli klucza MAC.
+
+Programowe testy obejmują podpis Ed25519 (w tym inne
+klucze/tenants, podmienione dane, wygasłe manifesty),
+powiązanie tożsamości RPC, rejestrację wyłącznie zatwierdzonych
+narzędzi, MAC receipt, limity concurrency, timeout/reaping
+oraz prawdziwy silnik Wasmtime; niezależny test TLS worker
+weryfikuje heartbeat i pustą kolejkę na tym samym protokole
+cert-bound co coordinator.
+
+## Otwarte granice bezpieczeństwa
+
+1. Izolacja WASIp1 nie zastępuje jądrowego sandboxa:
+   cgroups/namespace/seccomp i broker Firecracker/eBPF
+   pozostają częścią osobnego etapu **0.39**.
+2. Wymagane są niezależne testy crash/soak, opóźnień i
+   ataków na host, rotacji kluczy oraz ocen
+   podatności Wasmtime i dostawców.
+3. CLI Wasmtime musi być chroniony przed modyfikacją
+   podczas wywołania; sprawdzenie SHA-256 i ACL
+   nie jest sprzętową atestacją wykonania.
+4. `ExecutionReceipt` jeszcze nie stanowi trwałego
+   audytu commitów pracy rozproszonej.
+5. Tryb transportu mTLS ma odrębne otwarte blokery
+   CRL/OCSP i automatycznej rotacji ze stadium 0.37.
+6. Produkcja i rzeczywista niezależna wielohostowa HA
+   mają osobne twarde gates etapów 0.39–0.42.
+
+**Status: implementacja 0.38 rozszerzona o podpisy,
+tenant identity, TLS worker i receipts. Decyzja o
+technicznym zamknięciu zależy od wyników CI na
+końcowym commicie. Produkcja: NO-GO.**
