@@ -399,3 +399,12 @@ anulowaniu; regresję objęto testem przed poprawką.
 Nie stanowi to zakończenia testów crash/soak, izolacji
 multi-tenant ani usunięcia TOCTOU przy exec silnika.
 **Status 0.38: PARTIAL / NO-GO; 0.39 zablokowany.**
+
+## Dostęp i domknięcie 0.38 — aktualizacja 2026-10-13
+
+- Linux WASIp1: procesowa grupa kill, `PR_SET_NO_NEW_PRIVS`, `RLIMIT_CORE=0`, `PR_SET_PDEATHSIG` dla bezpośredniego potomka.
+- Silnik Wasmtime: egzekucja uszczelnionej, zweryfikowanej SHA-256 kopii `memfd` (`F_SEAL_WRITE/GROW/SHRINK/SEAL`), bez ponownego `execve` zmiennej ścieżki. Obowiązują limity właściciela/uprawnień/hardlinków.
+- Scenariusze CI: odmowy, anulowanie, root/tenant, równoległa atrybucja 2 tenantów, rzeczywisty Wasmtime i bounded stress z raportem JSON jako artefakt Actions.
+- Wzorcowy unit systemd ustanawia host cgroup limits i `KillMode=control-group`; **nie został wdrożony ani przetestowany na docelowej infrastrukturze**.
+- Utrzymujemy **0.38 = PARTIAL / PRODUCTION NO-GO** aż do hostowego crash/soak, rzeczywistego wielohostowego staging, rotacji trust anchor i podpisanego niezależnego odbioru. Formalna decyzja zależy od [macierzy 0.38.8–0.38.9](STAGE_038_8_9_ACCEPTANCE.md).
+- Nie rozpoczynać 0.39 na podstawie samego CI; odrębna infrastruktura dla Firecracker/KVM i eBPF.
