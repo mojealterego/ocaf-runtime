@@ -147,3 +147,12 @@ partition recovery i effect-fencing.
 pozostaje **NO-GO**, dopóki dowody z realnej infrastruktury i
 niezależny podpisany protokół akceptacji nie zostaną zatwierdzone.
 Etap 0.39 nie jest automatycznie rozpoczynany.
+
+## Formalny odbiór operatora
+
+Procedury wdrożenia cgroup/systemd, chaos-staging, weryfikacji
+wielodzierżawności i rotacji/odwołania zaufania: 
+[STAGE_038_OPERATOR_SIGNOFF.md](STAGE_038_OPERATOR_SIGNOFF.md).
+Dokument zawiera formularz **NO-GO** do wypełnienia przez
+operatora oraz niezależnego audytora; żaden sukces CI nie
+podmienia podpisu operatora.
