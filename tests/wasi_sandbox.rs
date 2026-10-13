@@ -84,6 +84,37 @@ fn command_fixture(message: &str) -> Vec<u8> {
     wasm
 }
 
+fn infinite_loop_fixture() -> Vec<u8> {
+    let mut wasm = b"\\0asm\\x01\\0\\0\\0".to_vec();
+    section(&mut wasm, 1, &[1, 0x60, 0, 0]);
+    section(&mut wasm, 3, &[1, 0]);
+    let mut exports = vec![1];
+    exports.extend(wasm_name("_start"));
+    exports.extend([0, 0]);
+    section(&mut wasm, 7, &exports);
+    let body = [0, 0x03, 0x40, 0x0c, 0, 0x0b, 0x0b];
+    let mut code = vec![1];
+    code.extend(leb(body.len()));
+    code.extend(body);
+    section(&mut wasm, 10, &code);
+    wasm
+}
+
+fn oversized_memory_fixture() -> Vec<u8> {
+    let mut wasm = b"\\0asm\\x01\\0\\0\\0".to_vec();
+    section(&mut wasm, 1, &[1, 0x60, 0, 0]);
+    section(&mut wasm, 3, &[1, 0]);
+    let mut memory = vec![1, 0];
+    memory.extend(leb(1024));
+    section(&mut wasm, 5, &memory);
+    let mut exports = vec![1];
+    exports.extend(wasm_name("_start"));
+    exports.extend([0, 0]);
+    section(&mut wasm, 7, &exports);
+    section(&mut wasm, 10, &[1, 2, 0, 0x0b]);
+    wasm
+}
+
 fn with_import(namespace: &str, function: &str) -> Vec<u8> {
     let mut wasm = b"\0asm\x01\0\0\0".to_vec();
     section(&mut wasm, 1, &[1, 0x60, 0, 0]);
@@ -288,4 +319,38 @@ async fn real_wasmtime_cli_when_configured() {
         .await
         .expect("real WASI");
     assert_eq!(result, json!({"real_wasi":true}));
+
+    let again = exec.execute(json!({}), &context()).await.expect("repeat");
+    assert_eq!(result, again);
+
+    let pinned = PinnedWasmtime::new(
+        PathBuf::from(std::env::var("OCAF_TEST_WASMTIME").expect("checked above")),
+        engine_digest,
+    ).expect("approved engine");
+    let loop_module = infinite_loop_fixture();
+    let loop_exec = WasmToolExecutor::new(
+        pinned.clone(),
+        loop_module.clone(),
+        digest(&loop_module),
+        SandboxPolicy {
+            fuel: 10_000,
+            ..SandboxPolicy::default()
+        },
+    ).expect("bounded loop fixture");
+    assert!(matches!(
+        loop_exec.execute(json!({}), &context()).await,
+        Err(ToolError::Execution(_)) | Err(ToolError::Timeout)
+    ));
+
+    let memory_module = oversized_memory_fixture();
+    let memory_exec = WasmToolExecutor::new(
+        pinned,
+        memory_module.clone(),
+        digest(&memory_module),
+        SandboxPolicy::default(),
+    ).expect("bounded memory fixture");
+    assert!(matches!(
+        memory_exec.execute(json!({}), &context()).await,
+        Err(ToolError::Execution(_)) | Err(ToolError::Timeout)
+    ));
 }
