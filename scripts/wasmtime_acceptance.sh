@@ -27,3 +27,16 @@ test -x "$executable"
 "$executable" --version
 OCAF_TEST_WASMTIME="$executable" cargo test --locked --no-default-features \
   --test wasi_sandbox -- --test-threads=1 --nocapture
+
+# A short, bounded repeatability and resource-census gate on every main run.
+# Operators may run 100+ cycles with explicit resource ceilings on their
+# target host; a CI pass is not a multi-host security acceptance.
+report="${OCAF_WASI_ACCEPTANCE_REPORT:-${GITHUB_WORKSPACE:-$PWD}/wasi-host-acceptance.json}"
+OCAF_TEST_WASMTIME="$executable" \
+OCAF_TEST_WASMTIME_SHA256="$(sha256sum "$executable" | cut -d ' ' -f 1)" \
+python3 scripts/wasi_host_acceptance.py \
+  --cycles "${OCAF_WASI_SOAK_CYCLES:-2}" \
+  --timeout 120 \
+  --max-fds 512 \
+  --max-processes 64 \
+  --report "$report"
