@@ -88,9 +88,8 @@ pub async fn runtime_from_env() -> Result<OcafRuntime> {
     let manifest = owner_only_file("OCAF_WASI_MANIFEST_FILE", 24 * 1024)?;
     let signature = owner_only_file("OCAF_WASI_SIGNATURE_FILE", 64)?;
     let key = owner_only_file("OCAF_WASI_PUBLISHER_KEY_FILE", 2048)?;
-    let approved = WasmToolExecutor::from_signed_manifest(
-        engine, module, &manifest, &signature, &key
-    )?;
+    let approved =
+        WasmToolExecutor::from_signed_manifest(engine, module, &manifest, &signature, &key)?;
     runtime.register_signed_wasi(approved).await?;
     Ok(runtime)
 }
