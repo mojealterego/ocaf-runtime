@@ -707,3 +707,13 @@ z certyfikatem mTLS. Niezależna implementacja zweryfikowanego
 powiązania TLS → RPC nadal jest wymagana. Szczegóły:
 [docs/PEER_CREDENTIAL_ROTATION_035.md](docs/PEER_CREDENTIAL_ROTATION_035.md).
 **Produkcja nadal NO-GO.**
+
+
+## Architektura docelowa po audycie 26 plików PDF
+
+Zintegrowana mapa zgodności dokumentacji z faktycznym kodem Rust,
+zweryfikowane luki, ograniczenia obietnic oraz zamknięty **plan
+priorytetów 0.36–0.50** znajdują się w
+[docs/MASTER_ARCHITECTURE_26_PDFS.md](docs/MASTER_ARCHITECTURE_26_PDFS.md).
+Przyjęto osobne cele odbioru dla bezpiecznego runtime (0.40)
+i rozszerzonej platformy (0.50). Produkcja pozostaje **NO-GO**.
