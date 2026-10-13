@@ -169,10 +169,19 @@ się usługi i ewentualny limit miesięczny:
 - https://cloud.ibm.com/docs/account?topic=account-billusagefaqs
 
 Proponowana **początkowa bramka zatwierdzenia** tylko dla staging 0.38:
-`max_estimated_pilot_cost_usd = 500`. To limit planowania i ręcznej
-akceptacji kosztorysu, **nie rzeczywisty limit rozliczeniowy**.
-Środowisko i dane operatora są prywatne; do repozytorium nie
-wprowadzamy salda konta. Wycenę należy uzyskać dla profili i regionu
+`max_estimated_pilot_cost_usd = 150`. Pierwsza faza obejmuje
+krótkotrwały test na jednej VSI i dowody preflight/soak. Dla drugiej
+VSI i testów sieciowych konieczna jest **oddzielna akceptacja** z
+nowym kosztorysem, z domyślnym łącznym limitem pilotowym
+`max_estimated_stage_038_cost_usd = 300` (nie jest to zobowiązanie
+do wydania środków). Progi są limitami planowania, a **nie
+rzeczywistymi limitami rozliczeniowymi IBM Cloud**. Aktywne
+saldo promocyjne, data wygaśnięcia, miesięczne limity promocji
+i kwalifikujące się usługi muszą być sprawdzone *przed*
+każdym płatnym wdrożeniem; sama obecność kredytów nie
+oznacza, że pokrywają całość kosztów. Środowisko i dane
+operatora są prywatne; do repozytorium nie wprowadzamy
+salda konta. Wycenę należy uzyskać dla profili i regionu
 `eu-de` w IBM Cloud Cost Estimator, z uwzględnieniem VSI, boot
 volumes, egress, floating IP, log storage i innych usług:
 
