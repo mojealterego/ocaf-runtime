@@ -385,3 +385,17 @@ uprawnień katalogów nadrzędnych i brak TOCTOU przy wykonywaniu binarium
 Wasmtime. Izolacja seccomp/cgroups/microVM jest osobnym zakresem 0.39.
 Dopóki kryteria 0.38 nie są odbierane niezależnie, status pozostaje
 **PARTIAL / NO-GO**, bez przejścia do 0.39.
+
+## Etap 0.38.8–0.38.9 — dowody i pozostające blokery
+
+Szczegółowy [kontrakt odbioru](STAGE_038_8_9_ACCEPTANCE.md).
+Wprowadzone kontrole Linux child obejmują grupowe wygaszanie
+procesów także po anulowaniu future, `PR_SET_NO_NEW_PRIVS`,
+`RLIMIT_CORE=0`, negatywne testy stderr, skryptowany test
+mutacji binariów oraz pełen zestaw scenariuszy `wasi_sandbox`
+z przypiętym prawdziwym Wasmtime. Wcześniejsze testy
+wykazały problem pozostawiania procesów potomnych po
+anulowaniu; regresję objęto testem przed poprawką.
+Nie stanowi to zakończenia testów crash/soak, izolacji
+multi-tenant ani usunięcia TOCTOU przy exec silnika.
+**Status 0.38: PARTIAL / NO-GO; 0.39 zablokowany.**
