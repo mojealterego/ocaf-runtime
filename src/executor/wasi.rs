@@ -3,7 +3,8 @@
 //! a host or microVM security boundary.
 use std::fs::{self, DirBuilder, File, OpenOptions};
 use std::io::{Read, Write};
-use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt, PermissionsExt};
+use std::os::fd::{AsRawFd, FromRawFd};
+use std::os::unix::fs::{DirBuilderExt, MetadataExt, OpenOptionsExt, PermissionsExt};
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
@@ -31,6 +32,7 @@ const MAX_IO_BYTES: usize = 64 * 1024;
 const MAX_MEMORY_BYTES: u64 = 64 * 1024 * 1024;
 const MAX_EXECUTION_MS: u64 = 10_000;
 const MAX_FUEL: u64 = 50_000_000;
+const MAX_ENGINE_BYTES: u64 = 256 * 1024 * 1024;
 const WASM_MAGIC_VERSION: &[u8; 8] = b"\0asm\x01\0\0\0";
 const ALLOWED_WASI_IMPORTS: &[&str] = &["fd_read", "fd_write", "fd_fdstat_get", "proc_exit"];
 
@@ -175,8 +177,37 @@ impl SandboxPolicy {
     }
 }
 
+/// Open a stable inode without following a final symlink. Privileged operator
+/// installation is separate: a source belonging to another non-root UID,
+/// a writable group/world source, or extra hard links is not trusted.
+fn open_engine_source(path: &Path) -> Result<File, ToolError> {
+    if !path.is_absolute() {
+        return Err(rejected("WASI engine path must be absolute"));
+    }
+    let file = OpenOptions::new()
+        .read(true)
+        .custom_flags(libc::O_NOFOLLOW | libc::O_CLOEXEC)
+        .open(path)
+        .map_err(|_| rejected("pinned WASI engine is unavailable"))?;
+    let meta = file
+        .metadata()
+        .map_err(|_| rejected("WASI engine metadata unavailable"))?;
+    let euid = unsafe { libc::geteuid() };
+    if !meta.is_file()
+        || meta.nlink() != 1
+        || (meta.uid() != euid && meta.uid() != 0)
+        || meta.permissions().mode() & 0o111 == 0
+        || meta.permissions().mode() & 0o022 != 0
+        || meta.len() == 0
+        || meta.len() > MAX_ENGINE_BYTES
+    {
+        return Err(rejected("WASI engine inode ownership, link count, mode or size rejected"));
+    }
+    Ok(file)
+}
+
 fn hash_file(path: &Path) -> Result<[u8; 32], ToolError> {
-    let mut file = File::open(path).map_err(|_| rejected("pinned WASI engine is unavailable"))?;
+    let mut file = open_engine_source(path)?;
     let mut hasher = Sha256::new();
     let mut buf = [0u8; 16_384];
     loop {
@@ -191,39 +222,76 @@ fn hash_file(path: &Path) -> Result<[u8; 32], ToolError> {
     Ok(hasher.finalize().into())
 }
 
-/// Operator-provided, absolute, executable engine path and verified digest.
-/// The caller must protect the executable and all parent directories from
-/// untrusted mutation. No PATH lookup and no engine downloaded at runtime.
+/// Seal an executable snapshot in a Linux anonymous memfd, then execute
+/// THAT inode through /proc/self/fd/N instead of reopening the mutable path.
+/// A digest verified against the exact copied bytes prevents a path swap
+/// between hash_file and execve. F_SEAL_WRITE/SHRINK/GROW/SEAL protects the
+/// already-verified executable from in-place mutation.
+fn sealed_engine_snapshot(path: &Path, expected: [u8; 32]) -> Result<File, ToolError> {
+    let mut source = open_engine_source(path)?;
+    let fd = unsafe {
+        libc::memfd_create(
+            c"ocaf-pinned-wasmtime".as_ptr(),
+            libc::MFD_CLOEXEC | libc::MFD_ALLOW_SEALING,
+        )
+    };
+    if fd < 0 {
+        return Err(rejected("Linux sealed WASI engine snapshot unavailable"));
+    }
+    let mut sealed = unsafe { File::from_raw_fd(fd) };
+    let mut hasher = Sha256::new();
+    let mut total = 0u64;
+    let mut buf = [0u8; 16_384];
+    loop {
+        let n = source
+            .read(&mut buf)
+            .map_err(|_| rejected("cannot read pinned WASI engine"))?;
+        if n == 0 {
+            break;
+        }
+        total = total
+            .checked_add(n as u64)
+            .filter(|bytes| *bytes <= MAX_ENGINE_BYTES)
+            .ok_or_else(|| rejected("WASI engine exceeds snapshot limit"))?;
+        hasher.update(&buf[..n]);
+        sealed
+            .write_all(&buf[..n])
+            .map_err(|_| rejected("cannot snapshot pinned WASI engine"))?;
+    }
+    if total == 0 || <[u8; 32]>::from(hasher.finalize()) != expected {
+        return Err(rejected("WASI engine snapshot digest mismatch"));
+    }
+    let seals = libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL;
+    if unsafe { libc::fcntl(sealed.as_raw_fd(), libc::F_ADD_SEALS, seals) } != 0 {
+        return Err(rejected("cannot seal pinned WASI executable"));
+    }
+    Ok(sealed)
+}
+
+/// Pinned SHA-256 and an immutable, memory-backed executable inode.
+/// The operator must still protect deployment keys and host privileges.
 #[derive(Clone)]
 pub struct PinnedWasmtime {
     executable: PathBuf,
     sha256: [u8; 32],
+    sealed: Arc<File>,
 }
 
 impl PinnedWasmtime {
     pub fn new(executable: PathBuf, expected_sha256: [u8; 32]) -> Result<Self, ToolError> {
+        let sealed = Arc::new(sealed_engine_snapshot(&executable, expected_sha256)?);
         let engine = Self {
             executable,
             sha256: expected_sha256,
+            sealed,
         };
         engine.verify()?;
         Ok(engine)
     }
 
     fn verify(&self) -> Result<(), ToolError> {
-        if !self.executable.is_absolute() {
-            return Err(rejected("WASI engine path must be absolute"));
-        }
-        let meta = fs::symlink_metadata(&self.executable)
-            .map_err(|_| rejected("WASI engine metadata unavailable"))?;
-        if !meta.is_file()
-            || meta.file_type().is_symlink()
-            || meta.permissions().mode() & 0o111 == 0
-        {
-            return Err(rejected(
-                "WASI engine must be a regular executable, not a symlink",
-            ));
-        }
+        // Also detect changes to the operator's original installation.
+        // Execution nevertheless uses the immutable sealed snapshot.
         if hash_file(&self.executable)? != self.sha256 {
             return Err(rejected("WASI engine digest mismatch"));
         }
@@ -428,7 +496,8 @@ impl WasmToolExecutor {
         self.engine.verify()?;
         let staged = EphemeralModule::new(&self.approved_module)?;
 
-        let mut command = Command::new(&self.engine.executable);
+        let engine_fd = self.engine.sealed.as_raw_fd();
+        let mut command = Command::new(format!("/proc/self/fd/{engine_fd}"));
         command
             .arg("run")
             .arg("-W")
@@ -451,7 +520,15 @@ impl WasmToolExecutor {
         // The only operations in pre_exec are raw Linux syscalls. Failure
         // aborts child spawn; never silently drop the hardening policy.
         unsafe {
-            command.as_std_mut().pre_exec(|| {
+            command.as_std_mut().pre_exec(move || {
+                // MFD_CLOEXEC protects the coordinator. Clear it only in the
+                // forked guest before execve, so binfmt_script can reopen a
+                // shebang fixture through /proc/self/fd without mutable path
+                // lookup. The parent descriptor stays CLOEXEC.
+                let flags = libc::fcntl(engine_fd, libc::F_GETFD);
+                if flags < 0 || libc::fcntl(engine_fd, libc::F_SETFD, flags & !libc::FD_CLOEXEC) < 0 {
+                    return Err(std::io::Error::last_os_error());
+                }
                 if libc::prctl(libc::PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) != 0 {
                     return Err(std::io::Error::last_os_error());
                 }
