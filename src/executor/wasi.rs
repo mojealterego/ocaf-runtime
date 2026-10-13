@@ -327,9 +327,8 @@ impl WasmToolExecutor {
     async fn run(&self, args: Value, ctx: &ExecutionContext) -> Result<Value, ToolError> {
         let _permit = self
             .permits
-            .acquire()
-            .await
-            .map_err(|_| rejected("WASI sandbox admission closed"))?;
+            .try_acquire()
+            .map_err(|_| rejected("WASI sandbox capacity exhausted"))?;
         if ctx.deadline_ms == 0 {
             return Err(rejected("deadline is required"));
         }
@@ -412,8 +411,21 @@ impl WasmToolExecutor {
             };
             tokio::try_join!(send, output, error_output, exit)
         })
-        .await
-        .map_err(|_| ToolError::Timeout)??;
+        .await;
+
+        let completed = match completed {
+            Ok(Ok(values)) => values,
+            Ok(Err(error)) => {
+                let _ = child.start_kill();
+                let _ = tokio::time::timeout(Duration::from_millis(500), child.wait()).await;
+                return Err(error);
+            }
+            Err(_) => {
+                let _ = child.start_kill();
+                let _ = tokio::time::timeout(Duration::from_millis(500), child.wait()).await;
+                return Err(ToolError::Timeout);
+            }
+        };
 
         let ((), output, _stderr, status) = completed;
         if !status.success() {
