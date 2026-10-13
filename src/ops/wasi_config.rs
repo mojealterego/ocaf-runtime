@@ -118,8 +118,7 @@ mod operator_file_tests {
         let workspace = tempfile::tempdir().expect("temporary operator workspace");
         let sealed = workspace.path().join("manifest.json");
         fs::write(&sealed, b"safe").expect("create manifest");
-        fs::set_permissions(&sealed, fs::Permissions::from_mode(0o600))
-            .expect("seal manifest");
+        fs::set_permissions(&sealed, fs::Permissions::from_mode(0o600)).expect("seal manifest");
 
         assert_eq!(
             read_operator_file(&sealed, "TEST_MANIFEST", 4).expect("approved file"),
@@ -139,8 +138,7 @@ mod operator_file_tests {
         fs::set_permissions(&sealed, fs::Permissions::from_mode(0o644))
             .expect("make world-readable");
         assert!(read_operator_file(&sealed, "TEST_MANIFEST", 16).is_err());
-        fs::set_permissions(&sealed, fs::Permissions::from_mode(0o600))
-            .expect("reseal file");
+        fs::set_permissions(&sealed, fs::Permissions::from_mode(0o600)).expect("reseal file");
 
         fs::write(&sealed, b"").expect("clear file");
         assert!(read_operator_file(&sealed, "TEST_MANIFEST", 16).is_err());
