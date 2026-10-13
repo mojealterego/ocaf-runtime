@@ -6,7 +6,7 @@
 //! This is not a distributed exactly-once side-effect protocol.
 
 #[cfg(feature = "tls-bound")]
-use crate::rpc::{RpcClient, RpcReply};
+use crate::rpc::RpcClient;
 #[cfg(feature = "tls-bound")]
 use crate::transport::tls_bound;
 #[cfg(feature = "tls-bound")]
