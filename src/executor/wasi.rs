@@ -352,15 +352,14 @@ impl WasmToolExecutor {
         let limit = self.policy.max_output_bytes;
         let timeout = Duration::from_millis(self.policy.timeout_ms.min(ctx.deadline_ms));
         let completed = tokio::time::timeout(timeout, async {
-            let send = async {
+            let send = async move {
                 stdin
                     .write_all(&payload)
                     .await
                     .map_err(|_| ToolError::Execution("WASI stdin write failed".into()))?;
-                stdin
-                    .shutdown()
-                    .await
-                    .map_err(|_| ToolError::Execution("WASI stdin shutdown failed".into()))?;
+                // WASI callers may wait for EOF; poll_shutdown alone does not
+                // guarantee the ChildStdin handle is closed.
+                drop(stdin);
                 Ok::<(), ToolError>(())
             };
             let output = read_bounded(stdout, limit);
