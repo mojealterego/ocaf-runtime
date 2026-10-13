@@ -32,7 +32,13 @@ Zenoh transport crate with version `1.10.1`, a fixed relative path
 and pinned `lz4_flex 0.11.6`; unrecognized patches and other local
 crate sources still fail closed.
 
-## Remaining blockers
+## Historical blockers after phase A (subsequently addressed)
+
+This section records the intermediate result after the first
+`lz4_flex` patch. The remaining findings below were eliminated by
+phase B and phase C, verified in job `38371010671`.
+
+
 
 This backport targets **only** RUSTSEC-2026-0041. Even after successful
 migration, remaining warnings for `paste`, `rustls-pemfile` and
@@ -92,3 +98,34 @@ third-party package contents remain sourced from Cargo's checksum
 validated registry cache, with patched manifests and Rust sources
 retained for independent review. Production multi-host certification
 remains a separate and still unmet release criterion.
+
+## Final dependency acceptance — priority 0.30
+
+The third source migration completed successfully in GitHub Actions
+run **38371010671**. All of its checks completed successfully:
+the three Zenoh crates were copied from Cargo-verified registry
+sources, YAML handling and PEM calls were migrated, negative policy
+tests and selected real Zenoh mTLS tests passed, `cargo clippy`
+passed, and the **full-feature `cargo-deny` check passed**.
+
+The changes were committed to `main` as
+`fc38bc16667c5685420f9fc1c41af974064ad3dd`.
+`Cargo.lock` has **428** packages and no longer contains
+`paste`, `rustls-pemfile`, `serde_yaml`, `unsafe-libyaml`,
+`rsa` or vulnerable `lz4_flex 0.10.0`. The five
+patched crates keep their upstream release number `1.10.1`
+(or `2.1.1` for token-cell), with explicit local Cargo overrides;
+they are **not** upstream releases, and must be rebased or
+re-reviewed whenever the Zenoh toolchain is upgraded.
+
+YAML configuration is intentionally no longer accepted, including
+recursive YAML file inclusions. Operators must migrate YAML files
+to security-validated JSON5 before upgrading. Actual certificates
+and key material must be deployed and tested independently.
+
+**Outstanding:** complete CI and artifact provenance must be
+reverified on the final documentation/build commit. Independently
+validated real multi-host PostgreSQL failover, certificate rotation,
+backup restoration, privileged sandbox and human security signoff
+remain outside automated source validation. Thus **production NO-GO**
+remains in effect.

@@ -559,9 +559,9 @@ Skrypt `scripts/release_readiness.py` sprawdza obecność i strukturę pliku
 `Cargo.lock` oraz kompletność, integralność SHA-256 i aktualność
 udokumentowanych dowodów operacyjnych. Niespełnione wymagania oznacza
 `NO_GO`. Zgodność formalna artefaktów nie stanowi certyfikacji
-bezpieczeństwa ani gotowości produkcyjnej. Ponieważ dotychczas w
-repozytorium nie zatwierdzono `Cargo.lock` i zewnętrznych dowodów
-wdrożeniowych, produkcyjne zatwierdzenie pozostaje zablokowane.
+bezpieczeństwa ani gotowości produkcyjnej. `Cargo.lock` znajduje się
+już w `main`, ale nadal brakuje niezależnie zweryfikowanych dowodów
+testów infrastrukturalnych. Produkcyjne zatwierdzenie pozostaje zablokowane.
 
 Weryfikacja testów: `python3 -m unittest discover -s scripts/tests -v`.
 Pełne wymagania i sposób użycia: [docs/RELEASE_READINESS.md](docs/RELEASE_READINESS.md).
@@ -576,9 +576,9 @@ oraz żąda atestacji pochodzenia kompilacji i SBOM. Ich istnienie i weryfikacja
 wymagają **zakończonego sukcesem** konkretnego przebiegu GitHub Actions.
 Kontrole nie są certyfikacją produkcyjną.
 
-**Ważne:** zestaw domyślnych funkcji Zenoh został ograniczony do TCP/TLS,
-co usunęło z `Cargo.lock` zależność `rsa`. Pozostałe aktualnie wykryte
-advisories RustSec blokują zatwierdzenie artefaktu. Szczegóły:
+**Historia:** zestaw domyślnych funkcji Zenoh został ograniczony do TCP/TLS,
+co usunęło z `Cargo.lock` zależność `rsa`. Kolejne ostrzeżenia RustSec
+wykryte na tym etapie zostały usunięte w priorytecie 0.30. Szczegóły:
 [docs/SUPPLY_CHAIN_FINDINGS.md](docs/SUPPLY_CHAIN_FINDINGS.md).
 
 Szczegóły: [docs/SUPPLY_CHAIN.md](docs/SUPPLY_CHAIN.md).
@@ -589,12 +589,35 @@ Konfiguracja Zenoh odrzuca włączenie kompresji zarówno dla transportu
 unicast, jak i multicast. Oddzielne testy i kontrola rozwiązanego grafu
 funkcji `cargo metadata --locked --all-features` ograniczają dopuszczone
 funkcje do transportów TCP/TLS bez kompresji i dodatkowego mechanizmu
-uwierzytelniania zależnego od RSA. To kontrola ochronna, **nie aktualizacja**
-niebezpiecznego pakietu: `lz4_flex 0.10.0` pozostaje zależnością Zenoh,
-podobnie jak część nieutrzymywanych zależności. Audyt `cargo-deny` nie
-został wyłączony — produkcyjne wydanie nadal jest zablokowane.
+uwierzytelniania zależnego od RSA. W priorytecie 0.29 była to
+tymczasowa kontrola ograniczająca ryzyko, **bez aktualizacji**
+bibliotek. Niebezpieczne zależności usunięto w następnym etapie 0.30.
 
 Szczegóły: [docs/SUPPLY_CHAIN_FINDINGS.md](docs/SUPPLY_CHAIN_FINDINGS.md).
+
+## Migracja zależności Zenoh i audyt RustSec (priorytet 0.30)
+
+W `main` wprowadzono pięć ściśle wyznaczonych backportów z kodu
+`zenoh 1.10.1` pozyskanego z weryfikowanych przez Cargo archiwów.
+Zaktualizowano `lz4_flex` do `0.11.6`, zastąpiono `paste` przez
+`pastey 0.2.3`, usunięto `rustls-pemfile` na rzecz parsera
+`rustls-pki-types` oraz wyłączono interpretację YAML (również w
+plikach dołączanych), usuwając `serde_yaml` i `unsafe-libyaml`.
+Własne pliki JSON5 oraz TLS/mTLS nadal podlegają testom integracyjnym.
+Z Cargo.lock usunięto pakiety powiązane ze wszystkimi czterema
+pierwotnymi ostrzeżeniami RustSec.
+
+Automatyczny proces migracji przeszedł testy Rust, Clippy i
+`cargo-deny check --all-features` **bez wyciszania ostrzeżeń**
+(GitHub Actions: `38371010671`). Każdy kolejny commit ma osobny
+zestaw weryfikacji CI; powodzenie backportu nie oznacza jeszcze
+certyfikowanego wydania. Utrzymanie lokalnych poprawek oraz niezależny
+przegląd kodu pozostają obowiązkowe.
+
+Dokumentacja: [docs/ZENOH_MIGRATION_030.md](docs/ZENOH_MIGRATION_030.md),
+[docs/SUPPLY_CHAIN_FINDINGS.md](docs/SUPPLY_CHAIN_FINDINGS.md).
+Stan produkcyjny pozostaje **NO-GO** z powodów infrastrukturalnych,
+mimo usunięcia wymienionych ostrzeżeń zależności.
 
 ## Prawa autorskie i kontakt
 

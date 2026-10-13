@@ -71,14 +71,25 @@ and committed the lockfile from this restricted feature configuration on
 other vulnerabilities. The upstream-linked dependencies identified in
 [SUPPLY_CHAIN_FINDINGS.md](SUPPLY_CHAIN_FINDINGS.md) remain blockers.
 
-The advisory gate remains **enforced**, and an attested release build is
-not permitted by CI while advisory policy is red. Do not treat available
-historical CI builds as signed production releases.
+**Resolution (priority 0.30, 2026-10-13):** the five carefully scoped,
+Cargo-sourced Zenoh-related local backports removed the four original
+RustSec findings without adding exceptions to `deny.toml`. CI job
+`38371010671` passed unit tests, selected real Zenoh/mTLS tests,
+full Clippy and `cargo-deny check --all-features` before committing
+the resulting vendor sources and `Cargo.lock` to `main`.
+The current RustSec database must still be checked on **each new commit**.
+
+Unlike a new upstream Zenoh release, these local patches require manual
+maintenance, source review and security review; historical audit results
+are not claims about new vulnerability discoveries. The advisory gate
+remains **enforced**, and generated release artifacts must be
+verified independently before use. Do not treat historical CI builds
+as signed production releases.
 
 ## Remaining production gates
 
 The following remain external prerequisites: independent multi-host
-PostgreSQL failover/fencing, real mTLS credential rollover, upstream
-vulnerability remediation and license review, tool sandboxing, restore
+PostgreSQL failover/fencing, real mTLS credential rollover, vendored dependency provenance and ongoing advisory/license review,
+tool sandboxing, restore
 rehearsal, independent security assessment and SLO/soak results.
 A green GitHub Actions status alone is **not** production acceptance.

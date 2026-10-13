@@ -1,10 +1,33 @@
 # Security inventory — 2026-10-13 (supply-chain priority 0.28)
 
-**Decision: production release NO-GO.** The first actual `cargo-deny`
+**Historical findings from priorities 0.28–0.29.** The first actual `cargo-deny`
 GitHub Actions scan, run ID `38364859758`, found the findings below.
-The scanner passed its **bans, licenses and sources** checks but failed
-its **advisories** check. This document records observed results, not
+At that time, the scanner passed its **bans, licenses and sources**
+checks but failed its **advisories** check. This document records observed results, not
 an independent exploitability assessment of OCAF's deployed configuration.
+
+## Resolution — priority 0.30 (2026-10-13)
+
+Verified migration workflow `38371010671` completed **SUCCESS**,
+including `cargo-deny check --all-features` without advisory ignores.
+Cargo.lock now contains `lz4_flex 0.11.6` and `pastey 0.2.3`
+and **does not contain** `lz4_flex 0.10.0`, `paste`,
+`rustls-pemfile`, `serde_yaml`, `unsafe-libyaml`, or `rsa`.
+
+Five pinned upstream-derived crates are locally patched:
+`zenoh-transport`, `token-cell`, `zenoh-config`,
+`zenoh-link-tls`, `zenoh-link-commons`. The JSON5-only
+configuration behavior intentionally rejects YAML.
+See [ZENOH_MIGRATION_030.md](ZENOH_MIGRATION_030.md) for operational
+compatibility and rollback considerations. This is a verified
+remediation of the **previously detected dependency advisories**,
+not a guarantee of zero newly discovered vulnerabilities.
+
+**Production readiness: NO-GO** until independent multi-host fault,
+PKI rotation, backup/restore, sandbox and security assessment evidence
+is supplied.
+
+### Historical audit output (before remediation)
 
 | RustSec advisory | Dependency in observed graph | Severity category | Required action |
 | --- | --- | --- | --- |
@@ -63,7 +86,7 @@ of the vulnerable `lz4_flex` package and not a replacement for a
 fixed upstream dependency. The `cargo-deny` advisory gate deliberately
 remains NO-GO until dependencies are remediated.
 
-**Production consequences:** the attested artifact job depends on the
-advisory/license/source gate. Therefore no new attested release artifact
-will be produced until the currently blocked security gate is resolved.
-Do not insert blanket RustSec ignores merely to turn CI green.
+**Historical production consequences:** until v0.30 remediation the
+advisory/license/source gate blocked attested builds. The current gate
+must continue to run on every new commit; a successful security scan
+does not independently authorize a production deployment.
