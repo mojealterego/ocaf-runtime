@@ -20,9 +20,7 @@ use super::{ExecutionContext, ToolError, ToolExecutor};
 
 #[path = "wasi_manifest.rs"]
 mod signed_manifest;
-pub use signed_manifest::{
-    manifest_signing_payload, verify_signed_manifest, SignedWasiManifest,
-};
+pub use signed_manifest::{manifest_signing_payload, verify_signed_manifest, SignedWasiManifest};
 
 const MAX_MODULE_BYTES: usize = 1024 * 1024;
 const MAX_IO_BYTES: usize = 64 * 1024;
@@ -312,12 +310,8 @@ impl WasmToolExecutor {
         trusted_publisher_key: &[u8],
     ) -> Result<Self, ToolError> {
         let module_hash = sha256(&module);
-        let manifest = verify_signed_manifest(
-            signed_json,
-            signature,
-            trusted_publisher_key,
-            module_hash,
-        )?;
+        let manifest =
+            verify_signed_manifest(signed_json, signature, trusted_publisher_key, module_hash)?;
         let policy = manifest.policy.clone();
         let mut executor = Self::new(engine, module, module_hash, policy)?;
         executor.signed_binding = Some(manifest);
