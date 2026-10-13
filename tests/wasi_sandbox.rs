@@ -128,7 +128,7 @@ fn with_import(namespace: &str, function: &str) -> Vec<u8> {
 
 fn fake_engine(dir: &Path, body: &str) -> (PathBuf, [u8; 32]) {
     let path = dir.join("fake-wasmtime");
-    let script = format!("#!/bin/sh\n{body}\n");
+    let script = format!("#!/bin/sh\nwhile IFS= read -r _line; do :; done\n{body}\n");
     fs::write(&path, script.as_bytes()).expect("script");
     fs::set_permissions(&path, fs::Permissions::from_mode(0o700)).expect("chmod");
     (path, digest(script.as_bytes()))
