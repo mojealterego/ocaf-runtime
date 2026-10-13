@@ -214,7 +214,11 @@ impl RemoteJobWorker {
                 args: lease.args.clone(),
                 auth: None,
             };
-            match self.runtime.execute(request).await {
+            match self
+                .runtime
+                .execute_authenticated_peer(request, &self.node_id)
+                .await
+            {
                 Ok(result) => RemoteJobOutcome::Succeeded {
                     output: result.output,
                 },
