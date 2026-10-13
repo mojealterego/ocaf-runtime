@@ -6,6 +6,16 @@
 //! This is not a distributed exactly-once side-effect protocol.
 
 use std::collections::HashSet;
+#[cfg(feature = "tls-bound")]
+use std::net::SocketAddr;
+#[cfg(feature = "tls-bound")]
+use std::sync::Arc;
+#[cfg(feature = "tls-bound")]
+use rustls::ClientConfig;
+#[cfg(feature = "tls-bound")]
+use crate::rpc::{RpcClient, RpcReply};
+#[cfg(feature = "tls-bound")]
+use crate::transport::tls_bound;
 
 use anyhow::{anyhow, bail, Result};
 use serde_json::from_value;
@@ -27,8 +37,31 @@ fn can_run_in_cluster(epoch: i64, tool: &str, approved: &HashSet<String>) -> boo
     epoch == 0 || (epoch > 0 && approved.contains(tool))
 }
 
+enum WorkerTransport {
+    Zenoh(ZenohRpcClient),
+    #[cfg(feature = "tls-bound")]
+    TlsBound {
+        protocol: RpcClient,
+        address: SocketAddr,
+        server_dns: String,
+        config: Arc<ClientConfig>,
+    },
+}
+
+impl WorkerTransport {
+    async fn request(&self, action: RpcAction) -> Result<crate::rpc::RpcReply> {
+        match self {
+            Self::Zenoh(client) => client.request(action).await,
+            #[cfg(feature = "tls-bound")]
+            Self::TlsBound { protocol, address, server_dns, config } => {
+                tls_bound::request(*address, server_dns, Arc::clone(config), protocol, action).await
+            }
+        }
+    }
+}
+
 pub struct RemoteJobWorker {
-    client: ZenohRpcClient,
+    client: WorkerTransport,
     runtime: OcafRuntime,
     allowed_tools: HashSet<String>,
     /// Only an operator-vetted, side-effect-free tool may run under a
@@ -51,7 +84,35 @@ impl RemoteJobWorker {
         }
         let node_id = client.local_id().to_owned();
         Ok(Self {
-            client,
+            client: WorkerTransport::Zenoh(client),
+            runtime,
+            allowed_tools,
+            cluster_pure_tools: HashSet::new(),
+            node_id,
+        })
+    }
+
+    /// An independent mTLS connection is created for every RPC request.
+    /// No Zenoh fallback is possible on this transport path.
+    #[cfg(feature = "tls-bound")]
+    pub fn new_tls_bound(
+        protocol: RpcClient,
+        address: SocketAddr,
+        server_dns: String,
+        config: Arc<ClientConfig>,
+        runtime: OcafRuntime,
+        allowed_tools: HashSet<String>,
+    ) -> Result<Self> {
+        if server_dns.is_empty()
+            || allowed_tools.is_empty()
+            || allowed_tools.len() > 64
+            || allowed_tools.iter().any(|tool| !validate_tool_name(tool))
+        {
+            bail!("invalid authenticated TLS worker configuration");
+        }
+        let node_id = protocol.local_id().to_owned();
+        Ok(Self {
+            client: WorkerTransport::TlsBound { protocol, address, server_dns, config },
             runtime,
             allowed_tools,
             cluster_pure_tools: HashSet::new(),
