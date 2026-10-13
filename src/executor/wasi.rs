@@ -7,7 +7,7 @@ use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -21,6 +21,9 @@ use super::{ExecutionContext, ToolError, ToolExecutor};
 #[path = "wasi_manifest.rs"]
 mod signed_manifest;
 pub use signed_manifest::{manifest_signing_payload, verify_signed_manifest, SignedWasiManifest};
+#[path = "wasi_receipt.rs"]
+mod receipts;
+pub use receipts::{ExecutionReceipt, ReceiptSigner, SignedExecutionReceipt};
 
 const MAX_MODULE_BYTES: usize = 1024 * 1024;
 const MAX_IO_BYTES: usize = 64 * 1024;
@@ -316,6 +319,44 @@ impl WasmToolExecutor {
         let mut executor = Self::new(engine, module, module_hash, policy)?;
         executor.signed_binding = Some(manifest);
         Ok(executor)
+    }
+
+    /// Produce an authenticated evidence receipt for a successful execution.
+    /// Sign with an operator-managed key outside the untrusted WASI guest.
+    /// For rejected requests the caller's audit/replay ledger is authoritative.
+    pub async fn execute_with_receipt(
+        &self,
+        args: Value,
+        ctx: &ExecutionContext,
+        signer: &ReceiptSigner,
+    ) -> Result<(Value, SignedExecutionReceipt), ToolError> {
+        let approval = self
+            .signed_binding
+            .as_ref()
+            .ok_or_else(|| rejected("receipts require a signed WASI manifest"))?;
+        let request_bytes = serde_json::to_vec(&args)
+            .map_err(|_| rejected("invalid input for receipt"))?;
+        let started = Instant::now();
+        let output = self.run(args, ctx).await?;
+        let output_bytes = serde_json::to_vec(&output)
+            .map_err(|_| rejected("invalid output for receipt"))?;
+        let completed_unix_secs = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|_| rejected("receipt clock unavailable"))?
+            .as_secs();
+        let receipt = ExecutionReceipt {
+            schema_version: 1,
+            tenant_id: approval.tenant_id.clone(),
+            agent_id: approval.agent_id.clone(),
+            tool_name: approval.tool.name.clone(),
+            correlation_id: ctx.correlation_id.clone(),
+            module_sha256_hex: approval.module_sha256_hex.clone(),
+            input_sha256_hex: format!("{:x}", Sha256::digest(&request_bytes)),
+            output_sha256_hex: format!("{:x}", Sha256::digest(&output_bytes)),
+            elapsed_ms: started.elapsed().as_millis().min(u64::MAX as u128) as u64,
+            completed_unix_secs,
+        };
+        Ok((output, signer.sign(receipt)?))
     }
 
     /// Only a signed instance can advertise its operator-approved
