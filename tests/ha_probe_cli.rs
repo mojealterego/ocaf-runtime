@@ -26,7 +26,12 @@ fn command(cluster: &str, dsn: &str) -> Command {
     child
 }
 
-async fn attempt(cluster: &str, dsn: &str, expect: &str, min_epoch: Option<i64>) -> serde_json::Value {
+async fn attempt(
+    cluster: &str,
+    dsn: &str,
+    expect: &str,
+    min_epoch: Option<i64>,
+) -> serde_json::Value {
     let mut command = command(cluster, dsn);
     command.args(["--mode", "attempt", "--expect", expect]);
     if let Some(epoch) = min_epoch {
@@ -36,7 +41,11 @@ async fn attempt(cluster: &str, dsn: &str, expect: &str, min_epoch: Option<i64>)
         .await
         .expect("bounded probe attempt")
         .expect("start probe attempt");
-    assert!(output.status.success(), "probe attempt failed: {}", String::from_utf8_lossy(&output.stderr));
+    assert!(
+        output.status.success(),
+        "probe attempt failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     serde_json::from_slice(&output.stdout).expect("one JSON record")
 }
 

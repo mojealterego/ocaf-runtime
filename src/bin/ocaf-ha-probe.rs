@@ -38,7 +38,9 @@ impl Args {
         let mut cursor = 0;
         while cursor < raw.len() {
             let flag = raw[cursor].as_str();
-            let value = raw.get(cursor + 1).context("each argument requires a value")?;
+            let value = raw
+                .get(cursor + 1)
+                .context("each argument requires a value")?;
             match flag {
                 "--mode" if mode.is_none() => {
                     mode = Some(match value.as_str() {
@@ -95,8 +97,8 @@ impl Args {
 }
 
 fn test_cluster_id() -> Result<String> {
-    let id = env::var("OCAF_HA_PROBE_CLUSTER_ID")
-        .context("OCAF_HA_PROBE_CLUSTER_ID is required")?;
+    let id =
+        env::var("OCAF_HA_PROBE_CLUSTER_ID").context("OCAF_HA_PROBE_CLUSTER_ID is required")?;
     let Some(random_id) = id.strip_prefix("ocaf33_") else {
         bail!("only dedicated ocaf33_ test namespaces are permitted");
     };
@@ -140,7 +142,11 @@ async fn main() -> Result<()> {
                 (args.expect, acquired),
                 (Some(Expectation::Acquired), true) | (Some(Expectation::Denied), false)
             );
-            if !valid_expectation || args.min_epoch.is_some_and(|required| epoch < Some(required)) {
+            if !valid_expectation
+                || args
+                    .min_epoch
+                    .is_some_and(|required| epoch < Some(required))
+            {
                 bail!("unexpected leadership result or non-monotonic fencing epoch");
             }
             emit(&json!({
@@ -202,9 +208,35 @@ mod tests {
     #[test]
     fn fail_closed_for_ambiguous_or_bypassed_expectations() {
         assert!(parse(&["--mode", "attempt"]).is_err());
-        assert!(parse(&["--mode", "attempt", "--expect", "denied", "--min-epoch", "10"]).is_err());
-        assert!(parse(&["--mode", "attempt", "--expect", "acquired", "--min-epoch", "1"]).is_ok());
-        assert!(parse(&["--mode", "attempt", "--expect", "acquired", "--expect", "denied"]).is_err());
-        assert!(parse(&["--mode", "attempt", "--expect", "acquired", "--unknown", "1"]).is_err());
+        assert!(parse(&[
+            "--mode",
+            "attempt",
+            "--expect",
+            "denied",
+            "--min-epoch",
+            "10"
+        ])
+        .is_err());
+        assert!(parse(&[
+            "--mode",
+            "attempt",
+            "--expect",
+            "acquired",
+            "--min-epoch",
+            "1"
+        ])
+        .is_ok());
+        assert!(
+            parse(&["--mode", "attempt", "--expect", "acquired", "--expect", "denied"]).is_err()
+        );
+        assert!(parse(&[
+            "--mode",
+            "attempt",
+            "--expect",
+            "acquired",
+            "--unknown",
+            "1"
+        ])
+        .is_err());
     }
 }
