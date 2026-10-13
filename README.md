@@ -792,4 +792,28 @@ Nie mylić `ToolExecutor` z izolacją obcego kodu ani
 praw hosta, plików ani sieci wyłącznie na podstawie deklaracji agenta.
 
 **Plan aktualny:** [docs/ROADMAP_FULL_ECOSYSTEM_2026.md](docs/ROADMAP_FULL_ECOSYSTEM_2026.md).
-**Status wdrożeniowy:** Stage 0.38 NOT STARTED; Production **NO-GO**.
+**Status wdrożeniowy:** Stage 0.38 PARTIAL / SECURITY REVIEW REQUIRED; Production **NO-GO**.
+
+## Priorytet 0.38 — WASI Preview1: pierwsza implementacja (Linux)
+
+Dodano `src/executor/wasi.rs`, który realizuje osobne,
+ograniczone wykonanie modułu WebAssembly poprzez przypięty
+SHA-256 plik binarny `wasmtime run`. Adapter
+`WasmToolExecutor` implementuje istniejący `ToolExecutor`.
+Wymaga jawnego operatorowego przekazania zatwierdzonego
+SHA-256 modułu i silnika, nie wykonuje nieznanych importów,
+nie daje WASI dostępu do plików hosta ani sieci oraz
+egzekwuje limity paliwa, pamięci liniowej, stosu,
+wall-clock, rozmiaru JSON i liczby procesów.
+
+Nowe testy `tests/wasi_sandbox.rs` i krok Rust CI pobierający
+archiwum Wasmtime 49.0.2 z przypiętym upstream SHA-256
+obejmują prawdziwy program WASIp1 i negatywne przypadki.
+Szczegóły, procedura i ograniczenia:
+[docs/WASI_EXECUTION_038.md](docs/WASI_EXECUTION_038.md).
+
+**0.38 ma status PARTIAL.** Pozostały podpisy manifestów,
+pełne powiązanie z remote workerami/tenantami, hardening
+hostowy, crash/teardown/soak/PKI oraz niezależny odbiór
+bezpieczeństwa. Dopóki te warunki nie zostaną wykazane,
+nie ma deklaracji ukończenia 0.38 ani gotowości produkcyjnej.
