@@ -2,7 +2,7 @@
 //! This loader is used by the coordinator and the TLS-bound remote worker.
 //! No tenant, manifest, module path or publisher key is read from RPC JSON.
 use std::env;
-use std::fs::{self, OpenOptions};
+use std::fs::OpenOptions;
 use std::io::Read;
 use std::os::unix::fs::{MetadataExt, OpenOptionsExt, PermissionsExt};
 use std::path::{Path, PathBuf};
@@ -111,6 +111,7 @@ pub async fn runtime_from_env() -> Result<OcafRuntime> {
 #[cfg(test)]
 mod operator_file_tests {
     use super::*;
+    use std::fs;
     use std::os::unix::fs::{symlink, PermissionsExt};
 
     #[test]
