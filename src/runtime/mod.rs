@@ -93,12 +93,19 @@ impl Drop for BudgetReservation {
     }
 }
 
+fn valid_principal_part(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= 128
+        && value.bytes().all(|c| c.is_ascii_alphanumeric() || b"_-.".contains(&c))
+}
+
 #[derive(Clone)]
 pub struct OcafRuntime {
     pub registry: ToolRegistry,
     budget_sats: Arc<AtomicU64>,
     pub metrics: MetricsStore,
     auth_verifier: Arc<dyn AuthVerifier>,
+    tenant_namespace: Option<String>,
 }
 
 impl OcafRuntime {
@@ -108,6 +115,7 @@ impl OcafRuntime {
             budget_sats: Arc::new(AtomicU64::new(initial_budget_sats)),
             metrics: MetricsStore::new(),
             auth_verifier: Arc::new(DenyByDefaultVerifier),
+            tenant_namespace: None,
         }
     }
 
@@ -133,9 +141,59 @@ impl OcafRuntime {
         self.registry.register(manifest, executor).await
     }
 
+    /// Install the trusted deployment namespace (not a field from the
+    /// inbound JSON request). Required for signed WASI tenant isolation.
+    pub fn with_tenant_namespace(mut self, tenant: &str) -> Result<Self, RuntimeError> {
+        if !valid_principal_part(tenant) {
+            return Err(RuntimeError::AuthRequired("invalid tenant namespace".into()));
+        }
+        self.tenant_namespace = Some(tenant.to_owned());
+        Ok(self)
+    }
+
+    /// The authenticated sender must be supplied ONLY by a trusted RPC
+    /// handler after HMAC, certificate PoP, TLS binding and replay gates.
+    /// This method does not authenticate a raw caller-provided string.
+    pub async fn execute_authenticated_peer(
+        &self,
+        request: ToolCallRequest,
+        authenticated_sender: &str,
+    ) -> Result<ToolCallResult, RuntimeError> {
+        if !valid_principal_part(authenticated_sender) {
+            return Err(RuntimeError::AuthRequired("invalid authenticated sender".into()));
+        }
+        let principal = self.tenant_namespace.as_ref()
+            .map(|tenant| format!("{tenant}:{authenticated_sender}"))
+            .unwrap_or_else(|| "unattributed".to_owned());
+        self.execute_attributed(request, &principal).await
+    }
+
+    /// Register only the manifest actually verified by the Ed25519 WASI
+    /// publisher signature. Unsigned local executors are not accepted here.
+    #[cfg(target_os = "linux")]
+    pub async fn register_signed_wasi(
+        &self,
+        executor: crate::executor::wasi::WasmToolExecutor,
+    ) -> Result<(), RegistryError> {
+        let manifest = executor.signed_tool_manifest()
+            .cloned()
+            .ok_or_else(|| RegistryError::InvalidManifest(
+                "WASI registration requires a signed publisher manifest".into()
+            ))?;
+        self.registry.register(manifest, executor).await
+    }
+
     pub async fn execute(&self, request: ToolCallRequest) -> Result<ToolCallResult, RuntimeError> {
+        self.execute_attributed(request, "unattributed").await
+    }
+
+    async fn execute_attributed(
+        &self,
+        request: ToolCallRequest,
+        principal: &str,
+    ) -> Result<ToolCallResult, RuntimeError> {
         let start = Instant::now();
-        let result = self.execute_inner(&request, start).await;
+        let result = self.execute_inner(&request, start, principal).await;
         let elapsed_us = start.elapsed().as_micros().min(u64::MAX as u128) as u64;
         if result.is_ok() {
             self.metrics.record_success(elapsed_us).await;
@@ -149,6 +207,7 @@ impl OcafRuntime {
         &self,
         request: &ToolCallRequest,
         start: Instant,
+        principal: &str,
     ) -> Result<ToolCallResult, RuntimeError> {
         let tool = self
             .registry
@@ -187,7 +246,7 @@ impl OcafRuntime {
             BudgetReservation::reserve(Arc::clone(&self.budget_sats), manifest.cost_sats)?;
 
         let ctx = ExecutionContext {
-            agent_id: "unattributed".to_string(),
+            agent_id: principal.to_owned(),
             deadline_ms: manifest.timeout_ms,
             correlation_id: request.call_id.clone(),
         };
