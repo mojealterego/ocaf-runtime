@@ -33,6 +33,36 @@ source-based dependency observation, not proof of runtime behavior.
   disabling a feature without rebuilding/retesting is not a deployment
   mitigation claim. Keep advisories fail-closed pending actual review.
 
+## Priority 0.29 — enforce disabled compression while upstream remediation is pending
+
+Zenoh `1.10.1` still locks `lz4_flex 0.10.0` through the
+`zenoh-transport` dependency, even with `transport_compression` disabled.
+The upstream dependency cannot be safely forced to patched
+`lz4_flex >=0.11.6,<0.12.0` without migrating the Zenoh integration,
+using a reviewed upstream patch, or maintaining a vetted security backport.
+See [RustSec 2026-0041](https://rustsec.org/advisories/RUSTSEC-2026-0041.html).
+
+Implemented safety gates in 0.29:
+- A fail-closed policy in `validate_zenoh_config` denies
+  `transport/{unicast,multicast}/compression/enabled` unless explicitly
+  `false`; missing compression settings retain Zenoh's disabled default.
+- An independently tested `cargo metadata --locked --all-features` guard
+  checks both `zenoh` and `zenoh-transport` to reject enabled
+  compression, public-key/password authentication, multilink or
+  unreviewed transport features. It requires both TCP and TLS.
+- Both standard Rust CI and supply-chain CI now enforce that graph
+  before any production-facing build. Compilation cannot silently
+  re-enable compression through Cargo feature unification without
+  failing that guard.
+- No advisory ignores, disabled scanners or deceptive substitutions
+  were added. Existing unmaintained packages still require upstream
+  migration and independent review.
+
+This is a **defense-in-depth reachability mitigation**, not removal
+of the vulnerable `lz4_flex` package and not a replacement for a
+fixed upstream dependency. The `cargo-deny` advisory gate deliberately
+remains NO-GO until dependencies are remediated.
+
 **Production consequences:** the attested artifact job depends on the
 advisory/license/source gate. Therefore no new attested release artifact
 will be produced until the currently blocked security gate is resolved.

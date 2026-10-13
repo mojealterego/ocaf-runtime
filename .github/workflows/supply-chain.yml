@@ -26,6 +26,11 @@ jobs:
           set -euo pipefail
           cargo metadata --format-version 1 --locked --no-deps > /dev/null
           git diff --exit-code -- Cargo.lock
+      - name: Verify enabled Zenoh feature graph (no compression or pubkey auth)
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s scripts/tests -p test_zenoh_feature_policy.py -v
+          python3 scripts/zenoh_feature_policy.py --repo .
       - name: Advisory, license, registry and dependency policy
         uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
         with:

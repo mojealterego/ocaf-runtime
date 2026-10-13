@@ -57,6 +57,50 @@ fn implicit_scouting_and_unrestricted_protocols_are_rejected() {
 }
 
 #[test]
+fn zenoh_transport_compression_is_denied_even_for_opted_in_loopback() {
+    // A rejected setting must not be silently accepted just because a
+    // dangerous upstream codec is still present in Cargo.lock.
+    let minimal = loopback_config("tcp", "127.0.0.1");
+    for section in ["unicast", "multicast"] {
+        let disabled = minimal.replace(
+            "transport: {link:",
+            &format!("transport: {{{section}:{{compression:{{enabled:false}}}},link:"),
+        );
+        assert!(validate_zenoh_config(&disabled, true).is_ok());
+        for disallowed in ["true", "\"true\"", "null"] {
+            let config = disabled.replace(
+                "compression:{enabled:false}",
+                &format!("compression:{{enabled:{disallowed}}}"),
+            );
+            assert!(matches!(
+                validate_zenoh_config(&config, true),
+                Err(TransportPolicyError::Unsafe)
+            ));
+        }
+    }
+}
+
+#[test]
+fn compression_objects_require_an_explicit_disabled_boolean() {
+    let plain = loopback_config("tcp", "127.0.0.1");
+    let missing_flag = plain.replace(
+        "transport: {link:",
+        "transport: {unicast:{compression:{}},link:",
+    );
+    assert!(validate_zenoh_config(&missing_flag, true).is_err());
+    let both_disabled = plain.replace(
+        "transport: {link:",
+        "transport: {unicast:{compression:{enabled:false}},multicast:{compression:{enabled:false}},link:",
+    );
+    assert!(validate_zenoh_config(&both_disabled, true).is_ok());
+    let one_enabled = both_disabled.replace(
+        "multicast:{compression:{enabled:false}}",
+        "multicast:{compression:{enabled:true}}",
+    );
+    assert!(validate_zenoh_config(&one_enabled, true).is_err());
+}
+
+#[test]
 fn forged_tls_endpoint_without_mutual_auth_is_rejected() {
     let tls = loopback_config("tls", "127.0.0.1");
     assert!(validate_zenoh_config(&tls, false).is_err());

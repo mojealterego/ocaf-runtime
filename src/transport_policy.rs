@@ -110,6 +110,23 @@ pub fn validate_zenoh_config(
     if !multicast || !gossip {
         return Err(TransportPolicyError::Unsafe);
     }
+
+    // RUSTSEC-2026-0041: Zenoh's upstream transport dependency still pulls
+    // an affected lz4_flex version, even with compression disabled at build
+    // time. Refuse operator attempts to enable compressed unicast/multicast
+    // transport in every accepted CLI configuration. Absent fields inherit
+    // Zenoh's documented disabled-by-default behavior. The separate CI
+    // feature-graph check guards against dependency feature unification.
+    for field in [
+        "/transport/unicast/compression",
+        "/transport/multicast/compression",
+    ] {
+        if let Some(value) = root.pointer(field) {
+            if value.get("enabled") != Some(&Value::Bool(false)) {
+                return Err(TransportPolicyError::Unsafe);
+            }
+        }
+    }
     let protocols = root
         .pointer("/transport/link/protocols")
         .and_then(Value::as_array)

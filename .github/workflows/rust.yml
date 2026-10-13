@@ -39,6 +39,8 @@ jobs:
           components: rustfmt, clippy
       - name: Committed Cargo.lock integrity
         run: python3 scripts/supply_chain.py --repo .
+      - name: Compile-time Zenoh transport and compression restrictions
+        run: python3 scripts/zenoh_feature_policy.py --repo .
       - name: Formatting
         run: cargo fmt --all -- --check
       - name: Clippy (core only)
@@ -54,7 +56,7 @@ jobs:
       - name: Network chaos (real PostgreSQL via loopback fault proxy)
         run: cargo test --locked --no-default-features --test postgres_network_chaos -- --test-threads=1
       - name: Tests (Zenoh)
-        run: cargo test
+        run: cargo test --locked
       - name: Transport chaos (Zenoh and PostgreSQL takeover)
         run: cargo test --locked --test zenoh_chaos_takeover -- --test-threads=1
       - name: Clippy (full Zenoh)

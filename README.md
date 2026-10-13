@@ -583,6 +583,19 @@ advisories RustSec blokują zatwierdzenie artefaktu. Szczegóły:
 
 Szczegóły: [docs/SUPPLY_CHAIN.md](docs/SUPPLY_CHAIN.md).
 
+## Ograniczenia ryzyka transportu Zenoh (priorytet 0.29)
+
+Konfiguracja Zenoh odrzuca włączenie kompresji zarówno dla transportu
+unicast, jak i multicast. Oddzielne testy i kontrola rozwiązanego grafu
+funkcji `cargo metadata --locked --all-features` ograniczają dopuszczone
+funkcje do transportów TCP/TLS bez kompresji i dodatkowego mechanizmu
+uwierzytelniania zależnego od RSA. To kontrola ochronna, **nie aktualizacja**
+niebezpiecznego pakietu: `lz4_flex 0.10.0` pozostaje zależnością Zenoh,
+podobnie jak część nieutrzymywanych zależności. Audyt `cargo-deny` nie
+został wyłączony — produkcyjne wydanie nadal jest zablokowane.
+
+Szczegóły: [docs/SUPPLY_CHAIN_FINDINGS.md](docs/SUPPLY_CHAIN_FINDINGS.md).
+
 ## Prawa autorskie i kontakt
 
 **© 2026 MOJEALTEREGO — Andrzej Mikulski. Wszystkie prawa zastrzeżone.**
