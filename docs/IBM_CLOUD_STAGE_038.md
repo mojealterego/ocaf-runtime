@@ -157,6 +157,24 @@ Do tego czasu **0.38 PARTIAL / PRODUCTION NO-GO**, etap 0.39 zablokowany.
 - https://cloud.ibm.com/docs/vpc?topic=vpc-vpc-reference
 - https://cloud.ibm.com/docs/vpc?topic=vpc-vpn-client-to-site-security-groups
 
+## 6A. Alternatywny 30-dniowy staging OVHcloud Public Cloud
+
+Istnieje osobna możliwość uzyskania vouchera próbnego
+**1000 PLN / 30 dni** dla kwalifikującego się pierwszego projektu
+OVHcloud Public Cloud. Nie jest to saldo IBM Cloud, nie można go
+łączyć z promocjami USD, nie finansuje automatycznie OVH VPS
+ani zewnętrznych serwerów dedykowanych. Okres ważności zaczyna
+się w chwili aktywacji projektu, a po wyczerpaniu vouchera
+usługi mogą obciążać podpiętą metodę płatności.
+
+**Strategia:** przygotować dokumenty, testy i kontrolę kosztów
+przed aktywacją; OVH wykorzystać w pierwszej kolejności do
+krótkich, intensywnych testów stage 0.38, IBM pozostawić jako
+odrębny punkt porównawczy. Nie deklarować prawdziwego
+multicloud failover bez odpowiedniej konfiguracji i dowodów.
+Szczegóły:
+[OVHCLOUD_30_DAY_STAGE_038_PLAN.md](OVHCLOUD_30_DAY_STAGE_038_PLAN.md).
+
 ## 7. Bramka kosztowa i architektura kolejnych etapów
 
 Budżet IBM Cloud udostępniony przez właściciela nie jest automatycznie
