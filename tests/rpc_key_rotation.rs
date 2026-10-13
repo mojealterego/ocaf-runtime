@@ -1,10 +1,10 @@
 //! Priority 0.35: authenticated per-peer HMAC key cutover, without
 //! pretending the Zenoh transport exposes a verified certificate identity.
-use std::collections::HashMap;
 use ocaf_runtime::rpc::{
     PeerPolicy, RpcAction, RpcError, RpcGateway, RpcReply, RpcRequest, RpcStatus, SignedFrame,
 };
 use ocaf_runtime::runtime::OcafRuntime;
+use std::collections::HashMap;
 
 const OLD: [u8; 32] = [0x31; 32];
 const NEW: [u8; 32] = [0x32; 32];
@@ -29,9 +29,7 @@ fn request(now: u64) -> RpcRequest {
     RpcRequest::new("agent-a", "coordinator", now, 5_000, RpcAction::Discover).unwrap()
 }
 
-async fn challenge(gateway: &RpcGateway, key: &[u8; 32], now: u64)
-    -> Result<Vec<u8>, RpcError>
-{
+async fn challenge(gateway: &RpcGateway, key: &[u8; 32], now: u64) -> Result<Vec<u8>, RpcError> {
     gateway
         .handle_at(&SignedFrame::seal(&request(now), key).unwrap(), now)
         .await
@@ -88,7 +86,9 @@ async fn arbitrary_key_never_authenticates_or_consumes_replay_nonce() {
     assert!(gateway.handle_at(&authorized, now).await.is_ok());
     // Both old and new use the same per-sender replay domain.
     assert!(matches!(
-        gateway.handle_at(&SignedFrame::seal(&request, &OLD).unwrap(), now).await,
+        gateway
+            .handle_at(&SignedFrame::seal(&request, &OLD).unwrap(), now)
+            .await,
         Err(RpcError::Replay)
     ));
 }
@@ -97,8 +97,7 @@ async fn arbitrary_key_never_authenticates_or_consumes_replay_nonce() {
 fn refuses_rotation_reusing_old_secret_or_zero_key() {
     for next in [OLD, [0; 32]] {
         assert!(matches!(
-            PeerPolicy::new(OLD, vec!["echo".into()])
-                .with_key_rotation(next, ACTIVATE, RETIRE),
+            PeerPolicy::new(OLD, vec!["echo".into()]).with_key_rotation(next, ACTIVATE, RETIRE),
             Err(RpcError::Malformed)
         ));
     }
@@ -114,8 +113,7 @@ fn refuses_invalid_or_unbounded_credential_overlap() {
         (u64::MAX, 1),
     ] {
         assert!(matches!(
-            PeerPolicy::new(OLD, vec!["echo".into()])
-                .with_key_rotation(NEW, start, end),
+            PeerPolicy::new(OLD, vec!["echo".into()]).with_key_rotation(NEW, start, end),
             Err(RpcError::Malformed)
         ));
     }
