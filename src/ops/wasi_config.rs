@@ -32,7 +32,7 @@ fn path(name: &str) -> Result<PathBuf> {
 /// and reopening it later. O_NOFOLLOW rejects final-component symlink swaps;
 /// fstat checks the inode actually read and enforces effective-UID custody.
 fn read_operator_file(p: &Path, name: &str, max_bytes: u64) -> Result<Vec<u8>> {
-    let mut file = OpenOptions::new()
+    let file = OpenOptions::new()
         .read(true)
         .custom_flags(libc::O_NOFOLLOW | libc::O_CLOEXEC)
         .open(p)?;
