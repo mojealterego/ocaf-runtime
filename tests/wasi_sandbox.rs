@@ -276,6 +276,66 @@ async fn timeout_kills_guest_process_and_rejects_result() {
     assert!(matches!(result, Err(ToolError::Timeout)));
 }
 
+/// Verify cancellation does not leave the Wasmtime child or module staging
+/// directory behind. This checks a Linux subprocess boundary; it is not
+/// evidence of cgroup/namespace/KVM isolation.
+#[tokio::test]
+async fn cancellation_reaps_guest_and_removes_private_workspace() {
+    let folder = tempfile::tempdir().expect("temp");
+    let pid_marker = folder.path().join("guest.pid");
+    let cwd_marker = folder.path().join("guest.cwd");
+    let script = format!(
+        "echo \"$\" > '{}'; pwd > '{}'; exec /bin/sleep 10",
+        pid_marker.display(),
+        cwd_marker.display()
+    );
+    let (path, hash) = fake_engine(folder.path(), &script);
+    let executor = executor(
+        path,
+        hash,
+        command_fixture("{}"),
+        SandboxPolicy {
+            timeout_ms: 10_000,
+            ..SandboxPolicy::default()
+        },
+    );
+    let mut ctx = context();
+    ctx.deadline_ms = 10_000;
+    let task = tokio::spawn(async move { executor.execute(json!({}), &ctx).await });
+
+    let mut child_pid = None;
+    for _ in 0..200 {
+        if let (Ok(pid), Ok(cwd)) = (
+            fs::read_to_string(&pid_marker),
+            fs::read_to_string(&cwd_marker),
+        ) {
+            if let Ok(pid) = pid.trim().parse::<u32>() {
+                if !cwd.trim().is_empty() {
+                    child_pid = Some((pid, cwd.trim().to_owned()));
+                    break;
+                }
+            }
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+    }
+    let (pid, guest_workspace) = child_pid.expect("guest started and recorded its workspace");
+    assert!(Path::new(&guest_workspace).is_dir());
+
+    task.abort();
+    let _ = task.await;
+
+    // The Tokio child-process reaper may complete asynchronously.
+    for _ in 0..200 {
+        let guest_gone = !Path::new(&format!("/proc/{pid}")).exists();
+        let workspace_gone = !Path::new(&guest_workspace).exists();
+        if guest_gone && workspace_gone {
+            return;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+    }
+    panic!("cancelled WASI subprocess or temporary module workspace was not cleaned up");
+}
+
 #[tokio::test]
 async fn wasi_pool_exhaustion_rejects_without_waiting_for_unsafe_fallback() {
     let folder = tempfile::tempdir().expect("tmp");
