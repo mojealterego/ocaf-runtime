@@ -66,7 +66,30 @@ def inspect(repository: Path) -> dict[str, Any]:
     packages = lock.get("package")
     if not isinstance(packages, list) or not 2 <= len(packages) <= MAX_PACKAGES:
         raise PolicyError("locked dependency graph is absent or oversized")
+    # One explicitly reviewed first-party patch may replace the pinned
+    # zenoh-transport crate. No other local/third-party source is allowed.
+    patches = manifest.get("patch", {}).get("crates-io", {})
+    if not isinstance(patches, dict):
+        raise PolicyError("malformed Cargo source patches")
+    if set(patches) - {"zenoh-transport"}:
+        raise PolicyError("unaudited Cargo source patch")
+    patched_transport = patches.get("zenoh-transport")
+    if patched_transport is not None:
+        if not isinstance(patched_transport, dict) or patched_transport.get("path") != "vendor/zenoh-transport" or set(patched_transport) != {"path"}:
+            raise PolicyError("untrusted Zenoh transport patch location")
+        vendored = _toml(_read_regular(root / "vendor/zenoh-transport/Cargo.toml", MAX_MANIFEST_BYTES))
+        meta = vendored.get("package")
+        if not isinstance(meta, dict) or meta.get("name") != "zenoh-transport" or meta.get("version") != "1.10.1":
+            raise PolicyError("unrecognized vendored Zenoh package")
+        deps = vendored.get("dependencies", {})
+        codec = deps.get("lz4_flex") if isinstance(deps, dict) else None
+        codec_ver = codec if isinstance(codec, str) else codec.get("version") if isinstance(codec, dict) else None
+        if codec_ver != "0.11.6":
+            raise PolicyError("Zenoh must depend on patched lz4_flex 0.11.6")
     seen: set[tuple[str, str, str]] = set()
+    vendored_seen = 0
+    registry_transport = 0
+    lz4_safe = 0
     roots = 0
     external = 0
     for pkg in packages:
@@ -77,9 +100,14 @@ def inspect(repository: Path) -> dict[str, Any]:
             raise PolicyError("invalid locked package identity")
         source = pkg.get("source")
         if source is None:
-            if pkg.get("checksum") is not None or (pname, pversion) != (name, version):
+            if pkg.get("checksum") is not None:
+                raise PolicyError("local package may not claim a registry checksum")
+            if (pname, pversion) == (name, version):
+                roots += 1
+            elif patched_transport is not None and (pname, pversion) == ("zenoh-transport", "1.10.1"):
+                vendored_seen += 1
+            else:
                 raise PolicyError("unexpected unverified local package")
-            roots += 1
             source = ""
         else:
             if source != ALLOWED_SOURCE:
@@ -87,6 +115,13 @@ def inspect(repository: Path) -> dict[str, Any]:
             checksum = pkg.get("checksum")
             if not isinstance(checksum, str) or CHECKSUM.fullmatch(checksum) is None:
                 raise PolicyError("invalid or missing registry checksum")
+            if pname == "zenoh-transport":
+                registry_transport += 1
+            if pname == "lz4_flex" and pversion == "0.11.6":
+                lz4_safe += 1
+            if pname == "lz4_flex" and (pversion.startswith("0.10.") or pversion in ("0.11.0", "0.11.1", "0.11.2", "0.11.3", "0.11.4", "0.11.5", "0.12.0")):
+                if patched_transport is not None:
+                    raise PolicyError("security-backport graph still includes a vulnerable LZ4 version")
             external += 1
         identity = (pname, pversion, source)
         if identity in seen:
@@ -94,11 +129,14 @@ def inspect(repository: Path) -> dict[str, Any]:
         seen.add(identity)
     if roots != 1 or external == 0:
         raise PolicyError("expected root and locked crates.io dependencies not found")
+    if patched_transport is not None and (vendored_seen != 1 or registry_transport or lz4_safe != 1):
+        raise PolicyError("patched Zenoh transport or safe LZ4 dependency is not exclusively locked")
     return {
         "status": "PASS",
         "lock_format": 4,
         "cargo_lock_sha256": hashlib.sha256(blob).hexdigest(),
         "registry_packages": external,
+        "vendored_zenoh_transport": vendored_seen == 1,
         "package_count": len(packages),
         "allowed_source": ALLOWED_SOURCE,
         "scope": "static-lockfile-integrity-not-a-vulnerability-or-license-audit",

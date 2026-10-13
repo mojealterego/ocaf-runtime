@@ -46,6 +46,55 @@ class SupplyChainTests(unittest.TestCase):
         self.assertEqual(result["registry_packages"], 1)
         self.assertEqual(len(result["cargo_lock_sha256"]), 64)
 
+    def _create_reviewed_patch(self):
+        crate = self.root / "vendor/zenoh-transport"
+        crate.mkdir(parents=True)
+        (crate / "Cargo.toml").write_text(
+            '[package]\\nname = "zenoh-transport"\\nversion = "1.10.1"\\n'
+            '[dependencies.lz4_flex]\\nversion = "0.11.6"\\n',
+            encoding="utf-8",
+        )
+        with (self.root / "Cargo.toml").open("a", encoding="utf-8") as fh:
+            fh.write('\\n[patch.crates-io]\\nzenoh-transport = { path = "vendor/zenoh-transport" }\\n')
+        self.lock.write_text(self.lock.read_text(encoding="utf-8")
+            + '\\n[[package]]\\nname = "zenoh-transport"\\nversion = "1.10.1"\\n'
+            + '\\n[[package]]\\nname = "lz4_flex"\\nversion = "0.11.6"\\n'
+            + 'source = "registry+https://github.com/rust-lang/crates.io-index"\\n'
+            + 'checksum = "' + "b"*64 + '"\\n', encoding="utf-8")
+
+    def test_accepts_explicit_single_vendored_security_patch(self):
+        self._create_reviewed_patch()
+        report = sc.inspect(self.root)
+        self.assertTrue(report["vendored_zenoh_transport"])
+
+    def test_rejects_unsafe_codec_backslide(self):
+        self._create_reviewed_patch()
+        manifest = self.root / "vendor/zenoh-transport/Cargo.toml"
+        manifest.write_text(manifest.read_text().replace("0.11.6", "0.10.0"))
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
+    def test_rejects_patched_manifest_without_local_package(self):
+        self._create_reviewed_patch()
+        self.lock.write_text(self.lock.read_text().replace(
+            '[[package]]\\nname = "zenoh-transport"\\nversion = "1.10.1"\\n', ""
+        ))
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
+    def test_rejects_arbitrary_extra_local_package(self):
+        self._create_reviewed_patch()
+        self.lock.write_text(self.lock.read_text()
+            + '\\n[[package]]\\nname = "injected"\\nversion = "1.0.0"\\n')
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
+    def test_rejects_missing_vendored_source_manifest(self):
+        self._create_reviewed_patch()
+        (self.root / "vendor/zenoh-transport/Cargo.toml").unlink()
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
     def test_refuses_missing_lockfile(self):
         self.lock.unlink()
         with self.assertRaises(sc.PolicyError):

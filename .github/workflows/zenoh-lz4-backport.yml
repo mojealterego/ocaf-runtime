@@ -1,0 +1,64 @@
+# Path-scoped, one-time security backport. No additional branches.
+# It commits to main ONLY after regenerating/compiling/testing the patched graph.
+name: Backport Zenoh LZ4 Fix
+on:
+  push:
+    branches: ["main"]
+    paths: [".github/workflows/zenoh-lz4-backport.yml"]
+permissions:
+  contents: read
+
+jobs:
+  validate-and-commit:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: true
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Acquire audited registry source from pinned lockfile
+        run: |
+          set -euo pipefail
+          cargo fetch --locked
+          python3 scripts/vendor_zenoh_transport.py --repo . --source-home "${CARGO_HOME:-$HOME/.cargo}"
+          cargo generate-lockfile
+          python3 scripts/supply_chain.py --repo .
+          python3 scripts/zenoh_feature_policy.py --repo .
+      - name: Backport guard and regression tests
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s scripts/tests -v
+          cargo fmt --all -- --check
+          cargo test --locked --no-default-features
+          cargo test --locked --test transport_policy --test zenoh_e2e --test zenoh_mtls_e2e
+          cargo clippy --locked --all-targets -- -D warnings
+      - name: Check that vulnerable LZ4 is absent from resolved graph
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import tomllib
+          packages = tomllib.loads(Path("Cargo.lock").read_text())["package"]
+          lz4 = [p["version"] for p in packages if p["name"] == "lz4_flex"]
+          assert lz4 == ["0.11.6"], f"vulnerable or missing lz4_flex in lockfile: {lz4}"
+          transport = [p for p in packages if p["name"] == "zenoh-transport"]
+          assert len(transport) == 1 and "source" not in transport[0], transport
+          print("RUSTSEC-2026-0041 addressed by patched lz4_flex 0.11.6 dependency")
+          PY
+      - name: Commit verified security backport on main only
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/zenoh-lz4-backport.yml
+          git add Cargo.toml Cargo.lock vendor/zenoh-transport
+          git diff --cached --check
+          git diff --cached --quiet && exit 0
+          git commit -m "fix(deps): vendor upstream Zenoh transport with patched lz4_flex 0.11.6"
+          git push origin HEAD:main
