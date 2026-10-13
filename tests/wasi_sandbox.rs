@@ -9,7 +9,7 @@ use ocaf_runtime::executor::wasi::{
 };
 use ocaf_runtime::executor::{ExecutionContext, ToolError, ToolExecutor};
 use ocaf_runtime::registry::ToolManifest;
-use ocaf_runtime::runtime::{OcafRuntime, ToolCallRequest, RuntimeError};
+use ocaf_runtime::runtime::{OcafRuntime, RuntimeError, ToolCallRequest};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 
@@ -158,11 +158,21 @@ fn digest_engine_and_policy_fail_closed() {
     let module = command_fixture(r#"{"ok":true}"#);
     let engine = PinnedWasmtime::new(path.clone(), hash).expect("approved");
     assert!(WasmToolExecutor::new(
-        engine.clone(), module.clone(), [0u8; 32], SandboxPolicy::default()
-    ).is_err());
+        engine.clone(),
+        module.clone(),
+        [0u8; 32],
+        SandboxPolicy::default()
+    )
+    .is_err());
     let mut policy = SandboxPolicy::default();
     policy.fuel = 0;
-    assert!(WasmToolExecutor::new(engine, module, digest(&command_fixture(r#"{"ok":true}"#)), policy).is_err());
+    assert!(WasmToolExecutor::new(
+        engine,
+        module,
+        digest(&command_fixture(r#"{"ok":true}"#)),
+        policy
+    )
+    .is_err());
     fs::write(&path, "#!/bin/sh\nexit 0\n").expect("mutate");
     assert!(PinnedWasmtime::new(path, hash).is_err());
 }
@@ -194,8 +204,14 @@ async fn json_wasi_adapter_integrates_with_runtime_validation() {
     };
     let result = runtime.execute(request.clone()).await.expect("output");
     assert_eq!(result.output, json!({"ok":true}));
-    let invalid = ToolCallRequest {args:json!({"data":44}), ..request};
-    assert!(matches!(runtime.execute(invalid).await, Err(RuntimeError::InvalidInput(_))));
+    let invalid = ToolCallRequest {
+        args: json!({"data":44}),
+        ..request
+    };
+    assert!(matches!(
+        runtime.execute(invalid).await,
+        Err(RuntimeError::InvalidInput(_))
+    ));
 }
 
 #[tokio::test]
@@ -205,7 +221,8 @@ async fn stdout_bomb_is_rejected_without_host_log_leak() {
     let mut policy = SandboxPolicy::default();
     policy.max_output_bytes = 128;
     let result = executor(path, hash, command_fixture("{}"), policy)
-        .execute(json!({}), &context()).await;
+        .execute(json!({}), &context())
+        .await;
     assert!(matches!(result, Err(ToolError::Validation(_))));
 }
 
@@ -216,7 +233,8 @@ async fn timeout_kills_guest_process_and_rejects_result() {
     let mut policy = SandboxPolicy::default();
     policy.timeout_ms = 30;
     let result = executor(path, hash, command_fixture("{}"), policy)
-        .execute(json!({}), &context()).await;
+        .execute(json!({}), &context())
+        .await;
     assert!(matches!(result, Err(ToolError::Timeout)));
 }
 
@@ -235,7 +253,9 @@ async fn output_json_and_input_limits_enforced() {
     let mut policy = SandboxPolicy::default();
     policy.max_input_bytes = 32;
     let exec2 = executor(path2, hash2, command_fixture("{}"), policy);
-    let result = exec2.execute(json!({"data":"a".repeat(100)}), &context()).await;
+    let result = exec2
+        .execute(json!({"data":"a".repeat(100)}), &context())
+        .await;
     assert!(matches!(result, Err(ToolError::Validation(_))));
 }
 
@@ -255,6 +275,9 @@ async fn real_wasmtime_cli_when_configured() {
         command_fixture(r#"{"real_wasi":true}"#),
         SandboxPolicy::default(),
     );
-    let result = exec.execute(json!({}), &context()).await.expect("real WASI");
+    let result = exec
+        .execute(json!({}), &context())
+        .await
+        .expect("real WASI");
     assert_eq!(result, json!({"real_wasi":true}));
 }
