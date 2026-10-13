@@ -71,7 +71,7 @@ def inspect(repository: Path) -> dict[str, Any]:
     patches = manifest.get("patch", {}).get("crates-io", {})
     if not isinstance(patches, dict):
         raise PolicyError("malformed Cargo source patches")
-    if set(patches) - {"zenoh-transport", "token-cell"}:
+    if set(patches) - {"zenoh-transport", "token-cell", "zenoh-config", "zenoh-link-tls", "zenoh-link-commons"}:
         raise PolicyError("unaudited Cargo source patch")
     patched_transport = patches.get("zenoh-transport")
     if patched_transport is not None:
@@ -101,6 +101,37 @@ def inspect(repository: Path) -> dict[str, Any]:
         alias = dependencies.get("paste") if isinstance(dependencies, dict) else None
         if not isinstance(alias, dict) or alias.get("version") != "0.2.3" or alias.get("package") != "pastey":
             raise PolicyError("token-cell must use the maintained pastey crate")
+    hardened = ("zenoh-config", "zenoh-link-tls", "zenoh-link-commons")
+    hardened_requested = {name_ for name_ in hardened if name_ in patches}
+    if hardened_requested and hardened_requested != set(hardened):
+        raise PolicyError("the config and TLS security backports must be applied together")
+    for component in hardened_requested:
+        override = patches.get(component)
+        if override != {"path": f"vendor/{component}"}:
+            raise PolicyError("unexpected Zenoh source override")
+        vendor_root = root / "vendor" / component
+        vendor_manifest = _toml(_read_regular(vendor_root / "Cargo.toml", MAX_MANIFEST_BYTES))
+        pkg_info = vendor_manifest.get("package")
+        if not isinstance(pkg_info, dict) or pkg_info.get("name") != component or pkg_info.get("version") != "1.10.1":
+            raise PolicyError("unverified Zenoh component identity")
+        deps = vendor_manifest.get("dependencies")
+        if not isinstance(deps, dict):
+            raise PolicyError("missing Zenoh component dependencies")
+        if component == "zenoh-config":
+            if "serde_yaml" in deps:
+                raise PolicyError("deprecated YAML parser still required")
+            yaml_source = _read_regular(vendor_root / "src/lib.rs", 2 * MAX_MANIFEST_BYTES)
+            if b"YAML configuration disabled by OCAF" not in yaml_source or b"serde_yaml::" in yaml_source:
+                raise PolicyError("unsafe YAML decoder not disabled")
+        else:
+            if "rustls-pemfile" in deps:
+                raise PolicyError("obsolete PEM decoder still required")
+            source_path = ("src/utils.rs" if component == "zenoh-link-tls" else "src/quic/utils.rs")
+            parser_source = _read_regular(vendor_root / source_path, 2 * MAX_MANIFEST_BYTES)
+            if b"rustls_pemfile::" in parser_source or b"pem::PemObject" not in parser_source:
+                raise PolicyError("obsolete PEM parser calls not replaced")
+            if component == "zenoh-link-commons" and "dep:rustls-pemfile" in vendor_manifest.get("features", {}).get("quic", []):
+                raise PolicyError("QUIC feature retains obsolete PEM dependency")
     seen: set[tuple[str, str, str]] = set()
     vendored_seen = 0
     registry_transport = 0
@@ -108,6 +139,9 @@ def inspect(repository: Path) -> dict[str, Any]:
     token_vendored = 0
     token_registry = 0
     pastey_safe = 0
+    hardened_local = {name_: 0 for name_ in hardened}
+    hardened_registry = {name_: 0 for name_ in hardened}
+    deprecated_seen = set()
     roots = 0
     external = 0
     for pkg in packages:
@@ -126,6 +160,8 @@ def inspect(repository: Path) -> dict[str, Any]:
                 vendored_seen += 1
             elif token_patch is not None and (pname, pversion) == ("token-cell", "2.1.1"):
                 token_vendored += 1
+            elif pname in hardened_requested and pversion == "1.10.1":
+                hardened_local[pname] += 1
             else:
                 raise PolicyError("unexpected unverified local package")
             source = ""
@@ -139,6 +175,10 @@ def inspect(repository: Path) -> dict[str, Any]:
                 registry_transport += 1
             if pname == "token-cell":
                 token_registry += 1
+            if pname in hardened:
+                hardened_registry[pname] += 1
+            if pname in {"rustls-pemfile", "serde_yaml", "unsafe-libyaml"}:
+                deprecated_seen.add(pname)
             if pname == "pastey" and pversion == "0.2.3":
                 pastey_safe += 1
             if pname == "paste" and token_patch is not None:
@@ -159,6 +199,11 @@ def inspect(repository: Path) -> dict[str, Any]:
         raise PolicyError("patched Zenoh transport or safe LZ4 dependency is not exclusively locked")
     if token_patch is not None and (token_vendored != 1 or token_registry or pastey_safe != 1):
         raise PolicyError("token-cell is not exclusively patched to maintained pastey")
+    if hardened_requested:
+        if any(hardened_local[k] != 1 or hardened_registry[k] for k in hardened):
+            raise PolicyError("an outdated Zenoh TLS/configuration component remains in the graph")
+        if deprecated_seen:
+            raise PolicyError("deprecated TLS/YAML dependencies remain in the graph")
     return {
         "status": "PASS",
         "lock_format": 4,
@@ -166,6 +211,7 @@ def inspect(repository: Path) -> dict[str, Any]:
         "registry_packages": external,
         "vendored_zenoh_transport": vendored_seen == 1,
         "vendored_token_cell": token_vendored == 1,
+        "migrated_zenoh_tls_config": bool(hardened_requested),
         "package_count": len(packages),
         "allowed_source": ALLOWED_SOURCE,
         "scope": "static-lockfile-integrity-not-a-vulnerability-or-license-audit",

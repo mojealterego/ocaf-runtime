@@ -155,6 +155,64 @@ class SupplyChainTests(unittest.TestCase):
         with self.assertRaises(sc.PolicyError):
             sc.inspect(self.root)
 
+    def _add_hardened_zenoh_sources(self):
+        self._add_reviewed_token_cell_patch()
+        for name, source_file, marker in [
+            ("zenoh-config", "src/lib.rs", "YAML configuration disabled by OCAF"),
+            ("zenoh-link-tls", "src/utils.rs", "pem::PemObject"),
+            ("zenoh-link-commons", "src/quic/utils.rs", "pem::PemObject"),
+        ]:
+            root = self.root / "vendor" / name
+            file = root / source_file
+            file.parent.mkdir(parents=True)
+            file.write_text(marker, encoding="utf-8")
+            (root / "Cargo.toml").write_text(
+                f'[package]\nname = "{name}"\nversion = "1.10.1"\n'
+                '[dependencies]\n'
+                '[features]\nquic = []\n',
+                encoding="utf-8",
+            )
+            with (self.root / "Cargo.toml").open("a", encoding="utf-8") as fh:
+                fh.write(f'{name} = {{ path = "vendor/{name}" }}\n')
+            self.lock.write_text(self.lock.read_text(encoding="utf-8") +
+                f'\n[[package]]\nname = "{name}"\nversion = "1.10.1"\n')
+
+    def test_accepts_all_three_hardened_local_upstream_crates(self):
+        self._add_hardened_zenoh_sources()
+        self.assertTrue(sc.inspect(self.root)["migrated_zenoh_tls_config"])
+
+    def test_denies_partial_tls_and_configuration_migration(self):
+        self._add_hardened_zenoh_sources()
+        cargo = self.root / "Cargo.toml"
+        cargo.write_text(cargo.read_text().replace(
+            'zenoh-link-commons = { path = "vendor/zenoh-link-commons" }\n', ""
+        ))
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
+    def test_denies_obsolete_decoder_in_vendored_source(self):
+        self._add_hardened_zenoh_sources()
+        path = self.root / "vendor/zenoh-link-tls/src/utils.rs"
+        path.write_text("rustls_pemfile::certs(...)")
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
+    def test_denies_unsafe_yaml_decoder_source(self):
+        self._add_hardened_zenoh_sources()
+        path = self.root / "vendor/zenoh-config/src/lib.rs"
+        path.write_text("serde_yaml::Deserializer::from_str")
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
+    def test_denies_deprecated_decoder_still_in_lockfile(self):
+        self._add_hardened_zenoh_sources()
+        self.lock.write_text(self.lock.read_text()
+            + '\n[[package]]\nname = "unsafe-libyaml"\nversion = "0.2.11"\n'
+            + 'source = "registry+https://github.com/rust-lang/crates.io-index"\n'
+            + 'checksum = "' + "e" * 64 + '"\n')
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
     def test_refuses_missing_lockfile(self):
         self.lock.unlink()
         with self.assertRaises(sc.PolicyError):

@@ -65,3 +65,30 @@ If any step fails, its candidate changes are not committed.
 
 Remaining unmaintained crates from Zenoh's upstream TLS/configuration
 subsystems require separately reviewed API migrations.
+
+## Phase C — Zenoh secure JSON5 configuration and PEM parsing
+
+Upstream `zenoh-config 1.10.1` still loads YAML via `serde_yaml`,
+which depends on unmaintained `unsafe-libyaml`. OCAF already admits
+only explicit, security-validated JSON5 configuration. The reviewed
+migration removes YAML loading from Zenoh's configuration source and
+its `serde_yaml` dependency; an attempted `.yaml` or `.yml` load
+fails closed. `.json` and `.json5` remain functional, proven with a
+dedicated Rust regression.
+
+`zenoh-link-tls` and QUIC-capable `zenoh-link-commons` used
+unmaintained `rustls-pemfile`. These two pinned source crates are
+updated to use the maintained `rustls-pki-types::pem::PemObject`
+certificate and private-key streaming API. The source-level
+replacements retain PKCS#1, PKCS#8, SEC1 private key ordering and
+complete certificate-chain loading. Actual OCAF mTLS handshake tests
+are required before merging the patch.
+
+The one-shot migration job validates all existing regression tests,
+full Rust Clippy, existing mTLS tests, and `cargo-deny check --all-features`
+**before pushing** the vendored changes to `main`. It refuses to
+commit any candidate failing compatibility or advisories. All
+third-party package contents remain sourced from Cargo's checksum
+validated registry cache, with patched manifests and Rust sources
+retained for independent review. Production multi-host certification
+remains a separate and still unmet release criterion.
