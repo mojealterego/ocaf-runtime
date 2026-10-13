@@ -59,3 +59,5 @@ tempfile = "3"
 # Reviewed single-crate security backport (RUSTSEC-2026-0041).
 [patch.crates-io]
 zenoh-transport = { path = "vendor/zenoh-transport" }
+# Compatibility backport: replace paste with maintained pastey (RUSTSEC-2024-0436).
+token-cell = { path = "vendor/token-cell" }

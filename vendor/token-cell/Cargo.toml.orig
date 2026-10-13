@@ -1,0 +1,23 @@
+[package]
+name = "token-cell"
+version = "2.1.1"
+edition = "2018"
+authors = ["Pierre Avital <pierre.avital@me.com>"]
+description = "A more convenient GhostCell"
+readme = "README.md"
+license = "EPL-2.0 OR Apache-2.0"
+repository = "https://github.com/p-avital/token-cell-rs"
+keywords = ["aliasing", "borrowing", "ghostcell"]
+categories = ["memory-management", "no-std"]
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+std = []
+debug = []
+default = ["std"]
+[dependencies]
+paste = "1.0"
+portable-atomic = "1"
+rustversion = "<2"
+[dev-dependencies]
+ghost-cell = "0.2"
