@@ -34,7 +34,9 @@ pub fn read_zenoh_config(path: &Path) -> Result<String, TransportPolicyError> {
     let file = options
         .open(path)
         .map_err(|_| TransportPolicyError::Malformed)?;
-    let metadata = file.metadata().map_err(|_| TransportPolicyError::Malformed)?;
+    let metadata = file
+        .metadata()
+        .map_err(|_| TransportPolicyError::Malformed)?;
     if !metadata.is_file() || metadata.len() == 0 || metadata.len() > MAX_CONFIG_BYTES as u64 {
         return Err(TransportPolicyError::Malformed);
     }
@@ -110,8 +112,7 @@ fn file_exists(config: &Value, key: &str, private: bool) -> bool {
             return false;
         }
         if private
-            && (meta.permissions().mode() & 0o077 != 0
-                || meta.uid() != unsafe { libc::geteuid() })
+            && (meta.permissions().mode() & 0o077 != 0 || meta.uid() != unsafe { libc::geteuid() })
         {
             return false;
         }

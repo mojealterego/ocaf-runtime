@@ -153,18 +153,12 @@ fn secure_mtls_configuration_requires_complete_certificates_and_strict_validatio
         use std::os::unix::fs::{symlink, PermissionsExt};
         let ca_link = dir.path().join("alias-ca.pem");
         symlink(&ca, &ca_link).unwrap();
-        let altered = good.replace(
-            &ca.display().to_string(),
-            &ca_link.display().to_string(),
-        );
+        let altered = good.replace(&ca.display().to_string(), &ca_link.display().to_string());
         assert!(validate_zenoh_config(&altered, false).is_err());
 
         let key_link = dir.path().join("alias-key.pem");
         symlink(&key, &key_link).unwrap();
-        let altered = good.replace(
-            &key.display().to_string(),
-            &key_link.display().to_string(),
-        );
+        let altered = good.replace(&key.display().to_string(), &key_link.display().to_string());
         assert!(validate_zenoh_config(&altered, false).is_err());
 
         fs::set_permissions(&key, fs::Permissions::from_mode(0o644)).unwrap();
@@ -231,8 +225,8 @@ fn zenoh_config_file_reader_rejects_oversize_files_before_parsing() {
 #[cfg(unix)]
 #[test]
 fn secure_zenoh_reader_rejects_final_component_symlinks() {
-    use std::os::unix::fs::symlink;
     use ocaf_runtime::transport_policy::read_zenoh_config;
+    use std::os::unix::fs::symlink;
     let dir = tempfile::tempdir().unwrap();
     let real = dir.path().join("config.json5");
     let linked = dir.path().join("linked.json5");
