@@ -61,3 +61,7 @@ tempfile = "3"
 zenoh-transport = { path = "vendor/zenoh-transport" }
 # Compatibility backport: replace paste with maintained pastey (RUSTSEC-2024-0436).
 token-cell = { path = "vendor/token-cell" }
+# Reviewed Zenoh JSON5-only and rustls-pki-types security backports.
+zenoh-config = { path = "vendor/zenoh-config" }
+zenoh-link-commons = { path = "vendor/zenoh-link-commons" }
+zenoh-link-tls = { path = "vendor/zenoh-link-tls" }
