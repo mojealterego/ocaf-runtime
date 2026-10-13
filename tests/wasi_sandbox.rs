@@ -85,7 +85,7 @@ fn command_fixture(message: &str) -> Vec<u8> {
 }
 
 fn infinite_loop_fixture() -> Vec<u8> {
-    let mut wasm = b"\\0asm\\x01\\0\\0\\0".to_vec();
+    let mut wasm = b"\0asm\x01\0\0\0".to_vec();
     section(&mut wasm, 1, &[1, 0x60, 0, 0]);
     section(&mut wasm, 3, &[1, 0]);
     let mut exports = vec![1];
@@ -101,7 +101,7 @@ fn infinite_loop_fixture() -> Vec<u8> {
 }
 
 fn oversized_memory_fixture() -> Vec<u8> {
-    let mut wasm = b"\\0asm\\x01\\0\\0\\0".to_vec();
+    let mut wasm = b"\0asm\x01\0\0\0".to_vec();
     section(&mut wasm, 1, &[1, 0x60, 0, 0]);
     section(&mut wasm, 3, &[1, 0]);
     let mut memory = vec![1, 0];
