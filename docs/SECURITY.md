@@ -188,3 +188,18 @@ not part of this implementation.
 
 Do not disclose exploitable credentials or private infrastructure details in
 public GitHub issues. Use the repository owner's private reporting channel.
+
+
+## Priority 0.35 — per-identity HMAC cutover
+
+The coordinator can stage a new 32-byte HMAC secret for each peer with
+a bounded, explicit UTC-ms overlap. The old secret is rejected at its
+retirement instant, and signed responses use exactly the credential that
+authenticated the request. Existing per-sender replay admission, ACLs
+and quotas remain effective throughout the cutover. No live hot-reload.
+
+**Unresolved:** the Zenoh queryable does not pass an independently
+verified TLS peer-certificate identity into this RPC gateway. An
+HMAC-authenticated `sender` is **not** proof that the caller has the
+corresponding X.509 SAN. Do not claim workload certificate binding.
+See [PEER_CREDENTIAL_ROTATION_035.md](PEER_CREDENTIAL_ROTATION_035.md).

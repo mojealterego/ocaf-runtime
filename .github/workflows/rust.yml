@@ -47,6 +47,8 @@ jobs:
         run: cargo fmt --all -- --check
       - name: Clippy (core only)
         run: cargo clippy --locked --all-targets --no-default-features -- -D warnings
+      - name: HMAC peer key cutover and replay identity acceptance
+        run: cargo test --locked --no-default-features --test rpc_key_rotation
       - name: Tests (core only)
         run: cargo test --locked --no-default-features
       - name: Final security acceptance (cluster isolation and fencing)

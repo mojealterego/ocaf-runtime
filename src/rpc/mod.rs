@@ -324,8 +324,16 @@ impl SignedFrame {
 }
 
 #[derive(Clone)]
+struct KeyRotation {
+    next_key: [u8; 32],
+    activate_at_ms: u64,
+    retire_old_at_ms: u64,
+}
+
+#[derive(Clone)]
 pub struct PeerPolicy {
     key: [u8; 32],
+    rotation: Option<KeyRotation>,
     allowed_tools: HashSet<String>,
     requests_per_second: u32,
     job_submitter: bool,
@@ -337,12 +345,66 @@ impl PeerPolicy {
     pub fn new(key: [u8; 32], allowed_tools: Vec<String>) -> Self {
         Self {
             key,
+            rotation: None,
             allowed_tools: allowed_tools.into_iter().collect(),
             requests_per_second: DEFAULT_PEER_RATE_PER_SECOND,
             job_submitter: false,
             job_worker: false,
             effect_writer: false,
         }
+    }
+
+    /// Stage a strictly bounded HMAC secret rollover for this exact RPC
+    /// sender. Old requests remain valid until retire_old_at_ms, while new
+    /// requests become valid at activate_at_ms. Replies are signed with the
+    /// *same* key that authenticated the request. This does not by itself
+    /// bind HMAC identity to the certificate used by Zenoh TLS.
+    pub fn with_key_rotation(
+        mut self,
+        next_key: [u8; 32],
+        activate_at_ms: u64,
+        retire_old_at_ms: u64,
+    ) -> Result<Self, RpcError> {
+        const MAX_OVERLAP_MS: u64 = 30 * 60 * 1000;
+        if self.key == [0; 32]
+            || next_key == [0; 32]
+            || next_key == self.key
+            || activate_at_ms == 0
+            || retire_old_at_ms <= activate_at_ms
+            || retire_old_at_ms - activate_at_ms > MAX_OVERLAP_MS
+        {
+            return Err(RpcError::Malformed);
+        }
+        self.rotation = Some(KeyRotation {
+            next_key,
+            activate_at_ms,
+            retire_old_at_ms,
+        });
+        Ok(self)
+    }
+
+    /// Verify the request using precisely the keys allowed by the cutover
+    /// schedule. No retired key may authenticate or sign a response.
+    fn authenticate<'a>(
+        &'a self,
+        bytes: &[u8],
+        now: u64,
+    ) -> Result<(RpcRequest, &'a [u8; 32]), RpcError> {
+        let Some(rotation) = &self.rotation else {
+            return SignedFrame::open(bytes, &self.key).map(|request| (request, &self.key));
+        };
+        if now < rotation.activate_at_ms {
+            return SignedFrame::open(bytes, &self.key).map(|request| (request, &self.key));
+        }
+        if now >= rotation.retire_old_at_ms {
+            return SignedFrame::open(bytes, &rotation.next_key)
+                .map(|request| (request, &rotation.next_key));
+        }
+        // In overlap, both keys are valid; no fallback outside this window.
+        if let Ok(request) = SignedFrame::open(bytes, &rotation.next_key) {
+            return Ok((request, &rotation.next_key));
+        }
+        SignedFrame::open(bytes, &self.key).map(|request| (request, &self.key))
     }
 
     /// Limit the number of authenticated RPC messages in each one-second
@@ -407,6 +469,13 @@ impl RpcGateway {
         for (peer_id, peer) in &peers {
             validate_node_id(peer_id)?;
             if peer.key == [0; 32]
+                || peer.rotation.as_ref().is_some_and(|rotation| {
+                    rotation.next_key == [0; 32]
+                        || rotation.next_key == peer.key
+                        || rotation.activate_at_ms == 0
+                        || rotation.retire_old_at_ms <= rotation.activate_at_ms
+                        || rotation.retire_old_at_ms - rotation.activate_at_ms > 1_800_000
+                })
                 || peer.allowed_tools.iter().any(|tool| tool.is_empty())
                 || (peer.effect_writer && !peer.job_worker)
             {
@@ -563,7 +632,7 @@ impl RpcGateway {
             .peers
             .get(&unverified.sender)
             .ok_or(RpcError::Unauthorized)?;
-        let request: RpcRequest = SignedFrame::open(message, &peer.key)?;
+        let (request, verified_key) = peer.authenticate(message, now)?;
         request.check(&self.node_id, now)?;
 
         // Count authenticated messages before manifest lookup or discovery,
@@ -846,7 +915,7 @@ impl RpcGateway {
             status,
             output,
         };
-        SignedFrame::seal(&reply, &peer.key)
+        SignedFrame::seal(&reply, verified_key)
     }
 }
 

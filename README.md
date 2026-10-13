@@ -619,6 +619,22 @@ Dokumentacja: [docs/ZENOH_MIGRATION_030.md](docs/ZENOH_MIGRATION_030.md),
 Stan produkcyjny pozostaje **NO-GO** z powodów infrastrukturalnych,
 mimo usunięcia wymienionych ostrzeżeń zależności.
 
+## Priorytet 0.31 — naprawa artefaktów CycloneDX i atestacji
+
+Naprawiono błąd generowania pliku SBOM: wersja `cargo-cyclonedx 0.5.9`
+automatycznie dopisuje rozszerzenie `.json` do nazwy ustawionej przez
+`--override-filename`. Użycie `bom.json` powodowało wygenerowanie
+`bom.json.json`; workflow oczekiwał `bom.json`. Zmieniono
+nazwę bazową na `bom`, dodano test regresyjny nazwy wyjściowej,
+walidację struktury SBOM CycloneDX 1.5 oraz uzupełniono dokumentację.
+Commit: `77ddc0c9046faece6781a294dd59df7febe02feb`.
+GitHub Actions **Rust CI** `38373890158` i **Supply Chain and
+Provenance** `38373889928` zakończyły się sukcesem, włącznie
+z publikacją atestacji pochodzenia binarnego i SBOM. Późniejszy
+priorytet 0.32 wprowadził odrębną weryfikację tych atestacji przez
+konsumenta. Szczegóły: [docs/SUPPLY_CHAIN.md](docs/SUPPLY_CHAIN.md).
+To nie jest certyfikacja produkcyjna.
+
 ## Prawa autorskie i kontakt
 
 **© 2026 MOJEALTEREGO — Andrzej Mikulski. Wszystkie prawa zastrzeżone.**
@@ -669,3 +685,25 @@ Dokumentacja: [docs/MTLS_LIFECYCLE_034.md](docs/MTLS_LIFECYCLE_034.md).
 Ta funkcja **nie** rotuje certyfikatów automatycznie, nie sprawdza CRL/OCSP
 ani nie wiąże SAN z tożsamością RPC. Wymagane są odrębne testy na hostach
 operacyjnych i zatwierdzenie zmiany; produkcja nadal **NO-GO**.
+
+
+## Priorytet 0.35 — kontrolowana wymiana kluczy HMAC agentów
+
+Brama RPC obsługuje opcjonalną rotację klucza HMAC dla konkretnego
+`sender`: stary klucz pozostaje ważny do granicy czasowej, nowy jest
+ważny od zadanego momentu aktywacji, a dozwolone nakładanie kluczy
+jest ograniczone do 30 minut. Odpowiedzi używają tego samego klucza,
+który uwierzytelnił żądanie; po wycofaniu stary klucz jest
+**odrzucany**. Polityka ACL, ochrona przed replay i limity dla agenta
+pozostają obowiązujące niezależnie od rotacji.
+
+Plik `OCAF_PEERS_FILE` przyjmuje w trybie jawnie włączonej rotacji
+`next_key_b64`, `activate_at_ms` i `retire_old_at_ms`.
+Niekompletne konfiguracje oraz powtórne użycie kluczy między
+tożsamościami są odrzucane. Zmiana pliku wymaga restartu procesu.
+
+**Ograniczenie:** sama rotacja HMAC nie dowodzi związania `sender`
+z certyfikatem mTLS. Niezależna implementacja zweryfikowanego
+powiązania TLS → RPC nadal jest wymagana. Szczegóły:
+[docs/PEER_CREDENTIAL_ROTATION_035.md](docs/PEER_CREDENTIAL_ROTATION_035.md).
+**Produkcja nadal NO-GO.**

@@ -24,6 +24,14 @@ use serde::Deserialize;
 #[serde(deny_unknown_fields)]
 struct PeerConfig {
     key_b64: String,
+    // Optional credential overlap schedule, evaluated against server UTC
+    // milliseconds. All three fields must be present together.
+    #[serde(default)]
+    next_key_b64: Option<String>,
+    #[serde(default)]
+    activate_at_ms: Option<u64>,
+    #[serde(default)]
+    retire_old_at_ms: Option<u64>,
     allowed_tools: Vec<String>,
     #[serde(default)]
     submit_jobs: bool,
@@ -74,6 +82,28 @@ fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
             anyhow::bail!("each coordinator peer must have a unique secret");
         }
         let mut policy = PeerPolicy::new(key, entry.allowed_tools);
+        match (
+            entry.next_key_b64,
+            entry.activate_at_ms,
+            entry.retire_old_at_ms,
+        ) {
+            (None, None, None) => {}
+            (Some(encoded), Some(activate), Some(retire)) => {
+                let decoded = B64
+                    .decode(encoded.as_bytes())
+                    .map_err(|_| anyhow::anyhow!("invalid next peer key for {node}"))?;
+                let next_key: [u8; 32] = decoded
+                    .try_into()
+                    .map_err(|_| anyhow::anyhow!("next peer key for {node} must be 32 bytes"))?;
+                if !seen_keys.insert(next_key) {
+                    anyhow::bail!("duplicate coordinator peer credential across rotations");
+                }
+                policy = policy
+                    .with_key_rotation(next_key, activate, retire)
+                    .map_err(|_| anyhow::anyhow!("invalid peer rotation schedule for {node}"))?;
+            }
+            _ => anyhow::bail!("incomplete peer rotation configuration for {node}"),
+        }
         if entry.submit_jobs {
             policy = policy.allow_job_submission();
         }
@@ -340,6 +370,74 @@ async fn main() -> anyhow::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rejects_incomplete_peer_rotation_metadata() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("peers.json");
+        let config = serde_json::json!({
+            "agent": {
+                "key_b64": B64.encode([1u8; 32]),
+                "next_key_b64": B64.encode([2u8; 32]),
+                "allowed_tools": ["echo"]
+            }
+        });
+        std::fs::write(&path, config.to_string()).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+        }
+        assert!(load_peers(&path).is_err());
+    }
+
+    #[test]
+    fn rejects_reused_rotation_key_across_peer_identities() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("peers.json");
+        let config = serde_json::json!({
+            "agent-a": {
+                "key_b64": B64.encode([1u8; 32]),
+                "next_key_b64": B64.encode([3u8; 32]),
+                "activate_at_ms": 1800000000000u64,
+                "retire_old_at_ms": 1800000060000u64,
+                "allowed_tools": ["echo"]
+            },
+            "agent-b": {
+                "key_b64": B64.encode([3u8; 32]),
+                "allowed_tools": ["echo"]
+            }
+        });
+        std::fs::write(&path, config.to_string()).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+        }
+        assert!(load_peers(&path).is_err());
+    }
+
+    #[test]
+    fn accepts_bounded_staged_secret_rotation() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("peers.json");
+        let config = serde_json::json!({
+            "agent": {
+                "key_b64": B64.encode([1u8; 32]),
+                "next_key_b64": B64.encode([2u8; 32]),
+                "activate_at_ms": 1800000000000u64,
+                "retire_old_at_ms": 1800000060000u64,
+                "allowed_tools": ["echo"]
+            }
+        });
+        std::fs::write(&path, config.to_string()).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+        }
+        assert_eq!(load_peers(&path).unwrap().len(), 1);
+    }
 
     #[test]
     fn rejects_shared_identity_secrets_between_two_distinct_peers() {
