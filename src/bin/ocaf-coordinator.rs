@@ -51,90 +51,18 @@ struct PeerConfig {
     write_effects: bool,
 }
 
-/// Optional signed WASI tool deployment. All paths and the tenant are
-/// trusted *operator* settings. Never derive them from an RPC payload.
+/// Only operator-controlled variables may define a signed WASI deployment.
 async fn configured_runtime() -> anyhow::Result<OcafRuntime> {
-    let tenant = env::var("OCAF_TENANT_NAMESPACE").ok();
-    let mut runtime = OcafRuntime::new(0);
-    if let Some(name) = &tenant {
-        runtime = runtime.with_tenant_namespace(name)?;
-    }
-
-    if env::var("OCAF_WASI_MANIFEST_FILE").is_err() {
-        return Ok(runtime);
-    }
-
-    #[cfg(not(target_os = "linux"))]
-    anyhow::bail!("the signed WASI adapter is available only on Linux");
-
     #[cfg(target_os = "linux")]
     {
-        use ocaf_runtime::executor::wasi::{PinnedWasmtime, WasmToolExecutor};
-        use std::os::unix::fs::{MetadataExt, PermissionsExt};
-
-        if tenant.is_none()
-            || env::var("OCAF_RPC_INGRESS").as_deref() != Ok("tls-bound")
-            || env::var("OCAF_REQUIRE_PEER_CERT_POP").as_deref() != Ok("1")
-        {
-            anyhow::bail!(
-                "signed WASI remote tools require tenant namespace, TLS-bound ingress and certificate PoP"
-            );
+        ocaf_runtime::ops::wasi_config::runtime_from_env().await
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        if env::var("OCAF_WASI_MANIFEST_FILE").is_ok() {
+            anyhow::bail!("signed WASI execution requires Linux");
         }
-        fn read_private_binary(name: &str, limit: u64) -> anyhow::Result<Vec<u8>> {
-            let path = absolute_path(name)?;
-            let metadata = fs::symlink_metadata(&path)?;
-            if !metadata.is_file()
-                || metadata.file_type().is_symlink()
-                || metadata.len() == 0
-                || metadata.len() > limit
-                || metadata.permissions().mode() & 0o077 != 0
-                || metadata.nlink() != 1
-            {
-                anyhow::bail!("{name} must be a bounded owner-only regular file");
-            }
-            let bytes = fs::read(&path)?;
-            if bytes.is_empty() || bytes.len() as u64 > limit {
-                anyhow::bail!("{name} size changed during reading");
-            }
-            Ok(bytes)
-        }
-        fn parse_sha256(value: &str) -> anyhow::Result<[u8; 32]> {
-            if value.len() != 64
-                || !value.bytes().all(|b| b.is_ascii_hexdigit())
-                || value.bytes().any(|b| b.is_ascii_uppercase())
-            {
-                anyhow::bail!("invalid lowercase 64-digit SHA-256");
-            }
-            let mut hash = [0u8; 32];
-            for (i, part) in value.as_bytes().as_chunks::<2>().0.iter().enumerate() {
-                hash[i] = u8::from_str_radix(std::str::from_utf8(part)?, 16)?;
-            }
-            Ok(hash)
-        }
-
-        let engine = PinnedWasmtime::new(
-            absolute_path("OCAF_WASMTIME_EXECUTABLE")?,
-            parse_sha256(&env_required("OCAF_WASMTIME_SHA256")?)?,
-        )?;
-        let module = read_private_binary("OCAF_WASI_MODULE_FILE", 1024 * 1024)?;
-        let manifest = read_private_binary("OCAF_WASI_MANIFEST_FILE", 24 * 1024)?;
-        let signature = read_private_binary("OCAF_WASI_SIGNATURE_FILE", 64)?;
-        let public_key = read_private_binary("OCAF_WASI_PUBLISHER_KEY_FILE", 2048)?;
-        let executor = WasmToolExecutor::from_signed_manifest(
-            engine,
-            module,
-            &manifest,
-            &signature,
-            &public_key,
-        )?;
-        if executor
-            .signed_tool_manifest()
-            .is_none_or(|tool| tool.timeout_ms > 10_000)
-        {
-            anyhow::bail!("invalid signed WASI tool deadline");
-        }
-        runtime.register_signed_wasi(executor).await?;
-        Ok(runtime)
+        Ok(OcafRuntime::new(0))
     }
 }
 
