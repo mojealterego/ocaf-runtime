@@ -992,7 +992,11 @@ impl RpcGateway {
                     args,
                     auth: None,
                 };
-                match self.runtime.execute_authenticated_peer(call, &request.sender).await {
+                match self
+                    .runtime
+                    .execute_authenticated_peer(call, &request.sender)
+                    .await
+                {
                     Ok(result) => (RpcStatus::Ok, result.output),
                     Err(RuntimeError::InvalidInput(_)) => (RpcStatus::InvalidInput, Value::Null),
                     Err(RuntimeError::Timeout) => (RpcStatus::Timeout, Value::Null),
