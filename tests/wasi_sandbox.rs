@@ -111,17 +111,11 @@ fn stdin_reading_command_fixture(message: &str) -> Vec<u8> {
     exports.extend([0, 2]);
     section(&mut wasm, 7, &exports);
     let body = [
-        0,
-        0x41, 0,       // fd_read stdin fd=0
+        0, 0x41, 0, // fd_read stdin fd=0
         0x41, 0xc0, 0, // input iovec at address 64
-        0x41, 1,
-        0x41, 0xd0, 0, // bytes read output pointer=80
+        0x41, 1, 0x41, 0xd0, 0, // bytes read output pointer=80
         0x10, 0, 0x1a, // call fd_read; drop errno
-        0x41, 1,
-        0x41, 0,
-        0x41, 1,
-        0x41, 8,
-        0x10, 1, 0x1a, // call fd_write; drop errno
+        0x41, 1, 0x41, 0, 0x41, 1, 0x41, 8, 0x10, 1, 0x1a, // call fd_write; drop errno
         0x0b,
     ];
     let mut code = vec![1];
