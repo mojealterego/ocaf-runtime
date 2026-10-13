@@ -56,7 +56,9 @@ fn signed_rpc_client(node_id: &str, remote_id: &str, key: [u8; 32]) -> anyhow::R
             Ok(client.with_certificate_private_key(pem.into_bytes())?)
         }
         Err(env::VarError::NotPresent) => Ok(client),
-        Err(error) => Err(anyhow::anyhow!("invalid RPC certificate key file environment: {error}")),
+        Err(error) => Err(anyhow::anyhow!(
+            "invalid RPC certificate key file environment: {error}"
+        )),
     }
 }
 

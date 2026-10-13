@@ -69,10 +69,7 @@ impl PinnedCertificate {
     }
 }
 
-pub(crate) fn sign_request(
-    request: &RpcRequest,
-    key_pem: &[u8],
-) -> Result<String, RpcError> {
+pub(crate) fn sign_request(request: &RpcRequest, key_pem: &[u8]) -> Result<String, RpcError> {
     if key_pem.is_empty() || key_pem.len() > MAX_PRIVATE_KEY_BYTES {
         return Err(RpcError::Malformed);
     }
@@ -81,8 +78,7 @@ pub(crate) fn sign_request(
     if !matches!(key.id(), Id::EC | Id::RSA) {
         return Err(RpcError::Malformed);
     }
-    let mut signer =
-        Signer::new(MessageDigest::sha256(), &key).map_err(|_| RpcError::Malformed)?;
+    let mut signer = Signer::new(MessageDigest::sha256(), &key).map_err(|_| RpcError::Malformed)?;
     signer
         .update(&request.proof_payload()?)
         .map_err(|_| RpcError::Malformed)?;

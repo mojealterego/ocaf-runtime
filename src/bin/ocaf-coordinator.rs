@@ -74,8 +74,7 @@ fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
     let mut peers = HashMap::with_capacity(parsed.len());
     let mut seen_keys = HashSet::new();
     let mut seen_certificates = HashSet::new();
-    let require_certificate_proof =
-        env::var("OCAF_REQUIRE_PEER_CERT_POP").as_deref() == Ok("1");
+    let require_certificate_proof = env::var("OCAF_REQUIRE_PEER_CERT_POP").as_deref() == Ok("1");
     for (node, entry) in parsed {
         let secret = B64
             .decode(&entry.key_b64)

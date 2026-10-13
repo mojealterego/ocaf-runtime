@@ -372,10 +372,7 @@ impl PeerPolicy {
         cert_pem: &[u8],
         expected_sha256: &str,
     ) -> Result<Self, RpcError> {
-        self.certificate_identity = Some(PinnedCertificate::from_pem(
-            cert_pem,
-            expected_sha256,
-        )?);
+        self.certificate_identity = Some(PinnedCertificate::from_pem(cert_pem, expected_sha256)?);
         Ok(self)
     }
 

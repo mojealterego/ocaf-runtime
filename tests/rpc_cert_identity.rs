@@ -19,8 +19,7 @@ const KEY: [u8; 32] = [0x36; 32];
 const NOW: u64 = 1_800_000_000_000;
 
 fn credential() -> (Vec<u8>, Vec<u8>, String) {
-    let ec = EcKey::generate(&EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap())
-        .unwrap();
+    let ec = EcKey::generate(&EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap()).unwrap();
     let key = PKey::from_ec_key(ec).unwrap();
     let mut name = X509NameBuilder::new().unwrap();
     name.append_entry_by_text("CN", "ocaf-test-agent").unwrap();
@@ -39,7 +38,11 @@ fn credential() -> (Vec<u8>, Vec<u8>, String) {
     cert.sign(&key, MessageDigest::sha256()).unwrap();
     let certificate = cert.build();
     let pin = format!("{:x}", Sha256::digest(certificate.to_der().unwrap()));
-    (certificate.to_pem().unwrap(), key.private_key_to_pem_pkcs8().unwrap(), pin)
+    (
+        certificate.to_pem().unwrap(),
+        key.private_key_to_pem_pkcs8().unwrap(),
+        pin,
+    )
 }
 
 fn gateway(cert: &[u8], pin: &str) -> RpcGateway {
@@ -90,7 +93,10 @@ async fn another_cert_private_key_is_not_authenticated() {
     let (_, wrong_key, _) = credential();
     let g = gateway(&pem, &pin);
     let candidate = request().with_certificate_proof(&wrong_key).unwrap();
-    assert!(matches!(send(&g, &candidate).await, Err(RpcError::Unauthorized)));
+    assert!(matches!(
+        send(&g, &candidate).await,
+        Err(RpcError::Unauthorized)
+    ));
 }
 
 #[tokio::test]
@@ -101,7 +107,10 @@ async fn signature_cannot_be_reused_with_mutated_action_or_recipient() {
     altered.action = RpcAction::Resolve {
         tool: "demo_echo".into(),
     };
-    assert!(matches!(send(&g, &altered).await, Err(RpcError::Unauthorized)));
+    assert!(matches!(
+        send(&g, &altered).await,
+        Err(RpcError::Unauthorized)
+    ));
     let mut altered = request().with_certificate_proof(&key).unwrap();
     altered.recipient = "node-c".into();
     assert!(send(&g, &altered).await.is_err());
@@ -123,7 +132,10 @@ async fn forged_signature_does_not_consume_replay_nonce() {
     let g = gateway(&pem, &pin);
     let initial = request();
     let wrong = initial.clone().with_certificate_proof(&wrong_key).unwrap();
-    assert!(matches!(send(&g, &wrong).await, Err(RpcError::Unauthorized)));
+    assert!(matches!(
+        send(&g, &wrong).await,
+        Err(RpcError::Unauthorized)
+    ));
     let right = initial.with_certificate_proof(&key).unwrap();
     assert!(send(&g, &right).await.is_ok());
     assert!(matches!(send(&g, &right).await, Err(RpcError::Replay)));
@@ -137,9 +149,13 @@ async fn extra_certificate_proof_without_policy_is_rejected() {
         OcafRuntime::new(0),
         HashMap::from([("node-a".into(), PeerPolicy::new(KEY, vec![]))]),
         4,
-    ).unwrap();
+    )
+    .unwrap();
     let signed = request().with_certificate_proof(&key).unwrap();
-    assert!(matches!(send(&g, &signed).await, Err(RpcError::Unauthorized)));
+    assert!(matches!(
+        send(&g, &signed).await,
+        Err(RpcError::Unauthorized)
+    ));
 }
 
 #[test]
@@ -159,8 +175,7 @@ fn client_preparation_attaches_certificate_proof_when_enabled() {
 #[test]
 fn invalid_public_certificate_is_rejected() {
     assert!(matches!(
-        PeerPolicy::new(KEY, vec![])
-            .with_pinned_certificate(b"not a certificate", &"a".repeat(64)),
+        PeerPolicy::new(KEY, vec![]).with_pinned_certificate(b"not a certificate", &"a".repeat(64)),
         Err(RpcError::Malformed)
     ));
 }
