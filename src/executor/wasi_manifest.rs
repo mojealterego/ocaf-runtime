@@ -16,7 +16,6 @@ use crate::registry::ToolManifest;
 const MANIFEST_DOMAIN: &[u8] = b"OCAF-WASI-MANIFEST-V1\0";
 const MAX_MANIFEST_BYTES: usize = 24 * 1024;
 const MAX_PUBLIC_KEY_BYTES: usize = 2048;
-const MAX_SIGNATURE_BYTES: usize = 256;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
