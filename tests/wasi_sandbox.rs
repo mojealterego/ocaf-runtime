@@ -428,7 +428,10 @@ printf '{"hardened":true}\\n'
     let result = executor(path, hash, command_fixture("{}"), SandboxPolicy::default())
         .execute(json!({}), &context())
         .await;
-    assert_eq!(result.expect("Linux child hardening policy"), json!({"hardened":true}));
+    assert_eq!(
+        result.expect("Linux child hardening policy"),
+        json!({"hardened":true})
+    );
 }
 
 #[tokio::test]
