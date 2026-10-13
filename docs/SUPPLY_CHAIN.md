@@ -113,3 +113,14 @@ succeeded. Confirm a successful supply-chain run on the resulting commit,
 inspect the published artifact, then verify the SHA-256 checksums and both
 attestations. Production remains **NO-GO** pending the independent acceptance
 gates listed above.
+
+## Priority 0.32 — independently checked release evidence (2026-10-13)
+
+The previously successful 0.31 run `38373889928` published the Linux archive,
+CycloneDX SBOM and SHA-256 sums and recorded both signing operations.
+Priority 0.32 adds a separate fail-closed consumer-side verification job
+to validate the downloaded artifact, archive inventory, CycloneDX structure,
+and matching SLSA + CycloneDX signatures for the exact `main` SHA.
+See [RELEASE_EVIDENCE_032.md](RELEASE_EVIDENCE_032.md) for evidence IDs,
+local verification commands and manual release signoff boundaries.
+This is not an automatic release or production certification.

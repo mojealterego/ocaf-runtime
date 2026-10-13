@@ -20,6 +20,7 @@ jobs:
           set -euo pipefail
           python3 -m unittest discover -s scripts/tests -p test_supply_chain.py -v
           python3 -m unittest discover -s scripts/tests -p test_sbom_workflow.py -v
+          python3 -m unittest discover -s scripts/tests -p test_release_bundle.py -v
           python3 scripts/supply_chain.py --repo .
       - uses: dtolnay/rust-toolchain@stable
       - name: Verify committed Cargo dependency graph
@@ -94,3 +95,48 @@ jobs:
         with:
           subject-path: dist/ocaf_runtime-linux-x86_64.tar.gz
           sbom-path: dist/ocaf_runtime.cdx.json
+
+
+  release-evidence:
+    name: Release evidence verification (no automatic publication)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [dependency-policy, attested-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Retrieve exact-build immutable artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: ocaf-linux-x86_64-${{ github.sha }}
+          path: evidence
+      - name: Validate checksums, CycloneDX and executable inventory
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s scripts/tests -p test_release_bundle.py -v
+          python3 scripts/verify_release_bundle.py --dir evidence
+      - name: Verify signed SLSA provenance against the exact main commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh attestation verify evidence/ocaf_runtime-linux-x86_64.tar.gz \
+            --repo "$GITHUB_REPOSITORY" \
+            --source-ref refs/heads/main \
+            --source-digest "$GITHUB_SHA" \
+            --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/supply-chain.yml"
+      - name: Verify signed CycloneDX SBOM attestation against the exact main commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh attestation verify evidence/ocaf_runtime-linux-x86_64.tar.gz \
+            --repo "$GITHUB_REPOSITORY" \
+            --predicate-type https://cyclonedx.org/bom \
+            --source-ref refs/heads/main \
+            --source-digest "$GITHUB_SHA" \
+            --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/supply-chain.yml"

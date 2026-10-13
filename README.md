@@ -629,3 +629,14 @@ mimo usunięcia wymienionych ostrzeżeń zależności.
 Nota o prawach autorskich nie zastępuje aktualnej deklaracji licencji MIT
 w `Cargo.toml`. Warunki dalszej dystrybucji wymagają spójnego ustalenia
 przed wydaniem produkcyjnym.
+
+
+## Priorytet 0.32 — weryfikacja wydania i atestacji
+
+GitHub Actions uruchamia dodatkowy etap `release-evidence` po pomyślnym
+zbudowaniu artefaktu na `main`: pobiera konkretny artefakt, weryfikuje
+SHA-256, strukturę archiwum i SBOM CycloneDX 1.5 oraz kryptograficznie
+sprawdza podpisane pochodzenie kompilacji i atestację SBOM dla konkretnego
+commita. Nie tworzy automatycznie tagów ani wydań. Dokumentacja:
+[docs/RELEASE_EVIDENCE_032.md](docs/RELEASE_EVIDENCE_032.md).
+**Stan wdrożenia produkcyjnego: NO-GO do czasu testów infrastrukturalnych.**
