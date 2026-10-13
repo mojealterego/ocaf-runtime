@@ -477,6 +477,31 @@ async fn cancelling_guest_kills_background_descendants() {
 
 /// Linux subprocess defense-in-depth: prevent gaining privileges via exec
 /// and suppress core files containing module input or runtime secrets.
+/// A coordinator killed with SIGKILL cannot run Rust Drop handlers.
+/// The guest leader must inherit a kernel-level parent-death signal.
+#[tokio::test]
+async fn wasi_guest_leader_receives_sigkill_on_parent_death() {
+    let folder = tempfile::tempdir().expect("temp");
+    let body = r#"
+/usr/bin/python3 - <<'PY'
+import ctypes
+import json
+import signal
+libc = ctypes.CDLL(None)
+out = ctypes.c_int()
+if libc.prctl(2, ctypes.byref(out), 0, 0, 0) != 0:
+    raise SystemExit(81)
+print(json.dumps({"parent_death_signal": out.value}))
+PY
+"#;
+    let (path, hash) = fake_engine(folder.path(), body);
+    let actual = executor(path, hash, command_fixture("{}"), SandboxPolicy::default())
+        .execute(json!({}), &context())
+        .await
+        .expect("child pdeath signal");
+    assert_eq!(actual, json!({"parent_death_signal": libc::SIGKILL}));
+}
+
 #[tokio::test]
 async fn wasi_guest_inherits_no_new_privileges_and_core_limit() {
     let folder = tempfile::tempdir().expect("temp");
