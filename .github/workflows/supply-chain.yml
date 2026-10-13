@@ -19,6 +19,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 -m unittest discover -s scripts/tests -p test_supply_chain.py -v
+          python3 -m unittest discover -s scripts/tests -p test_sbom_workflow.py -v
           python3 scripts/supply_chain.py --repo .
       - uses: dtolnay/rust-toolchain@stable
       - name: Verify committed Cargo dependency graph
@@ -70,9 +71,11 @@ jobs:
         run: |
           set -euo pipefail
           cargo install --locked cargo-cyclonedx --version 0.5.9
+          # cargo-cyclonedx appends the .json extension to --override-filename.
           cargo cyclonedx --format json --all-features --target all \
-            --spec-version 1.5 --override-filename bom.json
+            --spec-version 1.5 --override-filename bom
           test -s bom.json
+          python3 -c 'import json; b=json.load(open("bom.json", encoding="utf-8")); assert b.get("bomFormat") == "CycloneDX" and b.get("specVersion") == "1.5" and b.get("components"), "invalid or empty CycloneDX 1.5 SBOM"'
           mv bom.json dist/ocaf_runtime.cdx.json
           (cd dist && sha256sum *.tar.gz *.json > SHA256SUMS)
       - name: Upload binary, SBOM and SHA-256 checksums

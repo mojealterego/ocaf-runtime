@@ -93,3 +93,23 @@ PostgreSQL failover/fencing, real mTLS credential rollover, vendored dependency 
 tool sandboxing, restore
 rehearsal, independent security assessment and SLO/soak results.
 A green GitHub Actions status alone is **not** production acceptance.
+
+## Priority 0.31 — SBOM filename regression and provenance recovery (2026-10-13)
+
+The Rust CI and dependency-policy jobs passed at main commit
+`0dfa34b8d4f575b1de39cf502290fe63d8b56889`, but the attested-build job
+failed at CycloneDX output collection (run `38371980150`, job `115211163066`).
+Inspection of the job logs and `cargo-cyclonedx 0.5.9` source identified
+a CLI filename mismatch: `--override-filename bom.json` generates
+`bom.json.json`, whereas the workflow expects `bom.json`.
+
+The corrected workflow passes `--override-filename bom`, retaining the exact
+`bom.json` output path. A dedicated regression test is included in both the
+Python CI suite and the dependency-policy job. The SBOM must also parse as a
+nonempty CycloneDX 1.5 JSON document before upload or attestation.
+
+**Verification boundary:** this source correction is not proof that attestation
+succeeded. Confirm a successful supply-chain run on the resulting commit,
+inspect the published artifact, then verify the SHA-256 checksums and both
+attestations. Production remains **NO-GO** pending the independent acceptance
+gates listed above.
