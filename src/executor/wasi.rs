@@ -4,6 +4,7 @@
 use std::fs::{self, DirBuilder, File, OpenOptions};
 use std::io::{Read, Write};
 use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt, PermissionsExt};
+use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::sync::Arc;
@@ -447,6 +448,23 @@ impl WasmToolExecutor {
         // Isolate the guest's OS process group from the coordinator so
         // cleanup can terminate descendants in addition to the Wasmtime PID.
         command.process_group(0);
+        // The only operations in pre_exec are raw Linux syscalls. Failure
+        // aborts child spawn; never silently drop the hardening policy.
+        unsafe {
+            command.as_std_mut().pre_exec(|| {
+                if libc::prctl(libc::PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) != 0 {
+                    return Err(std::io::Error::last_os_error());
+                }
+                let no_core = libc::rlimit {
+                    rlim_cur: 0,
+                    rlim_max: 0,
+                };
+                if libc::setrlimit(libc::RLIMIT_CORE, &no_core) != 0 {
+                    return Err(std::io::Error::last_os_error());
+                }
+                Ok(())
+            });
+        }
 
         let mut child = command
             .spawn()
