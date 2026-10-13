@@ -285,7 +285,7 @@ async fn cancellation_reaps_guest_and_removes_private_workspace() {
     let pid_marker = folder.path().join("guest.pid");
     let cwd_marker = folder.path().join("guest.cwd");
     let script = format!(
-        "echo \"$\" > '{}'; pwd > '{}'; exec /bin/sleep 10",
+        "echo \"$$\" > '{}'; pwd > '{}'; exec /bin/sleep 10",
         pid_marker.display(),
         cwd_marker.display()
     );
