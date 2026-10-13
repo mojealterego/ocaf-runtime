@@ -551,8 +551,12 @@ async fn real_wasmtime_cli_when_configured() {
         .expect("real WASI");
     assert_eq!(result, json!({"real_wasi":true}));
 
-    let again = exec.execute(json!({}), &context()).await.expect("repeat");
-    assert_eq!(result, again);
+    // A bounded smoke cycle with the actual pinned engine catches reuse,
+    // stale subprocess state and repeated private-workspace cleanup defects.
+    for _ in 0..8 {
+        let again = exec.execute(json!({}), &context()).await.expect("repeat");
+        assert_eq!(result, again);
+    }
 
     let pinned = PinnedWasmtime::new(
         PathBuf::from(std::env::var("OCAF_TEST_WASMTIME").expect("checked above")),
