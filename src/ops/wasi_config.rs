@@ -2,9 +2,10 @@
 //! This loader is used by the coordinator and the TLS-bound remote worker.
 //! No tenant, manifest, module path or publisher key is read from RPC JSON.
 use std::env;
-use std::fs;
-use std::os::unix::fs::{MetadataExt, PermissionsExt};
-use std::path::PathBuf;
+use std::fs::{self, OpenOptions};
+use std::io::Read;
+use std::os::unix::fs::{MetadataExt, OpenOptionsExt, PermissionsExt};
+use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Result};
 
@@ -27,23 +28,36 @@ fn path(name: &str) -> Result<PathBuf> {
     Ok(p)
 }
 
-fn owner_only_file(name: &str, max_bytes: u64) -> Result<Vec<u8>> {
-    let p = path(name)?;
-    let meta = fs::symlink_metadata(&p)?;
+/// Open a sealed operator file by descriptor, rather than checking a path
+/// and reopening it later. O_NOFOLLOW rejects final-component symlink swaps;
+/// fstat checks the inode actually read and enforces effective-UID custody.
+fn read_operator_file(p: &Path, name: &str, max_bytes: u64) -> Result<Vec<u8>> {
+    let mut file = OpenOptions::new()
+        .read(true)
+        .custom_flags(libc::O_NOFOLLOW | libc::O_CLOEXEC)
+        .open(p)?;
+    let meta = file.metadata()?;
     if !meta.is_file()
-        || meta.file_type().is_symlink()
         || meta.nlink() != 1
+        || meta.uid() != unsafe { libc::geteuid() }
         || meta.permissions().mode() & 0o077 != 0
         || meta.len() == 0
         || meta.len() > max_bytes
     {
-        bail!("{name} must be a bounded single-linked owner-only file");
+        bail!("{name} must be a bounded, single-linked, effective-UID-owned, owner-only file");
     }
-    let bytes = fs::read(p)?;
+    let mut bytes = Vec::with_capacity(meta.len() as usize);
+    file.take(max_bytes.saturating_add(1))
+        .read_to_end(&mut bytes)?;
     if bytes.is_empty() || bytes.len() as u64 > max_bytes {
         bail!("{name} changed during reading");
     }
     Ok(bytes)
+}
+
+fn owner_only_file(name: &str, max_bytes: u64) -> Result<Vec<u8>> {
+    let p = path(name)?;
+    read_operator_file(&p, name, max_bytes)
 }
 
 fn lowercase_sha256(raw: &str) -> Result<[u8; 32]> {
@@ -92,4 +106,43 @@ pub async fn runtime_from_env() -> Result<OcafRuntime> {
         WasmToolExecutor::from_signed_manifest(engine, module, &manifest, &signature, &key)?;
     runtime.register_signed_wasi(approved).await?;
     Ok(runtime)
+}
+
+#[cfg(test)]
+mod operator_file_tests {
+    use super::*;
+    use std::os::unix::fs::{symlink, PermissionsExt};
+
+    #[test]
+    fn descriptor_based_loader_rejects_untrusted_path_and_inode_metadata() {
+        let workspace = tempfile::tempdir().expect("temporary operator workspace");
+        let sealed = workspace.path().join("manifest.json");
+        fs::write(&sealed, b"safe").expect("create manifest");
+        fs::set_permissions(&sealed, fs::Permissions::from_mode(0o600))
+            .expect("seal manifest");
+
+        assert_eq!(
+            read_operator_file(&sealed, "TEST_MANIFEST", 4).expect("approved file"),
+            b"safe"
+        );
+        assert!(read_operator_file(&sealed, "TEST_MANIFEST", 3).is_err());
+
+        let link = workspace.path().join("swapped.json");
+        symlink(&sealed, &link).expect("make symlink");
+        assert!(read_operator_file(&link, "TEST_MANIFEST", 16).is_err());
+
+        let second_link = workspace.path().join("hardlink.json");
+        fs::hard_link(&sealed, &second_link).expect("make hardlink");
+        assert!(read_operator_file(&sealed, "TEST_MANIFEST", 16).is_err());
+        fs::remove_file(&second_link).expect("remove hardlink");
+
+        fs::set_permissions(&sealed, fs::Permissions::from_mode(0o644))
+            .expect("make world-readable");
+        assert!(read_operator_file(&sealed, "TEST_MANIFEST", 16).is_err());
+        fs::set_permissions(&sealed, fs::Permissions::from_mode(0o600))
+            .expect("reseal file");
+
+        fs::write(&sealed, b"").expect("clear file");
+        assert!(read_operator_file(&sealed, "TEST_MANIFEST", 16).is_err());
+    }
 }
