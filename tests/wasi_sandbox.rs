@@ -5,7 +5,8 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 use ocaf_runtime::executor::wasi::{
-    manifest_signing_payload, validate_wasi_imports, PinnedWasmtime, SandboxPolicy, WasmToolExecutor,
+    manifest_signing_payload, validate_wasi_imports, PinnedWasmtime, SandboxPolicy,
+    WasmToolExecutor,
 };
 use ocaf_runtime::executor::{ExecutionContext, ToolError, ToolExecutor};
 use ocaf_runtime::registry::ToolManifest;
@@ -400,10 +401,7 @@ async fn publisher_signature_binds_module_tool_policy_and_principal() {
     let signature = signer.sign_oneshot_to_vec(&payload).expect("sign payload");
 
     let folder = tempfile::tempdir().expect("tmp");
-    let (engine, engine_hash) = fake_engine(
-        folder.path(),
-        "printf '{\"signed\":true}\\n'",
-    );
+    let (engine, engine_hash) = fake_engine(folder.path(), "printf '{\"signed\":true}\\n'");
     let approved = PinnedWasmtime::new(engine.clone(), engine_hash).expect("pinned");
     let exec = WasmToolExecutor::from_signed_manifest(
         approved.clone(),
@@ -411,24 +409,46 @@ async fn publisher_signature_binds_module_tool_policy_and_principal() {
         &json,
         &signature,
         &public,
-    ).expect("valid publisher signature");
-    assert_eq!(exec.signed_tool_manifest().expect("manifest").name, "signed_wasi");
+    )
+    .expect("valid publisher signature");
+    assert_eq!(
+        exec.signed_tool_manifest().expect("manifest").name,
+        "signed_wasi"
+    );
 
     let unsigned = executor(
-        engine.clone(), engine_hash, module.clone(), SandboxPolicy::default()
+        engine.clone(),
+        engine_hash,
+        module.clone(),
+        SandboxPolicy::default(),
     );
     assert!(unsigned.signed_tool_manifest().is_none());
     assert!(WasmToolExecutor::from_signed_manifest(
-        approved.clone(), module.clone(), &json, &signature, &other_public
-    ).is_err());
+        approved.clone(),
+        module.clone(),
+        &json,
+        &signature,
+        &other_public
+    )
+    .is_err());
     let mut modified = json.clone();
     modified.push(b' ');
     assert!(WasmToolExecutor::from_signed_manifest(
-        approved.clone(), module.clone(), &modified, &signature, &public
-    ).is_err());
+        approved.clone(),
+        module.clone(),
+        &modified,
+        &signature,
+        &public
+    )
+    .is_err());
     assert!(WasmToolExecutor::from_signed_manifest(
-        approved.clone(), command_fixture("{}"), &json, &signature, &public
-    ).is_err());
+        approved.clone(),
+        command_fixture("{}"),
+        &json,
+        &signature,
+        &public
+    )
+    .is_err());
 
     let mut context = context();
     assert!(exec.execute(json!({}), &context).await.is_err());
@@ -436,7 +456,9 @@ async fn publisher_signature_binds_module_tool_policy_and_principal() {
     assert!(exec.execute(json!({}), &context).await.is_err());
     context.agent_id = "tenant-a:agent-1".into();
     assert_eq!(
-        exec.execute(json!({}), &context).await.expect("authorized request"),
+        exec.execute(json!({}), &context)
+            .await
+            .expect("authorized request"),
         json!({"signed":true})
     );
 
@@ -447,10 +469,7 @@ async fn publisher_signature_binds_module_tool_policy_and_principal() {
         .register_signed_wasi(exec.clone())
         .await
         .expect("signed-only registration");
-    assert!(signed_runtime
-        .register_signed_wasi(unsigned)
-        .await
-        .is_err());
+    assert!(signed_runtime.register_signed_wasi(unsigned).await.is_err());
     let call = ToolCallRequest {
         call_id: "signed-1".into(),
         tool: "signed_wasi".into(),
@@ -473,7 +492,10 @@ async fn publisher_signature_binds_module_tool_policy_and_principal() {
     let other_tenant = OcafRuntime::new(0)
         .with_tenant_namespace("tenant-b")
         .expect("other tenant");
-    other_tenant.register_signed_wasi(exec.clone()).await.expect("register other tenant");
+    other_tenant
+        .register_signed_wasi(exec.clone())
+        .await
+        .expect("register other tenant");
     assert!(other_tenant
         .execute_authenticated_peer(call, "agent-1")
         .await
@@ -494,6 +516,11 @@ async fn publisher_signature_binds_module_tool_policy_and_principal() {
         .sign_oneshot_to_vec(&manifest_signing_payload(&expired_json).expect("payload"))
         .expect("sign");
     assert!(WasmToolExecutor::from_signed_manifest(
-        approved, module, &expired_json, &expired_sig, &public
-    ).is_err());
+        approved,
+        module,
+        &expired_json,
+        &expired_sig,
+        &public
+    )
+    .is_err());
 }
