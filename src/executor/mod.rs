@@ -64,3 +64,7 @@ where
         .await
         .map_err(|_| ToolError::Timeout)?
 }
+
+// Stage 0.38: Linux-only, operator-pinned, deny-by-default WASI adapter.
+#[cfg(target_os = "linux")]
+pub mod wasi;
