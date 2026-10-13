@@ -85,6 +85,63 @@ fn command_fixture(message: &str) -> Vec<u8> {
     wasm
 }
 
+/// Preview1 command that reads one stdin chunk before writing its output.
+/// Unlike a static print-only fixture, this exercises host JSON delivery
+/// without a race against an immediately exiting WASI guest.
+fn stdin_reading_command_fixture(message: &str) -> Vec<u8> {
+    let mut wasm = b"\0asm\x01\0\0\0".to_vec();
+    section(
+        &mut wasm,
+        1,
+        &[2, 0x60, 4, 0x7f, 0x7f, 0x7f, 0x7f, 1, 0x7f, 0x60, 0, 0],
+    );
+    let mut imports = vec![2];
+    for name in ["fd_read", "fd_write"] {
+        imports.extend(wasm_name("wasi_snapshot_preview1"));
+        imports.extend(wasm_name(name));
+        imports.extend([0, 0]);
+    }
+    section(&mut wasm, 2, &imports);
+    section(&mut wasm, 3, &[1, 1]);
+    section(&mut wasm, 5, &[1, 0, 1]);
+    let mut exports = vec![2];
+    exports.extend(wasm_name("memory"));
+    exports.extend([2, 0]);
+    exports.extend(wasm_name("_start"));
+    exports.extend([0, 2]);
+    section(&mut wasm, 7, &exports);
+    let body = [
+        0,
+        0x41, 0,       // fd_read stdin fd=0
+        0x41, 0xc0, 0, // input iovec at address 64
+        0x41, 1,
+        0x41, 0xd0, 0, // bytes read output pointer=80
+        0x10, 0, 0x1a, // call fd_read; drop errno
+        0x41, 1,
+        0x41, 0,
+        0x41, 1,
+        0x41, 8,
+        0x10, 1, 0x1a, // call fd_write; drop errno
+        0x0b,
+    ];
+    let mut code = vec![1];
+    code.extend(leb(body.len()));
+    code.extend(body);
+    section(&mut wasm, 10, &code);
+    let message = format!("{message}\\n");
+    let mut data = vec![0; 88];
+    data[0..4].copy_from_slice(&88u32.to_le_bytes());
+    data[4..8].copy_from_slice(&(message.len() as u32).to_le_bytes());
+    data[64..68].copy_from_slice(&128u32.to_le_bytes());
+    data[68..72].copy_from_slice(&64u32.to_le_bytes());
+    data.extend(message.as_bytes());
+    let mut segments = vec![1, 0, 0x41, 0, 0x0b];
+    segments.extend(leb(data.len()));
+    segments.extend(data);
+    section(&mut wasm, 11, &segments);
+    wasm
+}
+
 fn infinite_loop_fixture() -> Vec<u8> {
     let mut wasm = b"\0asm\x01\0\0\0".to_vec();
     section(&mut wasm, 1, &[1, 0x60, 0, 0]);
@@ -670,7 +727,7 @@ async fn signed_tenant_isolation_survives_concurrent_execution() {
 
     for label in ["a", "b"] {
         let tenant = format!("tenant-{label}");
-        let module = command_fixture(&format!(r#"{{"tenant":"{label}"}}"#));
+        let module = stdin_reading_command_fixture(&format!(r#"{{"tenant":"{label}"}}"#));
         let module_sha256_hex = format!("{:x}", Sha256::digest(&module));
         let tool = ToolManifest {
             name: "wasi_concurrent".into(),
