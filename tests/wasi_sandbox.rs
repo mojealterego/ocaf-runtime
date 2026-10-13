@@ -755,7 +755,7 @@ async fn signed_tenant_isolation_survives_concurrent_execution() {
         } else {
             let local = folder.path().join(label);
             fs::create_dir(&local).expect("independent tenant fixture");
-            let print = format!("printf '{{\\\"tenant\\\":\\\"{label}\\\"}}\\\\n'");
+            let print = format!(r#"printf '{{"tenant":"{label}"}}\n'"#);
             let (path, hash) = fake_engine(&local, &print);
             PinnedWasmtime::new(path, hash).expect("sealed fake engine")
         };
