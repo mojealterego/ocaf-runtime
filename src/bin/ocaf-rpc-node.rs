@@ -77,6 +77,16 @@ fn load_zenoh_config() -> anyhow::Result<zenoh::Config> {
         .map_err(|e| anyhow::anyhow!("cannot parse vetted Zenoh config: {e}"))
 }
 
+/// A typo in transport policy must NEVER silently fall back to Zenoh.
+fn ingress_mode(setting: Result<String, env::VarError>) -> anyhow::Result<bool> {
+    match setting {
+        Ok(value) if value == "tls-bound" => Ok(true),
+        Ok(value) if value == "zenoh" => Ok(false),
+        Err(env::VarError::NotPresent) => Ok(false),
+        _ => anyhow::bail!("OCAF_RPC_INGRESS must be exactly zenoh or tls-bound"),
+    }
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
@@ -85,7 +95,7 @@ async fn main() -> anyhow::Result<()> {
     let node_id = require("OCAF_NODE_ID")?;
     let peer_id = require("OCAF_PEER_ID")?;
     let key = load_key_env("OCAF_SHARED_KEY_B64")?;
-    let tls_mode = env::var("OCAF_RPC_INGRESS").as_deref() == Ok("tls-bound");
+    let tls_mode = ingress_mode(env::var("OCAF_RPC_INGRESS"))?;
     match role.as_str() {
         "server" => {
             anyhow::ensure!(
@@ -271,4 +281,19 @@ async fn main() -> anyhow::Result<()> {
         other => anyhow::bail!("unknown OCAF_ROLE: {other} (expected server, worker or client)"),
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod ingress_tests {
+    use super::*;
+
+    #[test]
+    fn rejects_malformed_transport_selection_without_legacy_fallback() {
+        assert!(ingress_mode(Ok("tls-bound".into())).unwrap());
+        assert!(!ingress_mode(Ok("zenoh".into())).unwrap());
+        assert!(!ingress_mode(Err(env::VarError::NotPresent)).unwrap());
+        for value in ["tls-boud", "none", "", "TLS-BOUND"] {
+            assert!(ingress_mode(Ok(value.to_owned())).is_err());
+        }
+    }
 }
