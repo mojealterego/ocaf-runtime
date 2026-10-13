@@ -26,4 +26,4 @@ test -x "$executable"
 
 "$executable" --version
 OCAF_TEST_WASMTIME="$executable" cargo test --locked --no-default-features \
-  --test wasi_sandbox real_wasmtime_cli_when_configured -- --exact --nocapture
+  --test wasi_sandbox -- --test-threads=1 --nocapture
