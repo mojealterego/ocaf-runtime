@@ -334,12 +334,12 @@ impl WasmToolExecutor {
             .signed_binding
             .as_ref()
             .ok_or_else(|| rejected("receipts require a signed WASI manifest"))?;
-        let request_bytes = serde_json::to_vec(&args)
-            .map_err(|_| rejected("invalid input for receipt"))?;
+        let request_bytes =
+            serde_json::to_vec(&args).map_err(|_| rejected("invalid input for receipt"))?;
         let started = Instant::now();
         let output = self.run(args, ctx).await?;
-        let output_bytes = serde_json::to_vec(&output)
-            .map_err(|_| rejected("invalid output for receipt"))?;
+        let output_bytes =
+            serde_json::to_vec(&output).map_err(|_| rejected("invalid output for receipt"))?;
         let completed_unix_secs = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map_err(|_| rejected("receipt clock unavailable"))?
