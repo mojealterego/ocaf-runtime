@@ -576,6 +576,11 @@ oraz żąda atestacji pochodzenia kompilacji i SBOM. Ich istnienie i weryfikacja
 wymagają **zakończonego sukcesem** konkretnego przebiegu GitHub Actions.
 Kontrole nie są certyfikacją produkcyjną.
 
+**Ważne:** zestaw domyślnych funkcji Zenoh został ograniczony do TCP/TLS,
+co usunęło z `Cargo.lock` zależność `rsa`. Pozostałe aktualnie wykryte
+advisories RustSec blokują zatwierdzenie artefaktu. Szczegóły:
+[docs/SUPPLY_CHAIN_FINDINGS.md](docs/SUPPLY_CHAIN_FINDINGS.md).
+
 Szczegóły: [docs/SUPPLY_CHAIN.md](docs/SUPPLY_CHAIN.md).
 
 ## Prawa autorskie i kontakt

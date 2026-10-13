@@ -59,6 +59,22 @@ attestation subject digest, workflow identity, `main` commit SHA and the
 reviewed Rust toolchain. Keep SBOM and attestations alongside the
 approved release before deployment.
 
+## Verified findings and minimized transport surface (2026-10-13)
+
+The initial full-dependency scan reported RustSec advisories in the Zenoh
+transitive graph, including the RSA timing side channel. To reduce attack
+surface, the project's Zenoh feature selection now disables Zenoh defaults
+and allows only `transport_tcp` and `transport_tls`. Cargo re-resolved
+and committed the lockfile from this restricted feature configuration on
+`main`. This removed the `rsa` package from the locked dependency graph
+(480 to 432 locked packages); this alone is not a proof of absence of
+other vulnerabilities. The upstream-linked dependencies identified in
+[SUPPLY_CHAIN_FINDINGS.md](SUPPLY_CHAIN_FINDINGS.md) remain blockers.
+
+The advisory gate remains **enforced**, and an attested release build is
+not permitted by CI while advisory policy is red. Do not treat available
+historical CI builds as signed production releases.
+
 ## Remaining production gates
 
 The following remain external prerequisites: independent multi-host
