@@ -214,5 +214,4 @@ mod operator_file_tests {
         unrelated.insert("OCAF_TEST_PG_DSN".to_owned());
         assert!(signed_wasi_bundle_enabled(&unrelated).expect("unrelated environment is allowed"));
     }
-
 }
