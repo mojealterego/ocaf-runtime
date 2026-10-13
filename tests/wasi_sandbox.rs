@@ -183,6 +183,20 @@ fn restricted_imports_fail_closed() {
     assert!(validate_wasi_imports(&truncated).is_err());
 }
 
+/// Bounded, deterministic parser-mutation smoke test: malformed or partially
+/// overwritten module bytes must never panic the admission validator.
+#[test]
+fn mutated_wasm_binaries_do_not_panic_import_validation() {
+    let source = command_fixture(r#"{"safe":true}"#);
+    for offset in 0..source.len() {
+        for value in [0_u8, 0x7f, 0x80, 0xff] {
+            let mut mutated = source.clone();
+            mutated[offset] = value;
+            let _ = validate_wasi_imports(&mutated);
+        }
+    }
+}
+
 #[test]
 fn digest_engine_and_policy_fail_closed() {
     let folder = tempfile::tempdir().expect("tmp");
@@ -260,6 +274,33 @@ async fn stdout_bomb_is_rejected_without_host_log_leak() {
         .execute(json!({}), &context())
         .await;
     assert!(matches!(result, Err(ToolError::Validation(_))));
+}
+
+/// Error streams have the same bound as stdout and are not returned to
+/// clients, even when malicious guests intentionally emit sensitive strings.
+#[tokio::test]
+async fn stderr_bomb_is_bounded_and_not_returned_to_callers() {
+    let folder = tempfile::tempdir().expect("temporary stderr fixture");
+    let (path, hash) = fake_engine(
+        folder.path(),
+        "printf 'untrusted-guest-secret' >&2; exec /usr/bin/yes >&2",
+    );
+    let exec = executor(
+        path,
+        hash,
+        command_fixture("{}"),
+        SandboxPolicy {
+            max_output_bytes: 128,
+            ..SandboxPolicy::default()
+        },
+    );
+    let result = exec.execute(json!({}), &context()).await;
+    match result {
+        Err(ToolError::Validation(message)) => {
+            assert!(!message.contains("untrusted-guest-secret"));
+        }
+        other => panic!("expected bounded stderr failure, got {other:?}"),
+    }
 }
 
 #[tokio::test]
