@@ -41,6 +41,8 @@ jobs:
         run: python3 scripts/supply_chain.py --repo .
       - name: Compile-time Zenoh transport and compression restrictions
         run: python3 scripts/zenoh_feature_policy.py --repo .
+      - name: mTLS certificate lifecycle with real ephemeral OpenSSL PKI
+        run: python3 -m unittest discover -s scripts/tests -p test_mtls_lifecycle.py -v
       - name: Formatting
         run: cargo fmt --all -- --check
       - name: Clippy (core only)

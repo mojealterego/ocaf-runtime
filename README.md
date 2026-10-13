@@ -652,3 +652,20 @@ procesy na jednym runnerze — nie są certyfikacją rzeczywistej
 infrastruktury. Dokumentacja:
 [docs/MULTIHOST_ACCEPTANCE_033.md](docs/MULTIHOST_ACCEPTANCE_033.md).
 **Produkcja pozostaje NO-GO.**
+
+
+## Priorytet 0.34 — kontrola cyklu życia certyfikatów mTLS
+
+Dodano read-only walidator `scripts/mtls_lifecycle.py` do weryfikacji
+łańcucha zaufania, EKU, identyfikatora SAN, dopasowania klucza prywatnego
+oraz wymaganego okresu ważności certyfikatu. Dla kandydatów rotacji
+sprawdzana jest też zmiana odcisku SHA-256 certyfikatu. Kontrole
+operacyjne zabezpieczają pliki konfiguracji i certyfikatów przed
+symlinkami w ostatnim komponencie oraz niebezpiecznymi uprawnieniami
+plików kluczy. Testy rzeczywistych certyfikatów OpenSSL są wykonywane
+przed podpisywaniem artefaktów w CI.
+Dokumentacja: [docs/MTLS_LIFECYCLE_034.md](docs/MTLS_LIFECYCLE_034.md).
+
+Ta funkcja **nie** rotuje certyfikatów automatycznie, nie sprawdza CRL/OCSP
+ani nie wiąże SAN z tożsamością RPC. Wymagane są odrębne testy na hostach
+operacyjnych i zatwierdzenie zmiany; produkcja nadal **NO-GO**.

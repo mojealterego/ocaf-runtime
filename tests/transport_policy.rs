@@ -148,6 +148,30 @@ fn secure_mtls_configuration_requires_complete_certificates_and_strict_validatio
         cert.display()
     );
     assert!(validate_zenoh_config(&good, false).is_ok());
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::{symlink, PermissionsExt};
+        let ca_link = dir.path().join("alias-ca.pem");
+        symlink(&ca, &ca_link).unwrap();
+        let altered = good.replace(
+            &ca.display().to_string(),
+            &ca_link.display().to_string(),
+        );
+        assert!(validate_zenoh_config(&altered, false).is_err());
+
+        let key_link = dir.path().join("alias-key.pem");
+        symlink(&key, &key_link).unwrap();
+        let altered = good.replace(
+            &key.display().to_string(),
+            &key_link.display().to_string(),
+        );
+        assert!(validate_zenoh_config(&altered, false).is_err());
+
+        fs::set_permissions(&key, fs::Permissions::from_mode(0o644)).unwrap();
+        assert!(validate_zenoh_config(&good, false).is_err());
+        fs::set_permissions(&key, fs::Permissions::from_mode(0o600)).unwrap();
+        assert!(validate_zenoh_config(&good, false).is_ok());
+    }
     assert!(validate_zenoh_config(
         &good.replace("enable_mtls:true", "enable_mtls:false"),
         false
@@ -202,4 +226,18 @@ fn zenoh_config_file_reader_rejects_oversize_files_before_parsing() {
         read_zenoh_config(&path),
         Err(TransportPolicyError::Malformed)
     ));
+}
+
+#[cfg(unix)]
+#[test]
+fn secure_zenoh_reader_rejects_final_component_symlinks() {
+    use std::os::unix::fs::symlink;
+    use ocaf_runtime::transport_policy::read_zenoh_config;
+    let dir = tempfile::tempdir().unwrap();
+    let real = dir.path().join("config.json5");
+    let linked = dir.path().join("linked.json5");
+    std::fs::write(&real, "{mode:'peer'}").unwrap();
+    symlink(&real, &linked).unwrap();
+    assert!(read_zenoh_config(&real).is_ok());
+    assert!(read_zenoh_config(&linked).is_err());
 }

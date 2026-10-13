@@ -22,6 +22,8 @@ jobs:
           python3 -m unittest discover -s scripts/tests -p test_sbom_workflow.py -v
           python3 -m unittest discover -s scripts/tests -p test_release_bundle.py -v
           python3 scripts/supply_chain.py --repo .
+          # Validate actual PKI behavior before allowing binary attestation.
+          python3 -m unittest discover -s scripts/tests -p test_mtls_lifecycle.py -v
       - uses: dtolnay/rust-toolchain@stable
       - name: Verify committed Cargo dependency graph
         run: |

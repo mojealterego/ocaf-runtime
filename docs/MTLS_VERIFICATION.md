@@ -71,3 +71,20 @@ See [DEPLOYMENT.md](DEPLOYMENT.md), [SECURITY.md](SECURITY.md),
 and [POSTGRES_CLUSTER.md](POSTGRES_CLUSTER.md). External side effects
 remain potentially ambiguous after losing a reply; at-most-once request
 admission is not exactly-once effect execution.
+
+
+## Priority 0.34 — independent certificate lifecycle preflight
+
+In addition to the existing ephemeral Zenoh handshake tests, operators
+can run `scripts/mtls_lifecycle.py` to check **actual staged or active**
+server/client certificates for correct CA trust, key correspondence,
+EKU, exact SAN and sufficient future validity. When a previous leaf is
+provided, rotation candidates must have different SHA-256 fingerprints.
+This is a read-only *operator* control, not hot PEM reload, automatic
+CA issuance, CRL/OCSP revocation, or HMAC peer identity binding.
+
+The static Zenoh policy now also rejects final-component symlinks,
+weak permissions and non-user-owned private keys in the TLS file paths.
+See [MTLS_LIFECYCLE_034.md](MTLS_LIFECYCLE_034.md) for explicit commands,
+limitations, certificate staging and controlled restart procedures.
+Real multi-host rotation and revocation remain unverified.

@@ -24,7 +24,20 @@ pub enum TransportPolicyError {
 /// Bound network configuration reads before JSON5 parsing. Never attempt to
 /// load arbitrarily large or binary operator-supplied config into memory.
 pub fn read_zenoh_config(path: &Path) -> Result<String, TransportPolicyError> {
-    let file = std::fs::File::open(path).map_err(|_| TransportPolicyError::Malformed)?;
+    let mut options = std::fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.custom_flags(libc::O_NOFOLLOW);
+    }
+    let file = options
+        .open(path)
+        .map_err(|_| TransportPolicyError::Malformed)?;
+    let metadata = file.metadata().map_err(|_| TransportPolicyError::Malformed)?;
+    if !metadata.is_file() || metadata.len() == 0 || metadata.len() > MAX_CONFIG_BYTES as u64 {
+        return Err(TransportPolicyError::Malformed);
+    }
     let mut source = String::new();
     file.take((MAX_CONFIG_BYTES + 1) as u64)
         .read_to_string(&mut source)
@@ -62,6 +75,7 @@ fn valid_loopback_endpoint(endpoint: &str) -> bool {
 }
 
 fn file_exists(config: &Value, key: &str, private: bool) -> bool {
+    const MAX_CREDENTIAL_BYTES: u64 = 1024 * 1024;
     let Some(filename) = config.get(key).and_then(Value::as_str) else {
         return false;
     };
@@ -69,16 +83,36 @@ fn file_exists(config: &Value, key: &str, private: bool) -> bool {
     if !path.is_absolute() {
         return false;
     }
-    let Ok(meta) = std::fs::symlink_metadata(path) else {
+    // Reject final-component symlinks atomically on Unix. A metadata-only
+    // check followed by Zenoh reopening the path cannot prevent swaps in
+    // operator-writable parent directories: those must be independently
+    // protected during deployments and certificate rotation.
+    let mut options = std::fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.custom_flags(libc::O_NOFOLLOW);
+    }
+    let Ok(file) = options.open(path) else {
         return false;
     };
-    if !meta.file_type().is_file() || meta.len() == 0 {
+    let Ok(meta) = file.metadata() else {
+        return false;
+    };
+    if !meta.is_file() || meta.len() == 0 || meta.len() > MAX_CREDENTIAL_BYTES {
         return false;
     }
     #[cfg(unix)]
-    if private {
-        use std::os::unix::fs::PermissionsExt;
-        if meta.permissions().mode() & 0o077 != 0 {
+    {
+        use std::os::unix::fs::{MetadataExt, PermissionsExt};
+        if meta.permissions().mode() & 0o022 != 0 {
+            return false;
+        }
+        if private
+            && (meta.permissions().mode() & 0o077 != 0
+                || meta.uid() != unsafe { libc::geteuid() })
+        {
             return false;
         }
     }
