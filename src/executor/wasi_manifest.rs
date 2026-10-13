@@ -49,9 +49,15 @@ impl SignedWasiManifest {
             || self.tool.timeout_ms > self.policy.timeout_ms
             || !self.tool.permissions.is_empty()
             || self.tool.cost_sats != 0
-            || !self.module_sha256_hex.bytes().all(|b| b.is_ascii_hexdigit())
+            || !self
+                .module_sha256_hex
+                .bytes()
+                .all(|b| b.is_ascii_hexdigit())
             || self.module_sha256_hex.len() != 64
-            || self.module_sha256_hex.bytes().any(|b| b.is_ascii_uppercase())
+            || self
+                .module_sha256_hex
+                .bytes()
+                .any(|b| b.is_ascii_uppercase())
             || self.module_sha256_hex != hex_sha256(module_sha256)
         {
             return Err(rejected("signed WASI manifest policy rejected"));
