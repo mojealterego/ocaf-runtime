@@ -18,6 +18,12 @@ use uuid::Uuid;
 
 use super::{ExecutionContext, ToolError, ToolExecutor};
 
+#[path = "wasi_manifest.rs"]
+mod signed_manifest;
+pub use signed_manifest::{
+    manifest_signing_payload, verify_signed_manifest, SignedWasiManifest,
+};
+
 const MAX_MODULE_BYTES: usize = 1024 * 1024;
 const MAX_IO_BYTES: usize = 64 * 1024;
 const MAX_MEMORY_BYTES: u64 = 64 * 1024 * 1024;
@@ -118,7 +124,8 @@ pub fn validate_wasi_imports(bytes: &[u8]) -> Result<(), ToolError> {
     Ok(())
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct SandboxPolicy {
     pub fuel: u64,
     pub max_linear_memory_bytes: u64,
@@ -268,6 +275,7 @@ pub struct WasmToolExecutor {
     engine: PinnedWasmtime,
     approved_module: Arc<[u8]>,
     approved_sha256: [u8; 32],
+    signed_binding: Option<SignedWasiManifest>,
     permits: Arc<Semaphore>,
 }
 
@@ -287,9 +295,39 @@ impl WasmToolExecutor {
             permits: Arc::new(Semaphore::new(policy.max_concurrent)),
             approved_module: Arc::from(module),
             approved_sha256: expected_module_sha256,
+            signed_binding: None,
             engine,
             policy,
         })
+    }
+
+    /// Construct a publisher-approved executable whose tool, subject,
+    /// immutable module SHA and policy are all part of an Ed25519 signature.
+    /// The supplied trust anchor must be installed by an operator.
+    pub fn from_signed_manifest(
+        engine: PinnedWasmtime,
+        module: Vec<u8>,
+        signed_json: &[u8],
+        signature: &[u8],
+        trusted_publisher_key: &[u8],
+    ) -> Result<Self, ToolError> {
+        let module_hash = sha256(&module);
+        let manifest = verify_signed_manifest(
+            signed_json,
+            signature,
+            trusted_publisher_key,
+            module_hash,
+        )?;
+        let policy = manifest.policy.clone();
+        let mut executor = Self::new(engine, module, module_hash, policy)?;
+        executor.signed_binding = Some(manifest);
+        Ok(executor)
+    }
+
+    /// Only a signed instance can advertise its operator-approved
+    /// ToolManifest to a tool registry.
+    pub fn signed_tool_manifest(&self) -> Option<&crate::registry::ToolManifest> {
+        self.signed_binding.as_ref().map(|m| &m.tool)
     }
 
     async fn run(&self, args: Value, ctx: &ExecutionContext) -> Result<Value, ToolError> {
@@ -300,6 +338,14 @@ impl WasmToolExecutor {
             .map_err(|_| rejected("WASI sandbox admission closed"))?;
         if ctx.deadline_ms == 0 {
             return Err(rejected("deadline is required"));
+        }
+        if let Some(approval) = &self.signed_binding {
+            // Only the trusted RPC ingress is permitted to supply the
+            // authenticated "tenant:agent" principal in ExecutionContext.
+            if ctx.agent_id != approval.principal() {
+                return Err(rejected("WASI signed manifest principal mismatch"));
+            }
+            approval.validate(self.approved_sha256)?;
         }
         let mut payload =
             serde_json::to_vec(&args).map_err(|_| rejected("WASI input is not serializable"))?;
