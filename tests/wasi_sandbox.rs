@@ -482,24 +482,19 @@ async fn cancelling_guest_kills_background_descendants() {
 #[tokio::test]
 async fn wasi_guest_leader_receives_sigkill_on_parent_death() {
     let folder = tempfile::tempdir().expect("temp");
-    let body = r#"
-/usr/bin/python3 - <<'PY'
-import ctypes
-import json
-import signal
-libc = ctypes.CDLL(None)
-out = ctypes.c_int()
-if libc.prctl(2, ctypes.byref(out), 0, 0, 0) != 0:
-    raise SystemExit(81)
-print(json.dumps({"parent_death_signal": out.value}))
-PY
-"#;
-    let (path, hash) = fake_engine(folder.path(), body);
-    let actual = executor(path, hash, command_fixture("{}"), SandboxPolicy::default())
+    // PR_SET_PDEATHSIG is intentionally not inherited by grandchildren.
+    // Use a direct python shebang to inspect the *same guest leader PID*
+    // after exec, not a shell-spawned grandchild which would always see 0.
+    let script = b"#!/usr/bin/python3\\nimport ctypes, json\\nlibc = ctypes.CDLL(None)\\nout = ctypes.c_int()\\nif libc.prctl(2, ctypes.byref(out), 0, 0, 0) != 0: raise SystemExit(81)\\nprint(json.dumps({'parent_death_signal': out.value}))\\n";
+    let path = folder.path().join("guest-leader");
+    fs::write(&path, script).expect("write guest leader");
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o700)).expect("chmod guest leader");
+    let actual = executor(path, digest(script), command_fixture("{}"), SandboxPolicy::default())
         .execute(json!({}), &context())
         .await
-        .expect("child pdeath signal");
+        .expect("guest leader parent death policy");
     assert_eq!(actual, json!({"parent_death_signal": libc::SIGKILL}));
+
 }
 
 #[tokio::test]
