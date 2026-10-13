@@ -174,7 +174,15 @@ async fn main() -> anyhow::Result<()> {
             served?;
         }
         "worker" => {
-            let runtime = OcafRuntime::new(0);
+            #[cfg(target_os = "linux")]
+            let runtime = ocaf_runtime::ops::wasi_config::runtime_from_env().await?;
+            #[cfg(not(target_os = "linux"))]
+            let runtime = {
+                if env::var("OCAF_WASI_MANIFEST_FILE").is_ok() {
+                    anyhow::bail!("signed WASI remote workers require Linux");
+                }
+                OcafRuntime::new(0)
+            };
             runtime.register(pricing_tool_manifest(), EchoTool).await?;
             let protocol = signed_rpc_client(&node_id, &peer_id, key)?;
             let pure_list = env::var("OCAF_CLUSTER_PURE_TOOLS").unwrap_or_default();
@@ -183,7 +191,14 @@ async fn main() -> anyhow::Result<()> {
             } else {
                 pure_list.split(',').map(str::to_owned).collect()
             };
-            let allowed = HashSet::from(["demo_echo".into()]);
+            let mut allowed = HashSet::from(["demo_echo".into()]);
+            for tool in runtime.registry.list().await {
+                if tool.name != "demo_echo" {
+                    // Exactly the operator-signed tool registered during
+                    // runtime_from_env; no untrusted capability discovery.
+                    allowed.insert(tool.name);
+                }
+            }
             let worker = if tls_mode {
                 #[cfg(feature = "tls-bound")]
                 {
