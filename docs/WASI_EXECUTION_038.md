@@ -198,3 +198,21 @@ cert-bound co coordinator.
 tenant identity, TLS worker i receipts. Decyzja o
 technicznym zamknięciu zależy od wyników CI na
 końcowym commicie. Produkcja: NO-GO.**
+
+## Utwardzenie dostępu do artefaktów operatora — 0.38
+
+Loader `src/ops/wasi_config.rs` otwiera manifest, podpis, PEM wydawcy
+i moduł przez deskryptory `O_NOFOLLOW | O_CLOEXEC`, zamiast wykonywać
+oddzielne `symlink_metadata(path)` i `read(path)` (co pozwalało na
+zamianę pliku pomiędzy sprawdzeniem a odczytem). Waliduje `fstat`
+rzeczywiście otwartego inode: zwykły plik, pojedyncze dowiązanie,
+właściciel równy effective UID procesu, zakaz uprawnień grupy/innych
+oraz ograniczenie rozmiaru przed i podczas odczytu. Testy modułowe
+obejmują poprawny plik, symlink, hardlink, tryb 0644, pusty plik i
+przekroczenie limitu.
+
+Ta zmiana **nie** blokuje podmiany komponentu katalogu nadrzędnego
+ani uruchomienia podmienionego pliku Wasmtime między weryfikacją
+SHA-256 a `execve`. Operator musi chronić katalogi instalacyjne,
+zasób zaufanych kluczy i samą binarkę silnika. Niezależny audyt
+oraz próby izolacyjne nadal są wymagane przed odbiorem etapu 0.38.
