@@ -106,7 +106,7 @@ async fn configured_runtime() -> anyhow::Result<OcafRuntime> {
                 anyhow::bail!("invalid lowercase 64-digit SHA-256");
             }
             let mut hash = [0u8; 32];
-            for (i, part) in value.as_bytes().chunks_exact(2).enumerate() {
+            for (i, part) in value.as_bytes().as_chunks::<2>().0.iter().enumerate() {
                 hash[i] = u8::from_str_radix(std::str::from_utf8(part)?, 16)?;
             }
             Ok(hash)
