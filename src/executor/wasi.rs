@@ -521,8 +521,18 @@ impl WasmToolExecutor {
         command.process_group(0);
         // The only operations in pre_exec are raw Linux syscalls. Failure
         // aborts child spawn; never silently drop the hardening policy.
+        let coordinator_pid = unsafe { libc::getpid() };
         unsafe {
             command.as_std_mut().pre_exec(move || {
+                // If OCAF dies with SIGKILL before a Rust Drop handler can
+                // execute, Linux kills the Wasmtime group leader itself.
+                if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL, 0, 0, 0) != 0 {
+                    return Err(std::io::Error::last_os_error());
+                }
+                // Close the race in which the parent died before PR_SET.
+                if libc::getppid() != coordinator_pid {
+                    return Err(std::io::Error::from_raw_os_error(libc::ECHILD));
+                }
                 // MFD_CLOEXEC protects the coordinator. Clear it only in the
                 // forked guest before execve, so binfmt_script can reopen a
                 // shebang fixture through /proc/self/fd without mutable path
