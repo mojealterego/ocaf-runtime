@@ -71,7 +71,7 @@ def inspect(repository: Path) -> dict[str, Any]:
     patches = manifest.get("patch", {}).get("crates-io", {})
     if not isinstance(patches, dict):
         raise PolicyError("malformed Cargo source patches")
-    if set(patches) - {"zenoh-transport"}:
+    if set(patches) - {"zenoh-transport", "token-cell"}:
         raise PolicyError("unaudited Cargo source patch")
     patched_transport = patches.get("zenoh-transport")
     if patched_transport is not None:
@@ -86,10 +86,28 @@ def inspect(repository: Path) -> dict[str, Any]:
         codec_ver = codec if isinstance(codec, str) else codec.get("version") if isinstance(codec, dict) else None
         if codec_ver != "0.11.6":
             raise PolicyError("Zenoh must depend on patched lz4_flex 0.11.6")
+    # Official token-cell >=3 uses maintained pastey already, but Zenoh
+    # pins ^2. Pin a reviewable 2.1.1 compatibility backport instead
+    # of silently forcing a potentially incompatible major version.
+    token_patch = patches.get("token-cell")
+    if token_patch is not None:
+        if not isinstance(token_patch, dict) or token_patch != {"path": "vendor/token-cell"}:
+            raise PolicyError("untrusted token-cell patch location")
+        vendored_token = _toml(_read_regular(root / "vendor/token-cell/Cargo.toml", MAX_MANIFEST_BYTES))
+        package_meta = vendored_token.get("package")
+        if not isinstance(package_meta, dict) or package_meta.get("name") != "token-cell" or package_meta.get("version") != "2.1.1":
+            raise PolicyError("unrecognized vendored token-cell package")
+        dependencies = vendored_token.get("dependencies")
+        alias = dependencies.get("paste") if isinstance(dependencies, dict) else None
+        if not isinstance(alias, dict) or alias.get("version") != "0.2.3" or alias.get("package") != "pastey":
+            raise PolicyError("token-cell must use the maintained pastey crate")
     seen: set[tuple[str, str, str]] = set()
     vendored_seen = 0
     registry_transport = 0
     lz4_safe = 0
+    token_vendored = 0
+    token_registry = 0
+    pastey_safe = 0
     roots = 0
     external = 0
     for pkg in packages:
@@ -106,6 +124,8 @@ def inspect(repository: Path) -> dict[str, Any]:
                 roots += 1
             elif patched_transport is not None and (pname, pversion) == ("zenoh-transport", "1.10.1"):
                 vendored_seen += 1
+            elif token_patch is not None and (pname, pversion) == ("token-cell", "2.1.1"):
+                token_vendored += 1
             else:
                 raise PolicyError("unexpected unverified local package")
             source = ""
@@ -117,6 +137,12 @@ def inspect(repository: Path) -> dict[str, Any]:
                 raise PolicyError("invalid or missing registry checksum")
             if pname == "zenoh-transport":
                 registry_transport += 1
+            if pname == "token-cell":
+                token_registry += 1
+            if pname == "pastey" and pversion == "0.2.3":
+                pastey_safe += 1
+            if pname == "paste" and token_patch is not None:
+                raise PolicyError("outdated paste dependency still in locked graph")
             if pname == "lz4_flex" and pversion == "0.11.6":
                 lz4_safe += 1
             if pname == "lz4_flex" and (pversion.startswith("0.10.") or pversion in ("0.11.0", "0.11.1", "0.11.2", "0.11.3", "0.11.4", "0.11.5", "0.12.0")):
@@ -131,12 +157,15 @@ def inspect(repository: Path) -> dict[str, Any]:
         raise PolicyError("expected root and locked crates.io dependencies not found")
     if patched_transport is not None and (vendored_seen != 1 or registry_transport or lz4_safe != 1):
         raise PolicyError("patched Zenoh transport or safe LZ4 dependency is not exclusively locked")
+    if token_patch is not None and (token_vendored != 1 or token_registry or pastey_safe != 1):
+        raise PolicyError("token-cell is not exclusively patched to maintained pastey")
     return {
         "status": "PASS",
         "lock_format": 4,
         "cargo_lock_sha256": hashlib.sha256(blob).hexdigest(),
         "registry_packages": external,
         "vendored_zenoh_transport": vendored_seen == 1,
+        "vendored_token_cell": token_vendored == 1,
         "package_count": len(packages),
         "allowed_source": ALLOWED_SOURCE,
         "scope": "static-lockfile-integrity-not-a-vulnerability-or-license-audit",

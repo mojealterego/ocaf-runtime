@@ -43,3 +43,25 @@ than blanket allowlists or pretending that a scanner failure is success.
 Perform independent TLS/mTLS handshake, multi-host cluster failure,
 backup/restore, upstream code review, artifact provenance and
 operational signoff before approving any production deployment.
+
+## Phase B — token-cell 2.1.1 compatibility backport
+
+The `paste 1.0.15` macro is unmaintained (RUSTSEC-2024-0436).
+The upstream `token-cell 3.0.0` migration already uses `pastey`,
+but Zenoh's current graph requires `token-cell ^2`, so a direct
+major-version upgrade is not a supported solution.
+
+A second, independently tested patch copies **only** the
+Cargo-verified registry source for `token-cell 2.1.1`, changes its
+`[dependencies.paste]` to `package="pastey",version="0.2.3"`
+and adds the specific `[patch.crates-io]` override. Its validation
+requires no other unauthorized source overrides and demands both
+the replacement of `paste` and retained patched `lz4_flex`.
+
+Like Phase A, the one-shot workflow pushes directly to `main`
+only after checking the resolved graph, regression tests,
+core/full compilation targets and a successful Clippy pass.
+If any step fails, its candidate changes are not committed.
+
+Remaining unmaintained crates from Zenoh's upstream TLS/configuration
+subsystems require separately reviewed API migrations.

@@ -95,6 +95,66 @@ class SupplyChainTests(unittest.TestCase):
         with self.assertRaises(sc.PolicyError):
             sc.inspect(self.root)
 
+    def _add_reviewed_token_cell_patch(self):
+        self._create_reviewed_patch()
+        crate = self.root / "vendor/token-cell"
+        crate.mkdir(parents=True)
+        (crate / "Cargo.toml").write_text(
+            '[package]\nname = "token-cell"\nversion = "2.1.1"\n'
+            '[dependencies.paste]\nversion = "0.2.3"\npackage = "pastey"\n',
+            encoding="utf-8",
+        )
+        with (self.root / "Cargo.toml").open("a", encoding="utf-8") as fh:
+            fh.write('\ntoken-cell = { path = "vendor/token-cell" }\n')
+        self.lock.write_text(
+            self.lock.read_text(encoding="utf-8")
+            + '\n[[package]]\nname = "token-cell"\nversion = "2.1.1"\n'
+            + '\n[[package]]\nname = "pastey"\nversion = "0.2.3"\n'
+            + 'source = "registry+https://github.com/rust-lang/crates.io-index"\n'
+            + 'checksum = "' + "c" * 64 + '"\n',
+            encoding="utf-8"
+        )
+
+    def test_accepts_explicit_token_cell_pastey_backport(self):
+        self._add_reviewed_token_cell_patch()
+        result = sc.inspect(self.root)
+        self.assertTrue(result["vendored_zenoh_transport"])
+        self.assertTrue(result["vendored_token_cell"])
+
+    def test_denies_token_cell_with_unmaintained_paste(self):
+        self._add_reviewed_token_cell_patch()
+        path = self.root / "vendor/token-cell/Cargo.toml"
+        path.write_text(path.read_text().replace(
+            'version = "0.2.3"\npackage = "pastey"',
+            'version = "1.0"'
+        ))
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
+    def test_denies_duplicate_registry_token_cell(self):
+        self._add_reviewed_token_cell_patch()
+        self.lock.write_text(self.lock.read_text()
+            + '\n[[package]]\nname = "token-cell"\nversion = "2.1.1"\n'
+            + 'source = "registry+https://github.com/rust-lang/crates.io-index"\n'
+            + 'checksum = "' + "d" * 64 + '"\n')
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
+    def test_denies_legacy_paste_in_patched_lockfile(self):
+        self._add_reviewed_token_cell_patch()
+        self.lock.write_text(self.lock.read_text()
+            + '\n[[package]]\nname = "paste"\nversion = "1.0.15"\n'
+            + 'source = "registry+https://github.com/rust-lang/crates.io-index"\n'
+            + 'checksum = "' + "d" * 64 + '"\n')
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
+    def test_denies_missing_vendored_token_cell(self):
+        self._add_reviewed_token_cell_patch()
+        (self.root / "vendor/token-cell/Cargo.toml").unlink()
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
     def test_refuses_missing_lockfile(self):
         self.lock.unlink()
         with self.assertRaises(sc.PolicyError):
