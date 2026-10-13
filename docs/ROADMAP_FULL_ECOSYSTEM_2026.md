@@ -63,7 +63,7 @@ traceability. Version numbers advance only after real release approvals.
 |---|---|---|---|---|
 | 0.36 | Identity/RPC | Application-layer certificate private-key proof + HMAC and pinning | Implement (opt-in) | Existing CI tests; genuine transport TLS peer binding remains blocked |
 | 0.37 | Identity/RPC | Separate TLS 1.3-bound ingress verifies live session leaf against RPC sender pin and SAN; CRL/reload/worker migration remains | Implemented experimentally / NO-GO | Real handshake and swapped-cert tests in CI; external PKI/CRL and multi-host still pending |
-| 0.38 | Execution | Restricted Wasmtime WASIp1 adapter (see [implementation](WASI_EXECUTION_038.md) and [acceptance contract](PRIORITY_038_EXECUTION_CONTRACT.md)) | **PARTIALLY IMPLEMENTED / P0 / NO-GO** | Operator-pinned Wasmtime CLI, signed-module policy still pending, deny-by-default imports, fuel/time/memory/output checks; actual E2E CI and threat review required |
+| 0.38 | Execution | Restricted Wasmtime WASIp1 adapter (see [implementation](WASI_EXECUTION_038.md) and [acceptance contract](PRIORITY_038_EXECUTION_CONTRACT.md)) | **PARTIALLY IMPLEMENTED / P0 / NO-GO** | Operator-pinned Wasmtime CLI, Ed25519 manifest, tenant/agent binding, TLS worker and HMAC receipt implemented; real WASIp1 tested in CI. Independent crash/soak, host threat review and final security acceptance pending |
 | 0.39 | Execution | Firecracker microVM broker + eBPF Aya controls + isolation attestations | P0 / NO-GO | Linux/KVM negative isolation, teardown, syscall/network constraints; mobile separate |
 | 0.40 | HA | Three physical host PostgreSQL HA, real leader fencing and failover | P0 / NO-GO | Host power loss, split-brain, former leader effect-writes rejected |
 | 0.41 | Reliability | Backup/restore, partition chaos, recovery and prolonged soak | P0 / NO-GO | RTO/RPO SLO, restore proof, job audit recovery, operator acceptance |
@@ -350,12 +350,38 @@ STAGE 0.38 NOT EXECUTED / PRODUCTION NO-GO.
   egzekwowane w warstwie narzędziowej, model zaufania
   oraz pozostałe blokery.
 
-**Ocena:** część 0.38.1–0.38.6/0.38.9 posiada kod i testy,
-ale 0.38.3 (formalnie podpisany manifest), 0.38.7 (pełne
-scoping/remote-worker), 0.38.8 (reliable teardown przy crash,
-resource accounting) oraz fizyczny host-isolation i audyt
-pozostają otwarte. `WASI` nie oznacza `Firecracker`.
+**Ocena historyczna z chwili pierwszego wdrożenia:** 0.38.1–0.38.6/0.38.9
+miały kod i testy, natomiast podpisany manifest, pełny scoping
+remote-worker i niezależny audyt pozostawały otwarte. Nowszy
+stan implementacji i aktualne blokery opisano poniżej.
+`WASI` nie oznacza `Firecracker`.
 **Etap 0.38: PARTIAL / NO-GO; następny etap wymagany do
 zamknięcia: 0.38 security hardening and acceptance,
 dopiero potem 0.39.** Wszelkie przyszłe podpisanie bramki
 musi mieć evidence konkretnych artefaktów.
+
+## Aktualizacja etapu 0.38 — signed-WASI i polityka operatora (2026-10-13)
+
+**Fakty implementacyjne (main):** izolowany proces Wasmtime/WASIp1;
+importy default-deny; deklaratywne limity fuel, pamięci, czasu, wejścia,
+wyjścia i współbieżności; podpisany przez operatora manifest Ed25519;
+powiązanie tenant/agent z uwierzytelnionym RPC TLS; zdalny worker;
+opcjonalne poświadczenia wykonania HMAC-SHA256. Operatorowo dostarczone
+pliki modułu, podpisu, manifestu i klucza są obecnie otwierane przez
+deskryptor `O_NOFOLLOW` z walidacją regularnego inode, właściciela
+effective UID, uprawnień, liczby dowiązań i rozmiaru. Dodano testy
+negatywne odrzucenia symlinków, hardlinków, plików czytelnych przez innych
+oraz naruszenia limitów wejścia.
+
+**Dowód wcześniejszego HEAD:** `5e3c08af62579cb1660ff72280ef06a141a5548a`
+posiada zakończone `Rust CI` i `Supply Chain and Provenance` ze
+statusem `success`. Nowe commity muszą mieć własne potwierdzone bramki CI;
+poprzednich wyników nie należy przenosić na nowe HEAD.
+
+**Wymagania do technicznego zamknięcia 0.38:** niezależne testy
+concurrent multi-tenant, crash/reaping, zasobów hosta i prób eksfiltracji,
+walidacja łańcucha publikacji Wasmtime oraz proces rotacji kluczy, kontrola
+uprawnień katalogów nadrzędnych i brak TOCTOU przy wykonywaniu binarium
+Wasmtime. Izolacja seccomp/cgroups/microVM jest osobnym zakresem 0.39.
+Dopóki kryteria 0.38 nie są odbierane niezależnie, status pozostaje
+**PARTIAL / NO-GO**, bez przejścia do 0.39.
