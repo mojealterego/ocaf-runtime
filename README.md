@@ -566,6 +566,18 @@ wdrożeniowych, produkcyjne zatwierdzenie pozostaje zablokowane.
 Weryfikacja testów: `python3 -m unittest discover -s scripts/tests -v`.
 Pełne wymagania i sposób użycia: [docs/RELEASE_READINESS.md](docs/RELEASE_READINESS.md).
 
+## Łańcuch dostaw i potwierdzanie pochodzenia (priorytet 0.28)
+
+`Cargo.lock` jest teraz śledzony w `main`, a CI sprawdza zapisany graf zależności
+za pomocą `--locked`. Odrębny workflow kontroluje źródła pakietów,
+advisories RustSec, licencje i integralność wpisów rejestru.
+Po przejściu kontroli generuje artefakty Linux x86_64, CycloneDX SBOM
+oraz żąda atestacji pochodzenia kompilacji i SBOM. Ich istnienie i weryfikacja
+wymagają **zakończonego sukcesem** konkretnego przebiegu GitHub Actions.
+Kontrole nie są certyfikacją produkcyjną.
+
+Szczegóły: [docs/SUPPLY_CHAIN.md](docs/SUPPLY_CHAIN.md).
+
 ## Prawa autorskie i kontakt
 
 **© 2026 MOJEALTEREGO — Andrzej Mikulski. Wszystkie prawa zastrzeżone.**

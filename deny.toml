@@ -1,0 +1,25 @@
+# Cargo dependency governance for the committed v4 lockfile.
+# No RUSTSEC exemptions; investigate and update vulnerable dependencies.
+[advisories]
+yanked = "warn"
+ignore = []
+
+[licenses]
+allow = [
+  "MIT", "MIT-0", "Apache-2.0", "Apache-2.0 WITH LLVM-exception",
+  "BSD-2-Clause", "BSD-3-Clause", "0BSD", "ISC", "CC0-1.0",
+  "Unlicense", "Zlib", "BSL-1.0", "Unicode-3.0",
+  "Unicode-DFS-2016", "MPL-2.0", "OpenSSL", "OFL-1.1",
+  "CDLA-Permissive-2.0",
+]
+confidence-threshold = 0.8
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

@@ -37,9 +37,9 @@ cargo build --locked --release --bin ocaf-coordinator --bin ocaf-cluster-health
 cargo test
 ```
 
-If no committed Cargo.lock is present, generate and review a lockfile
-before using `--locked`; **do not** treat this instruction as a claim
-that the repository already supplies a frozen dependency graph.
+The repository now tracks `Cargo.lock` on `main` (priority 0.28). Review
+its provenance and dependency changes before release; the lockfile alone
+does not establish security or license compliance. See [SUPPLY_CHAIN.md](SUPPLY_CHAIN.md).
 
 Install binaries under `/usr/local/bin`, create an unprivileged
 `ocaf` user, install `deploy/systemd/*.service` and

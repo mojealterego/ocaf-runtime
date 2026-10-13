@@ -1,0 +1,84 @@
+name: Supply Chain and Provenance
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Static dependency source and checksum validation
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s scripts/tests -p test_supply_chain.py -v
+          python3 scripts/supply_chain.py --repo .
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Verify committed Cargo dependency graph
+        run: |
+          set -euo pipefail
+          cargo metadata --format-version 1 --locked --no-deps > /dev/null
+          git diff --exit-code -- Cargo.lock
+      - name: Advisory, license, registry and dependency policy
+        uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+        with:
+          command: check
+          arguments: --all-features
+
+  attested-build:
+    if: github.event_name == 'push'
+    needs: dependency-policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Compile locked release binaries
+        run: |
+          set -euo pipefail
+          cargo build --locked --release --bins
+          mkdir -p dist
+          tar --sort=name --owner=0 --group=0 --numeric-owner \
+            --mtime="@$(git log -1 --format=%ct)" -cf - -C target/release \
+            ocaf_runtime ocaf-coordinator ocaf-cluster-health \
+            ocaf-rpc-node ocaf-effect-sink \
+            | gzip -n > dist/ocaf_runtime-linux-x86_64.tar.gz
+      - name: Generate CycloneDX 1.5 SBOM for all targets
+        run: |
+          set -euo pipefail
+          cargo install --locked cargo-cyclonedx --version 0.5.9
+          cargo cyclonedx --format json --all-features --target all \
+            --spec-version 1.5 --override-filename bom.json
+          test -s bom.json
+          mv bom.json dist/ocaf_runtime.cdx.json
+          (cd dist && sha256sum *.tar.gz *.json > SHA256SUMS)
+      - name: Upload binary, SBOM and SHA-256 checksums
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ocaf-linux-x86_64-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Sign and publish build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: dist/ocaf_runtime-linux-x86_64.tar.gz
+      - name: Sign and publish CycloneDX SBOM attestation
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: dist/ocaf_runtime-linux-x86_64.tar.gz
+          sbom-path: dist/ocaf_runtime.cdx.json

@@ -37,23 +37,25 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+      - name: Committed Cargo.lock integrity
+        run: python3 scripts/supply_chain.py --repo .
       - name: Formatting
         run: cargo fmt --all -- --check
       - name: Clippy (core only)
-        run: cargo clippy --all-targets --no-default-features -- -D warnings
+        run: cargo clippy --locked --all-targets --no-default-features -- -D warnings
       - name: Tests (core only)
-        run: cargo test --no-default-features
+        run: cargo test --locked --no-default-features
       - name: Final security acceptance (cluster isolation and fencing)
-        run: cargo test --no-default-features --test final_security_acceptance -- --test-threads=1
+        run: cargo test --locked --no-default-features --test final_security_acceptance -- --test-threads=1
       - name: Final replay acceptance (cluster isolation and nonce fencing)
-        run: cargo test --no-default-features --test final_replay_acceptance -- --test-threads=1
+        run: cargo test --locked --no-default-features --test final_replay_acceptance -- --test-threads=1
       - name: Operational health (PostgreSQL and CLI)
-        run: cargo test --no-default-features --test production_health --test health_cli
+        run: cargo test --locked --no-default-features --test production_health --test health_cli
       - name: Network chaos (real PostgreSQL via loopback fault proxy)
-        run: cargo test --no-default-features --test postgres_network_chaos -- --test-threads=1
+        run: cargo test --locked --no-default-features --test postgres_network_chaos -- --test-threads=1
       - name: Tests (Zenoh)
         run: cargo test
       - name: Transport chaos (Zenoh and PostgreSQL takeover)
-        run: cargo test --test zenoh_chaos_takeover -- --test-threads=1
+        run: cargo test --locked --test zenoh_chaos_takeover -- --test-threads=1
       - name: Clippy (full Zenoh)
-        run: cargo clippy --all-targets -- -D warnings
+        run: cargo clippy --locked --all-targets -- -D warnings
