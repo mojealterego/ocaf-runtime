@@ -1,4 +1,4 @@
-# OCAF FULL ECOSYSTEM ROADMAP — 26 PDF corpus / v2
+# OCAF FULL ECOSYSTEM ROADMAP — 26 PDF + 4 supplementary file versions / v3
 
 **State: 2026-10-13.** Repository: `mojealterego/ocaf-runtime`, **branch `main` only**.
 This document **supersedes the provisional 0.36–0.50 roadmap** in
@@ -14,6 +14,14 @@ as copies). The `Jarvis.PDF` comparison adds OmniMath. Sections
 1–33 of the last extended OCAF architecture map into the table below;
 older context-engineering drafts are covered by the MCP, OAuth,
 sandbox, L402, enterprise connectors and evaluation milestones.
+
+**Supplementary review (2026-10-13):** four newly attached PDF files
+(three versioned revisions of the OCAF/JARVIS research report and one
+Frontier 2027–2033 demonstrator, **48 file-pages including overlaps**)
+expand the roadmap rather than replacing the existing 26-file corpus.
+The 30 count is **file versions**, not 30 unique specifications.
+Added research/verification milestones 0.85–0.94, mapped below.
+New content from the PDFs is *proposed research*, not verified runtime.
 
 **No element is silently dropped.** Every row must subsequently have:
 owner, dependencies, implementation issue, threat model, executable
@@ -38,6 +46,12 @@ products. All changes are committed to `main` only.
 - **Integration and Final Acceptance (0.84):** gated artifacts for the
   selected release footprint. Unfinished research modules remain marked
   experimental instead of blocking a precisely scoped runtime release.
+- **Frontier Scientific Research (0.85–0.94):** genuinely new requirements
+  from the four supplementary file versions. These are separate research
+  milestones, not a prerequisite to starting or shipping a restricted
+  security-reviewed runtime footprint. Extraordinary claims require
+  independent benchmarks, proofs or experimental physics; physically
+  unsupported claims are explicitly held at NO-GO.
 
 The following numbers are **execution/backlog IDs**, not Cargo semantic
 versions; some may be combined after written review without losing
@@ -49,7 +63,7 @@ traceability. Version numbers advance only after real release approvals.
 |---|---|---|---|---|
 | 0.36 | Identity/RPC | Application-layer certificate private-key proof + HMAC and pinning | Implement (opt-in) | Existing CI tests; genuine transport TLS peer binding remains blocked |
 | 0.37 | Identity/RPC | Separate TLS 1.3-bound ingress verifies live session leaf against RPC sender pin and SAN; CRL/reload/worker migration remains | Implemented experimentally / NO-GO | Real handshake and swapped-cert tests in CI; external PKI/CRL and multi-host still pending |
-| 0.38 | Execution | Default-deny deterministic WASI runner for untrusted tool execution | P0 / NO-GO | No network/host FS, bounded CPU/memory/time, hostile payload tests |
+| 0.38 | Execution | Default-deny restricted WASI execution boundary (see [contract](PRIORITY_038_EXECUTION_CONTRACT.md)) | **NEXT / P0 / NOT STARTED** | Signed module, default-deny host imports/FS/network, bounded fuel/time/memory/output, adversarial integration tests; no production claim |
 | 0.39 | Execution | Firecracker microVM broker + eBPF Aya controls + isolation attestations | P0 / NO-GO | Linux/KVM negative isolation, teardown, syscall/network constraints; mobile separate |
 | 0.40 | HA | Three physical host PostgreSQL HA, real leader fencing and failover | P0 / NO-GO | Host power loss, split-brain, former leader effect-writes rejected |
 | 0.41 | Reliability | Backup/restore, partition chaos, recovery and prolonged soak | P0 / NO-GO | RTO/RPO SLO, restore proof, job audit recovery, operator acceptance |
@@ -96,6 +110,16 @@ traceability. Version numbers advance only after real release approvals.
 | 0.82 | OmniThermo + OmniQUBO | Energy cost models, optimization constraints and QUBO experiments | Research | Real power telemetry, optimization reproducibility |
 | 0.83 | OmniAlign | Human-aligned safety gates, conformal uncertainty, refusals | Research | Adversarial evaluation, audited policy, human approval for risky actions |
 | 0.84 | End-to-end acceptance | System integration, external review and product release readiness | Release gate | Signed acceptance for each supported optional domain pack |
+| 0.85 | OmniProof-STARK | Research a real verifier for formally specified task predicates, not unrestricted model reasoning | **Research / NO-GO** | Concrete relation, witness/public statement separation, soundness assumptions, valid/invalid/corrupted-proof tests, measured proof sizes/costs |
+| 0.86 | OmniMacro / Causal Emergence | Experimentally aggregate micro-agent state without losing per-agent audit, permissions or fencing | **Research / NO-GO** | Baseline, reversible state aggregation, information loss bounds, effect equivalence, falsifiable causal metrics |
+| 0.87 | OmniMarket-L402+ | Optional payment-channel state machine atop 0.49; no direct production settlement authority | **Research / NO-GO** | Signed sequence/nonces, channel conservation, two-sided dispute and timeout handling, durable replay and manual spending limits |
+| 0.88 | OmniSubstrate | Sandboxed Wasm/Cranelift specialization of *approved pure* hot paths, optional SIMD, exploratory FPGA | **Research / NO-GO** | Equivalence tests, independent limits and signatures; performance measured vs baseline, deterministic fallback |
+| 0.89 | Proof-Carrying RSI | Candidate code changes with independently checkable Lean/SMT contracts and human-authorized deployment | **Research / NO-GO** | Real proof kernel, property scope, compiled artifact binding, adversarial invalid proofs; no automated production hot-swap |
+| 0.90 | OmniThermo-Governor | Hardware-sourced RAPL/power telemetry and budget policy extending 0.82/0.65 | **Research / NO-GO** | Calibration vs wall power, sensor absence/rollover, per-tenant attribution error, enforcement tests; simulated values labelled |
+| 0.91 | Neuromorphic HIL / Loihi 2 | Optional experimental SNN routing adapter with CPU/GPU fallback | **Research / hardware dependency** | Actual device access and reproducible energy-delay-quality data; no claimed production acceleration |
+| 0.92 | Biocomputing / wetware | Ethics-first feasibility study, not an implementation commitment of biologically based cognition | **Exploratory / NO-GO** | Independent scientific validation, safety/biosafety/legal and ethics review; no live human-derived materials under current scope |
+| 0.93 | Optical/holographic state | Investigate optical storage/links as laboratory alternatives; do not replace authoritative PostgreSQL | **Exploratory / NO-GO** | Physical experimental design, measured bandwidth/latency, consistency under faults; reject zero-latency or nonlocal synchronization claims |
+| 0.94 | Topological error correction / PQC | Evaluate defined fault-tolerant coding and cryptographic constructions separately | **Exploratory / NO-GO** | Standards-backed threat model and independently reviewed proof/security analysis; no 'gravity-proof' guarantee |
 
 ## Mapping to final extended PDF (chapters 1–33)
 
@@ -192,6 +216,118 @@ certificate renewal, migration of remote worker roles, real multi-host
 host isolation and external acceptance remain **open blockers**.
 See [TLS_PEER_IDENTITY_037.md](TLS_PEER_IDENTITY_037.md).
 
-The entire 0.38–0.84 roadmap, including *all specialized agent swarms*,
+The entire 0.38–0.94 roadmap, including *all specialized agent swarms*,
 remains mandatory scope. No experimental module is claimed complete
 merely because its architecture is described in the source PDFs.
+
+---
+
+## Aktualizacja przed 0.38 — stan weryfikacji (2026-10-13)
+
+**Ostatni sprawdzony commit źródłowy przed aktualizacją planu:**
+`6bfc77714e6ecb3a5bda65246bbc69641e1ea8f9`
+(`main`, security: invalid transport selection rejected).
+Na tym commicie GitHub Actions potwierdził **Rust CI success**
+(`38398928258`) i **Supply Chain success** (`38398928287`).
+To nie jest odbiór produkcyjny i nie jest wynik testów jeszcze
+niezaimplementowanego sandboxa. Po kolejnych commitach sprawdzić
+**ich własny** status CI.
+
+**Inwentaryzacja kodu dla 0.38:** `src/executor/mod.rs` implementuje
+abstrakcję `ToolExecutor` i timeout zadania; `src/registry/mod.rs`
+kompiluje JSON Schema, odrzucając zewnętrzne `$ref`.
+Na sprawdzonym `main` brak backendu Wasm/WASI, Firecracker i Aya
+w `Cargo.toml`. Dlatego **0.38 = NOT STARTED, 0.39 = NOT STARTED**.
+Etap 0.37 dostarczył alternatywny listener TLS-bound na rzeczywistej
+sesji mTLS, lecz rotacja/revocation i migracja innych ról nie są gotowe.
+
+### Przedimplementacyjny kontrakt etapu 0.38
+
+Kanoniczne wymagania oraz przypadki RED/GREEN znajdują się w
+[PRIORITY_038_EXECUTION_CONTRACT.md](PRIORITY_038_EXECUTION_CONTRACT.md).
+Kolejność: (1) ADR silnika/WASI i wersji zależności; (2) izolowany
+`WasmToolExecutor`; (3) podpis/digest i allowlista importów; (4)
+host FS/network/secret **default-deny**; (5) bounded fuel, memory,
+stack, wall time, concurrency, stdin/stdout; (6) ścisły profil
+determinizmu; (7) integracja polityk i fencing; (8) testy ataków,
+cleanup oraz metryki; (9) CI + audyt z dowodami końcowego commitu.
+Nie wolno awansować tego etapu do `DONE` na podstawie projektowego
+dokumentu ani sukcesu innego commitu.
+
+### Macierz pokrycia czterech nowych załączników
+
+| Materiał | Zawartość | Realizacja/backlog | Status dowodowy |
+|---|---|---|---|
+| Raport architektoniczny — wersja podstawowa (12 stron) | Rust/MCP, dynamiczna fuzja schematów, Zenoh/SHM, CRDT, L402/ZKP, Firecracker/eBPF, PQC, Loihi, finansowanie | 0.38–0.49, 0.82, 0.91, grant track | Wymagania/koncepcje; liczby wydajności z raportu wymagają pomiarów |
+| Raport architektoniczny — rewizja (12 stron) | To samo jądro koncepcyjne, pomiary obiecanej wydajności i plan M0–M5 | 0.38–0.49, 0.91 | Powtórzenia deduplikowane, brak uznanego dowodu benchmarków |
+| Raport architektoniczny — rozszerzenie (14 stron) | M0–M9, Loihi, kwantowo-neuromorficzne HIL, wetware, optyka holograficzna, 'kwantowo-grawitacyjna' kryptografia | 0.45, 0.90–0.94 | M6–M9 wyłącznie eksploracyjne; zero-latency / odporność na grawitację nieudowodnione |
+| Frontier 2027–2033, „Dokument bez nazwy” (10 stron) | OmniThermo-Governor, OmniProof-STARK, OmniMacro, OmniMarket-L402+, OmniSubstrate, proof-carrying RSI | 0.82 i 0.85–0.90 | Kod demonstracyjny, brak dowodu implementacji STARK, Lean, JIT, RAPL lub rzeczywistych kanałów rozliczeń |
+
+**Mapowanie M0–M9 bez tworzenia równoległych implementacji:** M0 =
+0.43/Rust MCP; M1 = 0.46/SHM + CRDT; M2 = 0.49/0.87 L402/ZKP;
+M3 = 0.38–0.39 WASI/Firecracker/eBPF; M4 = 0.43/0.45 dynamiczne
+schematy i PQC; M5 = 0.91 neuromorfika; M6 = 0.91/0.94 HIL i
+konstrukcje kryptograficzne; M7 = 0.92 wetware; M8 = 0.93 optyka;
+M9 = 0.94 topologia/PQC. M1 nigdy nie daje uprawnień CRDT do
+sterowania autorytatywnym liderem; M8 nie może zastąpić dziennika
+finansowego ani leasingu PostgreSQL.
+
+### Korekty twierdzeń technicznych z dokumentów wejściowych
+
+- **STARK:** funkcja `verify_reasoning_trace` w załączonym pseudokodzie
+  porównuje digest SHA-256; nie wykonuje weryfikacji dowodu STARK
+  ani dowodu semantycznej prawdziwości wyniku modelu. Wariant realny
+  wymaga jawnego twierdzenia, circuit/AIR, poprawnego systemu
+  kryptograficznego oraz niezależnego verifiera.
+- **RAPL:** `record_execution_energy` jawnie estymuje energię z liczby
+  cykli; brak rzeczywistego odczytu czujnika. Limit Landauera to
+  fizyczna granica teoretyczna, nie budżet produkcyjnego scheduler'a.
+- **OmniMacro:** próg entropii i mnożnik `0.45` są heurystyką,
+  a nie dowodem emergencji przyczynowej lub 55–85% oszczędności.
+- **L402+**: mutacja dwóch pól `balance_agent_a/b` w pamięci
+  nie realizuje podpisanego kanału z depozytem, arbitrażem, durable
+  ledger i settlement; nie może wydawać środków realnych.
+- **RSI / formalny hot swap:** uruchomienie `candidate_fn` z jednym
+  `test_input` i ustawienie stałej sumy bajtów jako `binary_hash`
+  nie dowodzi trójki Hoare'a. Wymagane niezależny checker i
+  atestacja *konkretnego* binarium; każda produkcyjna zmiana
+  wymaga zatwierdzenia człowieka.
+- **Wasm/JIT:** fragmenty przedstawione jako 'OmniSubstrate'
+  nie są automatycznie działającym Cranelift/FPGA/ASIC backendem;
+  obietnice inferencji w nanosekundach wymagają niezależnych
+  benchmarków pod zdefiniowanym obciążeniem.
+- **Holograficzna pamięć/kwantowa grawitacja/wetware:** deklaracje
+  jednoczesnego nie-lokalnego stanu, zerowych opóźnień albo
+  odporności kryptografii na dowolne zakłócenia nie są kryteriami
+  wdrożeniowymi. Najpierw fizycznie wykonalne hipotezy i etyka.
+- **Rust/Zenoh/MCP:** wydajność, bezpieczeństwo, wersja protokołu
+  i skalowalność zależą od konfiguracji; dokumenty nie
+  certyfikują własnych porównań 16×/67 Gbps/10 000 agentów.
+- **Licencje:** deklaracja `MIT` w `Cargo.toml` i zastrzeżenie
+  w README wymagają uzgodnienia przed publicznym produkcyjnym
+  wydaniem, bez cichej zmiany praw użytkowania.
+
+### Grant/ESG — osobny strumień nietechniczny
+
+Źródłowe raporty wymieniają NCBR/FENG SMART, PARP/Platformy
+Startowe, regionalne inicjatywy na Śląsku, KFS oraz ESG.
+Stan programów, aktualne nabory, regulaminy, kwalifikowalność,
+kwoty i wymogi współfinansowania **nie zostały tu zweryfikowane**.
+Backlog `G-01`: zestawić aktualne oficjalne ogłoszenia,
+`G-02`: policzyć TCO i baseline energii oraz emisji,
+`G-03`: przygotować oddzielną, mierzalną narrację B+R bez
+nieudowodnionych gwarancji; nie mieszać tego z akceptacją kodu.
+
+### Zależności, ryzyka i kolejność startu
+
+`0.38` (WASI ograniczone wykonanie) → `0.39` (izolacja
+host/KVM) → `0.40` (realne HA/fencing) → `0.41`
+(disaster recovery/chaos/soak) → `0.42` (release review).
+Prace `0.43–0.84` mogą mieć prototypy za flagą feature,
+lecz wykonanie narzędzi o wysokim ryzyku **nie uzyskuje**
+praw produkcyjnych przed bramkami bezpieczeństwa.
+Wszystkie specialist swarms 0.56–0.71 pozostają w mapie.
+Badania 0.85–0.94 nie odblokowują automatycznie wdrożenia.
+
+**Decyzja na koniec aktualizacji planu:** ROADMAP UPDATED /
+STAGE 0.38 NOT EXECUTED / PRODUCTION NO-GO.
