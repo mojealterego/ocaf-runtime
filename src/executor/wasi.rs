@@ -230,6 +230,38 @@ impl PinnedWasmtime {
     }
 }
 
+/// Terminate an entire subprocess group if execution is cancelled, times out,
+/// traps, or returns. Tokio's kill_on_drop covers only the immediate child;
+/// a compromised engine could otherwise leave its descendants running.
+///
+/// This is best-effort Linux process supervision, NOT host sandbox isolation:
+/// an adversarial process able to create a new session can escape this group.
+struct WasiProcessGroup {
+    pgid: libc::pid_t,
+}
+
+impl WasiProcessGroup {
+    fn for_child(child: &tokio::process::Child) -> Result<Self, ToolError> {
+        let pid = child
+            .id()
+            .and_then(|pid| libc::pid_t::try_from(pid).ok())
+            .filter(|pid| *pid > 0)
+            .ok_or_else(|| ToolError::Execution("WASI child process ID unavailable".into()))?;
+        Ok(Self { pgid: pid })
+    }
+}
+
+impl Drop for WasiProcessGroup {
+    fn drop(&mut self) {
+        // Negative PID addresses the dedicated process group (never OCAF's).
+        // Ignore ESRCH when the whole group already exited. No descendants
+        // should retain privileges to setpgid or setsid under this policy.
+        unsafe {
+            libc::kill(-self.pgid, libc::SIGKILL);
+        }
+    }
+}
+
 struct EphemeralModule {
     directory: PathBuf,
     module_path: PathBuf,
@@ -412,10 +444,16 @@ impl WasmToolExecutor {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .kill_on_drop(true);
+        // Isolate the guest's OS process group from the coordinator so
+        // cleanup can terminate descendants in addition to the Wasmtime PID.
+        command.process_group(0);
 
         let mut child = command
             .spawn()
             .map_err(|_| ToolError::Execution("cannot start pinned WASI runtime".into()))?;
+        // Declared after child so Drop sends SIGKILL to the group before
+        // Tokio drops the immediate child when a future is cancelled.
+        let _group_guard = WasiProcessGroup::for_child(&child)?;
         let mut stdin = child
             .stdin
             .take()
