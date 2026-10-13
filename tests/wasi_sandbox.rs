@@ -128,7 +128,7 @@ fn stdin_reading_command_fixture(message: &str) -> Vec<u8> {
     code.extend(leb(body.len()));
     code.extend(body);
     section(&mut wasm, 10, &code);
-    let message = format!("{message}\\n");
+    let message = format!("{message}\n");
     let mut data = vec![0; 88];
     data[0..4].copy_from_slice(&88u32.to_le_bytes());
     data[4..8].copy_from_slice(&(message.len() as u32).to_le_bytes());
