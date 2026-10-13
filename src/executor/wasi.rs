@@ -201,7 +201,9 @@ fn open_engine_source(path: &Path) -> Result<File, ToolError> {
         || meta.len() == 0
         || meta.len() > MAX_ENGINE_BYTES
     {
-        return Err(rejected("WASI engine inode ownership, link count, mode or size rejected"));
+        return Err(rejected(
+            "WASI engine inode ownership, link count, mode or size rejected",
+        ));
     }
     Ok(file)
 }
@@ -526,7 +528,8 @@ impl WasmToolExecutor {
                 // shebang fixture through /proc/self/fd without mutable path
                 // lookup. The parent descriptor stays CLOEXEC.
                 let flags = libc::fcntl(engine_fd, libc::F_GETFD);
-                if flags < 0 || libc::fcntl(engine_fd, libc::F_SETFD, flags & !libc::FD_CLOEXEC) < 0 {
+                if flags < 0 || libc::fcntl(engine_fd, libc::F_SETFD, flags & !libc::FD_CLOEXEC) < 0
+                {
                     return Err(std::io::Error::last_os_error());
                 }
                 if libc::prctl(libc::PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) != 0 {
