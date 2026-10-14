@@ -153,10 +153,10 @@ jobs:
             export OCAF_TLS_SERVER_CA_FILE="$fixture/ca.pem"
             export OCAF_TLS_RPC_ADDRESS="127.0.0.1:$port"
             export OCAF_TLS_RPC_SERVER_DNS=localhost
-            export OCAF_ACTION=resolve
-            export OCAF_TOOL=ocaf_ci_noop
-            target/debug/ocaf-rpc-node >/dev/null
-            echo "SYNTHETIC_TLS_BOUND_SIGNED_TOOL_RESOLUTION_PASSED"
+            export OCAF_ACTION=discover
+            response="$(target/debug/ocaf-rpc-node)"
+            python3 -c 'import json,sys; data=json.loads(sys.stdin.read()); assert isinstance(data.get("output"),list) and any(isinstance(tool,dict) and tool.get("name")=="ocaf_ci_noop" for tool in data["output"]), "Signed WASI tool missing from authenticated discovery"' <<< "$response"
+            echo "SYNTHETIC_TLS_BOUND_SIGNED_TOOL_DISCOVERY_PASSED"
           done
           python3 scripts/stage038_host_gate.py \
             --unit "$unit" --report stage038-signed-wasi-systemd-host.json
