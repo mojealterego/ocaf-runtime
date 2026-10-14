@@ -38,7 +38,7 @@ class TwoTenantFixturesTests(unittest.TestCase):
                                  hashlib.sha256((base / "module.wasm").read_bytes()).hexdigest())
                 self.assertEqual(peers[agent]["allowed_tools"], [tool])
                 other = "agent-b" if agent == "agent-a" else "agent-a"
-                self.assertEqual(peers[other]["allowed_tools"], [])
+                self.assertEqual(peers[other]["allowed_tools"], ["demo_echo"])
                 verified = subprocess.run([
                     "openssl", "pkeyutl", "-verify", "-rawin", "-pubin",
                     "-inkey", str(base / "publisher.pem"),

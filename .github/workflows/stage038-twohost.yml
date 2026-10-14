@@ -130,7 +130,7 @@ jobs:
               raise SystemExit("unexpected synthetic peer fixture")
           if peers["agent-a"]["allowed_tools"] != ["ocaf_ci_noop"]:
               raise SystemExit("missing authorized positive control")
-          peers["agent-b"]["allowed_tools"] = []
+          peers["agent-b"]["allowed_tools"] = ["demo_echo"]
           path.write_text(json.dumps(peers, sort_keys=True),encoding="utf-8")
           PY
           for file in module.wasm manifest.json manifest.sig publisher.pem server.pem server.key ca.pem peers.json; do
@@ -365,16 +365,16 @@ jobs:
           export OCAF_TLS_CLIENT_KEY_FILE="$client/agent-b.key"
           export OCAF_SHARED_KEY_B64="$("$py" -c 'import json,sys;print(json.load(open(sys.argv[1]))["agent-b"])' "$client/private-hmac.json")"
           # Positive control: peer B successfully authenticated over the same
-          # TLS tunnel and can discover exactly zero executable tools.
+          # TLS tunnel but cannot discover the signed WASI tool.
           export OCAF_ACTION=discover
           target/debug/ocaf-rpc-node >"$RUNNER_TEMP/peer-b-discover.json" 2>"$RUNNER_TEMP/peer-b-discover.stderr"
           "$py" - "$RUNNER_TEMP/peer-b-discover.json" <<'PY'
           import json,sys
           reply=json.load(open(sys.argv[1]))
-          if reply.get("status") != "ok" or reply.get("output") != [] or reply.get("sender") != "coord-twohost-a" or reply.get("recipient") != "agent-b":
+          if reply.get("status") != "ok" or not isinstance(reply.get("output"),list) or any(item.get("name")=="ocaf_ci_noop" for item in reply["output"] if isinstance(item,dict)) or reply.get("sender") != "coord-twohost-a" or reply.get("recipient") != "agent-b":
               raise SystemExit("peer B did not authenticate with empty permissions")
           PY
-          echo "PEER_B_AUTHENTICATED_MTLS_WITH_NO_EXECUTION_CAPABILITY"
+          echo "PEER_B_AUTHENTICATED_MTLS_WITHOUT_SIGNED_WASI_CAPABILITY"
           export OCAF_ACTION=call
           denial_exit=0
           target/debug/ocaf-rpc-node >"$RUNNER_TEMP/cross-principal.stdout" 2>"$RUNNER_TEMP/cross-principal.stderr" || denial_exit=$?

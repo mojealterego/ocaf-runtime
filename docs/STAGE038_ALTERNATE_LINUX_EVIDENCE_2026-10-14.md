@@ -36,3 +36,5 @@ Ponownie uruchomić już istniejący pięcioszardowy workflow `stage038-extended
 ### Wynik ujemnego testu 38613269443 — RED potwierdzony
 
 Poprzedni test rozróżniający transport od odmowy policyjnej zakończył się NO-GO, ponieważ agent B otrzymał podpisaną odpowiedź RPC o statusie FAILED (stdout), zamiast odmowy na poziomie ingress. W tym stanie nie można dowieść, że egzekucja została zatrzymana **przed** runtime. Przed kolejnym uruchomieniem jawnie ustawiono `allowed_tools=[]` dla agenta B w rzeczywistej konfiguracji koordynatora testowego; dodano dodatnią próbę uwierzytelnienia B przez mTLS i pusty discovery, po czym odmowa uruchomienia narzędzia musi nastąpić po stronie RPC. Taki test dowodzi polityki konkretnego agenta w CI; nadal nie dowodzi izolacji dwóch niezależnych tenantów na trwałym staging.
+
+**Poprawka kontraktu polityki koordynatora:** `load_peers` celowo odrzuca `allowed_tools=[]`. Negatywny agent posiada wyłącznie niewrażliwy `demo_echo`, a NIE `ocaf_ci_noop`/tenant-bound WASI, co pozwala udowodnić uwierzytelnienie i policyjny zakaz wykonania narzędzia bez osłabiania fail-closed parsera.

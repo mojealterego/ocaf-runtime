@@ -40,7 +40,7 @@ def rewrite_signed_tenant(root: Path, tenant: str, principal: str, tool: str) ->
     if set(peers) != {"agent-a", "agent-b"}:
         raise ValueError("unexpected per-tenant principal set")
     for peer, config in peers.items():
-        config["allowed_tools"] = [tool] if peer == principal else []
+        config["allowed_tools"] = [tool] if peer == principal else ["demo_echo"]
     peers_path.write_text(json.dumps(peers, sort_keys=True), encoding="utf-8")
     for name in ("module.wasm", "manifest.json", "signing-input.bin",
                  "manifest.sig", "peers.json"):
