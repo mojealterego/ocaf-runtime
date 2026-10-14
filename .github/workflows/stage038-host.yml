@@ -47,6 +47,65 @@ jobs:
             echo "Synthetic systemd unit remained active after stop" >&2
             exit 1
           fi
+      - name: SIGKILL synthetic coordinator leader and verify cgroup descendant reaping (CI ONLY)
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          test "${GITHUB_ACTIONS:-}" = "true"
+          test "$(uname -m)" = "x86_64"
+          unit=ocaf-stage038-ci-kill.service
+          trap 'sudo systemctl stop "$unit" >/dev/null 2>&1 || true' EXIT
+          sudo systemd-run --unit=ocaf-stage038-ci-kill \
+            --property=User=ocaf \
+            --property=NoNewPrivileges=yes \
+            --property=KillMode=control-group \
+            --property=Restart=no \
+            --property=RuntimeMaxSec=45s \
+            /usr/bin/python3 -c 'import subprocess,time; subprocess.Popen(["/bin/sleep","40"]); time.sleep(40)'
+          child_pid=""
+          leader_pid=""
+          for i in $(seq 1 40); do
+            leader_pid="$(systemctl show -P MainPID "$unit")"
+            if [[ "$leader_pid" =~ ^[1-9][0-9]*$ ]]; then
+              child_pid="$(pgrep -P "$leader_pid" -f '/bin/sleep 40' | head -n 1 || true)"
+            fi
+            test -n "$child_pid" && break
+            sleep 0.2
+          done
+          test -n "$child_pid" || {
+            echo "::error::Synthetic cgroup descendant did not start; cannot certify kill test"
+            exit 1
+          }
+          sudo systemctl kill --kill-whom=main --signal=SIGKILL "$unit"
+          for i in $(seq 1 60); do
+            state="$(ps -o stat= -p "$child_pid" 2>/dev/null || true)"
+            if { [[ -z "$state" || "$state" == Z* ]]; } && ! systemctl is-active --quiet "$unit"; then
+              break
+            fi
+            sleep 0.2
+          done
+          state="$(ps -o stat= -p "$child_pid" 2>/dev/null || true)"
+          if [[ -n "$state" && "$state" != Z* ]] || systemctl is-active --quiet "$unit"; then
+            echo "::error::Synthetic descendant remained live after leader SIGKILL"
+            exit 1
+          fi
+          python3 - "$leader_pid" "$child_pid" <<'PY'
+          import json,os,sys
+          from datetime import datetime,timezone
+          report={"schema_version":1,"kind":"synthetic-systemd-cgroup-kill",
+                  "at_utc":datetime.now(timezone.utc).isoformat(),
+                  "leader_pid":int(sys.argv[1]),"descendant_pid":int(sys.argv[2]),
+                  "leader_signal":"SIGKILL","descendant_running_after":False,
+                  "synthetic_ci_only":True,"actual_ocaf_staging":False,
+                  "stage_038_complete":False}
+          fd=os.open("stage038-ci-chaos.json",os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600)
+          with os.fdopen(fd,"w") as out:
+              json.dump(report,out,indent=2)
+              out.write("\n")
+          print("SYNTHETIC_SYSTEMD_SIGKILL_DESCENDANT_REAPING_VERIFIED")
+          PY
+
       - name: Publish bounded host-preflight evidence (not production signoff)
         if: always()
         uses: actions/upload-artifact@v4
@@ -55,5 +114,6 @@ jobs:
           path: |
             stage038-ci-host.json
             stage038-ci-unit.json
+            stage038-ci-chaos.json
           if-no-files-found: warn
           retention-days: 30
