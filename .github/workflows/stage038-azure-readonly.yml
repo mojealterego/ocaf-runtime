@@ -1,0 +1,47 @@
+name: OCAF 0.38 Azure Free-Tier Inventory (read-only; NO-GO)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  inspect-azure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Test redaction and deny-by-default with no Azure access
+        run: python3 -m unittest discover -s scripts/tests -p test_azure_stage038_inventory.py -v
+      - name: Check OIDC configuration without exposing values
+        env:
+          CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${CLIENT_ID}" || -z "${TENANT_ID}" || -z "${SUBSCRIPTION_ID}" ]]; then
+            echo "Azure OIDC not configured. No authenticated Azure request was made."
+            exit 1
+          fi
+      - name: Login with short-lived GitHub OIDC (no passwords or stored Azure keys)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Observe Azure identity and existing VM count; no mutations
+        run: python3 scripts/azure_stage038_inventory.py --report stage038-azure-readonly.json
+      - name: Archive sanitized Azure diagnostics only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage038-azure-inventory
+          path: stage038-azure-readonly.json
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,74 @@
+# Independent Linux x86_64 VM evidence on CircleCI. No infrastructure provisioning.
+# Deliberately OFF by default: no credits consumed by merely importing a project.
+version: 2.1
+
+parameters:
+  run_stage038_linux:
+    type: boolean
+    default: false
+
+jobs:
+  real-linux-vm-preflight:
+    machine:
+      image: ubuntu-2404:current
+    resource_class: medium
+    working_directory: ~/project
+    environment:
+      OCAF_STAGE: "038"
+    steps:
+      - checkout
+      - run:
+          name: Record actual Linux x86_64 PID 1 and cgroup2 host evidence
+          command: |
+            set -euo pipefail
+            umask 077
+            mkdir -p .circleci/evidence
+            python3 -m unittest discover -s scripts/tests -p test_stage038_host_gate.py -v
+            python3 scripts/stage038_host_gate.py --report .circleci/evidence/circleci-host-gate.json
+      - store_artifacts:
+          path: .circleci/evidence
+          destination: ocaf038-independent-circleci-host
+
+  signed-wasi-short-soak:
+    machine:
+      image: ubuntu-2404:current
+    resource_class: medium
+    working_directory: ~/project
+    environment:
+      CARGO_INCREMENTAL: "0"
+      CARGO_BUILD_JOBS: "2"
+      OCAF_WASI_SOAK_CYCLES: "5"
+      OCAF_WASI_ACCEPTANCE_REPORT: "/home/circleci/project/.circleci/evidence/circleci-real-wasi.json"
+    steps:
+      - checkout
+      - run:
+          name: Compile and test Wasmtime only on real Linux x86_64
+          no_output_timeout: 20m
+          command: |
+            set -euo pipefail
+            umask 077
+            mkdir -p .circleci/evidence
+            test "$(uname -m)" = "x86_64"
+            if ! command -v cargo >/dev/null 2>&1; then
+              curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 https://sh.rustup.rs -o /tmp/ocaf038-rustup.sh
+              sh /tmp/ocaf038-rustup.sh -y --profile minimal --default-toolchain 1.99.0
+              rm -f /tmp/ocaf038-rustup.sh
+              . "$HOME/.cargo/env"
+            else
+              rustup toolchain install 1.99.0 --profile minimal
+            fi
+            rustup default 1.99.0
+            bash scripts/wasmtime_acceptance.sh
+      - store_artifacts:
+          path: .circleci/evidence
+          destination: ocaf038-independent-circleci-wasi
+
+workflows:
+  # Requires an explicit parameter at manual/API trigger. Never starts on repository pushes by default.
+  stage038_free_account_opt_in:
+    when: << pipeline.parameters.run_stage038_linux >>
+    jobs:
+      - real-linux-vm-preflight
+      - signed-wasi-short-soak:
+          requires:
+            - real-linux-vm-preflight
