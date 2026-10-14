@@ -8,6 +8,8 @@ on:
       - "scripts/stage038_relay.py"
       - "scripts/stage038_tunnel_client.py"
       - "scripts/stage038_relay_requirements.txt"
+      - docs/STAGE038_INDEPENDENT_AUDIT_HANDOFF.md
+      - docs/STAGE038_ALTERNATE_LINUX_EVIDENCE_2026-10-14.md
       - "scripts/stage038_assert_denial.py"
       - "scripts/tests/test_stage038_assert_denial.py"
       - "scripts/ci_stage038_signed_wasi_fixtures.py"

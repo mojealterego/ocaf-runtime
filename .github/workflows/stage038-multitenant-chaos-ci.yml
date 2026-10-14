@@ -6,6 +6,8 @@ on:
       - .github/workflows/stage038-multitenant-chaos-ci.yml
       - scripts/stage038_multitenant_fixtures.py
       - scripts/stage038_multitenant_acceptance.py
+      - docs/STAGE038_INDEPENDENT_AUDIT_HANDOFF.md
+      - docs/STAGE038_ALTERNATE_LINUX_EVIDENCE_2026-10-14.md
       - scripts/tests/test_stage038_multitenant_fixtures.py
       - scripts/ci_stage038_signed_wasi_fixtures.py
       - src/**
