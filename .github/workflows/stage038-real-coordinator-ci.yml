@@ -23,7 +23,9 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: dtolnay/rust-toolchain@stable
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
       - name: Build actual OCAF coordinator locked and feature restricted
         run: cargo build --locked --bin ocaf-coordinator --features zenoh
       - name: Start real OCAF coordinator (only loopback/ephemeral credentials), inspect cgroup, SIGKILL
@@ -147,7 +149,7 @@ jobs:
           PY
       - name: Upload real coordinator CI evidence (NOT signed WASI staging)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: stage038-actual-coordinator-systemd-ci
           path: |
