@@ -92,8 +92,15 @@ def require_positive(binary: Path, root: Path, tenant: str, principal: str,
                      tool: str, port: int) -> None:
     result = invoke(binary, root, tenant, principal, port, tool=tool)
     if result.returncode != 0:
+        # Exact CLI error lines are fixed by the trusted RPC client; do not print
+        # raw tool output, secret paths, HMACs, or credential-bearing stderr.
+        known = {b"Error: deadline has elapsed\n": "rpc_deadline_elapsed",
+                 b"Error: remote RPC rejected\n": "rpc_ingress_policy_denied",
+                 b"Error: remote tool call failed: Failed\n": "rpc_signed_wasi_failed",
+                 b"Error: remote tool call failed: Timeout\n": "rpc_signed_wasi_timeout"}
+        category = known.get(result.stderr, error_category(result.stderr))
         raise RuntimeError(f"authenticated tenant {tenant} execution failed: "
-                           f"{error_category(result.stderr)} (exit={result.returncode})")
+                           f"{category} (exit={result.returncode})")
     try:
         reply = json.loads(result.stdout)
     except ValueError as exc:

@@ -119,6 +119,22 @@ jobs:
             --binary "$GITHUB_WORKSPACE/target/debug/ocaf-rpc-node" \
             --port-a "$OCAF_PORT_A" --port-b "$OCAF_PORT_B" \
             --report stage038-multitenant-chaos-report.json
+      - name: Emit bounded secret-free coordinator health diagnostics on failures
+        if: failure()
+        run: |
+          for tenant in tenant-a tenant-b; do
+            printf '%s\n' "SYSTEMD_HEALTH_FOR_$tenant"
+            sudo systemctl show "ocaf-$tenant.service" \
+              --property=ActiveState --property=SubState \
+              --property=MainPID --property=ExecMainStatus \
+              --property=NRestarts --no-pager || true
+            sudo grep -Eo 'wasi_failure_class=[a-z_]+' \
+              "/var/lib/ocaf-$tenant/coordinator.log" 2>/dev/null | \
+              sort | uniq -c || true
+            sudo grep -Eo 'authenticated RPC tool call failed|RPC ingress|TLS-bound|WASI runtime|error: [A-Za-z_]+' \
+              "/var/lib/ocaf-$tenant/coordinator.log" 2>/dev/null | \
+              sort | uniq -c || true
+          done
       - name: Upload only sanitized disposable CI evidence
         if: always()
         uses: actions/upload-artifact@v4
