@@ -1018,6 +1018,7 @@ impl RpcGateway {
                             }
                             _ => "execution_rejected_other",
                         };
+                        eprintln!("wasi_failure_class={failure_class}");
                         tracing::warn!(
                             wasi_failure_class = failure_class,
                             "authenticated RPC tool call failed"
@@ -1025,6 +1026,7 @@ impl RpcGateway {
                         (RpcStatus::Failed, Value::Null)
                     }
                     Err(RuntimeError::ToolNotFound(_)) => {
+                        eprintln!("wasi_failure_class=registry_not_found");
                         tracing::warn!(
                             wasi_failure_class = "registry_not_found",
                             "authenticated RPC tool call failed"
@@ -1032,6 +1034,7 @@ impl RpcGateway {
                         (RpcStatus::Failed, Value::Null)
                     }
                     Err(RuntimeError::ToolDisabled(_)) => {
+                        eprintln!("wasi_failure_class=registry_disabled");
                         tracing::warn!(
                             wasi_failure_class = "registry_disabled",
                             "authenticated RPC tool call failed"
@@ -1039,6 +1042,7 @@ impl RpcGateway {
                         (RpcStatus::Failed, Value::Null)
                     }
                     Err(RuntimeError::AuthRequired(_)) => {
+                        eprintln!("wasi_failure_class=authorization_rejected");
                         tracing::warn!(
                             wasi_failure_class = "authorization_rejected",
                             "authenticated RPC tool call failed"
@@ -1046,6 +1050,7 @@ impl RpcGateway {
                         (RpcStatus::Failed, Value::Null)
                     }
                     Err(RuntimeError::InvalidOutput(_)) => {
+                        eprintln!("wasi_failure_class=schema_output_rejected");
                         tracing::warn!(
                             wasi_failure_class = "schema_output_rejected",
                             "authenticated RPC tool call failed"
@@ -1053,6 +1058,7 @@ impl RpcGateway {
                         (RpcStatus::Failed, Value::Null)
                     }
                     Err(RuntimeError::BudgetExceeded) => {
+                        eprintln!("wasi_failure_class=budget_rejected");
                         tracing::warn!(
                             wasi_failure_class = "budget_rejected",
                             "authenticated RPC tool call failed"
