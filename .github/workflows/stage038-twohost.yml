@@ -1,0 +1,334 @@
+name: OCAF 0.38 Two Real Linux VMs - end-to-end mTLS signed WASI (CI not production)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/stage038-twohost.yml"
+      - "scripts/stage038_relay.py"
+      - "scripts/stage038_tunnel_client.py"
+      - "scripts/stage038_relay_requirements.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: ocaf038-twohost-main
+  cancel-in-progress: false
+
+jobs:
+  systemd-coordinator-vm:
+    name: Dedicated VM A - signed WASI under systemd with end-to-end mTLS
+    runs-on: ubuntu-24.04
+    timeout-minutes: 28
+    steps:
+      - name: Checkout exact main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install bounded OIDC tunnel dependencies
+        run: |
+          python3 -m venv "$RUNNER_TEMP/ocaf038-python"
+          "$RUNNER_TEMP/ocaf038-python/bin/pip" install --disable-pip-version-check 'aiohttp==3.13.3'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Compile actual coordinator and pin real Wasmtime engine
+        timeout-minutes: 13
+        run: |
+          set -euo pipefail
+          cargo build --locked --features tls-bound --bin ocaf-coordinator
+          archive=wasmtime-v49.0.2-x86_64-linux.tar.xz
+          curl --fail --silent --show-error --location --retry 4 --proto '=https' --tlsv1.2 \
+            "https://github.com/bytecodealliance/wasmtime/releases/download/v49.0.2/$archive" -o "$RUNNER_TEMP/$archive"
+          echo "a4d6e9e3a5a60f527cf7793d674c48930c80c2e8977995b8a275cad3254b9322  $RUNNER_TEMP/$archive" | sha256sum --check --status
+          tar -xJf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP"
+          sudo install -d -m 0755 -o root -g root /opt/ocaf/bin
+          sudo install -m 0755 -o root -g root "$RUNNER_TEMP/wasmtime-v49.0.2-x86_64-linux/wasmtime" /opt/ocaf/bin/wasmtime
+          sudo install -m 0755 -o root -g root target/debug/ocaf-coordinator /opt/ocaf/bin/ocaf-coordinator
+      - name: Generate ephemeral publisher, CA, signed WASI and exchange public CA
+        run: |
+          set -euo pipefail
+          umask 077
+          fixture="$RUNNER_TEMP/ocaf038-signed"
+          python3 scripts/ci_stage038_signed_wasi_fixtures.py --directory "$fixture"
+          "$RUNNER_TEMP/ocaf038-python/bin/python" scripts/stage038_tunnel_client.py --mode put --item ca.pem --file "$fixture/ca.pem"
+      - name: Receive other VM CSRs, sign certificates and seal synthetic HMAC secrets
+        timeout-minutes: 11
+        run: |
+          set -euo pipefail
+          umask 077
+          fixture="$RUNNER_TEMP/ocaf038-signed"
+          py="$RUNNER_TEMP/ocaf038-python/bin/python"
+          for f in agent-a.csr agent-b.csr transport.pub; do
+            "$py" scripts/stage038_tunnel_client.py --mode get --item "$f" --file "$fixture/remote-$f"
+          done
+          for agent in agent-a agent-b; do
+            openssl req -verify -noout -in "$fixture/remote-$agent.csr" >/dev/null 2>&1
+            openssl x509 -req -in "$fixture/remote-$agent.csr" \
+              -CA "$fixture/ca.pem" -CAkey "$fixture/ca.key" -CAcreateserial \
+              -out "$fixture/remote-$agent.pem" -days 1 -sha256 -extfile "$fixture/$agent.ext" >/dev/null 2>&1
+            openssl verify -CAfile "$fixture/ca.pem" -purpose sslclient "$fixture/remote-$agent.pem" >/dev/null
+            "$py" scripts/stage038_tunnel_client.py --mode put --item "$agent.pem" --file "$fixture/remote-$agent.pem"
+          done
+          python3 - "$fixture" <<'PY'
+          import hashlib,json,subprocess,sys
+          from pathlib import Path
+          root=Path(sys.argv[1])
+          peers=json.loads((root/'peers.json').read_text())
+          sealed={}
+          for agent in ('agent-a','agent-b'):
+              der=subprocess.run(['openssl','x509','-in',str(root/('remote-'+agent+'.pem')),'-outform','DER'],capture_output=True,check=True).stdout
+              peers[agent]['certificate_sha256']=hashlib.sha256(der).hexdigest()
+              sealed[agent]=peers[agent]['key_b64']
+          (root/'peers.json').write_text(json.dumps(peers,sort_keys=True))
+          (root/'hmac-clear.json').write_text(json.dumps(sealed))
+          PY
+          openssl pkeyutl -encrypt -pubin -inkey "$fixture/remote-transport.pub" \
+            -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 \
+            -in "$fixture/hmac-clear.json" -out "$fixture/hmac.sealed"
+          "$py" scripts/stage038_tunnel_client.py --mode put --item hmac.sealed --file "$fixture/hmac.sealed"
+      - name: Run real signed coordinator with systemd/cgroup and forward opaque mTLS to VM B
+        timeout-minutes: 12
+        run: |
+          set -euo pipefail
+          umask 077
+          fixture="$RUNNER_TEMP/ocaf038-signed"
+          py="$RUNNER_TEMP/ocaf038-python/bin/python"
+          unit=ocaf038-twohost-coordinator.service
+          tunnel_pid=""
+          cleanup() {
+            if [[ -n "$tunnel_pid" ]]; then kill "$tunnel_pid" 2>/dev/null || true; fi
+            sudo systemctl stop "$unit" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          if ! id ocaf >/dev/null 2>&1; then sudo useradd --system --no-create-home --shell /usr/sbin/nologin ocaf; fi
+          sudo install -d -o ocaf -g ocaf -m 0700 /var/lib/ocaf
+          sudo install -o ocaf -g ocaf -m 0600 /dev/null /var/lib/ocaf/ocaf038-twohost.log
+          for file in module.wasm manifest.json manifest.sig publisher.pem server.pem server.key ca.pem peers.json; do
+            sudo install -o ocaf -g ocaf -m 0600 "$fixture/$file" "/var/lib/ocaf/$file"
+          done
+          for agent in agent-a agent-b; do
+            sudo install -o ocaf -g ocaf -m 0600 "$fixture/remote-$agent.pem" "/var/lib/ocaf/$agent.pem"
+          done
+          port="$("$py" -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1]);s.close()')"
+          hash="$(sha256sum /opt/ocaf/bin/wasmtime | cut -d ' ' -f 1)"
+          sudo systemd-run --unit=ocaf038-twohost-coordinator --service-type=exec \
+            --property=User=ocaf --property=Group=ocaf \
+            --property=WorkingDirectory=/var/lib/ocaf \
+            --property=ProtectSystem=strict --property=ReadWritePaths=/var/lib/ocaf \
+            --property=PrivateTmp=yes --property=NoNewPrivileges=yes \
+            --property=KillMode=control-group --property=Restart=no \
+            --property=MemoryMax=1610612736 --property=TasksMax=128 \
+            --property=CPUQuota=200% --property=LimitCORE=0 \
+            --property=RuntimeMaxSec=630s \
+            --property=StandardOutput=append:/var/lib/ocaf/ocaf038-twohost.log \
+            --property=StandardError=append:/var/lib/ocaf/ocaf038-twohost.log \
+            --setenv=OCAF_COORDINATOR_NODE_ID=coord-twohost-a \
+            --setenv=OCAF_COORDINATOR_MODE=active \
+            --setenv=OCAF_REPLAY_DB_PATH=/var/lib/ocaf/replay.sqlite \
+            --setenv=OCAF_COORDINATOR_DB_PATH=/var/lib/ocaf/coordinator.sqlite \
+            --setenv=OCAF_JOBS_DB_PATH=/var/lib/ocaf/jobs.sqlite \
+            --setenv=OCAF_COORDINATOR_LOCK_PATH=/var/lib/ocaf/leader.lock \
+            --setenv=OCAF_PEERS_FILE=/var/lib/ocaf/peers.json \
+            --setenv=OCAF_RPC_INGRESS=tls-bound \
+            --setenv=OCAF_REQUIRE_PEER_CERT_POP=1 \
+            --setenv=OCAF_TENANT_NAMESPACE=tenant-ci \
+            --setenv=OCAF_TLS_RPC_BIND="127.0.0.1:$port" \
+            --setenv=OCAF_TLS_SERVER_CERT_FILE=/var/lib/ocaf/server.pem \
+            --setenv=OCAF_TLS_SERVER_KEY_FILE=/var/lib/ocaf/server.key \
+            --setenv=OCAF_TLS_CLIENT_CA_FILE=/var/lib/ocaf/ca.pem \
+            --setenv=OCAF_WASI_MANIFEST_FILE=/var/lib/ocaf/manifest.json \
+            --setenv=OCAF_WASI_SIGNATURE_FILE=/var/lib/ocaf/manifest.sig \
+            --setenv=OCAF_WASI_PUBLISHER_KEY_FILE=/var/lib/ocaf/publisher.pem \
+            --setenv=OCAF_WASI_MODULE_FILE=/var/lib/ocaf/module.wasm \
+            --setenv=OCAF_WASMTIME_EXECUTABLE=/opt/ocaf/bin/wasmtime \
+            --setenv=OCAF_WASMTIME_SHA256="$hash" \
+            /opt/ocaf/bin/ocaf-coordinator
+          for i in $(seq 1 40); do
+            if systemctl is-active --quiet "$unit" && "$py" - "$port" <<'PY'
+          import socket,sys
+          try:
+              with socket.create_connection(("127.0.0.1",int(sys.argv[1])),timeout=.5):pass
+          except OSError: sys.exit(1)
+          PY
+            then break; fi
+            sleep .4
+          done
+          systemctl is-active --quiet "$unit" || { echo "::error::Staging coordinator failed"; exit 1; }
+          "$py" scripts/stage038_tunnel_client.py --mode upstream --port "$port" --workers 8 >"$RUNNER_TEMP/upstream-events.log" 2>&1 &
+          tunnel_pid=$!
+          python3 scripts/stage038_host_gate.py --unit "$unit" --report "$RUNNER_TEMP/host-a.json"
+          "$py" scripts/stage038_tunnel_client.py --mode get --item result.json --file "$RUNNER_TEMP/remote-result.json"
+          "$py" - "$RUNNER_TEMP/remote-result.json" <<'PY'
+          import json,sys
+          data=json.load(open(sys.argv[1]))
+          if data.get('signed_wasi_rpc_over_distinct_vm') is not True or data.get('agent_b_denied') is not True:
+              raise SystemExit("other VM did not attest required signed RPC checks")
+          print("REAL_TWO_RUNNER_SIGNED_WASI_MTLS_RPC_AND_CROSS_PRINCIPAL_DENIAL_PASSED")
+          PY
+          "$py" - "$RUNNER_TEMP/host-a.json" "$RUNNER_TEMP/remote-result.json" "$GITHUB_SHA" <<'PY'
+          import hashlib,json,sys
+          from pathlib import Path
+          machine=Path('/etc/machine-id').read_bytes().strip()
+          report={'schema_version':1, 'sha':sys.argv[3],
+                  'vm_machine_id_sha256':hashlib.sha256(machine).hexdigest(),
+                  'remote_vm_machine_id_sha256':json.load(open(sys.argv[2]))['vm_machine_id_sha256'],
+                  'real_systemd_coordinator':True,'real_signed_wasmtime_rpc':True,
+                  'real_inter_host_mtls':True,'ephemeral_github_vms_only':True,
+                  'two_tenant_prod_staging':False,
+                  'independent_auditor_signoff':False,'production_approved':False}
+          if report['vm_machine_id_sha256']==report['remote_vm_machine_id_sha256']:
+              raise SystemExit("runner machines not distinct")
+          Path('stage038-twohost-evidence.json').write_text(json.dumps(report,indent=2))
+          print("TWO_DISTINCT_LINUX_VM_MACHINE_IDS_VERIFIED")
+          PY
+      - name: Upload only sanitized host identity and cross-VM report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage038-twohost-vm-a
+          path: stage038-twohost-evidence.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  remote-client-vm:
+    name: Dedicated VM B - independent TLS client and cross-principal negative test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install only ephemeral OIDC relay dependencies and prepare private client keys
+        run: |
+          set -euo pipefail
+          umask 077
+          python3 -m venv "$RUNNER_TEMP/ocaf038-python"
+          "$RUNNER_TEMP/ocaf038-python/bin/pip" install --disable-pip-version-check 'aiohttp==3.13.3'
+          mkdir -m 0700 "$RUNNER_TEMP/ocaf038-client"
+          cd "$RUNNER_TEMP/ocaf038-client"
+          for agent in agent-a agent-b; do
+            openssl req -new -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes \
+              -keyout "$agent.key" -out "$agent.csr" -subj "/CN=$agent" >/dev/null 2>&1
+          done
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out transport.key >/dev/null 2>&1
+          openssl pkey -in transport.key -pubout -out transport.pub >/dev/null 2>&1
+          for item in agent-a.csr agent-b.csr transport.pub; do
+            "$RUNNER_TEMP/ocaf038-python/bin/python" "$GITHUB_WORKSPACE/scripts/stage038_tunnel_client.py" \
+              --mode put --item "$item" --file "$RUNNER_TEMP/ocaf038-client/$item"
+          done
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build actual TLS-bound OCAF RPC client from locked main
+        timeout-minutes: 13
+        run: cargo build --locked --features tls-bound --bin ocaf-rpc-node
+      - name: Download CA and signed leaf certificates, unwrap ephemeral HMAC without exposing secrets
+        timeout-minutes: 11
+        run: |
+          set -euo pipefail
+          umask 077
+          client="$RUNNER_TEMP/ocaf038-client"
+          py="$RUNNER_TEMP/ocaf038-python/bin/python"
+          for item in ca.pem agent-a.pem agent-b.pem hmac.sealed; do
+            "$py" scripts/stage038_tunnel_client.py --mode get --item "$item" --file "$client/$item"
+          done
+          for agent in agent-a agent-b; do
+            openssl verify -CAfile "$client/ca.pem" -purpose sslclient "$client/$agent.pem"
+          done
+          openssl pkeyutl -decrypt -inkey "$client/transport.key" \
+            -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 \
+            -in "$client/hmac.sealed" -out "$client/private-hmac.json"
+      - name: Probe signed-WASI RPC across actual VM network with independent mTLS identities
+        timeout-minutes: 11
+        run: |
+          set -euo pipefail
+          umask 077
+          client="$RUNNER_TEMP/ocaf038-client"
+          py="$RUNNER_TEMP/ocaf038-python/bin/python"
+          tunnel_pid=""
+          success=false
+          finish() {
+            code=$?
+            export OCAF038_FINAL_SUCCESS="$success"
+            "$py" - "$RUNNER_TEMP/remote-result.json" <<'PY'
+          import hashlib,json,os,sys
+          from pathlib import Path
+          obj={'schema_version':1,'git_commit':os.environ['GITHUB_SHA'],
+               'vm_machine_id_sha256':hashlib.sha256(Path('/etc/machine-id').read_bytes().strip()).hexdigest(),
+               'signed_wasi_rpc_over_distinct_vm':os.getenv('OCAF038_FINAL_SUCCESS')=='true',
+               'agent_b_denied':os.getenv('OCAF038_FINAL_SUCCESS')=='true',
+               'production_approved':False}
+          Path(sys.argv[1]).write_text(json.dumps(obj,sort_keys=True))
+          PY
+            "$py" scripts/stage038_tunnel_client.py --mode put --item result.json --file "$RUNNER_TEMP/remote-result.json" || true
+            if [[ -n "$tunnel_pid" ]]; then kill "$tunnel_pid" 2>/dev/null || true; fi
+            exit "$code"
+          }
+          trap finish EXIT
+          port="$("$py" -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1]);s.close()')"
+          "$py" scripts/stage038_tunnel_client.py --mode downstream --port "$port" >"$RUNNER_TEMP/downstream-events.log" 2>&1 &
+          tunnel_pid=$!
+          for i in $(seq 1 50); do
+            if "$py" - "$port" <<'PY'
+          import socket,sys
+          try:
+              with socket.create_connection(('127.0.0.1',int(sys.argv[1])),timeout=.3):pass
+          except OSError: sys.exit(1)
+          PY
+            then break; fi
+            sleep .2
+          done
+          export OCAF_ROLE=client OCAF_NODE_ID=agent-a OCAF_PEER_ID=coord-twohost-a
+          export OCAF_RPC_INGRESS=tls-bound OCAF_ACTION=discover
+          export OCAF_TLS_RPC_ADDRESS="127.0.0.1:$port"
+          export OCAF_TLS_RPC_SERVER_DNS=localhost
+          export OCAF_TLS_SERVER_CA_FILE="$client/ca.pem"
+          export OCAF_RPC_CERT_KEY_FILE="$client/agent-a.key"
+          export OCAF_TLS_CLIENT_CERT_FILE="$client/agent-a.pem"
+          export OCAF_TLS_CLIENT_KEY_FILE="$client/agent-a.key"
+          export OCAF_SHARED_KEY_B64="$("$py" -c 'import json,sys;print(json.load(open(sys.argv[1]))["agent-a"])' "$client/private-hmac.json")"
+          passed=false
+          for i in $(seq 1 35); do
+            if target/debug/ocaf-rpc-node >"$RUNNER_TEMP/private-discover.json" 2>/dev/null; then
+              if "$py" - "$RUNNER_TEMP/private-discover.json" <<'PY'
+          import json,sys
+          response=json.load(open(sys.argv[1]))
+          tools=response.get('output')
+          if not isinstance(tools,list) or not any(isinstance(x,dict) and x.get('name')=='ocaf_ci_noop' for x in tools):
+              sys.exit(1)
+          PY
+              then
+                passed=true
+                break
+              fi
+            fi
+            sleep 3
+          done
+          test "$passed" = true || { echo "::error::No authenticated cross-VM signed-tool discovery"; exit 1; }
+          export OCAF_ACTION=call OCAF_TOOL=ocaf_ci_noop OCAF_MESSAGE=remote_twohost_wasi
+          target/debug/ocaf-rpc-node >"$RUNNER_TEMP/private-result.json" 2>/dev/null
+          "$py" - "$RUNNER_TEMP/private-result.json" <<'PY'
+          import json,sys
+          result=json.load(open(sys.argv[1]))
+          if result.get('output',{}).get('ok') is not True:
+              raise SystemExit("real WASI remote result missing")
+          PY
+          echo "REAL_TWO_VM_SIGNED_WASI_OVER_TLS_BOUND_RPC_PASSED"
+          export OCAF_NODE_ID=agent-b OCAF_RPC_CERT_KEY_FILE="$client/agent-b.key"
+          export OCAF_TLS_CLIENT_CERT_FILE="$client/agent-b.pem"
+          export OCAF_TLS_CLIENT_KEY_FILE="$client/agent-b.key"
+          export OCAF_SHARED_KEY_B64="$("$py" -c 'import json,sys;print(json.load(open(sys.argv[1]))["agent-b"])' "$client/private-hmac.json")"
+          if target/debug/ocaf-rpc-node >"$RUNNER_TEMP/cross-principal-private" 2>&1; then
+            echo "::error::Cross-principal signed WASI was admitted"
+            exit 1
+          fi
+          echo "REAL_TWO_VM_CROSS_PRINCIPAL_WASI_EXECUTION_DENIED"
+          success=true
+      - name: Upload sanitized VM B report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage038-twohost-vm-b
+          path: ${{ runner.temp }}/remote-result.json
+          if-no-files-found: warn
+          retention-days: 14
