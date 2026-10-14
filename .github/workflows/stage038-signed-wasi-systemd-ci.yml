@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
       - name: Build actual TLS-bound OCAF coordinator with locked dependencies
         run: cargo build --locked --features tls-bound --bin ocaf-coordinator --bin ocaf-rpc-node
       - name: Verify and install pinned real Wasmtime 49.0.2 under root control
@@ -349,7 +349,7 @@ jobs:
           rm -f -- "$plain_log" "$systemd_log"
       - name: Archive sanitized evidence only, never ephemeral signing keys
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ocaf038-signed-wasi-systemd-ci
           path: |
