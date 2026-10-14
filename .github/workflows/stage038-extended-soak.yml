@@ -38,7 +38,9 @@ jobs:
         shard: [1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: dtolnay/rust-toolchain@stable
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
       - name: Recheck locked supply chain and exact engine release before executing modules
         run: python3 scripts/supply_chain.py --repo .
       - name: 20 repeated signed WASIp1 sandbox integrations with RSS/FD/PID sampling
@@ -48,7 +50,7 @@ jobs:
         run: bash scripts/wasmtime_acceptance.sh
       - name: Preserve shard resource evidence even on failure (not staging approval)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: wasi-038-shard-${{ matrix.shard }}
           path: shard-${{ matrix.shard }}.json
@@ -63,9 +65,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
       - name: Reject incomplete or tampered evidence with offline tests
         run: python3 -m unittest discover -s scripts/tests -p test_stage038_evidence_aggregate.py -v
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           pattern: wasi-038-shard-*
           path: shard-reports
@@ -89,7 +93,7 @@ jobs:
           }
       - name: Publish validated multi-host CI evidence (not operator staging signoff)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: wasi-038-extended-aggregate
           path: wasi-038-extended-summary.json
