@@ -19,6 +19,7 @@ jobs:
     timeout-minutes: 8
     env:
       SANDBOX_API_URL: ${{ secrets.OCAF_SANDBOX_API_URL }}
+      SANDBOX_API_FALLBACK: ${{ secrets.OCAF_SANDBOX_API }}
       SANDBOX_TOKEN: ${{ secrets.OCAF_SANDBOX_TOKEN }}
     steps:
       - name: Checkout main without persisted credentials
@@ -34,21 +35,35 @@ jobs:
         run: |
           set -euo pipefail
           umask 077
-          if [[ -z "${SANDBOX_API_URL}" || -z "${SANDBOX_TOKEN}" ]]; then
+          if [[ -z "${SANDBOX_TOKEN}" || ( -z "${SANDBOX_API_URL}" && -z "${SANDBOX_API_FALLBACK}" ) ]]; then
             echo "OpenShift connection not configured; no cluster requests made."
             printf '%s\n' '{"schema_version":1,"status":"CONNECTION_NOT_CONFIGURED","stage_038_complete":false,"production_approved":false}' > stage038-redhat-preflight.json
-            exit 0
+            exit 1
           fi
-          python3 - <<'PY'
-          import os, urllib.parse
-          u = urllib.parse.urlparse(os.environ["SANDBOX_API_URL"])
-          if u.scheme != "https" or u.username or u.password or u.path not in ("", "/") or u.query or u.fragment or not u.hostname or not u.hostname.endswith(".openshiftapps.com") or u.port != 6443:
-              raise SystemExit("Sandbox API URL validation failed; expected HTTPS OpenShift API port 6443.")
-          if len(os.environ["SANDBOX_TOKEN"]) < 20:
-              raise SystemExit("OpenShift token missing or unexpectedly short.")
+          API_SERVER="$(python3 - <<'PY'
+          import os, sys, urllib.parse
+          expected = "api.rm3.7wse.p1.openshiftapps.com"
+          for name in ("SANDBOX_API_URL", "SANDBOX_API_FALLBACK"):
+              raw = os.environ.get(name, "").strip()
+              try:
+                  u = urllib.parse.urlparse(raw)
+                  if (u.scheme == "https" and u.hostname == expected and u.port == 6443
+                          and not u.username and not u.password
+                          and u.path in ("", "/") and not u.query and not u.fragment
+                          and not u.params):
+                      print(raw.rstrip("/"))
+                      sys.exit(0)
+              except ValueError:
+                  pass
+          sys.exit("OpenShift API URL format invalid in configured secrets; use exact HTTPS --server URL with port 6443, not console URL.")
           PY
+          )"
+          if [[ ${#SANDBOX_TOKEN} -lt 20 ]]; then
+            echo "OpenShift token missing or unexpectedly short."
+            exit 1
+          fi
           command -v kubectl >/dev/null
-          kubectl config set-cluster ocaf-redhat --server="${SANDBOX_API_URL}" >/dev/null
+          kubectl config set-cluster ocaf-redhat --server="${API_SERVER}" >/dev/null
           kubectl config set-credentials ocaf-readonly --token="${SANDBOX_TOKEN}" >/dev/null
           kubectl config set-context ocaf-redhat --cluster=ocaf-redhat --user=ocaf-readonly --namespace=mojealterego-dev >/dev/null
           kubectl config use-context ocaf-redhat >/dev/null
