@@ -32,7 +32,7 @@ jobs:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
       - name: Build actual TLS-bound OCAF coordinator with locked dependencies
-        run: cargo build --locked --features tls-bound --bin ocaf-coordinator
+        run: cargo build --locked --features tls-bound --bin ocaf-coordinator --bin ocaf-rpc-node
       - name: Verify and install pinned real Wasmtime 49.0.2 under root control
         shell: bash
         run: |
@@ -141,6 +141,23 @@ jobs:
                           raise SystemExit("TLS downgrade rejected")
           print("TWO_SYNTHETIC_MTLS_CLIENT_CERTIFICATE_HANDSHAKES_OK")
           PY
+          for agent in agent-a agent-b; do
+            export OCAF_ROLE=client
+            export OCAF_NODE_ID="$agent"
+            export OCAF_PEER_ID=coord-ci
+            export OCAF_SHARED_KEY_B64="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))[sys.argv[2]]["key_b64"])' "$fixture/peers.json" "$agent")"
+            export OCAF_RPC_CERT_KEY_FILE="$fixture/$agent.key"
+            export OCAF_RPC_INGRESS=tls-bound
+            export OCAF_TLS_CLIENT_CERT_FILE="$fixture/$agent.pem"
+            export OCAF_TLS_CLIENT_KEY_FILE="$fixture/$agent.key"
+            export OCAF_TLS_SERVER_CA_FILE="$fixture/ca.pem"
+            export OCAF_TLS_RPC_ADDRESS="127.0.0.1:$port"
+            export OCAF_TLS_RPC_SERVER_DNS=localhost
+            export OCAF_ACTION=resolve
+            export OCAF_TOOL=ocaf_ci_noop
+            target/debug/ocaf-rpc-node >/dev/null
+            echo "SYNTHETIC_TLS_BOUND_SIGNED_TOOL_RESOLUTION_PASSED"
+          done
           python3 scripts/stage038_host_gate.py \
             --unit "$unit" --report stage038-signed-wasi-systemd-host.json
           python3 - <<'PY'
@@ -152,6 +169,8 @@ jobs:
               "real_coordinator_systemd_active_with_signed_wasi_admission":True,
               "pinned_real_wasmtime":True,
               "synthetic_client_cert_handshakes":2,
+              "signed_wasi_rpc_discovery_clients":2,
+              "signed_wasi_module_executed_over_rpc":False,
               "real_multi_host_staging":False,
               "two_tenant_end_to_end_execution":False,
               "independent_auditor_signoff":False,
