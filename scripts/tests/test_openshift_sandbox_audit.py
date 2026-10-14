@@ -11,6 +11,29 @@ module = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(module)
 
 class TestOpenShiftSandboxAudit(unittest.TestCase):
+    def test_access_failure_classification_redacts_secrets(self):
+        marker = "DO_NOT_SHOW_THIS_TOKEN"
+        result = module.classify_kubectl_error("Error from server (Unauthorized): " + marker)
+        self.assertEqual(result, "AUTHENTICATION_FAILED")
+        self.assertNotIn(marker, result)
+        self.assertEqual(
+            module.classify_kubectl_error("Error from server (Forbidden): resource not allowed"),
+            "RBAC_DENIED",
+        )
+        self.assertEqual(module.classify_kubectl_error("x509: certificate signed by unknown authority"), "TLS_VALIDATION_FAILED")
+
+    def test_scoped_probe_does_not_publish_response_or_stderr(self):
+        class Result:
+            stdout = '{"items":[{"metadata":{"name":"secret-pod-name"}}]}'
+            stderr = "Error from server (Forbidden): DO_NOT_LOG_THIS_VALUE"
+            returncode = 1
+        with patch.object(module.subprocess, "run", return_value=Result()) as mock:
+            report = module.scoped_access_probe()
+        self.assertEqual(report, {"ok": False, "failure_category": "RBAC_DENIED"})
+        self.assertNotIn("DO_NOT_LOG_THIS_VALUE", str(report))
+        self.assertNotIn("secret-pod-name", str(report))
+        self.assertIn(module.NAMESPACE, mock.call_args.args[0])
+
     def test_namespace_fixed_to_operator_link(self):
         self.assertEqual(module.NAMESPACE, "mojealterego-dev")
 
