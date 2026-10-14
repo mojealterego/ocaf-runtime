@@ -8,6 +8,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 SOURCE = Path(__file__).resolve().parents[1] / 'stage038_production_gate.py'
 SPEC = importlib.util.spec_from_file_location('stage038_production_gate', SOURCE)
@@ -122,6 +123,38 @@ class ProductionGateTests(unittest.TestCase):
         openssl('genpkey', '-algorithm', 'Ed25519', '-out', str(private))
         openssl('pkey', '-in', str(private), '-pubout', '-out', str(self.pubkeys['auditor']))
         self.assertIn('signature_invalid:auditor', self.evaluate()['blockers'])
+
+    def test_public_key_swap_after_initial_validation_must_not_change_trust_anchor(self):
+        """TOCTOU: signatures must be checked against the same trusted key bytes."""
+        trusted_public = self.pubkeys['operator']
+        forged_private = self.key_dir / 'forged.key'
+        forged_public = self.key_dir / 'forged.pem'
+        openssl('genpkey', '-algorithm', 'Ed25519', '-out', str(forged_private))
+        openssl('pkey', '-in', str(forged_private), '-pubout', '-out', str(forged_public))
+
+        raw = (self.bundle / 'acceptance.json').read_bytes()
+        payload = self.root / 'forged-operator.payload'
+        payload.write_bytes(module.signature_input('operator', raw))
+        openssl('pkeyutl', '-sign', '-rawin', '-inkey', str(forged_private),
+                '-in', str(payload), '-out', str(self.bundle / 'operator.sig'))
+
+        parse_trusted_key = module._public_der
+        swapped = False
+
+        def swap_after_first_parse(path):
+            nonlocal swapped
+            key_der = parse_trusted_key(path)
+            if path == trusted_public and not swapped:
+                trusted_public.write_bytes(forged_public.read_bytes())
+                swapped = True
+            return key_der
+
+        with mock.patch.object(module, '_public_der', side_effect=swap_after_first_parse):
+            result = self.evaluate()
+
+        self.assertTrue(swapped)
+        self.assertIn('signature_invalid:operator', result['blockers'])
+        self.assertEqual(result['status'], 'NO_GO')
 
     def test_duplicate_json_keys_are_no_go(self):
         f = self.bundle / 'acceptance.json'
