@@ -350,6 +350,24 @@ async fn stdout_bomb_is_rejected_without_host_log_leak() {
     assert!(matches!(result, Err(ToolError::Validation(_))));
 }
 
+/// The Wasmtime CLI may need its own writable HOME/cache even when the
+/// admitted WASI guest receives no inherited environment or filesystem paths.
+/// Restrict both locations to the private per-call directory, not the host's
+/// account home (which may be absent for a systemd service identity).
+#[tokio::test]
+async fn guest_engine_receives_only_private_writable_home() {
+    let folder = tempfile::tempdir().expect("fake pinned engine workspace");
+    let (path, hash) = fake_engine(
+        folder.path(),
+        "if [ \"$HOME\" != \"$(pwd -P)\" ] || [ \"$XDG_CACHE_HOME\" != \"$HOME\" ]; then exit 17; fi\nprintf '{\\\"ok\\\":true}\\n'",
+    );
+    let output = executor(path, hash, command_fixture("{}"), SandboxPolicy::default())
+        .execute(json!({}), &context())
+        .await
+        .expect("sandboxed CLI has a private writable home");
+    assert_eq!(output, json!({"ok": true}));
+}
+
 /// Error streams have the same bound as stdout and are not returned to
 /// clients, even when malicious guests intentionally emit sensitive strings.
 #[tokio::test]
