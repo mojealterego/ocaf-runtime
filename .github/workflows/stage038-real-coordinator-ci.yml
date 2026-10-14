@@ -5,6 +5,13 @@ on:
     branches: [main]
     paths:
       - .github/workflows/stage038-real-coordinator-ci.yml
+      - Cargo.toml
+      - Cargo.lock
+      - src/**
+      - deploy/systemd/**
+      - scripts/stage038_host_gate.py
+      - scripts/tests/test_stage038_host_gate.py
+      - vendor/**
   workflow_dispatch:
 
 permissions:

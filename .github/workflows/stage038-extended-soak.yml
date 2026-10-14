@@ -5,6 +5,16 @@ on:
     branches: [main]
     paths:
       - .github/workflows/stage038-extended-soak.yml
+      - Cargo.toml
+      - Cargo.lock
+      - src/**
+      - tests/wasi_sandbox.rs
+      - scripts/wasmtime_acceptance.sh
+      - scripts/wasi_host_acceptance.py
+      - scripts/stage038_evidence_aggregate.py
+      - scripts/tests/test_stage038_evidence_aggregate.py
+      - scripts/supply_chain.py
+      - vendor/**
   workflow_dispatch:
 
 permissions:
