@@ -369,6 +369,29 @@ printf '{"ok":true}\n'"#,
     assert_eq!(output, json!({"ok": true}));
 }
 
+/// Wasmtime may create nested cache data under its private HOME. A successful
+/// guest invocation must not leave cache directories behind in /tmp.
+#[tokio::test]
+async fn guest_cache_subdirectories_are_removed_after_execution() {
+    let fixture = tempfile::tempdir().expect("engine fixture");
+    let marker = fixture.path().join("private-home");
+    let shell = format!(
+        "mkdir -p \"$HOME/.cache/wasmtime\" && printf cache > \"$HOME/.cache/wasmtime/compiled\" && printf %s \"$HOME\" > '{}' && printf '{{\"ok\":true}}\\n'",
+        marker.display()
+    );
+    let (path, hash) = fake_engine(fixture.path(), &shell);
+    let result = executor(path, hash, command_fixture("{}"), SandboxPolicy::default())
+        .execute(json!({}), &context())
+        .await
+        .expect("guest ran with nested private cache");
+    assert_eq!(result, json!({"ok": true}));
+    let home = PathBuf::from(fs::read_to_string(marker).expect("recorded private HOME"));
+    assert!(
+        !home.exists(),
+        "private WASI cache directory must be removed after the guest exits"
+    );
+}
+
 /// Error streams have the same bound as stdout and are not returned to
 /// clients, even when malicious guests intentionally emit sensitive strings.
 #[tokio::test]
