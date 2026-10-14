@@ -1,0 +1,62 @@
+name: OCAF 0.38 Red Hat OpenShift Sandbox Read-Only Preflight (NO-GO)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sandbox-inventory:
+    name: Read-only project VM/RBAC/quota inventory
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      SANDBOX_API_URL: ${{ secrets.OCAF_SANDBOX_API_URL }}
+      SANDBOX_TOKEN: ${{ secrets.OCAF_SANDBOX_TOKEN }}
+      KUBECONFIG: ${{ runner.temp }}/ocaf-sandbox-kubeconfig
+    steps:
+      - name: Checkout main without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Offline parser safety tests
+        run: python3 -m unittest discover -s scripts/tests -p 'test_openshift_sandbox_audit.py' -v
+      - name: Setup namespace-scoped temporary Kubernetes context
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          if [[ -z "${SANDBOX_API_URL}" || -z "${SANDBOX_TOKEN}" ]]; then
+            echo "OpenShift connection not configured; no cluster requests made."
+            printf '%s\n' '{"schema_version":1,"status":"CONNECTION_NOT_CONFIGURED","stage_038_complete":false,"production_approved":false}' > stage038-redhat-preflight.json
+            exit 0
+          fi
+          python3 - <<'PY'
+          import os, urllib.parse
+          u = urllib.parse.urlparse(os.environ["SANDBOX_API_URL"])
+          if u.scheme != "https" or u.username or u.password or u.path not in ("", "/") or u.query or u.fragment or not u.hostname or not u.hostname.endswith(".openshiftapps.com") or u.port != 6443:
+              raise SystemExit("Sandbox API URL validation failed; expected HTTPS OpenShift API port 6443.")
+          if len(os.environ["SANDBOX_TOKEN"]) < 20:
+              raise SystemExit("OpenShift token missing or unexpectedly short.")
+          PY
+          command -v kubectl >/dev/null
+          kubectl config set-cluster ocaf-redhat --server="${SANDBOX_API_URL}" >/dev/null
+          kubectl config set-credentials ocaf-readonly --token="${SANDBOX_TOKEN}" >/dev/null
+          kubectl config set-context ocaf-redhat --cluster=ocaf-redhat --user=ocaf-readonly --namespace=mojealterego-dev >/dev/null
+          kubectl config use-context ocaf-redhat >/dev/null
+      - name: Inspect existing namespace without creating resources
+        if: ${{ env.SANDBOX_API_URL != '' && env.SANDBOX_TOKEN != '' }}
+        run: python3 scripts/openshift_sandbox_audit.py --report stage038-redhat-preflight.json
+      - name: Archive sanitized read-only report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocaf-stage038-redhat-sandbox-readonly
+          path: stage038-redhat-preflight.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Remove ephemeral local Kubernetes credential material
+        if: always()
+        shell: bash
+        run: rm -f -- "${KUBECONFIG}"
