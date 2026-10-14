@@ -5,12 +5,14 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   inspect-azure:
     runs-on: ubuntu-24.04
     timeout-minutes: 8
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -30,7 +32,7 @@ jobs:
             exit 1
           fi
       - name: Login with short-lived GitHub OIDC (no passwords or stored Azure keys)
-        uses: azure/login@v3
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -39,7 +41,7 @@ jobs:
         run: python3 scripts/azure_stage038_inventory.py --report stage038-azure-readonly.json
       - name: Archive sanitized Azure diagnostics only
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: stage038-azure-inventory
           path: stage038-azure-readonly.json
