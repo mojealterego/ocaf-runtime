@@ -50,6 +50,33 @@ class HostAcceptanceTests(unittest.TestCase):
             self.assertEqual(raised.exception.code, 2)
             self.assertFalse(report.exists())
 
+    def test_operator_pin_is_mandatory_and_well_formed(self):
+        with tempfile.TemporaryDirectory() as d:
+            engine = Path(d) / "wasmtime"
+            engine.write_bytes(b"synthetic-verified-test-engine")
+            report = Path(d) / "never-created.json"
+            for missing_or_bad in (None, "bad-sha", "A" * 64):
+                env = {"OCAF_TEST_WASMTIME": str(engine)}
+                if missing_or_bad is not None:
+                    env["OCAF_TEST_WASMTIME_SHA256"] = missing_or_bad
+                with patch.dict(os.environ, env, clear=True):
+                    with patch("sys.argv", ["wasi_host_acceptance.py",
+                            "--cycles", "1", "--report", str(report)]):
+                        with self.assertRaises(SystemExit) as result:
+                            module.main()
+                self.assertEqual(result.exception.code, 2)
+                self.assertFalse(report.exists())
+
+    def test_evidence_is_private_create_only_and_cannot_be_rewritten(self):
+        with tempfile.TemporaryDirectory() as d:
+            file = Path(d) / "private" / "wasi.json"
+            module.save_report(file, {"passed": True, "note": "synthetic test fixture"})
+            self.assertEqual(file.stat().st_mode & 0o777, 0o600)
+            before = file.read_bytes()
+            with self.assertRaises(FileExistsError):
+                module.save_report(file, {"passed": False})
+            self.assertEqual(file.read_bytes(), before)
+
 
 if __name__ == "__main__":
     unittest.main()
