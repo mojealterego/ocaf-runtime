@@ -17,7 +17,7 @@ ISSUER = "https://token.actions.githubusercontent.com"
 WORKFLOW = "mojealterego/ocaf-runtime/.github/workflows/stage038-twohost.yml@refs/heads/main"
 JWK = PyJWKClient(ISSUER + "/.well-known/jwks", cache_jwk_set=True, lifespan=900, timeout=8)
 ITEMS = frozenset({"ca.pem", "agent-a.csr", "agent-b.csr", "transport.pub",
-                   "agent-a.pem", "agent-b.pem", "hmac.sealed"})
+                   "agent-a.pem", "agent-b.pem", "hmac.sealed", "result.json"})
 PENDING = defaultdict(asyncio.Queue)
 MAILBOX = {}
 
@@ -113,7 +113,7 @@ async def tunnel(request):
     queue = PENDING[run_id]
     if len(PENDING) > 32 or queue.qsize() >= 12:
         raise web.HTTPServiceUnavailable(text="CI relay capacity exhausted")
-    ws = web.WebSocketResponse(heartbeat=15, max_msg_size=262144)
+    ws = web.WebSocketResponse(max_msg_size=262144)
     await ws.prepare(request)
     if role == "upstream":
         completed = asyncio.get_running_loop().create_future()
