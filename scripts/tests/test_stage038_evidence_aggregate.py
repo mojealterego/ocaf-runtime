@@ -124,5 +124,58 @@ class ExtendedSoakEvidenceTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 module.aggregate(root, COMMIT, 2, 3)
 
+
+    def test_rejects_duplicate_nested_and_top_level_json_keys(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            make(root)
+            file = root / "shard-2.json"
+            original = file.read_text()
+            for previous, ambiguous in [
+                ('"passed": true', '"passed": false, "passed": true'),
+                ('"elapsed_sec": 2.5', '"elapsed_sec": -1, "elapsed_sec": 2.5'),
+            ]:
+                with self.subTest(previous=previous):
+                    self.assertIn(previous, original)
+                    file.write_text(original.replace(previous, ambiguous, 1))
+                    with self.assertRaises(ValueError):
+                        module.aggregate(root, COMMIT, 2, 3)
+            file.write_text(original)
+            self.assertEqual(module.aggregate(root, COMMIT, 2, 3)["cycles_total"], 6)
+
+    def test_rejects_nonfinite_elapsed_time_including_overflow(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            make(root)
+            file = root / "shard-2.json"
+            original = file.read_text()
+            for nonfinite in ("NaN", "Infinity", "-Infinity", "1e9999"):
+                with self.subTest(nonfinite=nonfinite):
+                    file.write_text(original.replace('"elapsed_sec": 2.5',
+                                                    f'"elapsed_sec": {nonfinite}', 1))
+                    with self.assertRaises(ValueError):
+                        module.aggregate(root, COMMIT, 2, 3)
+
+    def test_rejects_boolean_schema_version_and_float_cycle_index(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            make(root)
+            file = root / "shard-2.json"
+            original = json.loads(file.read_text())
+            for field, value in (("schema_version", True),
+                                 ("cycles_requested", 3.0),
+                                 ("cycles_completed", 3.0)):
+                with self.subTest(field=field):
+                    tampered = json.loads(json.dumps(original))
+                    tampered[field] = value
+                    file.write_text(json.dumps(tampered))
+                    with self.assertRaises(ValueError):
+                        module.aggregate(root, COMMIT, 2, 3)
+            tampered = json.loads(json.dumps(original))
+            tampered["cycles"][0]["cycle"] = 1.0
+            file.write_text(json.dumps(tampered))
+            with self.assertRaises(ValueError):
+                module.aggregate(root, COMMIT, 2, 3)
+
 if __name__ == "__main__":
     unittest.main()

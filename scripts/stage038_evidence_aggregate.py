@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -15,12 +16,26 @@ HEX_64 = re.compile(r"[0-9a-f]{64}\Z")
 BOUND_LIMITS = {"max_rss_kib": 1572864, "max_fds": 512, "max_processes": 64}
 MAX_SHARD_BYTES = 512 * 1024
 
+def reject_duplicate_json_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Fail closed on ambiguous nested keys in untrusted CI evidence."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate evidence JSON key")
+        result[key] = value
+    return result
+
+def reject_nonfinite_json_constant(value: str) -> None:
+    """Python's permissive JSON decoder otherwise accepts NaN and Infinity."""
+    raise ValueError(f"non-finite evidence JSON literal: {value}")
+
 def valid_cycle(item: object, i: int, limits: dict) -> bool:
-    if not isinstance(item, dict) or item.get("cycle") != i or type(item.get("returncode")) is not int:
+    if not isinstance(item, dict) or type(item.get("cycle")) is not int or item["cycle"] != i or type(item.get("returncode")) is not int:
         return False
     if item["returncode"] != 0 or item.get("timed_out") is not False or "ceiling_violation" in item:
         return False
-    if not isinstance(item.get("elapsed_sec"), (int, float)) or isinstance(item.get("elapsed_sec"), bool) or item["elapsed_sec"] <= 0:
+    elapsed = item.get("elapsed_sec")
+    if type(elapsed) not in (int, float) or elapsed <= 0 or (type(elapsed) is float and not math.isfinite(elapsed)):
         return False
     if type(item.get("samples")) is not int or item["samples"] < 1:
         return False
@@ -54,10 +69,14 @@ def aggregate(directory: Path, expected_commit: str,
             raise ValueError("unsafe or oversized evidence shard")
         raw = file.read_bytes()
         try:
-            data = json.loads(raw)
+            data = json.loads(
+                raw,
+                object_pairs_hook=reject_duplicate_json_keys,
+                parse_constant=reject_nonfinite_json_constant,
+            )
         except (UnicodeError, ValueError) as exc:
             raise ValueError("invalid evidence JSON") from exc
-        if not isinstance(data, dict) or data.get("schema_version") != 1:
+        if not isinstance(data, dict) or type(data.get("schema_version")) is not int or data["schema_version"] != 1:
             raise ValueError("unknown evidence schema")
         if data.get("passed") is not True:
             raise ValueError(f"shard {i} failed")
@@ -73,7 +92,8 @@ def aggregate(directory: Path, expected_commit: str,
             raise ValueError("missing kernel provenance")
         if data.get("limits") != BOUND_LIMITS:
             raise ValueError("unexpected soak resource limits")
-        if data.get("cycles_requested") != cycles_per_shard or data.get("cycles_completed") != cycles_per_shard:
+        if (type(data.get("cycles_requested")) is not int or type(data.get("cycles_completed")) is not int
+                or data["cycles_requested"] != cycles_per_shard or data["cycles_completed"] != cycles_per_shard):
             raise ValueError("missing or misreported soak cycles")
         if data.get("new_private_workspace_residue") != []:
             raise ValueError("leftover private workspaces")
