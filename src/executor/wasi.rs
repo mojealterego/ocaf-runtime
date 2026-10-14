@@ -510,7 +510,13 @@ impl WasmToolExecutor {
                 self.policy.max_wasm_stack_bytes
             ))
             .arg(&staged.module_path)
+            // Wasmtime CLI may require a home/cache location even for a
+            // non-login system service account. Never inherit the operator's
+            // HOME or XDG config: confine both to the per-invocation private
+            // workspace (0700). No WASI guest environ_* import is allowed.
             .env_clear()
+            .env("HOME", &staged.directory)
+            .env("XDG_CACHE_HOME", &staged.directory)
             .current_dir(&staged.directory)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
