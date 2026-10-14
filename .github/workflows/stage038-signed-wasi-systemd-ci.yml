@@ -157,6 +157,22 @@ jobs:
             response="$(target/debug/ocaf-rpc-node)"
             python3 -c 'import json,sys; data=json.loads(sys.stdin.read()); assert isinstance(data.get("output"),list) and any(isinstance(tool,dict) and tool.get("name")=="ocaf_ci_noop" for tool in data["output"]), "Signed WASI tool missing from authenticated discovery"' <<< "$response"
             echo "SYNTHETIC_TLS_BOUND_SIGNED_TOOL_DISCOVERY_PASSED"
+            if [ "$agent" = agent-a ]; then
+              export OCAF_ACTION=call
+              export OCAF_TOOL=ocaf_ci_noop
+              export OCAF_MESSAGE=ci_test_message
+              target/debug/ocaf-rpc-node >/dev/null
+              echo "SIGNED_WASI_EXECUTION_OVER_MTLS_PASSED"
+            else
+              export OCAF_ACTION=call
+              export OCAF_TOOL=ocaf_ci_noop
+              export OCAF_MESSAGE=unauthorized_cross_principal
+              if target/debug/ocaf-rpc-node >/dev/null 2>&1; then
+                echo "::error::Signed agent-a WASI was executable by another principal"
+                exit 1
+              fi
+              echo "CROSS_PRINCIPAL_WASI_EXECUTION_DENIED"
+            fi
           done
           python3 scripts/stage038_host_gate.py \
             --unit "$unit" --report stage038-signed-wasi-systemd-host.json
@@ -170,7 +186,8 @@ jobs:
               "pinned_real_wasmtime":True,
               "synthetic_client_cert_handshakes":2,
               "signed_wasi_rpc_discovery_clients":2,
-              "signed_wasi_module_executed_over_rpc":False,
+              "signed_wasi_module_executed_over_rpc":True,
+              "cross_principal_guest_execution_denied":True,
               "real_multi_host_staging":False,
               "two_tenant_end_to_end_execution":False,
               "independent_auditor_signoff":False,

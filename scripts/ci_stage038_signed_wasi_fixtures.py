@@ -29,6 +29,53 @@ def put(root: Path, name: str, payload: bytes) -> Path:
     return path
 
 
+def stdin_reading_wasi_fixture(message: str) -> bytes:
+    """Real core WASIp1 command reading stdin and writing bounded JSON stdout."""
+    def leb(value: int) -> bytes:
+        out = bytearray()
+        while True:
+            byte = value & 0x7f
+            value >>= 7
+            out.append(byte | (0x80 if value else 0))
+            if not value:
+                return bytes(out)
+
+    def name(value: str) -> bytes:
+        raw = value.encode("utf-8")
+        return leb(len(raw)) + raw
+
+    def section(blob: bytearray, index: int, payload: bytes) -> None:
+        blob.extend(bytes([index]) + leb(len(payload)) + payload)
+
+    wasm = bytearray(b"\\x00asm\\x01\\x00\\x00\\x00")
+    section(wasm, 1, bytes([2, 0x60, 4, 0x7f, 0x7f, 0x7f, 0x7f, 1, 0x7f, 0x60, 0, 0]))
+    imports = bytearray([2])
+    for fn in ("fd_read", "fd_write"):
+        imports.extend(name("wasi_snapshot_preview1"))
+        imports.extend(name(fn))
+        imports.extend([0, 0])
+    section(wasm, 2, imports)
+    section(wasm, 3, bytes([1, 1]))
+    section(wasm, 5, bytes([1, 0, 1]))
+    exports = bytes([2]) + name("memory") + bytes([2, 0]) + name("_start") + bytes([0, 2])
+    section(wasm, 7, exports)
+    body = bytes([
+        0, 0x41, 0, 0x41, 0xc0, 0, 0x41, 1, 0x41, 0xd0, 0,
+        0x10, 0, 0x1a, 0x41, 1, 0x41, 0, 0x41, 1, 0x41, 8,
+        0x10, 1, 0x1a, 0x0b
+    ])
+    section(wasm, 10, bytes([1]) + leb(len(body)) + body)
+    raw = (message + "\\n").encode("utf-8")
+    memory = bytearray(88)
+    memory[0:4] = (88).to_bytes(4, "little")
+    memory[4:8] = len(raw).to_bytes(4, "little")
+    memory[64:68] = (128).to_bytes(4, "little")
+    memory[68:72] = (64).to_bytes(4, "little")
+    memory.extend(raw)
+    section(wasm, 11, bytes([1, 0, 0x41, 0, 0x0b]) + leb(len(memory)) + memory)
+    return bytes(wasm)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--directory", type=Path, required=True)
@@ -41,7 +88,7 @@ def main() -> int:
     try:
         root = args.directory.resolve()
         root.mkdir(parents=True, mode=0o700)
-        wasm = bytes.fromhex("0061736d0100000001040160000003020100070a01065f737461727400000a040102000b")
+        wasm = stdin_reading_wasi_fixture('{"ok":true}')
         put(root, "module.wasm", wasm)
         manifest = {
             "schema_version": 1,
@@ -54,7 +101,7 @@ def main() -> int:
                 "output_schema": {"type": "object"},
                 "cost_sats": 0,
                 "permissions": [],
-                "timeout_ms": 2000,
+                "timeout_ms": 5000,
                 "enabled": True
             },
             "module_sha256_hex": hashlib.sha256(wasm).hexdigest(),
@@ -63,7 +110,7 @@ def main() -> int:
                 "fuel": 2000000, "max_linear_memory_bytes": 33554432,
                 "max_wasm_stack_bytes": 1048576,
                 "max_input_bytes": 16384, "max_output_bytes": 16384,
-                "timeout_ms": 2000, "max_concurrent": 4
+                "timeout_ms": 5000, "max_concurrent": 4
             }
         }
         raw = json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()

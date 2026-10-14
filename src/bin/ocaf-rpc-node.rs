@@ -279,7 +279,7 @@ async fn main() -> anyhow::Result<()> {
                     }),
                 },
                 Ok("call") | Err(_) => RpcAction::Execute {
-                    tool: "demo_echo".into(),
+                    tool: env::var("OCAF_TOOL").unwrap_or_else(|_| "demo_echo".into()),
                     args: json!({"message": env::var("OCAF_MESSAGE").unwrap_or_else(|_| "hello over Zenoh RPC".into())}),
                 },
                 Ok(other) => anyhow::bail!("unknown OCAF_ACTION: {other}"),
