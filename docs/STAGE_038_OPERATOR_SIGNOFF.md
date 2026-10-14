@@ -134,6 +134,22 @@ ephemeral runner**, tworząc artefakt `stage038-ci-host-preflight`. Wynik
 `HOST_PREREQUISITES_VERIFIED_ONLY` nie upoważnia do oznaczania 0.38 jako
 ukończonego. Operacyjny GO nadal wymaga wypełnienia formularza powyżej.
 
+## Imienne role zatwierdzające — wskazanie użytkownika (2026-10-15)
+
+| Funkcja | Imię / identyfikator | Stan formalny |
+| --- | --- | --- |
+| Operator odbioru A12 | **Andrzej Mikulski** | Wskazany przez użytkownika; brak podpisu pod kompletnym protokołem i finalnym SHA |
+| Niezależny audytor A11 | **zchiz444** | Wskazany przez użytkownika; niezależność i tożsamość niezweryfikowane, brak raportu i podpisu audytu |
+| Inni zgłoszeni uczestnicy | `mojealteregopl`, `fotografandrzej333` | Rejestr udziału; bez przypisania uprawnień audytora/operatora |
+
+**Zgoda na utworzenie technicznych podpisów inicjalizacyjnych ≠
+formalny podpis decyzji ACCEPT.** Nie wystawiono podpisu operatora
+`operator.sig` ani niezależnego audytora `auditor.sig` pod
+`acceptance.json`. Klucze kontrolowane przez asystenta nie mogą
+udawać kluczy własnoręcznie użytych przez wymienione osoby. Decyzja
+pozostaje **NO-GO** do czasu wykonania kontroli i zatwierdzenia
+rzeczywistych dowodów technicznych A01–A12.
+
 ## Zgłoszeni uczestnicy podpisania — 2026-10-15
 
 Na wyraźne życzenie użytkownika do procesu dopisano trzy nazwy:
