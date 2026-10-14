@@ -20,7 +20,6 @@ jobs:
     env:
       SANDBOX_API_URL: ${{ secrets.OCAF_SANDBOX_API_URL }}
       SANDBOX_TOKEN: ${{ secrets.OCAF_SANDBOX_TOKEN }}
-      KUBECONFIG: ${{ runner.temp }}/ocaf-sandbox-kubeconfig
     steps:
       - name: Checkout main without persisted credentials
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -29,6 +28,8 @@ jobs:
       - name: Offline parser safety tests
         run: python3 -m unittest discover -s scripts/tests -p 'test_openshift_sandbox_audit.py' -v
       - name: Setup namespace-scoped temporary Kubernetes context
+        env:
+          KUBECONFIG: ${{ runner.temp }}/ocaf-sandbox-kubeconfig
         shell: bash
         run: |
           set -euo pipefail
@@ -52,6 +53,8 @@ jobs:
           kubectl config set-context ocaf-redhat --cluster=ocaf-redhat --user=ocaf-readonly --namespace=mojealterego-dev >/dev/null
           kubectl config use-context ocaf-redhat >/dev/null
       - name: Inspect existing namespace without creating resources
+        env:
+          KUBECONFIG: ${{ runner.temp }}/ocaf-sandbox-kubeconfig
         if: ${{ env.SANDBOX_API_URL != '' && env.SANDBOX_TOKEN != '' }}
         run: python3 scripts/openshift_sandbox_audit.py --report stage038-redhat-preflight.json
       - name: Archive sanitized read-only report
@@ -64,5 +67,7 @@ jobs:
           retention-days: 14
       - name: Remove ephemeral local Kubernetes credential material
         if: always()
+        env:
+          KUBECONFIG: ${{ runner.temp }}/ocaf-sandbox-kubeconfig
         shell: bash
         run: rm -f -- "${KUBECONFIG}"
