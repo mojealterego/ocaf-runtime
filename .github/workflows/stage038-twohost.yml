@@ -32,7 +32,13 @@ jobs:
         run: |
           python3 -m venv "$RUNNER_TEMP/ocaf038-python"
           "$RUNNER_TEMP/ocaf038-python/bin/pip" install --disable-pip-version-check 'aiohttp==3.13.3'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Use preinstalled Ubuntu Rust toolchain without flaky external bootstrap
+        run: |
+          set -euo pipefail
+          command -v rustc
+          command -v cargo
+          rustc --version
+          cargo --version
       - name: Compile actual coordinator and pin real Wasmtime engine
         timeout-minutes: 13
         run: |
@@ -218,7 +224,13 @@ jobs:
             "$RUNNER_TEMP/ocaf038-python/bin/python" "$GITHUB_WORKSPACE/scripts/stage038_tunnel_client.py" \
               --mode put --item "$item" --file "$RUNNER_TEMP/ocaf038-client/$item"
           done
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Use preinstalled Ubuntu Rust toolchain without flaky external bootstrap
+        run: |
+          set -euo pipefail
+          command -v rustc
+          command -v cargo
+          rustc --version
+          cargo --version
       - name: Build actual TLS-bound OCAF RPC client from locked main
         timeout-minutes: 13
         run: cargo build --locked --features tls-bound --bin ocaf-rpc-node
