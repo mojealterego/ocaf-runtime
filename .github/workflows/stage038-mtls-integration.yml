@@ -31,7 +31,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up locked Rust compiler
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
       - name: Test TLS-bound RPC with actual ephemeral certificates
         run: cargo test --locked --features tls-bound --test tls_bound_identity -- --test-threads=1
       - name: Test actual Zenoh mTLS handshakes and rejection
@@ -68,7 +68,7 @@ jobs:
           PY
       - name: Archive synthetic CI result, not private key material
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ocaf038-real-mtls-ci-evidence
           path: stage038-tls-mtls-ci-evidence.json
