@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import signal
 import subprocess
 import sys
@@ -118,6 +119,18 @@ def single_cycle(timeout: float) -> dict[str, object]:
     }
 
 
+
+def save_report(path: Path, report: dict[str, object]) -> None:
+    """Create owner-only evidence once; never overwrite earlier test records."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    old_umask = os.umask(0o077)
+    try:
+        with path.open("x", encoding="utf-8") as output:
+            json.dump(report, output, indent=2, sort_keys=True)
+            output.write("\n")
+    finally:
+        os.umask(old_umask)
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cycles", type=int, default=2)
@@ -141,7 +154,9 @@ def main() -> int:
         parser.error("OCAF_TEST_WASMTIME must be an absolute executable file")
     digest = file_sha256(engine)
     expected = os.getenv("OCAF_TEST_WASMTIME_SHA256")
-    if expected and expected != digest:
+    if expected is None or not re.fullmatch(r"[0-9a-f]{64}", expected):
+        parser.error("OCAF_TEST_WASMTIME_SHA256 must be a pinned lowercase 64-digit SHA-256")
+    if expected != digest:
         parser.error("Wasmtime binary SHA-256 does not match operator pin")
 
     started_at = int(time.time())
@@ -197,8 +212,7 @@ def main() -> int:
         "passed": passed,
         "sampling_note": "20 ms best-effort /proc process-tree samples; summed RSS double-counts shared pages",
     }
-    args.report.parent.mkdir(parents=True, exist_ok=True)
-    args.report.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+    save_report(args.report, report)
     print(json.dumps({"passed": passed, "cycles": len(results), "report": str(args.report)}))
     return 0 if passed else 1
 
