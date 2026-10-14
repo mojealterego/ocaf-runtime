@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 
 CGROUP_ROOT = Path("/sys/fs/cgroup")
 REQUIRED_CONTROLLERS = frozenset({"cpu", "memory", "pids"})
-UNIT_NAME = re.compile(r"ocaf-[a-z0-9@_.-]{1,100}\\.service\\Z")
+UNIT_NAME = re.compile(r"ocaf-[a-z0-9@_.-]{1,100}\.service\Z")
 MAX_MEMORY_BYTES = 2 * 1024 ** 3
 MAX_TASKS = 256
 
@@ -174,6 +174,10 @@ def build_report(unit: str | None = None) -> dict[str, object]:
                 if cgpath.is_relative_to(CGROUP_ROOT.resolve()) and cgpath.is_dir():
                     unit_checks["unit_cgroup_exists"] = True
                     record["metrics"] = read_cgroup_stats(cgpath)
+                    checks["unit_resource_accounting"] = all(
+                        record["metrics"].get(k) is not None
+                        for k in ("memory.peak", "memory.events", "pids.current", "cpu.stat")
+                    )
             checks.update(unit_checks)
             record["unit"] = {
                 "id": p["Id"], "fragment_path": p["FragmentPath"],
@@ -202,7 +206,7 @@ def main() -> int:
         try:
             with args.report.open("x", encoding="utf-8") as fp:
                 json.dump(report, fp, indent=2, sort_keys=True)
-                fp.write("\\n")
+                fp.write("\n")
         finally:
             os.umask(prior)
     except (ValueError, FileExistsError, OSError) as exc:
