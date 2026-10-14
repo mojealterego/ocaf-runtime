@@ -89,7 +89,7 @@ kluczy i bez danych tenantów. Dokładny schemat w
 
 Podpisy Ed25519 obejmują **identyczne bajty** `acceptance.json`, z oddzielną
 separacją domen na rolę:
-`b"OCAF038-ACCEPTANCE-V1\\0" + role.encode("ascii") + b"\\0" + raw_json`.
+`b"OCAF038-ACCEPTANCE-V1\0" + role.encode("ascii") + b"\0" + raw_json`.
 Po podpisaniu przez operatora i audytora odrębnie, binarne pliki
 `operator.sig` i `auditor.sig` muszą leżeć obok `acceptance.json`.
 Zatwierdzone klucze publiczne `operator.pem`, `auditor.pem` należy trzymać
