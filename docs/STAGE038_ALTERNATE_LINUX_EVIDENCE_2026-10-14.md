@@ -32,3 +32,7 @@ Ponownie uruchomić już istniejący pięcioszardowy workflow `stage038-extended
 - Zmiana niniejszego dokumentu uruchamia osobny test 5 × 20 Wasmtime CI soak na nowym SHA. Jego **wynik należy odczytać z GitHub Actions**, a nie zakładać sukcesu na podstawie samego triggera.
 
 **Werdykt produkcyjny pozostaje NO-GO.** Pozytywne joby efemeryczne nie są zastępstwem trwałej infrastruktury staging, weryfikacji dwóch tenantów, chaosu/recovery, niezależnej oceny i podpisów operatora oraz audytora.
+
+### Wynik ujemnego testu 38613269443 — RED potwierdzony
+
+Poprzedni test rozróżniający transport od odmowy policyjnej zakończył się NO-GO, ponieważ agent B otrzymał podpisaną odpowiedź RPC o statusie FAILED (stdout), zamiast odmowy na poziomie ingress. W tym stanie nie można dowieść, że egzekucja została zatrzymana **przed** runtime. Przed kolejnym uruchomieniem jawnie ustawiono `allowed_tools=[]` dla agenta B w rzeczywistej konfiguracji koordynatora testowego; dodano dodatnią próbę uwierzytelnienia B przez mTLS i pusty discovery, po czym odmowa uruchomienia narzędzia musi nastąpić po stronie RPC. Taki test dowodzi polityki konkretnego agenta w CI; nadal nie dowodzi izolacji dwóch niezależnych tenantów na trwałym staging.
