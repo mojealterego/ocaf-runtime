@@ -175,3 +175,10 @@ Rejestr nazw, publicznych kluczy, hashy i podpisów:
 na końcowym SHA**. Posiadanie trzech nazw, trzech kluczy i trzech
 technicznie poprawnych podpisów nie może zastąpić niezależnego audytu
 i świadomego odbioru operatora.
+
+
+## Dodatkowi kandydaci do podpisania przeglądu — 2026-10-15
+
+Zgodnie z dyspozycją operatora do zgłoszonych uczestników przeglądu A11 dopisano **`arminburen84`** oraz **`wieslawdeskareporter`**, obok wcześniej wskazanego **`zchiz444`**. Trzy nazwy są rejestrem nominacji; nie oznaczają osobistej zgody, niezależności, przeprowadzonego audytu ani autentycznych podpisów.
+
+Formalne pola `auditor.sig` i `operator.sig` weryfikowane przez `scripts/stage038_production_gate.py` pozostają niewypełnione. Nie podpisywać decyzji ACCEPT za wymienione osoby. Przegląd A11 musi pochodzić od uprawnionego niezależnego podmiotu, a ostateczny odbiór A12 od operatora korzystającego z własnego klucza. Status nadal **NO-GO**, bez automatycznej zgody na wdrożenie.

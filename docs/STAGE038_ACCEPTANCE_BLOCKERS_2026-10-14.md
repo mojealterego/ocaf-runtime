@@ -91,3 +91,10 @@ Odwołania:
 Rejestr trzech wcześniejszych technicznych podpisów inicjalizacyjnych jest
 oddzielny od podpisów pod końcowym pakietem A11/A12.
 **Status nadal P0 / NO-GO** — nie fabrykować dowodów ani dat zamknięcia.
+
+
+## Aktualizacja składu odbioru — 2026-10-15
+
+Do zgłoszonego zespołu kontroli A11 dołączono **`arminburen84`** i **`wieslawdeskareporter`**, obok **`zchiz444`**. Dla nowych identyfikatorów nie uzyskano raportów, niezależnej weryfikacji tożsamości, kluczy zaufania ani podpisów; dla `zchiz444` analogiczne dowody A11 nadal są brakujące. Kandydaci nie są automatycznie zatwierdzonymi audytorami. Operatorem A12 pozostaje **Andrzej Mikulski**; poświadczenie operatora także pozostaje niepodpisane.
+
+**Niezmieniony gate:** brak rzeczywistych dwóch trwałych hostów docelowych, dowodów awarii i odtwarzania oraz osobnych podpisów A11/A12. Dopisanie nazwy nie jest raportem audytowym ani odbiorem: `0.38 PARTIAL / NO-GO`; `0.39` zablokowany.

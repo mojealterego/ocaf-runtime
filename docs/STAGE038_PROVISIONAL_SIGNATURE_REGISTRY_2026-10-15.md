@@ -77,3 +77,16 @@ niezależnego przejęcia przez rzeczywistych właścicieli.
    `production_approved: false`, zanim nastąpi zewnętrzny change-control.
 
 **Status bez zmian: 0.38 PARTIAL / NO-GO; 0.39 zablokowany.**
+
+
+## Uzupełnienie listy kandydatów — 2026-10-15 (oddzielny wpis, bez zmiany podpisanego komunikatu)
+
+Na żądanie operatora do przyszłej procedury odbiorowej OCAF 0.38 dopisano:
+- `arminburen84` — zgłoszony dodatkowy kandydat do przeglądu / współpodpisu audytu A11;
+- `wieslawdeskareporter` — zgłoszony dodatkowy kandydat do przeglądu / współpodpisu audytu A11.
+
+Razem z wcześniejszym `zchiz444` tworzą **listę trzech wskazanych kandydatów**, a nie listę trzech niezależnie zweryfikowanych audytorów. Żaden z dwóch nowych identyfikatorów nie ma tutaj poświadczonej tożsamości, zatwierdzonego zewnętrznego klucza publicznego ani osobistego podpisu pod raportem. Nie tworzono w ich imieniu kluczy ani podpisów.
+
+**Nie zmieniono historycznego JSON ani trzech podpisów inicjalizacyjnych powyżej**: te podpisy obejmują wyłącznie wcześniejsze bajty i wcześniejsze zgłoszone nazwy. Nowe wpisy są nominacjami, a nie retroaktywną zgodą właścicieli kont.
+
+A11 wymaga audytu wykonanego i podpisanego przez rzeczywiście niezależnego audytora; A12 wymaga odrębnego podpisu operatora Andrzeja Mikulskiego po sprawdzeniu dowodów. Stan: **A11/A12 PENDING, production NO-GO**.

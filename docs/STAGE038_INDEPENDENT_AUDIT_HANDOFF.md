@@ -51,3 +51,14 @@ NIE tworzyć podpisów w imieniu innych osób. Nie kopiować kluczy prywatnych d
 - **Operator wskazany do roli A12:** Andrzej Mikulski. Przegląd i końcowy podpis dopiero po kompletnym raporcie A11.
 
 **Stan A11: PENDING / NO-GO.**
+
+
+## Rozszerzenie składu zgłoszonego do przeglądu A11 — 2026-10-15
+
+| Identyfikator | Funkcja zgłoszona przez operatora | Status dowodowy |
+| --- | --- | --- |
+| `zchiz444` | Dotychczasowy kandydat na audytora wiodącego A11 | Brak potwierdzenia niezależności, raportu i osobistego podpisu |
+| `arminburen84` | Dodatkowy kandydat na audytora / współrecenzenta A11 | Nazwa dopisana; tożsamość, zgoda, kompetencje i podpis niezweryfikowane |
+| `wieslawdeskareporter` | Dodatkowy kandydat na audytora / współrecenzenta A11 | Nazwa dopisana; tożsamość, zgoda, kompetencje i podpis niezweryfikowane |
+
+Dopuszczenie dodatkowych osób do przeglądu **nie tworzy automatycznie trzech niezależnych audytów**. Audytor wiodący musi skontrolować rzeczywiste A01–A10 na jednym finalnym SHA, wydać własny raport PASS/FAIL i samodzielnie podpisać poświadczenie A11; współrecenzenci mogą przekazać oddzielne podpisane ustalenia, ale nie zastępują A11 ani podpisu operatora A12. W szczególności podpisy wygenerowane za inne osoby, wpisane identyfikatory albo klucze kontrolowane przez autora implementacji nie stanowią audytu zewnętrznego.
