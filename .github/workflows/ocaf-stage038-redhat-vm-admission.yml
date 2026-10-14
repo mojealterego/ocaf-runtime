@@ -1,0 +1,120 @@
+name: OCAF 0.38 OpenShift VM Admission Probe (dry-run ONLY)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/ocaf-stage038-redhat-vm-admission.yml"
+      - "scripts/openshift_vm_manifest.py"
+      - "scripts/tests/test_openshift_vm_manifest.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ocaf038-openshift-vm-admission-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  vm-admission:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      SANDBOX_API_URL: ${{ secrets.OCAF_SANDBOX_API_URL }}
+      SANDBOX_API_FALLBACK: ${{ secrets.OCAF_SANDBOX_API }}
+      SANDBOX_TOKEN: ${{ secrets.OCAF_SANDBOX_TOKEN }}
+    steps:
+      - name: Checkout current main without stored credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Validate immutable VM admission specification
+        run: |
+          python3 -m unittest discover -s scripts/tests -p test_openshift_vm_manifest.py -v
+          python3 scripts/openshift_vm_manifest.py --out "${RUNNER_TEMP}/ocaf038-candidate.json"
+      - name: Authenticate only to verified OpenShift API
+        shell: bash
+        env:
+          KUBECONFIG: ${{ runner.temp }}/ocaf038-kubeconfig
+        run: |
+          set -euo pipefail
+          umask 077
+          if [[ -z "${SANDBOX_TOKEN}" || ( -z "${SANDBOX_API_URL}" && -z "${SANDBOX_API_FALLBACK}" ) ]]; then
+            echo "Sandbox credentials not configured."
+            exit 1
+          fi
+          API_SERVER="https://api.rm3.7wse.p1.openshiftapps.com:6443"
+          python3 - <<'PY'
+          import os, sys
+          from urllib.parse import urlparse
+          expected = "api.rm3.7wse.p1.openshiftapps.com"
+          allowed = False
+          for key in ("SANDBOX_API_URL", "SANDBOX_API_FALLBACK"):
+              try:
+                  p = urlparse(os.environ.get(key, "").strip())
+                  if p.scheme == "https" and p.hostname == expected and p.port == 6443 and p.path in ("", "/") and not p.username and not p.password and not p.query and not p.fragment:
+                      allowed = True
+              except ValueError:
+                  pass
+          # Historical console URL secrets are allowed as long as a current
+          # token was independently supplied and only the pinned API is used.
+          if not allowed and not any(os.environ.get(k) for k in ("SANDBOX_API_URL", "SANDBOX_API_FALLBACK")):
+              sys.exit("No API or console configuration provided")
+          PY
+          curl --fail --silent --show-error --max-time 12 "${API_SERVER}/version" >/dev/null
+          kubectl config set-cluster redhat --server="${API_SERVER}" >/dev/null
+          kubectl config set-credentials trial --token="${SANDBOX_TOKEN}" >/dev/null
+          kubectl config set-context sandbox --cluster=redhat --user=trial --namespace=mojealterego-dev >/dev/null
+          kubectl config use-context sandbox >/dev/null
+      - name: Ask Kubernetes admission controller without creating anything
+        shell: bash
+        env:
+          KUBECONFIG: ${{ runner.temp }}/ocaf038-kubeconfig
+        run: |
+          set -uo pipefail
+          umask 077
+          result="SERVER_DRY_RUN_REJECTED"
+          vm_allowed="$(kubectl auth can-i create virtualmachines.kubevirt.io -n mojealterego-dev 2>/dev/null || true)"
+          ds_access="no"
+          kubectl -n openshift-virtualization-os-images get datasources.cdi.kubevirt.io fedora -o name >/dev/null 2>&1 && ds_access="yes"
+          if [[ "${vm_allowed}" == "yes" && "${ds_access}" == "yes" ]]; then
+            if kubectl -n mojealterego-dev create --dry-run=server -f "${RUNNER_TEMP}/ocaf038-candidate.json" -o name >/dev/null 2>"${RUNNER_TEMP}/ocaf038-admission-stderr"; then
+              result="SERVER_DRY_RUN_ACCEPTED"
+            fi
+          fi
+          export OCAF_ADMISSION_RESULT="${result}"
+          export OCAF_VM_CREATE_ALLOWED="${vm_allowed}"
+          export OCAF_OS_IMAGE_ACCESSIBLE="${ds_access}"
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          report = {
+              "schema_version": 1,
+              "sha": os.environ["GITHUB_SHA"],
+              "namespace": "mojealterego-dev",
+              "vm_resource": "ocaf038-preflight",
+              "vm_create_allowed": os.environ["OCAF_VM_CREATE_ALLOWED"] == "yes",
+              "fedora_datasource_accessible": os.environ["OCAF_OS_IMAGE_ACCESSIBLE"] == "yes",
+              "status": os.environ["OCAF_ADMISSION_RESULT"],
+              "dry_run_only": True,
+              "vm_created": False,
+              "stage_038_complete": False,
+              "production_approved": False,
+          }
+          Path("ocaf038-vm-admission.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n",encoding="utf-8")
+          print(json.dumps(report))
+          PY
+      - name: Upload sanitized admission report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocaf038-redhat-vm-admission
+          path: ocaf038-vm-admission.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Erase ephemeral Kubernetes session
+        if: always()
+        shell: bash
+        run: |
+          rm -f -- "${RUNNER_TEMP}/ocaf038-kubeconfig" "${RUNNER_TEMP}/ocaf038-candidate.json" "${RUNNER_TEMP}/ocaf038-admission-stderr"
