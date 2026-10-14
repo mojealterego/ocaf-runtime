@@ -62,3 +62,10 @@ NIE tworzyć podpisów w imieniu innych osób. Nie kopiować kluczy prywatnych d
 | `wieslawdeskareporter` | Dodatkowy kandydat na audytora / współrecenzenta A11 | Nazwa dopisana; tożsamość, zgoda, kompetencje i podpis niezweryfikowane |
 
 Dopuszczenie dodatkowych osób do przeglądu **nie tworzy automatycznie trzech niezależnych audytów**. Audytor wiodący musi skontrolować rzeczywiste A01–A10 na jednym finalnym SHA, wydać własny raport PASS/FAIL i samodzielnie podpisać poświadczenie A11; współrecenzenci mogą przekazać oddzielne podpisane ustalenia, ale nie zastępują A11 ani podpisu operatora A12. W szczególności podpisy wygenerowane za inne osoby, wpisane identyfikatory albo klucze kontrolowane przez autora implementacji nie stanowią audytu zewnętrznego.
+
+
+## Zlecenie rzeczywistego przeglądu zewnętrznego — 2026-10-15
+
+Wysłano wiadomość z zakresem niezależnego audytu, żądaniem potwierdzenia niezależności, raportu PASS/FAIL i własnego podpisu Ed25519 na adres kontaktowy dla `wieslawdeskareporter`. Identyfikator wiadomości Gmail: `1a13cd0f000bc8ab`. Wysłanie zlecenia **nie jest** wykonaniem audytu ani przyjęciem zlecenia przez adresata. Próby wysłania analogicznych wiadomości do `zchiz444` i `arminburen84` zostały zablokowane przez narzędzie, więc nie są oznaczone jako wysłane.
+
+**Stan A11:** oczekiwanie na niezależnie przeprowadzony audyt, raport, potwierdzenie tożsamości i niezależności oraz osobny podpis. **Stan A12:** oczekiwanie na komplet dowodów i podpis operatora. **NO-GO**.
