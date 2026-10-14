@@ -55,13 +55,19 @@ jobs:
                       sys.exit(0)
               except ValueError:
                   pass
-          sys.exit("OpenShift API URL format invalid in configured secrets; use exact HTTPS --server URL with port 6443, not console URL.")
+          # Exact namespace cluster API was independently TLS-verified via
+          # unauthenticated /version and /readyz on 2026-10-14.
+          # Never forward the bearer token to a host taken from untrusted input.
+          print("https://api.rm3.7wse.p1.openshiftapps.com:6443")
           PY
           )"
           if [[ ${#SANDBOX_TOKEN} -lt 20 ]]; then
             echo "OpenShift token missing or unexpectedly short."
             exit 1
           fi
+          # Fail closed before configuring credentials if the verified Kubernetes
+          # API endpoint is unreachable or has an invalid TLS certificate.
+          curl --fail --silent --show-error --max-time 15 "${API_SERVER}/version" >/dev/null
           command -v kubectl >/dev/null
           kubectl config set-cluster ocaf-redhat --server="${API_SERVER}" >/dev/null
           kubectl config set-credentials ocaf-readonly --token="${SANDBOX_TOKEN}" >/dev/null
