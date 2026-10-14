@@ -239,6 +239,53 @@ jobs:
             </dev/null >"$systemd_log" 2>&1
           systemd_rc=$?
           set -e
+          # Distinguish Unix file access, engine startup and Wasm invocation.
+          if sudo -u ocaf test -r "$module"; then
+            echo "STAGE038_UNPRIVILEGED_MODULE_READ=pass"
+          else
+            echo "STAGE038_UNPRIVILEGED_MODULE_READ=fail"
+          fi
+          if sudo -u ocaf test -x /opt/ocaf/bin/wasmtime; then
+            echo "STAGE038_UNPRIVILEGED_ENGINE_EXEC_BIT=pass"
+          else
+            echo "STAGE038_UNPRIVILEGED_ENGINE_EXEC_BIT=fail"
+          fi
+          version_log="$RUNNER_TEMP/ocaf038-wasmtime-version-private.log"
+          basic_log="$RUNNER_TEMP/ocaf038-wasmtime-basic-private.log"
+          set +e
+          sudo -u ocaf /usr/bin/env -i /opt/ocaf/bin/wasmtime --version >"$version_log" 2>&1
+          version_rc=$?
+          sudo -u ocaf /usr/bin/env -i /opt/ocaf/bin/wasmtime run "$module" </dev/null >"$basic_log" 2>&1
+          basic_rc=$?
+          set -e
+          if [ "$version_rc" -eq 0 ] && grep -q '^wasmtime ' "$version_log"; then
+            echo "STAGE038_UNPRIVILEGED_ENGINE_START=pass"
+          else
+            echo "STAGE038_UNPRIVILEGED_ENGINE_START=fail"
+          fi
+          if [ "$basic_rc" -eq 0 ] && grep -qx '{"ok":true}' "$basic_log"; then
+            echo "STAGE038_UNPRIVILEGED_BASIC_WASM=pass"
+          else
+            echo "STAGE038_UNPRIVILEGED_BASIC_WASM=fail"
+          fi
+          # These are fixed, allowlisted labels only. Never print captured stderr.
+          for kind in plain systemd basic; do
+            case "$kind" in
+              plain) diagnostic="$plain_log" ;;
+              systemd) diagnostic="$systemd_log" ;;
+              basic) diagnostic="$basic_log" ;;
+            esac
+            if grep -iq 'permission denied' "$diagnostic"; then
+              echo "STAGE038_${kind}_ERROR_CLASS=permission_denied"
+            elif grep -iq 'invalid value\|unknown option\|unexpected argument' "$diagnostic"; then
+              echo "STAGE038_${kind}_ERROR_CLASS=wasmtime_cli_rejected"
+            elif grep -iq 'failed to load\|failed to read' "$diagnostic"; then
+              echo "STAGE038_${kind}_ERROR_CLASS=module_load_failed"
+            else
+              echo "STAGE038_${kind}_ERROR_CLASS=other_or_none"
+            fi
+          done
+          rm -f -- "$version_log" "$basic_log"
           if [ "$plain_rc" -eq 0 ] && grep -qx '{"ok":true}' "$plain_log"; then
             echo "STAGE038_PLAIN_WASMTIME=pass"
           else
