@@ -446,8 +446,8 @@ independent auditor or authorized operator.
 | A08 | `soak_100_cycles` | One uninterrupted 100-cycle run per host with cgroup peak telemetry and concurrent two-tenant SLO | 5 x 20 CI PASS; STAGING MISSING |
 | A09 | `supply_chain_provenance` | Exact final SHA; signed attestation/SBOM; advisory review and reproducible verification | PASS FOR HISTORICAL SHA ONLY |
 | A10 | `backup_restore` | Verified restore and durable replay/uncertain-effect accounting in staging | NOT VERIFIED ON TARGET STAGING |
-| A11 | `independent_security_audit` | Different real auditor, adversarial report, residual risk, attachment hashes and separate valid signature | NO INDEPENDENT SIGNATURE |
-| A12 | `operator_signoff` | Authorized real operator reviews identical final SHA, host evidence, SLO, rollback and audit, signs separate approval | NOT SIGNED |
+| A11 | `independent_security_audit` | Different real auditor, adversarial report, residual risk, attachment hashes and separate valid signature | **zchiz444 nominated**; independence and identity not verified, audit report and independent signature missing; NO-GO |
+| A12 | `operator_signoff` | Authorized real operator reviews identical final SHA, host evidence, SLO, rollback and audit, signs separate approval | **Andrzej Mikulski nominated**; final evidence not approved, operator signature missing; NO-GO |
 
 **Acceptance sources:** [external acceptance procedure](STAGE038_EXTERNAL_ACCEPTANCE_RUNBOOK.md),
 [independent audit brief](STAGE038_INDEPENDENT_AUDIT_HANDOFF.md),
@@ -457,6 +457,16 @@ The verifier deliberately returns `production_approved: false`; even a valid sig
 packet is not an automatic change-control authorization. No private keys, host
 credentials, personal identity assertions or confidential host logs belong in this
 public repository. If a final SHA changes, restart the evidence/signoff clock.
+
+### Role assignment update — 2026-10-15
+
+The user designated **zchiz444** as independent security auditor (A11)
+and **Andrzej Mikulski** as operator (A12). These are **administrative
+nominations only**, not signed acceptance or proof of reviewer
+independence/authority. The previous assistant-generated provisioning
+signatures are not auditor/operator signatures on `acceptance.json`.
+A01–A10 persistent cross-host evidence and separate A11/A12 approval
+remain mandatory; **0.38 NO-GO, 0.39 blocked**.
 
 ### Security engineering review (independent TOOLS, not an independent PERSON)
 
