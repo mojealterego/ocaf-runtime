@@ -1,6 +1,6 @@
-# OCAF FULL ECOSYSTEM ROADMAP — 26 PDF + 4 supplementary file versions / v3
+# OCAF FULL ECOSYSTEM ROADMAP — consolidated evidence-led v4 (2026-10-14)
 
-**State: 2026-10-13.** Repository: `mojealterego/ocaf-runtime`, **branch `main` only**.
+**Revision: 2026-10-14.** The dated historical notes remain below. Repository: `mojealterego/ocaf-runtime`, **branch `main` only**.
 This document **supersedes the provisional 0.36–0.50 roadmap** in
 `docs/MASTER_ARCHITECTURE_26_PDFS.md`. It is a requirements traceability
 and milestone plan, not proof that the described systems already work.
@@ -63,7 +63,7 @@ traceability. Version numbers advance only after real release approvals.
 |---|---|---|---|---|
 | 0.36 | Identity/RPC | Application-layer certificate private-key proof + HMAC and pinning | Implement (opt-in) | Existing CI tests; genuine transport TLS peer binding remains blocked |
 | 0.37 | Identity/RPC | Separate TLS 1.3-bound ingress verifies live session leaf against RPC sender pin and SAN; CRL/reload/worker migration remains | Implemented experimentally / NO-GO | Real handshake and swapped-cert tests in CI; external PKI/CRL and multi-host still pending |
-| 0.38 | Execution | Restricted Wasmtime WASIp1 adapter (see [implementation](WASI_EXECUTION_038.md) and [acceptance contract](PRIORITY_038_EXECUTION_CONTRACT.md)) | **PARTIALLY IMPLEMENTED / P0 / NO-GO** | Operator-pinned Wasmtime CLI, Ed25519 manifest, tenant/agent binding, TLS worker and HMAC receipt implemented; real WASIp1 tested in CI. Independent crash/soak, host threat review and final security acceptance pending |
+| 0.38 | Execution | Restricted Wasmtime WASIp1 adapter (see [implementation](WASI_EXECUTION_038.md) and [acceptance contract](PRIORITY_038_EXECUTION_CONTRACT.md)) | **PARTIALLY IMPLEMENTED / P0 / NO-GO** | At SHA `361fefe` all seven named CI runs passed, including separate two-VM mTLS, two tenants on one VM and 5 x 20 real Wasmtime cycles. This is not combined two-tenant/two-host persistent staging, independent audit or operator-signed acceptance. See 2026-10-14 evidence appendix. |
 | 0.39 | Execution | Firecracker microVM broker + eBPF Aya controls + isolation attestations | P0 / NO-GO | Linux/KVM negative isolation, teardown, syscall/network constraints; mobile separate |
 | 0.40 | HA | Three physical host PostgreSQL HA, real leader fencing and failover | P0 / NO-GO | Host power loss, split-brain, former leader effect-writes rejected |
 | 0.41 | Reliability | Backup/restore, partition chaos, recovery and prolonged soak | P0 / NO-GO | RTO/RPO SLO, restore proof, job audit recovery, operator acceptance |
@@ -408,3 +408,114 @@ multi-tenant ani usunięcia TOCTOU przy exec silnika.
 - Wzorcowy unit systemd ustanawia host cgroup limits i `KillMode=control-group`; **nie został wdrożony ani przetestowany na docelowej infrastrukturze**.
 - Utrzymujemy **0.38 = PARTIAL / PRODUCTION NO-GO** aż do hostowego crash/soak, rzeczywistego wielohostowego staging, rotacji trust anchor i podpisanego niezależnego odbioru. Formalna decyzja zależy od [macierzy 0.38.8–0.38.9](STAGE_038_8_9_ACCEPTANCE.md).
 - Nie rozpoczynać 0.39 na podstawie samego CI; odrębna infrastruktura dla Firecracker/KVM i eBPF.
+
+---
+
+## Evidence-controlled update — 2026-10-14 (v4, priority 0.38)
+
+**Source of truth:** only `main`. All evidence below is for the observed immutable
+Git commit `361fefece39ed0f34675c8e3d0fd5f8054da41e0` and becomes
+**historical** when `main` advances. Any subsequent patch requires a fresh
+CI/security audit on its *own* SHA. **Stage 0.38 is NOT signed off; 0.39
+implementation is blocked.** No CI or AI self-review may impersonate an
+independent auditor or authorized operator.
+
+### Verified GitHub Actions (as of 2026-10-14)
+
+| Control | Actual run | Status | Scope restriction |
+|---|---|---|---|
+| Rust full CI | [38618072351](https://github.com/mojealterego/ocaf-runtime/actions/runs/38618072351) | SUCCESS | Code/test build, not production deployment |
+| CodeQL | [38618072199](https://github.com/mojealterego/ocaf-runtime/actions/runs/38618072199) | SUCCESS | Automated scanner, not independent certification |
+| Supply Chain and Provenance | [38618072116](https://github.com/mojealterego/ocaf-runtime/actions/runs/38618072116) | SUCCESS | Ephemeral build provenance and SBOM |
+| Linux host preflight | [38618072200](https://github.com/mojealterego/ocaf-runtime/actions/runs/38618072200) | SUCCESS | Ephemeral synthetic host only |
+| Two distinct Linux kernels + signed WASI mTLS RPC | [38618072312](https://github.com/mojealterego/ocaf-runtime/actions/runs/38618072312) | SUCCESS | Cross-VM, **one synthetic tenant**, no persistent staging |
+| Two tenants + systemd + fault simulation | [38618072122](https://github.com/mojealterego/ocaf-runtime/actions/runs/38618072122) | SUCCESS | Both tenants on **one** disposable VM |
+| 100-cycle Wasmtime soak (5 x 20) | [38618072521](https://github.com/mojealterego/ocaf-runtime/actions/runs/38618072521) | SUCCESS | Five CI runner shards, **not** one 100-cycle production-staging soak |
+
+### Mandatory stage 0.38 closure register (NO-GO until EVERY row independently accepted)
+
+| ID | Evidence identifier | Acceptance condition | Current result |
+|---|---|---|---|
+| A01 | `host_a_systemd` | Stable Linux host A; independent machine/failure domain; signed systemd/cgroup resource report | NOT VERIFIED ON TARGET STAGING |
+| A02 | `host_b_systemd` | Same for independently operated host B | NOT VERIFIED ON TARGET STAGING |
+| A03 | `multi_host_mtls_rpc` | Real inter-host signed WASI TLS-bound RPC and live peer identity, not loopback | CI PASS ONLY |
+| A04 | `two_tenant_isolation` | Both tenant identities, trust stores, logs, receipts and deny cases concurrently **across two hosts** | ONE-HOST CI PASS ONLY |
+| A05 | `network_partition_recovery` | Inter-host partition, restore, lease reconciliation, retained denial and no unauthorized replay | NOT VERIFIED ON TWO TARGET HOSTS |
+| A06 | `sigkill_replay_fencing` | SIGKILL/host loss, systemd cleanup and no double-commit of an uncertain external effect | PARTIAL DISPOSABLE CI |
+| A07 | `publisher_tls_revocation` | Operator-controlled publisher key and TLS CA rotation; old identity rejected on both hosts | ONE-HOST CI PARTIAL |
+| A08 | `soak_100_cycles` | One uninterrupted 100-cycle run per host with cgroup peak telemetry and concurrent two-tenant SLO | 5 x 20 CI PASS; STAGING MISSING |
+| A09 | `supply_chain_provenance` | Exact final SHA; signed attestation/SBOM; advisory review and reproducible verification | PASS FOR HISTORICAL SHA ONLY |
+| A10 | `backup_restore` | Verified restore and durable replay/uncertain-effect accounting in staging | NOT VERIFIED ON TARGET STAGING |
+| A11 | `independent_security_audit` | Different real auditor, adversarial report, residual risk, attachment hashes and separate valid signature | NO INDEPENDENT SIGNATURE |
+| A12 | `operator_signoff` | Authorized real operator reviews identical final SHA, host evidence, SLO, rollback and audit, signs separate approval | NOT SIGNED |
+
+**Acceptance sources:** [external acceptance procedure](STAGE038_EXTERNAL_ACCEPTANCE_RUNBOOK.md),
+[independent audit brief](STAGE038_INDEPENDENT_AUDIT_HANDOFF.md),
+[operator receipt](STAGE_038_OPERATOR_SIGNOFF.md),
+[fail-closed production verifier](../scripts/stage038_production_gate.py).
+The verifier deliberately returns `production_approved: false`; even a valid signed
+packet is not an automatic change-control authorization. No private keys, host
+credentials, personal identity assertions or confidential host logs belong in this
+public repository. If a final SHA changes, restart the evidence/signoff clock.
+
+### Security engineering review (independent TOOLS, not an independent PERSON)
+
+A local read-only scan with third-party **zizmor v1.30.1** on the
+`361fefe` source identified 67 workflow warnings in auditor profile.
+Proposed fixes (pin action SHAs and PostgreSQL image digest; reduce global
+OIDC; disable persisted checkout credentials) reduced that scanner's
+*offline regular-profile* count to zero and passed four local Python regression
+tests. This is **not** evidence that those changes have landed on `main`,
+that remote CI is green on a patched SHA, or that an independent qualified
+person has audited the runtime. The scanner profiles and installation context
+are different and cannot be numerically compared as a certification score.
+
+### Next executable sequence — NO paid infrastructure or fictional GO
+
+1. Finish CI supply-chain hardening on `main`; verify actual triggered jobs on
+   its final SHA, then freeze code and publish a SHA/digest-only audit manifest.
+2. Obtain **already authorized, no-new-charge** two-host *persistent* Linux staging
+   with PID1 systemd, separate failure domains, cgroup v2, private mTLS networking,
+   independently administered trust stores and recoverable database/sink.
+   Do not purchase a server, enable billable marketplace services, or promote
+   disposable GitHub runners to a "persistent host".
+3. Execute A01–A10 on that *frozen SHA* and store signed private host reports;
+   do not run destructive chaos outside an isolated test deployment.
+4. An auditor **separate from implementers** validates code, Wasmtime and host
+   hardening, signs A11 with an independently trusted Ed25519 identity.
+5. The designated operator independently accepts measured risk/SLO/rollback,
+   signs A12 with a separate identity. Verify the exact signed evidence packet
+   and record a separately authorized production change-control decision.
+6. **Only after these gates** set a verified 0.38 COMPLETE entry and unblock
+   implementation of 0.39 Firecracker/KVM + Aya/eBPF. Until then: `NO-GO`.
+
+### Traceability of four additional PDFs provided 2026-10-14
+
+These are **four input file versions**, overlapping the previous material,
+not four independently verified software deliveries. All source-provided
+runtime implementations and performance/safety claims are **proposals** until
+tested; a code block or a named specialist swarm is not installation evidence.
+
+| Source file | Technical additions and mapping | Verification gate |
+|---|---|---|
+| `Notes_261014_134626.pdf` (52 p.) | OmniThermo-Governor 0.82/0.90; OmniProof-STARK 0.85; causal macro-swarmed state 0.86; OmniMarket-L402+ 0.87; OmniSubstrate 0.88; proof-carrying RSI 0.89 | RAPL calibration, formal relation/verifier, reversible aggregation, payment-state conservation, deterministic equivalence and independently checked proofs |
+| `Dokument bez nazwy.PDF` (14 p.) | 25 repository candidates consolidated into OmniSeek-Local, OmniFlow-Pieces, OmniDroid-GUI, OmniEval-Lab / OmniFleet-C2, OmniVoice-Duplex / OmniCinema / OmniAgro-KG; see extension 0.95–0.99 | Real modules, sandbox, permissions, bounded DAG, latency and privacy benchmarks; do not copy unverified claims |
+| `Architektura OmniContext Agent Framework (OCAF) w ..(1).PDF` (61 p.) | Expanded specialist module corpus including OmniSys, OmniHFT/OmniCAD, OmniLex/OmniSocioSec, OmniFold/OmniBioClinical, OmniPhysics, OmniBroadcast/OmniTutor, OmniCrowd/OmniVet | Trace each domain to 0.56–0.84; require legal/data/operator guards and separate domain-specific evidence |
+| `Architektura OmniContext Agent Framework (OCAF) w ...PDF` (58 p.) | Earlier adjacent revision of the same extended architecture; consolidate variant-only additions instead of duplicating entire modules | Diff exact interfaces and requirements before implementation; independent security/benchmark evidence |
+
+**New supplementary delivery IDs** (not a change to 0.39 start gate):
+
+| ID | Scope | Concrete, testable delivery |
+|---|---|---|
+| 0.95 | OmniSeek-Local + bounded multi-agent DAG | Local adapter, budgeted recursion, explicit approved web/file/tool capabilities, no tenant leak |
+| 0.96 | OmniFlow-Pieces | Trigger/action typed interface, idempotency, durable checkpoint, cancellation and reproducible latency baseline |
+| 0.97 | OmniDroid-GUI | Android permissioned Accessibility bridge with user-visible approval for sensitive actions; test on real Android ARM64 |
+| 0.98 | OmniEval-Lab + OmniFleet-C2 | Replayable trajectory datasets, tamper-evident evals, secure skill provenance/hot reload with automatic rollback |
+| 0.99 | OmniVoice-Duplex + OmniCinema + OmniAgro-KG | Opt-in low-latency media and domain packs; real-device and consent tests, rights/provenance and domain model validation |
+
+**Important:** physics/latency claims in supplied notes (e.g. universally
+sub-microsecond execution, 85% RAM savings, nanosecond full inference,
+negligible proof verification) are hypotheses, not proven OCAF guarantees.
+Do not remove systemd/WASI sandbox controls or spend money to chase
+experimental targets without an approved study. Foundation stage 0.38
+remains the sole current execution priority.
