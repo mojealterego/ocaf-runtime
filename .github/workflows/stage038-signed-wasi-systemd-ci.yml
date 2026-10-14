@@ -268,6 +268,25 @@ jobs:
           else
             echo "STAGE038_UNPRIVILEGED_BASIC_WASM=fail"
           fi
+          # GitHub runner workspaces may not be searchable by the service UID.
+          # Compare the exact same CLI invocation after changing to an
+          # operator-owned, searchable cwd; never output guest stderr.
+          cwd_log="$RUNNER_TEMP/ocaf038-wasmtime-cwd-private.log"
+          set +e
+          sudo -u ocaf /usr/bin/env -i /bin/sh -c 'cd /var/lib/ocaf && exec /opt/ocaf/bin/wasmtime run -W "$1" /var/lib/ocaf/module.wasm' sh "$opts" </dev/null >"$cwd_log" 2>&1
+          cwd_rc=$?
+          set -e
+          if [ "$cwd_rc" -eq 0 ] && grep -qx '{"ok":true}' "$cwd_log"; then
+            echo "STAGE038_UNPRIVILEGED_CWD_FIXED_WASM=pass"
+          else
+            echo "STAGE038_UNPRIVILEGED_CWD_FIXED_WASM=fail"
+          fi
+          if grep -iq 'permission denied' "$cwd_log"; then
+            echo "STAGE038_CWD_FIXED_ERROR_CLASS=permission_denied"
+          else
+            echo "STAGE038_CWD_FIXED_ERROR_CLASS=other_or_none"
+          fi
+          rm -f -- "$cwd_log"
           # These are fixed, allowlisted labels only. Never print captured stderr.
           for kind in plain systemd basic; do
             case "$kind" in
