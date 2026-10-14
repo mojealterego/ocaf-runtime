@@ -95,7 +95,7 @@ jobs:
           umask 077
           fixture="$RUNNER_TEMP/ocaf038-signed"
           py="$RUNNER_TEMP/ocaf038-python/bin/python"
-          unit=ocaf038-twohost-coordinator.service
+          unit=ocaf-twohost-coordinator.service
           tunnel_pid=""
           cleanup() {
             if [[ -n "$tunnel_pid" ]]; then kill "$tunnel_pid" 2>/dev/null || true; fi
@@ -113,7 +113,7 @@ jobs:
           done
           port="$("$py" -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1]);s.close()')"
           hash="$(sha256sum /opt/ocaf/bin/wasmtime | cut -d ' ' -f 1)"
-          sudo systemd-run --unit=ocaf038-twohost-coordinator --service-type=exec \
+          sudo systemd-run --unit=ocaf-twohost-coordinator --service-type=exec \
             --property=User=ocaf --property=Group=ocaf \
             --property=WorkingDirectory=/var/lib/ocaf \
             --property=ProtectSystem=strict --property=ReadWritePaths=/var/lib/ocaf \
