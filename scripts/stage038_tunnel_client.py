@@ -96,7 +96,7 @@ async def connection(session, base, run_id, role, local=None, reader=None, write
     token = await identity(session)
     url = base.replace("https://", "wss://", 1) + "/tunnel/" + run_id + "/" + role
     async with session.ws_connect(url, headers={"Authorization": "Bearer " + token},
-                                  max_msg_size=262144, heartbeat=15, timeout=25) as ws:
+                                  max_msg_size=262144, timeout=25) as ws:
         while True:
             hello = await ws.receive(timeout=220)
             if hello.type != aiohttp.WSMsgType.TEXT or hello.data not in ("QUEUED", "PAIRED"):
@@ -152,7 +152,7 @@ async def main():
     if args.mode in ("put", "get"):
         if args.file is None or args.item not in (
             "ca.pem", "agent-a.csr", "agent-b.csr", "transport.pub",
-            "agent-a.pem", "agent-b.pem", "hmac.sealed"
+            "agent-a.pem", "agent-b.pem", "hmac.sealed", "result.json"
         ):
             ap.error("known item and --file required")
         await exchange(args.relay.rstrip("/"), args.run_id, args.item, args.mode, args.file)
