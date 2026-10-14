@@ -73,11 +73,27 @@ def invoke(binary: Path, root: Path, tenant: str, principal: str,
                           check=False)
 
 
+def error_category(stderr: bytes) -> str:
+    """Print fixed categories only; raw credential-bearing diagnostics stay private."""
+    for label, signature in (
+        ("service_not_listening", b"Connection refused"),
+        ("tls_identity_rejected", b"certificate"),
+        ("rpc_policy_rejected", b"remote RPC rejected"),
+        ("rpc_execution_failed", b"remote tool call failed"),
+        ("transport_closed", b"early eof"),
+        ("transport_timeout", b"deadline has elapsed"),
+    ):
+        if signature.lower() in stderr.lower():
+            return label
+    return "unclassified_client_failure"
+
+
 def require_positive(binary: Path, root: Path, tenant: str, principal: str,
                      tool: str, port: int) -> None:
     result = invoke(binary, root, tenant, principal, port, tool=tool)
-    if result.returncode != 0 or result.stderr:
-        raise RuntimeError(f"authenticated tenant {tenant} execution failed")
+    if result.returncode != 0:
+        raise RuntimeError(f"authenticated tenant {tenant} execution failed: "
+                           f"{error_category(result.stderr)} (exit={result.returncode})")
     try:
         reply = json.loads(result.stdout)
     except ValueError as exc:
@@ -126,8 +142,18 @@ def main(argv: list[str] | None = None) -> int:
     try:
         a, b = "tenant-a", "tenant-b"
         atool, btool = "ocaf_ci_tenant_a", "ocaf_ci_tenant_b"
-        require_positive(binary, root, a, "agent-a", atool, args.port_a)
-        require_positive(binary, root, b, "agent-b", btool, args.port_b)
+        # systemd-run --service-type=exec proves exec, not that TLS has bound.
+        # Wait for real *signed RPC execution* on both listeners before chaos.
+        for tenant, principal, tool, port in ((a, "agent-a", atool, args.port_a),
+                                               (b, "agent-b", btool, args.port_b)):
+            for attempt in range(25):
+                try:
+                    require_positive(binary, root, tenant, principal, tool, port)
+                    break
+                except RuntimeError:
+                    if attempt == 24:
+                        raise
+                    time.sleep(.3)
         checks.append("two_independent_signed_tenants_success")
         with ThreadPoolExecutor(max_workers=8) as pool:
             tasks = [pool.submit(require_positive, binary, root, a if i % 2 == 0 else b,
