@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - .github/workflows/stage038-extended-soak.yml
+      - docs/STAGE038_ALTERNATE_LINUX_EVIDENCE_2026-10-14.md
       - Cargo.toml
       - Cargo.lock
       - src/**
