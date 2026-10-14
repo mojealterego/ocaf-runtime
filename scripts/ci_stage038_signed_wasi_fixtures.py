@@ -47,7 +47,7 @@ def stdin_reading_wasi_fixture(message: str) -> bytes:
     def section(blob: bytearray, index: int, payload: bytes) -> None:
         blob.extend(bytes([index]) + leb(len(payload)) + payload)
 
-    wasm = bytearray(b"\\x00asm\\x01\\x00\\x00\\x00")
+    wasm = bytearray(bytes([0, 97, 115, 109, 1, 0, 0, 0]))
     section(wasm, 1, bytes([2, 0x60, 4, 0x7f, 0x7f, 0x7f, 0x7f, 1, 0x7f, 0x60, 0, 0]))
     imports = bytearray([2])
     for fn in ("fd_read", "fd_write"):
@@ -65,7 +65,7 @@ def stdin_reading_wasi_fixture(message: str) -> bytes:
         0x10, 1, 0x1a, 0x0b
     ])
     section(wasm, 10, bytes([1]) + leb(len(body)) + body)
-    raw = (message + "\\n").encode("utf-8")
+    raw = (message + chr(10)).encode("utf-8")
     memory = bytearray(88)
     memory[0:4] = (88).to_bytes(4, "little")
     memory[4:8] = len(raw).to_bytes(4, "little")
@@ -89,6 +89,8 @@ def main() -> int:
         root = args.directory.resolve()
         root.mkdir(parents=True, mode=0o700)
         wasm = stdin_reading_wasi_fixture('{"ok":true}')
+        if not wasm.startswith(bytes([0, 97, 115, 109, 1, 0, 0, 0])):
+            raise RuntimeError("generated WASI module header rejected")
         put(root, "module.wasm", wasm)
         manifest = {
             "schema_version": 1,
