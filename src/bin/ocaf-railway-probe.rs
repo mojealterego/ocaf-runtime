@@ -9,11 +9,7 @@ struct FixedEcho;
 
 #[async_trait::async_trait]
 impl ToolExecutor for FixedEcho {
-    async fn execute(
-        &self,
-        args: Value,
-        _context: &ExecutionContext,
-    ) -> Result<Value, ToolError> {
+    async fn execute(&self, args: Value, _context: &ExecutionContext) -> Result<Value, ToolError> {
         Ok(json!({"ok": true, "echo": args["message"]}))
     }
 }
@@ -56,17 +52,39 @@ async fn main() -> anyhow::Result<()> {
         )
         .await?;
     let ok = runtime
-        .execute(request("railway-valid", "ocaf_trial_echo", json!({"message": "hello"})))
+        .execute(request(
+            "railway-valid",
+            "ocaf_trial_echo",
+            json!({"message": "hello"}),
+        ))
         .await?;
-    anyhow::ensure!(ok.output == json!({"ok": true, "echo": "hello"}), "good output mismatch");
+    anyhow::ensure!(
+        ok.output == json!({"ok": true, "echo": "hello"}),
+        "good output mismatch"
+    );
     let invalid = runtime
-        .execute(request("railway-invalid", "ocaf_trial_echo", json!({"message": 5})))
+        .execute(request(
+            "railway-invalid",
+            "ocaf_trial_echo",
+            json!({"message": 5}),
+        ))
         .await;
-    anyhow::ensure!(matches!(invalid, Err(RuntimeError::InvalidInput(_))), "input must fail closed");
-    let missing = runtime.execute(request("railway-missing", "unknown_tool", json!({}))).await;
-    anyhow::ensure!(matches!(missing, Err(RuntimeError::ToolNotFound(_))), "unknown tool must fail");
+    anyhow::ensure!(
+        matches!(invalid, Err(RuntimeError::InvalidInput(_))),
+        "input must fail closed"
+    );
+    let missing = runtime
+        .execute(request("railway-missing", "unknown_tool", json!({})))
+        .await;
+    anyhow::ensure!(
+        matches!(missing, Err(RuntimeError::ToolNotFound(_))),
+        "unknown tool must fail"
+    );
     let tenant = OcafRuntime::new(0).with_tenant_namespace("trial-tenant")?;
-    anyhow::ensure!(tenant.with_tenant_namespace("invalid:tenant").is_err(), "invalid namespace must fail");
+    anyhow::ensure!(
+        tenant.with_tenant_namespace("invalid:tenant").is_err(),
+        "invalid namespace must fail"
+    );
     println!(
         "{}",
         json!({
