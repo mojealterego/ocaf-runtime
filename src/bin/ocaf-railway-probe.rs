@@ -98,5 +98,7 @@ async fn main() -> anyhow::Result<()> {
             "production_approved": false
         })
     );
+    // Allow Railway's asynchronous log collector to attach before this bounded job exits.
+    tokio::time::sleep(std::time::Duration::from_secs(8)).await;
     Ok(())
 }
