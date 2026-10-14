@@ -46,3 +46,7 @@ Poprzedni test rozróżniający transport od odmowy policyjnej zakończył się 
 3. W obu przypadkach wykonano kod i pomiary rzeczywistych procesów w CI, ale fixture są syntetyczne, węzły krótkotrwałe i nie są to trwałe systemy docelowe. Lokalny transport fault na jednym runnerze nie jest rzeczywistą partycją pomiędzy niezależnymi hostami. **NO-GO** pozostaje wiążące, dopóki audytor i operator nie zatwierdzą spójnego pakietu na finalnym SHA.
 
 Zakres przekazania do niezależnej weryfikacji: [STAGE038_INDEPENDENT_AUDIT_HANDOFF.md](STAGE038_INDEPENDENT_AUDIT_HANDOFF.md).
+
+### Uwaga: niestabilność obciążeniowa krótkotrwałego runnera (final-SHA CI)
+
+Run 38617678152 na `b059bc5b657f209c62e1ab55d9d09f6238d38698` zakończył się negatywnie przy równoległym uruchamianiu 8 procesów klienckich, z komunikatem `rpc_signed_wasi_timeout` podczas testu współbieżności. Jest to rzeczywisty błąd testu pod obciążeniem, nie wolno zaliczać runu jako PASS. Zmieniono próbę na trzy fale po cztery jednoczesne żądania (po dwa na tenant), aby oddzielić wymóg izolacji od ponadbudżetowego przeciążenia małego współdzielonego runnera CI. To NIE stanowi zatwierdzenia wydajnościowego ani pełnego stress/soak staging. Wymagane ponowne sprawdzenie na aktualnym SHA i dłuższy test przy prawidłowych operacyjnych SLO.

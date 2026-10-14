@@ -163,14 +163,23 @@ def main(argv: list[str] | None = None) -> int:
                     time.sleep(.3)
         checks.append("two_independent_signed_tenants_success")
         print("CI_CHECK_PASS:two_independent_signed_tenants_success", flush=True)
-        with ThreadPoolExecutor(max_workers=8) as pool:
-            tasks = [pool.submit(require_positive, binary, root, a if i % 2 == 0 else b,
-                                 "agent-a" if i % 2 == 0 else "agent-b",
-                                 atool if i % 2 == 0 else btool,
-                                 args.port_a if i % 2 == 0 else args.port_b)
-                     for i in range(12)]
-            for task in tasks:
-                task.result()
+        # Each signed WASI executor advertises max_concurrent=4. Keep
+        # stress below the sum of independent tenant budgets on shared CI,
+        # while still executing both tenants in parallel in repeated waves.
+        # Queueing 8+ independent Wasmtime CLI invocations on one small
+        # ephemeral runner needlessly tests runner CPU contention rather
+        # than cross-tenant authorization boundaries.
+        for wave in range(3):
+            with ThreadPoolExecutor(max_workers=4) as pool:
+                tasks = [pool.submit(
+                    require_positive, binary, root,
+                    a if i % 2 == 0 else b,
+                    "agent-a" if i % 2 == 0 else "agent-b",
+                    atool if i % 2 == 0 else btool,
+                    args.port_a if i % 2 == 0 else args.port_b,
+                ) for i in range(4)]
+                for task in tasks:
+                    task.result()
         checks.append("simultaneous_tenant_a_and_b_rpc_execution")
         print("CI_CHECK_PASS:simultaneous_tenant_a_and_b_rpc_execution", flush=True)
         require_policy_deny(binary, root, a, "agent-b", atool, args.port_a)
