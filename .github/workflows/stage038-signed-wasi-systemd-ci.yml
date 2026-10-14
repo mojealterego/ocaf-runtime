@@ -1,0 +1,172 @@
+name: OCAF 0.38 Signed WASI systemd TLS staging probe (ephemeral CI, NO-GO)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/stage038-signed-wasi-systemd-ci.yml"
+      - "scripts/ci_stage038_signed_wasi_fixtures.py"
+      - "scripts/stage038_host_gate.py"
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "vendor/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ocaf038-signed-systemd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  signed-wasi-systemd:
+    name: Root-owned Wasmtime, signed tool, two peer certs, systemd/cgroup probe
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exactly main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build actual TLS-bound OCAF coordinator with locked dependencies
+        run: cargo build --locked --features tls-bound --bin ocaf-coordinator
+      - name: Verify and install pinned real Wasmtime 49.0.2 under root control
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive=wasmtime-v49.0.2-x86_64-linux.tar.xz
+          install -d "$RUNNER_TEMP/ocaf-engine"
+          curl --fail --silent --show-error --location --retry 3 --proto '=https' --tlsv1.2 \
+            "https://github.com/bytecodealliance/wasmtime/releases/download/v49.0.2/$archive" \
+            -o "$RUNNER_TEMP/ocaf-engine/$archive"
+          echo "a4d6e9e3a5a60f527cf7793d674c48930c80c2e8977995b8a275cad3254b9322  $RUNNER_TEMP/ocaf-engine/$archive" | sha256sum --check --status
+          tar -xJf "$RUNNER_TEMP/ocaf-engine/$archive" -C "$RUNNER_TEMP/ocaf-engine"
+          sudo install -d -m 0755 -o root -g root /opt/ocaf/bin
+          sudo install -m 0755 -o root -g root \
+            "$RUNNER_TEMP/ocaf-engine/wasmtime-v49.0.2-x86_64-linux/wasmtime" \
+            /opt/ocaf/bin/wasmtime
+          sudo install -m 0755 -o root -g root target/debug/ocaf-coordinator /opt/ocaf/bin/ocaf-coordinator
+          /opt/ocaf/bin/wasmtime --version
+      - name: Generate private synthetic CA, peer identities, and Ed25519-signed WASI fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/ci_stage038_signed_wasi_fixtures.py \
+            --directory "$RUNNER_TEMP/ocaf038-signed"
+      - name: Launch real signed-WASI coordinator under strict systemd cgroup limits
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          test "$GITHUB_ACTIONS" = true
+          test "$(uname -m)" = x86_64
+          fixture="$RUNNER_TEMP/ocaf038-signed"
+          unit=ocaf-ci-signed-wasi.service
+          trap 'sudo systemctl stop "$unit" >/dev/null 2>&1 || true' EXIT
+          if ! id ocaf >/dev/null 2>&1; then
+            sudo useradd --system --no-create-home --shell /usr/sbin/nologin ocaf
+          fi
+          sudo install -d -o ocaf -g ocaf -m 0700 /var/lib/ocaf
+          for filename in module.wasm manifest.json manifest.sig publisher.pem \
+                          server.pem server.key ca.pem agent-a.pem agent-b.pem peers.json; do
+            sudo install -o ocaf -g ocaf -m 0600 \
+              "$fixture/$filename" "/var/lib/ocaf/$filename"
+          done
+          port="$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()')"
+          wasmtime_sha="$(sha256sum /opt/ocaf/bin/wasmtime | cut -d ' ' -f 1)"
+          sudo systemd-run --unit=ocaf-ci-signed-wasi --service-type=exec \
+            --property=User=ocaf --property=Group=ocaf \
+            --property=WorkingDirectory=/var/lib/ocaf \
+            --property=ProtectSystem=strict --property=ReadWritePaths=/var/lib/ocaf \
+            --property=PrivateTmp=yes --property=NoNewPrivileges=yes \
+            --property=KillMode=control-group --property=Restart=no \
+            --property=MemoryMax=1610612736 --property=TasksMax=128 \
+            --property=CPUQuota=200% --property=LimitCORE=0 \
+            --property=RuntimeMaxSec=150s \
+            --setenv=OCAF_COORDINATOR_NODE_ID=coord-ci \
+            --setenv=OCAF_COORDINATOR_MODE=active \
+            --setenv=OCAF_REPLAY_DB_PATH=/var/lib/ocaf/replay.sqlite \
+            --setenv=OCAF_COORDINATOR_DB_PATH=/var/lib/ocaf/coordinator.sqlite \
+            --setenv=OCAF_JOBS_DB_PATH=/var/lib/ocaf/jobs.sqlite \
+            --setenv=OCAF_COORDINATOR_LOCK_PATH=/var/lib/ocaf/leader.lock \
+            --setenv=OCAF_PEERS_FILE=/var/lib/ocaf/peers.json \
+            --setenv=OCAF_RPC_INGRESS=tls-bound \
+            --setenv=OCAF_REQUIRE_PEER_CERT_POP=1 \
+            --setenv=OCAF_TENANT_NAMESPACE=tenant-ci \
+            --setenv=OCAF_TLS_RPC_BIND="127.0.0.1:$port" \
+            --setenv=OCAF_TLS_SERVER_CERT_FILE=/var/lib/ocaf/server.pem \
+            --setenv=OCAF_TLS_SERVER_KEY_FILE=/var/lib/ocaf/server.key \
+            --setenv=OCAF_TLS_CLIENT_CA_FILE=/var/lib/ocaf/ca.pem \
+            --setenv=OCAF_WASI_MANIFEST_FILE=/var/lib/ocaf/manifest.json \
+            --setenv=OCAF_WASI_SIGNATURE_FILE=/var/lib/ocaf/manifest.sig \
+            --setenv=OCAF_WASI_PUBLISHER_KEY_FILE=/var/lib/ocaf/publisher.pem \
+            --setenv=OCAF_WASI_MODULE_FILE=/var/lib/ocaf/module.wasm \
+            --setenv=OCAF_WASMTIME_EXECUTABLE=/opt/ocaf/bin/wasmtime \
+            --setenv=OCAF_WASMTIME_SHA256="$wasmtime_sha" \
+            /opt/ocaf/bin/ocaf-coordinator
+          for i in $(seq 1 45); do
+            if systemctl is-active --quiet "$unit" && \
+               python3 - "$port" <<'PY'
+          import socket,sys
+          try:
+              with socket.create_connection(("127.0.0.1", int(sys.argv[1])), timeout=0.5):
+                  pass
+          except OSError:
+              sys.exit(1)
+          PY
+            then
+              break
+            fi
+            sleep 0.3
+          done
+          systemctl is-active --quiet "$unit" || {
+            echo "::error::Signed WASI TLS coordinator failed startup"
+            sudo systemctl status "$unit" --no-pager || true
+            exit 1
+          }
+          python3 - "$port" "$fixture" <<'PY'
+          import socket, ssl, sys
+          port, root = int(sys.argv[1]), sys.argv[2]
+          for name in ("agent-a", "agent-b"):
+              context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+              context.minimum_version = ssl.TLSVersion.TLSv1_3
+              context.load_verify_locations(cafile=root + "/ca.pem")
+              context.load_cert_chain(root + "/" + name + ".pem", root + "/" + name + ".key")
+              with socket.create_connection(("127.0.0.1", port), timeout=4) as raw:
+                  with context.wrap_socket(raw, server_hostname="localhost") as peer:
+                      if peer.version() != "TLSv1.3":
+                          raise SystemExit("TLS downgrade rejected")
+          print("TWO_SYNTHETIC_MTLS_CLIENT_CERTIFICATE_HANDSHAKES_OK")
+          PY
+          python3 scripts/stage038_host_gate.py \
+            --unit "$unit" --report stage038-signed-wasi-systemd-host.json
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          evidence = {
+              "schema_version":1,
+              "commit":os.environ["GITHUB_SHA"],
+              "real_coordinator_systemd_active_with_signed_wasi_admission":True,
+              "pinned_real_wasmtime":True,
+              "synthetic_client_cert_handshakes":2,
+              "real_multi_host_staging":False,
+              "two_tenant_end_to_end_execution":False,
+              "independent_auditor_signoff":False,
+              "stage_038_complete":False,
+              "production_approved":False,
+          }
+          Path("stage038-signed-wasi-ci-result.json").write_text(json.dumps(evidence,indent=2)+"\n")
+          PY
+      - name: Archive sanitized evidence only, never ephemeral signing keys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocaf038-signed-wasi-systemd-ci
+          path: |
+            stage038-signed-wasi-systemd-host.json
+            stage038-signed-wasi-ci-result.json
+          retention-days: 30
+          if-no-files-found: warn
