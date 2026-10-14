@@ -364,8 +364,11 @@ impl EphemeralModule {
 
 impl Drop for EphemeralModule {
     fn drop(&mut self) {
-        let _ = fs::remove_file(&self.module_path);
-        let _ = fs::remove_dir(&self.directory);
+        // Wasmtime may create nested XDG cache entries under the isolated
+        // per-invocation HOME. A non-recursive remove_dir leaves them behind.
+        // Rust's Unix remove_dir_all does not traverse directory symlinks;
+        // restrict deletion to the uniquely-created, owner-only workspace.
+        let _ = fs::remove_dir_all(&self.directory);
     }
 }
 
