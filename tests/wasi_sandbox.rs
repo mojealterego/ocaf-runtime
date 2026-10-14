@@ -359,7 +359,8 @@ async fn guest_engine_receives_only_private_writable_home() {
     let folder = tempfile::tempdir().expect("fake pinned engine workspace");
     let (path, hash) = fake_engine(
         folder.path(),
-        "if [ \"$HOME\" != \"$(pwd -P)\" ] || [ \"$XDG_CACHE_HOME\" != \"$HOME\" ]; then exit 17; fi\nprintf '{\\\"ok\\\":true}\\n'",
+        r#"if [ "$HOME" != "$(pwd -P)" ] || [ "$XDG_CACHE_HOME" != "$HOME" ]; then exit 17; fi
+printf '{"ok":true}\n'"#,
     );
     let output = executor(path, hash, command_fixture("{}"), SandboxPolicy::default())
         .execute(json!({}), &context())
