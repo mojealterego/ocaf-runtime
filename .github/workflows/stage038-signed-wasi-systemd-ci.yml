@@ -205,7 +205,7 @@ jobs:
         run: |
           set -euo pipefail
           # Do not print raw journal entries: they may contain user data.
-          categories="$(sudo grep -oE 'wasi_failure_class="[a-z_]+"|wasi_failure_class=[a-z_]+' /var/lib/ocaf/ci-signed-wasi-diagnostics.log 2>/dev/null | sort -u || true)"
+          categories="$(sudo grep -oE 'wasi(_guest)?_failure_class="[a-z_]+"|wasi(_guest)?_failure_class=[a-z_]+' /var/lib/ocaf/ci-signed-wasi-diagnostics.log 2>/dev/null | sort -u || true)"
           echo "STAGE038_DIAGNOSTIC_BYTES=$(sudo stat -c %s /var/lib/ocaf/ci-signed-wasi-diagnostics.log 2>/dev/null || echo 0)"
           if [ -n "$categories" ]; then
             echo "STAGE038_SANITIZED_FAILURE_CLASS=$categories"
