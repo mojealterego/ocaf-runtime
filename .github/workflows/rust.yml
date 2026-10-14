@@ -13,7 +13,7 @@ jobs:
     timeout-minutes: 30
     services:
       postgres:
-        image: postgres:16
+        image: postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
         env:
           POSTGRES_USER: ocaf
           POSTGRES_PASSWORD: ocaf_local_test_password
@@ -29,12 +29,14 @@ jobs:
       OCAF_TEST_PG_DSN: "host=127.0.0.1 port=5432 user=ocaf password=ocaf_local_test_password dbname=ocaf_test sslmode=disable"
       OCAF_REQUIRE_PG_TESTS: "1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
       - name: Offline release precheck unit tests (Python 3.11+)
         run: python3 -m unittest discover -s scripts/tests -v
       - name: Release evidence inventory (development only; not a release gate)
         run: python3 scripts/release_readiness.py --repo . --report-only
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
         with:
           components: rustfmt, clippy
       - name: Committed Cargo.lock integrity
@@ -51,7 +53,7 @@ jobs:
         run: bash scripts/wasmtime_acceptance.sh
       - name: Upload reproducible WASI host resource evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: wasi-host-acceptance
           path: wasi-host-acceptance.json
