@@ -22,3 +22,13 @@ Data: 2026-10-14. Ten zapis dokumentuje tylko rzeczywiste wyniki diagnostyki; **
 Ponownie uruchomić już istniejący pięcioszardowy workflow `stage038-extended-soak.yml` (5 × 20 rzeczywistych cykli Wasmtime) na *końcowym SHA main*. Każdy shard zapisuje odrębny dowód; agregator ma odrzucać brak, niezgodny SHA lub niepowodzenie.
 
 **Nadal NO-GO:** bez docelowego systemd/cgroup service, niezależnych endpointów mTLS i dwóch tenantów, kontrolowanego SIGKILL/replay/network-partition, rotacji certyfikatów oraz niezależnego audytu i podpisanego odbioru operatora **nie oznaczać 0.38 jako ukończonego**. Nie zamawiać płatnego VPS bez osobnego zatwierdzenia kosztu.
+
+## Aktualizacja dowodów: dwie rzeczywiste, efemeryczne maszyny Linux GitHub Actions (2026-10-14)
+
+- Run [38610837380](https://github.com/mojealterego/ocaf-runtime/actions/runs/38610837380) dla SHA `df2522381965f430d623af6dcfe69230c45bed92`: **oba joby SUCCESS**.
+- VM A: nieuprzywilejowana usługa `ocaf-twohost-coordinator.service` pod realnym systemd, cgroup limits, zatwierdzony digest Wasmtime 49.0.2, podpisany WASI; VM B: niezależny kernel boot ID, osobny proces klienta z certyfikatem mTLS. Potwierdzono cross-VM TLS-bound signed WASI RPC oraz odmowę nieautoryzowanemu agentowi B.
+- Wyniki CI są syntetycznymi fixture'ami, nie produkcyjnym systemem dwóch tenantów. Nie przeprowadzono na tym runie długiej próby chaos dla partycji/sigkill i rotacji certyfikatów.
+- Audyt negatywnego testu wykazał ryzyko fałszywie zielonego wyniku: dowolny niezerowy exit code klienta (np. zerwane połączenie) mógł zostać uznany za odmowę autoryzacji. Wzmocniono fail-closed: odrębne stdout/stderr, niezerowy exit, dokładna diagnoza odmowy z poziomu RPC; błędy sieci/timeout/certyfikatu wywołują NO-GO. Dodano testy regresyjne, a workflow uruchamia się również po zmianach `src/**`, `tests/**` i `Cargo.lock`.
+- Zmiana niniejszego dokumentu uruchamia osobny test 5 × 20 Wasmtime CI soak na nowym SHA. Jego **wynik należy odczytać z GitHub Actions**, a nie zakładać sukcesu na podstawie samego triggera.
+
+**Werdykt produkcyjny pozostaje NO-GO.** Pozytywne joby efemeryczne nie są zastępstwem trwałej infrastruktury staging, weryfikacji dwóch tenantów, chaosu/recovery, niezależnej oceny i podpisów operatora oraz audytora.

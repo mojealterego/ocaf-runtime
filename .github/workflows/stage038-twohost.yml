@@ -8,6 +8,13 @@ on:
       - "scripts/stage038_relay.py"
       - "scripts/stage038_tunnel_client.py"
       - "scripts/stage038_relay_requirements.txt"
+      - "scripts/stage038_assert_denial.py"
+      - "scripts/tests/test_stage038_assert_denial.py"
+      - "scripts/ci_stage038_signed_wasi_fixtures.py"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "src/**"
+      - "tests/**"
   workflow_dispatch:
 
 permissions:
@@ -215,6 +222,8 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+      - name: Prove negative RPC evidence gate fails closed on network faults
+        run: python3 -m unittest discover -s scripts/tests -p test_stage038_assert_denial.py -v
       - name: Install only ephemeral OIDC relay dependencies and prepare private client keys
         run: |
           set -euo pipefail
@@ -340,10 +349,12 @@ jobs:
           export OCAF_TLS_CLIENT_CERT_FILE="$client/agent-b.pem"
           export OCAF_TLS_CLIENT_KEY_FILE="$client/agent-b.key"
           export OCAF_SHARED_KEY_B64="$("$py" -c 'import json,sys;print(json.load(open(sys.argv[1]))["agent-b"])' "$client/private-hmac.json")"
-          if target/debug/ocaf-rpc-node >"$RUNNER_TEMP/cross-principal-private" 2>&1; then
-            echo "::error::Cross-principal signed WASI was admitted"
-            exit 1
-          fi
+          denial_exit=0
+          target/debug/ocaf-rpc-node >"$RUNNER_TEMP/cross-principal.stdout" 2>"$RUNNER_TEMP/cross-principal.stderr" || denial_exit=$?
+          python3 scripts/stage038_assert_denial.py \
+            --exit-code "$denial_exit" \
+            --stdout-file "$RUNNER_TEMP/cross-principal.stdout" \
+            --stderr-file "$RUNNER_TEMP/cross-principal.stderr"
           echo "REAL_TWO_VM_CROSS_PRINCIPAL_WASI_EXECUTION_DENIED"
           success=true
       - name: Upload sanitized VM B report
