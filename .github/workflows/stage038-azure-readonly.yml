@@ -1,6 +1,10 @@
 name: OCAF 0.38 Azure Free-Tier Inventory (read-only; NO-GO)
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/stage038-azure-readonly.yml"
   workflow_dispatch:
 
 permissions:
