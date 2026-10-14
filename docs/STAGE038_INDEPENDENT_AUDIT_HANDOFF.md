@@ -69,3 +69,9 @@ Dopuszczenie dodatkowych osób do przeglądu **nie tworzy automatycznie trzech n
 Wysłano wiadomość z zakresem niezależnego audytu, żądaniem potwierdzenia niezależności, raportu PASS/FAIL i własnego podpisu Ed25519 na adres kontaktowy dla `wieslawdeskareporter`. Identyfikator wiadomości Gmail: `1a13cd0f000bc8ab`. Wysłanie zlecenia **nie jest** wykonaniem audytu ani przyjęciem zlecenia przez adresata. Próby wysłania analogicznych wiadomości do `zchiz444` i `arminburen84` zostały zablokowane przez narzędzie, więc nie są oznaczone jako wysłane.
 
 **Stan A11:** oczekiwanie na niezależnie przeprowadzony audyt, raport, potwierdzenie tożsamości i niezależności oraz osobny podpis. **Stan A12:** oczekiwanie na komplet dowodów i podpis operatora. **NO-GO**.
+
+## Potwierdzone wysłanie drugiego zaproszenia do audytu — 2026-10-15
+
+Ponowne wysłanie do `arminburen84` zakończyło się sukcesem w Gmail. ID: `1a13cd25248f2355`. Poprzednia próba była zablokowana, ale ten **późniejszy** email został nadany. Wysyłkę do `wieslawdeskareporter` potwierdzono w folderze Wysłane, ID: `1a13cd0f000bc8ab`. Dla `zchiz444` nadal nie ma potwierdzonej wysyłki. W chwili weryfikacji nie było odpowiedzi od `arminburen84` ani `wieslawdeskareporter`.
+
+Wysłanie wiadomości nie potwierdza przyjęcia zlecenia ani przeprowadzenia niezależnego audytu. **A11 oczekuje na prawdziwy raport i podpis; A12 na niezależną decyzję odbiorową po skompletowaniu dowodów. Status 0.38: NO-GO.**
