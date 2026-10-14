@@ -127,30 +127,34 @@ def _valid_hosts(hosts: object) -> bool:
 
 
 def _public_der(path: Path) -> bytes:
-    _safe_file_bytes(path, 16 * 1024)
+    # Open the external trust anchor once. Never let OpenSSL re-read the
+    # mutable path after the checked descriptor has been closed.
+    pinned_pem = _safe_file_bytes(path, 16 * 1024)
     result = subprocess.run(
-        ['openssl', 'pkey', '-pubin', '-in', str(path), '-pubout', '-outform', 'DER'],
-        capture_output=True, check=False, timeout=10,
+        ['openssl', 'pkey', '-pubin', '-inform', 'PEM', '-outform', 'DER'],
+        input=pinned_pem, capture_output=True, check=False, timeout=10,
     )
     if result.returncode != 0 or not result.stdout:
         raise ValueError('unreadable pinned public key')
     return result.stdout
 
 
-def _verify_signature(role: str, public_key: Path, packet: bytes, signature: bytes) -> bool:
+def _verify_signature(role: str, public_der: bytes, packet: bytes, signature: bytes) -> bool:
     if len(signature) != 64:
         return False
     with tempfile.TemporaryDirectory(prefix='ocaf038-verify-') as work:
         base = Path(work)
         payload_file = base / 'payload'
         signature_file = base / 'signature'
+        public_file = base / 'public.der'
         payload_file.write_bytes(signature_input(role, packet))
         signature_file.write_bytes(signature)
+        public_file.write_bytes(public_der)
         try:
             result = subprocess.run(
                 ['openssl', 'pkeyutl', '-verify', '-rawin', '-pubin',
-                 '-inkey', str(public_key), '-in', str(payload_file),
-                 '-sigfile', str(signature_file)],
+                 '-keyform', 'DER', '-inkey', str(public_file),
+                 '-in', str(payload_file), '-sigfile', str(signature_file)],
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                 timeout=10, check=False,
             )
@@ -217,13 +221,13 @@ def evaluate(bundle: Path, expected_commit: str, operator_key: Path,
                     blockers.append(f'evidence_invalid:{name}')
                     continue
                 validated += 1
-        for role, key in [('operator', operator_key), ('auditor', auditor_key)]:
+        for role, trusted_der in [('operator', operator_der), ('auditor', auditor_der)]:
             try:
                 sig = _safe_file_bytes(bundle / f'{role}.sig', 1024)
             except (OSError, ValueError):
                 blockers.append(f'signature_invalid:{role}')
                 continue
-            if not _verify_signature(role, key, raw_packet, sig):
+            if not _verify_signature(role, trusted_der, raw_packet, sig):
                 blockers.append(f'signature_invalid:{role}')
     except (OSError, ValueError, TypeError, json.JSONDecodeError, subprocess.TimeoutExpired):
         blockers.append('packet_or_trust_material_invalid')
