@@ -102,3 +102,34 @@ Limity w przykładzie wymagają dopasowania do zatwierdzonego SLO.
 **Nie wolno wpisać GO na podstawie samego CI lub niepodpisanego
 raportu.** Testów destrukcyjnych nie wykonywać na hostach produkcyjnych
 bez odrębnej zgody i planu odzyskiwania.
+
+
+## Automatyczny odczyt cgroup/systemd (dodano 2026-10-14)
+
+Przed uruchomieniem prób destrukcyjnych operator musi wykonać **bezpieczny,
+wyłącznie odczytowy** gate hosta na docelowym Linux x86_64:
+
+```bash
+python3 scripts/stage038_host_gate.py --report /var/lib/ocaf/evidence/host-prereqs.json
+```
+
+Po rzeczywistym wdrożeniu, przy aktywnej jednostce OCAF:
+
+```bash
+python3 scripts/stage038_host_gate.py \
+  --unit ocaf-coordinator-wasi.service \
+  --report /var/lib/ocaf/evidence/host-service.json
+```
+
+Skrypt nie tworzy ani nie uruchamia jednostki. Wymaga PID 1 systemd, cgroup v2
+(cpu/memory/pids), `memfd` seals i `PR_GET_PDEATHSIG`. Dla jednostki kontroluje
+m.in. rzeczywistą konfigurację User=ocaf, no-new-privileges, KillMode,
+MemoryMax, TasksMax, CPUQuota i obecność cgroup + jego liczników.
+Raport jest nowy, prywatny (0600), nigdy nadpisywany. Zapisany `passed`
+**nie zastępuje** awaryjnego przeprowadzenia testów, rotacji kluczy ani
+podpisanej decyzji audytora.
+
+GitHub Actions `.github/workflows/stage038-host.yml` bada **wyłącznie
+ephemeral runner**, tworząc artefakt `stage038-ci-host-preflight`. Wynik
+`HOST_PREREQUISITES_VERIFIED_ONLY` nie upoważnia do oznaczania 0.38 jako
+ukończonego. Operacyjny GO nadal wymaga wypełnienia formularza powyżej.
