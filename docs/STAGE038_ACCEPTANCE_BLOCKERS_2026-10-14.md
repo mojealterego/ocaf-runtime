@@ -37,7 +37,7 @@ rejestr zmian w tym dokumencie i w nadrzędnej roadmapie.
 - Dokument: raport, reprodukowalne findings, finalny SHA,
   tabela kontroli, hash każdego załącznika, tożsamość audytora,
   osobny prawidłowy podpis Ed25519.
-- Stan: **brak wyznaczonego niezależnego audytora i raportu**.
+- Wyznaczony przez użytkownika kandydat: **zchiz444**. Jego niezależność i tożsamość **nie zostały zweryfikowane**, a rzeczywisty audyt i podpisany raport A11 nadal nie istnieją.
 
 ## Pakiet 3: operator i formalny odbiór change-control
 
@@ -51,7 +51,7 @@ rejestr zmian w tym dokumencie i w nadrzędnej roadmapie.
   Kod zwraca `production_approved: false` nawet przy poprawności
   kryptograficznej, gdyż wymagane jest niezależne zatwierdzenie
   release/change-control poza skryptem.
-- Stan: **brak podpisu i decyzji**.
+- Operator wskazany przez użytkownika: **Andrzej Mikulski**. Brak podpisanej decyzji A12 po przeglądzie A01–A11; wpisanie nazwiska samo nie oznacza ACCEPT.
 
 ## Zweryfikowana baza CI
 
@@ -80,3 +80,14 @@ Odwołania:
 [audyt](STAGE038_INDEPENDENT_AUDIT_HANDOFF.md),
 [operator](STAGE_038_OPERATOR_SIGNOFF.md),
 [roadmap](ROADMAP_FULL_ECOSYSTEM_2026.md).
+
+## Przypisanie osób — 2026-10-15
+
+| Kontrola | Wyznaczona nazwa | Status |
+| --- | --- | --- |
+| A11 — niezależny audyt bezpieczeństwa | **zchiz444** | Wskazany; niezależność i akceptacja roli niezweryfikowane; brak wyników i podpisu |
+| A12 — odbiór przez operatora | **Andrzej Mikulski** | Wskazany; nie zatwierdził zweryfikowanego pakietu, podpis końcowy nie istnieje |
+
+Rejestr trzech wcześniejszych technicznych podpisów inicjalizacyjnych jest
+oddzielny od podpisów pod końcowym pakietem A11/A12.
+**Status nadal P0 / NO-GO** — nie fabrykować dowodów ani dat zamknięcia.
