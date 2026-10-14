@@ -1,0 +1,85 @@
+name: OCAF 0.38 Extended WASI Linux Soak (100 CI cycles; not staging approval)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage038-extended-soak.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ocaf038-extended-soak-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  soak:
+    name: Real pinned Wasmtime shard ${{ matrix.shard }} of 5
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        shard: [1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Recheck locked supply chain and exact engine release before executing modules
+        run: python3 scripts/supply_chain.py --repo .
+      - name: 20 repeated signed WASIp1 sandbox integrations with RSS/FD/PID sampling
+        env:
+          OCAF_WASI_SOAK_CYCLES: "20"
+          OCAF_WASI_ACCEPTANCE_REPORT: ${{ github.workspace }}/shard-${{ matrix.shard }}.json
+        run: bash scripts/wasmtime_acceptance.sh
+      - name: Preserve shard resource evidence even on failure (not staging approval)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasi-038-shard-${{ matrix.shard }}
+          path: shard-${{ matrix.shard }}.json
+          retention-days: 30
+          if-no-files-found: warn
+
+  validate-evidence:
+    name: Aggregate 100 complete CI cycles without staging GO
+    needs: [soak]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Reject incomplete or tampered evidence with offline tests
+        run: python3 -m unittest discover -s scripts/tests -p test_stage038_evidence_aggregate.py -v
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wasi-038-shard-*
+          path: shard-reports
+          merge-multiple: true
+      - name: Aggregate all 5 verified x20 shards for this exact main commit
+        run: |
+          python3 scripts/stage038_evidence_aggregate.py \
+            --directory shard-reports \
+            --expected-commit "$GITHUB_SHA" \
+            --expected-shards 5 \
+            --cycles-per-shard 20 \
+            --output wasi-038-extended-summary.json
+      - name: Check every matrix job really succeeded
+        if: always()
+        env:
+          SOAK_RESULT: ${{ needs.soak.result }}
+        run: |
+          test "$SOAK_RESULT" = success || {
+            echo "::error::Some actual Wasmtime shards failed; extended soak is NO-GO."
+            exit 1
+          }
+      - name: Publish validated multi-host CI evidence (not operator staging signoff)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasi-038-extended-aggregate
+          path: wasi-038-extended-summary.json
+          if-no-files-found: warn
+          retention-days: 30
