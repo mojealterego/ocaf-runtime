@@ -83,6 +83,34 @@ jobs:
               result="SERVER_DRY_RUN_ACCEPTED"
             fi
           fi
+          failure_category="NONE"
+          if [[ "${result}" != "SERVER_DRY_RUN_ACCEPTED" ]]; then
+            failure_category="$(python3 - <<'PY'
+          import os
+          from pathlib import Path
+          p = Path(os.environ["RUNNER_TEMP"]) / "ocaf038-admission-stderr"
+          text = p.read_text(errors="replace").lower() if p.exists() else ""
+          if "does not support dry run" in text or "does not support dry-run" in text:
+              category = "ADMISSION_WEBHOOK_NO_DRY_RUN"
+          elif "forbidden" in text or "permission denied" in text:
+              category = "RBAC_DENIED"
+          elif "exceeded quota" in text or "insufficient quota" in text:
+              category = "NAMESPACE_QUOTA"
+          elif "is invalid" in text or "invalid value" in text or "unknown field" in text:
+              category = "MANIFEST_VALIDATION"
+          elif "not found" in text or "doesn't have a resource type" in text:
+              category = "DEPENDENCY_NOT_FOUND"
+          elif "timeout" in text or "connection refused" in text:
+              category = "API_TIMEOUT_OR_NETWORK"
+          elif not text:
+              category = "UNCLASSIFIED_OR_RBAC_PREFLIGHT"
+          else:
+              category = "OTHER_ADMISSION_REJECTION"
+          print(category)
+          PY
+          )"
+          fi
+          export OCAF_ADMISSION_FAILURE_CATEGORY="${failure_category}"
           export OCAF_ADMISSION_RESULT="${result}"
           export OCAF_VM_CREATE_ALLOWED="${vm_allowed}"
           export OCAF_OS_IMAGE_ACCESSIBLE="${ds_access}"
@@ -97,6 +125,7 @@ jobs:
               "vm_create_allowed": os.environ["OCAF_VM_CREATE_ALLOWED"] == "yes",
               "fedora_datasource_accessible": os.environ["OCAF_OS_IMAGE_ACCESSIBLE"] == "yes",
               "status": os.environ["OCAF_ADMISSION_RESULT"],
+              "failure_category": os.environ["OCAF_ADMISSION_FAILURE_CATEGORY"],
               "dry_run_only": True,
               "vm_created": False,
               "stage_038_complete": False,
