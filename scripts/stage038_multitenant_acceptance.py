@@ -211,6 +211,57 @@ def main(argv: list[str] | None = None) -> int:
             raise RuntimeError("tenant A did not recover after enforced SIGKILL")
         require_positive(binary, root, b, "agent-b", btool, args.port_b)
         checks.append("main_pid_sigkill_systemd_restart_no_tenant_b_interruption")
+        # Explicit tenant-A client CA replacement exercises a running TLS
+        # verifier, not only an offline openssl certificate-chain comparison.
+        # CI keys are ephemeral. The old A client must be rejected until A's
+        # trust anchor is restored; tenant B must remain functional.
+        import ssl
+        ca_a = root / a / "ca.pem"
+        ca_b = root / b / "ca.pem"
+        target_ca = "/var/lib/ocaf-tenant-a/ca.pem"
+        install_ca = ["sudo", "install", "-o", "ocaf", "-g", "ocaf",
+                      "-m", "0600"]
+        def reload_a_ca(source: Path) -> None:
+            subprocess.run(install_ca + [str(source), target_ca],
+                           check=True, capture_output=True, timeout=10)
+            subprocess.run(["sudo", "systemctl", "restart", "ocaf-tenant-a.service"],
+                           check=True, capture_output=True, timeout=10)
+        try:
+            reload_a_ca(ca_b)
+            context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            context.minimum_version = ssl.TLSVersion.TLSv1_3
+            context.load_verify_locations(cafile=str(ca_a))
+            context.load_cert_chain(certfile=str(root / b / "agent-b.pem"),
+                                    keyfile=str(root / b / "agent-b.key"))
+            context.set_alpn_protocols(["ocaf-rpc/1"])
+            for attempt in range(30):
+                try:
+                    with socket.create_connection(("127.0.0.1", args.port_a),
+                                                  timeout=2) as raw:
+                        with context.wrap_socket(raw, server_hostname="localhost") as tls:
+                            if tls.version() != "TLSv1.3":
+                                raise RuntimeError("TLS protocol downgraded")
+                    break
+                except (OSError, ssl.SSLError):
+                    if attempt == 29:
+                        raise RuntimeError("new CI CA was not admitted by live tenant A")
+                    time.sleep(.25)
+            forbidden = invoke(binary, root, a, "agent-a", args.port_a, tool=atool)
+            if forbidden.returncode == 0 or forbidden.stdout:
+                raise RuntimeError("revoked tenant A client certificate was still authorized")
+            require_positive(binary, root, b, "agent-b", btool, args.port_b)
+        finally:
+            reload_a_ca(ca_a)
+        for attempt in range(30):
+            try:
+                require_positive(binary, root, a, "agent-a", atool, args.port_a)
+                break
+            except RuntimeError:
+                if attempt == 29:
+                    raise
+                time.sleep(.25)
+        require_positive(binary, root, b, "agent-b", btool, args.port_b)
+        checks.append("live_mtls_client_ca_revocation_and_restore_without_tenant_b_disruption")
         if args.report.exists():
             raise RuntimeError("cannot overwrite evidence")
         report = {
