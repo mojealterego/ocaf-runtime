@@ -202,11 +202,9 @@ jobs:
         run: |
           set -euo pipefail
           # Do not print raw journal entries: they may contain user data.
-          categories="$(sudo journalctl -u ocaf-ci-signed-wasi.service --no-pager -o cat 2>/dev/null \\
-            | grep -oE 'wasi_failure_class="?[a-z_]+"?' \\
-            | sort -u || true)"
+          categories="$(sudo journalctl -u ocaf-ci-signed-wasi.service --no-pager -o cat 2>/dev/null | grep -oE 'wasi_failure_class="[a-z_]+"|wasi_failure_class=[a-z_]+' | sort -u || true)"
           if [ -n "$categories" ]; then
-            printf 'STAGE038_SANITIZED_FAILURE_CLASS=%s\\n' "$categories"
+            echo "STAGE038_SANITIZED_FAILURE_CLASS=$categories"
           else
             echo "STAGE038_SANITIZED_FAILURE_CLASS=unavailable"
           fi
