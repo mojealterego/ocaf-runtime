@@ -64,7 +64,8 @@ def read_cgroup_stats(path: Path) -> dict[str, object]:
         raise ValueError("cgroup traversal rejected")
     out: dict[str, object] = {}
     for name in ("memory.peak", "memory.current", "memory.events",
-                 "pids.peak", "pids.current", "cpu.stat"):
+                 "pids.peak", "pids.current", "cpu.stat",
+                 "memory.max", "pids.max", "cpu.max"):
         file = target / name
         try:
             data = file.read_text(encoding="ascii")
@@ -74,6 +75,24 @@ def read_cgroup_stats(path: Path) -> dict[str, object]:
         except (OSError, UnicodeError, ValueError):
             out[name] = None
     return out
+
+
+def kernel_limits_enforced(metrics: dict[str, object]) -> bool:
+    """Kernel cgroup v2 limit files, not merely configured systemd properties."""
+    mem = metrics.get("memory.max")
+    pids = metrics.get("pids.max")
+    cpu = metrics.get("cpu.max")
+    if not isinstance(mem, str) or not finite_positive_bound(mem, MAX_MEMORY_BYTES):
+        return False
+    if not isinstance(pids, str) or not finite_positive_bound(pids, MAX_TASKS):
+        return False
+    if not isinstance(cpu, str):
+        return False
+    pair = cpu.split()
+    if len(pair) != 2 or not all(x.isdecimal() for x in pair):
+        return False
+    quota, period = map(int, pair)
+    return quota > 0 and period > 0 and quota <= 2 * period
 
 def check_memfd_sealing() -> bool:
     if not hasattr(os, "memfd_create") or not hasattr(os, "MFD_ALLOW_SEALING"):
@@ -174,6 +193,7 @@ def build_report(unit: str | None = None) -> dict[str, object]:
                 if cgpath.is_relative_to(CGROUP_ROOT.resolve()) and cgpath.is_dir():
                     unit_checks["unit_cgroup_exists"] = True
                     record["metrics"] = read_cgroup_stats(cgpath)
+                    checks["unit_kernel_limits_enforced"] = kernel_limits_enforced(record["metrics"])
                     checks["unit_resource_accounting"] = all(
                         record["metrics"].get(k) is not None
                         for k in ("memory.peak", "memory.events", "pids.current", "cpu.stat")
