@@ -72,7 +72,7 @@ fn tls_client_settings() -> anyhow::Result<(std::net::SocketAddr, String, Arc<ru
     let ca_path = Path::new(&require("OCAF_TLS_SERVER_CA_FILE")?).to_path_buf();
     let cert = read_private_text(&cert_path, 32_768)?;
     let key = read_private_text(&key_path, 16_384)?;
-    let ca = read_private_text(&ca_path, 131_072)?;
+    let ca = read_private_text(&ca_path, 65_536)?;
     let address: std::net::SocketAddr = require("OCAF_TLS_RPC_ADDRESS")?
         .parse()
         .map_err(|_| anyhow::anyhow!("invalid explicit TLS RPC address"))?;

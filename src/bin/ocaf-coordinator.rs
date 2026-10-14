@@ -215,7 +215,7 @@ async fn serve_gateway(gateway: Arc<RpcGateway>, config: zenoh::Config) -> anyho
             {
                 let cert = read_private_text(&absolute_path("OCAF_TLS_SERVER_CERT_FILE")?, 32_768)?;
                 let key = read_private_text(&absolute_path("OCAF_TLS_SERVER_KEY_FILE")?, 16_384)?;
-                let ca = read_private_text(&absolute_path("OCAF_TLS_CLIENT_CA_FILE")?, 131_072)?;
+                let ca = read_private_text(&absolute_path("OCAF_TLS_CLIENT_CA_FILE")?, 65_536)?;
                 let config = server_config(cert.as_bytes(), key.as_bytes(), ca.as_bytes())?;
                 let bind = env_required("OCAF_TLS_RPC_BIND")?
                     .parse::<std::net::SocketAddr>()
