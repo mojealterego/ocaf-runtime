@@ -14,6 +14,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
       - name: Stage 0.38 host evidence parser regression tests
         run: python3 -m unittest discover -s scripts/tests -p test_stage038_host_gate.py -v
       - name: Inspect actual ephemeral Linux host and cgroup prerequisites
@@ -108,7 +110,7 @@ jobs:
 
       - name: Publish bounded host-preflight evidence (not production signoff)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: stage038-ci-host-preflight
           path: |
