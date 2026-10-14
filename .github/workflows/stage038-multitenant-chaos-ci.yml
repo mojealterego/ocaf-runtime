@@ -9,6 +9,8 @@ on:
       - docs/STAGE038_INDEPENDENT_AUDIT_HANDOFF.md
       - docs/STAGE038_ALTERNATE_LINUX_EVIDENCE_2026-10-14.md
       - scripts/tests/test_stage038_multitenant_fixtures.py
+      - scripts/stage038_production_gate.py
+      - scripts/tests/test_stage038_production_gate.py
       - scripts/ci_stage038_signed_wasi_fixtures.py
       - src/**
       - Cargo.toml
@@ -29,6 +31,8 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+      - name: Reject forged stage 0.38 approvals and trust-anchor TOCTOU regressions
+        run: python3 -m unittest discover -s scripts/tests -p test_stage038_production_gate.py -v
       - name: Validate cryptographically separated synthetic tenants
         run: python3 -m unittest discover -s scripts/tests -p test_stage038_multitenant_fixtures.py -v
       - name: Build real TLS-bound Rust binaries from locked repository

@@ -15,6 +15,8 @@ on:
       - scripts/wasi_host_acceptance.py
       - scripts/stage038_evidence_aggregate.py
       - scripts/tests/test_stage038_evidence_aggregate.py
+      - scripts/stage038_production_gate.py
+      - scripts/tests/test_stage038_production_gate.py
       - scripts/supply_chain.py
       - vendor/**
   workflow_dispatch:
@@ -67,6 +69,8 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+      - name: Reject forged stage 0.38 approvals and trust-anchor TOCTOU regressions
+        run: python3 -m unittest discover -s scripts/tests -p test_stage038_production_gate.py -v
       - name: Reject incomplete or tampered evidence with offline tests
         run: python3 -m unittest discover -s scripts/tests -p test_stage038_evidence_aggregate.py -v
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
