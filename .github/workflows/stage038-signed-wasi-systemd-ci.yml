@@ -212,6 +212,44 @@ jobs:
           else
             echo "STAGE038_SANITIZED_FAILURE_CLASS=unavailable"
           fi
+      - name: Differential Wasmtime probes without guest logs
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Run the same checked-in synthetic module independently from OCAF.
+          # Diagnostic output is private and discarded, never archived.
+          module=/var/lib/ocaf/module.wasm
+          opts='fuel=2000000,max-memory-size=33554432,max-wasm-stack=1048576,max-instances=1,max-memories=1,max-tables=1,nan-canonicalization=y'
+          plain_log="$RUNNER_TEMP/ocaf038-wasmtime-plain-private.log"
+          systemd_log="$RUNNER_TEMP/ocaf038-wasmtime-systemd-private.log"
+          set +e
+          sudo -u ocaf /usr/bin/env -i /opt/ocaf/bin/wasmtime run -W "$opts" "$module" </dev/null >"$plain_log" 2>&1
+          plain_rc=$?
+          sudo systemd-run --quiet --wait --pipe --collect \
+            --unit=ocaf-ci-wasmtime-direct --service-type=exec \
+            --property=User=ocaf --property=Group=ocaf \
+            --property=WorkingDirectory=/var/lib/ocaf \
+            --property=ProtectSystem=strict --property=ReadWritePaths=/var/lib/ocaf \
+            --property=PrivateTmp=yes --property=NoNewPrivileges=yes \
+            --property=KillMode=control-group --property=Restart=no \
+            --property=MemoryMax=1610612736 --property=TasksMax=128 \
+            --property=CPUQuota=200% --property=LimitCORE=0 \
+            /usr/bin/env -i /opt/ocaf/bin/wasmtime run -W "$opts" "$module" \
+            </dev/null >"$systemd_log" 2>&1
+          systemd_rc=$?
+          set -e
+          if [ "$plain_rc" -eq 0 ] && grep -qx '{"ok":true}' "$plain_log"; then
+            echo "STAGE038_PLAIN_WASMTIME=pass"
+          else
+            echo "STAGE038_PLAIN_WASMTIME=fail"
+          fi
+          if [ "$systemd_rc" -eq 0 ] && grep -qx '{"ok":true}' "$systemd_log"; then
+            echo "STAGE038_HARDENED_SYSTEMD_WASMTIME=pass"
+          else
+            echo "STAGE038_HARDENED_SYSTEMD_WASMTIME=fail"
+          fi
+          rm -f -- "$plain_log" "$systemd_log"
       - name: Archive sanitized evidence only, never ephemeral signing keys
         if: always()
         uses: actions/upload-artifact@v4
