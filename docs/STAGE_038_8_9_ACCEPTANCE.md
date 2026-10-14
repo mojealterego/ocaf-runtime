@@ -156,3 +156,28 @@ wielodzierżawności i rotacji/odwołania zaufania:
 Dokument zawiera formularz **NO-GO** do wypełnienia przez
 operatora oraz niezależnego audytora; żaden sukces CI nie
 podmienia podpisu operatora.
+
+
+## Dodatkowa automatyzacja odbioru hosta (2026-10-14)
+
+- `scripts/stage038_host_gate.py`: read-only, fail-closed preflight
+  Linux x86_64 / PID1 systemd / cgroup v2 / memfd seals / PDEATHSIG;
+  opcjonalny rygorystyczny odczyt rzeczywiście uruchomionej jednostki
+  `--unit ocaf-coordinator-wasi.service`, w tym limitów cgroup, licznika
+  `memory.peak`, `cpu.stat`, `pids.current` i `memory.events`.
+- `scripts/tests/test_stage038_host_gate.py`: walidacja bezpiecznej składni
+  jednostki, surowych limitów zasobów, odmowy przy niekompletnych właściwościach,
+  atomowego create-only report oraz niezmienności stanu NO-GO.
+- `.github/workflows/stage038-host.yml`: cykliczny test na ephemerycznym
+  runnerze Ubuntu x86_64, którego wynik nie jest fizycznym staging OCAF.
+- `scripts/wasi_host_acceptance.py` odmawia uruchomienia, jeśli brakuje
+  zatwierdzonego `OCAF_TEST_WASMTIME_SHA256` lub jest nieprawidłowy;
+  raport JSON zapisywany 0600 i wyłącznie w nowej ścieżce.
+- CI wykonuje 10 powtórzeń pełnego testu `wasi_sandbox` na prawdziwym
+  pinned Wasmtime z próbnikami RSS/FD/PID, a nie 2. Próg RSS w CI
+  jest smoke-budget dla efemerycznej VM, nie operacyjnym SLO hosta.
+
+**Ograniczenie:** CI nie stanowi potwierdzenia rzeczywistego działającego
+OCAF pod wdrożonym systemd na prywatnym staging, restartów hosta,
+sieciowego partition, rozliczenia efektów ani niezależnego audytu.
+Etap 0.39 pozostaje zablokowany do spełnienia protokołu odbioru.
