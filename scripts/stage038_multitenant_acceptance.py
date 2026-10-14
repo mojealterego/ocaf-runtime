@@ -162,6 +162,7 @@ def main(argv: list[str] | None = None) -> int:
                         raise
                     time.sleep(.3)
         checks.append("two_independent_signed_tenants_success")
+        print("CI_CHECK_PASS:two_independent_signed_tenants_success", flush=True)
         with ThreadPoolExecutor(max_workers=8) as pool:
             tasks = [pool.submit(require_positive, binary, root, a if i % 2 == 0 else b,
                                  "agent-a" if i % 2 == 0 else "agent-b",
@@ -171,14 +172,17 @@ def main(argv: list[str] | None = None) -> int:
             for task in tasks:
                 task.result()
         checks.append("simultaneous_tenant_a_and_b_rpc_execution")
+        print("CI_CHECK_PASS:simultaneous_tenant_a_and_b_rpc_execution", flush=True)
         require_policy_deny(binary, root, a, "agent-b", atool, args.port_a)
         require_policy_deny(binary, root, b, "agent-a", btool, args.port_b)
         checks.append("cross_principal_policy_denial_on_each_tenant")
+        print("CI_CHECK_PASS:cross_principal_policy_denial_on_each_tenant", flush=True)
         require_untrusted_ca_deny(binary, root, a, b, "agent-b", btool, args.port_a)
         require_untrusted_ca_deny(binary, root, b, a, "agent-a", atool, args.port_b)
         require_positive(binary, root, a, "agent-a", atool, args.port_a)
         require_positive(binary, root, b, "agent-b", btool, args.port_b)
         checks.append("independent_ca_rejection_followed_by_live_positive_controls")
+        print("CI_CHECK_PASS:independent_ca_rejection_followed_by_live_positive_controls", flush=True)
         require_positive(binary, root, a, "agent-a", atool, proxy.server_address[1])
         proxy.blocked.set()
         failure = invoke(binary, root, a, "agent-a", proxy.server_address[1], tool=atool)
@@ -188,6 +192,7 @@ def main(argv: list[str] | None = None) -> int:
         proxy.blocked.clear()
         require_positive(binary, root, a, "agent-a", atool, proxy.server_address[1])
         checks.append("tenant_a_tcp_fault_tenant_b_continues_then_recovery")
+        print("CI_CHECK_PASS:tenant_a_tcp_fault_tenant_b_continues_then_recovery", flush=True)
         command = ["systemctl", "show", "-p", "MainPID", "--value", "ocaf-tenant-a.service"]
         before = int(subprocess.check_output(command, timeout=10, text=True).strip())
         if before <= 1:
@@ -211,6 +216,7 @@ def main(argv: list[str] | None = None) -> int:
             raise RuntimeError("tenant A did not recover after enforced SIGKILL")
         require_positive(binary, root, b, "agent-b", btool, args.port_b)
         checks.append("main_pid_sigkill_systemd_restart_no_tenant_b_interruption")
+        print("CI_CHECK_PASS:main_pid_sigkill_systemd_restart_no_tenant_b_interruption", flush=True)
         # Explicit tenant-A client CA replacement exercises a running TLS
         # verifier, not only an offline openssl certificate-chain comparison.
         # CI keys are ephemeral. The old A client must be rejected until A's
@@ -228,6 +234,7 @@ def main(argv: list[str] | None = None) -> int:
                            check=True, capture_output=True, timeout=10)
         try:
             reload_a_ca(ca_b)
+            print("CI_DIAGNOSTIC_LIVE_CA_B_REPLACED", flush=True)
             context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
             context.minimum_version = ssl.TLSVersion.TLSv1_3
             context.load_verify_locations(cafile=str(ca_a))
@@ -252,6 +259,7 @@ def main(argv: list[str] | None = None) -> int:
             require_positive(binary, root, b, "agent-b", btool, args.port_b)
         finally:
             reload_a_ca(ca_a)
+            print("CI_DIAGNOSTIC_LIVE_CA_A_RESTORED", flush=True)
         for attempt in range(30):
             try:
                 require_positive(binary, root, a, "agent-a", atool, args.port_a)
@@ -262,6 +270,7 @@ def main(argv: list[str] | None = None) -> int:
                 time.sleep(.25)
         require_positive(binary, root, b, "agent-b", btool, args.port_b)
         checks.append("live_mtls_client_ca_revocation_and_restore_without_tenant_b_disruption")
+        print("CI_CHECK_PASS:live_mtls_client_ca_revocation_and_restore_without_tenant_b_disruption", flush=True)
         if args.report.exists():
             raise RuntimeError("cannot overwrite evidence")
         report = {
