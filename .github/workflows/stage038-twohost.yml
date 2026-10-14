@@ -21,7 +21,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 concurrency:
   group: ocaf038-twohost-${{ github.run_id }}
@@ -32,6 +31,9 @@ jobs:
     name: Dedicated VM A - signed WASI under systemd with end-to-end mTLS
     runs-on: ubuntu-24.04
     timeout-minutes: 28
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout exact main
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -224,7 +226,7 @@ jobs:
           PY
       - name: Upload only sanitized host identity and cross-VM report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: stage038-twohost-vm-a
           path: stage038-twohost-evidence.json
@@ -235,6 +237,9 @@ jobs:
     name: Dedicated VM B - independent TLS client and cross-principal negative test
     runs-on: ubuntu-24.04
     timeout-minutes: 28
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -388,7 +393,7 @@ jobs:
           success=true
       - name: Upload sanitized VM B report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: stage038-twohost-vm-b
           path: ${{ runner.temp }}/remote-result.json
