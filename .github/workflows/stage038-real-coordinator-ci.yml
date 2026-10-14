@@ -1,0 +1,150 @@
+name: OCAF 0.38 actual coordinator under systemd (CI synthetic local-only)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage038-real-coordinator-ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  actual-coordinator-systemd:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build actual OCAF coordinator locked and feature restricted
+        run: cargo build --locked --bin ocaf-coordinator --features zenoh
+      - name: Start real OCAF coordinator (only loopback/ephemeral credentials), inspect cgroup, SIGKILL
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          test "$GITHUB_ACTIONS" = true
+          test "$(uname -m)" = x86_64
+          unit=ocaf-ci-coordinator.service
+          trap 'sudo systemctl stop "$unit" >/dev/null 2>&1 || true' EXIT
+          if ! id ocaf >/dev/null 2>&1; then
+            sudo useradd --system --no-create-home --shell /usr/sbin/nologin ocaf
+          fi
+          sudo install -d -o ocaf -g ocaf -m 0700 /var/lib/ocaf
+          sudo install -d -o root -g root -m 0755 /opt/ocaf/bin
+          sudo install -o root -g root -m 0755 target/debug/ocaf-coordinator /opt/ocaf/bin/ocaf-coordinator
+          temp="$(mktemp -d)"
+          trap 'sudo systemctl stop "$unit" >/dev/null 2>&1 || true; rm -rf "$temp"' EXIT
+          python3 - "$temp" <<'PY'
+          import base64, json, os, pathlib, socket, sys
+          root=pathlib.Path(sys.argv[1])
+          key=base64.b64encode(os.urandom(32)).decode("ascii")
+          (root/"peers.json").write_text(json.dumps({
+              "agent-ci":{"key_b64":key,"allowed_tools":["ocaf_ci_noop"]}
+          })+"\n")
+          with socket.socket() as sock:
+              sock.bind(("127.0.0.1",0))
+              port=sock.getsockname()[1]
+          (root/"port.txt").write_text(str(port)+"\n")
+          (root/"zenoh.json5").write_text(
+              '{mode:"peer",listen:{endpoints:["tcp/127.0.0.1:%d"]},'
+              'scouting:{multicast:{enabled:false},gossip:{enabled:false}},'
+              'transport:{link:{protocols:["tcp"]}}}' % port
+          )
+          PY
+          sudo install -o ocaf -g ocaf -m 0600 "$temp/peers.json" /var/lib/ocaf/peers.json
+          sudo install -o ocaf -g ocaf -m 0600 "$temp/zenoh.json5" /var/lib/ocaf/zenoh.json5
+          rm -f "$temp/peers.json"
+          sudo systemd-run --unit=ocaf-ci-coordinator \
+            --service-type=exec \
+            --property=User=ocaf \
+            --property=Group=ocaf \
+            --property=WorkingDirectory=/var/lib/ocaf \
+            --property=ProtectSystem=strict \
+            --property=ReadWritePaths=/var/lib/ocaf \
+            --property=PrivateTmp=yes \
+            --property=NoNewPrivileges=yes \
+            --property=KillMode=control-group \
+            --property=Restart=no \
+            --property=MemoryMax=1610612736 \
+            --property=TasksMax=128 \
+            --property=CPUQuota=200% \
+            --property=LimitCORE=0 \
+            --property=RuntimeMaxSec=120s \
+            --setenv=OCAF_COORDINATOR_NODE_ID=coord-ci \
+            --setenv=OCAF_COORDINATOR_MODE=active \
+            --setenv=OCAF_REPLAY_DB_PATH=/var/lib/ocaf/replay.sqlite \
+            --setenv=OCAF_COORDINATOR_DB_PATH=/var/lib/ocaf/coordinator.sqlite \
+            --setenv=OCAF_JOBS_DB_PATH=/var/lib/ocaf/jobs.sqlite \
+            --setenv=OCAF_COORDINATOR_LOCK_PATH=/var/lib/ocaf/leader.lock \
+            --setenv=OCAF_PEERS_FILE=/var/lib/ocaf/peers.json \
+            --setenv=OCAF_ZENOH_CONFIG=/var/lib/ocaf/zenoh.json5 \
+            --setenv=OCAF_ALLOW_INSECURE_LOOPBACK=1 \
+            /opt/ocaf/bin/ocaf-coordinator
+          port="$(cat "$temp/port.txt")"
+          for i in $(seq 1 60); do
+            if systemctl is-active --quiet "$unit" &&
+              python3 - "$port" <<'PY'
+          import socket,sys
+          try:
+              with socket.create_connection(("127.0.0.1",int(sys.argv[1])),timeout=0.3):
+                  pass
+          except OSError:
+              sys.exit(1)
+          PY
+            then
+              break
+            fi
+            sleep 0.25
+          done
+          systemctl is-active --quiet "$unit" || {
+            echo "::error::Actual OCAF coordinator did not become active"
+            exit 1
+          }
+          python3 scripts/stage038_host_gate.py \
+            --unit "$unit" --report stage038-ci-actual-coordinator-host.json
+          leader_pid="$(systemctl show -P MainPID "$unit")"
+          [[ "$leader_pid" =~ ^[1-9][0-9]*$ ]] || exit 1
+          sudo systemctl kill --kill-whom=main --signal=SIGKILL "$unit"
+          for i in $(seq 1 50); do
+            if ! systemctl is-active --quiet "$unit"; then
+              break
+            fi
+            sleep 0.2
+          done
+          if systemctl is-active --quiet "$unit"; then
+            echo "::error::Coordinator unexpectedly survived SIGKILL"
+            exit 1
+          fi
+          python3 - "$leader_pid" <<'PY'
+          import json,os,sys
+          from datetime import datetime,timezone
+          pid=int(sys.argv[1])
+          path=f"/proc/{pid}/status"
+          if os.path.exists(path):
+              state=next((line for line in open(path) if line.startswith("State:")), "")
+              if "Z" not in state: raise SystemExit("Coordinator PID still alive")
+          report={"schema_version":1,"checked_at_utc":datetime.now(timezone.utc).isoformat(),
+                  "actual_binary":"ocaf-coordinator","actual_coordinator_running_before_kill":True,
+                  "systemd_limits_verified":True,"leader_sigkill_reaped":True,
+                  "loopback_zenoh_only":True,"signed_wasi_tool_loaded":False,
+                  "two_tenant_mtls_staging":False,"independent_security_audit":False,
+                  "stage_038_complete":False,"production_approved":False}
+          fd=os.open("stage038-ci-actual-coordinator-result.json",
+                     os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+          with os.fdopen(fd,"w") as f:
+              json.dump(report,f,indent=2)
+              f.write("\n")
+          print("REAL_OCAF_COORDINATOR_SYSTEMD_LEADER_SIGKILL_VERIFIED")
+          PY
+      - name: Upload real coordinator CI evidence (NOT signed WASI staging)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage038-actual-coordinator-systemd-ci
+          path: |
+            stage038-ci-actual-coordinator-host.json
+            stage038-ci-actual-coordinator-result.json
+          if-no-files-found: warn
+          retention-days: 30
