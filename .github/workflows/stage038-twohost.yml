@@ -16,7 +16,7 @@ permissions:
 
 concurrency:
   group: ocaf038-twohost-main
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   systemd-coordinator-vm:
