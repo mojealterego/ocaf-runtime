@@ -85,3 +85,5 @@ jobs:
         run: cargo test --locked --test zenoh_chaos_takeover -- --test-threads=1
       - name: Clippy (full Zenoh)
         run: cargo clippy --locked --all-targets -- -D warnings
+      - name: All-features Clippy contract gate (0.38)
+        run: cargo clippy --locked --all-targets --all-features -- -D warnings
