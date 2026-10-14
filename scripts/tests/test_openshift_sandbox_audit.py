@@ -34,6 +34,30 @@ class TestOpenShiftSandboxAudit(unittest.TestCase):
         self.assertNotIn("secret-pod-name", str(report))
         self.assertIn(module.NAMESPACE, mock.call_args.args[0])
 
+    def test_capacity_sanitizes_quota_keys_and_values(self):
+        fixture = {"items": [{"status": {
+            "hard": {"requests.cpu": "4", "requests.memory": "8Gi", "forbidden.secret": "value"},
+            "used": {"requests.cpu": "1", "requests.memory": "500Mi"}}}]}
+        with patch.object(module, "command", side_effect=[
+            (True, json.dumps(fixture)), (True, json.dumps({"items": []}))
+        ]):
+            result = module.sanitized_capacity()
+        self.assertTrue(result["accessible"])
+        self.assertEqual(result["quotas"][0]["requests.cpu"], {"hard": "4", "used": "1"})
+        self.assertNotIn("forbidden.secret", json.dumps(result))
+
+    def test_catalog_rejects_untrusted_names(self):
+        fixture = {"items": [
+            {"metadata": {"name": "fedora-41"}},
+            {"metadata": {"name": "ubuntu-2404"}},
+            {"metadata": {"name": "ubuntu-foo/../../secret"}},
+            {"metadata": {"name": "internal-credential"}},
+        ]}
+        with patch.object(module, "command", return_value=(True, json.dumps(fixture))):
+            result = module.os_image_catalog()
+        self.assertEqual(result, {"accessible": True,
+                                  "candidate_names": ["fedora-41", "ubuntu-2404"]})
+
     def test_namespace_fixed_to_operator_link(self):
         self.assertEqual(module.NAMESPACE, "mojealterego-dev")
 

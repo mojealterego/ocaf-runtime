@@ -83,12 +83,84 @@ def scoped_access_probe() -> dict[str, object]:
         return {"ok": False, "failure_category": "CLIENT_OR_TIMEOUT_ERROR"}
 
 
+def sanitized_capacity() -> dict[str, object]:
+    """Read user-namespace quotas/limits, recording only safe scalar limits."""
+    allowed_keys = {"requests.cpu", "limits.cpu", "requests.memory", "limits.memory",
+                    "requests.storage", "persistentvolumeclaims", "pods",
+                    "services", "count/virtualmachines.kubevirt.io",
+                    "count/virtualmachineinstances.kubevirt.io",
+                    "count/datavolumes.cdi.kubevirt.io"}
+    result: dict[str, object] = {"quotas": [], "limit_ranges": [], "accessible": False}
+    ok, value = command(["-n", NAMESPACE, "get", "resourcequotas", "-o", "json"])
+    if not ok:
+        return result
+    try:
+        payload = json.loads(value)
+        for entry in payload.get("items", [])[:16]:
+            hard = entry.get("status", {}).get("hard", {})
+            used = entry.get("status", {}).get("used", {})
+            quota = {
+                key: {"hard": hard[key], "used": used.get(key, "0")}
+                for key in allowed_keys
+                if key in hard and isinstance(hard[key], str)
+                and len(hard[key]) < 50 and isinstance(used.get(key, "0"), str)
+                and len(used.get(key, "0")) < 50
+            }
+            result["quotas"].append(dict(sorted(quota.items())))
+        result["accessible"] = True
+    except (ValueError, TypeError, KeyError, AttributeError):
+        return result
+    ok, limits_data = command(["-n", NAMESPACE, "get", "limitranges", "-o", "json"])
+    if ok:
+        try:
+            for item in json.loads(limits_data).get("items", [])[:12]:
+                for limits in item.get("spec", {}).get("limits", [])[:8]:
+                    kind = limits.get("type")
+                    if kind not in ("Container", "Pod", "PersistentVolumeClaim"):
+                        continue
+                    sanitized: dict[str, object] = {"type": kind}
+                    for field in ("min", "max", "default", "defaultRequest"):
+                        entries = limits.get(field, {})
+                        if isinstance(entries, dict):
+                            sanitized[field] = {
+                                key: val for key, val in entries.items()
+                                if key in ("cpu", "memory", "storage")
+                                and isinstance(val, str) and len(val) <= 50
+                            }
+                    result["limit_ranges"].append(sanitized)
+        except (ValueError, TypeError, AttributeError):
+            pass
+    return result
+
+
+def os_image_catalog() -> dict[str, object]:
+    """Inspect public distro DataSources without exposing cluster image URLs."""
+    ns = "openshift-virtualization-os-images"
+    ok, content = command(["-n", ns, "get", "datasources.cdi.kubevirt.io", "-o", "json"])
+    if not ok:
+        return {"accessible": False, "candidate_names": []}
+    try:
+        payload = json.loads(content)
+        names = []
+        for item in payload.get("items", [])[:200]:
+            name = item.get("metadata", {}).get("name", "")
+            if (isinstance(name, str) and len(name) <= 65
+                    and re.fullmatch(r"[a-z0-9]([-a-z0-9]*[a-z0-9])?", name)
+                    and any(d in name for d in ("fedora", "rhel", "centos", "ubuntu", "debian"))):
+                names.append(name)
+        return {"accessible": True, "candidate_names": sorted(set(names))[:30]}
+    except (ValueError, TypeError, AttributeError):
+        return {"accessible": False, "candidate_names": []}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--report", required=True, type=Path)
     args = parser.parse_args()
     args.report.parent.mkdir(parents=True, exist_ok=True)
     access_probe = scoped_access_probe()
+    capacity = sanitized_capacity()
+    images = os_image_catalog()
     auth = {
         "read_vm": authorization("get", "virtualmachines.kubevirt.io"),
         "create_vm": authorization("create", "virtualmachines.kubevirt.io"),
@@ -101,6 +173,8 @@ def main() -> int:
         "namespace": NAMESPACE,
         "checks": auth,
         "access_probe": access_probe,
+        "capacity": capacity,
+        "os_images": images,
         "resources": resources,
         "scope": "read-only-kubernetes-api",
         "vm_created": False,
