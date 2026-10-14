@@ -70,6 +70,7 @@ jobs:
             sudo useradd --system --no-create-home --shell /usr/sbin/nologin ocaf
           fi
           sudo install -d -o ocaf -g ocaf -m 0700 /var/lib/ocaf
+          sudo install -o ocaf -g ocaf -m 0600 /dev/null /var/lib/ocaf/ci-signed-wasi-diagnostics.log
           for filename in module.wasm manifest.json manifest.sig publisher.pem \
                           server.pem server.key ca.pem agent-a.pem agent-b.pem peers.json; do
             sudo install -o ocaf -g ocaf -m 0600 \
@@ -86,6 +87,8 @@ jobs:
             --property=MemoryMax=1610612736 --property=TasksMax=128 \
             --property=CPUQuota=200% --property=LimitCORE=0 \
             --property=RuntimeMaxSec=150s \
+            --property=StandardOutput=append:/var/lib/ocaf/ci-signed-wasi-diagnostics.log \
+            --property=StandardError=append:/var/lib/ocaf/ci-signed-wasi-diagnostics.log \
             --setenv=OCAF_COORDINATOR_NODE_ID=coord-ci \
             --setenv=OCAF_COORDINATOR_MODE=active \
             --setenv=OCAF_REPLAY_DB_PATH=/var/lib/ocaf/replay.sqlite \
@@ -202,7 +205,8 @@ jobs:
         run: |
           set -euo pipefail
           # Do not print raw journal entries: they may contain user data.
-          categories="$(sudo journalctl -u ocaf-ci-signed-wasi.service --no-pager -o cat 2>/dev/null | grep -oE 'wasi_failure_class="[a-z_]+"|wasi_failure_class=[a-z_]+' | sort -u || true)"
+          categories="$(sudo grep -oE 'wasi_failure_class="[a-z_]+"|wasi_failure_class=[a-z_]+' /var/lib/ocaf/ci-signed-wasi-diagnostics.log 2>/dev/null | sort -u || true)"
+          echo "STAGE038_DIAGNOSTIC_BYTES=$(sudo stat -c %s /var/lib/ocaf/ci-signed-wasi-diagnostics.log 2>/dev/null || echo 0)"
           if [ -n "$categories" ]; then
             echo "STAGE038_SANITIZED_FAILURE_CLASS=$categories"
           else
