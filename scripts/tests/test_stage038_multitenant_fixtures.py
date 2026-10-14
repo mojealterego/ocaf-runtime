@@ -37,6 +37,8 @@ class TwoTenantFixturesTests(unittest.TestCase):
                 self.assertEqual(manifest["module_sha256_hex"],
                                  hashlib.sha256((base / "module.wasm").read_bytes()).hexdigest())
                 self.assertEqual(peers[agent]["allowed_tools"], [tool])
+                self.assertEqual(peers[agent]["certificate_pem_path"],
+                                 f"/var/lib/ocaf-{tenant}/{agent}.pem")
                 other = "agent-b" if agent == "agent-a" else "agent-a"
                 self.assertEqual(peers[other]["allowed_tools"], ["demo_echo"])
                 verified = subprocess.run([
