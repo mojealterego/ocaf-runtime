@@ -10,6 +10,16 @@ import aiohttp
 
 AUDIENCE = "ocaf-038-twohost-relay"
 
+# A sleeping free-tier relay can return transient 429/5xx responses while it wakes.
+# Authentication/policy responses (401/403) are never retried or misclassified.
+TRANSIENT_HTTP = frozenset({429, 500, 502, 503, 504})
+
+
+def relay_error_label(error):
+    if isinstance(error, aiohttp.ClientResponseError):
+        return "HTTP_" + str(error.status)
+    return type(error).__name__
+
 
 async def identity(session):
     url = os.getenv("ACTIONS_ID_TOKEN_REQUEST_URL", "")
@@ -37,23 +47,37 @@ async def exchange(base, run_id, item, method, path):
             data = path.read_bytes()
             if not 0 < len(data) <= 16384:
                 raise ValueError("invalid exchange payload size")
-            async with session.post(url, data=data, headers=headers,
-                                    timeout=aiohttp.ClientTimeout(total=25)) as response:
-                response.raise_for_status()
+            for attempt in range(12):
+                try:
+                    async with session.post(url, data=data, headers=headers,
+                                            timeout=aiohttp.ClientTimeout(total=25)) as response:
+                        if response.status not in TRANSIENT_HTTP:
+                            response.raise_for_status()
+                            break
+                except (aiohttp.ClientConnectionError, asyncio.TimeoutError):
+                    if attempt == 11:
+                        raise
+                if attempt == 11:
+                    raise TimeoutError("temporary relay outage during exchange")
+                await asyncio.sleep(min(2 ** attempt, 10))
         else:
             data = None
             for i in range(240):
                 # Rotate short-lived OIDC tokens while waiting for the other VM.
                 if i and i % 15 == 0:
                     headers["Authorization"] = "Bearer " + await identity(session)
-                async with session.get(url, headers=headers,
-                                       timeout=aiohttp.ClientTimeout(total=25)) as response:
-                    if response.status == 404:
-                        await asyncio.sleep(2)
-                        continue
-                    response.raise_for_status()
-                    data = await response.read()
-                    break
+                try:
+                    async with session.get(url, headers=headers,
+                                           timeout=aiohttp.ClientTimeout(total=25)) as response:
+                        if response.status in TRANSIENT_HTTP or response.status == 404:
+                            await asyncio.sleep(2)
+                            continue
+                        response.raise_for_status()
+                        data = await response.read()
+                        break
+                except (aiohttp.ClientConnectionError, asyncio.TimeoutError):
+                    await asyncio.sleep(2)
+                    continue
             if data is None or not 0 < len(data) <= 16384:
                 raise TimeoutError("exchange item not ready")
             with path.open("xb") as output:
@@ -171,5 +195,5 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except (ValueError, RuntimeError, aiohttp.ClientError, OSError, TimeoutError) as err:
-        print("OCAF038_CI_TUNNEL_ERROR=" + type(err).__name__, file=sys.stderr)
+        print("OCAF038_CI_TUNNEL_ERROR=" + relay_error_label(err), file=sys.stderr)
         sys.exit(2)
