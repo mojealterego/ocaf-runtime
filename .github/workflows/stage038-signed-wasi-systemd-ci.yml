@@ -196,6 +196,20 @@ jobs:
           }
           Path("stage038-signed-wasi-ci-result.json").write_text(json.dumps(evidence,indent=2)+"\n")
           PY
+      - name: Report fixed-category WASI failure from systemd without journal contents
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Do not print raw journal entries: they may contain user data.
+          categories="$(sudo journalctl -u ocaf-ci-signed-wasi.service --no-pager -o cat 2>/dev/null \\
+            | grep -oE 'wasi_failure_class="?[a-z_]+"?' \\
+            | sort -u || true)"
+          if [ -n "$categories" ]; then
+            printf 'STAGE038_SANITIZED_FAILURE_CLASS=%s\\n' "$categories"
+          else
+            echo "STAGE038_SANITIZED_FAILURE_CLASS=unavailable"
+          fi
       - name: Archive sanitized evidence only, never ephemeral signing keys
         if: always()
         uses: actions/upload-artifact@v4
