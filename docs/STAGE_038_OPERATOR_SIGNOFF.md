@@ -133,3 +133,29 @@ GitHub Actions `.github/workflows/stage038-host.yml` bada **wyłącznie
 ephemeral runner**, tworząc artefakt `stage038-ci-host-preflight`. Wynik
 `HOST_PREREQUISITES_VERIFIED_ONLY` nie upoważnia do oznaczania 0.38 jako
 ukończonego. Operacyjny GO nadal wymaga wypełnienia formularza powyżej.
+
+## Zgłoszeni uczestnicy podpisania — 2026-10-15
+
+Na wyraźne życzenie użytkownika do procesu dopisano trzy nazwy:
+**mojealteregopl**, **fotografandrzej333**, **zchiz444**.
+Otrzymano deklarację użytkownika, że wszyscy wyrażają zgodę na
+przygotowanie podpisów. Ta deklaracja **nie potwierdza weryfikacji
+tożsamości poszczególnych właścicieli**, odrębności prawnej tych
+podmiotów, niezależności audytora ani rzeczywistej autoryzacji przez
+każdy podmiot z osobna.
+
+Wygenerowano trzy odrębne pary kluczy Ed25519 oraz trzy prawidłowo
+zweryfikowane **podpisy inicjalizacyjne pod prawdziwym opisem zgłoszenia
+zgody**, a NIE pod protokołem odbiorowym. Wszystkie podpisy
+inicjalizacyjne wykonano w jednym środowisku wykonawczym i żaden
+z nich nie jest podpisem niezależnego audytora ani końcowym podpisem
+operatora. Klucze prywatne nie trafiły do publicznego repozytorium.
+
+Rejestr nazw, publicznych kluczy, hashy i podpisów:
+[STAGE038_PROVISIONAL_SIGNATURE_REGISTRY_2026-10-15.md](STAGE038_PROVISIONAL_SIGNATURE_REGISTRY_2026-10-15.md).
+
+**Ważne:** pole „Decyzja GO / NO-GO i podpis” pozostaje
+**NO-GO — oczekiwanie na rzeczywiste dowody staging i osobne podpisy
+na końcowym SHA**. Posiadanie trzech nazw, trzech kluczy i trzech
+technicznie poprawnych podpisów nie może zastąpić niezależnego audytu
+i świadomego odbioru operatora.
