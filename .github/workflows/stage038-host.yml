@@ -18,11 +18,42 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p test_stage038_host_gate.py -v
       - name: Inspect actual ephemeral Linux host and cgroup prerequisites
         run: python3 scripts/stage038_host_gate.py --report stage038-ci-host.json
+      - name: Inspect synthetic systemd cgroup resource bounds (NOT an OCAF deployment)
+        run: |
+          set -euo pipefail
+          if ! id ocaf >/dev/null 2>&1; then
+            sudo useradd --system --no-create-home --shell /usr/sbin/nologin ocaf
+          fi
+          unit=ocaf-stage038-ci-smoke.service
+          trap 'sudo systemctl stop "$unit" >/dev/null 2>&1 || true' EXIT
+          sudo systemd-run --unit=ocaf-stage038-ci-smoke \
+            --property=User=ocaf \
+            --property=NoNewPrivileges=yes \
+            --property=KillMode=control-group \
+            --property=PrivateTmp=yes \
+            --property=ProtectSystem=strict \
+            --property=CPUQuota=200% \
+            --property=MemoryMax=1610612736 \
+            --property=TasksMax=128 \
+            --property=RuntimeMaxSec=45s \
+            /usr/bin/sleep 40
+          for i in $(seq 1 30); do
+            systemctl is-active --quiet "$unit" && break
+            sleep 0.2
+          done
+          python3 scripts/stage038_host_gate.py --unit "$unit" --report stage038-ci-unit.json
+          sudo systemctl stop "$unit"
+          if systemctl is-active --quiet "$unit"; then
+            echo "Synthetic systemd unit remained active after stop" >&2
+            exit 1
+          fi
       - name: Publish bounded host-preflight evidence (not production signoff)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: stage038-ci-host-preflight
-          path: stage038-ci-host.json
+          path: |
+            stage038-ci-host.json
+            stage038-ci-unit.json
           if-no-files-found: warn
           retention-days: 30
