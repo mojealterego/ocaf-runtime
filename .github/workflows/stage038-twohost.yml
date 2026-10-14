@@ -177,17 +177,26 @@ jobs:
           import hashlib,json,sys
           from pathlib import Path
           machine=Path('/etc/machine-id').read_bytes().strip()
+          boot=Path('/proc/sys/kernel/random/boot_id').read_bytes().strip()
+          remote=json.load(open(sys.argv[2]))
           report={'schema_version':1, 'sha':sys.argv[3],
                   'vm_machine_id_sha256':hashlib.sha256(machine).hexdigest(),
-                  'remote_vm_machine_id_sha256':json.load(open(sys.argv[2]))['vm_machine_id_sha256'],
+                  'remote_vm_machine_id_sha256':remote['vm_machine_id_sha256'],
+                  'vm_boot_id_sha256':hashlib.sha256(boot).hexdigest(),
+                  'remote_vm_boot_id_sha256':remote['vm_boot_id_sha256'],
                   'real_systemd_coordinator':True,'real_signed_wasmtime_rpc':True,
                   'real_inter_host_mtls':True,'ephemeral_github_vms_only':True,
                   'two_tenant_prod_staging':False,
                   'independent_auditor_signoff':False,'production_approved':False}
-          if report['vm_machine_id_sha256']==report['remote_vm_machine_id_sha256']:
-              raise SystemExit("runner machines not distinct")
+          # GitHub cloud images can clone /etc/machine-id; the Linux boot_id
+          # instead identifies each live kernel boot and stays identical across
+          # containers on the same kernel. Fail when the kernel is shared.
+          if report['vm_boot_id_sha256']==report['remote_vm_boot_id_sha256']:
+              raise SystemExit("runner kernels not distinct; cross-host evidence rejected")
+          report['distinct_live_linux_kernel_boots']=True
+          report['same_template_machine_id']=report['vm_machine_id_sha256']==report['remote_vm_machine_id_sha256']
           Path('stage038-twohost-evidence.json').write_text(json.dumps(report,indent=2))
-          print("TWO_DISTINCT_LINUX_VM_MACHINE_IDS_VERIFIED")
+          print("TWO_DISTINCT_LINUX_KERNEL_BOOT_IDS_VERIFIED")
           PY
       - name: Upload only sanitized host identity and cross-VM report
         if: always()
@@ -267,6 +276,7 @@ jobs:
           from pathlib import Path
           obj={'schema_version':1,'git_commit':os.environ['GITHUB_SHA'],
                'vm_machine_id_sha256':hashlib.sha256(Path('/etc/machine-id').read_bytes().strip()).hexdigest(),
+               'vm_boot_id_sha256':hashlib.sha256(Path('/proc/sys/kernel/random/boot_id').read_bytes().strip()).hexdigest(),
                'signed_wasi_rpc_over_distinct_vm':os.getenv('OCAF038_FINAL_SUCCESS')=='true',
                'agent_b_denied':os.getenv('OCAF038_FINAL_SUCCESS')=='true',
                'production_approved':False}
