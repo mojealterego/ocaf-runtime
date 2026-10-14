@@ -1,6 +1,6 @@
 # OCAF 0.38 — niezależny audyt bezpieczeństwa: pakiet do przekazania / NO-GO
 
-**Stan: wymagany audytor zewnętrzny NIE został wyznaczony ani podpisany.** Ten dokument jest zakresem zlecenia weryfikacyjnego, a nie rzekomym raportem audytora. Brak opłat i jakichkolwiek nowych zobowiązań finansowych.
+**Stan: zchiz444 wskazany przez użytkownika jako kandydat na niezależnego audytora. NIE zweryfikowano tożsamości, niezależności ani uprawnień; brak przeprowadzonego audytu, raportu i podpisu.** Ten dokument jest zakresem zlecenia weryfikacyjnego, a nie rzekomym raportem audytora. Brak opłat i jakichkolwiek nowych zobowiązań finansowych.
 
 ## Granica odbioru
 
@@ -41,3 +41,13 @@ python3 scripts/stage038_production_gate.py \
 ```
 
 NIE tworzyć podpisów w imieniu innych osób. Nie kopiować kluczy prywatnych do czatu ani GitHub. Nie oznaczać etapu 0.38 jako ukończonego, dopóki odbiór nie jest rzeczywiście podpisany i zweryfikowany. Przedtem bezwarunkowo `NO-GO`. Etap 0.39 pozostaje zablokowany.
+
+## Imienne wskazanie audytora — 2026-10-15
+
+- **Audytor wskazany do roli A11:** `zchiz444` (nazwa przekazana przez użytkownika).
+- **Status wyznaczenia:** wskazanie administracyjne; niezależność, rzeczywista tożsamość, kompetencje i osobiste przyjęcie roli **niezweryfikowane**.
+- **Wymagane działanie:** `zchiz444` samodzielnie przeprowadza kontrolę kodu i dowodów A01–A10, dokumentuje rzeczywiste wyniki PASS/FAIL, podpisuje raport własnym kluczem pod wyłączną kontrolą i przekazuje do operatora.
+- **Niedozwolony substytut:** podpis wygenerowany przez asystenta dla tej nazwy pod deklaracją zgody nie jest niezależnym podpisem audytora i nie stanowi akceptacji A11.
+- **Operator wskazany do roli A12:** Andrzej Mikulski. Przegląd i końcowy podpis dopiero po kompletnym raporcie A11.
+
+**Stan A11: PENDING / NO-GO.**
