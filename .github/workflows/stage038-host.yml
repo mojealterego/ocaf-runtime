@@ -1,0 +1,28 @@
+name: OCAF 0.38 Host Preflight (ephemeral CI, not release approval)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-host-prerequisites:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Stage 0.38 host evidence parser regression tests
+        run: python3 -m unittest discover -s scripts/tests -p test_stage038_host_gate.py -v
+      - name: Inspect actual ephemeral Linux host and cgroup prerequisites
+        run: python3 scripts/stage038_host_gate.py --report stage038-ci-host.json
+      - name: Publish bounded host-preflight evidence (not production signoff)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage038-ci-host-preflight
+          path: stage038-ci-host.json
+          if-no-files-found: warn
+          retention-days: 30
