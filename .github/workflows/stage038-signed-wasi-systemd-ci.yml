@@ -287,6 +287,37 @@ jobs:
             echo "STAGE038_CWD_FIXED_ERROR_CLASS=other_or_none"
           fi
           rm -f -- "$cwd_log"
+          # Control cases: distinguish a malformed fixture from restrictions
+          # specific to the isolated service UID or an unset home/cache.
+          root_log="$RUNNER_TEMP/ocaf038-wasmtime-root-private.log"
+          home_log="$RUNNER_TEMP/ocaf038-wasmtime-home-private.log"
+          set +e
+          sudo /usr/bin/env -i /opt/ocaf/bin/wasmtime run -W "$opts" "$module" </dev/null >"$root_log" 2>&1
+          root_rc=$?
+          sudo -u ocaf /usr/bin/env -i /bin/sh -c 'cd /var/lib/ocaf && exec /usr/bin/env HOME=/var/lib/ocaf XDG_CACHE_HOME=/var/lib/ocaf /opt/ocaf/bin/wasmtime run -W "$1" /var/lib/ocaf/module.wasm' sh "$opts" </dev/null >"$home_log" 2>&1
+          home_rc=$?
+          set -e
+          if [ "$root_rc" -eq 0 ] && grep -qx '{"ok":true}' "$root_log"; then
+            echo "STAGE038_ROOT_WASMTIME_FIXTURE=pass"
+          else
+            echo "STAGE038_ROOT_WASMTIME_FIXTURE=fail"
+          fi
+          if [ "$home_rc" -eq 0 ] && grep -qx '{"ok":true}' "$home_log"; then
+            echo "STAGE038_UNPRIVILEGED_HOME_SET_WASM=pass"
+          else
+            echo "STAGE038_UNPRIVILEGED_HOME_SET_WASM=fail"
+          fi
+          for kind in root home; do
+            if [ "$kind" = root ]; then diagnostic="$root_log"; else diagnostic="$home_log"; fi
+            if grep -iq 'permission denied' "$diagnostic"; then
+              echo "STAGE038_${kind}_ERROR_CLASS=permission_denied"
+            elif grep -iq 'invalid value\|unknown option\|unexpected argument' "$diagnostic"; then
+              echo "STAGE038_${kind}_ERROR_CLASS=wasmtime_cli_rejected"
+            else
+              echo "STAGE038_${kind}_ERROR_CLASS=other_or_none"
+            fi
+          done
+          rm -f -- "$root_log" "$home_log"
           # These are fixed, allowlisted labels only. Never print captured stderr.
           for kind in plain systemd basic; do
             case "$kind" in
