@@ -1000,6 +1000,21 @@ impl RpcGateway {
                     Ok(result) => (RpcStatus::Ok, result.output),
                     Err(RuntimeError::InvalidInput(_)) => (RpcStatus::InvalidInput, Value::Null),
                     Err(RuntimeError::Timeout) => (RpcStatus::Timeout, Value::Null),
+                    Err(RuntimeError::ToolExecution(error)) => {
+                        // Only fixed categories reach CI/operator logs. Guest-controlled
+                        // stderr, arguments, paths and credentials are never logged.
+                        let failure_class = match error.as_str() {
+                            "execution failed: WASI guest failed or trapped" => "guest_exit_nonzero",
+                            "execution failed: cannot start pinned WASI runtime" => "guest_spawn_failed",
+                            "execution failed: WASI stdin write failed" => "guest_stdin_failed",
+                            "execution failed: WASI stdout read failed" => "guest_stdout_failed",
+                            "execution failed: WASI stderr read failed" => "guest_stderr_failed",
+                            "input validation failed: WASI guest returned invalid JSON" => "guest_invalid_json",
+                            _ => "execution_rejected_other",
+                        };
+                        tracing::warn!(wasi_failure_class = failure_class, "authenticated RPC tool call failed");
+                        (RpcStatus::Failed, Value::Null)
+                    }
                     Err(_) => (RpcStatus::Failed, Value::Null),
                 }
             }
