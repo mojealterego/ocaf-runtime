@@ -1004,35 +1004,59 @@ impl RpcGateway {
                         // Only fixed categories reach CI/operator logs. Guest-controlled
                         // stderr, arguments, paths and credentials are never logged.
                         let failure_class = match error.as_str() {
-                            "execution failed: WASI guest failed or trapped" => "guest_exit_nonzero",
-                            "execution failed: cannot start pinned WASI runtime" => "guest_spawn_failed",
+                            "execution failed: WASI guest failed or trapped" => {
+                                "guest_exit_nonzero"
+                            }
+                            "execution failed: cannot start pinned WASI runtime" => {
+                                "guest_spawn_failed"
+                            }
                             "execution failed: WASI stdin write failed" => "guest_stdin_failed",
                             "execution failed: WASI stdout read failed" => "guest_stdout_failed",
                             "execution failed: WASI stderr read failed" => "guest_stderr_failed",
-                            "input validation failed: WASI guest returned invalid JSON" => "guest_invalid_json",
+                            "input validation failed: WASI guest returned invalid JSON" => {
+                                "guest_invalid_json"
+                            }
                             _ => "execution_rejected_other",
                         };
-                        tracing::warn!(wasi_failure_class = failure_class, "authenticated RPC tool call failed");
+                        tracing::warn!(
+                            wasi_failure_class = failure_class,
+                            "authenticated RPC tool call failed"
+                        );
                         (RpcStatus::Failed, Value::Null)
                     }
                     Err(RuntimeError::ToolNotFound(_)) => {
-                        tracing::warn!(wasi_failure_class = "registry_not_found", "authenticated RPC tool call failed");
+                        tracing::warn!(
+                            wasi_failure_class = "registry_not_found",
+                            "authenticated RPC tool call failed"
+                        );
                         (RpcStatus::Failed, Value::Null)
                     }
                     Err(RuntimeError::ToolDisabled(_)) => {
-                        tracing::warn!(wasi_failure_class = "registry_disabled", "authenticated RPC tool call failed");
+                        tracing::warn!(
+                            wasi_failure_class = "registry_disabled",
+                            "authenticated RPC tool call failed"
+                        );
                         (RpcStatus::Failed, Value::Null)
                     }
                     Err(RuntimeError::AuthRequired(_)) => {
-                        tracing::warn!(wasi_failure_class = "authorization_rejected", "authenticated RPC tool call failed");
+                        tracing::warn!(
+                            wasi_failure_class = "authorization_rejected",
+                            "authenticated RPC tool call failed"
+                        );
                         (RpcStatus::Failed, Value::Null)
                     }
                     Err(RuntimeError::InvalidOutput(_)) => {
-                        tracing::warn!(wasi_failure_class = "schema_output_rejected", "authenticated RPC tool call failed");
+                        tracing::warn!(
+                            wasi_failure_class = "schema_output_rejected",
+                            "authenticated RPC tool call failed"
+                        );
                         (RpcStatus::Failed, Value::Null)
                     }
                     Err(RuntimeError::BudgetExceeded) => {
-                        tracing::warn!(wasi_failure_class = "budget_rejected", "authenticated RPC tool call failed");
+                        tracing::warn!(
+                            wasi_failure_class = "budget_rejected",
+                            "authenticated RPC tool call failed"
+                        );
                         (RpcStatus::Failed, Value::Null)
                     }
                 }
