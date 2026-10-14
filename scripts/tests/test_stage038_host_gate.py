@@ -85,5 +85,21 @@ class Stage038HostGateTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             gate.read_cgroup_stats(Path("/etc"))
 
+    def test_actual_kernel_cgroup_limits_must_be_finite(self):
+        good = {"memory.max": "1610612736", "pids.max": "128",
+                "cpu.max": "200000 100000"}
+        self.assertTrue(gate.kernel_limits_enforced(good))
+        for name, value in (("memory.max", "max"),
+                            ("memory.max", "3221225472"),
+                            ("pids.max", "max"),
+                            ("pids.max", "512"),
+                            ("cpu.max", "max 100000"),
+                            ("cpu.max", "300000 100000"),
+                            ("cpu.max", "nonsense"),
+                            ("cpu.max", "0 100000")):
+            changed = {**good, name: value}
+            self.assertFalse(gate.kernel_limits_enforced(changed))
+        self.assertFalse(gate.kernel_limits_enforced({}))
+
 if __name__ == "__main__":
     unittest.main()
