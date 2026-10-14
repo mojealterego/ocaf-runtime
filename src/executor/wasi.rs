@@ -5,7 +5,7 @@ use std::fs::{self, DirBuilder, File, OpenOptions};
 use std::io::{Read, Write};
 use std::os::fd::{AsRawFd, FromRawFd};
 use std::os::unix::fs::{DirBuilderExt, MetadataExt, OpenOptionsExt, PermissionsExt};
-use std::os::unix::process::CommandExt;
+use std::os::unix::process::{CommandExt, ExitStatusExt};
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::sync::Arc;
@@ -614,12 +614,49 @@ impl WasmToolExecutor {
             }
         };
 
-        let ((), output, _stderr, status) = completed;
+        let ((), output, stderr, status) = completed;
         if !status.success() {
+            // Categorize only from fixed strings. The guest's stderr is
+            // untrusted and must never appear in operator logs or RPC data.
+            let failure_class = sanitized_guest_failure(&status, &stderr);
+            eprintln!("wasi_guest_failure_class={failure_class}");
             return Err(ToolError::Execution("WASI guest failed or trapped".into()));
         }
         serde_json::from_slice(&output)
             .map_err(|_| ToolError::Validation("WASI guest returned invalid JSON".into()))
+    }
+}
+
+/// Fixed-code diagnostics for failed guest exits. Never echo guest stderr.
+fn sanitized_guest_failure(status: &std::process::ExitStatus, stderr: &[u8]) -> &'static str {
+    if status.signal() == Some(libc::SIGKILL) {
+        return "guest_sigkill";
+    }
+    if status.signal().is_some() {
+        return "guest_signaled";
+    }
+    let message = String::from_utf8_lossy(stderr).to_ascii_lowercase();
+    if message.contains("fuel") && (message.contains("consum") || message.contains("exhaust")) {
+        "fuel_exhausted"
+    } else if message.contains("permission denied") {
+        "guest_permission_denied"
+    } else if message.contains("no such file or directory") {
+        "guest_file_missing"
+    } else if message.contains("unknown option")
+        || message.contains("unexpected argument")
+        || message.contains("invalid value")
+    {
+        "wasmtime_cli_rejected"
+    } else if message.contains("out of memory") || message.contains("memory allocation") {
+        "guest_memory_exhausted"
+    } else if message.contains("failed to parse") || message.contains("malformed") {
+        "guest_module_invalid"
+    } else if message.contains("trap") {
+        "guest_trap"
+    } else if message.contains("wasi") {
+        "wasi_runtime_failed"
+    } else {
+        "guest_failure_unclassified"
     }
 }
 
@@ -654,6 +691,25 @@ where
 #[cfg(test)]
 mod pinned_engine_tests {
     use super::*;
+
+    #[test]
+    fn guest_failure_diagnostics_do_not_echo_untrusted_stderr() {
+        let failed = std::process::ExitStatus::from_raw(256);
+        assert_eq!(
+            sanitized_guest_failure(&failed, b"unknown option: SECRET_PASSWORD"),
+            "wasmtime_cli_rejected"
+        );
+        assert_eq!(
+            sanitized_guest_failure(&failed, b"wasm trap: private/user/input"),
+            "guest_trap"
+        );
+        assert_eq!(
+            sanitized_guest_failure(&failed, b"SECRET_PASSWORD"),
+            "guest_failure_unclassified"
+        );
+        let killed = std::process::ExitStatus::from_raw(libc::SIGKILL);
+        assert_eq!(sanitized_guest_failure(&killed, b""), "guest_sigkill");
+    }
 
     #[test]
     fn verified_engine_executes_from_immutable_sealed_memfd() {
