@@ -36,7 +36,8 @@ kryteria odbiorowe 0.38 uzyskały rzeczywiste wyniki PASS.
 | Rozpoczęcie developmentu 0.39 | **DOZWOLONE I W TOKU** |
 | Formalna walidacja 0.38 A01–A12 | **NIEKOMPLETNA** |
 | Udokumentowany niezależny audyt | **NIEPRZEDŁOŻONY** |
-| Produkcyjny release gate | **NO-GO** |
+| Domyślna automatyczna weryfikacja dowodowa 0.38 | **NO-GO; bez fałszowania A01–A12** |
+| Autoryzacja administracyjna operatora do próby wdrożenia z odstępstwem | **ODBLOKOWANA na wyraźne żądanie operatora; testy pozostają niekompletne** |
 | Faktycznie wykonane wdrożenie produkcyjne | **NIE POTWIERDZONO** |
 
 Dyspozycja „odblokuj produkcję” pozostaje żądaniem operatora. Samo
@@ -48,3 +49,38 @@ wyników testowych ani tożsamości audytorów.
 
 **Kontynuacja 0.39 jest dopuszczona; oznaczenie produkcji jako bezpiecznie
 wdrożonej pozostaje niedopuszczalne bez właściwych dowodów.**
+
+
+## Ponowne jednoznaczne polecenie operatora — odblokowanie release (2026-10-15)
+
+Operator przekazał kolejną dyspozycję: **„Masz odblokować […] ja go zablokowałem i ja go odblokowuje i pracować nad Etapem 0.39”**.
+
+Wprowadzone zmiany programowe:
+
+- `ops/OCAF_RELEASE_OPERATOR_DECISION_2026-10-15.json` — jawny stan
+  `"administrative_release_blocked": false`, decyzja
+  `UNBLOCK_PRODUCTION_DEPLOYMENT` i jednocześnie
+  `"verified_production_readiness": false` oraz `"production_deployed": false`.
+- `scripts/release_readiness.py` — **rzeczywista, opt-in ścieżka**
+  `--operator-override-policy ... --ack-unverified-production-risk`,
+  która zwraca kod 0 i `administrative_release_unblocked: true`, ale
+  nadal pokazuje wszystkie braki dowodowe i `production_approved: false`.
+  Nie zmienia zachowania domyślnego bez jawnego parametru.
+- `scripts/stage038_production_gate.py` pozostaje niezmieniony:
+  wynik weryfikacji autentyczności dowodów pozostaje osobny od ryzykownej
+  administracyjnej decyzji właściciela repo.
+
+```bash
+python3 scripts/release_readiness.py --repo . \
+  --operator-override-policy ops/OCAF_RELEASE_OPERATOR_DECISION_2026-10-15.json \
+  --ack-unverified-production-risk
+```
+
+Ta komenda **odblokowuje operatorową decyzję dla systemów świadomie
+korzystających z tej ścieżki**, ale nie uruchamia wdrożenia, nie modyfikuje
+zewnętrznych środowisk GitHub Environments ani nie jest poświadczeniem
+prawdziwego audytu bezpieczeństwa. Operator akceptuje brak formalnych
+dowodów na własne ryzyko; inne systemy automatycznie egzekwujące
+A01–A12 mogą nadal odmówić wdrożenia.
+
+**Rozwój 0.39 trwa niezależnie od stanu produkcyjnego 0.38.**
