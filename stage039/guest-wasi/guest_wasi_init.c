@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <time.h>
+#include <sys/random.h>
 
 static const char expected[]="OCAF039_WASI_INSIDE_FC_VM_IMPORT_FD_WRITE\n";
 static void output(const char *s) { size_t n=strlen(s); while(n){ssize_t r=write(1,s,n); if(r<=0)break; s+=r;n-=(size_t)r;} }
@@ -27,6 +28,17 @@ int main(void) {
     int fd=open("/dev/console",O_WRONLY|O_CLOEXEC);
     if(fd>=0){dup2(fd,1); dup2(fd,2);if(fd>2)close(fd);}
     output("OCAF039_GUEST_PID1_BOOTED\n");
+    /* Nonblocking probe distinguishes an unseeded 4.14 guest kernel from
+       normal Wasmtime startup. No RNG bytes are printed or persisted. */
+    unsigned char entropy_probe[16];
+    ssize_t gr=getrandom(entropy_probe,sizeof(entropy_probe),GRND_NONBLOCK);
+    if(gr==(ssize_t)sizeof(entropy_probe))
+        output("OCAF039_GUEST_CRNG_READY\n");
+    else if(gr<0 && errno==EAGAIN)
+        output("OCAF039_GUEST_CRNG_NOT_INITIALIZED\n");
+    else
+        output("OCAF039_GUEST_CRNG_PROBE_FAILED\n");
+    memset(entropy_probe,0,sizeof(entropy_probe));
     int channel[2]; if(pipe(channel)!=0)fail();
     pid_t child=fork();
     if(child<0)fail();

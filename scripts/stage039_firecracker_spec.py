@@ -19,6 +19,23 @@ GUEST_KERNEL = "/guest/vmlinux.bin"
 GUEST_ROOTFS = "/guest/rootfs.ext4"
 
 
+def enable_guest_entropy_for_wasi(config:dict)->dict:
+    """Explicit Firecracker virtio-rng for guest getrandom() initialization.
+
+    The pinned Firecracker v1.17 API supports an 'entropy' device with an
+    optional rate limiter. Fail closed on any networked/invalid config.
+    This is NOT a claim that a particular guest Linux kernel has the
+    CONFIG_HW_RANDOM_VIRTIO frontend; actual guest execution must prove it.
+    """
+    if (not isinstance(config,dict) or config.get("network-interfaces")!=[]
+        or not isinstance(config.get("machine-config"),dict)
+        or type(config["machine-config"].get("vcpu_count")) is not int
+        or config["machine-config"]["vcpu_count"]<1
+        or config.get("entropy") is not None):
+        raise ValueError("cannot attach virtio-rng to unreviewed networked guest configuration")
+    return {**config,"entropy":{}}
+
+
 def build(manifest_raw: bytes, approved_root: Path, jailer_root: Path) -> dict:
     manifest = gate.parse_manifest(manifest_raw)
     src = gate.inspect_manifest(manifest_raw, Path(approved_root))

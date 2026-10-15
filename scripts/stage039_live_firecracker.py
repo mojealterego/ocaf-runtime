@@ -368,6 +368,11 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
                          root / "guest" / file,
                          parsed["assets"][asset]["sha256"])
         staging = spec.build(raw, approved_root, root)
+        if require_guest_wasi:
+            # Old minimal 4.14 guest has no early entropy and Wasmtime
+            # may block indefinitely in getrandom(); attach real virtio-rng.
+            staging["firecracker_config"] = spec.enable_guest_entropy_for_wasi(
+                staging["firecracker_config"])
         config = root / "vmconfig.json"
         with os.fdopen(os.open(config, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o444),
                        "w", encoding="utf-8") as f:
