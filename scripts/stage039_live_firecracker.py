@@ -217,7 +217,10 @@ def _bounded_console_evidence(log: Path) -> str:
         head = source.read(65536)
         source.seek(0, os.SEEK_END)
         size = source.tell()
-        source.seek(max(0, size - 8192), os.SEEK_SET)
+        if size <= len(head):
+            # Never count guest PID1/WASIp1 markers twice on short console logs.
+            return head.decode("utf-8", errors="replace")
+        source.seek(max(len(head), size - 8192), os.SEEK_SET)
         tail = source.read(8192)
     return head.decode("utf-8", errors="replace") + "\n" + tail.decode("utf-8", errors="replace")
 
