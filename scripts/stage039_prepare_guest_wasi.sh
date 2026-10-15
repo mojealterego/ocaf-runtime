@@ -35,7 +35,7 @@ wat2wasm "$SRC/stage039/guest-wasi/hello.wat" -o "$WORK/hello.wasm"
 wasm-objdump -x "$WORK/hello.wasm" | grep -F 'wasi_snapshot_preview1'
 # Independently verify WASI import even on HOST before any Firecracker VM starts.
 # This is a preflight; ONLY guest serial is counted as KVM execution.
-output="$("$WASMTIME" run "$WORK/hello.wasm")"
+output="$("$WASMTIME" run -C cache=no "$WORK/hello.wasm")"
 [[ "$output" == 'OCAF039_WASI_INSIDE_FC_VM_IMPORT_FD_WRITE' ]] || exit 4
 cp "$APPROVED/guest_rootfs" "$WORK/guest-rootfs-wasi.ext4"
 truncate -s +384M "$WORK/guest-rootfs-wasi.ext4"

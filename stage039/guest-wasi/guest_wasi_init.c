@@ -34,7 +34,7 @@ int main(void) {
         close(channel[0]);
         if(dup2(channel[1],1)<0 || dup2(channel[1],2)<0)_exit(127);
         close(channel[1]);
-        char * const args[]={"/usr/bin/wasmtime","run","/opt/ocaf/hello.wasm",NULL};
+        char * const args[]={"/usr/bin/wasmtime","run","-C","cache=no","/opt/ocaf/hello.wasm",NULL};
         char * const env[]={"PATH=/usr/bin:/bin","HOME=/","LANG=C",NULL};
         execve(args[0],args,env);
         _exit(127);
