@@ -79,7 +79,7 @@ jobs:
         run: |
           set -euo pipefail
           umask 077
-          PREFIX="/opt/ocaf039-independent-${GITHUB_RUN_ID}-${TENANT}"
+          PREFIX="/opt/o39h${GITHUB_RUN_ID}-${TENANT#tenant-}"
           SRC="/tmp/ocaf039-independent-source"
           sudo -n install -d -o root -g root -m 0700 "$PREFIX" "$PREFIX/approved" "$PREFIX/jailer"
           sudo -n install -o root -g root -m 0555 "$SRC/release-v1.17.0-x86_64/firecracker-v1.17.0-x86_64" "$PREFIX/approved/firecracker"
@@ -118,7 +118,7 @@ jobs:
           VM_UID: ${{ matrix.uid }}
         run: |
           set -euo pipefail
-          PREFIX="/opt/ocaf039-independent-${GITHUB_RUN_ID}-${TENANT}"
+          PREFIX="/opt/o39h${GITHUB_RUN_ID}-${TENANT#tenant-}"
           FC="$PREFIX/approved/firecracker"
           JAILER="$PREFIX/approved/jailer"
           sudo -n python3 scripts/stage039_live_firecracker.py \
@@ -155,7 +155,7 @@ jobs:
           TENANT: ${{ matrix.tenant }}
         run: |
           set -euo pipefail
-          PREFIX="/opt/ocaf039-independent-${GITHUB_RUN_ID}-${TENANT}"
+          PREFIX="/opt/o39h${GITHUB_RUN_ID}-${TENANT#tenant-}"
           echo "OCAF039_INDEPENDENT_JAILER_FAILURE_DIAGNOSTICS"
           sudo -n find "$PREFIX/jailer" -maxdepth 8 -type f -name serial-console.log \
             -exec tail -n 70 '{}' ';' || true
