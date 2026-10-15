@@ -9,6 +9,8 @@ on:
       - scripts/tests/test_stage039_microvm_gate.py
       - scripts/stage039_broker_ledger.py
       - scripts/tests/test_stage039_broker_ledger.py
+      - scripts/stage039_broker_ipc.py
+      - scripts/tests/test_stage039_broker_ipc.py
       - docs/STAGE039_MICROVM_EBPF.md
   workflow_dispatch:
 
@@ -28,10 +30,13 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_microvm_gate.py -v
       - name: Verify durable broker admission and leader fencing on real SQLite
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_broker_ledger.py -v
+      - name: Verify actual Linux AF_UNIX SO_PEERCRED broker protocol
+        run: python3 -m unittest discover -s scripts/tests -p test_stage039_broker_ipc.py -v
       - name: Python source syntax verification
         run: |
           python3 -m py_compile scripts/stage039_microvm_gate.py scripts/tests/test_stage039_microvm_gate.py
           python3 -m py_compile scripts/stage039_broker_ledger.py scripts/tests/test_stage039_broker_ledger.py
+          python3 -m py_compile scripts/stage039_broker_ipc.py scripts/tests/test_stage039_broker_ipc.py
       - name: Observe KVM, cgroup v2, PID1 systemd, BTF and bpffs on actual CI Linux
         shell: bash
         run: |
