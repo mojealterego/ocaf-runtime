@@ -11,7 +11,7 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
-use std::{any::Any, sync::Arc, time::Duration};
+use std::{any::Any, env, sync::Arc, time::Duration};
 
 use zenoh_core::{zasyncwrite, ztimeout};
 use zenoh_link::Link;
@@ -396,7 +396,8 @@ async fn auth_usrpwd(endpoint: &EndPoint, lowlatency_transport: bool) {
     /* [CLIENT] */
     let client01_id = ZenohIdProto::try_from([2]).unwrap();
     let user01 = "user01".to_string();
-    let password01 = "password01".to_string();
+    let password01 =
+        env::var("ZENOH_TEST_PASSWORD01").unwrap_or_else(|_| "password01".to_string());
 
     let client02_id = ZenohIdProto::try_from([3]).unwrap();
     let user02 = "invalid".to_string();
@@ -404,7 +405,8 @@ async fn auth_usrpwd(endpoint: &EndPoint, lowlatency_transport: bool) {
 
     let client03_id = client01_id;
     let user03 = "user03".to_string();
-    let password03 = "password03".to_string();
+    let password03 =
+        env::var("ZENOH_TEST_PASSWORD03").unwrap_or_else(|_| "password03".to_string());
 
     /* [ROUTER] */
     let router_id = ZenohIdProto::try_from([1]).unwrap();
