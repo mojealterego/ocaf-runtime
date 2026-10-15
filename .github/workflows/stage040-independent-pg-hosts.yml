@@ -1,0 +1,125 @@
+name: OCAF 0.40 THREE separate Linux kernel PostgreSQL failover labs (NOT interhost streaming)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage040-independent-pg-hosts.yml
+      - scripts/stage040_postgres_ha.py
+      - scripts/stage040_independent_pg_hosts.py
+      - scripts/tests/test_stage040_independent_pg_hosts.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  three-distinct-host-postgres:
+    name: Real PostgreSQL A→B→C WAL failover on kernel ${{ matrix.host }}
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [a, b, c]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Prepare real PostgreSQL 16 server and client binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! test -x /usr/lib/postgresql/16/bin/pg_basebackup; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16
+          fi
+          test -x /usr/lib/postgresql/16/bin/pg_ctl
+      - name: Real PostgreSQL crash and two standby WAL replay in this independent runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          LAB="/tmp/ocaf40-kernel-${GITHUB_RUN_ID}-${{ matrix.host }}"
+          sudo -n install -d -o postgres -g postgres -m 0700 "$LAB"
+          sudo -n install -o postgres -g postgres -m 0500 \
+            "$GITHUB_WORKSPACE/scripts/stage040_postgres_ha.py" "$LAB/driver.py"
+          sudo -n -u postgres python3 "$LAB/driver.py" \
+            --pg-bin-dir /usr/lib/postgresql/16/bin \
+            --report "$LAB/report.json" \
+            --ack-local-ephemeral-postgres-primary-kill
+          mkdir -p stage040-kernel-evidence
+          sudo -n cp "$LAB/report.json" "stage040-kernel-evidence/pg-${{ matrix.host }}.json"
+          sudo -n chown "$(id -u):$(id -g)" "stage040-kernel-evidence/pg-${{ matrix.host }}.json"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          role="${{ matrix.host }}"
+          r=json.loads(Path(f"stage040-kernel-evidence/pg-{role}.json").read_text())
+          kernel=Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+          assert r["kernel_boot_id"]==kernel
+          assert r["status"]=="POSTGRES_3_PROCESSES_STREAMING_FAILOVER_PASSED"
+          assert r["old_primary_killed_immediate"]
+          assert r["standby_b_promoted_writable"]
+          assert r["standby_c_replayed_post_promotion_wal"]
+          assert r["standby_c_wal_receiver_status"]=="streaming"
+          assert r["three_physically_independent_hosts"] is False
+          assert r["production_approved"] is False
+          print("STAGE040_REAL_POSTGRESQL_WAL_CRASH_ON_DISTINCT_KERNEL_"+role.upper()+"_PROVED")
+          PY
+      - name: Upload real locally failed over PostgreSQL evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage040-real-pg-host-${{ matrix.host }}
+          path: stage040-kernel-evidence/
+          retention-days: 30
+          if-no-files-found: warn
+
+  verify-kernel-isolation:
+    name: Independently compare three real distinct kernel boot ID PG failover receipts
+    needs: [three-distinct-host-postgres]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Pull three separate PG failover artifacts from three kernel jobs
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: stage040-real-pg-host-*
+          path: stage040-three-kernel-results
+          merge-multiple: true
+      - name: Strictly reject coincident kernel boot IDs or false interhost streaming reports
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s scripts/tests -p test_stage040_independent_pg_hosts.py -v
+          mkdir -p stage040-three-kernel-evidence
+          python3 scripts/stage040_independent_pg_hosts.py \
+            --host-a stage040-three-kernel-results/pg-a.json \
+            --host-b stage040-three-kernel-results/pg-b.json \
+            --host-c stage040-three-kernel-results/pg-c.json \
+            --report stage040-three-kernel-evidence/three-hosts.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("stage040-three-kernel-evidence/three-hosts.json").read_text())
+          assert r["status"]=="THREE_REAL_DISTINCT_LINUX_KERNELS_LOCAL_POSTGRES_FAILOVERS_VERIFIED"
+          assert r["distinct_kernels_observed"]==3
+          assert len(set(r["boot_ids"].values()))==3
+          assert r["postgresql_postmasters_executed_total"]==9
+          assert r["interhost_postgres_streaming_verified"] is False
+          assert r["split_brain_fencing_tested"] is False
+          assert r["production_approved"] is False
+          print("STAGE040_THREE_ACTUAL_DISTINCT_LINUX_KERNELS_PG_FAILOVER_PROVED_NOT_INTERHOST_HA")
+          PY
+      - name: Save triple-kernel machine evidence verifier
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage040-three-distinct-kernel-postgres-report
+          path: stage040-three-kernel-evidence/
+          retention-days: 30
+          if-no-files-found: warn
