@@ -9,6 +9,8 @@ on:
       - scripts/stage039_vm_egress.py
       - scripts/stage039_vm_resources.py
       - scripts/stage039_vm_crash.py
+      - scripts/stage039_dual_tenant.py
+      - scripts/tests/test_stage039_dual_tenant.py
       - scripts/stage039_live_egress.py
       - scripts/tests/test_stage039_vm_egress.py
       - stage039/aya-guard/**
@@ -23,7 +25,7 @@ permissions:
 jobs:
   live-jailer-kvm-guest:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -208,6 +210,59 @@ jobs:
           print("STAGE039_REAL_VM_SIGKILL_CGROUP_REAP_PROVED")
           print("STAGE039_LIVE_KERNEL_CGROUP_RESOURCE_LIMITS_AND_PEAKS_PROVED")
           print("STAGE039_LIVE_VM_HOST_CGROUP_AYA_EGRESS_NEGATIVE_AND_RECOVERY_PROVED")
+          PY
+      - name: ACTUAL two simultaneous jailed KVM guest kernels - tenant A and B crash isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
+          mkdir -p stage039-real-guest-evidence
+          sudo -n python3 - "$PREFIX/approved/request.json" "$PREFIX/approved/request-b.json" <<'PY'
+          import json,sys
+          from pathlib import Path
+          a=json.loads(Path(sys.argv[1]).read_text())
+          a["tenant_id"]="tenant-b"
+          a["agent_id"]="agent-b"
+          a["workload_id"]="ocaf-fc-live-boot-b"
+          p=Path(sys.argv[2]); p.write_text(json.dumps(a,sort_keys=True)+"\n")
+          p.chmod(0o600)
+          print("STAGE039_DISTINCT_SECOND_TENANT_MANIFEST_PINNED")
+          PY
+          sudo -n python3 scripts/stage039_dual_tenant.py \
+            --manifest-a "$PREFIX/approved/request.json" \
+            --manifest-b "$PREFIX/approved/request-b.json" \
+            --approved-root "$PREFIX/approved" \
+            --firecracker "$PREFIX/approved/firecracker" \
+            --firecracker-sha256 "$(sudo -n sha256sum "$PREFIX/approved/firecracker" | cut -d ' ' -f 1)" \
+            --jailer "$PREFIX/approved/jailer" \
+            --jailer-sha256 "$(sudo -n sha256sum "$PREFIX/approved/jailer" | cut -d ' ' -f 1)" \
+            --chroot-base "$PREFIX/jailer" \
+            --aya-loader "$PREFIX/approved/aya-guard" \
+            --aya-loader-sha256 "$(sudo -n sha256sum "$PREFIX/approved/aya-guard" | cut -d ' ' -f 1)" \
+            --aya-program "$PREFIX/approved/aya_cgroup_device" \
+            --aya-program-sha256 992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95 \
+            --aya-seconds 15 --timeout 90 \
+            --report stage039-real-guest-evidence/dual-tenants.json \
+            --ack-two-tenant-kvm-sigkill
+          sudo -n chown "$(id -u):$(id -g)" stage039-real-guest-evidence/dual-tenants.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("stage039-real-guest-evidence/dual-tenants.json").read_text())
+          assert r["status"]=="TWO_CONCURRENT_TENANTS_VM_BOOT_AND_FAULT_ISOLATION_PASSED"
+          assert r["simultaneous_guest_boot"]["two_guests_simultaneously_running"] is True
+          assert r["fault_isolation"]["tenant_b_survived_tenant_a_sigkill"] is True
+          assert r["tenant_a"]["tenant_id"]=="tenant-a"
+          assert r["tenant_b"]["tenant_id"]=="tenant-b"
+          assert r["tenant_a"]["cgroup_inode"]!=r["tenant_b"]["cgroup_inode"]
+          assert r["tenant_a"]["vm_id"]!=r["tenant_b"]["vm_id"]
+          assert r["tenant_a"]["vm_sigkill_fault"]["cgroup_subtree_empty"]
+          assert r["tenant_b"]["vm_sigkill_fault"]["cgroup_subtree_empty"]
+          assert r["two_independent_hosts"] is False
+          assert r["guest_network_egress_tested"] is False
+          assert r["production_approved"] is False
+          print("STAGE039_REAL_TWO_SIMULTANEOUS_JAILED_FIRECRACKER_TENANTS_PROVED")
+          print("STAGE039_TENANT_B_SURVIVED_TENANT_A_SIGKILL_PROVED")
           PY
       - name: Diagnose sandbox failure using only official public guest image boot logs
         if: failure()
