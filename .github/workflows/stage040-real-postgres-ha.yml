@@ -40,7 +40,9 @@ jobs:
           umask 077
           EVIDENCE="/tmp/ocaf40-${GITHUB_RUN_ID}-evidence"
           sudo -n install -d -o postgres -g postgres -m 0700 "$EVIDENCE"
-          sudo -n -u postgres python3 "$GITHUB_WORKSPACE/scripts/stage040_postgres_ha.py" \
+          sudo -n install -o postgres -g postgres -m 0500 \
+            "$GITHUB_WORKSPACE/scripts/stage040_postgres_ha.py" "$EVIDENCE/driver.py"
+          sudo -n -u postgres python3 "$EVIDENCE/driver.py" \
             --pg-bin-dir /usr/lib/postgresql/16/bin \
             --report "$EVIDENCE/actual-postgresql-streaming-failover.json" \
             --ack-local-ephemeral-postgres-primary-kill
