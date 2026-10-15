@@ -15,7 +15,7 @@ import stat
 ROOT = Path("/sys/fs/cgroup")
 DEDICATED_VM = re.compile(r"ocaf-stage039-vm-[a-f0-9]{16}\.service\Z")
 INTEGER = re.compile(r"(?:0|[1-9][0-9]*)\Z")
-EVENT_NAME = re.compile(r"[a-z][a-z0-9_]*\Z")
+EVENT_NAME = re.compile(r"[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*\Z")
 MAX_READ = 4096
 FILES = (
     "memory.max", "memory.swap.max", "memory.oom.group",
