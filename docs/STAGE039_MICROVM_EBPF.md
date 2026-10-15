@@ -206,3 +206,103 @@ Zasady wykonywania na hoście: operator musi przedstawić autoryzowany
 systemd/cgroup-v2 Linux KVM, zatwierdzony jailer/Firecracker tej samej
 wersji, zakotwiczone digests kernel/rootfs, politykę eBPF cgroup
 i logi uruchomienia i ograniczenia egress. Bez tych dowodów brak GO.
+
+
+## 0.39.6 — realny Firecracker przez jailer: skrypt testu sprzętowego
+
+Zaimplementowano `scripts/stage039_live_firecracker.py`, który jest
+**wykonawczym** narzędziem do uruchomienia ograniczonego gościa
+Firecracker na *rzeczywistym* autoryzowanym hoście Linux KVM.
+
+Kryteria przedstartowe: root na dedykowanym hoście, systemd PID1,
+dostępne `/dev/kvm`, realne `KVM_CREATE_VM`,
+zatwierdzony manifest SHA-256 Firecracker/kernel/rootfs,
+parowane `jailer`/Firecracker tej samej wersji, prywatny jailer base
+(0700), odrębne UID/GID (nie root) i rzeczywisty cgroup v2.
+
+Skrypt przygotowuje staging jailera w rzeczywistej ścieżce
+`<jailer-base>/<firecracker-name>/<vm-id>/root`,
+kopiuje guest kernel/rootfs z FD `O_NOFOLLOW` oraz ponownie
+porównuje digest, generuje domyślnie bezsieciową konfigurację,
+uruchamia **jailer bez --daemonize**, potwierdza Firecracker API
+`state=Running`, komunikat `Linux version ...` na konsoli gościa
+i membership PID w konkretnym cgroup.
+Zamyka proces i podejmuje sprzątanie osobnego cgroup.
+**Nie** jest to dowód uruchomienia aplikacji w gościu ani gwarancja
+braku TOCTOU.
+
+### Uruchomienie na host Linux/KVM (nie na GitHub-hosted runner)
+
+```bash
+sudo python3 scripts/stage039_live_firecracker.py \
+  --manifest /opt/ocaf/approved/request.json \
+  --approved-root /opt/ocaf/approved \
+  --firecracker /opt/ocaf/approved/firecracker \
+  --firecracker-sha256 PINNED_SHA256 \
+  --jailer /opt/ocaf/approved/jailer \
+  --jailer-sha256 PINNED_JAILER_SHA256 \
+  --chroot-base /srv/ocaf-jailer \
+  --uid 1002 --gid 1002 --timeout 60 \
+  --report /var/lib/ocaf/evidence/firecracker-real.json \
+  --ack-real-kvm-jailer-boot
+```
+
+## 0.39.7 — rzeczywisty test negatywny Aya/eBPF
+
+Zaimplementowano `scripts/stage039_live_egress.py`:
+tworzy **dwa nowe, dedykowane testowe cgroups A/B**, otwiera
+jedynie lokalny serwer TCP `127.0.0.1`; oba kontrolnie działają.
+Po realnym `BPF_PROG_LOAD` i `CgroupSkb::attach` Aya program
+deny-all w cgroup A odrzuca połączenie A, podczas gdy niezależny
+cgroup B nadal może połączyć się. Po `detach` A ponownie łączy
+się. Każde z tych przejść musi mieć sukces, inaczej test kończy
+się odmową. Nie ma zewnętrznego ruchu ani skanowania sieci.
+
+Każdy proces testujący musi **rzeczywiście zapisać swój PID do
+`cgroup.procs`**; błąd przyłączania do cgroup nie jest liczoną
+blokadą pakietów. Raport wiąże program ID Aya, inode cgroup,
+boot ID hosta i SHA-256 loadera oraz ELF. Skrypt nigdy nie
+zatwierdza wdrożenia Firecracker.
+
+```bash
+sudo python3 scripts/stage039_live_egress.py \
+  --loader /opt/ocaf/bin/ocaf-stage039-aya-guard \
+  --loader-sha256 PINNED_LOADER_SHA256 \
+  --program /opt/ocaf/approved/ocaf-stage039-deny-egress \
+  --program-sha256 PINNED_BPF_ELF_SHA256 \
+  --seconds 30 \
+  --report /var/lib/ocaf/evidence/aya-egress-real.json \
+  --ack-privileged-loopback-test
+```
+
+Dla przejścia na jednym rzeczywistym hoście przygotowano
+**workflow manualny** `.github/workflows/stage039-live-kvm-aya.yml`,
+uruchamiany **tylko** na autoryzowanym self-hosted runnerze
+`[self-hosted, linux, x64, ocaf-kvm-ebpf]`. Wymaga
+`vars.OCAF039_*` dla zweryfikowanych ścieżek i digestów i
+`sudo -n` na sprzętowo kompatybilnym hoście. Nie używa
+zwykłych runnerów GitHub i **nie** tworzy płatnych VM.
+
+### Stan rzeczywistej infrastruktury
+
+Sprawdzono aktualnie dostępne zaplecze:
+- GitHub-hosted Linux (`38665774854`): `/dev/kvm` niedostępny,
+  a host preflight i KVM ioctl **NO_GO**.
+- Sprite `ocaf-stage038-linux`: PID1=`tini` i brak
+  `/dev/kvm` — to środowisko kontenerowe, nie docelowy host.
+- DigitalOcean: zero istniejących Dropletów.
+- Kontenery Render/Railway nie są weryfikowanym hostem KVM.
+
+**Wynik aktualny:** 10 testów kontraktu rzeczywistych
+negatywnych prób eBPF + 6 testów kontraktu startu Firecracker
+PASS w GitHub Actions; razem z wcześniejszymi: **84 testy**
+(81 Python + 3 Rust), [run 38665774854](https://github.com/mojealterego/ocaf-runtime/actions/runs/38665774854).
+**To nie są live BPF attach ani guest boot!** Brak dostępnego
+autoryzowanego hosta KVM/BPF, więc całościowy test sprzętowy
+i jego dowody nadal **NO-GO**.
+
+**Warunek awansu:** rejestracja istniejącego (bez dodatkowych kosztów)
+lub osobno zatwierdzonego przez operatora realnego hosta KVM/BPF.
+Dopiero niezależne artefakty `kvm.json`, `boot.json`,
+`egress.json` z jednego `boot_id` mogą potwierdzić zrealizowanie
+prób (z zachowaniem dalszych osobnych kryteriów produkcyjnych).

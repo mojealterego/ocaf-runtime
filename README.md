@@ -894,3 +894,18 @@ fail-closed generator zweryfikowanej konfiguracji jailer/Firecracker
 ([workflow](https://github.com/mojealterego/ocaf-runtime/actions/runs/38663469207)).
 Aktualny host **nie ma działającego KVM**; Firecracker nie został
 uruchomiony, Aya nie został podpięty, brak produkcyjnej izolacji.
+
+
+### 0.39 — testy rzeczywistego Firecracker i Aya (inkrementacja 2026-10-15)
+
+Zaimplementowano `scripts/stage039_live_firecracker.py` uruchamiający
+**prawdziwy jailer/Firecracker** wyłącznie po udanym kernel `KVM_CREATE_VM`,
+z weryfikacją API `Running`, konsoli gościa i członkostwa cgroup; oraz
+`scripts/stage039_live_egress.py` wykonujący test A/B na lokalnym
+TCP `127.0.0.1`: A ma utracić egress po rzeczywistym Aya attach,
+B zachować łączność, A odzyskać ją po detach. Workflow
+`.github/workflows/stage039-live-kvm-aya.yml` wymaga własnego,
+uprawnionego self-hosted runnera KVM/BPF. **84 testy kontraktu PASS** w
+[GitHub Actions](https://github.com/mojealterego/ocaf-runtime/actions/runs/38665774854),
+ale testy sprzętowe nie są wykonane. Dostępne kontenery/Sprite
+nie udostępniają `/dev/kvm`, aktualny status izolacji: **NO-GO**.

@@ -71,7 +71,7 @@ traceability. Version numbers advance only after real release approvals.
 | 0.36 | Identity/RPC | Application-layer certificate private-key proof + HMAC and pinning | Implement (opt-in) | Existing CI tests; genuine transport TLS peer binding remains blocked |
 | 0.37 | Identity/RPC | Separate TLS 1.3-bound ingress verifies live session leaf against RPC sender pin and SAN; CRL/reload/worker migration remains | Implemented experimentally / NO-GO | Real handshake and swapped-cert tests in CI; external PKI/CRL and multi-host still pending |
 | 0.38 | Execution | Restricted Wasmtime WASIp1 adapter (see [implementation](WASI_EXECUTION_038.md) and [acceptance contract](PRIORITY_038_EXECUTION_CONTRACT.md)) | **ADMINISTRATIVELY CLOSED BY OPERATOR DIRECTIVE / technical A01–A12 NO-GO** | Operator requested project-level closure and transition to 0.39; documented in [directive](STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md). Passing CI is not persistent two-host acceptance, independent signed security audit or verified production release. |
-| 0.39 | Execution | Firecracker microVM broker + eBPF Aya controls + isolation attestations | **IN PROGRESS: 0.39.1–0.39.5 and Aya loader source; real KVM/attach/boot NO-GO** | Genuine ioctl probe and jailer-root readonly/no-network config generation implemented; native Aya cgroup-skb loader compiled. 68 relevant unit tests PASS at run 38663469207; on hosted runner KVM and Aya live enforcement remain NO-GO. See [stage 0.39 plan](STAGE039_MICROVM_EBPF.md). |
+| 0.39 | Execution | Firecracker microVM broker + eBPF Aya controls + isolation attestations | **IN PROGRESS: real-host jailed Firecracker and Aya network-negative harness ready; actual VM/attach NO-GO** | Added hardware-dependent `scripts/stage039_live_firecracker.py` and `scripts/stage039_live_egress.py`, 16 new regression tests, manual [self-hosted KVM/Aya workflow](../.github/workflows/stage039-live-kvm-aya.yml). 84 tests PASS at run 38665774854; no accessible KVM/BPF host for actual kernel execution. |
 | 0.40 | HA | Three physical host PostgreSQL HA, real leader fencing and failover | P0 / NO-GO | Host power loss, split-brain, former leader effect-writes rejected |
 | 0.41 | Reliability | Backup/restore, partition chaos, recovery and prolonged soak | P0 / NO-GO | RTO/RPO SLO, restore proof, job audit recovery, operator acceptance |
 | 0.42 | Release | Production hardening, SBOM/provenance, license and audit GO/NO-GO | P0 / NO-GO | External security review; release version not mistaken for priority number |
@@ -599,8 +599,8 @@ implementacji. Komplet nazw, odwołanie do etapów, kryteria i zagrożenia:
 | 0.39.3 | `stage039_broker_ipc.py`: AF_UNIX, kernel SO_PEERCRED | Zła UID i tenant denied; limit ramki, bez implicit exec | **PASS 10 tests** |
 | 0.39.4 | **KVM kernel ioctl probe** i konfiguracja jails/VM | Real KVM API_VERSION=12, CREATE_VM succeeded; char device nie wystarcza | **CODE + 8 tests PASS; actual CI kernel ioctl NO-GO (/dev/kvm unavailable)** |
 | 0.39.5 | Pin Firecracker **i jailer tej samej wersji**, signed/provenance assets; generator staging chroot | No stale artifact path, immutable verified staged copy, no symlink / TOCTOU | **Static chroot config + 6 tests PASS; live jailer / TOCTOU runtime proof OPEN** |
-| 0.39.6 | Realny boot Firecracker za jailer na host Linux/KVM | Kernel/rootfs readonly; VM Running, serial/vsock proof, shutdown cleanup | **BLOCKED until KVM host** |
-| 0.39.7 | Program Rust `aya-ebpf` cgroup_skb/egress + userspace Aya loader | Realne BPF verifier load, pinned cgroup identity, link ID & blocked packet proof | **Aya host loader compiled, 3 Rust unit PASS; eBPF ELF build / kernel attach NO-GO** |
+| 0.39.6 | Realny boot Firecracker za jailer na host Linux/KVM | Kernel/rootfs readonly; VM Running + kernel serial + cgroup proof + cleanup | **LIVE EXECUTOR WRITTEN; 6 contract tests PASS; host KVM NO-GO** |
+| 0.39.7 | Program Rust `aya-ebpf` cgroup_skb/egress + userspace Aya loader | Realne BPF verifier load, program ID, tenant A block/B unaffected, recovery after detach | **LIVE EGRESS EXECUTOR WRITTEN; 10 negative contract tests PASS; kernel attach NO-GO** |
 | 0.39.8 | Spójny broker lifecycle: claim → jailer → eBPF link → VM → receipt → teardown | Block until eBPF enforcement; kill/replay/restore cleanup, no orphan VM | PLANNED |
 | 0.39.9 | Dwa odrębne trwałe hosty KVM, tenant A/B, chaos i bounded 100-cycle soak na każdym | Rzeczywiste UUID hosta, failure-domain, restart, revoked-key rejection | **NO-GO / hosts unavailable** |
 | 0.39.10 | Safety & supply chain: SBOM, vulnerability/TOCTOU tests, independent scope review | Reproduce SHA manifest-to-running inode, guest escape and egress attempts | **NO-GO** |
@@ -663,3 +663,20 @@ odcięcia ruchu bez negatywnego testu pakietów.
 65 testów Pythona (12+17+10+12+8+6) i 3 testy Rust Aya
 **PASS**. Host preflight i actual KVM ioctl **NO-GO**, zgodnie z realną
 infrastrukturą CI. Brak sztucznego hosta, audytu czy raportu GO.
+
+
+## 2026-10-15 — sprzętowe testy Firecracker / Aya: wykonawcza automatyzacja bez fikcyjnego PASS
+
+Dostarczono skrypty rzeczywistego testu `scripts/stage039_live_firecracker.py`
+i `scripts/stage039_live_egress.py` oraz manualny workflow
+`.github/workflows/stage039-live-kvm-aya.yml`, który może uruchomić
+je jedynie na istniejącym self-hosted Linux x64 z etykietą
+`ocaf-kvm-ebpf`. Są testy realnego API KVM/Firecracker, boot console,
+PID w dedykowanym cgroup i dwóch osobnych procesów network loopback
+(A blokowany przez Aya, B nieblokowany, A ponownie dostępny po detach).
+CI wykonało 16 nowych unit/regression tests i 68 wcześniejszych,
+łącznie **84 PASS** ([run 38665774854](https://github.com/mojealterego/ocaf-runtime/actions/runs/38665774854)).
+**Sprzętowy Firecracker/KVM oraz kernel Aya attach nie były uruchomione**:
+brak dostępnego hosta z uprawnieniami KVM i eBPF; żadnych dodatkowych
+płatnych VM nie stworzono. Plan akceptacji produkcyjnej nie zmienia
+warunków GO/NO-GO.
