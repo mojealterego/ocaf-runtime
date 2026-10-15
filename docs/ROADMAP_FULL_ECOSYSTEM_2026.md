@@ -1,9 +1,16 @@
-# OCAF FULL ECOSYSTEM ROADMAP — consolidated evidence-led v4 (2026-10-14)
+# OCAF FULL ECOSYSTEM ROADMAP — consolidated evidence-led v5 (2026-10-15)
 
 **Revision: 2026-10-14.** The dated historical notes remain below. Repository: `mojealterego/ocaf-runtime`, **branch `main` only**.
 This document **supersedes the provisional 0.36–0.50 roadmap** in
 `docs/MASTER_ARCHITECTURE_26_PDFS.md`. It is a requirements traceability
 and milestone plan, not proof that the described systems already work.
+
+**Revision v5 (2026-10-15):** added the two new user-supplied documents,
+covering 24 + 9 reference repositories in ten integration groups; primary
+traceability document:
+[33-repository adaptation matrix](ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md).
+Stage 0.39 execution milestones expanded below. Upstream descriptions and
+code examples in PDFs are *proposals*; they are not production-test evidence.
 
 ## Mandatory scope and coverage
 
@@ -64,7 +71,7 @@ traceability. Version numbers advance only after real release approvals.
 | 0.36 | Identity/RPC | Application-layer certificate private-key proof + HMAC and pinning | Implement (opt-in) | Existing CI tests; genuine transport TLS peer binding remains blocked |
 | 0.37 | Identity/RPC | Separate TLS 1.3-bound ingress verifies live session leaf against RPC sender pin and SAN; CRL/reload/worker migration remains | Implemented experimentally / NO-GO | Real handshake and swapped-cert tests in CI; external PKI/CRL and multi-host still pending |
 | 0.38 | Execution | Restricted Wasmtime WASIp1 adapter (see [implementation](WASI_EXECUTION_038.md) and [acceptance contract](PRIORITY_038_EXECUTION_CONTRACT.md)) | **ADMINISTRATIVELY CLOSED BY OPERATOR DIRECTIVE / technical A01–A12 NO-GO** | Operator requested project-level closure and transition to 0.39; documented in [directive](STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md). Passing CI is not persistent two-host acceptance, independent signed security audit or verified production release. |
-| 0.39 | Execution | Firecracker microVM broker + eBPF Aya controls + isolation attestations | **IN PROGRESS — static admission + durable SQLite + kernel-authenticated AF_UNIX broker; P0 / isolation NO-GO** | `scripts/stage039_microvm_gate.py`, `scripts/stage039_broker_ledger.py`, `scripts/stage039_broker_ipc.py`; 39 regression tests (12+17+10), Linux KVM/eBPF host preflight. No live microVM, actual Aya attach or independent host attestation yet. |
+| 0.39 | Execution | Firecracker microVM broker + eBPF Aya controls + isolation attestations | **IN PROGRESS: 0.39.1–0.39.3, real host KVM/attach/boot NO-GO** | Existing manifest gate, durable SQLite fencing/replay and kernel SO_PEERCRED local AF_UNIX broker; 39 stage tests last PASS. New 0.39.4–0.39.11: ioctl-based KVM capability, jailed boot, real Aya attach, fault/egress denial, host evidence, peer audit and release review. See milestone breakdown and [stage 0.39 plan](STAGE039_MICROVM_EBPF.md). |
 | 0.40 | HA | Three physical host PostgreSQL HA, real leader fencing and failover | P0 / NO-GO | Host power loss, split-brain, former leader effect-writes rejected |
 | 0.41 | Reliability | Backup/restore, partition chaos, recovery and prolonged soak | P0 / NO-GO | RTO/RPO SLO, restore proof, job audit recovery, operator acceptance |
 | 0.42 | Release | Production hardening, SBOM/provenance, license and audit GO/NO-GO | P0 / NO-GO | External security review; release version not mistaken for priority number |
@@ -558,3 +565,74 @@ SQLite admission/release integration. Tested with 10 real socket regressions
 in addition to 29 earlier tests. Guest KVM launch and Aya enforcement
 remain incomplete. Development milestone started, production microVM
 isolation **NO-GO**.
+
+
+## Rozszerzenie v5 — 33 repozytoria i krytyczna ścieżka 0.39 (2026-10-15)
+
+Dostarczone dwa PDF mają łącznie **27 stron** i grupują **24 oraz 9
+referencyjnych nazw repozytoriów**. Zostały przepisane jako **10 pakietów
+architektonicznych**, bez kopiowania przykładowego kodu jako zatwierdzonej
+implementacji. Komplet nazw, odwołanie do etapów, kryteria i zagrożenia:
+[ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md](ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md).
+
+### Macierz nowe wymagania → istniejące etapy
+
+| Pakiet z materiałów | Odpowiednik OCAF | Priorytet / istniejący etap | Stan |
+|---|---|---|---|
+| P24-01, 5 repo | OmniAutoGen-ActorBus, DampedBabyAgiPlanner | 0.46, 0.50, 0.70–0.71 | REQUIREMENTS ONLY |
+| P24-02, 3 repo | OmniBolt-Workstation, OmniFreeApi-Rotator | 0.50–0.56, 0.69, 0.49 | REQUIREMENTS ONLY |
+| P24-03, 5 repo | OmniBookToSkill-Compiler, OmniAzureMcp-Bridge | 0.43–0.44, 0.48, 0.62 | REQUIREMENTS ONLY |
+| P24-04, 5 repo | OmniPredator-AwdDefenseGrid / Aya telemetry | 0.39, 0.47, 0.63, 0.70 | REQUIREMENTS ONLY; Aya not attached |
+| P24-05, 5 repo | OmniVoip-RtpEngine, OmniSeedance-Director, OmniQuantum-Qasm | 0.61, 0.75–0.76 | REQUIREMENTS ONLY |
+| P24-06, 1 repo | OmniBrave-ContextShield | 0.48, 0.60, 0.83 | REQUIREMENTS ONLY |
+| P09-01, 2 repo | OmniAider-RepoMap, OmniArchGen-Contract | 0.50, 0.55–0.56 | REQUIREMENTS ONLY |
+| P09-02, 3 repo | OmniArtemis-AuditMCP | 0.43, 0.63 | REQUIREMENTS ONLY |
+| P09-03, 2 repo | OmniAppStudio-Engine | 0.50–0.55, 0.58 | REQUIREMENTS ONLY |
+| P09-04, 2 repo | OmniVertical-Matcher | 0.67, 0.69, 0.71 | REQUIREMENTS ONLY |
+
+### 0.39 — kolejność wdrożenia od aktualnego stanu
+
+| WBS | Zadanie / artefakt | Twarde wymaganie i test negatywny | Stan |
+|---|---|---|---|
+| 0.39.1 | `stage039_microvm_gate.py`: typed manifest, pinned digests, host preflight | Odrzuca fałszywe /dev/kvm, dane tenant, mutable paths; nigdy nie raportuje boot | **PASS 12 tests**, CI host NO-GO |
+| 0.39.2 | `stage039_broker_ledger.py`: SQLite WAL, fencing leader_epoch, anti-replay | Odrzuć rollback epoch, concurrent double-claim, błędny owner, DB perms | **PASS 17 tests** |
+| 0.39.3 | `stage039_broker_ipc.py`: AF_UNIX, kernel SO_PEERCRED | Zła UID i tenant denied; limit ramki, bez implicit exec | **PASS 10 tests** |
+| 0.39.4 | **KVM kernel ioctl probe** i konfiguracja jails/VM | Real KVM API_VERSION=12, CREATE_VM succeeded; char device nie wystarcza | **IN PROGRESS / real host dependency** |
+| 0.39.5 | Pin Firecracker **i jailer tej samej wersji**, signed/provenance assets; generator staging chroot | No stale artifact path, immutable verified staged copy, no symlink / TOCTOU | PLANNED |
+| 0.39.6 | Realny boot Firecracker za jailer na host Linux/KVM | Kernel/rootfs readonly; VM Running, serial/vsock proof, shutdown cleanup | **BLOCKED until KVM host** |
+| 0.39.7 | Program Rust `aya-ebpf` cgroup_skb/egress + userspace Aya loader | Realne BPF verifier load, pinned cgroup identity, link ID & blocked packet proof | **BLOCKED until BPF-capable host** |
+| 0.39.8 | Spójny broker lifecycle: claim → jailer → eBPF link → VM → receipt → teardown | Block until eBPF enforcement; kill/replay/restore cleanup, no orphan VM | PLANNED |
+| 0.39.9 | Dwa odrębne trwałe hosty KVM, tenant A/B, chaos i bounded 100-cycle soak na każdym | Rzeczywiste UUID hosta, failure-domain, restart, revoked-key rejection | **NO-GO / hosts unavailable** |
+| 0.39.10 | Safety & supply chain: SBOM, vulnerability/TOCTOU tests, independent scope review | Reproduce SHA manifest-to-running inode, guest escape and egress attempts | **NO-GO** |
+| 0.39.11 | Produkcyjny operator acceptance dla 0.39 | Oddzielne zatwierdzenie, report ze środowiska i podpis; nie mylić z administracyjnym unblock | **NO-GO** |
+
+**Krytyczna zależność:** nie ma kontrolowanego hosta z `/dev/kvm`
+i `systemd` PID1 / cgroup v2 / BTF / bpffs udostępnionego narzędziom.
+Ostatni rzeczywisty GitHub Actions Linux preflight dał `NO_GO`.
+Brak sprzętowych capability **nie zostanie naprawiony** przez zmiany
+w manifestach, dodanie zależności Cargo lub sfałszowanie wyniku CI.
+Należy nieodpłatnie użyć dostępnego już, zatwierdzonego hosta KVM
+albo osobno uzyskać autoryzację finansowania; nie tworzymy
+niezamówionych płatnych VM.
+
+### Prawidłowo interpretowane KPI z PDF
+
+- Deklaracje „<1ms API routing”, „<2ms RTP”, „zero downtime”,
+  „gwarantowana skończoność” oraz „usuwanie prompt injection w
+  mikrosekundach” są **hipotezami do benchmarków** z warm-up, p50/p95/p99,
+  replayable workload i fail conditions — nie SLA w roadmapie.
+- Wykładnicze tłumienie punktacji zadania nie ogranicza całkowitej
+  liczby zadań; trzeba twardych limitów.
+- Nazwanie ciągu znaków 'eBPF patch' nie wykonuje BPF attach; log
+  musi zawierać zweryfikowany link i negatywny test pakietu.
+- Stateless stopień dopasowania ATS nie zastępuje referencji do
+  potwierdzonych faktów CV; DOM string-replace nie gwarantuje
+  neutralizacji injected instructions.
+- Finansowy fallback API nie może uruchamiać L402 bez jawnego,
+  odrębnego zatwierdzenia użytkownika i limitu kosztów.
+
+**Zarządzanie wydaniem:** blokada *administracyjna* 0.38 zdjęta
+na dyspozycję operatora. Techniczne testy i audyt A01–A12
+nadal niewystarczające do poświadczenia gotowości. `0.39`
+jest wykonywany wyłącznie na `main`; **nie twierdzimy,
+że VM Firecracker albo Aya działają produkcyjnie.**
