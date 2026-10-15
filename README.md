@@ -1,5 +1,8 @@
 # OCAF Runtime — Rust / Tokio / Zenoh
 
+> **ROADMAPA KANONICZNA v10 — OD POCZĄTKU PROJEKTU**  
+> [Otwórz pełną Roadmapę](docs/ROADMAP_FULL_ECOSYSTEM_2026.md): **195 numerowanych etapów głównych 0.00–1.94 + 64 zidentyfikowane podetapy = 259 pozycji wykonawczych**, z odniesieniami do **33 repozytoriów referencyjnych**. [Pełna ewidencja maszynowa](docs/roadmap/canonical_v10_inventory.json); [oryginalny zapis v9 bez żadnych strat](docs/archive/ROADMAP_FULL_ECOSYSTEM_v9_2026-10-15.md). Nieodtworzone 0.00–0.10 i historyczne tytuły 0.11–0.35 jawnie oznaczone, zamiast dopisywać fikcyjne wymagania. Techniczne zamknięcie Firecracker WASI, niezależnych hostów PostgreSQL HA i długich testów odporności nadal wymaga dowodów.
+
 ## Zamknięcie kamienia milowego 0.38 — COMPLETE (2026-10-15)
 
 **STAGE 0.38 = COMPLETE  (status prac w roadmapie).**
