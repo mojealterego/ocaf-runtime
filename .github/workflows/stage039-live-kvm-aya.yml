@@ -18,23 +18,23 @@ concurrency:
 
 jobs:
   live-kvm-aya:
-    if: ${{ inputs.authorized }
+    if: ${{ inputs.authorized }}
     runs-on: [self-hosted, linux, x64, ocaf-kvm-ebpf]
     timeout-minutes: 15
     env:
-      MANIFEST: ${{ vars.OCAF039_MANIFEST }
-      APPROVED_ROOT: ${{ vars.OCAF039_APPROVED_ROOT }
-      FC: ${{ vars.OCAF039_FIRECRACKER }
-      FC_SHA: ${{ vars.OCAF039_FIRECRACKER_SHA256 }
-      JAILER: ${{ vars.OCAF039_JAILER }
-      JAILER_SHA: ${{ vars.OCAF039_JAILER_SHA256 }
-      JAIL_BASE: ${{ vars.OCAF039_CHROOT_BASE }
-      UID: ${{ vars.OCAF039_UNPRIV_UID }
-      GID: ${{ vars.OCAF039_UNPRIV_GID }
-      AYA: ${{ vars.OCAF039_AYA_LOADER }
-      AYA_SHA: ${{ vars.OCAF039_AYA_LOADER_SHA256 }
-      ELF: ${{ vars.OCAF039_EBPF_ELF }
-      ELF_SHA: ${{ vars.OCAF039_EBPF_ELF_SHA256 }
+      MANIFEST: ${{ vars.OCAF039_MANIFEST }}
+      APPROVED_ROOT: ${{ vars.OCAF039_APPROVED_ROOT }}
+      FC: ${{ vars.OCAF039_FIRECRACKER }}
+      FC_SHA: ${{ vars.OCAF039_FIRECRACKER_SHA256 }}
+      JAILER: ${{ vars.OCAF039_JAILER }}
+      JAILER_SHA: ${{ vars.OCAF039_JAILER_SHA256 }}
+      JAIL_BASE: ${{ vars.OCAF039_CHROOT_BASE }}
+      OCAF_UNPRIV_UID: ${{ vars.OCAF039_UNPRIV_UID }}
+      OCAF_UNPRIV_GID: ${{ vars.OCAF039_UNPRIV_GID }}
+      AYA: ${{ vars.OCAF039_AYA_LOADER }}
+      AYA_SHA: ${{ vars.OCAF039_AYA_LOADER_SHA256 }}
+      ELF: ${{ vars.OCAF039_EBPF_ELF }}
+      ELF_SHA: ${{ vars.OCAF039_EBPF_ELF_SHA256 }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -43,7 +43,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for key in MANIFEST APPROVED_ROOT FC FC_SHA JAILER JAILER_SHA JAIL_BASE UID GID AYA AYA_SHA ELF ELF_SHA; do
+          for key in MANIFEST APPROVED_ROOT FC FC_SHA JAILER JAILER_SHA JAIL_BASE OCAF_UNPRIV_UID OCAF_UNPRIV_GID AYA AYA_SHA ELF ELF_SHA; do
             test -n "$(printenv "$key")" || { echo "::error::missing $key"; exit 1; }
           done
       - name: Actual KVM API ioctl
@@ -60,7 +60,7 @@ jobs:
             --manifest "$MANIFEST" --approved-root "$APPROVED_ROOT" \
             --jailer "$JAILER" --jailer-sha256 "$JAILER_SHA" \
             --firecracker "$FC" --firecracker-sha256 "$FC_SHA" \
-            --chroot-base "$JAIL_BASE" --uid "$UID" --gid "$GID" \
+            --chroot-base "$JAIL_BASE" --uid "$OCAF_UNPRIV_UID" --gid "$OCAF_UNPRIV_GID" \
             --timeout 60 --report stage039-live-evidence/boot.json \
             --ack-real-kvm-jailer-boot
       - name: Genuine Aya cgroup attach, negative egress and post-detach recovery
