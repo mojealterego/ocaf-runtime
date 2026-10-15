@@ -64,7 +64,8 @@ class BrokerIPCTests(unittest.IsolatedAsyncioTestCase):
             allowed_pairs=frozenset({("tenant-x", "agent-x")}))
         self.sockpath = self.working / "broker.sock"
         self.service = ipc.BrokerIPC(
-            self.sockpath, self.ledger, self.assets, self.policy)
+            self.sockpath, self.ledger, self.assets, self.policy,
+            clock=lambda: self.now)
         await self.service.start()
         self.addAsyncCleanup(self.service.close)
 
