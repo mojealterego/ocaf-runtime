@@ -695,3 +695,22 @@ CI buduje z `--locked`. Wynik
 `BPF_PROG_LOAD`/attach, negatywnego testu ruchu lub boot Firecracker.
 Self-hosted workflow `.github/workflows/stage039-live-kvm-aya.yml`
 pozostaje ścieżką rzeczywistych testów KVM/BPF.
+
+
+### 0.39 — host KVM: CircleCI Android machine (kandydat, 2026-10-15)
+
+Dla braku /dev/kvm w GitHub i Sprite wybrano **CircleCI Android
+machine image `android:current` na `medium.gen2`**, którego
+oficjalna dokumentacja deklaruje wsparcie nested virtualization.
+W `.circleci/config.yml` dodano `stage039-hardware-nested-kvm`:
+realne `KVM_GET_API_VERSION/KVM_CREATE_VM`, test wymagania cgroup
+v2+BTF+bpffs, budowanie sprawdzonego loadera Aya i test A/B
+odłączenia egress na rzeczywistym jądrze. Artefakty: 
+`ocaf039-circleci-real-kvm-aya`; fail-closed przy braku właściwego hosta.
+**Uruchomienie VM nie zostało potwierdzone:** GitHub nie pokazał
+statusu CircleCI dla commitu `d3a406d651b3bbcb0fbb5d21260c315f1b6b5d0e`; brak
+bezpośrednio autoryzowanego dostępu do konta/projektu CircleCI.
+Domyślna flaga `run_stage039_kvm=false` chroni przed przypadkowym
+przyszłym zużyciem kredytów; jednorazowo ustawić ją na `true` w
+ręcznym wyzwoleniu w projekcie po weryfikacji darmowego limitu.
+**Host ma charakter CI ephemeral, a nie trwałego serwera produkcyjnego.**

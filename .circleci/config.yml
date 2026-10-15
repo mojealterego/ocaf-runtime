@@ -6,10 +6,10 @@ parameters:
   # Operator ordered a real KVM-capable host; Android machine image has
   # documented nested virtualization. This ephemeral probe consumes CircleCI
   # compute credits only if the repository is connected to CircleCI.
-  # IMPORTANT: turn this parameter off after the initial infrastructure probe.
+  # Fail-safe: manual trigger only, avoids indefinite credit consumption.
   run_stage039_kvm:
     type: boolean
-    default: true
+    default: false
   run_stage038_linux:
     type: boolean
     default: false
