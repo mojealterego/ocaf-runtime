@@ -7,6 +7,7 @@ on:
       - .github/workflows/stage040-real-postgres-netns.yml
       - scripts/stage040_postgres_netns.py
       - scripts/tests/test_stage040_postgres_netns.py
+      - scripts/tests/test_stage040_postgres_netns_soak.py
   workflow_dispatch:
 
 permissions:
@@ -23,6 +24,8 @@ jobs:
           persist-credentials: false
       - name: Strict kernel TCP/host-scope negative unit tests
         run: python3 -m unittest discover -s scripts/tests -p test_stage040_postgres_netns.py -v
+      - name: Verify actual pgbench partition, WAL exclusion and recovery negative contracts
+        run: python3 -m unittest discover -s scripts/tests -p test_stage040_postgres_netns_soak.py -v
       - name: Ensure actual PostgreSQL 16 server and privileged iproute2 network namespace capabilities
         shell: bash
         run: |
@@ -33,6 +36,7 @@ jobs:
           fi
           test -x /usr/lib/postgresql/16/bin/initdb
           test -x /usr/lib/postgresql/16/bin/pg_ctl
+          test -x /usr/lib/postgresql/16/bin/pgbench
           command -v ip
           sudo -n true
       - name: Three real isolated kernel netns PostgreSQL TCP WAL replication, blackhole B and promote
@@ -43,6 +47,7 @@ jobs:
           mkdir -p stage040-netns-evidence
           sudo -n python3 scripts/stage040_postgres_netns.py \
             --pg-bin-dir /usr/lib/postgresql/16/bin \
+            --soak-seconds 20 \
             --report "$GITHUB_WORKSPACE/stage040-netns-evidence/actual-tcp-wal-netns.json" \
             --ack-privileged-isolated-netns-postgres-fault-lab
           sudo -n chown "$(id -u):$(id -g)" stage040-netns-evidence/actual-tcp-wal-netns.json
@@ -61,6 +66,17 @@ jobs:
           assert r["one_underlying_linux_kernel"] is True
           assert r["inter_kernel_tcp_streaming_tested"] is False
           assert r["production_approved"] is False
+          soak=r["pgbench_chaos_soak"]
+          assert soak["real_pgbench_completed"] is True
+          assert soak["clients"]==8 and soak["duration_seconds"]==20
+          assert soak["actual_committed_transactions"]>=100
+          assert soak["both_replica_tcp_streams_replayed_commits"] is True
+          assert soak["bidirectional_kernel_route_blackhole_verified"] is True
+          assert soak["replica_b_isolated_while_c_healthy"] is True
+          assert len(soak["account_balances_md5"])==32
+          assert soak["actual_pgbench_tps"]>0
+          assert soak["inter_kernel_streaming_proved"] is False
+          print("STAGE041_REAL_8CLIENT_20SEC_TCP_PARTITION_PGBENCH_STANDBY_PARITY_PROVED")
           print("STAGE040_ACTUAL_THREE_POSTGRESQL_KERNEL_NETNS_TCP_WAL_PARTITION_PROMOTION_PROVED")
           PY
       - name: Preserve real Linux kernel TCP PostgreSQL WAL fault and recovery report
