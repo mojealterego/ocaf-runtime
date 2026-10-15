@@ -33,3 +33,17 @@
 3. Długotrwałe równoległe obciążenie PostgreSQL/Firecracker i pomiar p95/p99, host/guest RAM, WAL backlog, RTO/RPO oraz automatyczne czyszczenie po błędach.
 
 **Etapy 0.39 i 0.40 pozostają technicznie w toku. Bez podpisów jako warunku rozwoju — tak; bez rzeczywistych testów lub z fikcyjnymi wynikami — nie.**
+
+## 0.40.2 — 30 sekund rzeczywistego obciążenia pgbench z dwiema replikami WAL
+
+**Rzeczywisty CI run 38740936947 — SUCCESS**: [GitHub Actions](https://github.com/mojealterego/ocaf-runtime/actions/runs/38740936947) [artefakt 11975657701](https://github.com/mojealterego/ocaf-runtime/actions/runs/38740936947/artifacts/11975657701), ZIP SHA-256 `2e178799f91b297350fa9611c9d12ea0a4c28d860a299ced2ff2285fbb621472`.
+
+1. Nowy, nieuprzywilejowany **prawdziwy PostgreSQL 16** primary A oraz dwa standby B/C na tym samym kernelu Linux; `pgbench -i -s 1` zakłada dane obciążeniowe.
+2. W trakcie realnej replikacji WAL uruchomiono **osiem współbieżnych klientów pgbench** na **dwóch worker threads przez 30 sekund**; `pgbench` potwierdził zakończenie, liczbę rzeczywiście przetworzonych transakcji oraz dodatni TPS.
+3. Po zakończeniu obciążenia serwer A, replika B oraz replika C zwróciły **dokładnie te same skumulowane salda** tabel `pgbench_accounts`, `pgbench_branches` i `pgbench_tellers`. Walidator wymaga odtworzenia transakcji przez obie działające repliki B/C.
+4. Wymuszono **`pg_ctl stop -m immediate`** primary A. B został promowany do primary, C przepięto na nowy primary i potwierdzono dalszą replikację. Bez takiej pozytywnej obserwacji CI zgłasza błąd.
+5. Skrypt ogranicza maksymalny czas obciążenia, liczbę klientów i zapisuje czas, rzeczywisty licznik transakcji i raportowany TPS do maszyny dowodowej. Nie zgłasza sztucznego RPO/RTO.
+
+Dodatkowe testy jednostkowe: **4 PASS** — m.in. odrzucanie brakujących danych pgbench/TPS/duration, niedopasowane salda replik oraz błędne parametry fizycznego basebackup. Podczas pierwszego przebiegu **[38740603200 — FAILED](https://github.com/mojealterego/ocaf-runtime/actions/runs/38740603200)** rzeczywisty `pg_basebackup` przekroczył dozwolony czas po przygotowaniu dużej bazy `pgbench`. Naprawiono konfigurację poprzez wymuszenie rzeczywistego checkpointu `--checkpoint=fast` oraz streaming `--wal-method=stream`, a pełny [ponowny test 38740936947 zakończył się SUCCESS](https://github.com/mojealterego/ocaf-runtime/actions/runs/38740936947).
+
+**Granice:** trzy procesy PostgreSQL znajdują się na **jednym kernelu**; to test WAL churn, replikacji i awarii procesu po obciążeniu, nie długotrwały test tygodniowy, fizyczny host poweroff ani prawdziwe interhost mTLS HA.

@@ -1061,3 +1061,7 @@ Operator authorized unrestricted **development progression and roadmap extension
 ### 0.40.1: three independent Linux runner kernel PostgreSQL crash/failover labs (2026-10-15)
 
 **Four-job hardware CI PASS:** [38740089797](https://github.com/mojealterego/ocaf-runtime/actions/runs/38740089797). Three separate Linux kernel boot IDs each run real PostgreSQL A/B/C local streaming, primary crash and standby reparent; independent fourth job rejects coincident kernel IDs and false release claims. **This does not establish live replication between the three different hosts.** [Evidence ledger](docs/STAGE039_040_BROKER_KERNEL_PG_INDEPENDENCE_2026-10-15.md).
+
+### 0.40.2: actual PostgreSQL WAL streaming and crash after 30s/8-client pgbench reliability stress
+
+**Real CI PASS:** [38740936947](https://github.com/mojealterego/ocaf-runtime/actions/runs/38740936947). PostgreSQL 16 primary A with streaming B/C, a real `pgbench -i` dataset, **8 concurrent clients / 2 threads / 30 seconds** WAL churn; both replicas confirmed matching accumulated account/branch/teller balances, then A IMMEDIATE process crash, B promotion and C reparent with resumed streaming. PostgreSQL fast checkpoint recovery of `pg_basebackup` was corrected after an initial stressed timeout. [Evidence and limits](docs/STAGE039_040_BROKER_KERNEL_PG_INDEPENDENCE_2026-10-15.md). All 3 local DB processes share one Linux kernel, so not a durability claim across physical servers.
