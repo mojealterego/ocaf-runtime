@@ -1,0 +1,197 @@
+name: OCAF 0.41 REAL physical WAL point-in-time recovery across TWO Linux kernels (not production DR)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage041-physical-pitr-cross-kernel.yml
+      - scripts/stage041_pitr.py
+      - scripts/stage041_pitr_cross_kernel.py
+      - scripts/tests/test_stage041_pitr_cross_kernel.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  physical-source:
+    name: Kernel A - physical basebackup archive WAL and IMMEDIATE postgres crash
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install PostgreSQL 16 physical backup tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! test -x /usr/lib/postgresql/16/bin/pg_basebackup; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16
+          fi
+          test -x /usr/lib/postgresql/16/bin/initdb
+          /usr/lib/postgresql/16/bin/pg_basebackup --version
+      - name: Generate actual WAL PITR and export hash pinned physical basebackup and archived WAL
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          ROOT="/tmp/ocaf41-physical-source-${GITHUB_RUN_ID}"
+          sudo -n install -d -o postgres -g postgres -m 0700 "$ROOT" "$ROOT/evidence" "$ROOT/bundle"
+          sudo -n install -o postgres -g postgres -m 0500 \
+            "$GITHUB_WORKSPACE/scripts/stage041_pitr.py" "$ROOT/driver.py"
+          sudo -n -u postgres python3 "$ROOT/driver.py" \
+            --pg-bin-dir /usr/lib/postgresql/16/bin \
+            --report "$ROOT/evidence/pitr.json" \
+            --export-bundle-dir "$ROOT/bundle" \
+            --ack-ephemeral-postgres-pitr-crash-lab
+          mkdir -p stage041-physical-source
+          for filename in manifest.json source.json basebackup.tar.gz archived-wal.tar.gz; do
+            sudo -n cp "$ROOT/bundle/$filename" "stage041-physical-source/$filename"
+            sudo -n chown "$(id -u):$(id -g)" "stage041-physical-source/$filename"
+          done
+          python3 - <<'PY'
+          import hashlib,json,sys
+          from pathlib import Path
+          sys.path.insert(0,"scripts")
+          from stage041_pitr_cross_kernel import inspect_bundle
+          root=Path("stage041-physical-source").resolve()
+          m=json.loads((root/"manifest.json").read_text())
+          actual_boot=Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+          assert m["source_boot_id"]==actual_boot
+          assert m["expected_target_rows"]==35
+          assert m["later_committed_rows_excluded"]==5
+          for file,key in (
+            ("basebackup.tar.gz","basebackup_sha256"),
+            ("archived-wal.tar.gz","wal_archive_sha256"),
+            ("source.json","source_report_sha256"),
+          ):
+              assert hashlib.sha256((root/file).read_bytes()).hexdigest()==m[key]
+          try:
+              inspect_bundle(root,actual_boot)
+          except ValueError:
+              pass
+          else:
+              raise AssertionError("source kernel was incorrectly accepted as recovery host")
+          print("STAGE041_REAL_SOURCE_PHYSICAL_PGBASEBACKUP_AND_WAL_ARCHIVE_SHA256_EXPORTED")
+          PY
+      - name: Preserve actual physical backup and archived WAL data from first Linux kernel
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage041-pitr-physical-source-bundle
+          path: stage041-physical-source/
+          retention-days: 30
+          if-no-files-found: warn
+
+  physical-recovery:
+    name: Kernel B - verify source and recover 35/35 records from real archived WAL to target LSN
+    needs: [physical-source]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Download independent host's physical backup and WAL archive
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: stage041-pitr-physical-source-bundle
+          path: stage041-pitr-physical-download
+      - name: Run tamper, malicious tar, false host identity and PITR receipt negative unit tests
+        run: python3 -m unittest discover -s scripts/tests -p test_stage041_pitr_cross_kernel.py -v
+      - name: Install actual PostgreSQL 16 recovery binaries on new Linux kernel
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! test -x /usr/lib/postgresql/16/bin/pg_ctl; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16
+          fi
+          test -x /usr/lib/postgresql/16/bin/psql
+      - name: Real negative tamper and replay checks then actual new-postmaster archived-WAL PITR
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          ROOT="/tmp/ocaf41-physical-recovery-${GITHUB_RUN_ID}"
+          sudo -n install -d -o postgres -g postgres -m 0700 "$ROOT" "$ROOT/bundle" "$ROOT/evidence"
+          sudo -n install -o postgres -g postgres -m 0500 \
+            "$GITHUB_WORKSPACE/scripts/stage041_pitr_cross_kernel.py" "$ROOT/driver.py"
+          sudo -n install -o postgres -g postgres -m 0500 \
+            "$GITHUB_WORKSPACE/scripts/stage041_pitr.py" "$ROOT/stage041_pitr.py"
+          for file in manifest.json source.json basebackup.tar.gz archived-wal.tar.gz; do
+            sudo -n install -o postgres -g postgres -m 0600 \
+              "stage041-pitr-physical-download/$file" "$ROOT/bundle/$file"
+          done
+          sudo -n -u postgres python3 - "$ROOT" <<'PY'
+          import json,shutil,sys
+          from pathlib import Path
+          root=Path(sys.argv[1])
+          sys.path.insert(0,str(root))
+          import driver
+          folder=root/"bundle"
+          manifest=json.loads((folder/"manifest.json").read_text())
+          current=Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+          assert current!=manifest["source_boot_id"],"independent Linux kernel boot IDs must differ"
+          proof=driver.inspect_bundle(folder,current)
+          assert proof["distinct_linux_kernels"]
+          target=folder/"archived-wal.tar.gz"
+          copied=root/"original-wal.tar.gz"
+          shutil.copyfile(target,copied)
+          with target.open("r+b") as f:
+              old=f.read(1)
+              assert old
+              f.seek(0);f.write(bytes([old[0]^1]))
+          try:
+              driver.inspect_bundle(folder,current)
+          except driver.CrossPITRError:
+              pass
+          else:
+              raise AssertionError("tampered real WAL archive accepted on recovery kernel")
+          shutil.copyfile(copied,target)
+          try:
+              driver.inspect_bundle(folder,manifest["source_boot_id"])
+          except driver.CrossPITRError:
+              pass
+          else:
+              raise AssertionError("reused source kernel boot ID accepted")
+          assert driver.inspect_bundle(folder,current)["target_lsn"]==manifest["target_lsn"]
+          print("STAGE041_REAL_CROSS_KERNEL_WAL_ARCHIVE_TAMPER_AND_ID_REPLAY_REJECTED")
+          PY
+          sudo -n -u postgres python3 "$ROOT/driver.py" \
+            --bundle-dir "$ROOT/bundle" \
+            --pg-bin-dir /usr/lib/postgresql/16/bin \
+            --report "$ROOT/evidence/recovery.json" \
+            --ack-ephemeral-two-kernel-physical-wal-pitr
+          mkdir -p stage041-physical-recovered
+          sudo -n cp "$ROOT/evidence/recovery.json" stage041-physical-recovered/recovery.json
+          sudo -n chown "$(id -u):$(id -g)" stage041-physical-recovered/recovery.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("stage041-physical-recovered/recovery.json").read_text())
+          assert r["status"]=="TWO_LINUX_KERNELS_REAL_PHYSICAL_WAL_PITR_RECOVERY_PASSED"
+          assert r["source_boot_id"]!=r["recovery_boot_id"]
+          assert r["real_separate_kernel_wal_pitr_proved"] is True
+          assert r["expected_rows"]==r["recovered_rows"]==35
+          assert r["post_target_committed_rows"]==5
+          assert r["recovered_post_target_rows"]==0
+          assert r["source_target_checksum"]==r["recovered_target_checksum"]
+          assert r["real_restored_postmaster_started"] is True
+          assert r["real_wal_replay_exited_recovery"] is True
+          assert r["physical_host_power_loss_tested"] is False
+          assert r["immutable_encrypted_offsite_storage_tested"] is False
+          assert r["production_approved"] is False
+          assert r["stage_041_complete"] is False
+          print("STAGE041_REAL_SECOND_LINUX_KERNEL_POSTGRES_ARCHIVED_WAL_PITR_35_RECORDS_PROVED")
+          PY
+      - name: Upload actual second-kernel physical WAL PITR verification and content hash
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage041-pitr-real-second-kernel-wal-recovery
+          path: stage041-physical-recovered/
+          retention-days: 30
+          if-no-files-found: warn
