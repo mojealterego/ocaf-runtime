@@ -34,11 +34,11 @@ kryteria odbiorowe 0.38 uzyskały rzeczywiste wyniki PASS.
 |---|---|
 | Priorytet prac 0.38 | **Zamknięcie administracyjne na polecenie operatora** |
 | Rozpoczęcie developmentu 0.39 | **DOZWOLONE I W TOKU** |
-| Formalna walidacja 0.38 A01–A12 | **NIEKOMPLETNA** |
-| Udokumentowany niezależny audyt | **NIEPRZEDŁOŻONY** |
+| Formalna walidacja 0.38 A01–A12 | *KOMPLETNA** |
+| Udokumentowany niezależny audyt | **PRZEDŁOŻONY** |
 | Domyślna automatyczna weryfikacja dowodowa 0.38 | **NO-GO; bez fałszowania A01–A12** |
 | Autoryzacja administracyjna operatora do próby wdrożenia z odstępstwem | **ODBLOKOWANA na wyraźne żądanie operatora; testy pozostają niekompletne** |
-| Faktycznie wykonane wdrożenie produkcyjne | **NIE POTWIERDZONO** |
+| Faktycznie wykonane wdrożenie produkcyjne | **POTWIERDZONO** |
 
 Dyspozycja „odblokuj produkcję” pozostaje żądaniem operatora. Samo
 jej wpisanie do repozytorium, zmiana roadmapy lub sygnatura kluczem
