@@ -1,0 +1,70 @@
+name: OCAF 0.39 Privileged KVM kernel capability (GitHub Linux)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage039-privileged-kvm-probe.yml
+      - scripts/stage039_kvm_ioctl.py
+      - scripts/stage039_microvm_gate.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  kernel-kvm-root-probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Observe real /dev/kvm device and ioctl as privileged root
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p stage039-privileged-evidence
+          echo "HOST_KERNEL=$(uname -r)"
+          echo "PID1=$(cat /proc/1/comm)"
+          stat -c 'DEV_KVM=%F PERMS=%a OWNER=%U GROUP=%G' /dev/kvm || true
+          if ! sudo -n true; then
+            echo "::error::Hosted Linux lacks passwordless sudo"
+            exit 1
+          fi
+          set +e
+          sudo -n python3 scripts/stage039_kvm_ioctl.py \
+            --report stage039-privileged-evidence/actual-root-kvm-ioctl.json
+          rc=$?
+          set -e
+          test "$rc" -eq 0 || test "$rc" -eq 1
+          sudo -n chown "$(id -u):$(id -g)" stage039-privileged-evidence/actual-root-kvm-ioctl.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("stage039-privileged-evidence/actual-root-kvm-ioctl.json").read_text())
+          print("STAGE039_PRIVILEGED_KVM_REAL_HOST_REPORT",json.dumps({
+              "status":r["status"],"kvm_vm_fd_created":r["kvm_vm_fd_created"],
+              "checks":r["checks"]},sort_keys=True))
+          if r["status"]=="KVM_IOCTL_VM_CREATED_NOT_BOOTED":
+              assert r["api_version_verified"] is True
+              assert r["kvm_vm_fd_created"] is True
+              print("STAGE039_REAL_KERNEL_KVM_CREATE_VM_PROVED")
+          elif r["status"]=="NO_GO":
+              assert r["kvm_vm_fd_created"] is False
+              print("STAGE039_REAL_KERNEL_KVM_PRIVILEGED_ACCESS_DENIED_OR_UNAVAILABLE")
+          else:
+              raise SystemExit("Unknown KVM status")
+          assert r["microvm_launched"] is False
+          assert r["ebpf_attached"] is False
+          assert r["production_approved"] is False
+          PY
+      - name: Archive factual root-level KVM ioctl report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage039-actual-github-root-kvm-evidence
+          path: stage039-privileged-evidence/
+          retention-days: 30
+          if-no-files-found: warn
