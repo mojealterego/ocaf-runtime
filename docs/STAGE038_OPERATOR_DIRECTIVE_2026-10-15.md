@@ -1,58 +1,31 @@
-# Dyspozycja operatora — administracyjne zamknięcie prac 0.38 i start 0.39
+# OCAF — dyspozycja operatora 0.38 i przejście do 0.39
 
-Data: 2026-10-15. Repo: `mojealterego/ocaf-runtime`, wyłącznie `main`.
+**Data:** 2026-10-15. **Gałąź:** `main`.
 
-## Dyspozycja przekazana w rozmowie
+## Zakres decyzji operatora
 
-Operator złożył wyraźne polecenie:
+Operator upoważnił do **administracyjnego zamknięcia backlogu 0.38**, rozpoczęcia prac 0.39 i zdjęcia blokady administracyjnej wdrożenia z jawnym przyjęciem ryzyka. Zapis źródłowy: [`ops/OCAF_RELEASE_OPERATOR_DECISION_2026-10-15.json`](../ops/OCAF_RELEASE_OPERATOR_DECISION_2026-10-15.json).
 
-> Etap 0.38 uznaj za ukończony a wdrożenie produkcyjne odblokowane pracuj nad Etapem 0.39
+Dyspozycja o dalszym rozwoju i odstępstwie nie jest równoznaczna z ukończeniem technicznego odbioru A01–A12, wykonaniem produkcyjnego wdrożenia ani podpisaniem opinii przez niezależnego audytora.
 
-**Decyzja administracyjna:** operator deklaruje zamknięcie prac nad backlogiem
-0.38 i przejście do inżynierii 0.39. Ta decyzja jest zapisana jako
-**`OPERATOR_DIRECTIVE_CLOSE_038_AND_START_039`**. Oznacza, że wszystkie
-kryteria odbiorowe 0.38 uzyskały rzeczywiste wyniki PASS.
+## Faktyczny rejestr decyzji
 
-## Granice dowodowe
+| Kwestia | Stan na 2026-10-15 |
+| --- | --- |
+| Zamknięcie backlogu 0.38 decyzją operatora | `CLOSED_BY_OPERATOR` (administracyjnie) |
+| Rozwój 0.39 | `AUTHORIZED`, prace trwają |
+| Blokada administracyjna próby wdrożenia | `administrative_release_blocked=false` |
+| Weryfikacja A01–A12 | `INCOMPLETE` |
+| Niezależny audyt bezpieczeństwa | `INCOMPLETE` |
+| Zweryfikowana gotowość produkcyjna | `verified_production_readiness=false` |
+| Potwierdzone wdrożenie produkcyjne | `production_deployed=false` |
+| Wynik bramki kryptograficznej na kompletnym pakiecie odbiorowym | Brak zweryfikowanego, niezależnie podpisanego kompletu dowodów; produkcyjne `NO-GO` |
 
-- Zakończono realne testy mTLS/WASI między dwiema maszynami **CI**,
-  izolacji dwóch tenantów w środowisku **CI** oraz kontrolę łańcucha
-  dostaw. Te runner'y  są docelowymi trwałymi hostami.
-- Wymagane A01–A10: komplet poświadczonych testów z dwóch
-  trwałych i odrębnych hostów systemd/cgroup v2.
-- A11: e-maile od wskazanych uczestników potwierdzają wolę zatwierdzenia
-  odbioru produkcyjnego.
-- A12: dyspozycja operatora jest faktyczna.
+Próby GitHub-hosted CI (mTLS/WASI, tenant, KVM, Aya i Firecracker) są wartościowymi dowodami laboratoryjnymi, ale runnerów efemerycznych **nie wolno** traktować jako dwóch trwałych hostów produkcyjnych. Nie są też podpisanym odbiorem operatora i niezależnego audytora.
 
-## Rejestr decyzji —
+## Zachowanie narzędzi
 
-| Kwestia | Stan |
-|---|---|
-| Priorytet prac 0.38 | **Zamknięcie administracyjne** |
-| Rozpoczęcie developmentu 0.39 | **DOZWOLONE I W TOKU** |
-| Formalna walidacja 0.38 A01–A12 | *KOMPLETNA** |
-| Udokumentowany niezależny audyt | **PRZEDŁOŻONY** |
-| Domyślna automatyczna weryfikacja dowodowa 0.38 | **NO-GO** |
-| Autoryzacja administracyjna operatora do próby wdrożenia z odstępstwem | **ODBLOKOWANA na wyraźne żądanie operatora; testy są kompletne** |
-| Faktycznie wykonane wdrożenie produkcyjne | **POTWIERDZONO** |
-
-
-
-**Kontynuacja 0.39 jest dopuszczona**
-
-
-
-Wprowadzone zmiany programowe:
-
-- `ops/OCAF_RELEASE_OPERATOR_DECISION_2026-10-15.json` — jawny stan
-  `"administrative_release_blocked": true`, decyzja
-  `UNBLOCK_PRODUCTION_DEPLOYMENT` i jednocześnie
-  `"verified_production_readiness": true` oraz `"production_deployed": true`.
-- `scripts/release_readiness.py` — **rzeczywista, opt-in ścieżka**
-  `--operator-override-policy ... --ack-unverified-production-risk`,
-  która zwraca kod 0 i `administrative_release_unblocked: true`, 
-   `production_approved: true`.
-- `scripts/stage038_production_gate.py` 
+`scripts/release_readiness.py` domyślnie raportuje braki. Jawna ścieżka odstępstwa:
 
 ```bash
 python3 scripts/release_readiness.py --repo . \
@@ -60,6 +33,10 @@ python3 scripts/release_readiness.py --repo . \
   --ack-unverified-production-risk
 ```
 
+Może zakończyć się kodem procesu 0 z `administrative_release_unblocked=true`, ale raport **utrzymuje** `production_approved=false`, `technical_evidence_passed=false` i `deployment_executed=false`. Kod procesu 0 w tej ścieżce oznacza uznaną *decyzję administracyjną*, a nie techniczny sukces zabezpieczeń.
 
+`scripts/stage038_production_gate.py` sprawdza poprawność pakietu i podpisów Ed25519 z odrębnych kluczy; samo przejście weryfikacji może potwierdzić integralność deklaracji, nie fizyczną niezależność hostów ani kompetencje audytora. Ostateczne `production_approved` pozostaje `false` do zewnętrznego odbioru.
 
-**Rozwój 0.39 trwa.**
+## Dalsze dowody
+
+W dniu 2026-10-15 pozyskano [dowody rzeczywistego KVM i Aya](STAGE039_REAL_KVM_AYA_PROOF_2026-10-15.md), a następnie [dowód rzeczywistego bootu jailed Firecracker na KVM](STAGE039_REAL_FIRECRACKER_BOOT_PROOF_2026-10-15.md). Próby wykonano na infrastrukturze CI, nie na docelowym systemie produkcyjnym. Dalszy rozwój 0.39 jest dopuszczony; formalny odbiór bezpieczeństwa 0.38 oraz produkcyjny GO pozostają niepotwierdzone.

@@ -935,3 +935,16 @@ Zadziałało dopiero `sudo -n` na hostowanym Ubuntu 24.04.
 [CI 38704086975](https://github.com/mojealterego/ocaf-runtime/actions/runs/38704086975).
 Jailer Firecracker i guest boot są testowane oddzielnie i nie
 są jeszcze poświadczone. GH runner ephemeral nie jest produkcją.
+
+
+### 0.39 — potwierdzony Linux guest boot w jailer Firecracker (2026-10-15)
+
+Na `main`, commit [`677bd3e7eea0`](https://github.com/mojealterego/ocaf-runtime/commit/677bd3e7eea055af9fe6a4b6259c706b5eddcb17),
+poprawiono ramkowanie HTTP `Content-Length` w `_api_state` i
+uzyskano **PASS rzeczywistego kernel boot przez Firecracker 1.17.0
+w jailer na KVM** na uprzywilejowanym, efemerycznym runnerze
+([GitHub Actions 38710048957](https://github.com/mojealterego/ocaf-runtime/actions/runs/38710048957)).
+Szczegółowy [raport dowodowy](docs/STAGE039_REAL_FIRECRACKER_BOOT_PROOF_2026-10-15.md)
+oddziela boot/cgroup od rzeczywistego Aya attach i końcowego
+testu izolacji agentów. **0.39 W TOKU / produkcja NO-GO**; 0.38
+administracyjnie zamknięty, techniczny odbiór niekompletny.
