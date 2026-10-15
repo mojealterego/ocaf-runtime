@@ -1,0 +1,60 @@
+name: OCAF 0.39 Aya eBPF ELF cross-compile (NOT kernel attach)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - stage039/aya-ebpf-egress/**
+      - .github/workflows/stage039-aya-ebpf-elf.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-ebpf:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install matching pinned Rust eBPF toolchain and bpf-linker
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup toolchain install nightly-2026-08-12 --component rust-src --profile minimal
+          command -v zstd
+          mkdir -p "$RUNNER_TEMP/stage039-linker"
+          curl --fail --location --silent --show-error --retry 2 \
+            https://github.com/aya-rs/bpf-linker/releases/download/v0.11.0/bpf-linker-x86_64-unknown-linux-musl.tar.zst \
+            -o "$RUNNER_TEMP/stage039-bpf-linker.tar.zst"
+          echo "10f62ba9ab7e544d538370552660efcb4f1a19153d5752bbf0f6b51f3bada450  $RUNNER_TEMP/stage039-bpf-linker.tar.zst" | sha256sum --check --
+          tar --zstd --extract --file "$RUNNER_TEMP/stage039-bpf-linker.tar.zst" --directory "$RUNNER_TEMP/stage039-linker"
+          echo "$RUNNER_TEMP/stage039-linker" >> "$GITHUB_PATH"
+      - name: Cross-compile actual eBPF ELF (NOT kernel verifier/load/attach)
+        shell: bash
+        env:
+          CARGO_CFG_BPF_TARGET_ARCH: x86_64
+        run: |
+          set -euo pipefail
+          command -v bpf-linker
+          cargo +nightly-2026-08-12 build --manifest-path stage039/aya-ebpf-egress/Cargo.toml \
+            --target bpfel-unknown-none -Z build-std=core --release --locked
+          ELF="stage039/aya-ebpf-egress/target/bpfel-unknown-none/release/ocaf-stage039-deny-egress"
+          test -s "$ELF"
+          readelf --file-header "$ELF" | grep -q 'Linux BPF'
+          readelf --wide --sections "$ELF" | grep -q 'cgroup_skb/egress'
+          sha256sum "$ELF" > stage039-ebpf-elf.sha256
+          cp "$ELF" stage039-deny-egress.elf
+          echo "STAGE039_BPF_ELF_COMPILED_NOT_KERNEL_ATTACHED"
+      - name: Preserve verified BPF ELF and SHA-256
+        if: success()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage039-pinned-aya-deny-egress-bpfel
+          path: |
+            stage039-deny-egress.elf
+            stage039-ebpf-elf.sha256
+          retention-days: 30
+          if-no-files-found: error
