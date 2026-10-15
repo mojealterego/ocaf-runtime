@@ -6,7 +6,7 @@
 
 **Pełny rejestr w ramkach poniżej:** wszystkie 195 etapów głównych, 64 podetapy techniczne i 10 produktów Agents Builder — od początku repozytorium do ostatnich zarejestrowanych funkcji. Każdy punkt ma własny numer, opis i status. [Dokument kanoniczny](ROADMAP.md) · [Rejestr zmian](docs/roadmap/STAGE_CHANGELOG.md).
 
-# OCAF — PEŁNA ROADMAPA OD POCZĄTKU, PUNKT PO PUNKCIE (1–269)
+## Pełny rejestr historyczny i bieżący (1–269)
 
 **To jest pierwsza sekcja README.md i pełna lista statusów, nie tylko odsyłacz.** Każdy numer ma informację **ZROBIONE** albo **DO ZROBIENIA**. `ZROBIONE — ZAKRES IMPLEMENTACJI` oznacza kod i testy historyczne obecne w repo (NIE pełny odbiór ani produkcję); `ZROBIONE — TEST W OGRANICZONYM ZAKRESIE` oznacza wyłącznie potwierdzoną próbę laboratoryjną.
 
@@ -16,11 +16,10 @@
 
 **Kanoniczny pełny dokument:** [ROADMAP.md](ROADMAP.md) · [lustrzana Roadmapa](docs/ROADMAP_FULL_ECOSYSTEM_2026.md) · [manifest 195+64](docs/roadmap/canonical_v11_inventory.json) · [dziesięć Agents Builder](docs/roadmap/agents_builder_products_v11.json) · [rejestr odzyskanych braków](docs/INVENTORY_LOST_REQUIREMENTS_2026-10-15.md) · [dziennik aktualizacji po każdym etapie](docs/roadmap/STAGE_CHANGELOG.md).
 
-## Punkty 1–195 — wszystkie etapy główne OCAF od 0.00 do 1.94
+## Pełna Roadmapa — jedna ramka, wszystkie punkty
 
-| Nr | Status i pełny opis punktu |
+| Nr | Etap / funkcjonalność — opis i status |
 | :-- | :-- |
-
 | **1** | **[DO ZROBIENIA]** **0.00 — Historyczny etap bez zachowanej definicji**. Brak opisu w dostępnym README i Roadmapie 0.36–0.99; nie dopowiadać specyfikacji. **Kryterium zakończenia:** Weryfikacja źródła historycznego i rzeczywistych testów.. **Stan źródłowy:** `UNSPECIFIED_IN_CURRENT_REPO`. |
 | **2** | **[DO ZROBIENIA]** **0.01 — Historyczny etap bez zachowanej definicji**. Brak opisu w dostępnym README i Roadmapie 0.36–0.99; nie dopowiadać specyfikacji. **Kryterium zakończenia:** Weryfikacja źródła historycznego i rzeczywistych testów.. **Stan źródłowy:** `UNSPECIFIED_IN_CURRENT_REPO`. |
 | **3** | **[DO ZROBIENIA]** **0.02 — Historyczny etap bez zachowanej definicji**. Brak opisu w dostępnym README i Roadmapie 0.36–0.99; nie dopowiadać specyfikacji. **Kryterium zakończenia:** Weryfikacja źródła historycznego i rzeczywistych testów.. **Stan źródłowy:** `UNSPECIFIED_IN_CURRENT_REPO`. |
@@ -216,12 +215,6 @@
 | **193** | **[DO ZROBIENIA]** **1.92 — Core domain swarms integration**. Bind OmniDev OmniUX OmniE2E OmniForge OmniWeb OmniMath and OmniSec to capability registry **Kryterium zakończenia:** Seven swarms execute real authorized fixture tasks with trace and audit. **Stan źródłowy:** `PLANNED`. |
 | **194** | **[DO ZROBIENIA]** **1.93 — Extended domain adapters**. Integrate OmniNous OmniHoncho OmniZeroClick OmniDiT OmniLex and OmniHFT as opt in adapters **Kryterium zakończenia:** Real backend smoke or explicit DISABLED gate for all six systems. **Stan źródłowy:** `PLANNED`. |
 | **195** | **[DO ZROBIENIA]** **1.94 — Sovereign master integrated workflow**. Compose broker Firecracker PostgreSQL CRDT telemetry cognition action gates and swarms **Kryterium zakończenia:** One authorized request has verified identity trace durable result and recovery. **Stan źródłowy:** `PLANNED`. |
-
-## Punkty 196–259 — wszystkie 64 zidentyfikowane podetapy techniczne
-
-| Nr | Status i pełny opis punktu |
-| :-- | :-- |
-
 | **196** | **[DO ZROBIENIA]** **0.38.1 — Etap historyczny, dokumentacja wymaga weryfikacji**. Etap historyczny, dokumentacja wymaga weryfikacji **Kryterium zakończenia:** Weryfikacja faktycznych dowodów z dokumentu źródłowego.. **Stan źródłowy:** `HISTORICAL_LAB_SCOPE_LIMITED`. |
 | **197** | **[DO ZROBIENIA]** **0.38.6 — Etap historyczny, dokumentacja wymaga weryfikacji**. Etap historyczny, dokumentacja wymaga weryfikacji **Kryterium zakończenia:** Weryfikacja faktycznych dowodów z dokumentu źródłowego.. **Stan źródłowy:** `HISTORICAL_LAB_SCOPE_LIMITED`. |
 | **198** | **[DO ZROBIENIA]** **0.38.8 — Kryteria 0.38.8**. Kryteria 0.38.8 **Kryterium zakończenia:** Weryfikacja faktycznych dowodów z dokumentu źródłowego.. **Stan źródłowy:** `HISTORICAL_LAB_SCOPE_LIMITED`. |
@@ -286,12 +279,6 @@
 | **257** | **[DO ZROBIENIA]** **0.42.2 — Workspace licensing and SBOM**. Record actual upstream license resolved hash and dependency vulnerabilities **Kryterium zakończenia:** Pinned SBOM cargo deny and audit cover all crates. **Stan źródłowy:** `PLANNED`. |
 | **258** | **[DO ZROBIENIA]** **0.42.3 — Release evidence scope matrix**. Separate real host, guest, Loihi, LN and test lab proof per feature **Kryterium zakończenia:** Production gate demands real evidence IDs and scopes. **Stan źródłowy:** `PLANNED`. |
 | **259** | **[DO ZROBIENIA]** **0.42.4 — Reproducible rollback**. Sign manifests and test rollback of workspace update on fresh runner **Kryterium zakończenia:** Artifact SHA and prior version behavior recover after rollback. **Stan źródłowy:** `PLANNED`. |
-
-## Punkty 260–269 — pierwotne Agents Builder: Cloud, Windows, macOS, Android, iOS × Code/NoCode
-
-| Nr | Status i pełny opis punktu |
-| :-- | :-- |
-
 | **260** | **[DO ZROBIENIA]** **AB-CLOUD-CODE — Agents Builder Chmurowy Code** — wymagania pierwotne etapów 0.52. Web IDE + typed graph IR + Rust backend/Axum + Git integration + isolated build/execute + deployments + versioning **Kryterium zakończenia:** Browser Code IDE edits graph DSL, compiles/simulates typed agent, persists versioned project in tenant-scoped Cloud workspace; full build log. **Stan źródłowy:** `NOT_IMPLEMENTED`. |
 | **261** | **[DO ZROBIENIA]** **AB-CLOUD-NOCODE — Agents Builder Chmurowy NoCode** — wymagania pierwotne etapów 0.52. Browser visual drag/drop graph editor + templates, form nodes, visual tool/MCP grants and one-click preview/publish behind explicit approval **Kryterium zakończenia:** Browser NoCode canvas builds equivalent graph from nodes, round-trips graph JSON with compiled DSL for supported subset, and previews without source editing. **Stan źródłowy:** `NOT_IMPLEMENTED`. |
 | **262** | **[DO ZROBIENIA]** **AB-WINDOWS-CODE — Agents Builder Desktopowy Windows Code** — wymagania pierwotne etapów 0.53. Native Windows desktop Code IDE (Tauri v2) with local code editor, diagnostics, dependency runner, export to local agent bundle + offline mode **Kryterium zakończenia:** Actual Windows runner builds, installs and launches signed/verified executable; Code IDE opens agent project, compiles valid Rust/DSL, persists/reopens offline. **Stan źródłowy:** `NOT_IMPLEMENTED`. |
