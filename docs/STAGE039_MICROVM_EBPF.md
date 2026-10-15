@@ -419,3 +419,9 @@ Two real Firecracker tenants run concurrently **inside jailer**, both emit authe
 Across two distinct ephemeral Linux kernels a source checkpoint after confirmed VM SIGKILL was delivered as an immutable GitHub Actions artifact and the second host booted new jailed guests, which emitted the same tagged UDP nonce. [CI 38722139701](https://github.com/mojealterego/ocaf-runtime/actions/runs/38722139701).
 
 No claim of real-time interhost mTLS RPC, physical host power-loss partition tests, Aya-program enforcement on **guest** traffic, or production readiness is made. [Evidence ledger and unresolved acceptance](STAGE039_NETWORK_EBPF_CROSS_HOST_EVIDENCE_2026-10-15.md).
+
+## 0.39.15–0.39.17 — real mTLS network-failure lab and cryptographic review dossier
+
+A **privileged ephemeral Linux kernel** provided two real network namespaces connected by veth. Python TLS1.3 mutual certificate server and client authenticated signed client SAN identities, SQLite maintained a durable single-authority fencing epoch, a real Linux blackhole network route denied renewals, and the RPC was recovered after route removal and the server's SIGKILL/restart. Actual [workflow 38724640542](https://github.com/mojealterego/ocaf-runtime/actions/runs/38724640542) PASS with kernel namespace inode observations and uploaded JSON evidence.
+
+An offline OpenSSL Ed25519 dossier verifier checks external auditor and operator signatures from **distinct out-of-band pinned keys** over all required hashed files; [cryptographic unit tests 38725162927](https://github.com/mojealterego/ocaf-runtime/actions/runs/38725162927) use synthetic ephemeral keys only. Neither mechanism proves distinct production hosts, live two-host consensus/mTLS or an external signed audit. [Full new evidence ledger](STAGE039_ACTUAL_BOUNDARY_CLOSURE_2026-10-15.md). Stage 0.39 still not production accepted.

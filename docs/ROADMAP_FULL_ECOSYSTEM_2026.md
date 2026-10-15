@@ -813,3 +813,9 @@ niezależnego audytu. **0.38 COMPLETE (decyzja operatora);
 `0.39.14: PASS` — actual guest packet drops by **kernel TC eBPF** loaded on the TAP of a jailed tenant A while jailed tenant B packets still arrive; remove TC and prove A recovers, [38722682521](https://github.com/mojealterego/ocaf-runtime/actions/runs/38722682521). This is NOT Aya CgroupSkb filtering guest traffic.
 
 **Open release gates:** independent durable production host pair + authenticated interhost RPC/partition/failover and recovery, per-tenant network namespaces and soak tests, independent signed audit and real operator signature. [Full source-backed evidence ledger](STAGE039_NETWORK_EBPF_CROSS_HOST_EVIDENCE_2026-10-15.md). **Milestone 0.38 COMPLETE project-status, 0.39 still IN PROGRESS; prod NO-GO.**
+
+## 0.39.15–0.39.17 — TLS1.3 mTLS + network partition lab and signed acceptance integrity (2026-10-15)
+
+- `0.39.15–0.39.16: PASS, LAB ONLY`: real Linux netns/veth TLS1.3 mutual-cert client/server, privileged kernel blackhole route, rogue client cert rejection, SQLite durable leader fencing and restart recovery, [workflow 38724640542](https://github.com/mojealterego/ocaf-runtime/actions/runs/38724640542). **Not** two-host live RPC/HA.
+- `0.39.17: PASS, CRYPTO UNIT TEST ONLY`: two distinct test-generated Ed25519 key pairs, hashed evidence artifacts and strict evidence dossier validation; missing/same-key/tampered signatures are rejected, [workflow 38725162927](https://github.com/mojealterego/ocaf-runtime/actions/runs/38725162927). **Not** an independent signed external audit or human operator signoff.
+- Scope table and exact remaining release gates: [stage 0.39 consolidated ledger](STAGE039_ACTUAL_BOUNDARY_CLOSURE_2026-10-15.md). **0.39 IN PROGRESS / NO-GO** until durable actual live two-host HA and independent external signed formal production acceptance.
