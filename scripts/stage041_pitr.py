@@ -18,7 +18,9 @@ import json
 import os
 from pathlib import Path
 import re
+import secrets
 import shutil
+import tarfile
 import socket
 import subprocess
 import tempfile
@@ -88,7 +90,59 @@ def _available_ports()->tuple[int,int]:
         b.bind(("127.0.0.1",0))
         return (a.getsockname()[1],b.getsockname()[1])
 
-def execute(pg_bin:Path, report_path:Path)->dict:
+
+def _sha256_file(path:Path)->str:
+    digest=hashlib.sha256()
+    with path.open("rb") as inp:
+        while chunk:=inp.read(1024*1024):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _save_recovery_bundle(bundle_dir:Path,base:Path,archive:Path,
+                          report_path:Path,proof:dict)->None:
+    """Only disposable PG cluster bytes, never PostgreSQL passwords or key material."""
+    if (not bundle_dir.is_absolute() or ".." in bundle_dir.parts
+        or bundle_dir.is_symlink() or not bundle_dir.is_dir()
+        or bundle_dir.stat().st_mode & 0o077 or any(bundle_dir.iterdir())):
+        raise PITRError("private empty recovery export directory required")
+    if proof["primary_immediate_crash_executed"] is not True:
+        raise PITRError("source must have crashed before physical artifact export")
+    for directory in (base,archive):
+        if directory.is_symlink() or any(p.is_symlink() for p in directory.rglob("*")):
+            raise PITRError("symlinked PostgreSQL recovery inputs prohibited")
+    shutil.copyfile(report_path,bundle_dir/"source.json")
+    for name,path,label in (
+        ("basebackup.tar.gz",base,"base"),
+        ("archived-wal.tar.gz",archive,"wal"),
+    ):
+        target=bundle_dir/name
+        with tarfile.open(target,mode="w:gz",format=tarfile.PAX_FORMAT) as bundle:
+            bundle.add(path,arcname=label,recursive=True)
+        target.chmod(0o600)
+    (bundle_dir/"source.json").chmod(0o600)
+    manifest={
+        "schema_version":1,
+        "source_boot_id":proof["host_boot_id"],
+        "source_report_sha256":_sha256_file(bundle_dir/"source.json"),
+        "basebackup_sha256":_sha256_file(bundle_dir/"basebackup.tar.gz"),
+        "wal_archive_sha256":_sha256_file(bundle_dir/"archived-wal.tar.gz"),
+        "target_lsn":proof["recovery_target_lsn"],
+        "target_checksum":proof["original_target_checksum"],
+        "expected_target_rows":proof["expected_rows"],
+        "later_committed_rows_excluded":proof["post_target_rows"],
+        "run_nonce":secrets.token_hex(8),
+        "production_approved":False,
+    }
+    descriptor=os.open(bundle_dir/"manifest.json",os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+    with os.fdopen(descriptor,"w",encoding="utf-8") as out:
+        json.dump(manifest,out,sort_keys=True,separators=(",",":"))
+        out.write("\n")
+        out.flush();os.fsync(out.fileno())
+
+
+def execute(pg_bin:Path, report_path:Path, *,
+            export_bundle_dir:Path|None=None)->dict:
     if (os.geteuid()==0 or os.uname().sysname!="Linux"
         or not isinstance(pg_bin,Path) or not pg_bin.is_absolute()
         or pg_bin.is_symlink() or not pg_bin.is_dir()
@@ -241,6 +295,8 @@ def execute(pg_bin:Path, report_path:Path)->dict:
         with report_path.open("x") as fp:
             json.dump(proof,fp,sort_keys=True,indent=2)
             fp.write("\n")
+        if export_bundle_dir is not None:
+            _save_recovery_bundle(export_bundle_dir,base,archive,report_path,proof)
         return proof
     finally:
         if recovery_started:
@@ -256,11 +312,14 @@ def main()->int:
     p.add_argument("--pg-bin-dir",type=Path,required=True)
     p.add_argument("--report",type=Path,required=True)
     p.add_argument("--ack-ephemeral-postgres-pitr-crash-lab",action="store_true")
+    p.add_argument("--export-bundle-dir",type=Path,
+                   help="optional private empty destination for physical basebackup and archived-WAL evidence")
     args=p.parse_args()
     if not args.ack_ephemeral_postgres_pitr_crash_lab:
         p.error("explicit isolated ephemeral real PostgreSQL crash acknowledgment required")
     try:
-        result=execute(args.pg_bin_dir,args.report)
+        result=execute(args.pg_bin_dir,args.report,
+                       export_bundle_dir=args.export_bundle_dir)
     except (OSError,ValueError) as exc:
         p.error(str(exc))
     print(json.dumps({"status":result["status"],"production_approved":False}))
