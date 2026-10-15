@@ -11,6 +11,8 @@ on:
       - scripts/tests/test_stage039_broker_ledger.py
       - scripts/stage039_broker_ipc.py
       - scripts/tests/test_stage039_broker_ipc.py
+      - scripts/stage039_kvm_ioctl.py
+      - scripts/tests/test_stage039_kvm_ioctl.py
       - scripts/release_readiness.py
       - scripts/tests/test_release_readiness.py
       - ops/OCAF_RELEASE_OPERATOR_DECISION_2026-10-15.json
@@ -57,11 +59,14 @@ jobs:
               raise SystemExit("operator override must not forge evidence or deployment")
           print("OPERATOR_ADMIN_RELEASE_UNBLOCKED_WITH_UNVERIFIED_EVIDENCE")
           PY
+      - name: Kernel KVM API ioctl and real VM fd creation regression
+        run: python3 -m unittest discover -s scripts/tests -p test_stage039_kvm_ioctl.py -v
       - name: Python source syntax verification
         run: |
           python3 -m py_compile scripts/stage039_microvm_gate.py scripts/tests/test_stage039_microvm_gate.py
           python3 -m py_compile scripts/stage039_broker_ledger.py scripts/tests/test_stage039_broker_ledger.py
           python3 -m py_compile scripts/stage039_broker_ipc.py scripts/tests/test_stage039_broker_ipc.py
+          python3 -m py_compile scripts/stage039_kvm_ioctl.py scripts/tests/test_stage039_kvm_ioctl.py
       - name: Observe KVM, cgroup v2, PID1 systemd, BTF and bpffs on actual CI Linux
         shell: bash
         run: |
