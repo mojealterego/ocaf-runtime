@@ -1,0 +1,41 @@
+"""Stage 0.39: independent GitHub-runner kernel guest failure evidence."""
+from pathlib import Path
+import sys
+import unittest
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+import stage039_independent_hosts as hosts
+
+
+def entry(tenant,boot,vm,host):
+    return {"tenant_id":tenant,"host_boot_id":boot,"hostname":host,
+            "guest":{"vm_id":vm,"status":"JAILED_FIRECRACKER_GUEST_KERNEL_BOOT_OBSERVED",
+                     "firecracker_api_running":True,"guest_kernel_console_seen":True,
+                     "tenant_id":tenant,"vm_sigkill_fault":{
+                         "status":"VM_SIGKILL_CGROUP_SUBTREE_DRAINED",
+                         "cgroup_subtree_empty":True,
+                         "sigkill_exit_code":-9},
+                     "production_approved":False}}
+
+
+class IndependentHostValidator(unittest.TestCase):
+    def test_real_separate_kernel_boot_ids_and_host_failure(self):
+        a=entry("tenant-a","boot-a","vm-a","host-1")
+        b=entry("tenant-b","boot-b","vm-b","host-2")
+        z=hosts.verify_hosts(a,b)
+        self.assertTrue(z["two_separate_kernel_boot_ids_observed"])
+        self.assertFalse(z["interhost_rpc_tested"])
+        self.assertFalse(z["production_approved"])
+
+    def test_rejects_same_kernel_or_reused_guest_evidence(self):
+        a=entry("tenant-a","boot-a","vm-a","host-1")
+        b=entry("tenant-b","boot-b","vm-b","host-2")
+        for mutated in (
+            {**b,"host_boot_id":"boot-a"},
+            {**b,"hostname":"host-1"},
+            {**b,"guest":{**b["guest"],"vm_id":"vm-a"}},
+            {**b,"tenant_id":"tenant-a"},
+            {**b,"guest":{**b["guest"],"tenant_id":"tenant-a"}},
+            {**b,"guest":{**b["guest"],"vm_sigkill_fault":{"cgroup_subtree_empty":False}}},
+        ):
+            with self.subTest(mutated=mutated),self.assertRaises(hosts.IndependentHostError):
+                hosts.verify_hosts(a,mutated)
