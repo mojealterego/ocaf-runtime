@@ -7,6 +7,7 @@ on:
       - .github/workflows/stage040-real-postgres-ha.yml
       - scripts/stage040_postgres_ha.py
       - scripts/tests/test_stage040_postgres_ha.py
+      - scripts/tests/test_stage040_pgbench_soak.py
   workflow_dispatch:
 
 permissions:
@@ -22,6 +23,8 @@ jobs:
           persist-credentials: false
       - name: Test fail-closed 3-process PostgreSQL failover claims
         run: python3 -m unittest discover -s scripts/tests -p test_stage040_postgres_ha.py -v
+      - name: Verify 8-client PostgreSQL WAL pgbench duration, throughput and standby checksum contracts
+        run: python3 -m unittest discover -s scripts/tests -p test_stage040_pgbench_soak.py -v
       - name: Install PostgreSQL 16 from Ubuntu packages if absent
         shell: bash
         run: |
@@ -32,6 +35,7 @@ jobs:
           fi
           test -x /usr/lib/postgresql/16/bin/initdb
           test -x /usr/lib/postgresql/16/bin/pg_ctl
+          test -x /usr/lib/postgresql/16/bin/pgbench
           /usr/lib/postgresql/16/bin/pg_ctl --version
       - name: REAL streaming two standbys, IMMEDIATE primary crash and C reparent after B promotion
         shell: bash
@@ -45,6 +49,7 @@ jobs:
           sudo -n -u postgres python3 "$EVIDENCE/driver.py" \
             --pg-bin-dir /usr/lib/postgresql/16/bin \
             --report "$EVIDENCE/actual-postgresql-streaming-failover.json" \
+            --soak-seconds 30 \
             --ack-local-ephemeral-postgres-primary-kill
           mkdir -p stage040-evidence
           sudo -n cp "$EVIDENCE/actual-postgresql-streaming-failover.json" stage040-evidence/postgres-real-ha.json
@@ -62,6 +67,15 @@ jobs:
           assert r["standby_c_followed_promoted_b"] is True
           assert r["standby_c_replayed_post_promotion_wal"] is True
           assert r["standby_c_wal_receiver_status"]=="streaming"
+          soak=r["pgbench_wal_soak"]
+          assert soak["duration_seconds"]==30
+          assert soak["clients"]==8
+          assert soak["transactions"]>=100
+          assert soak["tps"]>0
+          assert soak["both_streaming_replicas_replayed_pgbench_dataset"] is True
+          assert soak["load_during_replication"] is True
+          assert soak["primary_immediate_crash_after_soak"] is True
+          print("STAGE040_REAL_8_CLIENT_PGBENCH_30_SECONDS_WAL_REPLICA_PARITY_AND_CRASH_PROVED")
           assert r["all_three_same_kernel"] is True
           assert r["three_physically_independent_hosts"] is False
           assert r["host_power_loss_tested"] is False
