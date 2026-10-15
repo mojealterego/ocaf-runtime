@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "version": "v11-loss-audit",
+  "scope": "SRC_AND_DOCUMENTATION_AUDIT_NOT_PRODUCTION_CERTIFICATION",
+  "repository": "mojealterego/ocaf-runtime",
+  "branch": "main",
+  "inspected_date": "2026-10-15",
+  "inspected_code_evidence": {
+    "root_cargo": "Cargo.toml",
+    "src_runtime": "src/",
+    "master_docs": "docs/MASTER_ARCHITECTURE_26_PDFS.md",
+    "canonical_v10": "docs/roadmap/canonical_v10_inventory.json"
+  },
+  "counts": {
+    "ten_original_agents_builder_variants": 10,
+    "scope_gaps": 24
+  },
+  "items": [
+    {
+      "id": "INV-001",
+      "component": "Agents Builder Cloud Code",
+      "parent": "0.52",
+      "condition": "MISSING",
+      "basis": "No Cloud Code builder app sources/build evidence",
+      "repair": "Write Cloud Code editor, typed IR/project persistence, browser E2E"
+    },
+    {
+      "id": "INV-002",
+      "component": "Agents Builder Cloud NoCode",
+      "parent": "0.52",
+      "condition": "MISSING",
+      "basis": "No browser NoCode UI, compiled graph preview",
+      "repair": "Build interactive Cloud canvas and graph roundtrip"
+    },
+    {
+      "id": "INV-003",
+      "component": "Agents Builder Windows Code",
+      "parent": "0.53",
+      "condition": "MISSING",
+      "basis": "No Tauri Windows product project, binary or CI build",
+      "repair": "Separate signed Windows Code IDE and installer test"
+    },
+    {
+      "id": "INV-004",
+      "component": "Agents Builder Windows NoCode",
+      "parent": "0.53",
+      "condition": "MISSING",
+      "basis": "No Windows visual NoCode project or GUI E2E",
+      "repair": "Separate native Windows visual builder, offline save/reopen"
+    },
+    {
+      "id": "INV-005",
+      "component": "Agents Builder macOS Code",
+      "parent": "0.53",
+      "condition": "MISSING",
+      "basis": "No macOS Code Builder product or codesign",
+      "repair": "Build macOS Code IDE with reproducible macOS CI and notarization-ready config"
+    },
+    {
+      "id": "INV-006",
+      "component": "Agents Builder macOS NoCode",
+      "parent": "0.53",
+      "condition": "MISSING",
+      "basis": "No macOS visual NoCode frontend or UI CI",
+      "repair": "Build native macOS graph editor/preview/roundtrip"
+    },
+    {
+      "id": "INV-007",
+      "component": "Agents Builder Android Code",
+      "parent": "0.54",
+      "condition": "MISSING",
+      "basis": "No Android Kotlin/Compose application or ARM64 build",
+      "repair": "Build mobile Code DSL project editor with UniFFI core and instrumentation"
+    },
+    {
+      "id": "INV-008",
+      "component": "Agents Builder Android NoCode",
+      "parent": "0.54",
+      "condition": "MISSING",
+      "basis": "No Android touch NoCode agent designer",
+      "repair": "Build offline Compose graph editor with E2E"
+    },
+    {
+      "id": "INV-009",
+      "component": "Agents Builder iOS Code",
+      "parent": "0.54",
+      "condition": "MISSING",
+      "basis": "No SwiftUI iOS Code Builder/Xcode target",
+      "repair": "Build iOS Code DSL editor, actual iOS simulator smoke"
+    },
+    {
+      "id": "INV-010",
+      "component": "Agents Builder iOS NoCode",
+      "parent": "0.54",
+      "condition": "MISSING",
+      "basis": "No SwiftUI iOS NoCode visual editor target",
+      "repair": "Build iOS graph canvas and simulator UI roundtrip"
+    },
+    {
+      "id": "INV-011",
+      "component": "Shared Agents Builder IR, compiler and debugger",
+      "parent": "0.50",
+      "condition": "MISSING",
+      "basis": "No ocaf-builder-core crate or typed agent-project schema in source tree",
+      "repair": "Typed DAG project IR, compiler, agent preview and versioning"
+    },
+    {
+      "id": "INV-012",
+      "component": "Shared bidirectional Code↔NoCode editor",
+      "parent": "0.51",
+      "condition": "MISSING",
+      "basis": "No bidirectional interactive IDE/canvas or true round-trip implementation",
+      "repair": "Supported DSL Code/visual conversion with lossiness detection"
+    },
+    {
+      "id": "INV-013",
+      "component": "Agents Builder sandbox, security and publishing",
+      "parent": "0.55",
+      "condition": "MISSING",
+      "basis": "Runtime has executor code but no product packaging or builder permission UI",
+      "repair": "Per-project tool grants, cost limits, preview, signed export and consent"
+    },
+    {
+      "id": "INV-014",
+      "component": "Specialized Omni* domain swarms",
+      "parent": "0.56–0.77",
+      "condition": "PLANNED_UNVERIFIED",
+      "basis": "Roadmap lists OmniDev, OmniUX, OmniE2E, OmniForge, OmniStudio, OmniMath and other swarms; src contains no dedicated Omni implementation",
+      "repair": "Per-swarm registry, defined real entrypoint, capability manifest and E2E"
+    },
+    {
+      "id": "INV-015",
+      "component": "True Firecracker broker→guest WASI execution",
+      "parent": "0.39",
+      "condition": "ACTIVE_TECHNICAL_OPEN",
+      "basis": "Script/CI exists; production and signed workload execution proofs not complete",
+      "repair": "Signed WASI module and broker-bound guest exec, actual completion report and tampered module rejection"
+    },
+    {
+      "id": "INV-016",
+      "component": "PostgreSQL TCP WAL replication across independent kernels",
+      "parent": "0.40",
+      "condition": "ACTIVE_TECHNICAL_OPEN",
+      "basis": "Separate-runner local labs and three netns one-kernel tests not live cross-host cluster",
+      "repair": "Three durable Linux hosts with secure live TCP, witness fencing and stale-primary write denial"
+    },
+    {
+      "id": "INV-017",
+      "component": "Reliability prolonged soak, real infrastructure RTO/RPO",
+      "parent": "0.41",
+      "condition": "ACTIVE_TECHNICAL_OPEN",
+      "basis": "Short CI/netns WAL chaos and restore tests are not multi-hour production DR",
+      "repair": "30/60/120-minute soak, host power loss, trusted offsite restore, loss analysis"
+    },
+    {
+      "id": "INV-018",
+      "component": "Dynamic third-party MCP and OAuth user consent",
+      "parent": "0.43–0.44",
+      "condition": "PLANNED_UNVERIFIED",
+      "basis": "Runtime registry and HMAC transport exist; full authenticated remote MCP discovery and OAuth2.1 scope consent not verified",
+      "repair": "Strict MCP lifecycle, OAuth PKCE and connector isolation test"
+    },
+    {
+      "id": "INV-019",
+      "component": "CRDT memory + OpenTelemetry actual exports",
+      "parent": "0.46–0.48",
+      "condition": "PLANNED_UNVERIFIED",
+      "basis": "Single runtime crate contains no Automerge/Yrs/OTLP collector integration",
+      "repair": "CRDT convergence, OTLP exporter real collector and privacy filter"
+    },
+    {
+      "id": "INV-020",
+      "component": "Domain-specific OmniMath Lean/SMT verified checker",
+      "parent": "0.78–0.89",
+      "condition": "PLANNED_UNVERIFIED",
+      "basis": "Roadmap describes formal reasoning modules; src tree does not contain real Lean/SMT verifier",
+      "repair": "Independent checker, typed proofs and real solver E2E"
+    },
+    {
+      "id": "INV-021",
+      "component": "Historical milestone specifications 0.00–0.10",
+      "parent": "0.00–0.10",
+      "condition": "UNKNOWN_SOURCE",
+      "basis": "Current repository does not carry original titles/contracts; numbering only",
+      "repair": "Recover old commits/specs before filling metadata or claiming Done"
+    },
+    {
+      "id": "INV-022",
+      "component": "Original stage details 0.11–0.35",
+      "parent": "0.11–0.35",
+      "condition": "HISTORY_PARTIAL",
+      "basis": "README historic headings visible; source-era test provenance still needs reconciliation",
+      "repair": "Link each historical commit/tests to acceptance contract; mark partial until verified"
+    },
+    {
+      "id": "INV-023",
+      "component": "Six Sovereign Workspace crates",
+      "parent": "1.55–1.94",
+      "condition": "PLANNED_UNVERIFIED",
+      "basis": "v9 documents desired workspace crates; actual root Cargo.toml declares a single ocaf_runtime crate",
+      "repair": "Create incremental cargo workspace and package CI without dropping current runtime"
+    },
+    {
+      "id": "INV-024",
+      "component": "Repository 33 reference integrations",
+      "parent": "0.43–1.94",
+      "condition": "REFERENCE_ONLY",
+      "basis": "33 external repository names preserved in inventory but do not prove adapters are implemented",
+      "repair": "For each source pin license+commit, test actual adapter, add real evidence and status"
+    }
+  ]
+}
