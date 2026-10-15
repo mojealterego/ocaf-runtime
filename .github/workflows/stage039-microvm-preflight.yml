@@ -10,6 +10,8 @@ on:
       - scripts/stage039_broker_ledger.py
       - scripts/tests/test_stage039_broker_ledger.py
       - scripts/stage039_broker_ipc.py
+      - scripts/stage039_broker_vm_binding.py
+      - scripts/tests/test_stage039_broker_vm_binding.py
       - scripts/tests/test_stage039_broker_ipc.py
       - scripts/stage039_kvm_ioctl.py
       - scripts/tests/test_stage039_kvm_ioctl.py
@@ -68,6 +70,8 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_broker_ledger.py -v
       - name: Verify actual Linux AF_UNIX SO_PEERCRED broker protocol
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_broker_ipc.py -v
+      - name: Broker admission-to-jailed-VM identity and cgroup-fault anti-replay contracts
+        run: python3 -m unittest discover -s scripts/tests -p test_stage039_broker_vm_binding.py -v
       - name: Verify explicit operator release authorization keeps audit failures visible
         run: python3 -m unittest discover -s scripts/tests -p test_release_readiness.py -v
       - name: Exercise explicitly operator-unblocked administrative release, preserving factual blockers
@@ -127,6 +131,7 @@ jobs:
           python3 -m py_compile scripts/stage039_microvm_gate.py scripts/tests/test_stage039_microvm_gate.py
           python3 -m py_compile scripts/stage039_broker_ledger.py scripts/tests/test_stage039_broker_ledger.py
           python3 -m py_compile scripts/stage039_broker_ipc.py scripts/tests/test_stage039_broker_ipc.py
+          python3 -m py_compile scripts/stage039_broker_vm_binding.py scripts/tests/test_stage039_broker_vm_binding.py
           python3 -m py_compile scripts/stage039_kvm_ioctl.py scripts/tests/test_stage039_kvm_ioctl.py
           python3 -m py_compile scripts/stage039_firecracker_spec.py scripts/tests/test_stage039_firecracker_spec.py
           python3 -m py_compile scripts/stage039_live_egress.py scripts/tests/test_stage039_live_egress.py

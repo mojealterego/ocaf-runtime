@@ -10,6 +10,8 @@ on:
       - scripts/stage039_vm_resources.py
       - scripts/stage039_vm_crash.py
       - scripts/stage039_dual_tenant.py
+      - scripts/stage039_broker_vm_binding.py
+      - scripts/tests/test_stage039_broker_vm_binding.py
       - scripts/stage039_guest_network.py
       - scripts/stage039_jailed_guest_network.py
       - scripts/stage039_guest_tc.py
@@ -235,7 +237,7 @@ jobs:
           p.chmod(0o600)
           print("STAGE039_DISTINCT_SECOND_TENANT_MANIFEST_PINNED")
           PY
-          sudo -n python3 scripts/stage039_dual_tenant.py \
+          sudo -n python3 scripts/stage039_broker_vm_binding.py \
             --manifest-a "$PREFIX/approved/request.json" \
             --manifest-b "$PREFIX/approved/request-b.json" \
             --approved-root "$PREFIX/approved" \
@@ -244,13 +246,14 @@ jobs:
             --jailer "$PREFIX/approved/jailer" \
             --jailer-sha256 "$(sudo -n sha256sum "$PREFIX/approved/jailer" | cut -d ' ' -f 1)" \
             --chroot-base "$PREFIX/jailer" \
+            --ledger-dir "$PREFIX/broker" \
             --aya-loader "$PREFIX/approved/aya-guard" \
             --aya-loader-sha256 "$(sudo -n sha256sum "$PREFIX/approved/aya-guard" | cut -d ' ' -f 1)" \
             --aya-program "$PREFIX/approved/aya_cgroup_device" \
             --aya-program-sha256 992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95 \
             --aya-seconds 15 --timeout 90 \
             --report stage039-real-guest-evidence/dual-tenants.json \
-            --ack-two-tenant-kvm-sigkill
+            --ack-broker-two-jailed-vm-real-kvm
           sudo -n chown "$(id -u):$(id -g)" stage039-real-guest-evidence/dual-tenants.json
           python3 - <<'PY'
           import json
@@ -268,6 +271,17 @@ jobs:
           assert r["two_independent_hosts"] is False
           assert r["guest_network_egress_tested"] is False
           assert r["production_approved"] is False
+          binding=r["broker_vm_binding"]
+          assert binding["status"]=="BROKER_SO_PEERCRED_TWO_REAL_JAILED_VM_BOOT_BOUND"
+          assert binding["real_kernel_so_peercred_authenticated_broker"] is True
+          assert binding["admission_before_vm_launch"] is True
+          assert binding["durable_sqlite_leases_matched"] is True
+          assert binding["both_guest_kernel_boots_observed"] is True
+          assert binding["both_vm_cgroups_drained_after_sigkill"] is True
+          assert binding["durable_broker_leases_released_after_vm_crashes"] is True
+          assert binding["wasi_executed_inside_guest"] is False
+          assert binding["production_approved"] is False
+          print("STAGE039_REAL_AUTHENTICATED_BROKER_TWO_JAILED_VM_BOOT_AND_FENCING_BOUND")
           print("STAGE039_REAL_TWO_SIMULTANEOUS_JAILED_FIRECRACKER_TENANTS_PROVED")
           print("STAGE039_TENANT_B_SURVIVED_TENANT_A_SIGKILL_PROVED")
           PY
