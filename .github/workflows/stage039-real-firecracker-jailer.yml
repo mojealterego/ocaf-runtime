@@ -6,6 +6,11 @@ on:
     paths:
       - .github/workflows/stage039-real-firecracker-jailer.yml
       - scripts/stage039_live_firecracker.py
+      - scripts/stage039_vm_egress.py
+      - scripts/stage039_live_egress.py
+      - scripts/tests/test_stage039_vm_egress.py
+      - stage039/aya-guard/**
+      - stage039/aya-ebpf-egress/prebuilt/**
       - scripts/stage039_firecracker_spec.py
       - scripts/stage039_kvm_ioctl.py
   workflow_dispatch:
@@ -107,6 +112,21 @@ jobs:
           sudo -n sha256sum "$PREFIX/approved/firecracker" "$PREFIX/approved/jailer" \
             > stage039-real-guest-evidence/verified-vmm-binaries.sha256
           sudo -n chown "$(id -u):$(id -g)" stage039-real-guest-evidence/verified-vmm-binaries.sha256
+      - name: Compile pinned Aya loader and provision dedicated root-owned probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.99.0 --profile minimal
+          cargo +1.99.0 build --manifest-path stage039/aya-guard/Cargo.toml --release
+          PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
+          sudo -n install -o root -g root -m 0500 \
+            stage039/aya-guard/target/release/ocaf-stage039-aya-guard \
+            "$PREFIX/approved/aya-guard"
+          echo '992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95  stage039/aya-ebpf-egress/prebuilt/stage039-deny-egress.elf' | sha256sum --check -
+          echo '992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95  '
+          sudo -n sha256sum "$PREFIX/approved/aya-guard" "$PREFIX/approved/aya_cgroup_device" \
+            > stage039-real-guest-evidence/verified-aya-binaries.sha256
+          sudo -n chown "$(id -u):$(id -g)" stage039-real-guest-evidence/verified-aya-binaries.sha256
       - name: ACTUAL root-privileged Firecracker jailer launches guest Linux on kernel KVM
         shell: bash
         run: |
@@ -135,7 +155,12 @@ jobs:
             --jailer "$JAILER" \
             --jailer-sha256 "$(sudo -n sha256sum "$JAILER" | cut -d ' ' -f 1)" \
             --chroot-base "$PREFIX/jailer" --uid 1002 --gid 1002 \
-            --timeout 60 --report stage039-real-guest-evidence/guest-boot.json \
+            --timeout 90 --report stage039-real-guest-evidence/guest-boot.json \
+            --aya-loader "$PREFIX/approved/aya-guard" \
+            --aya-loader-sha256 "$(sudo -n sha256sum "$PREFIX/approved/aya-guard" | cut -d ' ' -f 1)" \
+            --aya-program "$PREFIX/approved/aya_cgroup_device" \
+            --aya-program-sha256 992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95 \
+            --aya-seconds 15 --ack-privileged-vm-cgroup-egress-probe \
             --ack-real-kvm-jailer-boot
           sudo -n chown "$(id -u):$(id -g)" stage039-real-guest-evidence/guest-boot.json
           python3 - <<'PY'
@@ -147,7 +172,16 @@ jobs:
           assert boot["status"]=="JAILED_FIRECRACKER_GUEST_KERNEL_BOOT_OBSERVED"
           assert boot["ebpf_attached"] is False
           assert boot["production_approved"] is False
+          egress=boot["vm_host_cgroup_egress"]
+          assert egress["status"]=="VM_HOST_CGROUP_EBPF_PROBE_PASSED"
+          assert egress["host_vm_cgroup_egress_enforced"] is True
+          assert egress["other_cgroup_remained_reachable"] is True
+          assert egress["network_recovered_after_detach"] is True
+          assert egress["aya_detached"] is True
+          assert egress["guest_network_egress_tested"] is False
+          assert egress["production_approved"] is False
           print("STAGE039_REAL_FIRECRACKER_JAILER_GUEST_LINUX_BOOT_PROVED")
+          print("STAGE039_LIVE_VM_HOST_CGROUP_AYA_EGRESS_NEGATIVE_AND_RECOVERY_PROVED")
           PY
       - name: Diagnose sandbox failure using only official public guest image boot logs
         if: failure()
