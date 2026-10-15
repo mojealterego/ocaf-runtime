@@ -112,5 +112,35 @@ class LiveContract(unittest.TestCase):
             self.assertLess(len(bounded),80000)
 
 
+    def test_firecracker_api_response_uses_content_length_without_waiting_for_eof(self):
+        import json,socket,threading,time,tempfile
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/"api.sock"
+            listener=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)
+            listener.bind(str(path))
+            listener.listen(1)
+            response={"id":"ocaf-test-a","state":"Running","vmm_version":"1.17.0"}
+            raw=json.dumps(response).encode()
+            def serve():
+                try:
+                    peer,_=listener.accept()
+                    with peer:
+                        peer.recv(4096)
+                        peer.sendall(b"HTTP/1.1 200 OK\r\nContent-Length: "+
+                                     str(len(raw)).encode()+b"\r\nContent-Type: application/json\r\n\r\n"+raw)
+                        time.sleep(1.2)
+                finally:
+                    listener.close()
+            worker=threading.Thread(target=serve,daemon=True)
+            worker.start()
+            try:
+                start=time.monotonic()
+                result=live._api_state(path)
+                self.assertEqual(result,response)
+                self.assertLess(time.monotonic()-start,1.0)
+            finally:
+                worker.join(timeout=3)
+
+
 if __name__ == "__main__":
     unittest.main()
