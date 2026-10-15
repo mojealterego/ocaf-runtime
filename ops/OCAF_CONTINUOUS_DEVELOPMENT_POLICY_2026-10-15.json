@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "branch": "main",
+  "authorized_by": "repo operator via ChatGPT on 2026-10-15",
+  "directive": "CONTINUE_RESEARCH_AND_DEVELOPMENT_ALL_ROADMAP_STAGES",
+  "roadmap_extensible": true,
+  "development_advance_policy": {
+    "external_independent_attestations_required": false,
+    "separate_external_auditor_signoff_required": false,
+    "separate_formal_operator_signature_required": false,
+    "technical_runtime_tests_required": true,
+    "actual_evidence_must_remain_truthful": true,
+    "incomplete_technical_stages_may_be_followed_by_parallel_stage_work": true
+  },
+  "release_boundary": {
+    "nonproduction_development_only": true,
+    "no_self_issued_external_audit_certificate": true,
+    "production_approved": false,
+    "production_deployed": false,
+    "no_fabricated_hardware_or_host_attestation": true,
+    "release_readiness_gate_unchanged": true
+  },
+  "notes": "Operator waives independent confirmation as a prerequisite to continuing development and extending the roadmap. This is NOT evidence of a completed technical test, production rollout, third-party audit, or an independent host."
+}
