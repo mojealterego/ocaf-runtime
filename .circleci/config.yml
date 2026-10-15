@@ -3,6 +3,13 @@
 version: 2.1
 
 parameters:
+  # Operator ordered a real KVM-capable host; Android machine image has
+  # documented nested virtualization. This ephemeral probe consumes CircleCI
+  # compute credits only if the repository is connected to CircleCI.
+  # IMPORTANT: turn this parameter off after the initial infrastructure probe.
+  run_stage039_kvm:
+    type: boolean
+    default: true
   run_stage038_linux:
     type: boolean
     default: false
@@ -63,7 +70,107 @@ jobs:
           path: .circleci/evidence
           destination: ocaf038-independent-circleci-wasi
 
+
+  stage039-hardware-nested-kvm:
+    # CircleCI's Android MACHINE image officially supports nested KVM;
+    # ordinary Ubuntu GitHub runners and old OCAF Sprite had no /dev/kvm.
+    machine:
+      image: android:current
+    resource_class: medium.gen2
+    working_directory: ~/project
+    environment:
+      OCAF_STAGE: "039"
+      CARGO_INCREMENTAL: "0"
+      CARGO_BUILD_JOBS: "2"
+    steps:
+      - checkout
+      - run:
+          name: Verify real nested KVM, systemd, cgroup v2 and BPF prerequisites
+          no_output_timeout: 3m
+          command: |
+            set -euo pipefail
+            umask 077
+            mkdir -p .circleci/evidence
+            echo "OCAF039_CIRCLECI_ANDROID_MACHINE_KERNEL_PROBE"
+            uname -a
+            printf 'pid1='
+            cat /proc/1/comm
+            test "$(uname -m)" = "x86_64"
+            command -v sudo
+            sudo -n true
+            if [ ! -c /dev/kvm ]; then
+              sudo -n modprobe kvm_intel || sudo -n modprobe kvm_amd || true
+            fi
+            ls -l /dev/kvm || true
+            if [ -d /sys/fs/bpf ] && ! mountpoint -q /sys/fs/bpf; then
+              sudo -n mount -t bpf bpf /sys/fs/bpf || true
+            fi
+            set +e
+            sudo -n python3 scripts/stage039_kvm_ioctl.py \
+              --report .circleci/evidence/circleci-kvm-ioctl.json
+            status="$?"
+            set -e
+            python3 - <<'PY'
+            import json
+            from pathlib import Path
+            result=json.loads(Path(".circleci/evidence/circleci-kvm-ioctl.json").read_text())
+            print("REAL_CIRCLECI_KVM_REPORT:", json.dumps(result, sort_keys=True))
+            if result.get("kvm_vm_fd_created") is not True:
+                raise SystemExit("No real KVM_CREATE_VM; no VM/bpf positive claim")
+            if result.get("status") != "KVM_IOCTL_VM_CREATED_NOT_BOOTED":
+                raise SystemExit("Kernel host preflight incomplete")
+            if result.get("production_approved") is not False:
+                raise SystemExit("KVM-only probe must not certify production")
+            PY
+            test "$status" -eq 0
+      - run:
+          name: Real kernel Aya cgroup A/B negative loopback and detach recovery
+          no_output_timeout: 6m
+          command: |
+            set -euo pipefail
+            umask 077
+            timeout 290s bash -ec '
+              command -v rustup >/dev/null || {
+                curl --fail --location --silent --show-error --proto "=https" --tlsv1.2 \
+                  https://sh.rustup.rs -o /tmp/stage039-rustup.sh
+                sh /tmp/stage039-rustup.sh -y --profile minimal --default-toolchain 1.99.0
+                . "$HOME/.cargo/env"
+              }
+              rustup toolchain install 1.99.0 --profile minimal
+              cargo +1.99.0 build --manifest-path stage039/aya-guard/Cargo.toml --release
+              LOADER="stage039/aya-guard/target/release/ocaf-stage039-aya-guard"
+              ELF="stage039/aya-ebpf-egress/prebuilt/stage039-deny-egress.elf"
+              test -x "$LOADER"
+              echo "992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95  $ELF" | sha256sum -c -
+              sudo -n python3 scripts/stage039_live_egress.py \
+                --loader "$(readlink -f "$LOADER")" \
+                --loader-sha256 "$(sha256sum "$LOADER" | cut -d " " -f1)" \
+                --program "$(readlink -f "$ELF")" \
+                --program-sha256 992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95 \
+                --seconds 25 --report .circleci/evidence/circleci-aya-egress-real.json \
+                --ack-privileged-loopback-test
+              python3 - << "PY"
+            import json
+            from pathlib import Path
+            r=json.loads(Path(".circleci/evidence/circleci-aya-egress-real.json").read_text())
+            assert r["status"]=="KERNEL_EBPF_EGRESS_ISOLATION_PASSED"
+            assert r["tenant_a_denied_during_attachment"] is True
+            assert r["tenant_b_not_blocked"] is True
+            assert r["tenant_a_recovered_after_detach"] is True
+            assert r["production_approved"] is False
+            print("STAGE039_REAL_AYA_LOOPBACK_NEGATIVE_EGRESS_PROVED")
+            PY
+            '
+      - store_artifacts:
+          path: .circleci/evidence
+          destination: ocaf039-circleci-real-kvm-aya
+
 workflows:
+  stage039_nested_hardware_operator_request:
+    when: << pipeline.parameters.run_stage039_kvm >>
+    jobs:
+      - stage039-hardware-nested-kvm
+
   # Requires an explicit parameter at manual/API trigger. Never starts on repository pushes by default.
   stage038_free_account_opt_in:
     when: << pipeline.parameters.run_stage038_linux >>
