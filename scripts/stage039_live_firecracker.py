@@ -23,6 +23,7 @@ import time
 
 import stage039_firecracker_spec as spec
 import stage039_kvm_ioctl as kvm
+import stage039_vm_egress as vm_egress
 import stage039_microvm_gate as gate
 
 VALID_VM = re.compile(r"[a-z0-9][a-z0-9-]{0,63}\Z")
@@ -258,8 +259,16 @@ def _api_state(sockpath: Path) -> dict:
 
 def run(*, manifest: Path, approved_root: Path, jailer: Path,
         jailer_sha: str, firecracker: Path, firecracker_sha: str,
-        chroot_base: Path, uid: int, gid: int, timeout: int) -> dict:
+        chroot_base: Path, uid: int, gid: int, timeout: int,
+        aya_loader: Path | None = None, aya_loader_sha: str | None = None,
+        aya_program: Path | None = None, aya_program_sha: str | None = None,
+        aya_seconds: int = 15) -> dict:
     import secrets
+    inputs = (aya_loader, aya_loader_sha, aya_program, aya_program_sha)
+    if any(value is not None for value in inputs) and any(value is None for value in inputs):
+        raise LiveFirecrackerError("Aya host-cgroup probe requires all four pinned inputs")
+    if aya_loader is not None and not 12 <= aya_seconds <= 60:
+        raise LiveFirecrackerError("Aya attach must use a bounded 12..60 second interval")
     if os.geteuid() != 0:
         raise LiveFirecrackerError("operator must run privileged jailer on an authorized KVM host")
     if not 10 <= timeout <= 120:
@@ -339,6 +348,16 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
                     "serial_tail_sha256": hashlib.sha256(seen.encode()).hexdigest(),
                     "limit_note": "This confirms kernel boot console/API only. Aya egress must be proven separately.",
                 })
+                if aya_loader is not None:
+                    # Guest boot was checked while the original jailer process lives.
+                    # Probe packets originate from a HOST process in the VM cgroup.
+                    # This is not a proof that guest network traffic is isolated.
+                    result["vm_host_cgroup_egress"] = (
+                        vm_egress.prove_vm_host_cgroup_egress(
+                            proc=proc, vm_id=vm_id, cgroup=cgroup,
+                            loader=aya_loader, loader_sha=aya_loader_sha,
+                            program=aya_program, program_sha=aya_program_sha,
+                            seconds=aya_seconds))
                 return result
             except LiveFirecrackerError as exc:
                 last_rejection = str(exc)
@@ -375,16 +394,32 @@ def main() -> int:
     p.add_argument("--gid", type=int, required=True)
     p.add_argument("--timeout", type=int, default=45)
     p.add_argument("--report", type=Path, required=True)
+    p.add_argument("--aya-loader", type=Path)
+    p.add_argument("--aya-loader-sha256")
+    p.add_argument("--aya-program", type=Path)
+    p.add_argument("--aya-program-sha256")
+    p.add_argument("--aya-seconds", type=int, default=15)
+    p.add_argument("--ack-privileged-vm-cgroup-egress-probe", action="store_true")
     p.add_argument("--ack-real-kvm-jailer-boot", action="store_true")
     a = p.parse_args()
     if not a.ack_real_kvm_jailer_boot:
         p.error("acknowledge real jailed KVM guest launch with --ack-real-kvm-jailer-boot")
+    vm_egress_inputs = (a.aya_loader, a.aya_loader_sha256,
+                        a.aya_program, a.aya_program_sha256)
+    if any(value is not None for value in vm_egress_inputs) or a.ack_privileged_vm_cgroup_egress_probe:
+        if not a.ack_privileged_vm_cgroup_egress_probe or any(
+                value is None for value in vm_egress_inputs):
+            p.error("the live VM host-cgroup Aya probe requires all pinned Aya inputs and explicit acknowledgement")
     try:
         result = run(manifest=a.manifest, approved_root=a.approved_root,
                      jailer=a.jailer, jailer_sha=a.jailer_sha256,
                      firecracker=a.firecracker, firecracker_sha=a.firecracker_sha256,
                      chroot_base=a.chroot_base, uid=a.uid, gid=a.gid,
-                     timeout=a.timeout)
+                     timeout=a.timeout, aya_loader=a.aya_loader,
+                     aya_loader_sha=a.aya_loader_sha256,
+                     aya_program=a.aya_program,
+                     aya_program_sha=a.aya_program_sha256,
+                     aya_seconds=a.aya_seconds)
         gate.save_report(a.report, result)
     except (OSError, ValueError, LiveFirecrackerError) as exc:
         p.error(str(exc))
