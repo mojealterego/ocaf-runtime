@@ -26,12 +26,21 @@ class IndependentHostValidator(unittest.TestCase):
         self.assertFalse(z["interhost_rpc_tested"])
         self.assertFalse(z["production_approved"])
 
+    def test_distinct_kernel_boots_are_valid_even_if_hostnames_are_reused(self):
+        # GitHub ephemeral runners may reuse image-supplied hostname strings;
+        # /proc/sys/kernel/random/boot_id is the actual kernel-identity signal.
+        a=entry("tenant-a","boot-a","vm-a","runner")
+        b=entry("tenant-b","boot-b","vm-b","runner")
+        report=hosts.verify_hosts(a,b)
+        self.assertTrue(report["two_separate_kernel_boot_ids_observed"])
+        self.assertFalse(report["hostnames_are_distinct"])
+        self.assertFalse(report["durable_production_host_independence_proved"])
+
     def test_rejects_same_kernel_or_reused_guest_evidence(self):
         a=entry("tenant-a","boot-a","vm-a","host-1")
         b=entry("tenant-b","boot-b","vm-b","host-2")
         for mutated in (
             {**b,"host_boot_id":"boot-a"},
-            {**b,"hostname":"host-1"},
             {**b,"guest":{**b["guest"],"vm_id":"vm-a"}},
             {**b,"tenant_id":"tenant-a"},
             {**b,"guest":{**b["guest"],"tenant_id":"tenant-a"}},
