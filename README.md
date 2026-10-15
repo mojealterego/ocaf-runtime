@@ -819,7 +819,7 @@ plików konfiguracyjnych przy użyciu deskryptorów z `O_NOFOLLOW`
 i kontrolą uprawnień/inode (z testami negatywnymi). Nadal wymagane
 są niezależne testy odporności na awarie, obciążenie i wycieki,
 audyt hosta, rotacja kluczy/PKI oraz formalny odbiór bezpieczeństwa.
-Etap 0.39 nie został rozpoczęty; gotowości produkcyjnej nie potwierdzono.
+Etap 0.39 został rozpoczęty na wyraźne polecenie operatora, wyłącznie w zakresie fail-closed admission Firecracker/KVM + Aya/eBPF i odczytowego host preflight. Szczegóły: [docs/STAGE039_MICROVM_EBPF.md](docs/STAGE039_MICROVM_EBPF.md). Ani 0.38, ani 0.39 nie mają produkcyjnego GO.
 
 ## Odbiór bezpieczeństwa 0.38.8–0.38.9
 
@@ -834,3 +834,8 @@ odbioru i wymaganego hostowego hardeningu.
 ### 0.38 — host acceptance, sealed engine i dostęp operatora
 
 Signed WASIp1 wykonuje przypiętą kopię Wasmtime przez uszczelniony Linux `memfd` zamiast wykonywać mutowalną ścieżkę pliku; system Linux uzupełniają `PR_SET_PDEATHSIG`, grupy procesów i `no_new_privs`. `scripts/wasi_host_acceptance.py` dokumentuje wyniki testów obciążenia i obserwowane RSS/FD/PID w JSON. Konfiguracja hostowa systemd/cgroup to [szablon, nie wdrożenie](deploy/systemd/ocaf-coordinator-wasi.service.example). Kody, ograniczenia i braki dostępu: [dokumentacja odbioru](docs/STAGE_038_8_9_ACCEPTANCE.md). **0.38 PARTIAL / NO-GO, 0.39 zablokowany.** Plan zewnętrznego odbioru: [IBM Cloud VPC](docs/IBM_CLOUD_STAGE_038.md) oraz [warunkowy 30-dniowy pilotaż OVHcloud Public Cloud](docs/OVHCLOUD_30_DAY_STAGE_038_PLAN.md). Dodatkowe testy po weryfikacji ofert: [audyt 8 darmowych/trial hostów](docs/CLOUD_FREE_TRIALS_OCAF_2026.md) i [Oracle Cloud: lokalna automatyzacja read-only i bramki płatności](docs/ORACLE_CLOUD_AUTOMATION.md). Promocyjne kredyty nie stanowią potwierdzenia wdrożenia ani budżetowego limitu bezpieczeństwa.
+
+
+## Etap 0.39 — mikroVM Firecracker/KVM i Aya/eBPF (rozpoczęty)
+
+**Zaimplementowano:** `scripts/stage039_microvm_gate.py` — fail-closed weryfikacja manifestu, podpisanych digestami SHA-256 artefaktów, deny-by-default polityki (jailer, brak sieci, RO rootfs, seccomp) i read-only host prerequisites (`/dev/kvm`, cgroup v2, systemd, bpffs, BTF). Testy: `scripts/tests/test_stage039_microvm_gate.py`, CI: `.github/workflows/stage039-microvm-preflight.yml`. **Nie uruchamia VM ani Aya/eBPF**; artefakty CI nie dowodzą izolacji. `0.38 PARTIAL / NO-GO`; `0.39 STARTED / NO-GO`; produkcja **NO-GO**.
