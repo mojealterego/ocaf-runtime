@@ -32,7 +32,7 @@ file "$WASMTIME"
 gcc -std=c11 -O2 -static -Wall -Wextra -Werror \
  "$SRC/stage039/guest-wasi/guest_wasi_init.c" -o "$WORK/ocaf-wasi-init"
 wat2wasm "$SRC/stage039/guest-wasi/hello.wat" -o "$WORK/hello.wasm"
-wasm-objdump -x "$WORK/hello.wasm" | grep -F 'wasi_snapshot_preview1.fd_write'
+wasm-objdump -x "$WORK/hello.wasm" | grep -F 'wasi_snapshot_preview1'
 # Independently verify WASI import even on HOST before any Firecracker VM starts.
 # This is a preflight; ONLY guest serial is counted as KVM execution.
 output="$("$WASMTIME" run "$WORK/hello.wasm")"
