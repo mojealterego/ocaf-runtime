@@ -1,0 +1,43 @@
+name: OCAF v11 CANONICAL ROOT-PINNED Roadmap + 10 original Agents Builder Code NoCode products
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - README.md
+      - ROADMAP.md
+      - docs/ROADMAP_FULL_ECOSYSTEM_2026.md
+      - docs/AGENTS_BUILDER_CODE_NOCODE_5_PLATFORMS.md
+      - docs/INVENTORY_LOST_REQUIREMENTS_2026-10-15.md
+      - docs/roadmap/canonical_v10_inventory.json
+      - docs/roadmap/canonical_v11_inventory.json
+      - docs/roadmap/agents_builder_products_v11.json
+      - docs/roadmap/missing_capabilities_v11.json
+      - docs/roadmap/STAGE_CHANGELOG.md
+      - scripts/validate_roadmap_v11.py
+      - scripts/tests/test_validate_roadmap_v11.py
+      - .github/workflows/roadmap-v11-builders.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  no-original-builder-may-be-lost:
+    name: Canonical 195 stages + 64 substages + all ten builder products and root README pin
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Compile validator and run no-loss/negative tests
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/validate_roadmap_v11.py scripts/tests/test_validate_roadmap_v11.py
+          python3 -m unittest discover -s scripts/tests -p test_validate_roadmap_v11.py -v
+      - name: Ensure pinned root, original 10 products and historical status are identical and no new numbering invented
+        run: |
+          set -euo pipefail
+          python3 scripts/validate_roadmap_v11.py --repo-root .
+          echo OCAF_V11_COMPLETE_195_MAIN_64_TECHNICAL_10_ORIGINAL_AGENTS_BUILDER_PRODUCTS_ROOT_PINNED
