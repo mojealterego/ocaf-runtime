@@ -1,0 +1,76 @@
+name: OCAF 0.40 LIVE 3-host PostgreSQL WAL proof (remote test requires provisioned hosts)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage040-interhost-live-validation.yml
+      - scripts/stage040_interhost_live.py
+      - scripts/tests/test_stage040_interhost_live.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-failclosed-live-host-prerequisites:
+    name: Reject fake multi-host PG HA claims, localhost identity, missing SQL replay
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Read-only Python contract checks — do not simulate actual interhost success
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s scripts/tests -p test_stage040_interhost_live.py -v
+          python3 -m py_compile scripts/stage040_interhost_live.py
+          echo "STAGE040_INTERHOST_RUNNER_PRECHECK_ONLY_NO_LIVE_REPLICATION_CLAIM"
+
+  actual-three-independent-postgresql-hosts:
+    if: github.event_name == 'workflow_dispatch'
+    name: TRUE three separate reachable Linux hosts, actual SQL WAL nonce (self-hosted only)
+    needs: verify-failclosed-live-host-prerequisites
+    runs-on: [self-hosted, linux, ocaf-pg-operator]
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: REAL direct TCP streaming across independently pinned SSH hosts
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          test -n "${OCAF_PG_INTERHOST_INVENTORY:-}"
+          test -n "${OCAF_PG_INTERHOST_KNOWN_HOSTS:-}"
+          test -f "$OCAF_PG_INTERHOST_INVENTORY"
+          test -f "$OCAF_PG_INTERHOST_KNOWN_HOSTS"
+          test "$(stat -c %a "$OCAF_PG_INTERHOST_KNOWN_HOSTS")" = 600
+          mkdir -m 0700 -p stage040-actual-interhost
+          python3 scripts/stage040_interhost_live.py \
+            --inventory "$OCAF_PG_INTERHOST_INVENTORY" \
+            --known-hosts "$OCAF_PG_INTERHOST_KNOWN_HOSTS" \
+            --report "$GITHUB_WORKSPACE/stage040-actual-interhost/live-tcp-lsn.json" \
+            --ack-mutating-disposable-postgresql-interhost-lab
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path("stage040-actual-interhost/live-tcp-lsn.json").read_text())
+          assert d["status"]=="REAL_DISTINCT_LINUX_KERNELS_POSTGRESQL_LIVE_TCP_STREAMING_VERIFIED"
+          assert len(set(d["boot_ids"].values()))==3
+          assert d["actual_direct_network_replication"] is True
+          assert d["consensus_fencing_verified"] is False
+          assert d["production_approved"] is False
+          print("STAGE040_LIVE_REAL_THREE_INDEPENDENT_LINUX_KERNELS_POSTGRES_WAL_TCP_SQL_REPLAY_PROVED")
+          PY
+      - name: Preserve real three-host kernel inventory and WAL nonce receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage040-actual-three-host-postgres-tcp-stream
+          path: stage040-actual-interhost/
+          retention-days: 30
+          if-no-files-found: warn
