@@ -1,0 +1,163 @@
+name: OCAF 0.39 REAL artifact-mediated two-host guest cold restart (NOT HA)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage039-cold-recovery.yml
+      - scripts/stage039_prepare_cold_host.sh
+      - scripts/stage039_cold_recovery.py
+      - scripts/stage039_jailed_guest_network.py
+      - scripts/tests/test_stage039_cold_recovery.py
+      - scripts/stage039_guest_network.py
+      - stage039/guest-egress/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-host:
+    name: Real independent KVM kernel A - guest UDP and VM SIGKILL
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Build source-host read-only pinned Firecracker guest registry
+        run: bash scripts/stage039_prepare_cold_host.sh "$GITHUB_RUN_ID" a
+      - name: Run actual two jailed guest networks, tenant A and B SIGKILL and checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p stage039-cold-source
+          PREFIX="/opt/o39c${GITHUB_RUN_ID}-a"
+          NONCE="$(python3 -c 'import secrets;print(secrets.token_hex(8))')"
+          sudo -n python3 scripts/stage039_jailed_guest_network.py \
+            --firecracker "$PREFIX/approved/firecracker" \
+            --firecracker-sha256 "$(sudo -n sha256sum "$PREFIX/approved/firecracker" | cut -d ' ' -f 1)" \
+            --jailer "$PREFIX/approved/jailer" \
+            --jailer-sha256 "$(sudo -n sha256sum "$PREFIX/approved/jailer" | cut -d ' ' -f 1)" \
+            --jailer-base "$PREFIX/jailer" \
+            --kernel "$PREFIX/approved/kernel" \
+            --kernel-sha256 882fa465c43ab7d92e31bd4167da3ad6a82cb9230f9b0016176df597c6014cef \
+            --rootfs "$PREFIX/approved/rootfs" \
+            --rootfs-sha256 786f0612582cadcee4c8ad46e30e4cc93dff9a3c0b4ede3f3c597b4c241dd547 \
+            --probe-source "$GITHUB_WORKSPACE/stage039/guest-egress/guest_probe_init.c" \
+            --checkpoint-nonce "$NONCE" \
+            --report "$GITHUB_WORKSPACE/stage039-cold-source/source.json" \
+            --ack-privileged-dual-jailed-guest-network-lab
+          sudo -n chown "$(id -u):$(id -g)" stage039-cold-source/source.json
+          python3 - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          src=Path("stage039-cold-source/source.json")
+          data=json.loads(src.read_text())
+          assert data["jailer_used_for_both_guests"] is True
+          assert data["tenant_a_vm_sigkill"]["cgroup_subtree_empty"] is True
+          assert data["tenant_b_vm_sigkill"]["cgroup_subtree_empty"] is True
+          checkpoint={
+              "schema_version":1,
+              "source_report_sha256":hashlib.sha256(src.read_bytes()).hexdigest(),
+              "nonce":data["checkpoint_nonce"],
+              "source_boot_id":data["host_boot_id"],
+              "source_fault_complete":True,
+          }
+          Path("stage039-cold-source/checkpoint.json").write_text(
+              json.dumps(checkpoint,sort_keys=True)+"\n")
+          print("STAGE039_REAL_SOURCE_HOST_KVM_JAILED_GUEST_FAULT_CHECKPOINT_PROVED")
+          PY
+      - name: Preserve immutable source-host fault/checkpoint evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage039-cold-source
+          path: stage039-cold-source/
+          retention-days: 30
+          if-no-files-found: warn
+
+  recovery-host:
+    name: Distinct KVM host B replays checkpoint nonce inside newly booted jailed guest
+    needs: [source-host]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Fetch source run immutable checkpoint and actual jailed boot report
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: stage039-cold-source
+          path: /tmp/ocaf039-source
+      - name: Fail closed on tampered or unverified source-host checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json,re
+          from pathlib import Path
+          source=Path("/tmp/ocaf039-source/source.json")
+          checkpoint=json.loads(Path("/tmp/ocaf039-source/checkpoint.json").read_text())
+          report=json.loads(source.read_text())
+          assert checkpoint["schema_version"]==1
+          assert checkpoint["source_report_sha256"]==hashlib.sha256(source.read_bytes()).hexdigest()
+          assert checkpoint["nonce"]==report["checkpoint_nonce"]
+          assert re.fullmatch("[0-9a-f]{16}",checkpoint["nonce"])
+          assert checkpoint["source_boot_id"]==report["host_boot_id"]
+          assert checkpoint["source_fault_complete"] is True
+          assert report["tenant_a_vm_sigkill"]["sigkill_exit_code"]==-9
+          assert report["tenant_b_vm_sigkill"]["sigkill_exit_code"]==-9
+          assert report["production_approved"] is False
+          print("STAGE039_SIGNED_BY_WORKFLOW_CHECKPOINT_DIGEST_REPLAY_PROTECTION_READY")
+          PY
+      - name: Build wholly new pinned Firecracker and guest on independent kernel B
+        run: bash scripts/stage039_prepare_cold_host.sh "$GITHUB_RUN_ID" b
+      - name: Actual guest emits recovered checkpoint nonce from another host
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p stage039-cold-recovered
+          PREFIX="/opt/o39c${GITHUB_RUN_ID}-b"
+          NONCE="$(python3 -c 'import json;print(json.load(open("/tmp/ocaf039-source/checkpoint.json"))["nonce"])')"
+          sudo -n python3 scripts/stage039_jailed_guest_network.py \
+            --firecracker "$PREFIX/approved/firecracker" \
+            --firecracker-sha256 "$(sudo -n sha256sum "$PREFIX/approved/firecracker" | cut -d ' ' -f 1)" \
+            --jailer "$PREFIX/approved/jailer" \
+            --jailer-sha256 "$(sudo -n sha256sum "$PREFIX/approved/jailer" | cut -d ' ' -f 1)" \
+            --jailer-base "$PREFIX/jailer" \
+            --kernel "$PREFIX/approved/kernel" \
+            --kernel-sha256 882fa465c43ab7d92e31bd4167da3ad6a82cb9230f9b0016176df597c6014cef \
+            --rootfs "$PREFIX/approved/rootfs" \
+            --rootfs-sha256 786f0612582cadcee4c8ad46e30e4cc93dff9a3c0b4ede3f3c597b4c241dd547 \
+            --probe-source "$GITHUB_WORKSPACE/stage039/guest-egress/guest_probe_init.c" \
+            --checkpoint-nonce "$NONCE" \
+            --report "$GITHUB_WORKSPACE/stage039-cold-recovered/recovery.json" \
+            --ack-privileged-dual-jailed-guest-network-lab
+          sudo -n chown "$(id -u):$(id -g)" stage039-cold-recovered/recovery.json
+          python3 -m unittest discover -s scripts/tests -p test_stage039_cold_recovery.py -v
+          python3 scripts/stage039_cold_recovery.py \
+            --source /tmp/ocaf039-source/source.json \
+            --recovery stage039-cold-recovered/recovery.json \
+            --report stage039-cold-recovered/verified-handoff.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path("stage039-cold-recovered/verified-handoff.json").read_text())
+          assert report["status"]=="TWO_KERNEL_JAILED_GUEST_NONCE_COLD_RESTART_PASSED"
+          assert report["separate_kernel_boot_ids"] is True
+          assert report["guest_nonce_delivered_on_recovery_host"] is True
+          assert report["source_vm_sigkill_observed_before_recovery"] is True
+          assert report["live_interhost_rpc_failover_tested"] is False
+          assert report["production_approved"] is False
+          print("STAGE039_REAL_SECOND_KERNEL_JAILED_GUEST_ARTIFACT_COLD_RESTART_PROVED")
+          PY
+      - name: Preserve actual second-kernel guest checkpoint recovery and comparison
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage039-cold-recovery-verified
+          path: stage039-cold-recovered/
+          retention-days: 30
+          if-no-files-found: warn
