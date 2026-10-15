@@ -72,3 +72,42 @@ Nie stwierdzono jeszcze nowego, unikalnego wymagania, które można bezpiecznie 
 - `README.md` utrzymuje jedną tabelę 269 pozycji i wyraźnie rozróżnia administracyjne `ETAP UKOŃCZONY` od odbioru produkcyjnego.
 
 **Werdykt:** audyt 20 dokumentów źródłowych i wybranych modułów wykonano; **pełny audyt wszystkich plików kodu, uruchomienie testów oraz certyfikacja bezpieczeństwa i infrastruktury NIE zostały wykonane**. Produkcyjne GO = **NO-GO**. Nie nadano sztucznych ID 1.95+, gdyż opisane wymagania mają już przypisania w v11 i INV-001–024.
+
+
+## Kontrola kompletności Roadmapy — wynik korekty 20 PDF
+
+**Wynik porównania z kanoniczną Roadmapą v11 przed korektą:** NIE, nie wszystkie wymagania były jawnie ujęte. Dokument `Analiza AGI I Ludzkich AI (1).PDF` (s. 2–6, 11–13) wymienia specyficzne technologie i benchmarki, których nie było w `ROADMAP.md` pod nazwami: OpenCog Hyperon/MeTTa/PLN/ECAN; ACT-R/Soar/LIDA; Letta/MemGPT, Mem0, Cognee, Zep i ewaluacje LoCoMo/LongMemEval. Samo ogólne hasło „cognition/memory” nie wystarczało do potwierdzenia kompletności.
+
+**Korekta na `main`:** dopisano trzy odrębne, weryfikowalne etapy:
+- `1.95`: eksperymentalny Hyperon/MeTTa/PLN/ECAN z kontrolą uprawnień i oceną niepewności;
+- `1.96`: porównanie ACT-R, Soar, LIDA względem istniejących mechanizmów;
+- `1.97`: Letta/MemGPT, Mem0, Cognee, Zep/Graphiti, LoCoMo/LongMemEval, metryki pamięci i izolacja tenantów.
+
+Zaktualizowano `ROADMAP.md`, `docs/ROADMAP_FULL_ECOSYSTEM_2026.md`, `docs/roadmap/canonical_v11_inventory.json` oraz `README.md`. Manifest ma teraz **198 etapów głównych + 64 techniczne + 10 Agents Builder = 272 pozycje**. Nowy numer dla unikalnego przyszłego wymagania: `1.98`.
+
+### Mapa 20 plików → zakres istniejącej Roadmapy lub korekta
+
+| Źródło PDF | Dominujący zakres Roadmapy | Decyzja |
+|---|---|---|
+| Analiza AGI I Ludzkich AI (1).PDF | 0.48, 0.91, 1.65–1.69; nowe 1.95–1.97 | **LUKI UZUPEŁNIONE** |
+| Analiza Architektury Systemu OCAF (1).PDF | 0.43–0.49, 0.63 | ISTNIEJĄCE |
+| Analiza Architektury Systemu OCAF.PDF | 0.43–0.49, 0.63 | DUPLIKAT TEKSTU |
+| Analiza Architektury Systemu OCAF(1).PDF | 0.43–0.49, 0.63 | ISTNIEJĄCE |
+| Analiza Architektury Systemu OCAF(2).PDF | 0.39, 0.43–0.49, 1.90–1.94 | ISTNIEJĄCE |
+| Analiza Architektury Systemu OCAF(3).PDF | 0.39, 0.43–0.49, 1.90–1.94 | ISTNIEJĄCE |
+| Analiza Architektury Systemu OCAF(4).PDF | 0.39, 0.43–0.49, 1.90–1.94 | ISTNIEJĄCE |
+| Analiza Architektury Systemu OCAF(5).PDF | 0.39, 0.43–0.49, 1.90–1.94 | ISTNIEJĄCE |
+| Architektura OCAF w Języku Rust (1).PDF | 0.42–0.49, 0.63 | ISTNIEJĄCE |
+| Architektura OCAF w Języku Rust.PDF | 0.42–0.49, 0.63 | DUPLIKAT TEKSTU |
+| Architektura OCAF w Języku RustPDF_261012_042941.pdf | 0.42–0.49, 0.63 | DUPLIKAT TEKSTU |
+| Architektura OCAF w Języku Rust(1).PDF | 0.39, 0.43–0.49, 1.90–1.94 | ISTNIEJĄCE |
+| Architektura OmniContext Agent Framework (OCAF) w .. (1).PDF | 0.39–0.49, 1.90–1.94 | ISTNIEJĄCE |
+| Dokument bez nazwy (2).PDF | 0.43–0.49 | ISTNIEJĄCE |
+| Dokument bez nazwy (6).PDF | 0.43–0.49 | ISTNIEJĄCE |
+| Kompleksowa Roadmapa Wdrożenia Ekosystemu OCAF w Rust.PDF | 0.42–0.49 | ISTNIEJĄCE |
+| Projekt i Mapa Drogowa Rewolucyjnej Architektury S.. (1).PDF | 0.39–0.49, 0.50–0.55 | ISTNIEJĄCE |
+| Projekt i Mapa Drogowa Rewolucyjnej Architektury S..(1) (1).PDF | 0.39–0.49, 0.50–0.55 | DUPLIKAT TEKSTU |
+| Projekt i Mapa Drogowa Rewolucyjnej Architektury S..(2) (1).PDF | 0.39–0.49, 0.50–0.55 | ISTNIEJĄCE |
+| Projekt i Mapa Drogowa Rewolucyjnej Architektury S..(3).PDF | 0.39–0.49, 0.50–0.55 | ISTNIEJĄCE |
+
+**Zakres zapewnienia:** ta mapa potwierdza obecność głównych obszarów funkcjonalnych w Roadmapie oraz naprawienie zidentyfikowanych braków nazwanych. Nie jest dowodem, że każda pojedyncza rekomendacja, przykładowy snippet i wariant API z 307 stron został odrębnie przepisany na zadanie. Nie jest też potwierdzeniem wykonania kodu ani testów. Wymagania `1.95–1.97` mają status **PLANNED**, a nie DONE.
