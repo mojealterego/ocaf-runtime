@@ -34,6 +34,7 @@ CGROUP_ROOT = Path("/sys/fs/cgroup")
 BPF_MOUNT = Path("/sys/fs/bpf")
 MAX_PROGRAM = 16 * 1024 * 1024
 CGROUP_NAME = re.compile(r"ocaf-stage039-[ab]-[0-9a-f]{16}\.service\Z")
+VM_PROBE_CGROUP = re.compile(r"ocaf-stage039-vm-[0-9a-f]{16}\.service\Z")
 
 
 class AcceptanceError(RuntimeError):
@@ -42,7 +43,8 @@ class AcceptanceError(RuntimeError):
 
 def permitted_probe_cgroup(path: Path) -> bool:
     return (path.is_absolute() and path.parent == CGROUP_ROOT and
-            CGROUP_NAME.fullmatch(path.name) is not None)
+            (CGROUP_NAME.fullmatch(path.name) is not None or
+             VM_PROBE_CGROUP.fullmatch(path.name) is not None))
 
 
 def sha256_file(path: Path) -> str:
