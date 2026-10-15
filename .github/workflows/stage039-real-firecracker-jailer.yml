@@ -8,6 +8,7 @@ on:
       - scripts/stage039_live_firecracker.py
       - scripts/stage039_vm_egress.py
       - scripts/stage039_vm_resources.py
+      - scripts/stage039_vm_crash.py
       - scripts/stage039_live_egress.py
       - scripts/tests/test_stage039_vm_egress.py
       - stage039/aya-guard/**
@@ -162,6 +163,7 @@ jobs:
             --aya-program "$PREFIX/approved/aya_cgroup_device" \
             --aya-program-sha256 992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95 \
             --aya-seconds 15 --ack-privileged-vm-cgroup-egress-probe \
+            --ack-vm-sigkill-fault \
             --ack-real-kvm-jailer-boot
           sudo -n chown "$(id -u):$(id -g)" stage039-real-guest-evidence/guest-boot.json
           python3 - <<'PY'
@@ -194,7 +196,16 @@ jobs:
           assert resources["kernel_pids_quota_hits"]==0
           assert resources["vm_cgroup_inode"]==egress["vm_cgroup_inode"]
           assert resources["production_approved"] is False
+          killed=boot["vm_sigkill_fault"]
+          assert killed["status"]=="VM_SIGKILL_CGROUP_SUBTREE_DRAINED"
+          assert killed["cgroup_subtree_empty"] is True
+          assert killed["sigkill_executed"] is True
+          assert killed["sigkill_exit_code"]==-9
+          assert killed["vm_cgroup_inode"]==resources["vm_cgroup_inode"]
+          assert killed["multi_host_failover_tested"] is False
+          assert killed["production_approved"] is False
           print("STAGE039_REAL_FIRECRACKER_JAILER_GUEST_LINUX_BOOT_PROVED")
+          print("STAGE039_REAL_VM_SIGKILL_CGROUP_REAP_PROVED")
           print("STAGE039_LIVE_KERNEL_CGROUP_RESOURCE_LIMITS_AND_PEAKS_PROVED")
           print("STAGE039_LIVE_VM_HOST_CGROUP_AYA_EGRESS_NEGATIVE_AND_RECOVERY_PROVED")
           PY
