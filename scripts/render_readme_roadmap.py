@@ -110,7 +110,7 @@ def validate_readme(readme: str, inventory: dict, builders: dict) -> dict:
     rows=re.findall(r"^([0-9]+)\. \*\*\[([^]]+)\]\*\* \*\*",readme[:len(expected)],re.MULTILINE)
     if [int(i) for i,_ in rows]!=list(range(1,270)):
         raise ReadmeRoadmapError("README status list not numbered 1..269 with every ID represented")
-    if not all("ZROBIONE" in status for _,status in rows):
+    if not all(status=="DO ZROBIENIA" or status=="ZROBIONE — TEST W OGRANICZONYM ZAKRESIE" for _,status in rows):
         raise ReadmeRoadmapError("at least one roadmap item lacks explicit completion status")
     return {
         "status":"OCAF_README_ROADMAP_1_TO_269_SOURCE_STATUS_PARITY_VERIFIED",
