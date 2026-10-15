@@ -1,0 +1,73 @@
+name: OCAF 0.39 REAL kernel veth netns TLS1.3 mTLS partition fencing (LAB not HA)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage039-real-mtls-partition.yml
+      - scripts/stage039_mtls_fencing.py
+      - scripts/stage039_mtls_partition_lab.py
+      - scripts/tests/test_stage039_mtls_fencing.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  actual-kernel-netns-tls-fencing:
+    name: Real TLS1.3 veth netns attack/failover-fencing lab (one Linux kernel)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Unit red-green regression - rejected principals and stale epoch
+        run: python3 -m unittest discover -s scripts/tests -p test_stage039_mtls_fencing.py -v
+      - name: Validate Linux network namespace, kernel route, OpenSSL tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v ip
+          command -v openssl
+          sudo -n true
+          test -e /proc/sys/kernel/random/boot_id
+          openssl version
+          ip -Version
+      - name: REAL root-privileged mTLS certificate and Linux veth netns fault injection
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p stage039-mtls-partition-evidence
+          sudo -n python3 scripts/stage039_mtls_partition_lab.py \
+            --fencing-source "$GITHUB_WORKSPACE/scripts/stage039_mtls_fencing.py" \
+            --report "$GITHUB_WORKSPACE/stage039-mtls-partition-evidence/real-mtls-partition.json" \
+            --ack-root-network-namespace-partition-lab
+          sudo -n chown "$(id -u):$(id -g)" stage039-mtls-partition-evidence/real-mtls-partition.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("stage039-mtls-partition-evidence/real-mtls-partition.json").read_text())
+          assert r["status"]=="REAL_NETNS_TLS13_MTLS_PARTITION_FENCING_PASSED"
+          assert r["distinct_linux_network_namespaces"]
+          assert r["namespace_a_inode"]!=r["namespace_b_inode"]
+          assert r["tls_version"]=="TLSv1.3"
+          assert r["rogue_ca_signed_client_certificate_denied"]
+          assert r["second_primary_before_release_denied"]
+          assert r["kernel_blackhole_partition_installed"]
+          assert r["client_write_on_lost_authority_denied"]
+          assert r["post_partition_lease_renewal_proved"]
+          assert r["epoch_persisted_after_authority_restart"]
+          assert r["live_interhost_mtls_failover_tested"] is False
+          assert r["production_approved"] is False
+          print("STAGE039_REAL_KERNEL_NETNS_TLS13_MTLS_PARTITION_FENCING_PROVED")
+          PY
+      - name: Preserve real kernel mTLS and fault evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage039-real-kernel-tls13-mtls-fencing-not-ha
+          path: stage039-mtls-partition-evidence/
+          retention-days: 30
+          if-no-files-found: warn
