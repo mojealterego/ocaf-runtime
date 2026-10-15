@@ -8,16 +8,16 @@ Dawna Roadmapa **zgubiła rozróżnienie dziesięciu produktów**. Pierwotny Age
 
 | Etap oryginalny | Produkt (tworzenie projektów agentów) | Tryb | Stan aktualnie sprawdzony |
 |---|---|---|---|
-| 0.52 | **AGENTS BUILDER Chmurowy Code** | **Code** | ❌ **NOT_IMPLEMENTED** |
-| 0.52 | **AGENTS BUILDER Chmurowy NoCode** | **NoCode** | ❌ **NOT_IMPLEMENTED** |
-| 0.53 | **AGENTS BUILDER Desktopowy Windows Code** | **Code** | ❌ **NOT_IMPLEMENTED** |
-| 0.53 | **AGENTS BUILDER Desktopowy Windows NoCode** | **NoCode** | ❌ **NOT_IMPLEMENTED** |
-| 0.53 | **AGENTS BUILDER Desktopowy macOS Code** | **Code** | ❌ **NOT_IMPLEMENTED** |
-| 0.53 | **AGENTS BUILDER Desktopowy macOS NoCode** | **NoCode** | ❌ **NOT_IMPLEMENTED** |
-| 0.54 | **AGENTS BUILDER Android Code** | **Code** | ❌ **NOT_IMPLEMENTED** |
-| 0.54 | **AGENTS BUILDER Android NoCode** | **NoCode** | ❌ **NOT_IMPLEMENTED** |
-| 0.54 | **AGENTS BUILDER iOS Code** | **Code** | ❌ **NOT_IMPLEMENTED** |
-| 0.54 | **AGENTS BUILDER iOS NoCode** | **NoCode** | ❌ **NOT_IMPLEMENTED** |
+| 0.52 | **Agents Builder Chmurowy Code** | **Code** | ❌ **NOT_IMPLEMENTED** |
+| 0.52 | **Agents Builder Chmurowy NoCode** | **NoCode** | ❌ **NOT_IMPLEMENTED** |
+| 0.53 | **Agents Builder Desktopowy Windows Code** | **Code** | ❌ **NOT_IMPLEMENTED** |
+| 0.53 | **Agents Builder Desktopowy Windows NoCode** | **NoCode** | ❌ **NOT_IMPLEMENTED** |
+| 0.53 | **Agents Builder Desktopowy macOS Code** | **Code** | ❌ **NOT_IMPLEMENTED** |
+| 0.53 | **Agents Builder Desktopowy macOS NoCode** | **NoCode** | ❌ **NOT_IMPLEMENTED** |
+| 0.54 | **Agents Builder Android Code** | **Code** | ❌ **NOT_IMPLEMENTED** |
+| 0.54 | **Agents Builder Android NoCode** | **NoCode** | ❌ **NOT_IMPLEMENTED** |
+| 0.54 | **Agents Builder iOS Code** | **Code** | ❌ **NOT_IMPLEMENTED** |
+| 0.54 | **Agents Builder iOS NoCode** | **NoCode** | ❌ **NOT_IMPLEMENTED** |
 
 Dwa wspólne mechanizmy: **0.50 Agents Builder Core typed graph/IR** oraz **0.51 dwie działające aplikacje edycji Code i NoCode**, plus **0.55 autoryzacja/sandbox/testy pakietów**. Szczegóły i osobne kryteria 10 produktów: [AGENTS_BUILDER_CODE_NOCODE_5_PLATFORMS.md](AGENTS_BUILDER_CODE_NOCODE_5_PLATFORMS.md) oraz [manifest JSON](roadmap/agents_builder_products_v11.json).
 
