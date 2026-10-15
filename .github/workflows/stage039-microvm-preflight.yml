@@ -21,6 +21,8 @@ on:
       - scripts/stage039_dual_tenant.py
       - scripts/stage039_guest_network.py
       - scripts/stage039_jailed_guest_network.py
+      - scripts/stage039_guest_tc.py
+      - scripts/tests/test_stage039_guest_tc.py
       - scripts/stage039_cold_recovery.py
       - scripts/tests/test_stage039_cold_recovery.py
       - scripts/tests/test_stage039_jailed_guest_network.py
@@ -110,6 +112,8 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_jailed_guest_network.py -v
       - name: Artifact-mediated second-kernel cold restart negative contracts
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_cold_recovery.py -v
+      - name: Guest TC eBPF program ID and actual packet phase fail-closed contracts
+        run: python3 -m unittest discover -s scripts/tests -p test_stage039_guest_tc.py -v
       - name: Python source syntax verification
         run: |
           python3 -m py_compile scripts/stage039_microvm_gate.py scripts/tests/test_stage039_microvm_gate.py
@@ -125,6 +129,7 @@ jobs:
           python3 -m py_compile scripts/stage039_dual_tenant.py scripts/tests/test_stage039_dual_tenant.py
           python3 -m py_compile scripts/stage039_guest_network.py scripts/tests/test_stage039_guest_network.py
           python3 -m py_compile scripts/stage039_jailed_guest_network.py scripts/tests/test_stage039_jailed_guest_network.py
+          python3 -m py_compile scripts/stage039_guest_tc.py scripts/tests/test_stage039_guest_tc.py
           python3 -m py_compile scripts/stage039_cold_recovery.py scripts/tests/test_stage039_cold_recovery.py
           python3 -m py_compile scripts/stage039_independent_hosts.py scripts/tests/test_stage039_independent_hosts.py
       - name: Observe KVM, cgroup v2, PID1 systemd, BTF and bpffs on actual CI Linux
