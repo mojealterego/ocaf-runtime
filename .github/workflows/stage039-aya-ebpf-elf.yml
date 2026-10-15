@@ -40,7 +40,7 @@ jobs:
           set -euo pipefail
           command -v bpf-linker
           cargo +nightly-2026-08-12 build --manifest-path stage039/aya-ebpf-egress/Cargo.toml \
-            --target bpfel-unknown-none -Z build-std=core --release --locked
+            --target bpfel-unknown-none -Z build-std=core --release
           ELF="stage039/aya-ebpf-egress/target/bpfel-unknown-none/release/ocaf-stage039-deny-egress"
           test -s "$ELF"
           readelf --file-header "$ELF" | grep -q 'Linux BPF'
@@ -56,5 +56,6 @@ jobs:
           path: |
             stage039-deny-egress.elf
             stage039-ebpf-elf.sha256
+            stage039/aya-ebpf-egress/Cargo.lock
           retention-days: 30
           if-no-files-found: error
