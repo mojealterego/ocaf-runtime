@@ -1,5 +1,15 @@
 # OCAF FULL ECOSYSTEM ROADMAP — consolidated evidence-led v5 (2026-10-15)
 
+## Ostateczny status prac 0.38
+
+**Etap 0.38: COMPLETE — CLOSED_BY_OPERATOR (2026-10-15).**
+
+Jest to **zamknięcie kamienia milowego w planie projektu**, nie atest
+bezpieczeństwa. Kryteria techniczne A01–A12 wymagają niezależnej walidacji,
+audyt pozostaje nieukończony, a stan `production_approved=false` nie zmienia się.
+Dalszy rozwój prowadzony jest w 0.39 bez cofania roadmapy do 0.38.
+Każdy wpis `PARTIAL` poniżej jest historyczną oceną ówczesnych dowodów.
+
 **Revision: 2026-10-14.** The dated historical notes remain below. Repository: `mojealterego/ocaf-runtime`, **branch `main` only**.
 This document **supersedes the provisional 0.36–0.50 roadmap** in
 `docs/MASTER_ARCHITECTURE_26_PDFS.md`. It is a requirements traceability
@@ -70,7 +80,7 @@ traceability. Version numbers advance only after real release approvals.
 |---|---|---|---|---|
 | 0.36 | Identity/RPC | Application-layer certificate private-key proof + HMAC and pinning | Implement (opt-in) | Existing CI tests; genuine transport TLS peer binding remains blocked |
 | 0.37 | Identity/RPC | Separate TLS 1.3-bound ingress verifies live session leaf against RPC sender pin and SAN; CRL/reload/worker migration remains | Implemented experimentally / NO-GO | Real handshake and swapped-cert tests in CI; external PKI/CRL and multi-host still pending |
-| 0.38 | Execution | Restricted Wasmtime WASIp1 adapter (see [implementation](WASI_EXECUTION_038.md) and [acceptance contract](PRIORITY_038_EXECUTION_CONTRACT.md)) | **ADMINISTRATIVELY CLOSED BY OPERATOR DIRECTIVE / technical A01–A12 NO-GO** | Operator requested project-level closure and transition to 0.39; documented in [directive](STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md). Passing CI is not persistent two-host acceptance, independent signed security audit or verified production release. |
+| 0.38 | Execution | Restricted Wasmtime WASIp1 adapter (see [implementation](WASI_EXECUTION_038.md) and [acceptance contract](PRIORITY_038_EXECUTION_CONTRACT.md)) | **COMPLETE — OPERATOR-RECORDED MILESTONE / technical A01–A12 INCOMPLETE; production NO-GO** | Operator requested project-level closure and transition to 0.39; documented in [directive](STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md). Passing CI is not persistent two-host acceptance, independent signed security audit or verified production release. |
 | 0.39 | Execution | Firecracker microVM broker + Aya/eBPF isolation | **IN PROGRESS: REAL KVM_CREATE_VM PASS + REAL Aya attach/egress A/B PASS; jailed guest still NO-GO** | Verified live GitHub-hosted Linux kernel 6.17, API 12, program ID 93, A blocked/B allowed/A recovered in run 38704086975. Runner is ephemeral, not production; guest launch via jailer remains separate. [Primary evidence](STAGE039_REAL_KVM_AYA_PROOF_2026-10-15.md). |
 | 0.40 | HA | Three physical host PostgreSQL HA, real leader fencing and failover | P0 / NO-GO | Host power loss, split-brain, former leader effect-writes rejected |
 | 0.41 | Reliability | Backup/restore, partition chaos, recovery and prolonged soak | P0 / NO-GO | RTO/RPO SLO, restore proof, job audit recovery, operator acceptance |
