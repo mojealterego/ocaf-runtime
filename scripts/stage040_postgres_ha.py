@@ -98,6 +98,20 @@ def _wait(test,seconds:int=15)->None:
     raise PostgresHAError("bounded PostgreSQL WAL catch-up timed out: "+str(last))
 
 
+def pg_basebackup_command(binary:str,port:int,destination:Path)->list[str]:
+    if (not isinstance(binary,str) or not binary.startswith("/")
+        or type(port) is not int or not 1024<=port<=65535
+        or not isinstance(destination,Path) or not destination.is_absolute()
+        or ".." in destination.parts or destination.is_symlink()):
+        raise PostgresHAError("untrusted local streaming backup target")
+    # Default spread checkpoint can wait for minutes under concurrent WAL
+    # churn; force a PostgreSQL CHECKPOINT now, not a synthetic sleep.
+    return [binary,"--host","127.0.0.1","--port",str(port),
+            "--username","postgres","--pgdata",str(destination),
+            "--format=plain","--wal-method=stream",
+            "--checkpoint=fast","--write-recovery-conf"]
+
+
 def validate_pgbench_load(output:str,seconds:int,clients:int)->dict:
     if (not isinstance(output,str) or len(output)>100000 or
         type(seconds) is not int or not 15<=seconds<=120 or
@@ -176,9 +190,8 @@ def run_lab(*,pg_bin:Path,report:Path,soak_seconds:int=0)->dict:
             _run([bindir("pgbench"),"-i","-s","1","-h","127.0.0.1",
                   "-p",str(ports[0]),"-U","postgres","postgres"],timeout=80)
         for name in ("b","c"):
-            _run([bindir("pg_basebackup"),"-h","127.0.0.1",
-                  "-p",str(ports[0]),"-U","postgres",
-                  "-D",str(paths[name]),"-Fp","-Xs","-R"],timeout=60)
+            _run(pg_basebackup_command(bindir("pg_basebackup"),ports[0],paths[name]),
+                 timeout=90)
             start(name)
             _wait(lambda n=name:query(n,"SELECT pg_is_in_recovery()")=="t"
                   and query(n,"SELECT COUNT(*) FROM ocaf40_events")=="1",seconds=20)
