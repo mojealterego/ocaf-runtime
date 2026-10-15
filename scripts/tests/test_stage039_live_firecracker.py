@@ -99,5 +99,18 @@ class LiveContract(unittest.TestCase):
             self.assertEqual(stat.S_IMODE((root/"guest").stat().st_mode),0o755)
 
 
+    def test_large_guest_serial_logs_keep_initial_kernel_boot_line(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            output=Path(directory)/"console.log"
+            output.write_text("[    0.000000] Linux version 4.14.55\n" +
+                              ("[api get] 200 OK\n"*12000) +
+                              "Welcome to Alpine Linux\n")
+            bounded=live._bounded_console_evidence(output)
+            self.assertIn("Linux version 4.14.55",bounded)
+            self.assertIn("Welcome to Alpine Linux",bounded)
+            self.assertLess(len(bounded),80000)
+
+
 if __name__ == "__main__":
     unittest.main()
