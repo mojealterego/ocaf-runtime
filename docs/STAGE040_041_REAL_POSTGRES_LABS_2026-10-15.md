@@ -48,3 +48,7 @@ Prowadzić rozwój zgodnie z zależnościami, implementować i testować każdy 
 - 0.42+: wszystkie kolejne etapy macierzy wraz z tworzeniem kolejnych etapów w razie rzeczywistych nowych wymagań.
 
 **Operator nie wymaga niezależnych potwierdzeń do prowadzenia tych prac. Nie jest to zezwolenie na fałszowanie technicznych wyników lub ogłoszenie faktycznego wdrożenia produkcyjnego bez testów.**
+
+## 0.41.2 — rzeczywisty PostgreSQL restore na innym kernelu Linux
+
+[**GitHub Actions 38734668015 — SUCCESS, oba joby**](https://github.com/mojealterego/ocaf-runtime/actions/runs/38734668015). Po `pg_dump` 25 rekordów i zatrzymaniu źródłowego PostgreSQL A, nowy host B zweryfikował SHA-256 checkpointu/archiwum i różne identyfikatory boot kernela, odrzucił rzeczywiście zmodyfikowaną kopię, następnie uruchomił nową instancję PostgreSQL i przywrócił identyczne 25 rekordów (`pg_restore` + identyczny SHA-256 treści). Artefakty: [źródło 11972505183](https://github.com/mojealterego/ocaf-runtime/actions/runs/38734668015/artifacts/11972505183), [odtworzenie 11972585218](https://github.com/mojealterego/ocaf-runtime/actions/runs/38734668015/artifacts/11972585218). Wszystko w **dwóch efemerycznych Linux VM**; nie twierdzi się, że było to DR produkcyjne. [Pełny raport](STAGE041_CROSS_KERNEL_RESTORE_2026-10-15.md).
