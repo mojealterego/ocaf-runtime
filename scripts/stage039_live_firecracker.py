@@ -63,7 +63,7 @@ def validate_running(api: dict, serial: str, cgroups: str, vm_id: str,
     if (not isinstance(api, dict) or api.get("state") != "Running" or
             api.get("id") != vm_id):
         raise LiveFirecrackerError("Firecracker API did not report the expected running VM")
-    if not re.search(r"(?:^|\n)Linux version [0-9]", serial):
+    if not re.search(r"(?:^|\n)(?:\[[ .0-9]+\]\s*)?Linux version [0-9]", serial):
         raise LiveFirecrackerError("no authentic guest kernel boot message on serial")
     if not isinstance(cgroups, str) or not any(
         x.startswith("0::/") and cgroup_name in x[4:].split("/")
