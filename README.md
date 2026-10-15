@@ -1068,3 +1068,8 @@ Operator authorized unrestricted **development progression and roadmap extension
 ### 0.40.6: genuine PostgreSQL WAL over private kernel TCP/veth namespaces with live partition (2026-10-15)
 
 **REAL CI PASS** [38752910618](https://github.com/mojealterego/ocaf-runtime/actions/runs/38752910618): three actual PostgreSQL 16 postmasters using **separate Linux network namespaces and veth/bridge**, each with its own private IP; source A's `pg_stat_replication` sees `10.247.40.2` and `10.247.40.3`. Kernel route blackholes B→A, C continues replay, B freezes, route heals and B catches up. After A IMMEDIATE crash, B promotes and C re-parents by **live TCP**. The kernel is SHARED, so this is not PostgreSQL replication between independent physical hosts/kernels. [Evidence](docs/STAGE040_LIVE_TCP_NETNS_PARTITION_2026-10-15.md).
+
+
+### Roadmap v8 — source-traceable Apex Tier-0 extension (2026-10-15)
+
+Added **40 further main stages (1.15–1.54) and 12 infrastructure subtasks** directly to `main`, all backed by positive/negative acceptance tests, dependencies, responsible subsystems and page references to the newly supplied 15-page `Dokument bez nazwy(2).PDF`. Six source pillars: Zenoh SHM and hybrid Automerge/Yrs; CoALA/UALA/Titans; RQGM/type-sitter; Sigma-Delta/Loihi 2 and ML-KEM; genuine guest Aya eBPF and FinOps; L402/Macaroon/Lightning. **Status of ALL new features: PLANNED, not implemented.** Numerical performance claims from the supplied PDF require actual measurements and cannot be treated as verified. [Full v8 table](docs/ROADMAP_APEX_TIER0_2026-10-15.md) · [Machine-readable 52-stage scope](docs/roadmap/apex_tier0_extension.json). Python regression and CI block missing rows, invented test evidence and false production approval.

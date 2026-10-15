@@ -1,0 +1,40 @@
+name: OCAF roadmap v8 Apex traceability regression — 52 planned milestones
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/ROADMAP_APEX_TIER0_2026-10-15.md
+      - docs/roadmap/apex_tier0_extension.json
+      - docs/ROADMAP_FULL_ECOSYSTEM_2026.md
+      - scripts/validate_roadmap_apex.py
+      - scripts/tests/test_validate_roadmap_apex.py
+      - .github/workflows/roadmap-apex-v8-validation.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-apex-roadmap:
+    name: Six pillars, 40 new main stages, 12 sub-stages, exact negative tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Compile and run source-traceability negative regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/validate_roadmap_apex.py scripts/tests/test_validate_roadmap_apex.py
+          python3 -m unittest discover -s scripts/tests -p test_validate_roadmap_apex.py -v
+      - name: Validate exact v8 roadmapping with no fabricated implementation claims
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/validate_roadmap_apex.py \
+            --manifest docs/roadmap/apex_tier0_extension.json \
+            --markdown docs/ROADMAP_APEX_TIER0_2026-10-15.md
+          echo "OCAF_APEX_V8_40_MAIN_12_TECHNICAL_SIX_PILLARS_TRACEABILITY_VALID"
