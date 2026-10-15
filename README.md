@@ -5,8 +5,7 @@
 **STAGE 0.38 = COMPLETE  (status prac w roadmapie).**
 Wszystkie dalsze zadania rozwojowe przeniesiono do 0.39 lub odrębnych bramek odbiorowych.
 Zakończenie kamienia milowego.
-**Odbiór techniczny A01–A12 = COMPLETE, audyt niezależny = COMPLETE,
-production_approved = true, production_deployed = true.**
+**Odbiór administracyjny operatora: COMPLETE. Techniczne A01–A12 oraz niezależny audyt nie mają kompletu rzeczywistych dowodów. `production_approved=false`, `production_deployed=false`; etap 0.38 zamknięto zarządczo, nie jako certyfikat produkcyjny.**
 Zapisy historyczne `PARTIAL` w poniższych sekcjach odnoszą się do poprzednich
 dat; nadrzędny aktualny status zarządczy brzmi `COMPLETE`.
 Szczegóły: [decyzja operatora](docs/STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md)
@@ -1077,3 +1076,11 @@ Added **40 further main stages (1.15–1.54) and 12 infrastructure subtasks** di
 ### OCAF Roadmap v9 (2026-10-15)
 
 Added **40 main roadmap stages 1.55–1.94 plus 16 technical subtasks**, reflecting the eight-step research/deployment program and six-Crate Cargo Workspace proposal in the user's newer 13-page research PDF. The total main stage identifier range is **195 (0.00–1.94)**; added functions remain **PLANNED**, and source benchmark numbers are not OCAF empirical results. [Detailed 56 rows](docs/ROADMAP_SOVEREIGN_WORKSPACE_V9_2026-10-15.md) · [machine manifest](docs/roadmap/sovereign_workspace_v9.json). Existing KVM WASI-in-guest and independent-host PostgreSQL HA requirements stay OPEN until actual tests succeed.
+
+### Iteracja wykonawcza 0.39–0.41 — rzeczywiste testy i granice infrastruktury (2026-10-15)
+
+**0.39: Guest WASIp1 / Firecracker remains IN PROGRESS.** In actual Firecracker KVM Linux 4.14 guests, Wasmtime stalled before `fd_write` due to an uninitialized guest kernel CRNG (console `OCAF039_GUEST_CRNG_NOT_INITIALIZED`, [failing run 38764740853](https://github.com/mojealterego/ocaf-runtime/actions/runs/38764740853)). Kernel-authenticated broker now waits for actual guest WASIp1 success before VM termination; a kernel virtio-rng entropy device was configured; additional dedicated old-kernel CPU RDSEED/RDRAND → Linux `RNDADDENTROPY` bootstrap and strict `getrandom` readiness checks are being exercised in real KVM. **No PASS is claimed until a new real runner finishes green.**
+
+**0.40/0.41: REAL 20-second PostgreSQL network chaos PASSED.** [GitHub Actions 38764083703 — SUCCESS](https://github.com/mojealterego/ocaf-runtime/actions/runs/38764083703) ran three genuine PG postmasters in separate Linux network namespaces via veth/TCP, `pgbench -c8 -j2 -T20`, bidirectional A↔B blackhole, healthy C WAL replay, delayed B WAL rejoin and full account balance checksums, A IMMEDIATE crash, B promotion and C reparent. **All 3 processes share one kernel; not inter-host HA.**
+
+**0.40.3: TRUE live 3-host PostgreSQL test infrastructure IMPLEMENTED but NOT EXECUTED.** [GitHub Actions 38765271549 — unit PASS, remote job SKIPPED](https://github.com/mojealterego/ocaf-runtime/actions/runs/38765271549). `scripts/stage040_interhost_live.py` requires three genuinely different Linux kernel boot IDs, SSH host-key pinning, real primary `pg_stat_replication.client_addr`, two real `pg_stat_wal_receiver` streams and a newly written source nonce/LSN replayed via WAL on both remote hosts. [Required topology and runbook](docs/STAGE040_REAL_INTERHOST_LIVE_PG_ACCEPTANCE_2026-10-15.md). An independently provisioned authorised three-host lab and operator SSH keys are not currently connected; therefore **true inter-host streaming and quorum fencing remain unverified**.
