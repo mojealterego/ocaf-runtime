@@ -58,7 +58,7 @@ class RestoreOriginalBuilderTests(unittest.TestCase):
         with self.assertRaises(guard.CanonicalV11Error):
             self.verify(builders=b)
         b=copy.deepcopy(self.builders)
-        b["products"][6]["mode"]="Code"
+        b["products"][7]["mode"]="Code"
         with self.assertRaises(guard.CanonicalV11Error):
             self.verify(builders=b)
 
