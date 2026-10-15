@@ -34,6 +34,12 @@ class JailedGuestNetworkContracts(unittest.TestCase):
             with self.subTest(changes=changes),self.assertRaises(jailed.JailedNetError):
                 jailed.verify_pair(a,{**b,**changes})
 
+    def test_cross_host_handoff_nonce_cannot_be_missing_or_malformed(self):
+        self.assertEqual(jailed.bound_nonce("0123456789abcdef"),"0123456789abcdef")
+        for bad in ("", "not-a-nonce", "0"*15, "g"*16, "../"*6, "0"*64):
+            with self.subTest(bad=bad),self.assertRaises(jailed.JailedNetError):
+                jailed.bound_nonce(bad)
+
     def test_late_pid_and_cgroup_changes_are_rejected(self):
         p=mock.Mock(pid=42424);p.poll.return_value=None
         with mock.patch.object(jailed.fc.vm_egress,"require_vm_running",return_value=909):
