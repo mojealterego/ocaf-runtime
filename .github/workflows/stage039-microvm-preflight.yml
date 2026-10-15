@@ -15,6 +15,8 @@ on:
       - scripts/tests/test_stage039_kvm_ioctl.py
       - scripts/stage039_firecracker_spec.py
       - scripts/tests/test_stage039_firecracker_spec.py
+      - scripts/stage039_live_egress.py
+      - scripts/tests/test_stage039_live_egress.py
       - stage039/aya-guard/**
       - stage039/aya-ebpf-egress/**
       - scripts/release_readiness.py
@@ -69,6 +71,8 @@ jobs:
         run: cargo test --manifest-path stage039/aya-guard/Cargo.toml --verbose
       - name: Verify staged jailer artifacts and no-egress Firecracker machine config
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_firecracker_spec.py -v
+      - name: Aya real-host negative-egress acceptance harness (mock unit contract ONLY)
+        run: python3 -m unittest discover -s scripts/tests -p test_stage039_live_egress.py -v
       - name: Python source syntax verification
         run: |
           python3 -m py_compile scripts/stage039_microvm_gate.py scripts/tests/test_stage039_microvm_gate.py
@@ -76,6 +80,7 @@ jobs:
           python3 -m py_compile scripts/stage039_broker_ipc.py scripts/tests/test_stage039_broker_ipc.py
           python3 -m py_compile scripts/stage039_kvm_ioctl.py scripts/tests/test_stage039_kvm_ioctl.py
           python3 -m py_compile scripts/stage039_firecracker_spec.py scripts/tests/test_stage039_firecracker_spec.py
+          python3 -m py_compile scripts/stage039_live_egress.py scripts/tests/test_stage039_live_egress.py
       - name: Observe KVM, cgroup v2, PID1 systemd, BTF and bpffs on actual CI Linux
         shell: bash
         run: |
