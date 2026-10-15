@@ -179,6 +179,19 @@ class BrokerAdmissionTests(unittest.TestCase):
             broker.AdmissionLedger(self.state / "second.sqlite")
         self.state.chmod(0o700)
 
+    def test_sqlite_file_is_private_before_connect_opens_it(self):
+        fresh = self.state / "fresh.sqlite"
+        actual_connect = broker.sqlite3.connect
+
+        def check_and_connect(*args, **kwargs):
+            self.assertTrue(fresh.is_file(), "secure create-only file must exist first")
+            self.assertEqual(fresh.stat().st_mode & 0o777, 0o600)
+            return actual_connect(*args, **kwargs)
+
+        with mock.patch.object(broker.sqlite3, "connect", side_effect=check_and_connect):
+            created = broker.AdmissionLedger(fresh)
+            created.close()
+
     def test_ledger_rejects_symlink(self):
         (self.state / "other.db").write_text("")
         (self.state / "alias.db").symlink_to(self.state / "other.db")
