@@ -66,3 +66,12 @@ production_approved: false
 - New PLANNED stages: 1.98 (DSPy BootstrapFewShot/MIPRO/GEPA), 1.99 (SWE-bench Verified/N-run reliability), 2.00 (taskweaving DAG and fault recovery).
 - Synchronized: ROADMAP.md, docs/ROADMAP_FULL_ECOSYSTEM_2026.md, docs/roadmap/canonical_v11_inventory.json and README.md.
 - Counts: 201 main + 64 technical + 10 Agents Builder = 275. Next new stage 2.01. No production approval or new test claim.
+
+## 2026-10-15 — PDF reconciliation final pass and regression guard
+
+- Additional explicit source-derived research requirements: `2.01` Sakana AI Scientist four-stage scientific lifecycle; `2.02` OpenHands/OpenDevin agent-server/legacy repository workflow; `2.03` theory-of-mind uncertainty and human approval.
+- Canonical inventory now: **204 main stages + 64 technical subtasks + 10 Agents Builder products = 278 entries**; `next_new_main_stage=2.04`. All nine newly recovered stages 1.95–2.03 remain `PLANNED`.
+- Added `scripts/check_roadmap_pdf_coverage.py` and `.github/workflows/roadmap-pdf-coverage.yml` to fail on missing stage IDs, roadmap/mirror drift, missing PDF provenance, duplicate IDs, count mismatch or incorrectly marked production approval.
+- Cross-reference: `docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md`.
+- This is a documentation coverage and consistency gate, **not** a proof that all implementation, security, multi-host or release acceptance tests passed.
+
