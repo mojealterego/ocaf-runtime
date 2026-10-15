@@ -45,7 +45,7 @@ def verify_brokered_pair(broker_report:dict,jailer_base:Path,rootfs_sha256:str)-
     if (not isinstance(binding,dict)
         or binding.get("status")!="BROKER_SO_PEERCRED_TWO_REAL_JAILED_VM_BOOT_BOUND"
         or binding.get("real_kernel_so_peercred_authenticated_broker") is not True
-        or binding.get("durable_broker_leases_matched") is not True
+        or binding.get("durable_sqlite_leases_matched") is not True
         or binding.get("admission_before_vm_launch") is not True
         or binding.get("durable_broker_leases_released_after_vm_crashes") is not True
         or binding.get("wasi_executed_inside_guest") is not False
