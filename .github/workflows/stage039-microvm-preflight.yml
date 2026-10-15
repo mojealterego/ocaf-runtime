@@ -18,6 +18,8 @@ on:
       - scripts/stage039_live_egress.py
       - scripts/tests/test_stage039_live_egress.py
       - scripts/stage039_live_firecracker.py
+      - scripts/stage039_vm_egress.py
+      - scripts/tests/test_stage039_vm_egress.py
       - scripts/tests/test_stage039_live_firecracker.py
       - stage039/aya-guard/**
       - stage039/aya-ebpf-egress/**
@@ -77,6 +79,8 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_live_egress.py -v
       - name: Jailed Firecracker real guest boot contract (mock unit checks only)
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_live_firecracker.py -v
+      - name: VM host-cgroup Aya test contract (no physical kernel claim)
+        run: python3 -m unittest discover -s scripts/tests -p test_stage039_vm_egress.py -v
       - name: Python source syntax verification
         run: |
           python3 -m py_compile scripts/stage039_microvm_gate.py scripts/tests/test_stage039_microvm_gate.py
@@ -86,6 +90,7 @@ jobs:
           python3 -m py_compile scripts/stage039_firecracker_spec.py scripts/tests/test_stage039_firecracker_spec.py
           python3 -m py_compile scripts/stage039_live_egress.py scripts/tests/test_stage039_live_egress.py
           python3 -m py_compile scripts/stage039_live_firecracker.py scripts/tests/test_stage039_live_firecracker.py
+          python3 -m py_compile scripts/stage039_vm_egress.py scripts/tests/test_stage039_vm_egress.py
       - name: Observe KVM, cgroup v2, PID1 systemd, BTF and bpffs on actual CI Linux
         shell: bash
         run: |
