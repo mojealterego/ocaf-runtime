@@ -1,4 +1,4 @@
-# OCAF FULL ECOSYSTEM ROADMAP — consolidated evidence-led v7 (2026-10-15)
+# OCAF FULL ECOSYSTEM ROADMAP — consolidated evidence-led v8 (2026-10-15)
 
 ## Mandat operatora: ciągły rozwój bez odrębnych potwierdzeń (2026-10-15)
 
@@ -32,6 +32,12 @@ code examples in PDFs are *proposals*; they are not production-test evidence.
 Uwzględniono **dwa nowo dostarczone PDF-y**: 15-stronicowy przegląd `OmniNous/OmniHoncho/OmniCloudShield/OmniMask/OmniVox/OmniGrant` oraz 14-stronicowy przegląd `OmniZeroClick/OmniGraphiti/OmniDiT/OmniGameSubsystems/OmniMCPO/OmniCloudBurst`. Zgodnie z dokumentami i techniczną selekcją zostało zapisanych **15 dodatkowych etapów 1.00–1.14** oraz P0 testy **0.39.19–0.39.21, 0.40.3–0.40.5, 0.41.5–0.41.6** wraz z zależnościami i falsyfikowalnymi warunkami zakończenia. Nie uznajemy przykładowego kodu w PDF za wdrożony komponent; nie obiecujemy skuteczności ochrony przed zero-click, rzeczywistego DID/eSIM, nieposiadanej infrastruktury GPU, zewnętrznej certyfikacji ani dostępu do opłaconych API. **Wersja źródłowa i kompletna matryca śledzenia: [ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md](ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md).**
 
 Pierwsze obowiązkowe priorytety wykonawcze: **rzeczywisty WASIp1 import wykonany przez interpreter *wewnątrz* Firecracker guest i związany z autoryzacją brokera**, następnie **rzeczywiste PostgreSQL WAL streaming między osobnymi kernelami przez żywy TCP i fencing**, a dopiero potem **wielogodzinne testy chaos/soak**. Obserwacje pośrednie nadal mają własne dowody, lecz nie są równoznaczne z zamknięciem tych kryteriów.
+
+## Revision v8 — nowy PDF „Apex Tier-0”: +40 etapów głównych, +12 zadań infrastrukturalnych (2026-10-15)
+
+Z 15-stronicowego `Dokument bez nazwy(2).PDF` wyodrębniono sześć filarów i dodano **40 nowych etapów 1.15–1.54**: Zenoh SHM/Automerge+Yrs/OTel; CoALA–UALA–Titans; Red Queen Gödel Machine + type-sitter; Sigma-Delta/Loihi 2 i ML-KEM; host+guest Aya/eBPF oraz zarządzanie kosztami i aplikacjami jednorazowymi; stateless L402/Macaroon/Lightning. Ponadto dopisano **12 podetapów 0.39.22–0.39.25, 0.40.7–0.40.10 oraz 0.41.7–0.41.10**. Każda nowa pozycja ma **właściciela modułowego, zależności, stronę PDF, test pozytywny i negatywny**. **Wszystkie nowe elementy mają status PLANNED**, bez fałszywego założenia, że prototyp z PDF działa już w repozytorium lub osiąga deklarowane opóźnienia i wydajność. [Tabela 52 pozycji](ROADMAP_APEX_TIER0_2026-10-15.md) · [Manifest JSON](roadmap/apex_tier0_extension.json).
+
+**Zachowany priorytet:** faktyczne WASI wewnątrz Firecracker i broker, streaming PostgreSQL między niezależnymi kernelami oraz długie testy niezawodności. Numery 1.15+ rozszerzają plan, nie zamykają niezrealizowanych kryteriów 0.39–0.41.
 
 ## Mandatory scope and coverage
 

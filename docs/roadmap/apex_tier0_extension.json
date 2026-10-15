@@ -1,0 +1,1087 @@
+{
+  "schema_version": 1,
+  "roadmap_id": "OCAF_APEX_TIER0_2026_10_15",
+  "status": "PROPOSED_NOT_IMPLEMENTED",
+  "repo": "mojealterego/ocaf-runtime",
+  "branch": "main",
+  "source_pdf": "Dokument bez nazwy(2).PDF",
+  "source_pages": 15,
+  "main_stage_ids_range": "1.15-1.54",
+  "main_stages": 40,
+  "technical_substages": 12,
+  "independent_audit_gate_waived_for_development": true,
+  "production_approved": false,
+  "items": [
+    {
+      "id": "1.15",
+      "title": "Zenoh SHM zero-copy",
+      "deliverable": "Implementacja transportu Zenoh shared-memory z limitami buforów i kontrolą wersji API",
+      "acceptance": "Dwa procesy przesyłają rzeczywiste bloki i zapisują p50/p95/p99 oraz kopie bajtów",
+      "negative": "Niepoprawny uchwyt SHM i przekroczony rozmiar kończą się odmową",
+      "dependencies": [
+        "0.43",
+        "0.47"
+      ],
+      "pdf_pages": [
+        1,
+        3
+      ],
+      "priority": "P1",
+      "owner": "transport",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.16",
+      "title": "Izolacja SHM tenantów",
+      "deliverable": "Obszary SHM przypisane do UID/capability i czyszczenie po SIGKILL",
+      "acceptance": "Tenant B nie odczytuje pamięci A; po awarii usuwane są osierocone segmenty",
+      "negative": "Cross-tenant attach i pozostawione deskryptory muszą być wykryte",
+      "dependencies": [
+        "0.39",
+        "1.15"
+      ],
+      "pdf_pages": [
+        1,
+        3
+      ],
+      "priority": "P0",
+      "owner": "security",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.17",
+      "title": "Zenoh no_std i pico",
+      "deliverable": "Adaptery no_std/pico tylko dla rzeczywistych wspieranych urządzeń edge",
+      "acceptance": "Pub/sub i queryable przetestowane na sprzęcie albo emulatorze z ograniczoną pamięcią",
+      "negative": "Zerwany transport, zły frame i niezgodna wersja odrzucane",
+      "dependencies": [
+        "0.43",
+        "1.15"
+      ],
+      "pdf_pages": [
+        1
+      ],
+      "priority": "P2",
+      "owner": "edge",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.18",
+      "title": "Automerge + Yrs",
+      "deliverable": "Wydzielone domeny binarnych dokumentów JSON i strumieni tekstowo-kodowych oraz jawny most",
+      "acceptance": "Konkurencyjne edycje round-trip bez utraty typów i z rzeczywistym merge",
+      "negative": "Uszkodzony update Yrs lub niezgodny typ JSON nie zmienia stanu",
+      "dependencies": [
+        "0.48",
+        "1.09"
+      ],
+      "pdf_pages": [
+        1,
+        3
+      ],
+      "priority": "P1",
+      "owner": "memory",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.19",
+      "title": "CRDT konflikt i porządek przyczynowy",
+      "deliverable": "Deterministyczne reguły merge, tombstone i kompakcja danych z ograniczeniem pamięci",
+      "acceptance": "Niezależne repliki z losową kolejnością operacji dają identyczny stan",
+      "negative": "Replay, ABA, skasowany rekord i wyczerpanie quota bez cichej utraty danych",
+      "dependencies": [
+        "1.18",
+        "0.44"
+      ],
+      "pdf_pages": [
+        1
+      ],
+      "priority": "P1",
+      "owner": "memory",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.20",
+      "title": "OTel batch exporter",
+      "deliverable": "Dobór zgodnej wersji tracing-opentelemetry i batch export do OTLP z bounded queue",
+      "acceptance": "Rzeczywisty collector przyjmuje spany i zachowuje traceparent przez tokio::spawn",
+      "negative": "Zerwany collector oraz pełna kolejka nie zatrzymują ścieżki krytycznej",
+      "dependencies": [
+        "0.47",
+        "1.15"
+      ],
+      "pdf_pages": [
+        1,
+        3
+      ],
+      "priority": "P1",
+      "owner": "observability",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.21",
+      "title": "Sampling i shutdown telemetrii",
+      "deliverable": "ParentBased sampling i uporządkowane zamknięcie Tracer/Meter/Logger",
+      "acceptance": "Porównanie śladów multi-hop, drop counts i kontrolowane zakończenie procesów",
+      "negative": "Odrzucenie błędnych trace-id, przeciążenia i nieukończonych flushów",
+      "dependencies": [
+        "1.20"
+      ],
+      "pdf_pages": [
+        1,
+        3
+      ],
+      "priority": "P1",
+      "owner": "observability",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.22",
+      "title": "CoALA working memory",
+      "deliverable": "Osobne ograniczone stanem roboczym konteksty decyzji w per-tenant store",
+      "acceptance": "Reset scratchpadu i izolacja wielu agentów po każdej turze",
+      "negative": "Próba ponownego użycia starego scratchpadu lub innego tenantu odrzucona",
+      "dependencies": [
+        "0.48",
+        "1.09"
+      ],
+      "pdf_pages": [
+        1,
+        5,
+        6
+      ],
+      "priority": "P1",
+      "owner": "memory",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.23",
+      "title": "CoALA episodic memory",
+      "deliverable": "Epizody i trajektorie o weryfikowalnym źródle reward i wyniku",
+      "acceptance": "Zapytania po czasie, powrót po restart oraz reprodukcja konkretnego epizodu",
+      "negative": "Skasowanie wyniku i podmieniony reward wykrywane sumą i uprawnieniami",
+      "dependencies": [
+        "1.22",
+        "1.00"
+      ],
+      "pdf_pages": [
+        1,
+        5,
+        6
+      ],
+      "priority": "P1",
+      "owner": "memory",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.24",
+      "title": "CoALA semantic memory",
+      "deliverable": "Semantyczne fakty z temporalnością, zaufaniem i usuwaniem danych",
+      "acceptance": "Konfliktujące fakty mają jawny status, wersję i pochodzenie",
+      "negative": "Stary lub podmieniony fakt nie nadpisuje zatwierdzonej korekty",
+      "dependencies": [
+        "1.09",
+        "1.22"
+      ],
+      "pdf_pages": [
+        1,
+        5,
+        6
+      ],
+      "priority": "P1",
+      "owner": "memory",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.25",
+      "title": "CoALA procedural memory",
+      "deliverable": "Wersjonowane procedury i bezpieczne wiązanie kodu skilli z capabilities",
+      "acceptance": "Replay procedury o znanym digest i audyt wywołanych narzędzi",
+      "negative": "Nieautoryzowany skill, niezgodny digest i rekurencyjna pętla odrzucone",
+      "dependencies": [
+        "1.22",
+        "0.43"
+      ],
+      "pdf_pages": [
+        1,
+        5,
+        6
+      ],
+      "priority": "P1",
+      "owner": "agents",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.26",
+      "title": "UALA uncertainty gate",
+      "deliverable": "Kalibrowany próg niepewności przed action-tool bez automatycznego potwierdzania",
+      "acceptance": "Krzywe kalibracji i realne odrzucenia niepewnych działań w sandboxie",
+      "negative": "NaN, infinity i brak predykcji zawsze odmowa",
+      "dependencies": [
+        "1.22",
+        "0.44"
+      ],
+      "pdf_pages": [
+        1,
+        6
+      ],
+      "priority": "P0",
+      "owner": "security",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.27",
+      "title": "Titans test-time neural memory",
+      "deliverable": "Wydzielony adapter trwałej pamięci neuronowej z rollbackiem i ograniczonym uczeniem",
+      "acceptance": "Rzeczywiste porównanie pamięci i holdout baseline na tych samych epizodach",
+      "negative": "Nieograniczony gradient, catastrophic forgetting i cross-tenant mixing zablokowane",
+      "dependencies": [
+        "1.22",
+        "1.23",
+        "1.26"
+      ],
+      "pdf_pages": [
+        1,
+        5,
+        6
+      ],
+      "priority": "P2",
+      "owner": "research",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.28",
+      "title": "Retencja/zgody CoALA i Titans",
+      "deliverable": "Purpose-scoped consent, eksport i purge wszystkich czterech warstw oraz stanu neuronowego",
+      "acceptance": "Purge odtwarza 0 trafień i usuwa związane checkpointy",
+      "negative": "Zapytanie po usunięciu, stary snapshot i odtworzenie bez zgody odrzucone",
+      "dependencies": [
+        "1.22",
+        "1.27",
+        "1.02"
+      ],
+      "pdf_pages": [
+        1,
+        5,
+        6
+      ],
+      "priority": "P0",
+      "owner": "privacy",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.29",
+      "title": "RQGM egzaminator epoki",
+      "deliverable": "Niepodlegający zmianie w trakcie ewaluacji examiner i signed test-set manifest",
+      "acceptance": "Wszystkie kandydatury jednej epoki używają tego samego digesta sędziego",
+      "negative": "Podmiana sędziego w połowie epoki automatycznie unieważnia wynik",
+      "dependencies": [
+        "1.00",
+        "0.72"
+      ],
+      "pdf_pages": [
+        2,
+        7,
+        8
+      ],
+      "priority": "P1",
+      "owner": "evaluation",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.30",
+      "title": "RQGM koewolucja",
+      "deliverable": "Kontrolowane iteracje Examiner/Contestant z budżetem mutacji i walidacją",
+      "acceptance": "Dokładny replay par mutacji i wzrost wymagania kontrprzykładów mierzone baseline",
+      "negative": "Reward hacking i samonagradzanie modelu są odrzucane",
+      "dependencies": [
+        "1.29",
+        "0.72"
+      ],
+      "pdf_pages": [
+        2,
+        7,
+        8
+      ],
+      "priority": "P2",
+      "owner": "research",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.31",
+      "title": "RQGM Selective Erasure",
+      "deliverable": "Jawne oznaczenie score ledgerów zastępowanych examinerów bez usuwania źródeł",
+      "acceptance": "Po promocji nowego examina zachowują się wcześniejsze dowody surowe",
+      "negative": "Próba wymazania niepowiązanego evidence nie przechodzi",
+      "dependencies": [
+        "1.29",
+        "1.30"
+      ],
+      "pdf_pages": [
+        2,
+        7,
+        8
+      ],
+      "priority": "P1",
+      "owner": "evaluation",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.32",
+      "title": "Adversarial counterexample pool",
+      "deliverable": "Kontrolowana pula syntetycznych i ręcznie zweryfikowanych prób przeciwnych",
+      "acceptance": "Faktyczne mutacje powodują nowe testy i policzalne odrzucenia",
+      "negative": "Duplikat, prompt injection i dane innego tenantu odrzucone",
+      "dependencies": [
+        "1.30",
+        "1.31"
+      ],
+      "pdf_pages": [
+        2,
+        7,
+        8
+      ],
+      "priority": "P1",
+      "owner": "evaluation",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.33",
+      "title": "type-sitter typed AST",
+      "deliverable": "Pinned tree-sitter grammars, wygenerowane typowane node-types.json i AST digest",
+      "acceptance": "Rzeczywiste repo Rust parsowane w CI przed mutacją kodu",
+      "negative": "Nieprawidłowy parser i nieobsługiwany node muszą przerywać dopuszczenie",
+      "dependencies": [
+        "0.55",
+        "1.30"
+      ],
+      "pdf_pages": [
+        2,
+        7,
+        8
+      ],
+      "priority": "P1",
+      "owner": "code",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.34",
+      "title": "Architecture graph guards",
+      "deliverable": "Analiza cykli i niedozwolonych zależności View/Core/Data/Infrastructure",
+      "acceptance": "Fixture God Class, dependency cycle i leaky abstraction wykrywa każdą klasę",
+      "negative": "Ukryty alias i reexport nie omijają reguł",
+      "dependencies": [
+        "1.33"
+      ],
+      "pdf_pages": [
+        2,
+        7,
+        8
+      ],
+      "priority": "P1",
+      "owner": "code",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.35",
+      "title": "Sandboxed mutation safety",
+      "deliverable": "Mutacje tylko z capability, bez egress i z limitem czasu/kosztu",
+      "acceptance": "Kompilacja, testy regresyjne i wycofanie zmienionej mutacji mierzone",
+      "negative": "Złośliwa komenda shell, eskalacja UID i tajny token zakazane",
+      "dependencies": [
+        "0.39",
+        "1.32",
+        "1.34"
+      ],
+      "pdf_pages": [
+        2,
+        7,
+        8
+      ],
+      "priority": "P0",
+      "owner": "security",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.36",
+      "title": "CPU Sigma-Delta baseline",
+      "deliverable": "Deterministyczny router SDNN z przeniesieniem różnic do akumulatora",
+      "acceptance": "Fixture sygnałów 16-bit i histogram sparsity reproducible",
+      "negative": "Brak kanałów i niezgodny rozmiar bufora odrzucane",
+      "dependencies": [
+        "0.78"
+      ],
+      "pdf_pages": [
+        2,
+        8,
+        9
+      ],
+      "priority": "P2",
+      "owner": "edge",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.37",
+      "title": "Graded spikes numerics",
+      "deliverable": "Saturating arithmetic na signed 16-bit i bounded 32-bit sigma integrator",
+      "acceptance": "Testy własnościowe dla -32768 i +32767 bez overflow",
+      "negative": "Próg zerowy i dzielenie przez 0 muszą kończyć się błędem",
+      "dependencies": [
+        "1.36"
+      ],
+      "pdf_pages": [
+        2,
+        8,
+        9
+      ],
+      "priority": "P1",
+      "owner": "edge",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.38",
+      "title": "Loihi 2 hardware adapter",
+      "deliverable": "Opcjonalny sterownik do prawdziwego Intel Loihi 2 z CPU fallback",
+      "acceptance": "Dowód sprzętu, wersja SDK i zgodne spikes na fizycznym chipie",
+      "negative": "Brak sprzętu nie może oznaczać Loihi PASS ani wymuszać zakupu",
+      "dependencies": [
+        "1.37"
+      ],
+      "pdf_pages": [
+        2,
+        8,
+        9
+      ],
+      "priority": "P2",
+      "owner": "research",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.39",
+      "title": "SDNN energy latency benchmarking",
+      "deliverable": "Pomiar EDP dla Loihi/Jetson/CPU na równych workloadach",
+      "acceptance": "Surowe dane J/op i latency p95 wraz z host inventory",
+      "negative": "Wynik 0.000872x z PDF nie jest celem certyfikowanym bez testu",
+      "dependencies": [
+        "1.38"
+      ],
+      "pdf_pages": [
+        2,
+        8,
+        9
+      ],
+      "priority": "P2",
+      "owner": "research",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.40",
+      "title": "mlkem-native pinned KEM",
+      "deliverable": "Integracja z aktualnym audytowanym backend ML-KEM i testami znanych wektorów",
+      "acceptance": "KAT/negative key decapsulation w Rust na rzeczywistym backendzie",
+      "negative": "Zmieniony ciphertext i błędne klucze nie dają poprawnego secret",
+      "dependencies": [
+        "0.45"
+      ],
+      "pdf_pages": [
+        2,
+        9,
+        10
+      ],
+      "priority": "P1",
+      "owner": "crypto",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.41",
+      "title": "PQC hybrid handshake",
+      "deliverable": "Uwierzytelniony klasyczny plus ML-KEM transport i downgrading policy",
+      "acceptance": "Dwustronny handshake, rotation, RTT i transcript binding",
+      "negative": "Atak downgrade, niezgodny cert i replay są odrzucane",
+      "dependencies": [
+        "1.40",
+        "0.44"
+      ],
+      "pdf_pages": [
+        2,
+        9,
+        10
+      ],
+      "priority": "P0",
+      "owner": "crypto",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.42",
+      "title": "Guest Aya eBPF probe",
+      "deliverable": "Rzeczywista sonda syscall w jądrze Linux gościa Firecracker obok host TC/eBPF",
+      "acceptance": "Dowód kernel guest BPF program ID i rzeczywiste openat w VM",
+      "negative": "Host-only events i udawany program ID nie są dowodami guest telemetry",
+      "dependencies": [
+        "0.39",
+        "1.35"
+      ],
+      "pdf_pages": [
+        2,
+        3,
+        9,
+        10
+      ],
+      "priority": "P0",
+      "owner": "security",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.43",
+      "title": "Host/guest event correlation",
+      "deliverable": "Zweryfikowana korelacja VMID UID cgroup/guest boot ID ze zdarzeniem kernel eBPF",
+      "acceptance": "Event guest i host mają odrębną autentyczność i wspólne workload nonce",
+      "negative": "Podrobione boot ID, uid i cross-tenant event są odrzucane",
+      "dependencies": [
+        "1.42",
+        "0.39"
+      ],
+      "pdf_pages": [
+        2,
+        3,
+        9,
+        10
+      ],
+      "priority": "P0",
+      "owner": "security",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.44",
+      "title": "Entropy ransomware detector",
+      "deliverable": "Testowana entropia Shannona nazw plików i model false positives na kernel syscall",
+      "acceptance": "FNR/FPR liczony na rzeczywistym korpusie benign i malicious",
+      "negative": "Przypadkowo długie nazwy i fałszywe .locked nie zabijają procesu bez dowodu",
+      "dependencies": [
+        "1.42",
+        "1.43"
+      ],
+      "pdf_pages": [
+        3,
+        10,
+        11
+      ],
+      "priority": "P1",
+      "owner": "security",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.45",
+      "title": "Kernel network syscall monitor",
+      "deliverable": "Gość obserwuje connect/sendto, host obserwuje TAP wraz z polityką egress",
+      "acceptance": "Rzeczywiste zdarzenia obu jąder korelowane z pakietami",
+      "negative": "Pominięty/źle dopasowany proces lub polityka host-only nie uzyskuje PASS",
+      "dependencies": [
+        "1.42",
+        "1.43"
+      ],
+      "pdf_pages": [
+        3,
+        10,
+        11
+      ],
+      "priority": "P0",
+      "owner": "security",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.46",
+      "title": "Action capability verification",
+      "deliverable": "Stan Uprawnione→Zadeklarowane→Wdrożone→Zweryfikowane na rzeczywistym efekcie",
+      "acceptance": "Działania fizyczne i płatne wymagają odczytania wyniku zewnętrznego systemu",
+      "negative": "Sam raport narzędzia bez efektu nie jest zatwierdzeniem wdrożenia",
+      "dependencies": [
+        "0.44",
+        "1.26"
+      ],
+      "pdf_pages": [
+        3,
+        10,
+        11
+      ],
+      "priority": "P0",
+      "owner": "security",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.47",
+      "title": "Cost exhaustion shield",
+      "deliverable": "Rate/rolling budget limiter dla tokenów, requestów i opłat z oknami",
+      "acceptance": "Rzeczywiste obcięcie nadmiernej sesji i zachowanie legalnej",
+      "negative": "Overflow licznika, clock skew i fragmentacja tenantów nie omijają limitu",
+      "dependencies": [
+        "0.50",
+        "1.46"
+      ],
+      "pdf_pages": [
+        3,
+        10,
+        11
+      ],
+      "priority": "P0",
+      "owner": "finops",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.48",
+      "title": "Disposable Apps i Grid Compute",
+      "deliverable": "Rejestr TTL aplikacji, revoke secrets, garbage collect i opcjonalne sygnały energii",
+      "acceptance": "E2E utworzenie→wygaśnięcie→odwołanie i udokumentowany scheduler fallback",
+      "negative": "Brak licznika energii nie może udawać współpracy z siecią energetyczną",
+      "dependencies": [
+        "1.46",
+        "1.47"
+      ],
+      "pdf_pages": [
+        3,
+        10,
+        11
+      ],
+      "priority": "P1",
+      "owner": "finops",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.49",
+      "title": "L402 HTTP/gRPC grammar",
+      "deliverable": "Bounded parser challenge/authorization bez automatycznej płatności",
+      "acceptance": "Stricte parsowanie poprawnych nagłówków L402 i interoperacyjne fixtures",
+      "negative": "Niekompletna faktura, injection i za długie nagłówki odrzucone",
+      "dependencies": [
+        "0.44",
+        "0.50"
+      ],
+      "pdf_pages": [
+        3,
+        11,
+        12
+      ],
+      "priority": "P1",
+      "owner": "payments",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.50",
+      "title": "Macaroon chain HMAC",
+      "deliverable": "Prawidłowy root secret i HMAC-SHA256 chained caveats z kluczami w secret store",
+      "acceptance": "Interop z prawdziwym Macaroon verifier, constant-time MAC check",
+      "negative": "Modyfikacja caveat lub signature powoduje odmowę",
+      "dependencies": [
+        "1.49"
+      ],
+      "pdf_pages": [
+        3,
+        11,
+        12
+      ],
+      "priority": "P0",
+      "owner": "crypto",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.51",
+      "title": "Attenuation i caveat semantics",
+      "deliverable": "Caveats zakresu, limitu, czasu i tenantu bez podniesienia uprawnień",
+      "acceptance": "Pod-agent może tylko ograniczyć uprawnienia parent token",
+      "negative": "Nieznany caveat, szeroki scope i sprzeczny warunek = deny",
+      "dependencies": [
+        "1.50",
+        "0.44"
+      ],
+      "pdf_pages": [
+        11,
+        12,
+        13
+      ],
+      "priority": "P0",
+      "owner": "payments",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.52",
+      "title": "Preimage SHA-256 check",
+      "deliverable": "Stałoczasowe porównanie payment hash z preimage po weryfikacji formatu",
+      "acceptance": "Autoryzacja z prawidłowym 32-byte preimage i działającą parą HMAC",
+      "negative": "Błędny rozmiar, replay nonce i podmieniony hash odrzucone",
+      "dependencies": [
+        "1.49",
+        "1.50"
+      ],
+      "pdf_pages": [
+        11,
+        12,
+        13
+      ],
+      "priority": "P0",
+      "owner": "payments",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.53",
+      "title": "Lightning settlement authority",
+      "deliverable": "Dowód opłacenia faktury w połączonym autoryzowanym węźle LN, nie tylko self-asserted preimage",
+      "acceptance": "Real settlement reference, amount, expiry i nonce bez kosztu nieautoryzowanego",
+      "negative": "Nieopłacona lub anulowana faktura nie otrzymuje zapisu paid",
+      "dependencies": [
+        "1.52"
+      ],
+      "pdf_pages": [
+        11,
+        12,
+        13
+      ],
+      "priority": "P1",
+      "owner": "payments",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "1.54",
+      "title": "L402 production gateway quotas",
+      "deliverable": "Bounded HTTP/gRPC interceptors dla scope, replay journal, expiry i accounting",
+      "acceptance": "Wieloagentowe E2E z wydanym challenge i legalnym settlement",
+      "negative": "Double-spend logiki, clock rollback i stream exhaustion odrzucane",
+      "dependencies": [
+        "1.51",
+        "1.53",
+        "1.47"
+      ],
+      "pdf_pages": [
+        11,
+        12,
+        13
+      ],
+      "priority": "P1",
+      "owner": "payments",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "0.39.22",
+      "title": "Guest ABI eBPF readiness",
+      "deliverable": "Sprawdzić dostępność BTF, kprobe i syscall ABI w faktycznym jądrze guest",
+      "acceptance": "Niepusty guest BPF program ID potwierdzony przez Linux guest",
+      "negative": "Host TC/BPF nie liczy się jako kernel BPF gościa",
+      "dependencies": [
+        "0.39",
+        "1.42"
+      ],
+      "pdf_pages": [
+        2,
+        3
+      ],
+      "priority": "P0",
+      "owner": "runtime",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "0.39.23",
+      "title": "Podpisany guest probe manifest",
+      "deliverable": "Pakiet kernel/runtime/sonda WASI/guest rootfs ma oddzielne digest i signed provenance",
+      "acceptance": "Uruchomienie VM tylko po sprawdzeniu każdego hashu przed mountem",
+      "negative": "Zmiana bajtu sondy lub podmiana rootfs blokuje broker admission",
+      "dependencies": [
+        "0.39.22",
+        "1.43"
+      ],
+      "pdf_pages": [
+        2,
+        3
+      ],
+      "priority": "P0",
+      "owner": "security",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "0.39.24",
+      "title": "Guest BPF quarantine action",
+      "deliverable": "Rzeczywiste wstrzymanie wybranego guest PID przez autoryzowaną politykę i userspace agent",
+      "acceptance": "Odczyt guest exit code i brak wykonania innego tenantu",
+      "negative": "Entropia pojedynczej nazwy nie wystarcza do nieodwracalnego SIGKILL",
+      "dependencies": [
+        "0.39.23",
+        "1.44"
+      ],
+      "pdf_pages": [
+        3,
+        10,
+        11
+      ],
+      "priority": "P0",
+      "owner": "security",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "0.39.25",
+      "title": "BPF joint failure drill",
+      "deliverable": "Host eBPF, guest eBPF i broker fail-closed w rzeczywistym Firecracker",
+      "acceptance": "Net partition i crash guest agent dają zweryfikowaną izolację",
+      "negative": "Brak guest sonda nie może być mylony z sukcesem host-probe",
+      "dependencies": [
+        "0.39.24",
+        "1.45"
+      ],
+      "pdf_pages": [
+        2,
+        3
+      ],
+      "priority": "P0",
+      "owner": "reliability",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "0.40.7",
+      "title": "Transport health instrumentation",
+      "deliverable": "PostgreSQL HA telemetry pg_stat_wal_receiver i lag w każdej niezależnej VM",
+      "acceptance": "WAL LSN z dwóch faktycznie niezależnych kernels na live TCP",
+      "negative": "Wspólny kernel lub artifact handoff nie kwalifikuje się jako interhost",
+      "dependencies": [
+        "0.40.3",
+        "1.20"
+      ],
+      "pdf_pages": [
+        1,
+        3
+      ],
+      "priority": "P0",
+      "owner": "database",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "0.40.8",
+      "title": "Quorum pre-promotion gate",
+      "deliverable": "Promocja PostgreSQL tylko przy ważnej dzierżawie z trzeciego świadka",
+      "acceptance": "Network partition zablokuje stale leader effect writes",
+      "negative": "Jednostronny dostęp A i B do quorum nie może dać dwóch primary",
+      "dependencies": [
+        "0.40.4",
+        "1.46"
+      ],
+      "pdf_pages": [
+        2,
+        3
+      ],
+      "priority": "P0",
+      "owner": "database",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "0.40.9",
+      "title": "Postgres fencing soak",
+      "deliverable": "Przy 8-32 klientach i obciętym linku wykonać 60 min wal stress",
+      "acceptance": "Porównanie committed tx-id i WAL ACK po failover",
+      "negative": "Powrót starego primary nigdy nie powoduje dual-writable",
+      "dependencies": [
+        "0.40.8",
+        "0.41.5"
+      ],
+      "pdf_pages": [
+        3,
+        11
+      ],
+      "priority": "P0",
+      "owner": "database",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "0.40.10",
+      "title": "PQC secured database controls",
+      "deliverable": "Po ustanowieniu prawdziwych peer certów ograniczyć admin/replication privileges",
+      "acceptance": "Test TCP mTLS i opcjonalnej hybrydy PQC w niezależnych hostach",
+      "negative": "Nieakceptowany cert/UID oraz downgrade połączenia odrzucane",
+      "dependencies": [
+        "1.41",
+        "0.40.7"
+      ],
+      "pdf_pages": [
+        2,
+        11
+      ],
+      "priority": "P1",
+      "owner": "crypto",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "0.41.7",
+      "title": "SHM versus network soak",
+      "deliverable": "Mierzyć p50/p95/p99/rate/CPU dla Zenoh SHM i TCP przy obciążeniu",
+      "acceptance": "Surowe percentyle i job run ID na tej samej infrastrukturze",
+      "negative": "Twierdzenie PDF o 7–10 µs pozostaje hipotezą",
+      "dependencies": [
+        "1.15",
+        "1.20"
+      ],
+      "pdf_pages": [
+        1,
+        3
+      ],
+      "priority": "P1",
+      "owner": "reliability",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "0.41.8",
+      "title": "Telemetry backpressure soak",
+      "deliverable": "OTel kolektor offline i workload running przez 60 min",
+      "acceptance": "Zmierzone dropped spans, queue depth, flush i CPU",
+      "negative": "Odkładanie nieograniczonej kolejki i OOM nie może przejść",
+      "dependencies": [
+        "1.20",
+        "1.21"
+      ],
+      "pdf_pages": [
+        1,
+        3
+      ],
+      "priority": "P1",
+      "owner": "observability",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "0.41.9",
+      "title": "Quarantine false positive soak",
+      "deliverable": "Korpus openat/connect/sendto w gościu i host zdarzenia przez 60 min",
+      "acceptance": "Mierzony FPR/FNR, brak cross-tenant event i poprawny cancel",
+      "negative": "Progi z PDF nie są autonomicznym dowodem ransomware",
+      "dependencies": [
+        "1.44",
+        "1.45"
+      ],
+      "pdf_pages": [
+        3,
+        10,
+        11
+      ],
+      "priority": "P1",
+      "owner": "security",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    },
+    {
+      "id": "0.41.10",
+      "title": "Budget and recovery chaos",
+      "deliverable": "Równoległe wyczerpanie token budget + host crash + PostgreSQL PITR",
+      "acceptance": "Wymuszone limity i spójne ledger logs po restore",
+      "negative": "Podwójne naliczenie i replay faktury nie przechodzą",
+      "dependencies": [
+        "1.47",
+        "1.54",
+        "0.41.4"
+      ],
+      "pdf_pages": [
+        3,
+        11,
+        12
+      ],
+      "priority": "P1",
+      "owner": "finops",
+      "status": "PLANNED",
+      "evidence": [],
+      "source_file": "Dokument bez nazwy(2).PDF"
+    }
+  ]
+}
