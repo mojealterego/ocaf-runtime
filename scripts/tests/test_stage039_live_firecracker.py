@@ -57,5 +57,14 @@ class LiveContract(unittest.TestCase):
                 "ocaf-test-a", "ocaf-stage039-vm-0123456789abcdef.service")
 
 
+    def test_linux_console_timestamped_kernel_version_is_valid_boot_evidence(self):
+        report=live.validate_running(
+            {"state":"Running","id":"ocaf-test-a"},
+            "[    0.000000] Linux version 6.6.15 (builder@host)\n",
+            "0::/ocaf-stage039-vm-0123456789abcdef.service/firecracker/ocaf-test-a",
+            "ocaf-test-a","ocaf-stage039-vm-0123456789abcdef.service")
+        self.assertTrue(report["guest_kernel_console_seen"])
+
+
 if __name__ == "__main__":
     unittest.main()
