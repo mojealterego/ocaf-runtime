@@ -60,6 +60,28 @@ class BrokerVmAcceptanceTests(unittest.TestCase):
         self.reports={x:admission(x,self.raw[x]) for x in ("a","b")}
         self.actual=evidence()
 
+    def test_guest_wasi_broker_claim_requires_two_independent_real_guest_receipts(self):
+        actual=json.loads(json.dumps(self.actual))
+        for t in ("a","b"):
+            actual["tenant_"+t]["guest_wasi_execution"]={
+                "guest_pid1_started":True,
+                "wasi_preview1_fd_write_observed_inside_guest":True,
+                "guest_wasmtime_child_exited_zero":True,
+                "serial_sha256": ("a" if t=="a" else "b")*64,
+            }
+        result=binding.verify_binding(self.reports,self.raw,actual,require_wasi=True)
+        self.assertTrue(result["wasi_executed_inside_guest"])
+        self.assertFalse(result["signed_wasi_manifest_verified"])
+        for tamper in (
+            {"guest_wasi_execution":None},
+            {"guest_wasi_execution":{**actual["tenant_b"]["guest_wasi_execution"],
+                                     "guest_wasmtime_child_exited_zero":False}},
+        ):
+            with self.subTest(tamper=tamper),self.assertRaises(binding.BindingError):
+                bad=json.loads(json.dumps(actual))
+                bad["tenant_b"].update(tamper)
+                binding.verify_binding(self.reports,self.raw,bad,require_wasi=True)
+
     def test_auth_broker_bound_to_actual_two_kernel_guests(self):
         p=binding.verify_binding(self.reports,self.raw,self.actual)
         self.assertEqual(p["status"],"BROKER_SO_PEERCRED_TWO_REAL_JAILED_VM_BOOT_BOUND")
