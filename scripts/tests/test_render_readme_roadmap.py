@@ -16,6 +16,40 @@ class FullReadmeRoadmapTests(unittest.TestCase):
         cls.builders=json.loads((ROOT/"docs/roadmap/agents_builder_products_v11.json").read_text())
         cls.readme=(ROOT/"README.md").read_text()
 
+    def test_very_first_visible_element_is_a_clickable_markdown_status_box(self):
+        # README is what GitHub actually renders on the repository front page.
+        # The clickable roadmap and five original Code/NoCode product pairs
+        # must be in the first visible bordered table, NOT hidden below text.
+        first = self.readme.replace(renderer.BEGIN, "", 1).lstrip()
+        self.assertTrue(
+            first.startswith("| 📌 **ROADMAPA OCAF"),
+            "top of GitHub README must render the roadmap as a Markdown table",
+        )
+        before_main_heading=first.split("# OCAF — PEŁNA ROADMAPA",1)[0]
+        self.assertIn("[OTWÓRZ PEŁNĄ ROADMAPĘ](ROADMAP.md)",before_main_heading)
+        self.assertIn("195 etapów",before_main_heading)
+        self.assertIn("64 podetapy",before_main_heading)
+        self.assertIn("269",before_main_heading)
+        for platform in ("Chmurowy","Desktopowy Windows","Desktopowy macOS",
+                         "Android","iOS"):
+            row=next((x for x in before_main_heading.splitlines()
+                      if f"Agents Builder {platform}" in x),None)
+            self.assertIsNotNone(row,f"missing original Agents Builder {platform}")
+            self.assertIn("Code",row)
+            self.assertIn("NoCode",row)
+            self.assertIn("DO ZROBIENIA",row)
+        self.assertIn("WASI",before_main_heading)
+        self.assertIn("PostgreSQL",before_main_heading)
+
+    def test_forged_pinned_panel_or_missing_roadmap_link_fails_validator(self):
+        for bad in (
+            self.readme.replace("[OTWÓRZ PEŁNĄ ROADMAPĘ](ROADMAP.md)",
+                                "[NIE MA](somewhere.md)",1),
+            self.readme.replace("Agents Builder Desktopowy macOS","Agent macOS",1),
+        ):
+            with self.assertRaises(renderer.ReadmeRoadmapError):
+                renderer.validate_readme(bad,self.inv,self.builders)
+
     def test_every_number_1_to_269_at_top_with_executable_gate_and_status(self):
         result=renderer.validate_readme(self.readme,self.inv,self.builders)
         self.assertEqual(result["numbered_items"],269)
