@@ -264,7 +264,8 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
         chroot_base: Path, uid: int, gid: int, timeout: int,
         aya_loader: Path | None = None, aya_loader_sha: str | None = None,
         aya_program: Path | None = None, aya_program_sha: str | None = None,
-        aya_seconds: int = 15, crash_after_proof: bool = False) -> dict:
+        aya_seconds: int = 15, crash_after_proof: bool = False,
+        boot_hook=None) -> dict:
     import secrets
     inputs = (aya_loader, aya_loader_sha, aya_program, aya_program_sha)
     if any(value is not None for value in inputs) and any(value is None for value in inputs):
@@ -347,13 +348,22 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
                     "schema_version": 1,
                     "observed_at_utc": datetime.now(timezone.utc).isoformat(),
                     "kernel": os.uname().release,
-                    "vm_id": vm_id, "guest_kernel_sha256": parsed["assets"]["guest_kernel"]["sha256"],
+                    "vm_id": vm_id, "tenant_id": parsed["tenant_id"],
+                    "agent_id": parsed["agent_id"],
+                    "workload_id": parsed["workload_id"],
+                    "host_boot_id": Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
+                    "guest_kernel_sha256": parsed["assets"]["guest_kernel"]["sha256"],
                     "guest_rootfs_sha256": parsed["assets"]["guest_rootfs"]["sha256"],
                     "firecracker_sha256": firecracker_sha, "jailer_sha256": jailer_sha,
                     "firecracker_release": release, "cgroup_inode": cgroup.stat().st_ino,
                     "serial_tail_sha256": hashlib.sha256(seen.encode()).hexdigest(),
                     "limit_note": "This confirms kernel boot console/API only. Aya egress must be proven separately.",
                 })
+                if boot_hook is not None:
+                    # Test-only synchronization callback. The still-running
+                    # process and cgroup inode are independently checked by
+                    # the dual-tenant acceptance harness before proceeding.
+                    boot_hook(result, proc, vm_id, cgroup)
                 if aya_loader is not None:
                     # Guest boot was checked while the original jailer process lives.
                     # Probe packets originate from a HOST process in the VM cgroup.
