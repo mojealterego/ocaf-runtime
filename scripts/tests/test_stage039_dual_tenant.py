@@ -22,10 +22,10 @@ class TestDualTenant(unittest.TestCase):
                 dual.validate_distinct_tenants(a,{**b,**values})
 
     def test_rejects_fabricated_concurrency_and_same_kernel_cgroup(self):
-        a={"tenant_id":"tenant-a","vm_id":"ocaf-"+"1"*24,
+        a={"tenant_id":"tenant-a","agent_id":"agent-a","workload_id":"job-a","vm_id":"ocaf-"+"1"*24,
            "cgroup_inode":100,"host_boot_id":"boot01","status":"JAILED_FIRECRACKER_GUEST_KERNEL_BOOT_OBSERVED",
            "firecracker_api_running":True,"guest_kernel_console_seen":True,"production_approved":False}
-        b={**a,"tenant_id":"tenant-b","vm_id":"ocaf-"+"2"*24,"cgroup_inode":200}
+        b={**a,"tenant_id":"tenant-b","agent_id":"agent-b","workload_id":"job-b","vm_id":"ocaf-"+"2"*24,"cgroup_inode":200}
         self.assertTrue(dual.validate_dual_evidence(a,b,True)["two_guests_simultaneously_running"])
         for bad in ({**b,"vm_id":a["vm_id"]},
                     {**b,"cgroup_inode":100},
