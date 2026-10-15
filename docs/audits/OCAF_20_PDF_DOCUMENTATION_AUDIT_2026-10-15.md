@@ -1,0 +1,56 @@
+# OCAF — audyt dokumentacyjny 20 PDF (15.10.2026)
+
+Repo: `mojealterego/ocaf-runtime`; gałąź `main`.
+
+## Metodyka i zakres
+
+Przeanalizowano tekst wszystkich 20 przesłanych PDF (307 stron łącznie z powtórzeniami), wyodrębniono 17 rodzin wymagań, wykryto 3 grupy plików o identycznej znormalizowanej treści (2, 3 i 2 pliki). Porównano wymagania z aktualnymi plikami `Cargo.toml`, `src/lib.rs`, `ROADMAP.md`, `docs/MASTER_ARCHITECTURE_26_PDFS.md`, `docs/roadmap/missing_capabilities_v11.json` i `docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md`.
+
+**Granica weryfikacji:** to audyt dokumentacyjny i przegląd dostępnych dowodów, nie kompletny audyt każdego symbolu w repozytorium. Kontener nie miał dostępu sieciowego do klonowania GitHub. Nie uruchomiono Cargo CI, KVM ani testów trzech hostów. Statusy poniżej nie stanowią certyfikacji produkcyjnej.
+
+## Macierz wymagań PDF → repo → status
+
+| Domena | Dowód / istniejący punkt | Werdykt |
+|---|---|---|
+| Rust/Tokio runtime | `Cargo.toml`, `src/lib.rs`, `src/runtime` | Implementacja rdzenia istnieje; pełne E2E niezweryfikowane |
+| Zenoh TLS/TCP | `Cargo.toml` Zenoh 1.10, `src/transport` | Częściowo; SHM zero-copy i benchmarki niepotwierdzone |
+| MCP dynamic tool loading | `src/registry`, INV-018, 0.43–0.44 | Pełne remote discovery/OAuth niepotwierdzone |
+| JSON Schema / Tree-sitter | `jsonschema=0.33`; brak Tree-sitter w Cargo | Walidacja częściowo; AST niepotwierdzone |
+| OAuth2.1/PKCE | `src/auth`, INV-018 | Niepotwierdzone |
+| Firecracker/WASI | 0.39, INV-015 | OTWARTE; brak rzeczywistego guest WASI receipt |
+| CRDT Automerge/Yrs | INV-019 | Niepotwierdzone; brak zależności |
+| OTLP OpenTelemetry | `tracing`, INV-019 | Tracing częściowo; realny OTLP niepotwierdzony |
+| PostgreSQL HA | 0.40, INV-016 | OTWARTE; brak live inter-kernel WAL |
+| L402/x402 settlement | dokumentacja 26 PDF | Planowane; brak potwierdzonego ledgeru |
+| ZKP/PQC | dokumentacja 26 PDF | Planowane; brak potwierdzonego silnika |
+| RAG / wektory | dokumentacja 26 PDF | Niepotwierdzone E2E |
+| AGI/neurosymbolic | źródła PDF; backlog badań | Koncepcje, bez dowodów AGI |
+| 10 Agents Builder Code/NoCode | 0.50–0.55, INV-001–013 | Brak produktów i platformowego E2E wg rejestru |
+| Omni swarms | 0.56–0.89, INV-014 | Planowane/niepotwierdzone |
+| OWASP ASI | `src/auth`, `src/rpc` | Częściowe zabezpieczenia; brak pełnej macierzy ataków |
+| CI/benchmark | ROADMAP.md | Historyczne dowody nie zastępują aktualnego testu |
+
+## Wykryte sprzeczności i ryzyka
+
+1. Starszy dokument `MASTER_ARCHITECTURE_26_PDFS.md` zawiera superseded numerację etapów 0.39–0.50; obowiązuje v11 `ROADMAP.md`.
+2. Fragmenty Rust w PDF nie są gotowymi implementacjami: występują przestarzałe API Zenoh/OTLP i niebezpieczne demonstracyjne skróty.
+3. Twierdzenia o 35 μs, 40/67 Gbps lub <1 ms wymagają własnych benchmarków i topologii.
+4. CRDT nie może być autorytatywnym mechanizmem fencing, uprawnień ani płatności.
+5. Firecracker wymaga Linux/KVM; Android/iOS potrzebują osobnych backendów.
+6. Deklaracje ZKP/PQC i „AGI” nie są dowodami.
+7. `Cargo.toml` deklaruje MIT; komunikat „wszystkie prawa zastrzeżone” w README wymaga spójnej decyzji licencyjnej.
+8. Etapy 0.00–0.38 oznaczone administracyjnie jako ukończone nie mają przez to automatycznie potwierdzonego odbioru produkcyjnego.
+
+## Deduplikacja i decyzja Roadmapy
+
+Nie stwierdzono jeszcze nowego, unikalnego wymagania, które można bezpiecznie dodać jako 1.95 bez powtórzenia pozycji 0.39–1.94 lub INV-001–024. **Nie dodawano sztucznych etapów**. W kolejnych partiach dopisywać wyłącznie nowe kontrakty z `PDF + strona + acceptance gate + dedupe proof`; istniejące numery i 10 Builders zachować.
+
+## Otwarte bramy audytu wykonawczego
+
+- Pełny checkout Git i śledzenie wymagań do symboli oraz testów.
+- `cargo fmt --check`, `cargo clippy --all-targets --all-features`, `cargo test --all-features`, SAST/SBOM na aktualnym SHA.
+- Live WASI/Firecracker na KVM, PostgreSQL HA na odrębnych kernelach, SLO/DR.
+- Realne OTLP, CRDT convergence, OAuth PKCE, MCP interoperability i testy ZKP/PQC.
+- Weryfikacja workflow na aktualnym commicie.
+
+**Werdykt: brak podstaw do produkcyjnego GO; pełna weryfikacja techniczna pozostaje otwarta.**
