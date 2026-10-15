@@ -110,7 +110,7 @@ jobs:
           assert report["tenant_a_vm_sigkill"]["sigkill_exit_code"]==-9
           assert report["tenant_b_vm_sigkill"]["sigkill_exit_code"]==-9
           assert report["production_approved"] is False
-          print("STAGE039_SIGNED_BY_WORKFLOW_CHECKPOINT_DIGEST_REPLAY_PROTECTION_READY")
+          print("STAGE039_CHECKPOINT_SHA256_AND_NONCE_CORRELATION_VERIFIED_NOT_SIGNATURE")
           PY
       - name: Build wholly new pinned Firecracker and guest on independent kernel B
         run: bash scripts/stage039_prepare_cold_host.sh "$GITHUB_RUN_ID" b
