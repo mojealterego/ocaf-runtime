@@ -12,6 +12,19 @@ from pathlib import Path
 import re
 import sys
 
+# Implementation exists for these HISTORICAL REPOSITORY SCOPES in source/tests.
+# This is NOT proof of full milestone sign-off, independent-host HA or production.
+# Specific checked source/test paths are recorded in the accompanying audit.
+HISTORICAL_IMPLEMENTED_SCOPES = frozenset(
+    {f"0.{i:02d}" for i in (6,7,8,9,*range(11,36))}
+)
+ORIGINAL_EARLY_TITLES = {
+    "0.06": "Durable local jobs (v0.6)",
+    "0.07": "Authenticated capability coordinator (v0.7)",
+    "0.08": "Distributed job orchestration (v0.8)",
+    "0.09": "Local active/passive coordinator and transport preflight (v0.9)",
+}
+
 BEGIN = "<!-- OCAF_README_ROADMAP_BEGIN -->"
 END = "<!-- OCAF_README_ROADMAP_END -->"
 
@@ -26,7 +39,11 @@ def clean(value: str) -> str:
     return " ".join(value.replace("|", "/").split())
 
 
-def mark(status: str, kind: str) -> str:
+def mark(status: str, kind: str, row: dict | None = None) -> str:
+    if (kind == "main" and isinstance(row,dict)
+        and row.get("id") in HISTORICAL_IMPLEMENTED_SCOPES
+        and status in ("UNSPECIFIED_IN_CURRENT_REPO", "HISTORICAL_NEEDS_VERIFICATION")):
+        return "ZROBIONE — ZAKRES IMPLEMENTACJI"
     if kind == "product":
         return "DO ZROBIENIA"
     if kind == "technical" and "PASS" in status and "OPEN" not in status and "NO-GO" not in status:
@@ -37,12 +54,15 @@ def mark(status: str, kind: str) -> str:
 def line(num: int, row: dict, kind: str) -> str:
     if not isinstance(row, dict) or kind not in ("main", "technical", "product"):
         raise ReadmeRoadmapError("bad source roadmap row")
-    status=mark(clean(row["status"]),kind)
+    status=mark(clean(row["status"]),kind,row)
     ident=clean(row["id"])
-    title=clean(row["product"] if kind=="product" else row["title"])
+    title=clean(row["product"] if kind=="product" else ORIGINAL_EARLY_TITLES.get(row["id"],row["title"]))
     scope=clean(row["scope"])
     criterion=clean(row["real_acceptance"] if kind=="product" else row["acceptance"])
     extra=" — wymagania pierwotne etapów "+row["platform_stage"] if kind=="product" else ""
+    if kind=="main" and row["id"] in HISTORICAL_IMPLEMENTED_SCOPES:
+        extra+=" — **Kod i testy istnieją w repo; pełny odbiór etapu i produkcji: NIE**"
+        extra+="; dowody: [audyt](docs/HISTORICAL_IMPLEMENTATION_AUDIT_2026-10-15.md)"
     return (
         f"{num}. **[{status}]** **{ident} — {title}**{extra}. {scope} "
         f"**Kryterium zakończenia:** {criterion}. **Stan źródłowy:** `{clean(row['status'])}`."
@@ -70,7 +90,7 @@ def render_section(inventory: dict, builders: dict) -> str:
         BEGIN,
         "# OCAF — PEŁNA ROADMAPA OD POCZĄTKU, PUNKT PO PUNKCIE (1–269)",
         "",
-        "**To jest pierwsza sekcja README.md i pełna lista statusów, nie tylko odsyłacz.** Każdy numer ma informację **ZROBIONE** albo **DO ZROBIENIA**. `ZROBIONE — TEST W OGRANICZONYM ZAKRESIE` oznacza wyłącznie potwierdzoną próbę laboratoryjną, a nie gotowość produktu, bezpieczeństwo produkcyjne czy zamknięcie całego etapu.",
+        "**To jest pierwsza sekcja README.md i pełna lista statusów, nie tylko odsyłacz.** Każdy numer ma informację **ZROBIONE** albo **DO ZROBIENIA**. `ZROBIONE — ZAKRES IMPLEMENTACJI` oznacza kod i testy historyczne obecne w repo (NIE pełny odbiór ani produkcję); `ZROBIONE — TEST W OGRANICZONYM ZAKRESIE` oznacza wyłącznie potwierdzoną próbę laboratoryjną.",
         "",
         "**Zakres inwentaryzacji:** **1–195 = wszystkie historyczne i nowe etapy główne (0.00–1.94)**, **196–259 = 64 podetapy techniczne**, **260–269 = 10 pierwotnych produktów Agents Builder Code/NoCode**. Suma **269 kolejno numerowanych pozycji w README** = 259 punktów kamieni milowych/podetapów + 10 osobnych pozycji produktowych (nie są dodatkowymi numerami etapów). **33 repozytoria referencyjne nie są etapami.**",
         "",
@@ -110,7 +130,7 @@ def validate_readme(readme: str, inventory: dict, builders: dict) -> dict:
     rows=re.findall(r"^([0-9]+)\. \*\*\[([^]]+)\]\*\* \*\*",readme[:len(expected)],re.MULTILINE)
     if [int(i) for i,_ in rows]!=list(range(1,270)):
         raise ReadmeRoadmapError("README status list not numbered 1..269 with every ID represented")
-    if not all(status=="DO ZROBIENIA" or status=="ZROBIONE — TEST W OGRANICZONYM ZAKRESIE" for _,status in rows):
+    if not all(status in ("DO ZROBIENIA","ZROBIONE — TEST W OGRANICZONYM ZAKRESIE","ZROBIONE — ZAKRES IMPLEMENTACJI") for _,status in rows):
         raise ReadmeRoadmapError("at least one roadmap item lacks explicit completion status")
     return {
         "status":"OCAF_README_ROADMAP_1_TO_269_SOURCE_STATUS_PARITY_VERIFIED",
