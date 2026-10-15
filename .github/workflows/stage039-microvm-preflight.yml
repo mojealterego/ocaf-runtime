@@ -13,6 +13,8 @@ on:
       - scripts/tests/test_stage039_broker_ipc.py
       - scripts/stage039_kvm_ioctl.py
       - scripts/tests/test_stage039_kvm_ioctl.py
+      - scripts/stage039_firecracker_spec.py
+      - scripts/tests/test_stage039_firecracker_spec.py
       - stage039/aya-guard/**
       - stage039/aya-ebpf-egress/**
       - scripts/release_readiness.py
@@ -65,12 +67,15 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_kvm_ioctl.py -v
       - name: Compile Aya userspace loader and run local-policy unit tests (NO kernel attachment in CI)
         run: cargo test --manifest-path stage039/aya-guard/Cargo.toml --verbose
+      - name: Verify staged jailer artifacts and no-egress Firecracker machine config
+        run: python3 -m unittest discover -s scripts/tests -p test_stage039_firecracker_spec.py -v
       - name: Python source syntax verification
         run: |
           python3 -m py_compile scripts/stage039_microvm_gate.py scripts/tests/test_stage039_microvm_gate.py
           python3 -m py_compile scripts/stage039_broker_ledger.py scripts/tests/test_stage039_broker_ledger.py
           python3 -m py_compile scripts/stage039_broker_ipc.py scripts/tests/test_stage039_broker_ipc.py
           python3 -m py_compile scripts/stage039_kvm_ioctl.py scripts/tests/test_stage039_kvm_ioctl.py
+          python3 -m py_compile scripts/stage039_firecracker_spec.py scripts/tests/test_stage039_firecracker_spec.py
       - name: Observe KVM, cgroup v2, PID1 systemd, BTF and bpffs on actual CI Linux
         shell: bash
         run: |
