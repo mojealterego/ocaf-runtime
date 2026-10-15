@@ -37,6 +37,26 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_broker_ipc.py -v
       - name: Verify explicit operator release authorization keeps audit failures visible
         run: python3 -m unittest discover -s scripts/tests -p test_release_readiness.py -v
+      - name: Exercise explicitly operator-unblocked administrative release, preserving factual blockers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/release_readiness.py --repo . \
+            --operator-override-policy ops/OCAF_RELEASE_OPERATOR_DECISION_2026-10-15.json \
+            --ack-unverified-production-risk > stage039-operator-release-state.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("stage039-operator-release-state.json").read_text())
+          if (r.get("status") != "OPERATOR_AUTHORIZED_UNVERIFIED" or
+              r.get("administrative_release_unblocked") is not True or
+              r.get("production_approved") is not False or
+              r.get("technical_evidence_passed") is not False or
+              r.get("deployment_executed") is not False or
+              "evidence_manifest_missing" not in r.get("blockers", [])):
+              raise SystemExit("operator override must not forge evidence or deployment")
+          print("OPERATOR_ADMIN_RELEASE_UNBLOCKED_WITH_UNVERIFIED_EVIDENCE")
+          PY
       - name: Python source syntax verification
         run: |
           python3 -m py_compile scripts/stage039_microvm_gate.py scripts/tests/test_stage039_microvm_gate.py
@@ -75,6 +95,8 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: stage039-linux-kvm-ebpf-readonly-preflight
-          path: stage039-host-preflight.json
+          path: |
+            stage039-host-preflight.json
+            stage039-operator-release-state.json
           retention-days: 30
           if-no-files-found: warn
