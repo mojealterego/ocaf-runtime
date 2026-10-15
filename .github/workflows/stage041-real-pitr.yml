@@ -1,0 +1,79 @@
+name: OCAF 0.41 REAL PostgreSQL WAL PITR (physical basebackup, archived WAL, exclude later writes)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage041-real-pitr.yml
+      - scripts/stage041_pitr.py
+      - scripts/tests/test_stage041_pitr.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-postgres-wal-pitr:
+    name: Real PostgreSQL 16 WAL PITR after IMMEDIATE primary crash (same kernel LAB)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Unit acceptance and adversarial false-claim tests
+        run: python3 -m unittest discover -s scripts/tests -p test_stage041_pitr.py -v
+      - name: Install real PostgreSQL 16 including physical pg_basebackup and WAL archive tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! test -x /usr/lib/postgresql/16/bin/pg_basebackup; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16
+          fi
+          test -x /usr/lib/postgresql/16/bin/initdb
+          test -x /usr/lib/postgresql/16/bin/pg_basebackup
+          /usr/lib/postgresql/16/bin/pg_basebackup --version
+      - name: ACTUAL WAL archive/primary crash and PITR target-LSN recovery excluding five later commits
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          ROOT="/tmp/ocaf41-pitr-${GITHUB_RUN_ID}"
+          sudo -n install -d -o postgres -g postgres -m 0700 "$ROOT" "$ROOT/evidence"
+          sudo -n install -o postgres -g postgres -m 0500 \
+            "$GITHUB_WORKSPACE/scripts/stage041_pitr.py" "$ROOT/driver.py"
+          sudo -n -u postgres python3 "$ROOT/driver.py" \
+            --pg-bin-dir /usr/lib/postgresql/16/bin \
+            --report "$ROOT/evidence/pitr.json" \
+            --ack-ephemeral-postgres-pitr-crash-lab
+          mkdir -p stage041-pitr-evidence
+          sudo -n cp "$ROOT/evidence/pitr.json" stage041-pitr-evidence/pitr.json
+          sudo -n chown "$(id -u):$(id -g)" stage041-pitr-evidence/pitr.json
+          python3 - <<'PY'
+          import json,re
+          from pathlib import Path
+          d=json.loads(Path("stage041-pitr-evidence/pitr.json").read_text())
+          assert d["status"]=="POSTGRES_REAL_WAL_POINT_IN_TIME_RECOVERY_PASSED"
+          assert re.fullmatch("[0-9A-F]+/[0-9A-F]+",d["recovery_target_lsn"])
+          assert d["postgres_wal_archive_written"] is True
+          assert d["archived_wal_segments"]>0
+          assert d["primary_immediate_crash_executed"] is True
+          assert d["expected_rows"]==d["actual_recovered_rows"]==35
+          assert d["post_target_rows"]==5
+          assert d["post_target_rows_excluded"] is True
+          assert d["original_target_checksum"]==d["restored_target_checksum"]
+          assert d["last_backup_recovery_mode_exited"] is True
+          assert d["same_kernel"] is True
+          assert d["offsite_wal_archive_tested"] is False
+          assert d["production_approved"] is False
+          print("STAGE041_REAL_PGBASEBACKUP_ARCHIVED_WAL_LSN_PITR_POST_TARGET_EXCLUSION_PROVED")
+          PY
+      - name: Upload measured WAL crash-recovery evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage041-real-pitr-archived-wal-lsn-crash-one-host
+          path: stage041-pitr-evidence/
+          retention-days: 30
+          if-no-files-found: warn
