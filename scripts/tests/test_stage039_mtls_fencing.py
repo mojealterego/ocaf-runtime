@@ -65,5 +65,5 @@ class TestFencing(unittest.TestCase):
                     {"subjectAltName":(("DNS","ocaf039-tenant-b.client"),)},
                     {"subjectAltName":(("DNS","ocaf039-tenant-a.client"),
                                       ("DNS","ocaf039-tenant-b.client"))}):
-            with self.subTest(cert=bad), self.assertFalse(fencing.peer_authorized(bad)):
-                pass
+            with self.subTest(cert=bad):
+                self.assertFalse(fencing.peer_authorized(bad))
