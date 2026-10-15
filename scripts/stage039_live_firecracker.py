@@ -38,6 +38,25 @@ class LiveFirecrackerError(ValueError):
     pass
 
 
+def validate_api_socket_path(chroot_base: Path, binary_name: str,
+                             vm_id: str) -> Path:
+    """Linux sockaddr_un.sun_path allows at most 107 pathname bytes + NUL.
+
+    The jailer exposes the guest's AF_UNIX API socket via a long host path.
+    Oversized paths silently lose Firecracker API evidence if not rejected.
+    """
+    if (not isinstance(chroot_base, Path) or not chroot_base.is_absolute()
+            or ".." in chroot_base.parts or chroot_base.is_symlink()
+            or not isinstance(binary_name, str)
+            or re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", binary_name) is None
+            or not isinstance(vm_id, str) or VALID_VM.fullmatch(vm_id) is None):
+        raise LiveFirecrackerError("invalid jailed Firecracker API socket scope")
+    path = chroot_base / binary_name / vm_id / "root" / "firecracker.socket"
+    if len(os.fsencode(path)) > 107:
+        raise LiveFirecrackerError("jailed Firecracker API sockaddr_un path exceeds 107 bytes")
+    return path
+
+
 def build_jailer_command(jailer: Path, firecracker: Path, vm_id: str,
                          uid: int, gid: int, chroot_base: Path,
                          cgroup_name: str) -> list[str]:
@@ -294,6 +313,7 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
     cgroup_name = "ocaf-stage039-vm-" + secrets.token_hex(8) + ".service"
     cgroup = Path("/sys/fs/cgroup") / cgroup_name
     root = chroot_base / firecracker.name / vm_id / "root"
+    sockpath = validate_api_socket_path(chroot_base, firecracker.name, vm_id)
     proc = None
     created = False
     try:
@@ -328,7 +348,6 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
                                     close_fds=True)
         finally:
             os.close(outfd)
-        sockpath = root / "firecracker.socket"
         deadline = time.monotonic() + timeout
         api = {}
         seen = ""
