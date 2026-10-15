@@ -103,10 +103,10 @@ def validate_pgbench_load(output:str,seconds:int,clients:int)->dict:
         type(seconds) is not int or not 15<=seconds<=120 or
         type(clients) is not int or not 2<=clients<=16):
         raise PostgresHAError("bounded real pgbench stress required")
-    counts=re.findall(r"number of transactions actually processed:\\s*([0-9]+)",output)
-    rates=re.findall(r"tps\\s*=\\s*([0-9]+(?:\\.[0-9]+)?)",output)
-    client_ids=re.findall(r"number of clients:\\s*([0-9]+)",output)
-    durations=re.findall(r"duration:\\s*([0-9]+)\\s*s",output)
+    counts=re.findall(r"number of transactions actually processed:\s*([0-9]+)",output)
+    rates=re.findall(r"tps\s*=\s*([0-9]+(?:\.[0-9]+)?)",output)
+    client_ids=re.findall(r"number of clients:\s*([0-9]+)",output)
+    durations=re.findall(r"duration:\s*([0-9]+)\s*s",output)
     if (len(counts)!=1 or len(rates)!=1 or len(client_ids)!=1 or
             len(durations)!=1 or int(client_ids[0])!=clients or
             int(durations[0])!=seconds or int(counts[0])<100 or
