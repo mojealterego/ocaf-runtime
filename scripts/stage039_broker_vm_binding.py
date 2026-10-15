@@ -55,7 +55,7 @@ def _manifest(raw:bytes)->dict:
 
 
 def verify_ledger_rows(rows:dict,reports:dict)->None:
-    if set(rows)!=set(reports)!=set(("a","b")):
+    if set(rows)!=set(("a","b")) or set(reports)!=set(("a","b")):
         raise BindingError("both independent broker leases required")
     for tenant in ("a","b"):
         row=rows[tenant]
