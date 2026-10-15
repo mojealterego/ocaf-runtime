@@ -1,0 +1,76 @@
+name: OCAF 0.41 REAL PostgreSQL pg_dump/pg_restore SHA256 tamper rejection (ONE HOST LAB)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage041-real-backup-restore.yml
+      - scripts/stage041_backup_restore.py
+      - scripts/tests/test_stage041_backup_restore.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-postgres-backup-restore:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify backup digest mismatch and fail-closed recovery assertions
+        run: python3 -m unittest discover -s scripts/tests -p test_stage041_backup_restore.py -v
+      - name: Prepare PostgreSQL 16 local binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! test -x /usr/lib/postgresql/16/bin/pg_restore; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16
+          fi
+          test -x /usr/lib/postgresql/16/bin/pg_dump
+          test -x /usr/lib/postgresql/16/bin/pg_restore
+      - name: REAL PostgreSQL 25 durable receipt rows, custom dump, corrupt rejection and exact restore
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          EVIDENCE="/tmp/ocaf41-${GITHUB_RUN_ID}-evidence"
+          sudo -n install -d -o postgres -g postgres -m 0700 "$EVIDENCE"
+          sudo -n install -o postgres -g postgres -m 0500 \
+            "$GITHUB_WORKSPACE/scripts/stage041_backup_restore.py" "$EVIDENCE/driver.py"
+          sudo -n install -d -o postgres -g postgres -m 0700 "$EVIDENCE/data"
+          sudo -n -u postgres python3 "$EVIDENCE/driver.py" \
+            --pg-bin-dir /usr/lib/postgresql/16/bin \
+            --output-dir "$EVIDENCE/data" \
+            --ack-ephemeral-postgres-backup-lab
+          mkdir -p stage041-evidence
+          sudo -n cp "$EVIDENCE/data/backup-restore-report.json" stage041-evidence/report.json
+          sudo -n cp "$EVIDENCE/data/snapshot.pgcustom" stage041-evidence/snapshot.pgcustom
+          sudo -n chown "$(id -u):$(id -g)" stage041-evidence/*
+          python3 - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          r=json.loads(Path("stage041-evidence/report.json").read_text())
+          snapshot=Path("stage041-evidence/snapshot.pgcustom")
+          assert r["status"]=="POSTGRES_REAL_BACKUP_RESTORE_IDENTICAL_RECORDS_PASSED"
+          assert r["backup_sha256"]==hashlib.sha256(snapshot.read_bytes()).hexdigest()
+          assert r["original_rows"]==r["restored_rows"]==25
+          assert r["original_checksum"]==r["restored_checksum"]
+          assert r["tampered_backup_rejected"]
+          assert r["rpo_records_lost"]==0
+          assert r["same_kernel_source_and_restore"] is True
+          assert r["cross_host_restore_tested"] is False
+          assert r["production_approved"] is False
+          print("STAGE041_REAL_POSTGRESQL_BACKUP_RESTORE_SHA256_TAMPER_PROVED")
+          PY
+      - name: Preserve actual backup and report with measured restoration time
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage041-real-pg-dump-restore-sha256-one-host
+          path: stage041-evidence/
+          retention-days: 30
+          if-no-files-found: warn
