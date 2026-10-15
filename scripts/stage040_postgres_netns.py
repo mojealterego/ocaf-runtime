@@ -89,6 +89,10 @@ def run_lab(*,pg_bin:Path,report:Path)->dict:
     bridge="br40"+tag
     ns={k:"oc40"+k+tag for k in "abc"}
     root={k:base/k for k in "abc"}
+    sockets={k:base/("pgsock-"+k) for k in "abc"}
+    for sockdir in sockets.values():
+        sockdir.mkdir(mode=0o700)
+        os.chown(sockdir,uid,gid)
     ip={k:f"10.247.40.{i}" for i,k in enumerate("abc",start=1)}
     port=25340
     namespaces=[]
@@ -137,7 +141,7 @@ def run_lab(*,pg_bin:Path,report:Path)->dict:
             return r.stdout.strip() if check else r.returncode
         def start(node):
             try:
-                ctl(node,"-o",f"-p {port} -h {ip[node]}",
+                ctl(node,"-o",f"-p {port} -h {ip[node]} -k {sockets[node]}",
                     "-l",str(base/(node+".log")),"-w","start",timeout=35)
             except NetnsPGError as exc:
                 logfile=base/(node+".log")
