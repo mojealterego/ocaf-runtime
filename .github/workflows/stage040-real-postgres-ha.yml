@@ -1,0 +1,76 @@
+name: OCAF 0.40 REAL 3-postmaster PostgreSQL WAL crash recovery (ONE HOST LAB)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage040-real-postgres-ha.yml
+      - scripts/stage040_postgres_ha.py
+      - scripts/tests/test_stage040_postgres_ha.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-real-three-processes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Test fail-closed 3-process PostgreSQL failover claims
+        run: python3 -m unittest discover -s scripts/tests -p test_stage040_postgres_ha.py -v
+      - name: Install PostgreSQL 16 from Ubuntu packages if absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! test -x /usr/lib/postgresql/16/bin/pg_basebackup; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16
+          fi
+          test -x /usr/lib/postgresql/16/bin/initdb
+          test -x /usr/lib/postgresql/16/bin/pg_ctl
+          /usr/lib/postgresql/16/bin/pg_ctl --version
+      - name: REAL streaming two standbys, IMMEDIATE primary crash and C reparent after B promotion
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          EVIDENCE="/tmp/ocaf40-${GITHUB_RUN_ID}-evidence"
+          sudo -n install -d -o postgres -g postgres -m 0700 "$EVIDENCE"
+          sudo -n -u postgres python3 "$GITHUB_WORKSPACE/scripts/stage040_postgres_ha.py" \
+            --pg-bin-dir /usr/lib/postgresql/16/bin \
+            --report "$EVIDENCE/actual-postgresql-streaming-failover.json" \
+            --ack-local-ephemeral-postgres-primary-kill
+          mkdir -p stage040-evidence
+          sudo -n cp "$EVIDENCE/actual-postgresql-streaming-failover.json" stage040-evidence/postgres-real-ha.json
+          sudo -n chown "$(id -u):$(id -g)" stage040-evidence/postgres-real-ha.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("stage040-evidence/postgres-real-ha.json").read_text())
+          assert r["status"]=="POSTGRES_3_PROCESSES_STREAMING_FAILOVER_PASSED"
+          assert r["nodes_count"]==3
+          assert r["both_standbys_replayed_pre_crash_wal"] is True
+          assert r["old_primary_killed_immediate"] is True
+          assert r["old_primary_unreachable_after_crash"] is True
+          assert r["standby_b_promoted_writable"] is True
+          assert r["standby_c_followed_promoted_b"] is True
+          assert r["standby_c_replayed_post_promotion_wal"] is True
+          assert r["standby_c_wal_receiver_status"]=="streaming"
+          assert r["all_three_same_kernel"] is True
+          assert r["three_physically_independent_hosts"] is False
+          assert r["host_power_loss_tested"] is False
+          assert r["production_approved"] is False
+          print("STAGE040_REAL_THREE_POSTGRES_PROCESSES_WAL_PRIMARY_CRASH_AND_REPARENT_PROVED")
+          PY
+      - name: Preserve genuine PostgreSQL WAL failover observation
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage040-real-three-postgres-wal-failover-one-host
+          path: stage040-evidence/
+          retention-days: 30
+          if-no-files-found: warn
