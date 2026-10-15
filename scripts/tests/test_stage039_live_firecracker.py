@@ -14,6 +14,16 @@ class LiveContract(unittest.TestCase):
                 "ocaf-test-a", 0, 1002, Path("/srv/ocaf-jailer"),
                 "ocaf-stage039-vm-0123456789abcdef.service")
 
+    def test_jailer_api_socket_path_must_fit_linux_sockaddr_un_limit(self):
+        ident = "ocaf-" + "a" * 24
+        unsafe = Path("/opt/ocaf039-independent-38720117864-tenant-a/jailer")
+        safe = Path("/opt/o39h38720117864-a/jailer")
+        with self.assertRaisesRegex(live.LiveFirecrackerError, "sockaddr_un"):
+            live.validate_api_socket_path(unsafe, "firecracker", ident)
+        result = live.validate_api_socket_path(safe, "firecracker", ident)
+        self.assertTrue(str(result).endswith("/root/firecracker.socket"))
+        self.assertLessEqual(len(str(result).encode()), 107)
+
     def test_jailer_command_requires_cgroup2_and_chroot(self):
         cmd = live.build_jailer_command(Path("/opt/bin/jailer"), Path("/opt/bin/firecracker"),
             "ocaf-test-a", 1002, 1002, Path("/srv/ocaf-jailer"),
