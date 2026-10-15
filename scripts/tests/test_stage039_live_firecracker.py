@@ -8,6 +8,41 @@ import stage039_live_firecracker as live
 
 
 class LiveContract(unittest.TestCase):
+    def test_guest_wasi_child_must_finish_before_firecracker_is_sigkilled(self):
+        import tempfile, threading, time
+        from stage039_guest_wasi import INIT, OUTPUT, PASS, FAILED
+        class Live:
+            def poll(self): return None
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/"serial-console.log"
+            path.write_bytes(b"[    0.00] Linux version 6.1.0\\n"+INIT)
+            def finish():
+                time.sleep(.12)
+                with path.open("ab") as f: f.write(OUTPUT+PASS)
+            t=threading.Thread(target=finish,daemon=True)
+            t.start()
+            try:
+                evidence=live.await_real_guest_wasi_execution(Live(),path,seconds=2)
+                self.assertTrue(evidence["wasi_preview1_fd_write_observed_inside_guest"])
+                self.assertTrue(evidence["guest_wasmtime_child_exited_zero"])
+            finally:t.join(timeout=1)
+            path.write_bytes(b"[    0.00] Linux version 6.1.0\\n"+INIT+FAILED)
+            with self.assertRaisesRegex(live.LiveFirecrackerError,"failed"):
+                live.await_real_guest_wasi_execution(Live(),path,seconds=1)
+            path.write_bytes(b"[    0.00] Linux version 6.1.0\\n"+INIT)
+            with self.assertRaisesRegex(live.LiveFirecrackerError,"deadline"):
+                live.await_real_guest_wasi_execution(Live(),path,seconds=1)
+
+    def test_guest_wasi_wait_rejects_dead_vm(self):
+        import tempfile
+        class Dead:
+            def poll(self): return 143
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/"serial"
+            path.write_bytes(b"Linux version 6.1\\n")
+            with self.assertRaisesRegex(live.LiveFirecrackerError,"exited"):
+                live.await_real_guest_wasi_execution(Dead(),path,seconds=1)
+
     def test_uid_gid_must_not_be_root(self):
         with self.assertRaises(live.LiveFirecrackerError):
             live.build_jailer_command(Path("/opt/bin/jailer"), Path("/opt/bin/firecracker"),
