@@ -79,9 +79,16 @@ jobs:
           set -euo pipefail
           umask 077
           ROOT="$PWD"
-          AYA="$ROOT/stage039/aya-guard/target/release/ocaf-stage039-aya-guard"
-          ELF="$ROOT/stage039/aya-ebpf-egress/prebuilt/stage039-deny-egress.elf"
-          LOADER_SHA="$(sha256sum "$AYA" | cut -d ' ' -f 1)"
+          BUILT_AYA="$ROOT/stage039/aya-guard/target/release/ocaf-stage039-aya-guard"
+          BUILT_ELF="$ROOT/stage039/aya-ebpf-egress/prebuilt/stage039-deny-egress.elf"
+          ROOT_STAGE="/opt/ocaf039-live-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          sudo -n install -d -o root -g root -m 0700 "$ROOT_STAGE"
+          sudo -n install -o root -g root -m 0500 "$BUILT_AYA" "$ROOT_STAGE/aya-guard"
+          sudo -n install -o root -g root -m 0400 "$BUILT_ELF" "$ROOT_STAGE/deny-egress.elf"
+          AYA="$ROOT_STAGE/aya-guard"
+          ELF="$ROOT_STAGE/deny-egress.elf"
+          LOADER_SHA="$(sha256sum "$BUILT_AYA" | cut -d ' ' -f 1)"
+          echo "992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95  $BUILT_ELF" | sha256sum -c -
           sudo -n python3 scripts/stage039_live_egress.py \
             --loader "$AYA" --loader-sha256 "$LOADER_SHA" \
             --program "$ELF" \
