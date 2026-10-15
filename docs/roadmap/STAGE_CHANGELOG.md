@@ -38,3 +38,10 @@ production_approved: false
 
 **Wpis `STAGE_VERIFIED` nie może posiadać pustego zestawu testów i pustego potwierdzenia CI. `RESTORED_EXISTING` zawsze wskazuje pierwotny milestone i zachowuje stary zakres. `NEW_REQUIREMENT` musi używać kolejnego niezajętego numeru po 1.94.**
 
+
+## 2026-10-15 — README_ROADMAP_RENDERED — numery 1–269 na samej górze repo
+
+- Zgodnie z poleceniem operatora: pełna kolejno numerowana Roadmapa (195 etapów głównych + 64 podetapy + 10 pierwotnych produktów Agents Builder Code/NoCode) zostaje **w całości wypisana na samym początku README.md**, nie tylko linkowana.
+- Każda pozycja posiada dosłowną etykietę `ZROBIONE — TEST W OGRANICZONYM ZAKRESIE` lub `DO ZROBIENIA`, jawny oryginalny numer ID, tytuł, zakres, kryterium i źródłowy status. `PASS` ograniczonego testu nie oznacza produkcyjnego ukończenia całości.
+- Generator: `scripts/render_readme_roadmap.py`, blok chroniony znacznikami HTML, testy anty-utrata/anty-fikcyjny-status, CI sprawdza zgodność z dwoma manifestami. **Bez nowych numerów etapów**: produkty pierwotne są wyłącznie wydzielonymi pozycjami kontrolnymi.
+- Przy zmianie statusu lub dopisaniu etapu generator jest obowiązkowym krokiem w tym samym commicie. Weryfikacja po wykonaniu przez GitHub Actions; nie deklarować wyniku przed zakończeniem.

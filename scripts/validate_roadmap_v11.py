@@ -6,6 +6,7 @@ Hard-fail on loss of any of the 195 main stages, 64 technical substages,
 or code-execution claim is made by passing this documentation validator.
 """
 from __future__ import annotations
+import render_readme_roadmap as readme_roadmap
 import argparse
 import json
 from pathlib import Path
@@ -32,9 +33,10 @@ def _assert(ok: bool, msg: str):
 def validate(v11: dict, v10_data: dict, root: str, mirror: str, readme: str,
              builders: dict, losses: dict, ledger: str, archive: str) -> dict:
     _assert(root == mirror, "root ROADMAP.md must be identical to docs mirror")
-    _assert(readme.startswith(
-        "> **📌 [PEŁNA ROADMAPA OCAF OD SAMEGO POCZĄTKU — ROADMAP.md](ROADMAP.md)**"),
-        "first line of README must pin the canonical root roadmap")
+    try:
+        readme_roadmap.validate_readme(readme,v11,builders)
+    except (ValueError,TypeError,KeyError) as exc:
+        raise CanonicalV11Error("README must display ALL 269 source-synced numbered roadmap statuses at TOP") from exc
     _assert(
         isinstance(v11, dict)
         and v11.get("schema_version") == 1

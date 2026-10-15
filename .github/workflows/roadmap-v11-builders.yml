@@ -14,6 +14,8 @@ on:
       - docs/roadmap/agents_builder_products_v11.json
       - docs/roadmap/missing_capabilities_v11.json
       - docs/roadmap/STAGE_CHANGELOG.md
+      - scripts/render_readme_roadmap.py
+      - scripts/tests/test_render_readme_roadmap.py
       - scripts/validate_roadmap_v11.py
       - scripts/tests/test_validate_roadmap_v11.py
       - .github/workflows/roadmap-v11-builders.yml
@@ -34,10 +36,13 @@ jobs:
       - name: Compile validator and run no-loss/negative tests
         run: |
           set -euo pipefail
+          python3 -m py_compile scripts/render_readme_roadmap.py scripts/tests/test_render_readme_roadmap.py
+          python3 -m unittest discover -s scripts/tests -p test_render_readme_roadmap.py -v
           python3 -m py_compile scripts/validate_roadmap_v11.py scripts/tests/test_validate_roadmap_v11.py
           python3 -m unittest discover -s scripts/tests -p test_validate_roadmap_v11.py -v
       - name: Ensure pinned root, original 10 products and historical status are identical and no new numbering invented
         run: |
           set -euo pipefail
+          python3 scripts/render_readme_roadmap.py --repo-root . --check
           python3 scripts/validate_roadmap_v11.py --repo-root .
           echo OCAF_V11_COMPLETE_195_MAIN_64_TECHNICAL_10_ORIGINAL_AGENTS_BUILDER_PRODUCTS_ROOT_PINNED

@@ -87,7 +87,7 @@ class RestoreOriginalBuilderTests(unittest.TestCase):
         with self.assertRaises(guard.CanonicalV11Error):
             self.verify(root=self.root.replace("## Najważniejsze: pierwotny AGENTS BUILDER","## Deleted"))
         with self.assertRaises(guard.CanonicalV11Error):
-            self.verify(readme=self.readme.replace("> **📌","> **",1))
+            self.verify(readme=self.readme.replace("1. **[DO ZROBIENIA]**","1. **[ZROBIONE]**",1))
         with self.assertRaises(guard.CanonicalV11Error):
             self.verify(mirror=self.mirror+"tampered")
         loss=copy.deepcopy(self.losses);loss["items"].pop()
