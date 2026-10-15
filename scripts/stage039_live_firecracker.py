@@ -183,6 +183,22 @@ def _copy_pinned(src: Path, dest: Path, digest: str) -> None:
                 os.close(fd)
 
 
+
+def _bounded_console_evidence(log: Path) -> str:
+    """Retain guest's early boot signature AND latest output in bounded RAM.
+
+    Previous last-64KiB-only inspection lost the Linux version string
+    after chatty Firecracker API logs appended tens of thousands of bytes.
+    """
+    with log.open("rb") as source:
+        head = source.read(65536)
+        source.seek(0, os.SEEK_END)
+        size = source.tell()
+        source.seek(max(0, size - 8192), os.SEEK_SET)
+        tail = source.read(8192)
+    return head.decode("utf-8", errors="replace") + "\n" + tail.decode("utf-8", errors="replace")
+
+
 def _api_state(sockpath: Path) -> dict:
     try:
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -266,12 +282,13 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
         deadline = time.monotonic() + timeout
         api = {}
         seen = ""
+        last_rejection = "no API or console evidence yet"
         while time.monotonic() < deadline:
             if proc.poll() is not None:
                 break
             api = _api_state(sockpath)
             try:
-                seen = log.read_text(encoding="utf-8", errors="replace")[-65536:]
+                seen = _bounded_console_evidence(log)
                 cgroups = Path(f"/proc/{proc.pid}/cgroup").read_text()
             except OSError:
                 cgroups = ""
@@ -289,9 +306,12 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
                     "limit_note": "This confirms kernel boot console/API only. Aya egress must be proven separately.",
                 })
                 return result
-            except LiveFirecrackerError:
+            except LiveFirecrackerError as exc:
+                last_rejection = str(exc)
                 time.sleep(0.25)
-        raise LiveFirecrackerError("no matching real jailed Firecracker API+guest kernel+cgroup proof within timeout")
+        raise LiveFirecrackerError(
+            "no matching real jailed Firecracker API+guest kernel+cgroup proof "
+            f"within timeout; last check: {last_rejection}")
     finally:
         if proc is not None and proc.poll() is None:
             proc.terminate()
