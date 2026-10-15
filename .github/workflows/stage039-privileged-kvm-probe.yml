@@ -7,6 +7,9 @@ on:
       - .github/workflows/stage039-privileged-kvm-probe.yml
       - scripts/stage039_kvm_ioctl.py
       - scripts/stage039_microvm_gate.py
+      - scripts/stage039_live_egress.py
+      - stage039/aya-guard/**
+      - stage039/aya-ebpf-egress/prebuilt/**
   workflow_dispatch:
 
 permissions:
@@ -15,7 +18,7 @@ permissions:
 jobs:
   kernel-kvm-root-probe:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 17
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -59,6 +62,45 @@ jobs:
           assert r["microvm_launched"] is False
           assert r["ebpf_attached"] is False
           assert r["production_approved"] is False
+          PY
+      - name: Verify pinned eBPF ELF and compile actual Aya loader
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.99.0 --profile minimal
+          cargo +1.99.0 build --manifest-path stage039/aya-guard/Cargo.toml --release
+          file stage039/aya-guard/target/release/ocaf-stage039-aya-guard
+          test -x stage039/aya-guard/target/release/ocaf-stage039-aya-guard
+          file stage039/aya-ebpf-egress/prebuilt/stage039-deny-egress.elf
+          echo '992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95  stage039/aya-ebpf-egress/prebuilt/stage039-deny-egress.elf' | sha256sum --check --
+      - name: REAL Aya BPF_PROG_LOAD cgroup attach and two-tenant egress negative test
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          ROOT="$PWD"
+          AYA="$ROOT/stage039/aya-guard/target/release/ocaf-stage039-aya-guard"
+          ELF="$ROOT/stage039/aya-ebpf-egress/prebuilt/stage039-deny-egress.elf"
+          LOADER_SHA="$(sha256sum "$AYA" | cut -d ' ' -f 1)"
+          sudo -n python3 scripts/stage039_live_egress.py \
+            --loader "$AYA" --loader-sha256 "$LOADER_SHA" \
+            --program "$ELF" \
+            --program-sha256 992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95 \
+            --seconds 15 \
+            --report stage039-privileged-evidence/actual-root-aya-egress.json \
+            --ack-privileged-loopback-test
+          sudo -n chown "$(id -u):$(id -g)" stage039-privileged-evidence/actual-root-aya-egress.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path("stage039-privileged-evidence/actual-root-aya-egress.json").read_text())
+          assert report["status"]=="KERNEL_EBPF_EGRESS_ISOLATION_PASSED"
+          assert report["tenant_a_denied_during_attachment"] is True
+          assert report["tenant_b_not_blocked"] is True
+          assert report["tenant_a_recovered_after_detach"] is True
+          assert report["production_approved"] is False
+          assert report["microvm_booted"] is False
+          print("STAGE039_REAL_GITHUB_KERNEL_AYA_TWO_TENANT_EGRESS_PROVEN")
           PY
       - name: Archive factual root-level KVM ioctl report
         if: always()
