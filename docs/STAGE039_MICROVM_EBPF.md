@@ -119,3 +119,38 @@ Rozdzielenie decyzji administracyjnej i weryfikowalnego odbioru opisuje
 [`STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md`](STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md).
 Prace 0.39 nie są już wstrzymywane przez kolejność backlogu, lecz bramki
 wdrożeniowe i bezpieczeństwa nadal nie mogą zostać oznaczone PASS bez dowodów.
+
+## 0.39.3 — rzeczywiste IPC AF_UNIX z uwierzytelnianiem jądra (2026-10-15)
+
+Zaimplementowano `scripts/stage039_broker_ipc.py`. Jest to wyłącznie
+lokalna, kontrolowana bramka **admission**, bez wykonywania mikroVM:
+
+- rzeczywiste gniazdo `AF_UNIX` z odczytem `SO_PEERCRED`
+  (kernelowo poświadczone `pid,uid,gid`); odmowa wszystkich UID
+  nieobecnych na jawnej liście operatora;
+- jeden `tenant:agent` na osobny socket, bez pola UID w JSON i bez
+  możliwości nadpisania kernelowego principal danymi sieciowymi;
+- katalog socketu `0700`, sam socket `0600`, odmowa podmiany
+  istniejącej ścieżki, usuwanie tylko własnego inode;
+- długość ramki 32-bit big-endian, ścisły JSON, skończone
+  limity wiadomości i czasowy deadline; odmowa unknown fields,
+  niespójnych typów, duplikatów JSON i prób `exec`;
+- `reserve` → lokalna SQLite z anty-replay / fencing, `release`
+  → powiązanie właściciela istniejącej rezerwacji z kernelowym UID;
+- `health` i odpowiedzi jawnie deklarują `microvm_launched=false`,
+  `ebpf_attached=false` i `production_approved=false`.
+
+Regresje: `scripts/tests/test_stage039_broker_ipc.py` — 10 testów
+obejmujących **rzeczywiste** gniazdo UNIX i prawa systemu plików,
+uprawnienia kernel UID, politykę tenant/agent, odmowę >128 KiB,
+odmowę sfałszowanego UID w JSON i realny zapis/replay/release w SQLite.
+Workflow GitHub Actions `stage039-microvm-preflight.yml` uruchamia
+łącznie **39 testów** (12 manifest/host, 17 ledger, 10 IPC).
+
+**Ograniczenia:** brak rzeczywistego Firecracker/jailer start,
+KVM VM/guest, attach Aya/eBPF, pomiaru isolation i pełnego
+podpisanego RPC→host brokera. Peer UID identyfikuje proces lokalny,
+a nie podpisanego zdalnego agenta: zaufany front-end RPC i kontrola
+autoryzacji nadal pozostają obowiązkowe. Odczyt całych dużych hashów
+odbywa się synchronicznie — przed udostępnieniem jako usługa
+konieczne są ograniczenia pojemności/konkurencji i testy denial-of-service.
