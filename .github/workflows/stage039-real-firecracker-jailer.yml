@@ -413,7 +413,7 @@ jobs:
             --aya-loader-sha256 "$(sudo -n sha256sum "$PREFIX/approved/aya-guard" | cut -d ' ' -f 1)" \
             --aya-program "$PREFIX/approved/aya_cgroup_device" \
             --aya-program-sha256 992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95 \
-            --aya-seconds 8 --timeout 110 \
+            --aya-seconds 12 --timeout 110 \
             --report "$GITHUB_WORKSPACE/stage039-real-guest-evidence/broker-wasi-vm.json" \
             --ack-broker-two-jailed-vm-real-kvm
           sudo -n python3 scripts/stage039_guest_wasi.py \
