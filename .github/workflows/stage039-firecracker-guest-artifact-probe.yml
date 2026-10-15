@@ -1,0 +1,70 @@
+name: OCAF 0.39 Firecracker pinned vendor artifacts and guest image probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage039-firecracker-guest-artifact-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-and-record:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Fetch official SHA-256 pinned Firecracker v1.17.0 release
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p /tmp/ocaf039-vendor stage039-guest-evidence
+          cd /tmp/ocaf039-vendor
+          curl --fail --silent --show-error --location --retry 2 --max-time 120 \
+            --proto '=https' --tlsv1.2 \
+            https://github.com/firecracker-microvm/firecracker/releases/download/v1.17.0/firecracker-v1.17.0-x86_64.tgz \
+            -o firecracker-v1.17.0-x86_64.tgz
+          echo '06094a1108ae9e82aa4c23a775aa92758f53f1175d422270d9d6162cb9ade558  firecracker-v1.17.0-x86_64.tgz' | sha256sum -c -
+          tar -tzf firecracker-v1.17.0-x86_64.tgz | head -35
+          sha256sum firecracker-v1.17.0-x86_64.tgz \
+            > "$GITHUB_WORKSPACE/stage039-guest-evidence/vendor-tar-sha256.txt"
+          echo STAGE039_FIRECRACKER_V1_17_0_VENDOR_TARBALL_PINNED
+      - name: Fingerprint official Firecracker sample guest kernel and rootfs
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          cd /tmp/ocaf039-vendor
+          curl --fail --silent --show-error --location --retry 2 --max-time 120 \
+            --proto '=https' --tlsv1.2 \
+            https://s3.amazonaws.com/spec.ccfc.min/img/hello/kernel/hello-vmlinux.bin \
+            -o hello-vmlinux.bin
+          curl --fail --silent --show-error --location --retry 2 --max-time 120 \
+            --proto '=https' --tlsv1.2 \
+            https://s3.amazonaws.com/spec.ccfc.min/img/hello/fsfiles/hello-rootfs.ext4 \
+            -o hello-rootfs.ext4
+          test -s hello-vmlinux.bin
+          test -s hello-rootfs.ext4
+          file hello-vmlinux.bin hello-rootfs.ext4
+          e2fsck -fn hello-rootfs.ext4 >/tmp/ocaf039-e2fsck.log 2>&1 || {
+            sed -n '1,35p' /tmp/ocaf039-e2fsck.log
+            exit 1
+          }
+          sha256sum hello-vmlinux.bin hello-rootfs.ext4 \
+            > "$GITHUB_WORKSPACE/stage039-guest-evidence/guest-images-sha256.txt"
+          stat -c '%n %s bytes' hello-vmlinux.bin hello-rootfs.ext4
+          cat "$GITHUB_WORKSPACE/stage039-guest-evidence/guest-images-sha256.txt"
+          echo STAGE039_OFFICIAL_SAMPLE_KERNEL_ROOTFS_HASHED_NOT_BOOTED
+      - name: Publish public digest manifest, never unverifiable guest boot PASS
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage039-firecracker-guest-source-digests
+          path: stage039-guest-evidence/
+          retention-days: 30
+          if-no-files-found: warn
