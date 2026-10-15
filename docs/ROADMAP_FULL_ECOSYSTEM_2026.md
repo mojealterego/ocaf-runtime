@@ -23,6 +23,14 @@ Dwa wspólne mechanizmy: **0.50 Agents Builder Core typed graph/IR** oraz **0.51
 
 **Inwentaryzacja utraconego zakresu:** [24 rozpoznane luki i obszary do weryfikacji](INVENTORY_LOST_REQUIREMENTS_2026-10-15.md) ([JSON](roadmap/missing_capabilities_v11.json)). Statusy: `MISSING`, `PLANNED_UNVERIFIED`, `ACTIVE_TECHNICAL_OPEN`, `UNKNOWN_SOURCE` odróżnione od realnego PASS.
 
+## Inwentaryzacja wykonanych historycznych implementacji 0.06–0.35 (29 pozycji)
+
+**29 pierwotnych etapów 0.06–0.09 oraz 0.11–0.35 posiada ZROBIONE — ZAKRES IMPLEMENTACJI.** Ich historyczne opisy README potwierdzają wdrożenie konkretnych komponentów, a kod i zestawy testów są obecne w repo. Nie oznacza to, że wszystkie wymagania produkcyjne zostały spełnione. [Tabela szczegółowa: pierwotny tytuł, rzeczywisty zakres i pliki](HISTORICAL_IMPLEMENTATION_AUDIT_2026-10-15.md). [Poprzedni Rust CI SUCCESS](https://github.com/mojealterego/ocaf-runtime/actions/runs/38772115289) potwierdza testy repo w danym commicie, nie pełny odbiór HA/DR.
+
+**Odzyskano pierwotną implementację:** 0.06 durable SQLite jobs; 0.07 capability coordinator; 0.08 signed distributed jobs; 0.09 local active/passive; 0.11 PostgreSQL active/passive coordinator; 0.12 audit/chaos; 0.13 health; 0.14 reconnect; 0.15 mTLS; 0.16 database lease clock; 0.17 leader fencing; 0.18 worker lease; 0.19 fenced sink; 0.20 effect permissions; 0.21 external sink; 0.22 scoped permits; 0.23 PG coordinator promotion; 0.24 network chaos; 0.25 operations; 0.26 namespace isolation; 0.27 release readiness; 0.28 supply chain; 0.29 Zenoh restrictions; 0.30 dependency migration; 0.31 CycloneDX; 0.32 attestations; 0.33 HA probe; 0.34 mTLS lifecycle; 0.35 HMAC rotation.
+
+**Wciąż do odtworzenia:** nieznane pierwotne kontrakty 0.00–0.05 i 0.10. Poprzedni status źródłowy wpisów v10 poniżej jest historyczną migawką — nie może wymazać odkrytego kodu. **0.39/0.40/0.41:** rzeczywiste zintegrowane WASI/Firecracker, niezależne hosty PostgreSQL HA i SLO/DR pozostają otwarte. **Agents Builder** = 10 oryginalnych produktów Cloud/Windows/macOS/Android/iOS × Code/NoCode, nie same agenty. Ich GUI i E2E wciąż nie zostały wykazane.
+
 ## Statystyka wykonania i uczciwe oznaczenia
 
 | Status etapów głównych | Liczba | Znaczenie |
