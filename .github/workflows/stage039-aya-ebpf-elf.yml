@@ -49,6 +49,14 @@ jobs:
           sha256sum "$ELF" > stage039-ebpf-elf.sha256
           cp "$ELF" stage039-deny-egress.elf
           echo "STAGE039_BPF_ELF_COMPILED_NOT_KERNEL_ATTACHED"
+      - name: Emit public Cargo dependency lockfile for canonical main pinning
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo OCAF039_LOCK_BEGIN
+          base64 --wrap=0 stage039/aya-ebpf-egress/Cargo.lock
+          echo
+          echo OCAF039_LOCK_END
       - name: Preserve verified BPF ELF and SHA-256
         if: success()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
