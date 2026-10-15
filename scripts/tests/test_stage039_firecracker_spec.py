@@ -56,6 +56,19 @@ class FirecrackerSpecTests(unittest.TestCase):
         self.assertFalse(report["aya_attached"])
         self.assertFalse(report["production_approved"])
 
+    def test_just_in_time_wasmtime_guest_requires_actual_virtio_rng_source(self):
+        original=cfg.build(self.manifest,self.approved,self.chroot)["firecracker_config"]
+        self.assertNotIn("entropy",original)
+        spec=cfg.enable_guest_entropy_for_wasi(original)
+        self.assertIn("entropy",spec)
+        self.assertEqual(spec["entropy"],{})
+        self.assertEqual(spec["network-interfaces"],[])
+        self.assertNotIn("entropy",original)
+        with self.assertRaises(ValueError):
+            cfg.enable_guest_entropy_for_wasi({"network-interfaces":[{"iface_id":"eth0"}]})
+        with self.assertRaises(ValueError):
+            cfg.enable_guest_entropy_for_wasi({"machine-config":{"vcpu_count":0}})
+
     def test_reject_modified_staged_kernel_and_rootfs(self):
         for filename in ("vmlinux.bin", "rootfs.ext4"):
             p = self.chroot / "guest" / filename
