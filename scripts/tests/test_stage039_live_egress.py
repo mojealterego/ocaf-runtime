@@ -107,5 +107,37 @@ class TestLiveEgressHarness(unittest.TestCase):
                 harness.preflight()
 
 
+    def test_bpffs_directory_alone_is_not_a_mounted_bpf_filesystem(self):
+        mounts = ("cgroup2 /sys/fs/cgroup cgroup2 rw,nosuid 0 0\n"
+                  "tmpfs /sys/fs/bpf tmpfs rw,nosuid 0 0\n")
+        with mock.patch.object(harness.os, "geteuid", return_value=0), \
+             mock.patch.object(harness.Path, "exists", return_value=True), \
+             mock.patch.object(harness.Path, "read_text",
+                               side_effect=lambda *args, **kwargs: mounts):
+            with self.assertRaisesRegex(harness.AcceptanceError, "bpffs"):
+                harness.preflight()
+
+    def test_bpf_mount_preflight_accepts_genuine_bpf_mount(self):
+        mounts = ("cgroup2 /sys/fs/cgroup cgroup2 rw,nosuid 0 0\n"
+                  "bpf /sys/fs/bpf bpf rw,nosuid 0 0\n")
+        with mock.patch.object(harness.os, "geteuid", return_value=0), \
+             mock.patch.object(harness.Path, "exists", return_value=True), \
+             mock.patch.object(harness.Path, "read_text",
+                               side_effect=lambda *args, **kwargs: mounts):
+            result=harness.preflight()
+        self.assertTrue(result["kernel"])
+        self.assertTrue(result["hostname"])
+
+    def test_executable_rejects_relative_paths(self):
+        with tempfile.TemporaryDirectory() as directory:
+            binary = Path(directory) / "loader"
+            binary.write_bytes(b"synthetic-aya-test-loader")
+            binary.chmod(0o700)
+            actual=harness.sha256_file(binary)
+            with mock.patch.object(harness.Path, "is_absolute", return_value=False):
+                with self.assertRaises(harness.AcceptanceError):
+                    harness.verified_executable(binary, actual)
+
+
 if __name__ == "__main__":
     unittest.main()
