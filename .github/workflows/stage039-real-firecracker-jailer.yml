@@ -66,6 +66,9 @@ jobs:
           PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
           SOURCES="/tmp/ocaf039-real-guest-source"
           sudo -n install -d -o root -g root -m 0700 "$PREFIX" "$PREFIX/approved" "$PREFIX/jailer"
+          sudo -n chown root:root "$PREFIX" "$PREFIX/approved" "$PREFIX/jailer"
+          sudo -n chmod 0700 "$PREFIX" "$PREFIX/approved" "$PREFIX/jailer"
+          sudo -n stat -c 'OCAF039_JAILER_DIR %n %a %U:%G' "$PREFIX" "$PREFIX/approved" "$PREFIX/jailer"
           sudo -n install -o root -g root -m 0555 \
             "$SOURCES/release-v1.17.0-x86_64/firecracker-v1.17.0-x86_64" "$PREFIX/approved/firecracker"
           sudo -n install -o root -g root -m 0555 \
