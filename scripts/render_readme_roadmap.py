@@ -69,6 +69,51 @@ def line(num: int, row: dict, kind: str) -> str:
     )
 
 
+def render_pinned_panel(builders:dict)->list[str]:
+    """First GitHub-rendered README element: visible bordered roadmap STATUS table.
+
+    This is not a GitHub special pinned feature or a collapsed <details>.
+    A two-column Markdown table renders immediately under the repository files.
+    Always derive Agents Builder statuses from the canonical 10-product manifest.
+    """
+    if not isinstance(builders,dict) or not isinstance(builders.get("products"),list):
+        raise ReadmeRoadmapError("missing canonical Agents Builder product manifest")
+    pairs={(p.get("platform"),p.get("mode")):p for p in builders["products"]}
+           if len(builders["products"])==10 and all(isinstance(p,dict) for p in builders["products"]) else {}
+    platforms=(("Cloud","Chmurowy"),("Windows","Desktopowy Windows"),
+               ("macOS","Desktopowy macOS"),("Android","Android"),("iOS","iOS"))
+    if len(pairs)!=10 or any((platform,mode) not in pairs
+                             for platform,_ in platforms for mode in ("Code","NoCode")):
+        raise ReadmeRoadmapError("top panel must show all five Code and NoCode builder pairs")
+    status_labels={"NOT_IMPLEMENTED":"[DO ZROBIENIA]",
+                   "PARTIAL":"[W TRAKCIE]",
+                   "IMPLEMENTED_VERIFIED":"[ZROBIONE — ZWERYFIKOWANY ZAKRES]"}
+    rows=[
+        "| 📌 **ROADMAPA OCAF — PRZYPIĘTA NA GÓRZE REPOZYTORIUM** | **STATUS / SZYBKI DOSTĘP** |",
+        "| :--- | :--- |",
+        "| **[OTWÓRZ PEŁNĄ ROADMAPĘ](ROADMAP.md)** | **195 etapów + 64 podetapy + 10 produktów Agents Builder = 269 pozycji** |",
+        "| **[Pełna lista statusów od 0.00 do 1.94](ROADMAP.md)** | **ZROBIONE / W TRAKCIE / DO ZROBIENIA — szczegóły bezpośrednio pod ramką** |",
+    ]
+    for platform,label in platforms:
+        code=pairs[platform,"Code"]
+        nocode=pairs[platform,"NoCode"]
+        if (code.get("platform_stage")!=nocode.get("platform_stage")
+            or code.get("status") not in status_labels
+            or nocode.get("status") not in status_labels):
+            raise ReadmeRoadmapError("unverified Agents Builder pair status or original stage")
+        rows.append(
+            f"| **Agents Builder {label} — Code + NoCode (etap {code['platform_stage']})** "
+            f"| **Code: {status_labels[code['status']]} · NoCode: {status_labels[nocode['status']]}** |"
+        )
+    rows.extend((
+        "| **PRIORYTET: 0.39 / 0.40 / 0.41** | **WASI w Firecracker: W TRAKCIE; PostgreSQL HA między hostami: DO ZROBIENIA; testy niezawodności: W TRAKCIE** |",
+        "| **REGUŁA STAŁEJ AKTUALIZACJI** | **Po każdym etapie: status, realny test/CI, commit, artefakt, changelog; nowe punkty na końcu** |",
+        "| **[Inwentaryzacja braków](docs/INVENTORY_LOST_REQUIREMENTS_2026-10-15.md)** | **[10 pierwotnych Agents Builder](docs/AGENTS_BUILDER_CODE_NOCODE_5_PLATFORMS.md) · [Dziennik zmian etapów](docs/roadmap/STAGE_CHANGELOG.md)** |",
+        "",
+    ))
+    return rows
+
+
 def render_section(inventory: dict, builders: dict) -> str:
     if (not isinstance(inventory,dict) or not isinstance(builders,dict)
         or len(inventory.get("main",[])) != 195
@@ -88,6 +133,7 @@ def render_section(inventory: dict, builders: dict) -> str:
         raise ReadmeRoadmapError("not exactly 269 sequential numbered roadmap rows")
     parts=[
         BEGIN,
+        *render_pinned_panel(builders),
         "# OCAF — PEŁNA ROADMAPA OD POCZĄTKU, PUNKT PO PUNKCIE (1–269)",
         "",
         "**To jest pierwsza sekcja README.md i pełna lista statusów, nie tylko odsyłacz.** Każdy numer ma informację **ZROBIONE** albo **DO ZROBIENIA**. `ZROBIONE — ZAKRES IMPLEMENTACJI` oznacza kod i testy historyczne obecne w repo (NIE pełny odbiór ani produkcję); `ZROBIONE — TEST W OGRANICZONYM ZAKRESIE` oznacza wyłącznie potwierdzoną próbę laboratoryjną.",

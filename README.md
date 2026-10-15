@@ -1,4 +1,17 @@
 <!-- OCAF_README_ROADMAP_BEGIN -->
+| 📌 **ROADMAPA OCAF — PRZYPIĘTA NA GÓRZE REPOZYTORIUM** | **STATUS / SZYBKI DOSTĘP** |
+| :--- | :--- |
+| **[OTWÓRZ PEŁNĄ ROADMAPĘ](ROADMAP.md)** | **195 etapów + 64 podetapy + 10 produktów Agents Builder = 269 pozycji** |
+| **[Pełna lista statusów od 0.00 do 1.94](ROADMAP.md)** | **ZROBIONE / W TRAKCIE / DO ZROBIENIA — szczegóły bezpośrednio pod ramką** |
+| **Agents Builder Chmurowy — Code + NoCode (etap 0.52)** | **Code: [DO ZROBIENIA] · NoCode: [DO ZROBIENIA]** |
+| **Agents Builder Desktopowy Windows — Code + NoCode (etap 0.53)** | **Code: [DO ZROBIENIA] · NoCode: [DO ZROBIENIA]** |
+| **Agents Builder Desktopowy macOS — Code + NoCode (etap 0.53)** | **Code: [DO ZROBIENIA] · NoCode: [DO ZROBIENIA]** |
+| **Agents Builder Android — Code + NoCode (etap 0.54)** | **Code: [DO ZROBIENIA] · NoCode: [DO ZROBIENIA]** |
+| **Agents Builder iOS — Code + NoCode (etap 0.54)** | **Code: [DO ZROBIENIA] · NoCode: [DO ZROBIENIA]** |
+| **PRIORYTET: 0.39 / 0.40 / 0.41** | **WASI w Firecracker: W TRAKCIE; PostgreSQL HA między hostami: DO ZROBIENIA; testy niezawodności: W TRAKCIE** |
+| **REGUŁA STAŁEJ AKTUALIZACJI** | **Po każdym etapie: status, realny test/CI, commit, artefakt, changelog; nowe punkty na końcu** |
+| **[Inwentaryzacja braków](docs/INVENTORY_LOST_REQUIREMENTS_2026-10-15.md)** | **[10 pierwotnych Agents Builder](docs/AGENTS_BUILDER_CODE_NOCODE_5_PLATFORMS.md) · [Dziennik zmian etapów](docs/roadmap/STAGE_CHANGELOG.md)** |
+
 # OCAF — PEŁNA ROADMAPA OD POCZĄTKU, PUNKT PO PUNKCIE (1–269)
 
 **To jest pierwsza sekcja README.md i pełna lista statusów, nie tylko odsyłacz.** Każdy numer ma informację **ZROBIONE** albo **DO ZROBIENIA**. `ZROBIONE — ZAKRES IMPLEMENTACJI` oznacza kod i testy historyczne obecne w repo (NIE pełny odbiór ani produkcję); `ZROBIONE — TEST W OGRANICZONYM ZAKRESIE` oznacza wyłącznie potwierdzoną próbę laboratoryjną.
