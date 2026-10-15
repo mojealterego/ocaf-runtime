@@ -54,3 +54,21 @@ Nie stwierdzono jeszcze nowego, unikalnego wymagania, które można bezpiecznie 
 - Weryfikacja workflow na aktualnym commicie.
 
 **Werdykt: brak podstaw do produkcyjnego GO; pełna weryfikacja techniczna pozostaje otwarta.**
+
+
+## Aneks weryfikacyjny 20/20 źródeł i kodu (15.10.2026)
+
+**Weryfikacja plików PDF:** 20 plików, 307 stron, 16 unikalnych znormalizowanych tekstów. SHA-256 treści tekstowej wykazał trzy grupy identycznych źródeł: (a) `Analiza Architektury Systemu OCAF (1).PDF` i `Analiza Architektury Systemu OCAF.PDF`; (b) `Architektura OCAF w Języku Rust (1).PDF`, `Architektura OCAF w Języku Rust.PDF`, `Architektura OCAF w Języku RustPDF_261012_042941.pdf`; (c) `Projekt i Mapa Drogowa Rewolucyjnej Architektury S.. (1).PDF` i `Projekt i Mapa Drogowa Rewolucyjnej Architektury S..(1) (1).PDF`. Pozostałe 13 źródeł mają różny tekst. Pełny indeks stron/tematów dostępny w oddzielnym lokalnym raporcie.
+
+**Rzeczywista inspekcja kodu na `main`:**
+- `src/auth/mod.rs`: `AuthContext` przechowuje `macaroon`, `preimage`, `invoice`, `nonce`, ale `DenyByDefaultVerifier` zawsze zwraca `VerificationUnavailable`. To nie jest działający L402/payment settlement ani OAuth PKCE.
+- `src/transport/mod.rs`: komentarz źródłowy jednoznacznie zastrzega, że otwarcie sesji Zenoh nie zapewnia automatycznie tool discovery/pub-sub/remote execution. Transport RPC istnieje w osobnych modułach, więc nie należy utożsamiać tej uwagi z brakiem wszelkiej komunikacji.
+- `src/registry/mod.rs`: lokalny rejestr z kompilacją input/output JSON Schema; blokuje zewnętrzne `$ref`, `$dynamicRef`, `$recursiveRef`. Nie potwierdza federacji MCP.
+- `src/rpc/mod.rs`: uwierzytelnianie HMAC-SHA256, ograniczenia ramek i replay; komentarz źródłowy stwierdza, że ramki same w sobie **nie są szyfrowane** — wymagany autoryzowany TLS.
+- `src/executor/mod.rs`: obecny Linux-only moduł `wasi`; nie dowodzi ukończonego broker→Firecracker guest WASI.
+- `src/cluster/mod.rs`: kod opisuje eksperymentalne PostgreSQL primitives i wyraźnie odróżnia je od replikacji katalogu SQLite. Nie jest to dowód działającej repliki PostgreSQL HA.
+- `Cargo.toml`: Zenoh 1.10, Tokio, `tracing`, `jsonschema`; nie deklaruje `automerge`, `yrs`, `opentelemetry-otlp`, `tree-sitter`, `halo2` w głównym crate. Brak zależności sam w sobie nie dowodzi nieistnienia każdego adaptera w całym repo.
+- `.github/workflows/rust.yml`: rzeczywiste kroki `cargo fmt`, core-only Clippy i testy, Wasmtime acceptance, PostgreSQL loopback chaos. Definicja workflow nie jest dowodem zakończenia bieżącego run ani prawdziwego KVM i multi-host failover.
+- `README.md` utrzymuje jedną tabelę 269 pozycji i wyraźnie rozróżnia administracyjne `ETAP UKOŃCZONY` od odbioru produkcyjnego.
+
+**Werdykt:** audyt 20 dokumentów źródłowych i wybranych modułów wykonano; **pełny audyt wszystkich plików kodu, uruchomienie testów oraz certyfikacja bezpieczeństwa i infrastruktury NIE zostały wykonane**. Produkcyjne GO = **NO-GO**. Nie nadano sztucznych ID 1.95+, gdyż opisane wymagania mają już przypisania w v11 i INV-001–024.
