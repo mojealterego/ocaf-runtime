@@ -158,15 +158,90 @@ def evaluate(repo: Path, manifest: Path | None, now: datetime | None = None) -> 
     }
 
 
+
+REQUIRED_OPERATOR_DIRECTIVE = frozenset({
+    "schema_version", "git_branch", "operator_directive_date",
+    "operator_authorization_source", "operator_decision",
+    "administrative_release_blocked", "stage_038_administrative_status",
+    "stage_039_development", "safety_acceptance_a01_a12",
+    "third_party_audit_evidence", "verified_production_readiness",
+    "production_deployed", "risk_waiver_notes",
+})
+
+
+def apply_operator_override(report: dict[str, Any], policy_path: Path,
+                            *, acknowledged: bool) -> dict[str, Any]:
+    """User-authorized administrative release, NOT evidence or actual deployment."""
+    if acknowledged is not True:
+        raise ValueError("explicit acknowledgement of outstanding risk required")
+    if (policy_path.is_symlink() or not policy_path.is_file() or
+            not 0 < policy_path.stat().st_size <= 8192):
+        raise ValueError("operator directive missing, linked or oversized")
+    try:
+        directive = json.loads(policy_path.read_text(encoding="utf-8"),
+                               object_pairs_hook=_unique_fields)
+    except (OSError, UnicodeError, ValueError) as exc:
+        raise ValueError("unreadable operator directive") from exc
+    if not isinstance(directive, dict) or set(directive) != REQUIRED_OPERATOR_DIRECTIVE:
+        raise ValueError("invalid operator directive schema")
+    expected = {
+        "schema_version": 1, "git_branch": "main",
+        "operator_decision": "UNBLOCK_PRODUCTION_DEPLOYMENT",
+        "administrative_release_blocked": False,
+        "stage_038_administrative_status": "CLOSED_BY_OPERATOR",
+        "stage_039_development": "AUTHORIZED",
+        "safety_acceptance_a01_a12": "INCOMPLETE",
+        "third_party_audit_evidence": "INCOMPLETE",
+        "verified_production_readiness": False,
+        "production_deployed": False,
+    }
+    if any(type(directive[k]) is not type(v) or directive[k] != v for k, v in expected.items()):
+        raise ValueError("operator directive contradicts factual release state")
+    for k in ("operator_directive_date", "operator_authorization_source",
+              "risk_waiver_notes"):
+        v = directive[k]
+        if not isinstance(v, str) or not 5 <= len(v) <= 500:
+            raise ValueError("directive lacks risk/authorization context")
+    state = dict(report)
+    state.update(status="OPERATOR_AUTHORIZED_UNVERIFIED",
+                 administrative_release_unblocked=True,
+                 operator_risk_acknowledged=True,
+                 technical_evidence_passed=False,
+                 production_approved=False,
+                 deployment_executed=False)
+    state["limitations"] += (
+        " Operator explicitly authorized an unverified administrative release "
+        "exception. All evidence blockers remain; physical host isolation, "
+        "auditor qualifications and live deployment are not attested."
+    )
+    return state
+
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path.cwd())
     parser.add_argument("--evidence", type=Path, default=None)
     parser.add_argument("--report-only", action="store_true", help="emit report without blocking development CI; NOT a production override")
+    parser.add_argument("--operator-override-policy", type=Path,
+                        help="operator's explicit risk waiver (not technical acceptance)")
+    parser.add_argument("--ack-unverified-production-risk", action="store_true",
+                        help="explicitly acknowledge unverified evidence before release")
     args = parser.parse_args(argv)
     report = evaluate(args.repo, args.evidence)
+    if args.operator_override_policy is not None or args.ack_unverified_production_risk:
+        if args.operator_override_policy is None:
+            parser.error("--operator-override-policy required")
+        try:
+            report = apply_operator_override(
+                report, args.operator_override_policy,
+                acknowledged=args.ack_unverified_production_risk)
+        except ValueError as exc:
+            parser.error(str(exc))
     json.dump(report, sys.stdout, indent=2, sort_keys=True)
     sys.stdout.write("\n")
+    if report.get("administrative_release_unblocked"):
+        return 0
     return 0 if args.report_only or not report["blockers"] else 2
 
 
