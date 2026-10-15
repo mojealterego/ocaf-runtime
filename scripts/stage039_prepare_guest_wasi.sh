@@ -11,7 +11,7 @@ PREFIX="$1"; SRC="$2"
 [[ "$PREFIX" == /opt/ocaf039-real-* && "$SRC" == /* && -d "$SRC/stage039/guest-wasi" ]] || exit 2
 APPROVED="$PREFIX/approved"
 [[ -f "$APPROVED/guest_rootfs" && -f "$APPROVED/request.json" ]] || exit 2
-WORK="/tmp/ocaf39-real-guest-wasi-${GITHUB_RUN_ID:?}"
+WORK="/tmp/ocaf39-real-guest-wasi-$(basename "$PREFIX")"
 mkdir -p "$WORK" "$WORK/mount"
 chmod 0700 "$WORK" "$WORK/mount"
 cleanup() {
