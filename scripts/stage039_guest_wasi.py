@@ -50,7 +50,12 @@ def verify_brokered_pair(broker_report:dict,jailer_base:Path,rootfs_sha256:str)-
         or binding.get("durable_broker_leases_released_after_vm_crashes") is not True
         or binding.get("wasi_executed_inside_guest") is not False
         or binding.get("production_approved") is not False):
-        raise GuestWasiError("missing original kernel-authenticated broker reservation")
+        allowed_keys=("status","real_kernel_so_peercred_authenticated_broker",
+                     "durable_sqlite_leases_matched","admission_before_vm_launch",
+                     "durable_broker_leases_released_after_vm_crashes",
+                     "wasi_executed_inside_guest","production_approved")
+        diagnostics={k:binding.get(k) for k in allowed_keys} if isinstance(binding,dict) else {"binding_is_dict":False}
+        raise GuestWasiError("missing original kernel-authenticated broker reservation: "+json.dumps(diagnostics,sort_keys=True))
     receipts={}
     names=[]
     for key in ("a","b"):
