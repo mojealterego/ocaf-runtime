@@ -18,6 +18,29 @@ MIRROR = ROOT / "docs/ROADMAP_FULL_ECOSYSTEM_2026.md"
 README = ROOT / "README.md"
 AUDIT = ROOT / "docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md"
 
+SOURCE_PDFS = [
+    "Analiza AGI I Ludzkich AI (1).PDF",
+    "Analiza Architektury Systemu OCAF (1).PDF",
+    "Analiza Architektury Systemu OCAF(1).PDF",
+    "Analiza Architektury Systemu OCAF(2).PDF",
+    "Analiza Architektury Systemu OCAF(3).PDF",
+    "Analiza Architektury Systemu OCAF(4).PDF",
+    "Analiza Architektury Systemu OCAF(5).PDF",
+    "Analiza Architektury Systemu OCAF.PDF",
+    "Architektura OCAF w Języku Rust (1).PDF",
+    "Architektura OCAF w Języku Rust(1).PDF",
+    "Architektura OCAF w Języku Rust.PDF",
+    "Architektura OCAF w Języku RustPDF_261012_042941.pdf",
+    "Architektura OmniContext Agent Framework (OCAF) w .. (1).PDF",
+    "Dokument bez nazwy (2).PDF",
+    "Dokument bez nazwy (6).PDF",
+    "Kompleksowa Roadmapa Wdrożenia Ekosystemu OCAF w Rust.PDF",
+    "Projekt i Mapa Drogowa Rewolucyjnej Architektury S.. (1).PDF",
+    "Projekt i Mapa Drogowa Rewolucyjnej Architektury S..(1) (1).PDF",
+    "Projekt i Mapa Drogowa Rewolucyjnej Architektury S..(2) (1).PDF",
+    "Projekt i Mapa Drogowa Rewolucyjnej Architektury S..(3).PDF"
+]
+
 REQUIRED = {
     "1.95": "Hyperon",
     "1.96": "ACT-R",
@@ -75,6 +98,13 @@ def main() -> None:
     if "278" not in readme or "204" not in readme:
         fail("README total does not reflect 204+64+10=278")
     audit = AUDIT.read_text(encoding="utf-8")
+    if len(SOURCE_PDFS) != 20 or len(set(SOURCE_PDFS)) != 20:
+        fail("source PDF inventory must contain 20 distinct filenames")
+    for name in SOURCE_PDFS:
+        if name not in audit:
+            fail(f"missing source PDF in audit: {name}")
+    if "307" not in audit:
+        fail("source audit does not record 307 PDF pages")
     for sid in REQUIRED:
         if sid not in audit:
             fail(f"audit missing trace for {sid}")
