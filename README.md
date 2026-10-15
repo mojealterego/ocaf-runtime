@@ -979,3 +979,25 @@ dlatego nie testowano pakietów emitowanych z maszyny wirtualnej.
 Nie jest to produkcyjny GO ani audyt dwóch niezależnych hostów.
 Etap 0.38 ma status roadmapy **COMPLETE (decyzja operatora)**,
 odbiór bezpieczeństwa A01–A12 pozostaje **INCOMPLETE**.
+
+
+### 0.39.8–0.39.9 — egzekwowane limity host-cgroup i próba SIGKILL (2026-10-15)
+
+**Rzeczywiste, pozytywne testy na GitHub-hosted Linux/KVM:**
+[Actions 38713156606](https://github.com/mojealterego/ocaf-runtime/actions/runs/38713156606).
+Nowy `scripts/stage039_vm_resources.py` stosuje dla każdej efemerycznej
+VM przed startem jailera wymuszone w jądrze cgroup v2 limity:
+`memory.max` (dla 256 MiB RAM gościa: 768 MiB hosta), `memory.swap.max=0`,
+`memory.oom.group=1`, `pids.max=96`, `cpu.max=200000 100000`.
+Dodatkowo weryfikuje realny odczyt limitów i `memory.peak`,
+`pids.peak`, `memory.events`, `pids.events`, `cpu.stat`.
+Wystąpienie OOM lub uderzenie w limit PID oznacza odmowę odbioru.
+
+`scripts/stage039_vm_crash.py` wykonuje **rzeczywisty SIGKILL** wobec
+własnego sprawdzonego procesu jailed Firecracker, weryfikuje kod zakończenia
+`-SIGKILL` i jądrowe `cgroup.events: populated=0` (również potomne
+grupy) przed usunięciem cgroup. Istnieją osobne testy odmowy, regexów i
+fałszywych zdarzeń. [Raport z wynikami i ograniczeniami](docs/STAGE039_VM_RESOURCE_FAULT_PROOF_2026-10-15.md).
+**0.38 = COMPLETE (decyzja operatora), 0.39 = IN PROGRESS, produkcja = NO-GO.**
+Próba nie dowodzi odporności na awarię całego hosta ani izolacji
+ruchu emitowanego z wnętrza VM (gość bez interfejsu sieciowego).

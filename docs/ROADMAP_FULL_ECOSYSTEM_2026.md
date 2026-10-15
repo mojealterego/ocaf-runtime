@@ -756,3 +756,26 @@ a brak zewnętrznego dwu-hostowego i niezależnego odbioru nadal blokuje GO.
 Kryteria bezpieczeństwa 0.38 A01–A12 wciąż `INCOMPLETE`,
 produkcja `NO-GO`. Zapisy starsze niż ta sekcja odnoszą się
 do historycznych commitów i ich ograniczonych wyników.
+
+
+## Wynik 0.39.8–0.39.9 — rzeczywisty resource envelope + SIGKILL (2026-10-15)
+
+Na pojedynczym, efemerycznym Ubuntu 24.04 GitHub Actions uruchomiono
+prawdziwą jailed VM Firecracker 1.17.0 na KVM, podpięto Aya do hostowego
+cgroup procesu, wymuszono `memory.max`, `memory.swap.max=0`,
+`memory.oom.group=1`, `pids.max=96`, `cpu.max=200000 100000`,
+odczytano peak memory/pids i liczniki OOM, następnie wykonano
+**SIGKILL rzeczywistego procesu VMM** i sprawdzono `cgroup.events`
+`populated=0` obejmujące cgroup potomne. [Weryfikowalny run
+38713156606](https://github.com/mojealterego/ocaf-runtime/actions/runs/38713156606),
+[rejestr dowodowy](STAGE039_VM_RESOURCE_FAULT_PROOF_2026-10-15.md).
+Kod i automatyczne testy negatywne w
+`scripts/stage039_vm_resources.py`, `scripts/stage039_vm_crash.py`,
+`scripts/tests/test_stage039_vm_resources.py` i
+`scripts/tests/test_stage039_vm_crash.py`.
+
+Granica: crash dotyczył procesu VMM na jednym runnerze, nie awarii
+fizycznego hosta, failoveru dwuhostowego ani niezależnego staging.
+Próbnik Aya wykonywał hostowy TCP loopback, nie sieć gościa.
+**Roadmapa: 0.38 COMPLETE (operator project closure), 0.39 IN PROGRESS,
+produkcja NO-GO do odbioru bezpieczeństwa i infrastruktury.**

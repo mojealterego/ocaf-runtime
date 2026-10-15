@@ -370,3 +370,20 @@ wewnątrz guest VM, która ma domyślnie wyłączony interfejs sieciowy.
 Dowodzi egzekucji polityki względem hostowego cgroup maszyny wirtualnej,
 nie końcowej izolacji ruchu gościa, tenantów, długotrwałego staging
 ani produkcji.
+
+
+## 0.39.8–0.39.9 — sprzętowy limit hosta oraz awaria procesu Firecracker
+
+Po prawdziwym boot jailed Firecracker i Aya dodano
+`stage039_vm_resources.py` (memory.max/swap.max/oom.group/pids.max/cpu.max,
+odczyt kernel memory.peak/pids.peak/cpu.stat/events) oraz
+`stage039_vm_crash.py` (SIGKILL sprawdzonego procesu i
+`cgroup.events populated=0` dla całego poddrzewa).
+**Wynik realnego runnera:** [GitHub Actions 38713156606](https://github.com/mojealterego/ocaf-runtime/actions/runs/38713156606),
+`success`. Kryteria CPU/RSS/PIDs i powrotu hostowego egress po Aya
+spełnione; SIGKILL i spustoszenie cgroup potwierdzone. [Szczegóły,
+zakres i SHA-256 artefaktu](STAGE039_VM_RESOURCE_FAULT_PROOF_2026-10-15.md).
+
+Host-runner nie jest serwerem docelowym, a kod gościa nie inicjował
+pakietów sieciowych. Nie ma podstaw do traktowania `success` jako
+dwuhostowego produkcyjnego GO.
