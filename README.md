@@ -855,3 +855,23 @@ Dyspozycja operatora o administracyjnym zamknięciu 0.38:
 [docs/STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md](docs/STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md).
 Weryfikacja produkcyjna pozostaje zależna od rzeczywistych testów
 i raportu bezpieczeństwa; release gate nie jest omijany automatycznie.
+
+
+### Aktualizacja 2026-10-15 — odblokowanie decyzji operatora i 0.39.3
+
+Na wyraźne polecenie operatora **blokada administracyjna dopuszczenia do
+próby wydania została zdjęta** w
+[`ops/OCAF_RELEASE_OPERATOR_DECISION_2026-10-15.json`](ops/OCAF_RELEASE_OPERATOR_DECISION_2026-10-15.json).
+W `scripts/release_readiness.py` dostępna jest świadoma, jawna
+ścieżka `--operator-override-policy` oraz
+`--ack-unverified-production-risk`. Pozostałe wyniki A01–A12,
+status weryfikacji 0.38 oraz brak rzeczywistego wdrożenia pozostają
+udokumentowane bez nadpisywania ich fałszywym PASS. Samo zdjęcie blokady
+operatora **nie wdraża oprogramowania** i nie poświadcza środowiska.
+
+W 0.39.3 dodano `scripts/stage039_broker_ipc.py`, realny
+`AF_UNIX` z kernelowym `SO_PEERCRED`, ograniczonymi wiadomościami,
+polityką jednego tenant:agent na socket oraz operacjami admission/release
+na lokalnym SQLite. Zestaw regresji 0.39 obejmuje 12 testów admission,
+17 testów trwałych rezerwacji oraz 10 testów realnego IPC.
+Rzeczywistej VM Firecracker i attach Aya/eBPF jeszcze nie wykonano.
