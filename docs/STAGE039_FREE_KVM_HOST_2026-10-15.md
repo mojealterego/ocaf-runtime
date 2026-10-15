@@ -66,3 +66,17 @@ tej samej kompatybilnej architekturze.
 
 **Aktualny wynik 0.39: NO-GO dla realnej maszyny Firecracker i Aya
 na hoście, bo nie ma potwierdzonej egzekucji na zgodnym hostcie.**
+
+
+## Korekta — 2026-10-15
+
+**Znaleziona, działająca alternatywa bez tworzenia płatnego Dropletu:**
+GitHub Actions `ubuntu-24.04` z `sudo -n`. W normalnym kontekście
+runnera KVM było nieosiągalne (`kvm_device_accessible=false`), lecz
+uruchomienie przez `sudo -n` rzeczywiście udostępniło
+`KVM_GET_API_VERSION=12` i `KVM_CREATE_VM`, a Aya naprawdę
+podłączyła cgroup_skb i przeszła A/B testy. [Realne dowody](STAGE039_REAL_KVM_AYA_PROOF_2026-10-15.md).
+Przesłanka „CircleCI jako jedyna opcja” nie jest już aktualna.
+Jest to wyłącznie efemeryczna infrastruktura do badań,
+nie trwały produkcyjny host. Brak GO dla gościa Firecracker i
+kompletnej izolacji produkcyjnej.

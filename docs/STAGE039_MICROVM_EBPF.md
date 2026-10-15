@@ -332,3 +332,16 @@ a `bpf-linker v0.11.0` jest pobierany z weryfikacją SHA-256
 jest host z BPF/cgroup v2 i prawidłową polityką privileges.
 Rzeczywisty test negatywny na A/B i Firecracker guest boot pozostają
 **NO-GO**.
+
+
+## 2026-10-15 — rzeczywiste KVM i Aya w GitHub Actions Linux
+
+Dowód: [STAGE039_REAL_KVM_AYA_PROOF_2026-10-15.md](STAGE039_REAL_KVM_AYA_PROOF_2026-10-15.md)
+i [workflow 38704086975](https://github.com/mojealterego/ocaf-runtime/actions/runs/38704086975).
+Uprzywilejowany runner Ubuntu 24.04 pozwolił wywołać **rzeczywisty**
+`KVM_CREATE_VM` z API_VERSION 12 i **rzeczywisty**
+`CgroupSkb::attach` Aya, program ID 93, do cgroup A.
+Próby: A/B dostępne przed attach, A zablokowane, B nadal dostępne,
+A odzyskane po detach — **PASS**. Wszystkie raporty ograniczają
+zakres do tego tymczasowego hosta; runtime Firecracker guest
+i długotrwały host nadal wymagają osobnych potwierdzeń.

@@ -924,3 +924,14 @@ CI buduje z `--locked`. Wynik
 `BPF_PROG_LOAD`/attach, negatywnego testu ruchu lub boot Firecracker.
 Self-hosted workflow `.github/workflows/stage039-live-kvm-aya.yml`
 pozostaje ścieżką rzeczywistych testów KVM/BPF.
+
+
+### 0.39 — sprzętowe wyniki testów GitHub-hosted Linux (15.10.2026)
+
+**Rzeczywisty KVM API=12 i KVM_CREATE_VM: PASS.**
+**Rzeczywisty Aya cgroup egress deny/recovery A/B: PASS.**
+Zadziałało dopiero `sudo -n` na hostowanym Ubuntu 24.04.
+[Dowód źródłowy](docs/STAGE039_REAL_KVM_AYA_PROOF_2026-10-15.md),
+[CI 38704086975](https://github.com/mojealterego/ocaf-runtime/actions/runs/38704086975).
+Jailer Firecracker i guest boot są testowane oddzielnie i nie
+są jeszcze poświadczone. GH runner ephemeral nie jest produkcją.
