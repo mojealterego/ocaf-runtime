@@ -52,3 +52,10 @@ production_approved: false
 - Nie zmieniono numeracji historycznych etapów ani 10 produktów Agents Builder. Etapy mają nadal otwarte niezależne kryteria odbioru, szczególnie 0.23/0.33 HA produkcyjne, 0.39 Firecracker/WASI, 0.40 interhost PostgreSQL i 0.41 DR.
 - Wcześniejszy [GitHub Actions Rust CI 38772115289](https://github.com/mojealterego/ocaf-runtime/actions/runs/38772115289): sukces dla ówczesnego commitu. Nowa walidacja statusów uruchamiana w roadmap-v11-builders; nie deklarować wyników przed zakończeniem.
 - Mapa statusów zachowana w `scripts/render_readme_roadmap.py`, test regresyjny wymaga obecności faktycznych ścieżek kodu/QA, a pierwsza sekcja README zawiera 269 numerowanych pozycji, z 29 poprawnymi oznaczeniami zakresu wdrożenia.
+
+## 2026-10-15 — 20 PDF roadmap coverage
+
+- Verified 20 PDF sources and added missing research requirements 1.95–1.97 to canonical roadmap, mirror, inventory and README.
+- Roadmap count: 198 main + 64 technical + 10 Agents Builder = 272.
+- Evidence: docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md.
+- Implementation status: PLANNED; production_approved=false.
