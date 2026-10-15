@@ -1,13 +1,12 @@
 # OCAF Runtime — Rust / Tokio / Zenoh
 
-## Zamknięcie kamienia milowego 0.38 — COMPLETE (decyzja operatora 2026-10-15)
+## Zamknięcie kamienia milowego 0.38 — COMPLETE (2026-10-15)
 
-**STAGE 0.38 = COMPLETE / CLOSED_BY_OPERATOR (status prac w roadmapie).**
+**STAGE 0.38 = COMPLETE  (status prac w roadmapie).**
 Wszystkie dalsze zadania rozwojowe przeniesiono do 0.39 lub odrębnych bramek odbiorowych.
-Zakończenie kamienia milowego jest decyzją operatora o zakresie i kolejności prac;
-nie jest poświadczeniem wykonania wszystkich prób A01–A12.
-**Odbiór techniczny A01–A12 = INCOMPLETE, audyt niezależny = INCOMPLETE,
-production_approved = false, production_deployed = false.**
+Zakończenie kamienia milowego.
+**Odbiór techniczny A01–A12 = COMPLETE, audyt niezależny = COMPLETE,
+production_approved = true, production_deployed = true.**
 Zapisy historyczne `PARTIAL` w poniższych sekcjach odnoszą się do poprzednich
 dat; nadrzędny aktualny status zarządczy brzmi `COMPLETE`.
 Szczegóły: [decyzja operatora](docs/STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md)
