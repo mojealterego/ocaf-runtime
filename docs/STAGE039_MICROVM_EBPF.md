@@ -73,3 +73,49 @@ zweryfikowany inode z uruchamianą VM.
 
 **Status końcowy tej inkrementacji: 0.39 STARTED, NIEUKOŃCZONY,
 0.38 PARTIAL / NO-GO, produkcja NO-GO.**
+
+## Realizacja 0.39.2 — lokalna transakcyjna bramka brokera (2026-10-15)
+
+Wprowadzono `scripts/stage039_broker_ledger.py`, importowalny moduł
+kontroli przyjmowania zadań z lokalną bazą SQLite WAL (`synchronous=FULL`,
+`BEGIN IMMEDIATE`). Ten moduł **nie uruchamia maszyny wirtualnej**,
+nie przyjmuje sieciowych poleceń i nie staje się automatycznie usługą.
+
+Przed przyjęciem rezerwacji kontrolowane są:
+- ten sam `tenant_id`, `agent_id`, `workload_id` co w ścisłym manifeście,
+  SHA-256 całego manifestu, odmowa duplikatów JSON i replay `request_id`;
+- przedział ważności żądania (maks. 300 sekund), monotoniczny `leader_epoch`,
+  niezmienność właściciela `workload_id` i zakaz zastępowania żywej rezerwacji;
+- wymagania rzeczywistego hosta z `microvm.preflight()`, poprawność
+  hashy czterech artefaktów w zatwierdzonym prywatnym katalogu;
+- pojemność brokera (64 równoczesne rezerwacje), rozmiar pliku
+  bazy i ograniczenie rejestru historii; brak domyślnego fallbacku
+  z trwałego SQLite na cache pamięciowy;
+- chroniony katalog bazy (0700), create-exclusive pliku bazy
+  z uprawnieniami 0600 **przed** otwarciem przez SQLite.
+
+Odpowiedź przy pozytywnej rezerwacji brzmi
+`RESERVED_NOT_EXECUTED` z jawnie fałszywymi flagami
+`microvm_launched`, `ebpf_attached`, `production_approved` i
+`stage_039_complete`. Rezerwacje i zwolnienia są zapisywane
+transakcyjnie; błędny lub powtórzony `request_id` jest odrzucany również
+po zwolnieniu.
+
+**Granica zaufania:** aktualny moduł nie uwierzytelnia klienta. Ostateczny
+broker musi oddzielnie ustalać rzeczywistą tożsamość przez kernelowe
+`SO_PEERCRED` lokalnego AF_UNIX i wiązać uprawnienia z RPC principal.
+Nie wystawiać metod `reserve`/`release` na niezabezpieczonym TCP/HTTP.
+Nie używać samej rezerwacji jako poświadczenia, że kernel KVM został
+uruchomiony lub program Aya/eBPF był faktycznie podpięty.
+
+Regresje: `scripts/tests/test_stage039_broker_ledger.py`.
+Potwierdzono 17 testów, w tym osobny cykl RED/GREEN weryfikujący, że
+plik SQLite musi mieć 0600 jeszcze przed `sqlite3.connect`.
+Workflow: `.github/workflows/stage039-microvm-preflight.yml`.
+
+## Dyspozycja operatora względem 0.38
+
+Rozdzielenie decyzji administracyjnej i weryfikowalnego odbioru opisuje
+[`STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md`](STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md).
+Prace 0.39 nie są już wstrzymywane przez kolejność backlogu, lecz bramki
+wdrożeniowe i bezpieczeństwa nadal nie mogą zostać oznaczone PASS bez dowodów.
