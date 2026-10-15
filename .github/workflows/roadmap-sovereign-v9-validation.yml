@@ -1,0 +1,37 @@
+name: OCAF Sovereign Workspace Roadmap v9 — 56 milestones, eight research phases
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/ROADMAP_SOVEREIGN_WORKSPACE_V9_2026-10-15.md
+      - docs/roadmap/sovereign_workspace_v9.json
+      - docs/ROADMAP_FULL_ECOSYSTEM_2026.md
+      - scripts/validate_roadmap_sovereign_v9.py
+      - scripts/tests/test_validate_roadmap_sovereign_v9.py
+      - .github/workflows/roadmap-sovereign-v9-validation.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-v9-source:
+    name: Verify 40 plus 16 source-traceable stages and missing-evidence refusal
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Compile machine validator and seven adversarial regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/validate_roadmap_sovereign_v9.py scripts/tests/test_validate_roadmap_sovereign_v9.py
+          python3 -m unittest discover -s scripts/tests -p test_validate_roadmap_sovereign_v9.py -v
+      - name: Check PDF provenance, eight phases, six crates and human readable rows
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/validate_roadmap_sovereign_v9.py \
+            --manifest docs/roadmap/sovereign_workspace_v9.json \
+            --markdown docs/ROADMAP_SOVEREIGN_WORKSPACE_V9_2026-10-15.md
+          echo "OCAF_SOVEREIGN_V9_40_MAIN_16_TECH_EIGHT_PHASES_SIX_CRATES_TRACED"
