@@ -119,8 +119,11 @@ class MtlsLifecycleTests(unittest.TestCase):
 
     def test_rejects_world_readable_key(self):
         os.chmod(self.server_key, 0o644)
-        with self.assertRaises(mtls.MtlsError):
-            self.inspect()
+        try:
+            with self.assertRaises(mtls.MtlsError):
+                self.inspect()
+        finally:
+            os.chmod(self.server_key, 0o600)
 
     def test_rejects_invalid_expected_dns_and_ip(self):
         with self.assertRaises(mtls.MtlsError):
