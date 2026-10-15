@@ -64,7 +64,7 @@ def main() -> None:
     if canonical != mirror:
         fail("roadmap mirror differs from canonical file")
     readme = README.read_text(encoding="utf-8")
-    row_re = re.compile(r"^\\| \\*\\*((?:0|1|2)\\.\\d{2})\\*\\* \\|", re.M)
+    row_re = re.compile(r"^[|] [*][*]((?:0|1|2)[.][0-9]{2})[*][*] [|]", re.M)
     for name, content in (("ROADMAP", canonical), ("README", readme)):
         rows = row_re.findall(content)
         if len(rows) != len(main_stages) or rows != ids:
