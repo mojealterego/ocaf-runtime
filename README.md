@@ -1053,3 +1053,11 @@ Operator authorized unrestricted **development progression and roadmap extension
 ### 0.41.4: real PostgreSQL physical WAL PITR on two distinct Linux kernels (2026-10-15)
 
 **HARDWARE CI PASS**: [two independent GitHub Actions Linux jobs 38738198412](https://github.com/mojealterego/ocaf-runtime/actions/runs/38738198412). Source PG16 crashes via `pg_ctl stop -m immediate` after archiving WAL and 5 post-target commits; destination validates two SHA256-pinned physical basebackup/WAL TARs, rejects a deliberately tampered WAL archive and replayed `boot_id`, boots fresh PostgreSQL from actual basebackup and WAL replay to target LSN with **35/35 intended rows, 0 post-target records and identical SHA256**. Not physical power loss, encrypted offsite storage, enterprise DR or production GO. [Full evidence](docs/STAGE041_TWO_KERNEL_PHYSICAL_WAL_PITR_2026-10-15.md).
+
+### 0.39.18: ACTUAL SO_PEERCRED broker admission before two JAILED Firecracker VM boots (2026-10-15)
+
+**Real kernel CI PASS:** [38739812121](https://github.com/mojealterego/ocaf-runtime/actions/runs/38739812121), [admission regression 38739812535](https://github.com/mojealterego/ocaf-runtime/actions/runs/38739812535). Two separate AF_UNIX broker sockets authenticate real SO_PEERCRED UID/tenant principals and persist distinct manifest SHA256-bound workload reservations **before** booting both actual jailed Firecracker Linux guests; VM ID, boot, cgroup inode, guest/rootfs SHA, Aya host-cgroup and SIGKILL evidence are bound to the reserved identities, and both leases released. **Signed WASI execution inside a Firecracker guest still NOT PROVEN.** [Proof ledger](docs/STAGE039_040_BROKER_KERNEL_PG_INDEPENDENCE_2026-10-15.md).
+
+### 0.40.1: three independent Linux runner kernel PostgreSQL crash/failover labs (2026-10-15)
+
+**Four-job hardware CI PASS:** [38740089797](https://github.com/mojealterego/ocaf-runtime/actions/runs/38740089797). Three separate Linux kernel boot IDs each run real PostgreSQL A/B/C local streaming, primary crash and standby reparent; independent fourth job rejects coincident kernel IDs and false release claims. **This does not establish live replication between the three different hosts.** [Evidence ledger](docs/STAGE039_040_BROKER_KERNEL_PG_INDEPENDENCE_2026-10-15.md).

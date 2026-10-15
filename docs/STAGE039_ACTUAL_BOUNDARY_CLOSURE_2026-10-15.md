@@ -50,3 +50,7 @@ The technical CI experiments **are finished and passed within their scoped testb
 - `.github/workflows/stage039-real-mtls-partition.yml`: privileged ephemeral Ubuntu runner test and evidence ZIP.
 - `scripts/stage039_signed_acceptance.py`: out-of-band public-key fingerprint-pinned Ed25519 dual-signature dossier integrity verifier. **Never** sets `production_approved=true`.
 - `scripts/tests/test_stage039_mtls_fencing.py`, `scripts/tests/test_stage039_signed_acceptance.py`: TDD negative + positive regression, with synthetic signers only.
+
+## Update 0.39.18 — real two-tenant SO_PEERCRED broker-to-jailer identity/cgroup binding
+
+[**CI 38739812121, SUCCESS**](https://github.com/mojealterego/ocaf-runtime/actions/runs/38739812121) starts two actual jailed Firecracker guest kernels ONLY AFTER two separate kernel SO_PEERCRED broker socket reservations persisted in SQLite. Pinned manifest SHA256, tenant/agent/workload and executable guest/kernel digests are correlated to measured VM/cgroup/boot and SIGKILL/peer-survival evidence. All reservations released after crash. [Full reproducibility](STAGE039_040_BROKER_KERNEL_PG_INDEPENDENCE_2026-10-15.md). **This is not yet signed WASI execution within guest, production remote authentication or independent host HA; 0.39 IN PROGRESS.**
