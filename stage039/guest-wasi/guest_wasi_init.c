@@ -74,21 +74,21 @@ int main(void) {
     unsigned char entropy_probe[16];
     ssize_t gr=getrandom(entropy_probe,sizeof(entropy_probe),GRND_NONBLOCK);
     if(gr==(ssize_t)sizeof(entropy_probe)){
-        output("OCAF039_GUEST_CRNG_READY\\n");
+        output("OCAF039_GUEST_CRNG_READY\n");
     }else{
-        output("OCAF039_GUEST_CRNG_NOT_INITIALIZED\\n");
+        output("OCAF039_GUEST_CRNG_NOT_INITIALIZED\n");
         if(seed_guest_crng()!=0){
             memset(entropy_probe,0,sizeof(entropy_probe));
-            output("OCAF039_GUEST_HW_RNG_SEED_DENIED\\n");
+            output("OCAF039_GUEST_HW_RNG_SEED_DENIED\n");
             fail();
         }
         gr=getrandom(entropy_probe,sizeof(entropy_probe),GRND_NONBLOCK);
         if(gr!=(ssize_t)sizeof(entropy_probe)){
             memset(entropy_probe,0,sizeof(entropy_probe));
-            output("OCAF039_GUEST_CRNG_STILL_UNAVAILABLE\\n");
+            output("OCAF039_GUEST_CRNG_STILL_UNAVAILABLE\n");
             fail();
         }
-        output("OCAF039_GUEST_CRNG_READY_AFTER_CPU_RNG\\n");
+        output("OCAF039_GUEST_CRNG_READY_AFTER_CPU_RNG\n");
     }
     memset(entropy_probe,0,sizeof(entropy_probe));
     int channel[2]; if(pipe(channel)!=0)fail();
