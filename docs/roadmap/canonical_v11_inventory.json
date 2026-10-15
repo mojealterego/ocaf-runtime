@@ -1,0 +1,4599 @@
+{
+  "schema_version": 1,
+  "version": "v11-original-builder-scope-restored",
+  "repository": "mojealterego/ocaf-runtime",
+  "branch": "main",
+  "main_count": 195,
+  "technical_count": 64,
+  "reference_count": 33,
+  "production_approved": false,
+  "legacy_archive": "docs/archive/ROADMAP_FULL_ECOSYSTEM_v9_2026-10-15.md",
+  "main": [
+    {
+      "id": "0.00",
+      "title": "Historyczny etap bez zachowanej definicji",
+      "scope": "Brak opisu w dostępnym README i Roadmapie 0.36–0.99; nie dopowiadać specyfikacji.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "UNSPECIFIED_IN_CURRENT_REPO",
+      "source": "",
+      "source_class": "NUMBERING_ONLY"
+    },
+    {
+      "id": "0.01",
+      "title": "Historyczny etap bez zachowanej definicji",
+      "scope": "Brak opisu w dostępnym README i Roadmapie 0.36–0.99; nie dopowiadać specyfikacji.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "UNSPECIFIED_IN_CURRENT_REPO",
+      "source": "",
+      "source_class": "NUMBERING_ONLY"
+    },
+    {
+      "id": "0.02",
+      "title": "Historyczny etap bez zachowanej definicji",
+      "scope": "Brak opisu w dostępnym README i Roadmapie 0.36–0.99; nie dopowiadać specyfikacji.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "UNSPECIFIED_IN_CURRENT_REPO",
+      "source": "",
+      "source_class": "NUMBERING_ONLY"
+    },
+    {
+      "id": "0.03",
+      "title": "Historyczny etap bez zachowanej definicji",
+      "scope": "Brak opisu w dostępnym README i Roadmapie 0.36–0.99; nie dopowiadać specyfikacji.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "UNSPECIFIED_IN_CURRENT_REPO",
+      "source": "",
+      "source_class": "NUMBERING_ONLY"
+    },
+    {
+      "id": "0.04",
+      "title": "Historyczny etap bez zachowanej definicji",
+      "scope": "Brak opisu w dostępnym README i Roadmapie 0.36–0.99; nie dopowiadać specyfikacji.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "UNSPECIFIED_IN_CURRENT_REPO",
+      "source": "",
+      "source_class": "NUMBERING_ONLY"
+    },
+    {
+      "id": "0.05",
+      "title": "Historyczny etap bez zachowanej definicji",
+      "scope": "Brak opisu w dostępnym README i Roadmapie 0.36–0.99; nie dopowiadać specyfikacji.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "UNSPECIFIED_IN_CURRENT_REPO",
+      "source": "",
+      "source_class": "NUMBERING_ONLY"
+    },
+    {
+      "id": "0.06",
+      "title": "Historyczny etap bez zachowanej definicji",
+      "scope": "Brak opisu w dostępnym README i Roadmapie 0.36–0.99; nie dopowiadać specyfikacji.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "UNSPECIFIED_IN_CURRENT_REPO",
+      "source": "",
+      "source_class": "NUMBERING_ONLY"
+    },
+    {
+      "id": "0.07",
+      "title": "Historyczny etap bez zachowanej definicji",
+      "scope": "Brak opisu w dostępnym README i Roadmapie 0.36–0.99; nie dopowiadać specyfikacji.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "UNSPECIFIED_IN_CURRENT_REPO",
+      "source": "",
+      "source_class": "NUMBERING_ONLY"
+    },
+    {
+      "id": "0.08",
+      "title": "Historyczny etap bez zachowanej definicji",
+      "scope": "Brak opisu w dostępnym README i Roadmapie 0.36–0.99; nie dopowiadać specyfikacji.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "UNSPECIFIED_IN_CURRENT_REPO",
+      "source": "",
+      "source_class": "NUMBERING_ONLY"
+    },
+    {
+      "id": "0.09",
+      "title": "Historyczny etap bez zachowanej definicji",
+      "scope": "Brak opisu w dostępnym README i Roadmapie 0.36–0.99; nie dopowiadać specyfikacji.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "UNSPECIFIED_IN_CURRENT_REPO",
+      "source": "",
+      "source_class": "NUMBERING_ONLY"
+    },
+    {
+      "id": "0.10",
+      "title": "Historyczny etap bez zachowanej definicji",
+      "scope": "Brak opisu w dostępnym README i Roadmapie 0.36–0.99; nie dopowiadać specyfikacji.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "UNSPECIFIED_IN_CURRENT_REPO",
+      "source": "",
+      "source_class": "NUMBERING_ONLY"
+    },
+    {
+      "id": "0.11",
+      "title": "PostgreSQL active/passive coordinator (v0.11)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.12",
+      "title": "Transactional audit and crash fault injection (v0.12)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.13",
+      "title": "Cluster observability and operator controls (v0.13)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.14",
+      "title": "Stable-endpoint reconnect and deployment hardening (v0.14)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.15",
+      "title": "Cryptographic Zenoh mTLS integration gates (v0.15)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.16",
+      "title": "PostgreSQL-authoritative job lease clock (v0.16)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.17",
+      "title": "Durable leadership fencing epochs (v0.17)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.18",
+      "title": "Remote-worker epoch pre-execution checks (v0.18)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.19",
+      "title": "Transactional PostgreSQL effect sink (v0.19)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.20",
+      "title": "Fail-closed cluster execution & effect privileges (v0.20)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.21",
+      "title": "Independent authenticated effect receiver (v0.21)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.22",
+      "title": "Cluster-scoped verified sink permits (v0.22)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.23",
+      "title": "Automatic PostgreSQL HA failover and namespace isolation (v0.23)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.24",
+      "title": "Network and infrastructure chaos scenarios (v0.24)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.25",
+      "title": "Production operations: scoped health and secure configuration (v0.25)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.26",
+      "title": "Final development acceptance (v0.26)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.27",
+      "title": "Kontrola gotowości wydania (v0.27)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.28",
+      "title": "Łańcuch dostaw i potwierdzanie pochodzenia (priorytet 0.28)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.29",
+      "title": "Ograniczenia ryzyka transportu Zenoh (priorytet 0.29)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.30",
+      "title": "Migracja zależności Zenoh i audyt RustSec (priorytet 0.30)",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.31",
+      "title": "Priorytet 0.31 — naprawa artefaktów CycloneDX i atestacji",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.32",
+      "title": "Priorytet 0.32 — weryfikacja wydania i atestacji",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.33",
+      "title": "Priorytet 0.33 — testy PostgreSQL na trzech hostach",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.34",
+      "title": "Priorytet 0.34 — kontrola cyklu życia certyfikatów mTLS",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.35",
+      "title": "Priorytet 0.35 — kontrolowana wymiana kluczy HMAC agentów",
+      "scope": "Historyczny nagłówek README; szczegóły etapu wymagają odtworzenia z historii.",
+      "acceptance": "Weryfikacja źródła historycznego i rzeczywistych testów.",
+      "negative": "Nie nazywać zakończonym na podstawie samego numeru.",
+      "dependencies": [],
+      "status": "HISTORICAL_NEEDS_VERIFICATION",
+      "source": "README.md",
+      "source_class": "README_HEADING_ONLY"
+    },
+    {
+      "id": "0.36",
+      "title": "Identity/RPC",
+      "scope": "Application-layer certificate private-key proof + HMAC and pinning",
+      "acceptance": "Existing CI tests; genuine transport TLS peer binding remains blocked",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PARTIALLY_VERIFIED",
+      "historical_status": "Implement (opt-in)",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.37",
+      "title": "Identity/RPC",
+      "scope": "Separate TLS 1.3-bound ingress verifies live session leaf against RPC sender pin and SAN; CRL/reload/worker migration remains",
+      "acceptance": "Real handshake and swapped-cert tests in CI; external PKI/CRL and multi-host still pending",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PARTIALLY_VERIFIED",
+      "historical_status": "Implemented experimentally / NO-GO",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.38",
+      "title": "Execution",
+      "scope": "Restricted Wasmtime WASIp1 adapter (see [implementation](WASI_EXECUTION_038.md) and [acceptance contract](PRIORITY_038_EXECUTION_CONTRACT.md))",
+      "acceptance": "Operator requested project-level closure and transition to 0.39; documented in [directive](STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md). Passing CI is not persistent two-host acceptance, independent signed security audit or verified production release.",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "CLOSED_BY_OPERATOR_TECHNICAL_OPEN",
+      "historical_status": "**COMPLETE — OPERATOR-RECORDED MILESTONE / technical A01–A12 INCOMPLETE; production NO-GO**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.39",
+      "title": "Execution",
+      "scope": "Firecracker microVM broker + Aya/eBPF isolation",
+      "acceptance": "[Real Linux KVM CI 38739812121](https://github.com/mojealterego/ocaf-runtime/actions/runs/38739812121): two per-tenant kernel SO_PEERCRED AF_UNIX broker reservations with SHA-pinned netless manifests persisted in SQLite BEFORE launching two simultaneous jailed Firecracker Linux guests; lease/VM id/cgroup/boot hash and SIGKILL/peer survival receipts bound, leases released. [Ledger](STAGE039_040_BROKER_KERNEL_PG_INDEPENDENCE_2026-10-15.md). Signed WASI **inside guest not implemented**; production NO-GO, independent signer gates waived for development only.",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "ACTIVE_TECHNICAL_OPEN",
+      "historical_status": "**REAL BROKER SO_PEERCRED ADMISSION→TWO JAILED VM KERNEL BOOTS/FAULTS PASS; SIGNED WASI INSIDE GUEST OPEN**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.40",
+      "title": "HA",
+      "scope": "Three physical host PostgreSQL HA, real leader fencing and failover",
+      "acceptance": "[Three independent Linux kernel local failover run 38740936728](https://github.com/mojealterego/ocaf-runtime/actions/runs/38740936728); [30s 8-client WAL soak 38740936947](https://github.com/mojealterego/ocaf-runtime/actions/runs/38740936947); [real Linux veth/netns live PostgreSQL network partition run 38752910618](https://github.com/mojealterego/ocaf-runtime/actions/runs/38752910618) proves remote TCP client IP B/C, a live kernel route blackhole B while C advances, healing, A IMMEDIATE stop, B promotion and C reparent. Netns clients share **ONE kernel**; live *inter-kernel*/physical-host replication, witness fencing, host power-loss still unverified. [Evidence](STAGE040_LIVE_TCP_NETNS_PARTITION_2026-10-15.md).",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "ACTIVE_TECHNICAL_OPEN",
+      "historical_status": "**3 distinct kernel PG local failover PASS + real 30s pgbench WAL PASS + REAL 3-NS VETH TCP STREAMING/PARTITION/RECOVERY PASS; INTER-KERNEL LIVE PG STILL OPEN**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.41",
+      "title": "Reliability",
+      "scope": "Backup/restore, partition chaos, recovery and prolonged soak",
+      "acceptance": "[Physical WAL point-in-time restore on separate kernel run 38738198412](https://github.com/mojealterego/ocaf-runtime/actions/runs/38738198412): primary IMMEDIATE crash, SHA-pinned physical base and WAL tar sent via GitHub artifact, second kernel fresh PG replay to target LSN, 35/35 recovered, 5 later committed rows omitted; compromised bytes and replayed source boot ID rejected. [Detailed evidence](STAGE041_TWO_KERNEL_PHYSICAL_WAL_PITR_2026-10-15.md). Durable physical server power loss, encrypted offsite retention, actual automated RTO/RPO under soak still OPEN.",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "ACTIVE_TECHNICAL_OPEN",
+      "historical_status": "**REAL PHYSICAL BASEBACKUP + ARCHIVED WAL PITR ON TWO DISTINCT LINUX KERNELS PASS; PROD DR/SOAK OPEN**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.42",
+      "title": "Release",
+      "scope": "Production hardening, SBOM/provenance, license and audit GO/NO-GO",
+      "acceptance": "External security review; release version not mistaken for priority number",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P0 / NO-GO",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.43",
+      "title": "MCP",
+      "scope": "Dynamic discovery, semantic routing, manifest signature, Tree-sitter & JSON Schema",
+      "acceptance": "Untrusted tool metadata cannot inject policy; unknown tool never executes",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P1",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.44",
+      "title": "OAuth",
+      "scope": "OAuth 2.1 authorization code + PKCE, scoped tenant tokens, secret broker",
+      "acceptance": "PKCE, CSRF, confused deputy, issuer/audience/replay test matrix",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P1",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.45",
+      "title": "Crypto",
+      "scope": "Hybrid PQC ML-KEM/ML-DSA interoperability, ZKP caveat proof experiments",
+      "acceptance": "No replacement of audited mTLS until standards/tests pass",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P2 / research",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.46",
+      "title": "Transport",
+      "scope": "Zenoh SHM typed zero-copy, CRDT Automerge/Yrs for non-authoritative state",
+      "acceptance": "Benchmarks and CRDT convergence; NEVER for leadership/payment authority",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P1",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.47",
+      "title": "Telemetry",
+      "scope": "W3C tracing propagation, OpenTelemetry/OTLP metrics, SLA and audit logs",
+      "acceptance": "No secret leakage; trace replay across actual host boundaries",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P1",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.48",
+      "title": "Data",
+      "scope": "Enterprise ingest, connectors, retrieval, provenance, bitemporal policy",
+      "acceptance": "Tenant isolation, document provenance, deterministic authorization",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P1",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.49",
+      "title": "Economics",
+      "scope": "L402/x402 adapter, testnet invoice/preimage verification, offline escrow",
+      "acceptance": "Idempotent ledger, upper spend limits, explicit human confirmation",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P2",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.50",
+      "title": "AGENTS BUILDER — wspólny rdzeń projektowania Code i NoCode",
+      "scope": "Pierwotny Agents Builder (NIE generator gotowych agentów): ocaf-builder-core; kanoniczny typowany DAG/IR, kompilacja manifestu projektu agenta, wersjonowanie, galeria szablonów, debugowanie i wspólny backend dla Cloud, Windows, macOS, Android, iOS; dwa oddzielne warianty Code/NoCode na każdej platformie.",
+      "acceptance": "Wspólne parsery i typed IR: rzeczywisty projekt agentowy Code i NoCode, zapis/odczyt, kompilacja, roundtrip obsługiwanego podzbioru DSL; 10 prawdziwych buildów produktu i E2E są osobnymi gate 0.52–0.54.",
+      "negative": "Nieważny graf, niezgodne połączenie, utrata semantyki podczas konwersji i podszyty workspace odrzucone.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P1",
+      "source": "docs/MASTER_ARCHITECTURE_26_PDFS.md; operator restored original Agents Builder Code/NoCode 2026-10-15",
+      "source_class": "MATRIX_ORIGINAL",
+      "previous_title": "Builder Core",
+      "previous_scope": "ocaf-builder-core canonical typed DAG/IR, manifest compiler",
+      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json"
+    },
+    {
+      "id": "0.51",
+      "title": "AGENTS BUILDER — silniki edycji Code oraz NoCode",
+      "scope": "Pierwotne dwa kompletne tryby budowania: Code — edytor źródeł/DSL, diagnostyka, kompilacja, uruchamianie; NoCode — rzeczywisty interaktywny wizualny canvas drag/drop, paleta node, typed edges, symulator, konfiguracja modeli/Skills/MCP, eksport. Łączy je uczciwa obsługiwana transformacja Code↔NoCode; nie obiecuje dowolnej odwracalności Rust.",
+      "acceptance": "Osobne UI i testy użytkownika Code/NoCode; własny edytowalny projekt przechodzi z canvas do DSL i z powrotem w obsługiwanym zakresie, debug real runner i reload projektu.",
+      "negative": "NoCode nie może być obrazkiem, Code nie może być zwykłą odpowiedzią agenta; unsupported code conversion odrzucona i raportuje ograniczenia.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P1",
+      "source": "docs/MASTER_ARCHITECTURE_26_PDFS.md; operator restored original Agents Builder Code/NoCode 2026-10-15",
+      "source_class": "MATRIX_ORIGINAL",
+      "previous_title": "Builder UX",
+      "previous_scope": "No-Code canvas <-> bounded supported DSL and conflict-aware CRDT",
+      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json"
+    },
+    {
+      "id": "0.52",
+      "title": "AGENTS BUILDER CHMUROWY — Code + NoCode (dwa produkty)",
+      "scope": "Agents Builder Chmurowy Code: pełne web IDE do projektowania projektów agentowych, typed Code DSL, integracja repo i build/deploy kontrolowany. Agents Builder Chmurowy NoCode: interaktywny browser canvas do budowy/testowania/publikacji agenta bez programowania. Axum multi-tenant backend + RBAC, auth, audyt, stan projektów, limity, eksport.",
+      "acceptance": "Dwa osobne Cloud Code i Cloud NoCode browser E2E: tworzenie, edycja, preview, zapis, odtworzenie, kontrolowany build oraz audyt publikacji; negatywne testy izolacji tenantów i zadań kosztowych.",
+      "negative": "Cross-tenant workspace, fake cloud build, nieautoryzowane wdrożenie i koszt bez zgody odrzucone.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P1",
+      "source": "docs/MASTER_ARCHITECTURE_26_PDFS.md; operator restored original Agents Builder Code/NoCode 2026-10-15",
+      "source_class": "MATRIX_ORIGINAL",
+      "previous_title": "Cloud Builder",
+      "previous_scope": "Axum multi-tenant workspace backend, RBAC and audit",
+      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json"
+    },
+    {
+      "id": "0.53",
+      "title": "AGENTS BUILDER DESKTOPOWY Windows + macOS — Code i NoCode (cztery produkty)",
+      "scope": "Agents Builder Desktopowy Windows Code, Windows NoCode, macOS Code, macOS NoCode — CZTERY odrębne aplikacje/warianty na wspólnym Tauri v2/Rust core. Osobne native Code IDE i interaktywny NoCode canvas na każdej platformie, local-first/offline, debugger, podpisane pakiety, bezpieczny eksport i aktualizacje. Nie traktować macOS jako automatycznie przetestowanego Windows.",
+      "acceptance": "Rzeczywiste buildy i uruchomienia dwóch produktów na runnerach Windows ORAZ dwóch na macOS; E2E edycji Code i NoCode, zapisu/offline roundtrip i walidacji signature/entitlements.",
+      "negative": "Brak podpisu, nieautoryzowany shell/file access, zewnętrzny paid release bez zgody, Windows PASS użyty jako dowód macOS — deny.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P2",
+      "source": "docs/MASTER_ARCHITECTURE_26_PDFS.md; operator restored original Agents Builder Code/NoCode 2026-10-15",
+      "source_class": "MATRIX_ORIGINAL",
+      "previous_title": "Desktop Builder",
+      "previous_scope": "Tauri v2 local-first offline desktop IDE",
+      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json"
+    },
+    {
+      "id": "0.54",
+      "title": "AGENTS BUILDER MOBILNY Android + iOS — Code i NoCode (cztery produkty)",
+      "scope": "Agents Builder Android Code, Android NoCode, iOS Code, iOS NoCode — CZTERY odrębne warianty aplikacji. Rust UniFFI core, Kotlin Jetpack Compose na Android, SwiftUI na iOS: mobilny edytor Code ograniczonego DSL i prawdziwy dotykowy NoCode canvas, offline, wersje, export, bezpieczny preview. Mobile nie zakłada Firecracker/KVM/JIT i nie obiecuje kompilacji każdej biblioteki on-device.",
+      "acceptance": "Android ARM64 emulator lub urządzenie: APK install + test Code oraz UI NoCode; iOS Xcode simulator/device: osobne testy Code/NoCode; import/export, trwałość projektów, resume po ubiciu procesu.",
+      "negative": "Niedozwolone native API, jailbreak/JIT, fikcyjny iOS build, ukryta zgoda Accessibility/mikrofon/kamera, silent store deploy = fail.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P2",
+      "source": "docs/MASTER_ARCHITECTURE_26_PDFS.md; operator restored original Agents Builder Code/NoCode 2026-10-15",
+      "source_class": "MATRIX_ORIGINAL",
+      "previous_title": "Mobile Builder",
+      "previous_scope": "Rust/UniFFI + SwiftUI/Compose + bounded mobile agent runtime",
+      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json"
+    },
+    {
+      "id": "0.55",
+      "title": "AGENTS BUILDER — security/verification/packaging dla wszystkich 10 wariantów",
+      "scope": "Gwarantowany wspólny per-project auth, tenant isolation, typed graph verification, koszt i quota, sandbox preview WASI dla serwerów, ograniczony runner mobilny, podpisany eksport, bezpieczna publikacja, release gate i traceable run receipts — obowiązuje wszystkie pięć platform × Code/NoCode.",
+      "acceptance": "Macierz 10/10: real build+GUI E2E każdego wariantu, negative privilege-edge, cycles, cost overrun, podpisań i fake publishing, opublikowany hash artefaktu + stage report.",
+      "negative": "Jeśli choć jedna z 10 pozycji bez testu rzeczywistego — status całego Agents Builder pozostaje INCOMPLETE; żadnego automatycznego signing/sideload/płatności.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P1",
+      "source": "docs/MASTER_ARCHITECTURE_26_PDFS.md; operator restored original Agents Builder Code/NoCode 2026-10-15",
+      "source_class": "MATRIX_ORIGINAL",
+      "previous_title": "Builder Safety",
+      "previous_scope": "Graph static verification, typed edges, critical caps, WASI preview",
+      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json"
+    },
+    {
+      "id": "0.56",
+      "title": "OmniDev",
+      "scope": "AST/CST code agents, repo analysis, codegen, test harness",
+      "acceptance": "Compilable patches, tests, human-gated protected updates",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P1",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.57",
+      "title": "OmniUX",
+      "scope": "Figma design integration, accessible component UI and visual diff",
+      "acceptance": "Design token checks, visual regression, accessibility",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P2",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.58",
+      "title": "OmniE2E",
+      "scope": "Cross-platform app build and E2E test swarm",
+      "acceptance": "Reproducible Android/iOS/Desktop builds and QA artifacts",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P2",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.59",
+      "title": "OmniForge",
+      "scope": "Game development/CAD/GPU shader swarm",
+      "acceptance": "Sandboxed shader builds, GPU budgets and asset policy",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P3",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.60",
+      "title": "OmniWeb",
+      "scope": "Authorized web extraction, workflow automation, site generation",
+      "acceptance": "Permissions, rate limits, provenance; no default anti-bot bypass",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P2",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.61",
+      "title": "OmniStudio",
+      "scope": "Image/audio/video media orchestration swarm",
+      "acceptance": "Model/provider adapters, asset provenance, rights, spending quotas",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P2",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.62",
+      "title": "OmniDoc",
+      "scope": "Typst/report/code-aware documentation swarm",
+      "acceptance": "Reproducible PDFs and citations; source-map tests",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P2",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.63",
+      "title": "OmniSec",
+      "scope": "Purple Team validation in authorized scoped targets",
+      "acceptance": "Authorization checks, non-destructive default, explicit approval",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P1",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.64",
+      "title": "OmniGov",
+      "scope": "Governance/approval/constitutional policy control plane",
+      "acceptance": "Tamper-evident approvals, manual override constraints",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P1",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.65",
+      "title": "OmniFin",
+      "scope": "FinOps and cost-exhaustion defenses",
+      "acceptance": "Per-agent quotas and denied over-budget purchases",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P1",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.66",
+      "title": "OmniPhys",
+      "scope": "Robotics and physical-action connector swarm",
+      "acceptance": "Simulation-first, e-stop, separate physical permissions",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P3",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.67",
+      "title": "OmniCog + OmniGraph",
+      "scope": "Bitemporal memory and provenance-aware knowledge DAG",
+      "acceptance": "Retention, merge lineage, tenant boundaries, stale-memory tests",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P1",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.68",
+      "title": "OmniSleep + OmniPrune",
+      "scope": "Scheduled consolidation, semantic cache, knowledge decay",
+      "acceptance": "Safe pruning with rollbacks, benchmark vs baseline",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P2",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.69",
+      "title": "OmniArbitrage",
+      "scope": "Model SLA/BATNA routing, fallback, epsilon exploration",
+      "acceptance": "Measured quality/cost/latency under adversarial outages",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P1",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.70",
+      "title": "OmniContract + OmniChaos",
+      "scope": "Typed runtime contracts, circuit breakers, load shedding",
+      "acceptance": "Bounded retries and negative dependency/chaos tests",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P1",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.71",
+      "title": "OmniStrategy",
+      "scope": "DAG planning, counterfactual checks, error memories",
+      "acceptance": "Bounded search and independent step outcome verification",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P2",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.72",
+      "title": "OmniSense + OmniEvolve",
+      "scope": "Graph planning and governed self-improvement candidates",
+      "acceptance": "Shadow-only candidates, no unreviewed promotion to production",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "Research",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.73",
+      "title": "OmniVerify + OmniHomeostasis",
+      "scope": "SMT-defined invariants and homeostatic resource budgets",
+      "acceptance": "Proof scope explicit; arbitrary program termination not provable",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "Research",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.74",
+      "title": "OmniCausal",
+      "scope": "Counterfactual simulation and immutable deployment approvals",
+      "acceptance": "Modelled causal assumptions and no unattended hot-swap",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "Research",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.75",
+      "title": "OmniLatent + OmniAdaptive",
+      "scope": "Typed embeddings, work stealing and sandboxed ephemeral tools",
+      "acceptance": "Model/dimension binding, leased ownership and isolation tests",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P2/research",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.76",
+      "title": "OmniMath",
+      "scope": "Independent Lean 4 proof kernel and selected Z3/cvc5 e-graph cases",
+      "acceptance": "Certified selected theorems; LLM consensus not evidence",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "P2/research",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.77",
+      "title": "OmniInference + OmniTDA",
+      "scope": "Active inference, epistemic topology and diagnostics",
+      "acceptance": "Repeatable metrics with falsifiable hypotheses",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "Research",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.78",
+      "title": "OmniHDC + Sparse SAE",
+      "scope": "Hyperdimensional computing and sparse feature analysis",
+      "acceptance": "Interpretability benchmarks and leakage checks",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "Research",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.79",
+      "title": "OmniFractal + OmniNARS",
+      "scope": "Hierarchical delegation, uncertainty logic, bounded recursion",
+      "acceptance": "No unconstrained self-replication; bounded termination budgets",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "Research",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.80",
+      "title": "OmniCategory + OmniLogic",
+      "scope": "Category-theoretic mapping, multi-valued logic",
+      "acceptance": "Precisely defined type-preserving mappings and theorem checks",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "Research",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.81",
+      "title": "OmniTranspile + PCC",
+      "scope": "Verified Wasm/Cranelift modules, Hoare pre/postconditions",
+      "acceptance": "Independent checker for defined properties; signature not a proof",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "Research",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.82",
+      "title": "OmniThermo + OmniQUBO",
+      "scope": "Energy cost models, optimization constraints and QUBO experiments",
+      "acceptance": "Real power telemetry, optimization reproducibility",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "Research",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.83",
+      "title": "OmniAlign",
+      "scope": "Human-aligned safety gates, conformal uncertainty, refusals",
+      "acceptance": "Adversarial evaluation, audited policy, human approval for risky actions",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "Research",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.84",
+      "title": "End-to-end acceptance",
+      "scope": "System integration, external review and product release readiness",
+      "acceptance": "Signed acceptance for each supported optional domain pack",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "Release gate",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.85",
+      "title": "OmniProof-STARK",
+      "scope": "Research a real verifier for formally specified task predicates, not unrestricted model reasoning",
+      "acceptance": "Concrete relation, witness/public statement separation, soundness assumptions, valid/invalid/corrupted-proof tests, measured proof sizes/costs",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "**Research / NO-GO**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.86",
+      "title": "OmniMacro / Causal Emergence",
+      "scope": "Experimentally aggregate micro-agent state without losing per-agent audit, permissions or fencing",
+      "acceptance": "Baseline, reversible state aggregation, information loss bounds, effect equivalence, falsifiable causal metrics",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "**Research / NO-GO**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.87",
+      "title": "OmniMarket-L402+",
+      "scope": "Optional payment-channel state machine atop 0.49; no direct production settlement authority",
+      "acceptance": "Signed sequence/nonces, channel conservation, two-sided dispute and timeout handling, durable replay and manual spending limits",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "**Research / NO-GO**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.88",
+      "title": "OmniSubstrate",
+      "scope": "Sandboxed Wasm/Cranelift specialization of *approved pure* hot paths, optional SIMD, exploratory FPGA",
+      "acceptance": "Equivalence tests, independent limits and signatures; performance measured vs baseline, deterministic fallback",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "**Research / NO-GO**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.89",
+      "title": "Proof-Carrying RSI",
+      "scope": "Candidate code changes with independently checkable Lean/SMT contracts and human-authorized deployment",
+      "acceptance": "Real proof kernel, property scope, compiled artifact binding, adversarial invalid proofs; no automated production hot-swap",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "**Research / NO-GO**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.90",
+      "title": "OmniThermo-Governor",
+      "scope": "Hardware-sourced RAPL/power telemetry and budget policy extending 0.82/0.65",
+      "acceptance": "Calibration vs wall power, sensor absence/rollover, per-tenant attribution error, enforcement tests; simulated values labelled",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "**Research / NO-GO**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.91",
+      "title": "Neuromorphic HIL / Loihi 2",
+      "scope": "Optional experimental SNN routing adapter with CPU/GPU fallback",
+      "acceptance": "Actual device access and reproducible energy-delay-quality data; no claimed production acceleration",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "**Research / hardware dependency**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.92",
+      "title": "Biocomputing / wetware",
+      "scope": "Ethics-first feasibility study, not an implementation commitment of biologically based cognition",
+      "acceptance": "Independent scientific validation, safety/biosafety/legal and ethics review; no live human-derived materials under current scope",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "**Exploratory / NO-GO**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.93",
+      "title": "Optical/holographic state",
+      "scope": "Investigate optical storage/links as laboratory alternatives; do not replace authoritative PostgreSQL",
+      "acceptance": "Physical experimental design, measured bandwidth/latency, consistency under faults; reject zero-latency or nonlocal synchronization claims",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "**Exploratory / NO-GO**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.94",
+      "title": "Topological error correction / PQC",
+      "scope": "Evaluate defined fault-tolerant coding and cryptographic constructions separately",
+      "acceptance": "Standards-backed threat model and independently reviewed proof/security analysis; no 'gravity-proof' guarantee",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "historical_status": "**Exploratory / NO-GO**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.95",
+      "title": "OmniSeek-Local + bounded multi-agent DAG",
+      "scope": "Local adapter, budgeted recursion, explicit approved web/file/tool capabilities, no tenant leak",
+      "acceptance": "",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.96",
+      "title": "OmniFlow-Pieces",
+      "scope": "Trigger/action typed interface, idempotency, durable checkpoint, cancellation and reproducible latency baseline",
+      "acceptance": "",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.97",
+      "title": "OmniDroid-GUI",
+      "scope": "Android permissioned Accessibility bridge with user-visible approval for sensitive actions; test on real Android ARM64",
+      "acceptance": "",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.98",
+      "title": "OmniEval-Lab + OmniFleet-C2",
+      "scope": "Replayable trajectory datasets, tamper-evident evals, secure skill provenance/hot reload with automatic rollback",
+      "acceptance": "",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "0.99",
+      "title": "OmniVoice-Duplex + OmniCinema + OmniAgro-KG",
+      "scope": "Opt-in low-latency media and domain packs; real-device and consent tests, rights/provenance and domain model validation",
+      "acceptance": "",
+      "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
+      "dependencies": [],
+      "status": "PLANNED_OR_UNVERIFIED",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "MATRIX_ORIGINAL"
+    },
+    {
+      "id": "1.00",
+      "title": "OmniNous-AtroposRL",
+      "scope": "Typed trajectories `env_id, tool trace, schema outcome, reward provenance`, governance-gated offline LoRA candidates; transport QUIC `iroh` tylko po pinning/capabilities",
+      "acceptance": "500 powtarzalnych epizodów, porównanie baseline, odrzucenie złośliwego tool-call i cross-tenant reward poisoning; rzeczywiste szkolenie tylko z dostępem do zgodnego backendu",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [
+        "0.39",
+        "0.43",
+        "0.64",
+        "0.72"
+      ],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.01",
+      "title": "OmniSteering-CNA",
+      "scope": "Versioned bounded sparse feature masks i steering-gates, bez założenia uniwersalnej listy 150 neuronów",
+      "acceptance": "Test zgodności model/layer/dtype i exact feature indices, ablation/control, brak nonfinite/NaN, benchmark interferencji poza cechą docelową",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [
+        "0.75",
+        "0.78",
+        "1.00"
+      ],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.02",
+      "title": "OmniHoncho-IdentityMind",
+      "scope": "Consent-based profil preferencji, poprawki, retencja i user-control; nie wolno inferować wrażliwych atrybutów bez zgody",
+      "acceptance": "Deletion, purpose tags, export, stale fact invalidation, tenant boundary and no user impersonation",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [
+        "0.44",
+        "0.48",
+        "0.67"
+      ],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.03",
+      "title": "OmniCloudShield + OmniSentry-VoipGuard",
+      "scope": "Defensive eBPF cloud metadata/secret exfil guards, SIP honeypot i prawdziwa biblioteka STIR/SHAKEN",
+      "acceptance": "Kernel-level unauthorized metadata egress denied, legitimate flows allowed, RFC8224 certificate path/expiry validation, adversarial caller ID; deny-only, not SIP scanning",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [
+        "0.39",
+        "0.47",
+        "0.63"
+      ],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.04",
+      "title": "OmniMask-IdentityRelay + OmniTelecom-eSimPBX",
+      "scope": "Per-tenant alias state machine, tracker sanitizer based on proper HTML parsing, optional legitimately provisioned DID/eSIM service",
+      "acceptance": "Aliases genuinely deliver to authorized mailbox; no fabricated DID/eSIM/ICCID; GSMA operations only authenticated, rollback and PII deletion",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [
+        "0.44",
+        "0.48",
+        "0.64"
+      ],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.05",
+      "title": "OmniVox-BenchmarkRouter",
+      "scope": "Measured streaming voice TTFAB/RTF/MOS metadata, offline local TTS fallback vs opted-in cloud provider",
+      "acceptance": "Actual audio streaming p50/p95, TTFAB <= declared budget, metered paid opt-in, no privacy leak, MOS from external measured eval rather than hardcoded fictitious samples",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [
+        "0.47",
+        "0.61",
+        "0.65"
+      ],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.06",
+      "title": "OmniGrant-Architect + OmniPlasmic-Compiler",
+      "scope": "Grant criteria rule engine with citation/provenance and typed AST UI build + feature-flag rollback",
+      "acceptance": "Verified current public eligibility dates/amounts, precise computation; JSON AST roundtrip, no untrusted code injection or imaginary grant award; reproducible UI diff",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [
+        "0.50–0.55",
+        "0.62"
+      ],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.07",
+      "title": "OmniZeroClick-MobileShield + OmniMDM-LPA",
+      "scope": "Defensive mobile indicators, mobile compliance evidence, optional authorized MDM/eUICC and EXIF sanitizer",
+      "acceptance": "Fixture false positive/negative coverage; hardened complete JPEG segment parsing; real Android/iOS capabilities explicitly reported; **no promise** to read Apple PAC or remove in-memory implants solely via agent restart",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [
+        "0.54",
+        "0.63"
+      ],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.08",
+      "title": "OmniIDA-StaticMCP",
+      "scope": "Binary parser and offline sandboxed CFG inspection via authorized decompiler tool",
+      "acceptance": "Invalid ELF/PE/Mach-O corpus, malicious field lengths, no executable loader / dynamic evaluation, bounded CPU/memory and source provenance",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [
+        "0.39",
+        "0.43",
+        "0.63"
+      ],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.09",
+      "title": "OmniGraphiti-Engram + OmniStryker-MutationSOP",
+      "scope": "Bitemporal fact intervals `valid_from/to`, `recorded_at`, contradiction/tenant-safe merge, SOP PM→Architect→Engineer→QA plus mutation QA",
+      "acceptance": "Out-of-order writes and tombstones, no overlapping active facts; **measured** mutant score >=90% with nonzero generated mutants and timeouts counted failures",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [
+        "0.48",
+        "0.55",
+        "0.67"
+      ],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.10",
+      "title": "OmniDiT-USP + OmniDuix-AvatarSync",
+      "scope": "Token partition plan conditioned on actual GPU topology/VRAM, per-frame synchronized audio-viseme adapter",
+      "acceptance": "GPU OOM avoidance on real GPU; measured 720p throughput, latency/drift, audio/video opt-in and licensed model checkpoints; CPU-only mode no false GPU claims",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [
+        "0.61",
+        "0.65"
+      ],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.11",
+      "title": "OmniGameSubsystems-MCP",
+      "scope": "Typed adapters UE5 PCG/GAS/Niagara and Unity Splines/Cinemachine/NavMesh + finite Twine/Godot dialogue DAG",
+      "acceptance": "Editor version-scoped real projects compile, shape/spline property tests, reachability of all story endings, game-engine commands only in authorized sandbox",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [
+        "0.43",
+        "0.50",
+        "0.59"
+      ],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.12",
+      "title": "OmniMCPO-Gateway + OmniCDP-Inspector",
+      "scope": "Capability-scoped MCP↔OpenAPI3.1 bidirectional translation and consent-based live CDP browser inspector",
+      "acceptance": "JSON Schema negotiation, SSE backpressure, browser origin bound and no credential leakage, CDP permission denied default, actual browser protocol test",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [
+        "0.43",
+        "0.44",
+        "0.60"
+      ],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.13",
+      "title": "OmniMatrix-E2EE",
+      "scope": "Real audited Matrix Olm/Megolm SDK for operator-to-agent group messages, cryptographic key/identity verification",
+      "acceptance": "Actual offline history and group re-key on membership changes, key disclosure denial, invalid ciphertext/replay rejection; no homemade E2EE primitives",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [
+        "0.44",
+        "0.47",
+        "0.64"
+      ],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.14",
+      "title": "OmniCloud-BurstScheduler",
+      "scope": "Cloud-agnostic job contract across Modal/Northflank/Render/Koyeb/Cloudflare/Azure/CircleCI, local-first fallback",
+      "acceptance": "Provider API is actually connected, encrypted secrets and idempotent retries, explicit pricing verification/opt-in; no paid resources without approval, no fabricated <1ms prices/GPU VRAM",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [
+        "0.49",
+        "0.52",
+        "0.65",
+        "0.70"
+      ],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.15",
+      "title": "Zenoh SHM zero-copy",
+      "scope": "Implementacja transportu Zenoh shared-memory z limitami buforów i kontrolą wersji API",
+      "acceptance": "Dwa procesy przesyłają rzeczywiste bloki i zapisują p50/p95/p99 oraz kopie bajtów",
+      "negative": "Niepoprawny uchwyt SHM i przekroczony rozmiar kończą się odmową",
+      "dependencies": [
+        "0.43",
+        "0.47"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "transport",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        1,
+        3
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.16",
+      "title": "Izolacja SHM tenantów",
+      "scope": "Obszary SHM przypisane do UID/capability i czyszczenie po SIGKILL",
+      "acceptance": "Tenant B nie odczytuje pamięci A; po awarii usuwane są osierocone segmenty",
+      "negative": "Cross-tenant attach i pozostawione deskryptory muszą być wykryte",
+      "dependencies": [
+        "0.39",
+        "1.15"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "security",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        1,
+        3
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.17",
+      "title": "Zenoh no_std i pico",
+      "scope": "Adaptery no_std/pico tylko dla rzeczywistych wspieranych urządzeń edge",
+      "acceptance": "Pub/sub i queryable przetestowane na sprzęcie albo emulatorze z ograniczoną pamięcią",
+      "negative": "Zerwany transport, zły frame i niezgodna wersja odrzucane",
+      "dependencies": [
+        "0.43",
+        "1.15"
+      ],
+      "status": "PLANNED",
+      "priority": "P2",
+      "owner": "edge",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        1
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.18",
+      "title": "Automerge + Yrs",
+      "scope": "Wydzielone domeny binarnych dokumentów JSON i strumieni tekstowo-kodowych oraz jawny most",
+      "acceptance": "Konkurencyjne edycje round-trip bez utraty typów i z rzeczywistym merge",
+      "negative": "Uszkodzony update Yrs lub niezgodny typ JSON nie zmienia stanu",
+      "dependencies": [
+        "0.48",
+        "1.09"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "memory",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        1,
+        3
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.19",
+      "title": "CRDT konflikt i porządek przyczynowy",
+      "scope": "Deterministyczne reguły merge, tombstone i kompakcja danych z ograniczeniem pamięci",
+      "acceptance": "Niezależne repliki z losową kolejnością operacji dają identyczny stan",
+      "negative": "Replay, ABA, skasowany rekord i wyczerpanie quota bez cichej utraty danych",
+      "dependencies": [
+        "1.18",
+        "0.44"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "memory",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        1
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.20",
+      "title": "OTel batch exporter",
+      "scope": "Dobór zgodnej wersji tracing-opentelemetry i batch export do OTLP z bounded queue",
+      "acceptance": "Rzeczywisty collector przyjmuje spany i zachowuje traceparent przez tokio::spawn",
+      "negative": "Zerwany collector oraz pełna kolejka nie zatrzymują ścieżki krytycznej",
+      "dependencies": [
+        "0.47",
+        "1.15"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "observability",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        1,
+        3
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.21",
+      "title": "Sampling i shutdown telemetrii",
+      "scope": "ParentBased sampling i uporządkowane zamknięcie Tracer/Meter/Logger",
+      "acceptance": "Porównanie śladów multi-hop, drop counts i kontrolowane zakończenie procesów",
+      "negative": "Odrzucenie błędnych trace-id, przeciążenia i nieukończonych flushów",
+      "dependencies": [
+        "1.20"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "observability",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        1,
+        3
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.22",
+      "title": "CoALA working memory",
+      "scope": "Osobne ograniczone stanem roboczym konteksty decyzji w per-tenant store",
+      "acceptance": "Reset scratchpadu i izolacja wielu agentów po każdej turze",
+      "negative": "Próba ponownego użycia starego scratchpadu lub innego tenantu odrzucona",
+      "dependencies": [
+        "0.48",
+        "1.09"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "memory",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        1,
+        5,
+        6
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.23",
+      "title": "CoALA episodic memory",
+      "scope": "Epizody i trajektorie o weryfikowalnym źródle reward i wyniku",
+      "acceptance": "Zapytania po czasie, powrót po restart oraz reprodukcja konkretnego epizodu",
+      "negative": "Skasowanie wyniku i podmieniony reward wykrywane sumą i uprawnieniami",
+      "dependencies": [
+        "1.22",
+        "1.00"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "memory",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        1,
+        5,
+        6
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.24",
+      "title": "CoALA semantic memory",
+      "scope": "Semantyczne fakty z temporalnością, zaufaniem i usuwaniem danych",
+      "acceptance": "Konfliktujące fakty mają jawny status, wersję i pochodzenie",
+      "negative": "Stary lub podmieniony fakt nie nadpisuje zatwierdzonej korekty",
+      "dependencies": [
+        "1.09",
+        "1.22"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "memory",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        1,
+        5,
+        6
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.25",
+      "title": "CoALA procedural memory",
+      "scope": "Wersjonowane procedury i bezpieczne wiązanie kodu skilli z capabilities",
+      "acceptance": "Replay procedury o znanym digest i audyt wywołanych narzędzi",
+      "negative": "Nieautoryzowany skill, niezgodny digest i rekurencyjna pętla odrzucone",
+      "dependencies": [
+        "1.22",
+        "0.43"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "agents",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        1,
+        5,
+        6
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.26",
+      "title": "UALA uncertainty gate",
+      "scope": "Kalibrowany próg niepewności przed action-tool bez automatycznego potwierdzania",
+      "acceptance": "Krzywe kalibracji i realne odrzucenia niepewnych działań w sandboxie",
+      "negative": "NaN, infinity i brak predykcji zawsze odmowa",
+      "dependencies": [
+        "1.22",
+        "0.44"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "security",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        1,
+        6
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.27",
+      "title": "Titans test-time neural memory",
+      "scope": "Wydzielony adapter trwałej pamięci neuronowej z rollbackiem i ograniczonym uczeniem",
+      "acceptance": "Rzeczywiste porównanie pamięci i holdout baseline na tych samych epizodach",
+      "negative": "Nieograniczony gradient, catastrophic forgetting i cross-tenant mixing zablokowane",
+      "dependencies": [
+        "1.22",
+        "1.23",
+        "1.26"
+      ],
+      "status": "PLANNED",
+      "priority": "P2",
+      "owner": "research",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        1,
+        5,
+        6
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.28",
+      "title": "Retencja/zgody CoALA i Titans",
+      "scope": "Purpose-scoped consent, eksport i purge wszystkich czterech warstw oraz stanu neuronowego",
+      "acceptance": "Purge odtwarza 0 trafień i usuwa związane checkpointy",
+      "negative": "Zapytanie po usunięciu, stary snapshot i odtworzenie bez zgody odrzucone",
+      "dependencies": [
+        "1.22",
+        "1.27",
+        "1.02"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "privacy",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        1,
+        5,
+        6
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.29",
+      "title": "RQGM egzaminator epoki",
+      "scope": "Niepodlegający zmianie w trakcie ewaluacji examiner i signed test-set manifest",
+      "acceptance": "Wszystkie kandydatury jednej epoki używają tego samego digesta sędziego",
+      "negative": "Podmiana sędziego w połowie epoki automatycznie unieważnia wynik",
+      "dependencies": [
+        "1.00",
+        "0.72"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "evaluation",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        7,
+        8
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.30",
+      "title": "RQGM koewolucja",
+      "scope": "Kontrolowane iteracje Examiner/Contestant z budżetem mutacji i walidacją",
+      "acceptance": "Dokładny replay par mutacji i wzrost wymagania kontrprzykładów mierzone baseline",
+      "negative": "Reward hacking i samonagradzanie modelu są odrzucane",
+      "dependencies": [
+        "1.29",
+        "0.72"
+      ],
+      "status": "PLANNED",
+      "priority": "P2",
+      "owner": "research",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        7,
+        8
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.31",
+      "title": "RQGM Selective Erasure",
+      "scope": "Jawne oznaczenie score ledgerów zastępowanych examinerów bez usuwania źródeł",
+      "acceptance": "Po promocji nowego examina zachowują się wcześniejsze dowody surowe",
+      "negative": "Próba wymazania niepowiązanego evidence nie przechodzi",
+      "dependencies": [
+        "1.29",
+        "1.30"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "evaluation",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        7,
+        8
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.32",
+      "title": "Adversarial counterexample pool",
+      "scope": "Kontrolowana pula syntetycznych i ręcznie zweryfikowanych prób przeciwnych",
+      "acceptance": "Faktyczne mutacje powodują nowe testy i policzalne odrzucenia",
+      "negative": "Duplikat, prompt injection i dane innego tenantu odrzucone",
+      "dependencies": [
+        "1.30",
+        "1.31"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "evaluation",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        7,
+        8
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.33",
+      "title": "type-sitter typed AST",
+      "scope": "Pinned tree-sitter grammars, wygenerowane typowane node-types.json i AST digest",
+      "acceptance": "Rzeczywiste repo Rust parsowane w CI przed mutacją kodu",
+      "negative": "Nieprawidłowy parser i nieobsługiwany node muszą przerywać dopuszczenie",
+      "dependencies": [
+        "0.55",
+        "1.30"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "code",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        7,
+        8
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.34",
+      "title": "Architecture graph guards",
+      "scope": "Analiza cykli i niedozwolonych zależności View/Core/Data/Infrastructure",
+      "acceptance": "Fixture God Class, dependency cycle i leaky abstraction wykrywa każdą klasę",
+      "negative": "Ukryty alias i reexport nie omijają reguł",
+      "dependencies": [
+        "1.33"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "code",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        7,
+        8
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.35",
+      "title": "Sandboxed mutation safety",
+      "scope": "Mutacje tylko z capability, bez egress i z limitem czasu/kosztu",
+      "acceptance": "Kompilacja, testy regresyjne i wycofanie zmienionej mutacji mierzone",
+      "negative": "Złośliwa komenda shell, eskalacja UID i tajny token zakazane",
+      "dependencies": [
+        "0.39",
+        "1.32",
+        "1.34"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "security",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        7,
+        8
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.36",
+      "title": "CPU Sigma-Delta baseline",
+      "scope": "Deterministyczny router SDNN z przeniesieniem różnic do akumulatora",
+      "acceptance": "Fixture sygnałów 16-bit i histogram sparsity reproducible",
+      "negative": "Brak kanałów i niezgodny rozmiar bufora odrzucane",
+      "dependencies": [
+        "0.78"
+      ],
+      "status": "PLANNED",
+      "priority": "P2",
+      "owner": "edge",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        8,
+        9
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.37",
+      "title": "Graded spikes numerics",
+      "scope": "Saturating arithmetic na signed 16-bit i bounded 32-bit sigma integrator",
+      "acceptance": "Testy własnościowe dla -32768 i +32767 bez overflow",
+      "negative": "Próg zerowy i dzielenie przez 0 muszą kończyć się błędem",
+      "dependencies": [
+        "1.36"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "edge",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        8,
+        9
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.38",
+      "title": "Loihi 2 hardware adapter",
+      "scope": "Opcjonalny sterownik do prawdziwego Intel Loihi 2 z CPU fallback",
+      "acceptance": "Dowód sprzętu, wersja SDK i zgodne spikes na fizycznym chipie",
+      "negative": "Brak sprzętu nie może oznaczać Loihi PASS ani wymuszać zakupu",
+      "dependencies": [
+        "1.37"
+      ],
+      "status": "PLANNED",
+      "priority": "P2",
+      "owner": "research",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        8,
+        9
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.39",
+      "title": "SDNN energy latency benchmarking",
+      "scope": "Pomiar EDP dla Loihi/Jetson/CPU na równych workloadach",
+      "acceptance": "Surowe dane J/op i latency p95 wraz z host inventory",
+      "negative": "Wynik 0.000872x z PDF nie jest celem certyfikowanym bez testu",
+      "dependencies": [
+        "1.38"
+      ],
+      "status": "PLANNED",
+      "priority": "P2",
+      "owner": "research",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        8,
+        9
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.40",
+      "title": "mlkem-native pinned KEM",
+      "scope": "Integracja z aktualnym audytowanym backend ML-KEM i testami znanych wektorów",
+      "acceptance": "KAT/negative key decapsulation w Rust na rzeczywistym backendzie",
+      "negative": "Zmieniony ciphertext i błędne klucze nie dają poprawnego secret",
+      "dependencies": [
+        "0.45"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "crypto",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        9,
+        10
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.41",
+      "title": "PQC hybrid handshake",
+      "scope": "Uwierzytelniony klasyczny plus ML-KEM transport i downgrading policy",
+      "acceptance": "Dwustronny handshake, rotation, RTT i transcript binding",
+      "negative": "Atak downgrade, niezgodny cert i replay są odrzucane",
+      "dependencies": [
+        "1.40",
+        "0.44"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "crypto",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        9,
+        10
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.42",
+      "title": "Guest Aya eBPF probe",
+      "scope": "Rzeczywista sonda syscall w jądrze Linux gościa Firecracker obok host TC/eBPF",
+      "acceptance": "Dowód kernel guest BPF program ID i rzeczywiste openat w VM",
+      "negative": "Host-only events i udawany program ID nie są dowodami guest telemetry",
+      "dependencies": [
+        "0.39",
+        "1.35"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "security",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        3,
+        9,
+        10
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.43",
+      "title": "Host/guest event correlation",
+      "scope": "Zweryfikowana korelacja VMID UID cgroup/guest boot ID ze zdarzeniem kernel eBPF",
+      "acceptance": "Event guest i host mają odrębną autentyczność i wspólne workload nonce",
+      "negative": "Podrobione boot ID, uid i cross-tenant event są odrzucane",
+      "dependencies": [
+        "1.42",
+        "0.39"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "security",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        3,
+        9,
+        10
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.44",
+      "title": "Entropy ransomware detector",
+      "scope": "Testowana entropia Shannona nazw plików i model false positives na kernel syscall",
+      "acceptance": "FNR/FPR liczony na rzeczywistym korpusie benign i malicious",
+      "negative": "Przypadkowo długie nazwy i fałszywe .locked nie zabijają procesu bez dowodu",
+      "dependencies": [
+        "1.42",
+        "1.43"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "security",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        3,
+        10,
+        11
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.45",
+      "title": "Kernel network syscall monitor",
+      "scope": "Gość obserwuje connect/sendto, host obserwuje TAP wraz z polityką egress",
+      "acceptance": "Rzeczywiste zdarzenia obu jąder korelowane z pakietami",
+      "negative": "Pominięty/źle dopasowany proces lub polityka host-only nie uzyskuje PASS",
+      "dependencies": [
+        "1.42",
+        "1.43"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "security",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        3,
+        10,
+        11
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.46",
+      "title": "Action capability verification",
+      "scope": "Stan Uprawnione→Zadeklarowane→Wdrożone→Zweryfikowane na rzeczywistym efekcie",
+      "acceptance": "Działania fizyczne i płatne wymagają odczytania wyniku zewnętrznego systemu",
+      "negative": "Sam raport narzędzia bez efektu nie jest zatwierdzeniem wdrożenia",
+      "dependencies": [
+        "0.44",
+        "1.26"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "security",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        3,
+        10,
+        11
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.47",
+      "title": "Cost exhaustion shield",
+      "scope": "Rate/rolling budget limiter dla tokenów, requestów i opłat z oknami",
+      "acceptance": "Rzeczywiste obcięcie nadmiernej sesji i zachowanie legalnej",
+      "negative": "Overflow licznika, clock skew i fragmentacja tenantów nie omijają limitu",
+      "dependencies": [
+        "0.50",
+        "1.46"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "finops",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        3,
+        10,
+        11
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.48",
+      "title": "Disposable Apps i Grid Compute",
+      "scope": "Rejestr TTL aplikacji, revoke secrets, garbage collect i opcjonalne sygnały energii",
+      "acceptance": "E2E utworzenie→wygaśnięcie→odwołanie i udokumentowany scheduler fallback",
+      "negative": "Brak licznika energii nie może udawać współpracy z siecią energetyczną",
+      "dependencies": [
+        "1.46",
+        "1.47"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "finops",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        3,
+        10,
+        11
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.49",
+      "title": "L402 HTTP/gRPC grammar",
+      "scope": "Bounded parser challenge/authorization bez automatycznej płatności",
+      "acceptance": "Stricte parsowanie poprawnych nagłówków L402 i interoperacyjne fixtures",
+      "negative": "Niekompletna faktura, injection i za długie nagłówki odrzucone",
+      "dependencies": [
+        "0.44",
+        "0.50"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "payments",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        3,
+        11,
+        12
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.50",
+      "title": "Macaroon chain HMAC",
+      "scope": "Prawidłowy root secret i HMAC-SHA256 chained caveats z kluczami w secret store",
+      "acceptance": "Interop z prawdziwym Macaroon verifier, constant-time MAC check",
+      "negative": "Modyfikacja caveat lub signature powoduje odmowę",
+      "dependencies": [
+        "1.49"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "crypto",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        3,
+        11,
+        12
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.51",
+      "title": "Attenuation i caveat semantics",
+      "scope": "Caveats zakresu, limitu, czasu i tenantu bez podniesienia uprawnień",
+      "acceptance": "Pod-agent może tylko ograniczyć uprawnienia parent token",
+      "negative": "Nieznany caveat, szeroki scope i sprzeczny warunek = deny",
+      "dependencies": [
+        "1.50",
+        "0.44"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "payments",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        11,
+        12,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.52",
+      "title": "Preimage SHA-256 check",
+      "scope": "Stałoczasowe porównanie payment hash z preimage po weryfikacji formatu",
+      "acceptance": "Autoryzacja z prawidłowym 32-byte preimage i działającą parą HMAC",
+      "negative": "Błędny rozmiar, replay nonce i podmieniony hash odrzucone",
+      "dependencies": [
+        "1.49",
+        "1.50"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "payments",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        11,
+        12,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.53",
+      "title": "Lightning settlement authority",
+      "scope": "Dowód opłacenia faktury w połączonym autoryzowanym węźle LN, nie tylko self-asserted preimage",
+      "acceptance": "Real settlement reference, amount, expiry i nonce bez kosztu nieautoryzowanego",
+      "negative": "Nieopłacona lub anulowana faktura nie otrzymuje zapisu paid",
+      "dependencies": [
+        "1.52"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "payments",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        11,
+        12,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.54",
+      "title": "L402 production gateway quotas",
+      "scope": "Bounded HTTP/gRPC interceptors dla scope, replay journal, expiry i accounting",
+      "acceptance": "Wieloagentowe E2E z wydanym challenge i legalnym settlement",
+      "negative": "Double-spend logiki, clock rollback i stream exhaustion odrzucane",
+      "dependencies": [
+        "1.51",
+        "1.53",
+        "1.47"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "payments",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        11,
+        12,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.55",
+      "title": "Transport benchmark SHM/TCP",
+      "scope": "Matched real Zenoh SHM and TCP payload corpus",
+      "acceptance": "Raw p50/p95/p99 latency, CPU and memory for 64B, 4KiB, 1MiB messages",
+      "negative": "Reject synthetic clock and unequal hardware",
+      "dependencies": [
+        "1.15",
+        "1.20"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "transport",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.56",
+      "title": "SHM tenancy and quota",
+      "scope": "Bound shared allocations to UID and tenant capabilities",
+      "acceptance": "8 publishers stress allocation reclaim, crash and no cross tenant map",
+      "negative": "Reject foreign handle and unbounded pool growth",
+      "dependencies": [
+        "1.15",
+        "1.16",
+        "1.55"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "transport",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.57",
+      "title": "Dual CRDT convergence corpus",
+      "scope": "Bridge Automerge JSON with Yrs text using typed adapters",
+      "acceptance": "10000 randomized concurrent operations converge across restarted replicas",
+      "negative": "Reject stale tombstone revival and schema coercion",
+      "dependencies": [
+        "1.18",
+        "1.19"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "transport",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.58",
+      "title": "Edge Zenoh interoperability",
+      "scope": "Pin zenoh-pico/no_std compatibility with cloud peers",
+      "acceptance": "Real device or labeled emulator demonstrates suspend reconnect and queued delivery",
+      "negative": "Reject unsupported MCU claimed as measured hardware",
+      "dependencies": [
+        "1.17",
+        "1.55"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "transport",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.59",
+      "title": "Transport and CRDT release matrix",
+      "scope": "Publish reproducible versioned interoperability cases",
+      "acceptance": "x86_64 and optional arm64 run hash-equal state after network faults",
+      "negative": "Reject incompatible wire frame and malformed CRDT update",
+      "dependencies": [
+        "1.55",
+        "1.56",
+        "1.57",
+        "1.58"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "transport",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.60",
+      "title": "OTel resource precedence",
+      "scope": "Make service name and deployment environment operator configurable",
+      "acceptance": "Real collector records OTEL_SERVICE_NAME and version from process env",
+      "negative": "Reject hard-coded resource override",
+      "dependencies": [
+        "1.20",
+        "1.21"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "observability",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        3
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.61",
+      "title": "Asynchronous span lineage",
+      "scope": "Carry traceparent across Tokio tasks broker and guest boundaries",
+      "acceptance": "1000 fan-out tasks preserve trace_id and parent span identity",
+      "negative": "Reject orphan span or swapped tenant trace context",
+      "dependencies": [
+        "1.20",
+        "0.39"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "observability",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        3
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.62",
+      "title": "Batch exporter bounded outage",
+      "scope": "Constrain OTel batch queue and collector retry",
+      "acceptance": "10min collector failure yields bounded RSS, counted dropped spans and live workload",
+      "negative": "Reject unbounded memory or hidden trace loss",
+      "dependencies": [
+        "1.20",
+        "1.21"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "observability",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        3
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.63",
+      "title": "Telemetry orderly shutdown",
+      "scope": "Flush Tracer then Meter then Logger on process exit",
+      "acceptance": "Collector receives final span, metric and log within bounded deadline",
+      "negative": "Reject missing flush receipt and duplicated shutdown",
+      "dependencies": [
+        "1.20",
+        "1.21"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "observability",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        3
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.64",
+      "title": "Telemetry controlled overhead",
+      "scope": "Compare traces at head sampling ratios zero point one and one",
+      "acceptance": "Measured throughput and latency deltas vs matched no telemetry baseline",
+      "negative": "Reject unproven zero cost claim",
+      "dependencies": [
+        "1.60",
+        "1.61",
+        "1.62",
+        "1.63"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "observability",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        3
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.65",
+      "title": "CoALA typed memory API",
+      "scope": "Unify four separate memory stores with per tenant capabilities",
+      "acceptance": "Restart and replay an authorized agent decision on identical memory snapshot",
+      "negative": "Reject memory type confusion and foreign tenant read",
+      "dependencies": [
+        "1.22",
+        "1.23",
+        "1.24",
+        "1.25"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "memory",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        3,
+        9,
+        10
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.66",
+      "title": "UALA decision trace provenance",
+      "scope": "Bind measured uncertainty and Titans gradients to action receipt",
+      "acceptance": "External action logs calibrated uncertainty and selected memory revision",
+      "negative": "Reject NaN gradient and missing confidence",
+      "dependencies": [
+        "1.26",
+        "1.27",
+        "1.65"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "memory",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        3,
+        9,
+        10
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.67",
+      "title": "Titans stability evaluation",
+      "scope": "Bound momentum, gradient, forgetting and checkpoint format",
+      "acceptance": "Seeded replay tracks heldout loss and numerical stability",
+      "negative": "Reject nonfinite update, dimension mismatch and catastrophic regression",
+      "dependencies": [
+        "1.27",
+        "1.66"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "memory",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        3,
+        9,
+        10
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.68",
+      "title": "Cognitive cold restore",
+      "scope": "Reconstruct CoALA and optional Titans from authorized checkpoint",
+      "acceptance": "Fresh process reproduces approved memory and provenance graph",
+      "negative": "Reject recovery of revoked personal records",
+      "dependencies": [
+        "1.28",
+        "1.65",
+        "1.67"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "memory",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        3,
+        9,
+        10
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.69",
+      "title": "Cognitive tool safety benchmark",
+      "scope": "Evaluate calibrated UALA gates against actual sandbox actions",
+      "acceptance": "Publish FPR/FNR by risk threshold and baseline",
+      "negative": "Reject high uncertainty destructive action irrespective of reward",
+      "dependencies": [
+        "1.26",
+        "1.66",
+        "1.68"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "memory",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        3,
+        9,
+        10
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.70",
+      "title": "RQGM immutable examiner epoch",
+      "scope": "Pin judge and benchmark corpus digest for whole evaluation epoch",
+      "acceptance": "Independent workers attest one immutable examiner version",
+      "negative": "Reject changed judge during candidate batch",
+      "dependencies": [
+        "1.29",
+        "1.30"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "evaluation",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        3,
+        4,
+        9,
+        10
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.71",
+      "title": "RQGM score ledger preservation",
+      "scope": "Retain immutable raw evidence and selectively expire superseded scores",
+      "acceptance": "Replay judge transition preserves unrelated source evidence",
+      "negative": "Reject deletion of external judge observations",
+      "dependencies": [
+        "1.31",
+        "1.70"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "evaluation",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        3,
+        4,
+        9,
+        10
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.72",
+      "title": "Type sitter admission of mutations",
+      "scope": "Parse Rust mutation with pinned tree sitter schema and layer rules",
+      "acceptance": "Real compiled candidate passes dependency DAG and AST gate",
+      "negative": "Reject indirect circular graph and reexport bypass",
+      "dependencies": [
+        "1.33",
+        "1.34",
+        "1.35"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "evaluation",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        3,
+        4,
+        9,
+        10
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.73",
+      "title": "Examiner adversarial evaluation",
+      "scope": "Generate protected counterexamples for grading reward hacking",
+      "acceptance": "Heldout mutation corpus reports detection and human baseline",
+      "negative": "Reject contaminated evaluation set and prompt injected candidate",
+      "dependencies": [
+        "1.32",
+        "1.70",
+        "1.72"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "evaluation",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        3,
+        4,
+        9,
+        10
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.74",
+      "title": "Mutation deployment rollback",
+      "scope": "Stage accepted candidate behind sandboxed regression and rollback",
+      "acceptance": "Rebuild full regression with signed commit provenance before promotion",
+      "negative": "Reject security regression and self approved risky patch",
+      "dependencies": [
+        "1.71",
+        "1.72",
+        "1.73"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "evaluation",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        3,
+        4,
+        9,
+        10
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.75",
+      "title": "SDNN arithmetic property corpus",
+      "scope": "Implement saturating signed spikes and accumulator boundary tests",
+      "acceptance": "100000 seeded CPU traces yield reproducible exact deltas",
+      "negative": "Reject overflow, zero threshold and invalid channel index",
+      "dependencies": [
+        "1.36",
+        "1.37"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "crypto",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        4
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.76",
+      "title": "Loihi optional hardware backend",
+      "scope": "Negotiate SDK capabilities and fallback to CPU when unavailable",
+      "acceptance": "Device inventory records real Loihi chip for hardware comparisons",
+      "negative": "Reject emulator results labeled real hardware",
+      "dependencies": [
+        "1.38",
+        "1.75"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "crypto",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        4
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.77",
+      "title": "Energy delay reproducibility",
+      "scope": "Run same model and I/O boundary across available Loihi, Jetson, CPU",
+      "acceptance": "Export measured joules, frame rate and latency with raw repeats",
+      "negative": "Reject document headline ratio as OCAF measurement",
+      "dependencies": [
+        "1.39",
+        "1.76"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "crypto",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        4
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.78",
+      "title": "ML KEM provenance and vectors",
+      "scope": "Pin licensed mlkem-native release and supported CPU variants",
+      "acceptance": "Official KAT and negative ciphertext decapsulation run against actual backend",
+      "negative": "Reject changed ciphertext and unsupported accelerator",
+      "dependencies": [
+        "1.40"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "crypto",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        4
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.79",
+      "title": "Authenticated hybrid PQ handshake",
+      "scope": "Bind classical certificate and ML KEM key to same transport transcript",
+      "acceptance": "Two endpoints complete real handshake and key rotation",
+      "negative": "Reject downgrade replay and identity mismatch",
+      "dependencies": [
+        "1.41",
+        "1.78"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "crypto",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        4
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.80",
+      "title": "In guest Aya BPF verifier gate",
+      "scope": "Load actual Aya eBPF ELF into independent Firecracker guest kernel",
+      "acceptance": "Guest BPF ID and verified kernel image digest in KVM evidence",
+      "negative": "Reject host only TC classifier as guest result",
+      "dependencies": [
+        "1.42",
+        "0.39.22"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "security",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        4,
+        5,
+        7,
+        8
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.81",
+      "title": "One second syscall window",
+      "scope": "Track guest openat in bounded per PID monotonic windows",
+      "acceptance": "Actual guest syscall event counts correlate with guest PID and tenant",
+      "negative": "Reject PID reuse clock shift and unbounded BPF maps",
+      "dependencies": [
+        "1.42",
+        "1.43",
+        "1.80"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "security",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        4,
+        5,
+        7,
+        8
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.82",
+      "title": "Kernel anomaly false positive audit",
+      "scope": "Calibrate entropy and ransomware suffix features with real corpus",
+      "acceptance": "Export FNR and FPR before any process quarantine",
+      "negative": "Reject single suspicious filename as automatic killing proof",
+      "dependencies": [
+        "1.44",
+        "1.81"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "security",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        4,
+        5,
+        7,
+        8
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.83",
+      "title": "Guest host event correlation",
+      "scope": "Bind guest syscall to host packet via signed VM and workload nonce",
+      "acceptance": "Real guest and host traces match workload and boot ID",
+      "negative": "Reject forged nonce or foreign tenant event",
+      "dependencies": [
+        "1.43",
+        "1.45",
+        "1.80"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "security",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        4,
+        5,
+        7,
+        8
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.84",
+      "title": "Guest BPF fail safe controls",
+      "scope": "Lease authorize guest quarantine with revocation and map cleanup",
+      "acceptance": "Probe restart and VM crash preserve deny safety with reversible enforcement",
+      "negative": "Reject missing guest probe falsely reporting security PASS",
+      "dependencies": [
+        "1.80",
+        "1.82",
+        "1.83"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "security",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        4,
+        5,
+        7,
+        8
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.85",
+      "title": "L402 settlement provenance",
+      "scope": "Distinguish preimage verification from actual invoice settlement state",
+      "acceptance": "Authorized LN node returns paid invoice reference and amount",
+      "negative": "Reject self declared payment by HMAC alone",
+      "dependencies": [
+        "1.49",
+        "1.53"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "governance",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        2,
+        5,
+        11,
+        12
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.86",
+      "title": "L402 caveat semantics",
+      "scope": "Enforce tenant, scope, time, calls and spend on Macaroon attenuation",
+      "acceptance": "Interoperability test confirms bounded nested caveats across restart",
+      "negative": "Reject unknown caveat and privilege escalation",
+      "dependencies": [
+        "1.50",
+        "1.51",
+        "1.54"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "governance",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        2,
+        5,
+        11,
+        12
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.87",
+      "title": "Atomic token budget escrow",
+      "scope": "Reserve, commit and refund per tenant tool token budget",
+      "acceptance": "Concurrent 50 agent calls obey caps after simulated leader failover",
+      "negative": "Reject double debit overflow and replayed payment",
+      "dependencies": [
+        "1.47",
+        "1.54"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "governance",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        2,
+        5,
+        11,
+        12
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.88",
+      "title": "Disposable app lifecycle",
+      "scope": "Track application creator, TTL, endpoint and secret revocation",
+      "acceptance": "Real demo app expiry revokes deploy credentials and cleans resources",
+      "negative": "Reject lingering service access after purge",
+      "dependencies": [
+        "1.48",
+        "1.46"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "governance",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        2,
+        5,
+        11,
+        12
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.89",
+      "title": "Energy aware scheduler fallback",
+      "scope": "Use trusted energy budget and opt in for grid aware compute",
+      "acceptance": "Actual meter readings govern optional batch work with offline fallback",
+      "negative": "Reject fabricated energy surplus or implicit paid execution",
+      "dependencies": [
+        "1.48",
+        "1.87"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "governance",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        2,
+        5,
+        11,
+        12
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.90",
+      "title": "Cargo Workspace migration boundary",
+      "scope": "Preserve existing package while staging six functional workspace crates",
+      "acceptance": "Cargo metadata and cargo test workspace complete on main with old API intact",
+      "negative": "Reject cyclic crate graph and removed public CLI",
+      "dependencies": [
+        "0.42",
+        "1.59",
+        "1.64"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "architecture",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        2,
+        5,
+        6,
+        12,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.91",
+      "title": "Six crate typed interfaces",
+      "scope": "Define transport-crdt telemetry-ebpf cognition-rqgm economy-gov domain-swarms master-node boundaries",
+      "acceptance": "Six real crates compile with schema contracts and no unauthorized cycles",
+      "negative": "Reject direct dependency on privileged runtime from untrusted plugin",
+      "dependencies": [
+        "1.90",
+        "1.65",
+        "1.74",
+        "1.84",
+        "1.86"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "architecture",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        2,
+        5,
+        6,
+        12,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.92",
+      "title": "Core domain swarms integration",
+      "scope": "Bind OmniDev OmniUX OmniE2E OmniForge OmniWeb OmniMath and OmniSec to capability registry",
+      "acceptance": "Seven swarms execute real authorized fixture tasks with trace and audit",
+      "negative": "Reject fabricated tool completion and missing sandbox",
+      "dependencies": [
+        "1.91",
+        "0.43",
+        "0.56"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "architecture",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        2,
+        5,
+        6,
+        12,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.93",
+      "title": "Extended domain adapters",
+      "scope": "Integrate OmniNous OmniHoncho OmniZeroClick OmniDiT OmniLex and OmniHFT as opt in adapters",
+      "acceptance": "Real backend smoke or explicit DISABLED gate for all six systems",
+      "negative": "Reject absent credentials reported as live deployment",
+      "dependencies": [
+        "1.91",
+        "1.92",
+        "1.00",
+        "1.02"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "architecture",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        2,
+        5,
+        6,
+        12,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "1.94",
+      "title": "Sovereign master integrated workflow",
+      "scope": "Compose broker Firecracker PostgreSQL CRDT telemetry cognition action gates and swarms",
+      "acceptance": "One authorized request has verified identity trace durable result and recovery",
+      "negative": "Reject network partition stale epoch or missing evidence as success",
+      "dependencies": [
+        "1.90",
+        "1.91",
+        "1.92",
+        "1.93",
+        "0.39",
+        "0.40",
+        "0.41"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "architecture",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        2,
+        5,
+        6,
+        12,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    }
+  ],
+  "technical": [
+    {
+      "id": "0.38.1",
+      "title": "Etap historyczny, dokumentacja wymaga weryfikacji",
+      "scope": "Etap historyczny, dokumentacja wymaga weryfikacji",
+      "acceptance": "Weryfikacja faktycznych dowodów z dokumentu źródłowego.",
+      "negative": "Nie rozszerzać zakresu dowodu na niesprawdzone hosty.",
+      "dependencies": [],
+      "status": "HISTORICAL_LAB_SCOPE_LIMITED",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "HISTORICAL_EVIDENCE"
+    },
+    {
+      "id": "0.38.6",
+      "title": "Etap historyczny, dokumentacja wymaga weryfikacji",
+      "scope": "Etap historyczny, dokumentacja wymaga weryfikacji",
+      "acceptance": "Weryfikacja faktycznych dowodów z dokumentu źródłowego.",
+      "negative": "Nie rozszerzać zakresu dowodu na niesprawdzone hosty.",
+      "dependencies": [],
+      "status": "HISTORICAL_LAB_SCOPE_LIMITED",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "HISTORICAL_EVIDENCE"
+    },
+    {
+      "id": "0.38.8",
+      "title": "Kryteria 0.38.8",
+      "scope": "Kryteria 0.38.8",
+      "acceptance": "Weryfikacja faktycznych dowodów z dokumentu źródłowego.",
+      "negative": "Nie rozszerzać zakresu dowodu na niesprawdzone hosty.",
+      "dependencies": [],
+      "status": "HISTORICAL_LAB_SCOPE_LIMITED",
+      "source": "docs/STAGE_038_8_9_ACCEPTANCE.md",
+      "source_class": "HISTORICAL_EVIDENCE"
+    },
+    {
+      "id": "0.38.9",
+      "title": "Kryteria 0.38.9",
+      "scope": "Kryteria 0.38.9",
+      "acceptance": "Weryfikacja faktycznych dowodów z dokumentu źródłowego.",
+      "negative": "Nie rozszerzać zakresu dowodu na niesprawdzone hosty.",
+      "dependencies": [],
+      "status": "HISTORICAL_LAB_SCOPE_LIMITED",
+      "source": "docs/STAGE_038_8_9_ACCEPTANCE.md",
+      "source_class": "HISTORICAL_EVIDENCE"
+    },
+    {
+      "id": "0.39.1",
+      "title": "`stage039_microvm_gate.py`: typed manifest, pinned digests, host preflight",
+      "scope": "`stage039_microvm_gate.py`: typed manifest, pinned digests, host preflight",
+      "acceptance": "Odrzuca fałszywe /dev/kvm, dane tenant, mutable paths; nigdy nie raportuje boot",
+      "negative": "Nie zmieniać statusu bez właściwego testu realnego backendu.",
+      "dependencies": [],
+      "status": "**PASS 12 tests**, CI host NO-GO",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "ORIGINAL_SUBSTEP"
+    },
+    {
+      "id": "0.39.2",
+      "title": "`stage039_broker_ledger.py`: SQLite WAL, fencing leader_epoch, anti-replay",
+      "scope": "`stage039_broker_ledger.py`: SQLite WAL, fencing leader_epoch, anti-replay",
+      "acceptance": "Odrzuć rollback epoch, concurrent double-claim, błędny owner, DB perms",
+      "negative": "Nie zmieniać statusu bez właściwego testu realnego backendu.",
+      "dependencies": [],
+      "status": "**PASS 17 tests**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "ORIGINAL_SUBSTEP"
+    },
+    {
+      "id": "0.39.3",
+      "title": "`stage039_broker_ipc.py`: AF_UNIX, kernel SO_PEERCRED",
+      "scope": "`stage039_broker_ipc.py`: AF_UNIX, kernel SO_PEERCRED",
+      "acceptance": "Zła UID i tenant denied; limit ramki, bez implicit exec",
+      "negative": "Nie zmieniać statusu bez właściwego testu realnego backendu.",
+      "dependencies": [],
+      "status": "**PASS 10 tests**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "ORIGINAL_SUBSTEP"
+    },
+    {
+      "id": "0.39.4",
+      "title": "**KVM kernel ioctl probe** i konfiguracja jails/VM",
+      "scope": "**KVM kernel ioctl probe** i konfiguracja jails/VM",
+      "acceptance": "Real KVM API_VERSION=12, CREATE_VM succeeded; char device nie wystarcza",
+      "negative": "Nie zmieniać statusu bez właściwego testu realnego backendu.",
+      "dependencies": [],
+      "status": "**REAL KVM API 12 and CREATE_VM PASS as root, run 38704086975**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "ORIGINAL_SUBSTEP"
+    },
+    {
+      "id": "0.39.5",
+      "title": "Pin Firecracker **i jailer tej samej wersji**, signed/provenance assets; generator staging chroot",
+      "scope": "Pin Firecracker **i jailer tej samej wersji**, signed/provenance assets; generator staging chroot",
+      "acceptance": "No stale artifact path, immutable verified staged copy, no symlink / TOCTOU",
+      "negative": "Nie zmieniać statusu bez właściwego testu realnego backendu.",
+      "dependencies": [],
+      "status": "**Static chroot config + 6 tests PASS; live jailer / TOCTOU runtime proof OPEN**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "ORIGINAL_SUBSTEP"
+    },
+    {
+      "id": "0.39.6",
+      "title": "Realny boot Firecracker za jailer na host Linux/KVM",
+      "scope": "Realny boot Firecracker za jailer na host Linux/KVM",
+      "acceptance": "Kernel/rootfs readonly; VM Running + kernel serial + cgroup proof + cleanup",
+      "negative": "Nie zmieniać statusu bez właściwego testu realnego backendu.",
+      "dependencies": [],
+      "status": "**LIVE EXECUTOR WRITTEN; 6 contract tests PASS; host KVM NO-GO**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "ORIGINAL_SUBSTEP"
+    },
+    {
+      "id": "0.39.7",
+      "title": "Program Rust `aya-ebpf` cgroup_skb/egress + userspace Aya loader",
+      "scope": "Program Rust `aya-ebpf` cgroup_skb/egress + userspace Aya loader",
+      "acceptance": "Realne BPF verifier load, program ID, tenant A block/B unaffected, recovery after detach",
+      "negative": "Nie zmieniać statusu bez właściwego testu realnego backendu.",
+      "dependencies": [],
+      "status": "**REAL kernel Aya attach and A/B negative+recovery PASS, run 38704086975**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "ORIGINAL_SUBSTEP"
+    },
+    {
+      "id": "0.39.8",
+      "title": "Spójny broker lifecycle: claim → jailer → eBPF link → VM → receipt → teardown",
+      "scope": "Spójny broker lifecycle: claim → jailer → eBPF link → VM → receipt → teardown",
+      "acceptance": "Block until eBPF enforcement; kill/replay/restore cleanup, no orphan VM",
+      "negative": "Nie zmieniać statusu bez właściwego testu realnego backendu.",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "ORIGINAL_SUBSTEP"
+    },
+    {
+      "id": "0.39.9",
+      "title": "Dwa odrębne trwałe hosty KVM, tenant A/B, chaos i bounded 100-cycle soak na każdym",
+      "scope": "Dwa odrębne trwałe hosty KVM, tenant A/B, chaos i bounded 100-cycle soak na każdym",
+      "acceptance": "Rzeczywiste UUID hosta, failure-domain, restart, revoked-key rejection",
+      "negative": "Nie zmieniać statusu bez właściwego testu realnego backendu.",
+      "dependencies": [],
+      "status": "**NO-GO / hosts unavailable**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "ORIGINAL_SUBSTEP"
+    },
+    {
+      "id": "0.39.10",
+      "title": "Safety & supply chain: SBOM, vulnerability/TOCTOU tests, independent scope review",
+      "scope": "Safety & supply chain: SBOM, vulnerability/TOCTOU tests, independent scope review",
+      "acceptance": "Reproduce SHA manifest-to-running inode, guest escape and egress attempts",
+      "negative": "Nie zmieniać statusu bez właściwego testu realnego backendu.",
+      "dependencies": [],
+      "status": "**NO-GO**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "ORIGINAL_SUBSTEP"
+    },
+    {
+      "id": "0.39.11",
+      "title": "Produkcyjny operator acceptance dla 0.39",
+      "scope": "Produkcyjny operator acceptance dla 0.39",
+      "acceptance": "Oddzielne zatwierdzenie, report ze środowiska i podpis; nie mylić z administracyjnym unblock",
+      "negative": "Nie zmieniać statusu bez właściwego testu realnego backendu.",
+      "dependencies": [],
+      "status": "**NO-GO**",
+      "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+      "source_class": "ORIGINAL_SUBSTEP"
+    },
+    {
+      "id": "0.39.12",
+      "title": "Test izolacji jailed guest TAP",
+      "scope": "Test izolacji jailed guest TAP",
+      "acceptance": "Weryfikacja faktycznych dowodów z dokumentu źródłowego.",
+      "negative": "Nie rozszerzać zakresu dowodu na niesprawdzone hosty.",
+      "dependencies": [],
+      "status": "HISTORICAL_LAB_SCOPE_LIMITED",
+      "source": "docs/STAGE039_NETWORK_EBPF_CROSS_HOST_EVIDENCE_2026-10-15.md",
+      "source_class": "HISTORICAL_EVIDENCE"
+    },
+    {
+      "id": "0.39.13",
+      "title": "Kernel tc/eBPF egzekwowanie polityki",
+      "scope": "Kernel tc/eBPF egzekwowanie polityki",
+      "acceptance": "Weryfikacja faktycznych dowodów z dokumentu źródłowego.",
+      "negative": "Nie rozszerzać zakresu dowodu na niesprawdzone hosty.",
+      "dependencies": [],
+      "status": "HISTORICAL_LAB_SCOPE_LIMITED",
+      "source": "docs/STAGE039_NETWORK_EBPF_CROSS_HOST_EVIDENCE_2026-10-15.md",
+      "source_class": "HISTORICAL_EVIDENCE"
+    },
+    {
+      "id": "0.39.14",
+      "title": "Handoff dwóch hostów CI",
+      "scope": "Handoff dwóch hostów CI",
+      "acceptance": "Weryfikacja faktycznych dowodów z dokumentu źródłowego.",
+      "negative": "Nie rozszerzać zakresu dowodu na niesprawdzone hosty.",
+      "dependencies": [],
+      "status": "HISTORICAL_LAB_SCOPE_LIMITED",
+      "source": "docs/STAGE039_NETWORK_EBPF_CROSS_HOST_EVIDENCE_2026-10-15.md",
+      "source_class": "HISTORICAL_EVIDENCE"
+    },
+    {
+      "id": "0.39.15",
+      "title": "TLS1.3 mTLS SAN principal",
+      "scope": "TLS1.3 mTLS SAN principal",
+      "acceptance": "Weryfikacja faktycznych dowodów z dokumentu źródłowego.",
+      "negative": "Nie rozszerzać zakresu dowodu na niesprawdzone hosty.",
+      "dependencies": [],
+      "status": "HISTORICAL_LAB_SCOPE_LIMITED",
+      "source": "docs/STAGE039_ACTUAL_BOUNDARY_CLOSURE_2026-10-15.md",
+      "source_class": "HISTORICAL_EVIDENCE"
+    },
+    {
+      "id": "0.39.16",
+      "title": "Fencing przy partycji sieci",
+      "scope": "Fencing przy partycji sieci",
+      "acceptance": "Weryfikacja faktycznych dowodów z dokumentu źródłowego.",
+      "negative": "Nie rozszerzać zakresu dowodu na niesprawdzone hosty.",
+      "dependencies": [],
+      "status": "HISTORICAL_LAB_SCOPE_LIMITED",
+      "source": "docs/STAGE039_ACTUAL_BOUNDARY_CLOSURE_2026-10-15.md",
+      "source_class": "HISTORICAL_EVIDENCE"
+    },
+    {
+      "id": "0.39.17",
+      "title": "Integralność podpisanych dowodów",
+      "scope": "Integralność podpisanych dowodów",
+      "acceptance": "Weryfikacja faktycznych dowodów z dokumentu źródłowego.",
+      "negative": "Nie rozszerzać zakresu dowodu na niesprawdzone hosty.",
+      "dependencies": [],
+      "status": "HISTORICAL_LAB_SCOPE_LIMITED",
+      "source": "docs/STAGE039_ACTUAL_BOUNDARY_CLOSURE_2026-10-15.md",
+      "source_class": "HISTORICAL_EVIDENCE"
+    },
+    {
+      "id": "0.39.18",
+      "title": "Broker SO_PEERCRED z dwoma jailed VM",
+      "scope": "Broker SO_PEERCRED z dwoma jailed VM",
+      "acceptance": "Weryfikacja faktycznych dowodów z dokumentu źródłowego.",
+      "negative": "Nie rozszerzać zakresu dowodu na niesprawdzone hosty.",
+      "dependencies": [],
+      "status": "HISTORICAL_LAB_SCOPE_LIMITED",
+      "source": "docs/STAGE039_040_BROKER_KERNEL_PG_INDEPENDENCE_2026-10-15.md",
+      "source_class": "HISTORICAL_EVIDENCE"
+    },
+    {
+      "id": "0.39.19",
+      "title": "Podpisać/haszować obraz WASIp1 i digest host↔guest, umieścić **rzeczywisty interpreter WASI wewnątrz rootfs Firecracker**, serial output i sprawdzony exit code.",
+      "scope": "Podpisać/haszować obraz WASIp1 i digest host↔guest, umieścić **rzeczywisty interpreter WASI wewnątrz rootfs Firecracker**, serial output i sprawdzony exit code.",
+      "acceptance": "W prawdziwym `/dev/kvm`, kernel boot + wykonany wewnątrz gościa import WASI `fd_write` (nie sam host Wasmtime). Artefakt serial `WASI_EXEC:PASS` plus digest modułu i interpreter, test zmienionego modułu FAIL.",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.39.20",
+      "title": "Broker `SO_PEERCRED`/TLS identity→ledger `reserved`→inny `guest_rootfs` digest per tenant→Firecracker→WASI workload receipt→`commit/release`.",
+      "scope": "Broker `SO_PEERCRED`/TLS identity→ledger `reserved`→inny `guest_rootfs` digest per tenant→Firecracker→WASI workload receipt→`commit/release`.",
+      "acceptance": "Co najmniej dwa równoczesne jailed goście, **różne** WASI input/nonce, brak cross-tenant replay, wymuszone zatrzymanie A nie wpływa na B, brak lease continuation po awarii.",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.39.21",
+      "title": "Revocation, timeout, CPU/memory/time budget, OCI seccomp i real eBPF egress dla WASI.",
+      "scope": "Revocation, timeout, CPU/memory/time budget, OCI seccomp i real eBPF egress dla WASI.",
+      "acceptance": "CPU/timeout trap, out-of-memory, guest child process SIGKILL, seccomp denies, `tc` guest packet deny and recovery, audit receipts signed by host execution authority.",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.39.22",
+      "title": "Guest ABI eBPF readiness",
+      "scope": "Sprawdzić dostępność BTF, kprobe i syscall ABI w faktycznym jądrze guest",
+      "acceptance": "Niepusty guest BPF program ID potwierdzony przez Linux guest",
+      "negative": "Host TC/BPF nie liczy się jako kernel BPF gościa",
+      "dependencies": [
+        "0.39",
+        "1.42"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "runtime",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        3
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.39.23",
+      "title": "Podpisany guest probe manifest",
+      "scope": "Pakiet kernel/runtime/sonda WASI/guest rootfs ma oddzielne digest i signed provenance",
+      "acceptance": "Uruchomienie VM tylko po sprawdzeniu każdego hashu przed mountem",
+      "negative": "Zmiana bajtu sondy lub podmiana rootfs blokuje broker admission",
+      "dependencies": [
+        "0.39.22",
+        "1.43"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "security",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        3
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.39.24",
+      "title": "Guest BPF quarantine action",
+      "scope": "Rzeczywiste wstrzymanie wybranego guest PID przez autoryzowaną politykę i userspace agent",
+      "acceptance": "Odczyt guest exit code i brak wykonania innego tenantu",
+      "negative": "Entropia pojedynczej nazwy nie wystarcza do nieodwracalnego SIGKILL",
+      "dependencies": [
+        "0.39.23",
+        "1.44"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "security",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        3,
+        10,
+        11
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.39.25",
+      "title": "BPF joint failure drill",
+      "scope": "Host eBPF, guest eBPF i broker fail-closed w rzeczywistym Firecracker",
+      "acceptance": "Net partition i crash guest agent dają zweryfikowaną izolację",
+      "negative": "Brak guest sonda nie może być mylony z sukcesem host-probe",
+      "dependencies": [
+        "0.39.24",
+        "1.45"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "reliability",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        3
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.39.26",
+      "title": "WASI guest provenance",
+      "scope": "Bind live WASIp1 execution receipt to broker lease and kernel identity",
+      "acceptance": "Two real guest nonces show distinct Wasmtime child exit and hashes",
+      "negative": "Reject host side WASI pretending to be guest execution",
+      "dependencies": [
+        "0.39.20",
+        "1.94"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "runtime",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        5,
+        12,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.39.27",
+      "title": "In guest eBPF loading",
+      "scope": "Build and actually insert Aya syscall probe inside Firecracker kernel",
+      "acceptance": "Authenticated guest BPF program ID and openat events collected",
+      "negative": "Reject host Aya proof as guest program ID",
+      "dependencies": [
+        "1.80",
+        "1.81"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "runtime",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        5,
+        12,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.39.28",
+      "title": "Guest process quarantine",
+      "scope": "Enforce authorized PID isolation after corroborated syscall anomaly",
+      "acceptance": "Guest child is stopped while second tenant VM remains alive",
+      "negative": "Reject entropy only irreversible SIGKILL",
+      "dependencies": [
+        "1.82",
+        "1.84"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "runtime",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        5,
+        12,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.39.29",
+      "title": "VM trace propagation",
+      "scope": "Carry broker traceparent through Firecracker boot and guest receipt",
+      "acceptance": "Collector correlates two independent VM traces under correct tenant",
+      "negative": "Reject reused cross tenant serial receipt",
+      "dependencies": [
+        "1.61",
+        "1.83",
+        "0.39.26"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "runtime",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        5,
+        12,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.40.1",
+      "title": "Lokalne failover PG na trzech kernelach",
+      "scope": "Lokalne failover PG na trzech kernelach",
+      "acceptance": "Weryfikacja faktycznych dowodów z dokumentu źródłowego.",
+      "negative": "Nie rozszerzać zakresu dowodu na niesprawdzone hosty.",
+      "dependencies": [],
+      "status": "HISTORICAL_LAB_SCOPE_LIMITED",
+      "source": "docs/STAGE039_040_BROKER_KERNEL_PG_INDEPENDENCE_2026-10-15.md",
+      "source_class": "HISTORICAL_EVIDENCE"
+    },
+    {
+      "id": "0.40.2",
+      "title": "pgbench streaming WAL",
+      "scope": "pgbench streaming WAL",
+      "acceptance": "Weryfikacja faktycznych dowodów z dokumentu źródłowego.",
+      "negative": "Nie rozszerzać zakresu dowodu na niesprawdzone hosty.",
+      "dependencies": [],
+      "status": "HISTORICAL_LAB_SCOPE_LIMITED",
+      "source": "docs/STAGE040_041_REAL_POSTGRES_LABS_2026-10-15.md",
+      "source_class": "HISTORICAL_EVIDENCE"
+    },
+    {
+      "id": "0.40.3",
+      "title": "Dwukierunkowy TCP inter-host test PostgreSQL primary na oddzielnym kernelu; standby `primary_conninfo` z replikacją WAL.",
+      "scope": "Dwukierunkowy TCP inter-host test PostgreSQL primary na oddzielnym kernelu; standby `primary_conninfo` z replikacją WAL.",
+      "acceptance": "LSN WAL na fizycznie **dwóch oddzielnych kernels**: host A writes; B `pg_stat_wal_receiver.status=streaming`; B reads same checksum while A actually sends via network. GitHub artifact-mediated transfer **nie jest** TCP.",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.40.4",
+      "title": "Trzeci host replica i external quorum lease (PostgreSQL cannot be own fencing authority).",
+      "scope": "Trzeci host replica i external quorum lease (PostgreSQL cannot be own fencing authority).",
+      "acceptance": "3 odrębne kernels; stale primary blocked from effect-writes; split-brain/partition and restart fence, bounded RPO/RTO with witness.",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.40.5",
+      "title": "Recovery of promotion C after B failure, PG rewind/slot catch-up, WAL backpressure, synchronous mode.",
+      "scope": "Recovery of promotion C after B failure, PG rewind/slot catch-up, WAL backpressure, synchronous mode.",
+      "acceptance": "Lag/LSN under noisy neighbor and partition, no lost-ack synchronous commits, reject oldest WAL replay.",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.40.6",
+      "title": "PG TCP przez trzy netns, jeden kernel",
+      "scope": "PG TCP przez trzy netns, jeden kernel",
+      "acceptance": "Weryfikacja faktycznych dowodów z dokumentu źródłowego.",
+      "negative": "Nie rozszerzać zakresu dowodu na niesprawdzone hosty.",
+      "dependencies": [],
+      "status": "HISTORICAL_LAB_SCOPE_LIMITED",
+      "source": "docs/STAGE040_LIVE_TCP_NETNS_PARTITION_2026-10-15.md",
+      "source_class": "HISTORICAL_EVIDENCE"
+    },
+    {
+      "id": "0.40.7",
+      "title": "Transport health instrumentation",
+      "scope": "PostgreSQL HA telemetry pg_stat_wal_receiver i lag w każdej niezależnej VM",
+      "acceptance": "WAL LSN z dwóch faktycznie niezależnych kernels na live TCP",
+      "negative": "Wspólny kernel lub artifact handoff nie kwalifikuje się jako interhost",
+      "dependencies": [
+        "0.40.3",
+        "1.20"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "database",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        1,
+        3
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.40.8",
+      "title": "Quorum pre-promotion gate",
+      "scope": "Promocja PostgreSQL tylko przy ważnej dzierżawie z trzeciego świadka",
+      "acceptance": "Network partition zablokuje stale leader effect writes",
+      "negative": "Jednostronny dostęp A i B do quorum nie może dać dwóch primary",
+      "dependencies": [
+        "0.40.4",
+        "1.46"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "database",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        3
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.40.9",
+      "title": "Postgres fencing soak",
+      "scope": "Przy 8-32 klientach i obciętym linku wykonać 60 min wal stress",
+      "acceptance": "Porównanie committed tx-id i WAL ACK po failover",
+      "negative": "Powrót starego primary nigdy nie powoduje dual-writable",
+      "dependencies": [
+        "0.40.8",
+        "0.41.5"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "database",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        3,
+        11
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.40.10",
+      "title": "PQC secured database controls",
+      "scope": "Po ustanowieniu prawdziwych peer certów ograniczyć admin/replication privileges",
+      "acceptance": "Test TCP mTLS i opcjonalnej hybrydy PQC w niezależnych hostach",
+      "negative": "Nieakceptowany cert/UID oraz downgrade połączenia odrzucane",
+      "dependencies": [
+        "1.41",
+        "0.40.7"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "crypto",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        2,
+        11
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.40.11",
+      "title": "Live WAL vs artifact recovery distinction",
+      "scope": "Require direct two kernel TCP stream to count as distributed HA",
+      "acceptance": "Two separate Linux boot IDs continuously exchange actual PostgreSQL WAL",
+      "negative": "Reject artifact mediated cold restore counted as TCP streaming",
+      "dependencies": [
+        "0.40.3",
+        "1.94"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "database",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        5,
+        6
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.40.12",
+      "title": "Postgres quorum witness",
+      "scope": "Require third witness fencing token before standby promotion",
+      "acceptance": "Network partition and old primary return never yield two writable nodes",
+      "negative": "Reject expired epoch or dual primary overlap",
+      "dependencies": [
+        "0.40.8",
+        "0.40.11"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "database",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        5,
+        6
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.40.13",
+      "title": "Distributed escrow durability",
+      "scope": "Persist authorized billing and job reservations on fenced transactional HA store",
+      "acceptance": "Failover preserves committed ledger and refuses duplicate settlements",
+      "negative": "Reject stale leader ledger modifications",
+      "dependencies": [
+        "1.87",
+        "0.40.12"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "database",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        5,
+        6
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.40.14",
+      "title": "WAL failover trace continuity",
+      "scope": "Correlate LSN lag and timeline across old and new leader",
+      "acceptance": "Real promotion trace shows exact WAL catchup and reconnect",
+      "negative": "Reject partial trace claiming RPO zero",
+      "dependencies": [
+        "0.40.12",
+        "1.61"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "database",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        5,
+        6
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.41.2",
+      "title": "PG logic restore na innym kernelu",
+      "scope": "PG logic restore na innym kernelu",
+      "acceptance": "Weryfikacja faktycznych dowodów z dokumentu źródłowego.",
+      "negative": "Nie rozszerzać zakresu dowodu na niesprawdzone hosty.",
+      "dependencies": [],
+      "status": "HISTORICAL_LAB_SCOPE_LIMITED",
+      "source": "docs/STAGE041_CROSS_KERNEL_RESTORE_2026-10-15.md",
+      "source_class": "HISTORICAL_EVIDENCE"
+    },
+    {
+      "id": "0.41.3",
+      "title": "WAL PITR do LSN na jednym kernelu",
+      "scope": "WAL PITR do LSN na jednym kernelu",
+      "acceptance": "Weryfikacja faktycznych dowodów z dokumentu źródłowego.",
+      "negative": "Nie rozszerzać zakresu dowodu na niesprawdzone hosty.",
+      "dependencies": [],
+      "status": "HISTORICAL_LAB_SCOPE_LIMITED",
+      "source": "docs/STAGE041_REAL_WAL_PITR_2026-10-15.md",
+      "source_class": "HISTORICAL_EVIDENCE"
+    },
+    {
+      "id": "0.41.4",
+      "title": "Physical PITR na drugim kernelu",
+      "scope": "Physical PITR na drugim kernelu",
+      "acceptance": "Weryfikacja faktycznych dowodów z dokumentu źródłowego.",
+      "negative": "Nie rozszerzać zakresu dowodu na niesprawdzone hosty.",
+      "dependencies": [],
+      "status": "HISTORICAL_LAB_SCOPE_LIMITED",
+      "source": "docs/STAGE041_TWO_KERNEL_PHYSICAL_WAL_PITR_2026-10-15.md",
+      "source_class": "HISTORICAL_EVIDENCE"
+    },
+    {
+      "id": "0.41.5",
+      "title": "KVM and postgres 30/60/120 min soak including load ramp, WAL retention, clock skew and injected faults.",
+      "scope": "KVM and postgres 30/60/120 min soak including load ramp, WAL retention, clock skew and injected faults.",
+      "acceptance": "Crash-only evidence vs whole host fault distinguished; actual throughput p50/p95/p99, RSS, syscall errors, replay lag, post-fault audit.",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.41.6",
+      "title": "Immutable encrypted offsite backup, scheduled restore drill and bounded provenance.",
+      "scope": "Immutable encrypted offsite backup, scheduled restore drill and bounded provenance.",
+      "acceptance": "Real separate storage/keys; tamper ciphertext / revoked key / rollback deny; restore independent Linux kernel.",
+      "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.41.7",
+      "title": "SHM versus network soak",
+      "scope": "Mierzyć p50/p95/p99/rate/CPU dla Zenoh SHM i TCP przy obciążeniu",
+      "acceptance": "Surowe percentyle i job run ID na tej samej infrastrukturze",
+      "negative": "Twierdzenie PDF o 7–10 µs pozostaje hipotezą",
+      "dependencies": [
+        "1.15",
+        "1.20"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "reliability",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        1,
+        3
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.41.8",
+      "title": "Telemetry backpressure soak",
+      "scope": "OTel kolektor offline i workload running przez 60 min",
+      "acceptance": "Zmierzone dropped spans, queue depth, flush i CPU",
+      "negative": "Odkładanie nieograniczonej kolejki i OOM nie może przejść",
+      "dependencies": [
+        "1.20",
+        "1.21"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "observability",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        1,
+        3
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.41.9",
+      "title": "Quarantine false positive soak",
+      "scope": "Korpus openat/connect/sendto w gościu i host zdarzenia przez 60 min",
+      "acceptance": "Mierzony FPR/FNR, brak cross-tenant event i poprawny cancel",
+      "negative": "Progi z PDF nie są autonomicznym dowodem ransomware",
+      "dependencies": [
+        "1.44",
+        "1.45"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "security",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        3,
+        10,
+        11
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.41.10",
+      "title": "Budget and recovery chaos",
+      "scope": "Równoległe wyczerpanie token budget + host crash + PostgreSQL PITR",
+      "acceptance": "Wymuszone limity i spójne ledger logs po restore",
+      "negative": "Podwójne naliczenie i replay faktury nie przechodzą",
+      "dependencies": [
+        "1.47",
+        "1.54",
+        "0.41.4"
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "finops",
+      "pdf_file": "Dokument bez nazwy(2).PDF",
+      "pdf_pages": [
+        3,
+        11,
+        12
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/apex_tier0_extension.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.41.11",
+      "title": "Eight step method inventory",
+      "scope": "Document per step owner test threat model and source-page traceability",
+      "acceptance": "Automation detects missing step for all eight research phases",
+      "negative": "Reject synthetic empirical PDF benchmarks as CI evidence",
+      "dependencies": [
+        "1.55",
+        "1.94"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "reliability",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        5,
+        12,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.41.12",
+      "title": "Integrated 60 minute soak",
+      "scope": "Stress live broker VM PG WAL and swarms concurrently for at least 60min",
+      "acceptance": "Measured duration and p95 memory LSN exits and errors archived",
+      "negative": "Reject 30s smoke called one hour test",
+      "dependencies": [
+        "1.94",
+        "0.40.12"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "reliability",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        5,
+        12,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.41.13",
+      "title": "Memory and trace chaos",
+      "scope": "Fault inject CRDT divergence delayed trace export and Titans restore",
+      "acceptance": "No cross tenant leak unbounded queue or revoked snapshot recovery",
+      "negative": "Reject memory accuracy score as chaos validation",
+      "dependencies": [
+        "1.59",
+        "1.62",
+        "1.68"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "reliability",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        5,
+        12,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.41.14",
+      "title": "Settlement disaster reconciliation",
+      "scope": "Test escrow failover L402 expiry and delayed authorization responses",
+      "acceptance": "Post restore ledger matches genuine events without double charge",
+      "negative": "Reject fake settlement and spending after revoke",
+      "dependencies": [
+        "1.85",
+        "1.87",
+        "1.89"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "reliability",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        1,
+        2,
+        5,
+        12,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.42.1",
+      "title": "Cargo backwards compatibility",
+      "scope": "Stage Rust workspace crates without rewriting existing root runtime binary",
+      "acceptance": "All existing cargo tests and CLI entrypoints pass on main",
+      "negative": "Reject breaking API without migration and tests",
+      "dependencies": [
+        "1.90",
+        "1.91"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "architecture",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        5,
+        6,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.42.2",
+      "title": "Workspace licensing and SBOM",
+      "scope": "Record actual upstream license resolved hash and dependency vulnerabilities",
+      "acceptance": "Pinned SBOM cargo deny and audit cover all crates",
+      "negative": "Reject unlicensed code or unpinned binary",
+      "dependencies": [
+        "1.91",
+        "1.93"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "architecture",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        5,
+        6,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.42.3",
+      "title": "Release evidence scope matrix",
+      "scope": "Separate real host, guest, Loihi, LN and test lab proof per feature",
+      "acceptance": "Production gate demands real evidence IDs and scopes",
+      "negative": "Reject prototype PDF code counted as production PASS",
+      "dependencies": [
+        "1.94",
+        "0.41.11"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "architecture",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        5,
+        6,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    },
+    {
+      "id": "0.42.4",
+      "title": "Reproducible rollback",
+      "scope": "Sign manifests and test rollback of workspace update on fresh runner",
+      "acceptance": "Artifact SHA and prior version behavior recover after rollback",
+      "negative": "Reject revoked secrets or unsigned image restored",
+      "dependencies": [
+        "0.42.1",
+        "0.42.2",
+        "0.42.3"
+      ],
+      "status": "PLANNED",
+      "priority": "P0",
+      "owner": "architecture",
+      "pdf_file": "Dokument bez nazwy(3).PDF",
+      "pdf_pages": [
+        5,
+        6,
+        13
+      ],
+      "evidence": [],
+      "source": "docs/roadmap/sovereign_workspace_v9.json",
+      "source_class": "PDF_DRAFT"
+    }
+  ],
+  "reference_repositories": [
+    {
+      "name": "autogen",
+      "group": "P24-01",
+      "implementation_targets": "`OmniAutoGen-ActorBus`, `DampedBabyAgiPlanner`; 0.46, 0.50, 0.70, 0.71",
+      "test_scope": "Typowane wiadomości, limity liczby zadań/głębokości/fan-out/tokenów, idempotencja, przerwanie drzew zapętlonych, brak eskalacji uprawnień.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "AutoAgent",
+      "group": "P24-01",
+      "implementation_targets": "`OmniAutoGen-ActorBus`, `DampedBabyAgiPlanner`; 0.46, 0.50, 0.70, 0.71",
+      "test_scope": "Typowane wiadomości, limity liczby zadań/głębokości/fan-out/tokenów, idempotencja, przerwanie drzew zapętlonych, brak eskalacji uprawnień.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "babyagi",
+      "group": "P24-01",
+      "implementation_targets": "`OmniAutoGen-ActorBus`, `DampedBabyAgiPlanner`; 0.46, 0.50, 0.70, 0.71",
+      "test_scope": "Typowane wiadomości, limity liczby zadań/głębokości/fan-out/tokenów, idempotencja, przerwanie drzew zapętlonych, brak eskalacji uprawnień.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "bisheng",
+      "group": "P24-01",
+      "implementation_targets": "`OmniAutoGen-ActorBus`, `DampedBabyAgiPlanner`; 0.46, 0.50, 0.70, 0.71",
+      "test_scope": "Typowane wiadomości, limity liczby zadań/głębokości/fan-out/tokenów, idempotencja, przerwanie drzew zapętlonych, brak eskalacji uprawnień.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "Awesome-Serverless-Visual-Workflow-Orchestration",
+      "group": "P24-01",
+      "implementation_targets": "`OmniAutoGen-ActorBus`, `DampedBabyAgiPlanner`; 0.46, 0.50, 0.70, 0.71",
+      "test_scope": "Typowane wiadomości, limity liczby zadań/głębokości/fan-out/tokenów, idempotencja, przerwanie drzew zapętlonych, brak eskalacji uprawnień.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "bolt.diy",
+      "group": "P24-02",
+      "implementation_targets": "`OmniBolt-Workstation`, `OmniFreeApi-Rotator`; 0.50–0.55, 0.56, 0.69",
+      "test_scope": "Tree-sitter AST/CST diffs, CAS/optimistic locking, atomic rollback; twarde RPM/TPM i per-tenant billing caps, jawna zgoda przed fallbackiem na płatne L402.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "base44-platform-starter",
+      "group": "P24-02",
+      "implementation_targets": "`OmniBolt-Workstation`, `OmniFreeApi-Rotator`; 0.50–0.55, 0.56, 0.69",
+      "test_scope": "Tree-sitter AST/CST diffs, CAS/optimistic locking, atomic rollback; twarde RPM/TPM i per-tenant billing caps, jawna zgoda przed fallbackiem na płatne L402.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "awesome-free-llm-apis",
+      "group": "P24-02",
+      "implementation_targets": "`OmniBolt-Workstation`, `OmniFreeApi-Rotator`; 0.50–0.55, 0.56, 0.69",
+      "test_scope": "Tree-sitter AST/CST diffs, CAS/optimistic locking, atomic rollback; twarde RPM/TPM i per-tenant billing caps, jawna zgoda przed fallbackiem na płatne L402.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "book-to-skill",
+      "group": "P24-03",
+      "implementation_targets": "`OmniBookToSkill-Compiler`, `OmniAzureMcp-Bridge`; 0.43–0.44, 0.48, 0.62",
+      "test_scope": "Cytowana struktura źródeł, ekstrakcja CoALA z warunkami brzegowymi, kontrakt JSON Schema, podpisane rejestry capabilities, przeciwdziałanie prompt injection i podszywaniu się pod dostawcę.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "awesome-agent-skills",
+      "group": "P24-03",
+      "implementation_targets": "`OmniBookToSkill-Compiler`, `OmniAzureMcp-Bridge`; 0.43–0.44, 0.48, 0.62",
+      "test_scope": "Cytowana struktura źródeł, ekstrakcja CoALA z warunkami brzegowymi, kontrakt JSON Schema, podpisane rejestry capabilities, przeciwdziałanie prompt injection i podszywaniu się pod dostawcę.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "awesome-mcp-servers",
+      "group": "P24-03",
+      "implementation_targets": "`OmniBookToSkill-Compiler`, `OmniAzureMcp-Bridge`; 0.43–0.44, 0.48, 0.62",
+      "test_scope": "Cytowana struktura źródeł, ekstrakcja CoALA z warunkami brzegowymi, kontrakt JSON Schema, podpisane rejestry capabilities, przeciwdziałanie prompt injection i podszywaniu się pod dostawcę.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "Azure-mcp",
+      "group": "P24-03",
+      "implementation_targets": "`OmniBookToSkill-Compiler`, `OmniAzureMcp-Bridge`; 0.43–0.44, 0.48, 0.62",
+      "test_scope": "Cytowana struktura źródeł, ekstrakcja CoALA z warunkami brzegowymi, kontrakt JSON Schema, podpisane rejestry capabilities, przeciwdziałanie prompt injection i podszywaniu się pod dostawcę.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "awesome-selfhosted",
+      "group": "P24-03",
+      "implementation_targets": "`OmniBookToSkill-Compiler`, `OmniAzureMcp-Bridge`; 0.43–0.44, 0.48, 0.62",
+      "test_scope": "Cytowana struktura źródeł, ekstrakcja CoALA z warunkami brzegowymi, kontrakt JSON Schema, podpisane rejestry capabilities, przeciwdziałanie prompt injection i podszywaniu się pod dostawcę.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "AWD-Predator-Framework",
+      "group": "P24-04",
+      "implementation_targets": "`OmniPredator-AwdDefenseGrid`, `OmniSec`; 0.39.7, 0.47, 0.63, 0.70",
+      "test_scope": "Telemetria Aya/eBPF tylko przy rzeczywistym kernel attach; scope/consent przed jakąkolwiek diagnostyką; signed policy, canary virtual-patch, rollback; brak nieautoryzowanego skanowania.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "autopentest-ai",
+      "group": "P24-04",
+      "implementation_targets": "`OmniPredator-AwdDefenseGrid`, `OmniSec`; 0.39.7, 0.47, 0.63, 0.70",
+      "test_scope": "Telemetria Aya/eBPF tylko przy rzeczywistym kernel attach; scope/consent przed jakąkolwiek diagnostyką; signed policy, canary virtual-patch, rollback; brak nieautoryzowanego skanowania.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "BlackOps-Armarda",
+      "group": "P24-04",
+      "implementation_targets": "`OmniPredator-AwdDefenseGrid`, `OmniSec`; 0.39.7, 0.47, 0.63, 0.70",
+      "test_scope": "Telemetria Aya/eBPF tylko przy rzeczywistym kernel attach; scope/consent przed jakąkolwiek diagnostyką; signed policy, canary virtual-patch, rollback; brak nieautoryzowanego skanowania.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "Awesome-AI-Hacking-Agents",
+      "group": "P24-04",
+      "implementation_targets": "`OmniPredator-AwdDefenseGrid`, `OmniSec`; 0.39.7, 0.47, 0.63, 0.70",
+      "test_scope": "Telemetria Aya/eBPF tylko przy rzeczywistym kernel attach; scope/consent przed jakąkolwiek diagnostyką; signed policy, canary virtual-patch, rollback; brak nieautoryzowanego skanowania.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "Awesome-Hacking",
+      "group": "P24-04",
+      "implementation_targets": "`OmniPredator-AwdDefenseGrid`, `OmniSec`; 0.39.7, 0.47, 0.63, 0.70",
+      "test_scope": "Telemetria Aya/eBPF tylko przy rzeczywistym kernel attach; scope/consent przed jakąkolwiek diagnostyką; signed policy, canary virtual-patch, rollback; brak nieautoryzowanego skanowania.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "awesome-phone-call-agents",
+      "group": "P24-05",
+      "implementation_targets": "`OmniVoip-RtpEngine`, `OmniSeedance-Director`, `OmniQuantum-Qasm`; 0.61, 0.75, 0.76",
+      "test_scope": "RTP jitter/packet loss benchmarks, consent + PII, media rights, finite camera graphs, OpenQASM 3 parser w odrzucaniem błędnych indeksów i niezaufanych bramek.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "awesome-voip",
+      "group": "P24-05",
+      "implementation_targets": "`OmniVoip-RtpEngine`, `OmniSeedance-Director`, `OmniQuantum-Qasm`; 0.61, 0.75, 0.76",
+      "test_scope": "RTP jitter/packet loss benchmarks, consent + PII, media rights, finite camera graphs, OpenQASM 3 parser w odrzucaniem błędnych indeksów i niezaufanych bramek.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "Awesome-LLMs-meet-Multimodal-Generation",
+      "group": "P24-05",
+      "implementation_targets": "`OmniVoip-RtpEngine`, `OmniSeedance-Director`, `OmniQuantum-Qasm`; 0.61, 0.75, 0.76",
+      "test_scope": "RTP jitter/packet loss benchmarks, consent + PII, media rights, finite camera graphs, OpenQASM 3 parser w odrzucaniem błędnych indeksów i niezaufanych bramek.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "awesome-seedance-prompts",
+      "group": "P24-05",
+      "implementation_targets": "`OmniVoip-RtpEngine`, `OmniSeedance-Director`, `OmniQuantum-Qasm`; 0.61, 0.75, 0.76",
+      "test_scope": "RTP jitter/packet loss benchmarks, consent + PII, media rights, finite camera graphs, OpenQASM 3 parser w odrzucaniem błędnych indeksów i niezaufanych bramek.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "Awesome-Quantum-Computing-Platform",
+      "group": "P24-05",
+      "implementation_targets": "`OmniVoip-RtpEngine`, `OmniSeedance-Director`, `OmniQuantum-Qasm`; 0.61, 0.75, 0.76",
+      "test_scope": "RTP jitter/packet loss benchmarks, consent + PII, media rights, finite camera graphs, OpenQASM 3 parser w odrzucaniem błędnych indeksów i niezaufanych bramek.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "brave-browser",
+      "group": "P24-06",
+      "implementation_targets": "`OmniBrave-ContextShield`; 0.48, 0.60, 0.83",
+      "test_scope": "Parser HTML DOM, canonicalizacja URL, polityka redirect/SSRF i zasobów 3rd party, oddzielenie treści WWW od instrukcji narzędzi, payloady obfuskowane i fallback bez wstrzyknięcia.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "aider",
+      "group": "P09-01",
+      "implementation_targets": "`OmniAider-RepoMap`, `OmniArchGen-Contract`; 0.50, 0.55–0.56",
+      "test_scope": "PageRank symboli z normalizacją/obsługą dangling nodes, atomowe patche i CAS, cykle DAG, blokada zabronionych krawędzi między View/Core/Data/Infrastructure, deterministyczne snapshoty.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "ArchGen",
+      "group": "P09-01",
+      "implementation_targets": "`OmniAider-RepoMap`, `OmniArchGen-Contract`; 0.50, 0.55–0.56",
+      "test_scope": "PageRank symboli z normalizacją/obsługą dangling nodes, atomowe patche i CAS, cykle DAG, blokada zabronionych krawędzi między View/Core/Data/Infrastructure, deterministyczne snapshoty.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "artemis",
+      "group": "P09-02",
+      "implementation_targets": "`OmniArtemis-AuditMCP`; 0.43, 0.63",
+      "test_scope": "Wyłącznie autoryzowane domeny/CIDR, kontrola DNS rebinding i redirectów przed połączeniem, ograniczone rate/timeouts, pasywne kontrole TLS/CSP/HSTS/CORS/DMARC; brak surowego shell/command injection.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "AI_Offensive_MCP_Using_KaliLinux",
+      "group": "P09-02",
+      "implementation_targets": "`OmniArtemis-AuditMCP`; 0.43, 0.63",
+      "test_scope": "Wyłącznie autoryzowane domeny/CIDR, kontrola DNS rebinding i redirectów przed połączeniem, ograniczone rate/timeouts, pasywne kontrole TLS/CSP/HSTS/CORS/DMARC; brak surowego shell/command injection.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "AllHackingTools",
+      "group": "P09-02",
+      "implementation_targets": "`OmniArtemis-AuditMCP`; 0.43, 0.63",
+      "test_scope": "Wyłącznie autoryzowane domeny/CIDR, kontrola DNS rebinding i redirectów przed połączeniem, ograniczone rate/timeouts, pasywne kontrole TLS/CSP/HSTS/CORS/DMARC; brak surowego shell/command injection.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "appsmith",
+      "group": "P09-03",
+      "implementation_targets": "`OmniAppStudio-Engine`; 0.50–0.55, 0.58",
+      "test_scope": "Typed widget bindings, Zenoh topic ACL, non-authoritative CRDT merge, offline Android Compose, explicit sync policy i E2E permissions.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "Android-AI-Studio",
+      "group": "P09-03",
+      "implementation_targets": "`OmniAppStudio-Engine`; 0.50–0.55, 0.58",
+      "test_scope": "Typed widget bindings, Zenoh topic ACL, non-authoritative CRDT merge, offline Android Compose, explicit sync policy i E2E permissions.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "AI-Rental-Hunter",
+      "group": "P09-04",
+      "implementation_targets": "`OmniVertical-Matcher`; 0.67, 0.69, 0.71",
+      "test_scope": "Deduplikacja i fair housing/privacy, odporna mediana/MAD anomalii z wyjątkiem zero-variance, ATS-only claims ze zweryfikowanymi referencjami do faktów, brak fikcyjnych doświadczeń.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    },
+    {
+      "name": "AI-Resume-Optimizer",
+      "group": "P09-04",
+      "implementation_targets": "`OmniVertical-Matcher`; 0.67, 0.69, 0.71",
+      "test_scope": "Deduplikacja i fair housing/privacy, odporna mediana/MAD anomalii z wyjątkiem zero-variance, ATS-only claims ze zweryfikowanymi referencjami do faktów, brak fikcyjnych doświadczeń.",
+      "source": "docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md"
+    }
+  ],
+  "notes": "Early stage numbering 0.00–0.35 is not inherently proof that a documented stage contract exists. Historical headings verified only when present; all unknowns explicit; original sources retained. Restored ten ORIGINAL Agents Builder Code and NoCode platform products at 0.50–0.55; unmatched genuinely new features must append from 1.95. Source-range 0.00–0.10 remains unknown.",
+  "previous_version": "v10-restored-full",
+  "canonical_roadmap": "ROADMAP.md",
+  "docs_mirror": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
+  "original_agents_builder_matrix": "docs/roadmap/agents_builder_products_v11.json",
+  "lost_requirements_inventory": "docs/roadmap/missing_capabilities_v11.json",
+  "stage_update_log": "docs/roadmap/STAGE_CHANGELOG.md",
+  "next_new_main_stage": "1.95"
+}

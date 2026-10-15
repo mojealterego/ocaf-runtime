@@ -1,3 +1,6 @@
+> **📌 [PEŁNA ROADMAPA OCAF OD SAMEGO POCZĄTKU — ROADMAP.md](ROADMAP.md)** · [Etapy 0.00–1.94 i statusy wykonania](ROADMAP.md#statystyka-wykonania-i-uczciwe-oznaczenia) · [10 pierwotnych Agents Builder Code / NoCode](docs/AGENTS_BUILDER_CODE_NOCODE_5_PLATFORMS.md) · [inwentaryzacja braków](docs/INVENTORY_LOST_REQUIREMENTS_2026-10-15.md) · [dziennik zmian po każdym etapie](docs/roadmap/STAGE_CHANGELOG.md)  
+> **Jedyna kanoniczna Roadmapa v11 jest przypięta na samym początku README oraz w katalogu głównym.** 195 etapów, 64 podetapy; nowo odkryte elementy dopisywane tylko kolejnymi numerami, stare wymagania przywracane pod pierwotnymi etapami. 
+
 # OCAF Runtime — Rust / Tokio / Zenoh
 
 > **ROADMAPA KANONICZNA v10 — OD POCZĄTKU PROJEKTU**  
