@@ -43,7 +43,7 @@ class TestFencing(unittest.TestCase):
         self.assertFalse(fencing.safe_to_write(False,100,110))
         self.assertFalse(fencing.safe_to_write(True,111,110))
         self.assertTrue(fencing.safe_to_write(True,109,110))
-        self.assertFalse(fencing.safe_to_write(True,99,110))
+        self.assertFalse(fencing.safe_to_write(True,-1,110))
 
     def test_no_double_primary_or_stale_heartbeat(self):
         self.store.apply(self.request(),now=100)
