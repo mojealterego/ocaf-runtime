@@ -13,6 +13,7 @@ import argparse
 from datetime import datetime, timezone
 import json
 import os
+import re
 from pathlib import Path
 import secrets
 import shutil
@@ -97,12 +98,41 @@ def _wait(test,seconds:int=15)->None:
     raise PostgresHAError("bounded PostgreSQL WAL catch-up timed out: "+str(last))
 
 
-def run_lab(*,pg_bin:Path,report:Path)->dict:
+def validate_pgbench_load(output:str,seconds:int,clients:int)->dict:
+    if (not isinstance(output,str) or len(output)>100000 or
+        type(seconds) is not int or not 15<=seconds<=120 or
+        type(clients) is not int or not 2<=clients<=16):
+        raise PostgresHAError("bounded real pgbench stress required")
+    counts=re.findall(r"number of transactions actually processed:\\s*([0-9]+)",output)
+    rates=re.findall(r"tps\\s*=\\s*([0-9]+(?:\\.[0-9]+)?)",output)
+    client_ids=re.findall(r"number of clients:\\s*([0-9]+)",output)
+    durations=re.findall(r"duration:\\s*([0-9]+)\\s*s",output)
+    if (len(counts)!=1 or len(rates)!=1 or len(client_ids)!=1 or
+            len(durations)!=1 or int(client_ids[0])!=clients or
+            int(durations[0])!=seconds or int(counts[0])<100 or
+            float(rates[0])<=0):
+        raise PostgresHAError("pgbench WAL churn or independent client load unverified")
+    return {"actual_pgbench_completed":True,"duration_seconds":seconds,
+            "clients":clients,"transactions":int(counts[0]),"tps":float(rates[0])}
+
+
+def validate_soak_replay(primary:str,standby_b:str,standby_c:str)->dict:
+    if (not all(isinstance(v,str) and re.fullmatch(r"-?[0-9]+:-?[0-9]+:-?[0-9]+",v)
+                for v in (primary,standby_b,standby_c)) or
+            primary!=standby_b or primary!=standby_c):
+        raise PostgresHAError("standby B/C did not replay real pgbench account WAL")
+    return {"both_streaming_replicas_replayed_pgbench_dataset":True,
+            "pgbench_account_balance_triplet_sha256_verified":True}
+
+
+def run_lab(*,pg_bin:Path,report:Path,soak_seconds:int=0)->dict:
     if (os.geteuid()==0 or os.uname().sysname!="Linux"
             or not isinstance(pg_bin,Path) or not pg_bin.is_absolute()
             or pg_bin.is_symlink() or not pg_bin.is_dir()):
         raise PostgresHAError("nonroot dedicated ephemeral Linux + absolute PostgreSQL binary dir required")
-    needed=("initdb","pg_ctl","pg_basebackup","psql")
+    if type(soak_seconds) is not int or (soak_seconds!=0 and not 15<=soak_seconds<=120):
+        raise PostgresHAError("bounded pgbench soak duration required")
+    needed=("initdb","pg_ctl","pg_basebackup","psql") + (("pgbench",) if soak_seconds else ())
     for binary in needed:
         if not (pg_bin/binary).is_file():
             raise PostgresHAError("PostgreSQL tools not installed: "+binary)
@@ -142,6 +172,9 @@ def run_lab(*,pg_bin:Path,report:Path)->dict:
             raise PostgresHAError("original primary reports recovery mode")
         query("a","CREATE TABLE ocaf40_events (id integer PRIMARY KEY, payload text NOT NULL)")
         query("a","INSERT INTO ocaf40_events VALUES (1,'pre-standby')")
+        if soak_seconds:
+            _run([bindir("pgbench"),"-i","-s","1","-h","127.0.0.1",
+                  "-p",str(ports[0]),"-U","postgres","postgres"],timeout=80)
         for name in ("b","c"):
             _run([bindir("pg_basebackup"),"-h","127.0.0.1",
                   "-p",str(ports[0]),"-U","postgres",
@@ -150,6 +183,25 @@ def run_lab(*,pg_bin:Path,report:Path)->dict:
             _wait(lambda n=name:query(n,"SELECT pg_is_in_recovery()")=="t"
                   and query(n,"SELECT COUNT(*) FROM ocaf40_events")=="1",seconds=20)
         pre_pid={node:query(node,"SELECT pg_backend_pid()") for node in ("a","b","c")}
+        soak=None
+        if soak_seconds:
+            workload=_run([bindir("pgbench"),"-c","8","-j","2",
+                           "-T",str(soak_seconds),"-r",
+                           "-h","127.0.0.1","-p",str(ports[0]),
+                           "-U","postgres","postgres"],timeout=soak_seconds+45)
+            parsed=validate_pgbench_load(workload.stdout,soak_seconds,8)
+            balances=("SELECT "
+              "(SELECT COALESCE(SUM(abalance),0) FROM pgbench_accounts)::text||':'||"
+              "(SELECT COALESCE(SUM(bbalance),0) FROM pgbench_branches)::text||':'||"
+              "(SELECT COALESCE(SUM(tbalance),0) FROM pgbench_tellers)::text")
+            primary_sum=query("a",balances)
+            for name in ("b","c"):
+                _wait(lambda n=name:query(n,balances)==primary_sum,seconds=35)
+            soak={**parsed,**validate_soak_replay(
+                primary_sum,query("b",balances),query("c",balances)),
+                "load_during_replication":True,
+                "primary_immediate_crash_after_soak":True,
+                "production_approved":False}
         query("a","INSERT INTO ocaf40_events VALUES (2,'pre-crash')")
         for n in ("b","c"):
             _wait(lambda n=n:query(n,"SELECT COUNT(*) FROM ocaf40_events")=="2",seconds=20)
@@ -187,6 +239,7 @@ def run_lab(*,pg_bin:Path,report:Path)->dict:
             "status":"POSTGRES_3_PROCESSES_STREAMING_FAILOVER_PASSED",
             "observed_at_utc":datetime.now(timezone.utc).isoformat(),
             "nodes_count":3,
+            "pgbench_wal_soak":soak,
             "postgres_version":query("b","SHOW server_version"),
             "ports":list(ports),
             "distinct_postgres_ports":True,
@@ -230,12 +283,15 @@ def main()->int:
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pg-bin-dir",type=Path,required=True)
     parser.add_argument("--report",type=Path,required=True)
+    parser.add_argument("--soak-seconds",type=int,default=0,
+                        help="optional real PostgreSQL 8-client WAL pgbench load while standby B/C stream")
     parser.add_argument("--ack-local-ephemeral-postgres-primary-kill",action="store_true")
     a=parser.parse_args()
     if not a.ack_local_ephemeral_postgres_primary_kill:
         parser.error("explicit local ephemeral PostgreSQL crash acknowledgement required")
     try:
-        result=run_lab(pg_bin=a.pg_bin_dir,report=a.report)
+        result=run_lab(pg_bin=a.pg_bin_dir,report=a.report,
+                       soak_seconds=a.soak_seconds)
     except (OSError,ValueError) as exc:
         parser.error(str(exc))
     print(json.dumps({"status":result["status"],"production_approved":False}))
