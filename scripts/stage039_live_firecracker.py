@@ -24,6 +24,7 @@ import time
 import stage039_firecracker_spec as spec
 import stage039_kvm_ioctl as kvm
 import stage039_vm_egress as vm_egress
+import stage039_vm_resources as vm_resources
 import stage039_microvm_gate as gate
 
 VALID_VM = re.compile(r"[a-z0-9][a-z0-9-]{0,63}\Z")
@@ -296,6 +297,10 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
     try:
         cgroup.mkdir(mode=0o700)
         created = True
+        # Host-side CPU/RSS/task bounds are kernel cgroup-v2 limits,
+        # independent of Firecracker's guest-memory configuration.
+        guest_mem_mib = parsed["isolation"]["mem_mib"]
+        resource_plan = vm_resources.apply_resource_limits(cgroup, guest_mem_mib)
         _secure_staging_directories(root)
         # The jailer itself creates its chroot at this conventional location;
         # pre-staging is supported by Firecracker's jailer documentation.
@@ -358,6 +363,10 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
                             loader=aya_loader, loader_sha=aya_loader_sha,
                             program=aya_program, program_sha=aya_program_sha,
                             seconds=aya_seconds))
+                # Read real cgroup counters while Firecracker is alive,
+                # including any effects accumulated by the Aya host probe.
+                result["vm_resource_limits"] = vm_resources.audit_running_resource_limits(
+                    cgroup, guest_mem_mib, resource_plan["vm_cgroup_inode"])
                 return result
             except LiveFirecrackerError as exc:
                 last_rejection = str(exc)
