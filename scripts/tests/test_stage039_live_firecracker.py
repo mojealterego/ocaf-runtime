@@ -84,5 +84,20 @@ class LiveContract(unittest.TestCase):
             self.assertEqual(stat.S_IMODE(dest.stat().st_mode),0o444)
 
 
+    def test_staging_parent_modes_fail_closed_under_permissive_umask(self):
+        import os,stat,tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)/"firecracker"/"vm-id"/"root"
+            before=os.umask(0o002)
+            try:
+                live._secure_staging_directories(root)
+            finally:
+                os.umask(before)
+            self.assertEqual(stat.S_IMODE(root.parent.parent.stat().st_mode),0o700)
+            self.assertEqual(stat.S_IMODE(root.parent.stat().st_mode),0o700)
+            self.assertEqual(stat.S_IMODE(root.stat().st_mode),0o755)
+            self.assertEqual(stat.S_IMODE((root/"guest").stat().st_mode),0o755)
+
+
 if __name__ == "__main__":
     unittest.main()
