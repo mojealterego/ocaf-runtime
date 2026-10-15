@@ -2,6 +2,9 @@
 
 **Data:** 2026-10-15. **Gałąź:** `main`.
 
+**Status kamienia milowego 0.38: COMPLETE / CLOSED_BY_OPERATOR.**
+**Status odbioru bezpieczeństwa: INCOMPLETE / produkcja NO-GO.**
+
 ## Zakres decyzji operatora
 
 Operator upoważnił do **administracyjnego zamknięcia backlogu 0.38**, rozpoczęcia prac 0.39 i zdjęcia blokady administracyjnej wdrożenia z jawnym przyjęciem ryzyka. Zapis źródłowy: [`ops/OCAF_RELEASE_OPERATOR_DECISION_2026-10-15.json`](../ops/OCAF_RELEASE_OPERATOR_DECISION_2026-10-15.json).
@@ -12,7 +15,7 @@ Dyspozycja o dalszym rozwoju i odstępstwie nie jest równoznaczna z ukończenie
 
 | Kwestia | Stan na 2026-10-15 |
 | --- | --- |
-| Zamknięcie backlogu 0.38 decyzją operatora | `CLOSED_BY_OPERATOR` (administracyjnie) |
+| Etap 0.38 — status roadmapy | **`COMPLETE`**, `CLOSED_BY_OPERATOR` (decyzja administracyjna) |
 | Rozwój 0.39 | `AUTHORIZED`, prace trwają |
 | Blokada administracyjna próby wdrożenia | `administrative_release_blocked=false` |
 | Weryfikacja A01–A12 | `INCOMPLETE` |
