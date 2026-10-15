@@ -345,3 +345,28 @@ Próby: A/B dostępne przed attach, A zablokowane, B nadal dostępne,
 A odzyskane po detach — **PASS**. Wszystkie raporty ograniczają
 zakres do tego tymczasowego hosta; runtime Firecracker guest
 i długotrwały host nadal wymagają osobnych potwierdzeń.
+
+
+## 2026-10-15 — równoczesny Firecracker guest boot i Aya w jego host-cgroup
+
+[CI 38711385989](https://github.com/mojealterego/ocaf-runtime/actions/runs/38711385989)
+wykonało prawdziwy boot jailer/Firecracker v1.17 na KVM, następnie
+podczas pracy VM umieściło hostowy próbnik A w **tym samym cgroup**
+co Firecracker. Aya deny-all `cgroup_skb/egress` odcięło połączenie
+próbnika A z lokalnym TCP, nie zakłóciło B i po detach A odzyskał TCP.
+Wszystko zostało wykonane na jednym efemerycznym runnerze Ubuntu 24.04.
+[Pełny rejestr dowodowy](STAGE039_COMBINED_VM_CGROUP_EGRESS_PROOF_2026-10-15.md).
+
+Nowy moduł `scripts/stage039_vm_egress.py` wymusza identyfikację
+`ocaf-stage039-vm-<16hex>.service`, żywy proces Firecracker,
+monotoniczne sprawdzenie inode cgroup, weryfikację SHA-256 loadera/ELF,
+ujemny test A, brak zakłócenia B, odpięcie Aya i odzyskanie łączności.
+Odrębne testy `test_stage039_vm_egress.py` pilnują zakresu i odmów.
+Interfejs CLI wymaga osobnego
+`--ack-privileged-vm-cgroup-egress-probe` i kompletu pinów.
+
+**Uwaga bezpieczeństwa:** skrypt nie mierzy pakietów emitowanych
+wewnątrz guest VM, która ma domyślnie wyłączony interfejs sieciowy.
+Dowodzi egzekucji polityki względem hostowego cgroup maszyny wirtualnej,
+nie końcowej izolacji ruchu gościa, tenantów, długotrwałego staging
+ani produkcji.

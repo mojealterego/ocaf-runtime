@@ -737,3 +737,22 @@ Próby: A/B dostępne przed attach, A zablokowane, B nadal dostępne,
 A odzyskane po detach — **PASS**. Wszystkie raporty ograniczają
 zakres do tego tymczasowego hosta; runtime Firecracker guest
 i długotrwały host nadal wymagają osobnych potwierdzeń.
+
+
+## Postęp 0.39 — jednoczesny boot Firecracker/KVM i negatywny test Aya (2026-10-15)
+
+Działający `jailer` + VM na realnym KVM i kernelowy `CgroupSkb::attach`
+zostały połączone w pojedynczej próbie na tym samym efemerycznym
+hoście. VM host cgroup A: połączenie TCP hostowego próbnika zablokowane
+po attach, peer B nadal działa; A odzyskuje po detach; zweryfikowano
+tożsamość cgroup, inode, proces VM, podpisane/digest-pinned artefakty
+oraz flagi `production_approved=false`.
+[CI 38711385989](https://github.com/mojealterego/ocaf-runtime/actions/runs/38711385989),
+[raport](STAGE039_COMBINED_VM_CGROUP_EGRESS_PROOF_2026-10-15.md).
+**To nie jest test sieci gościa** (VM ma `network-interfaces=[]`),
+a brak zewnętrznego dwu-hostowego i niezależnego odbioru nadal blokuje GO.
+
+**Status roadmapy: 0.38 COMPLETE / CLOSED_BY_OPERATOR, 0.39 IN PROGRESS.**
+Kryteria bezpieczeństwa 0.38 A01–A12 wciąż `INCOMPLETE`,
+produkcja `NO-GO`. Zapisy starsze niż ta sekcja odnoszą się
+do historycznych commitów i ich ograniczonych wyników.

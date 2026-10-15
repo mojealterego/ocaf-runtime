@@ -961,3 +961,21 @@ Szczegółowy [raport dowodowy](docs/STAGE039_REAL_FIRECRACKER_BOOT_PROOF_2026-1
 oddziela boot/cgroup od rzeczywistego Aya attach i końcowego
 testu izolacji agentów. **0.39 W TOKU / produkcja NO-GO**; 0.38
 administracyjnie zamknięty, techniczny odbiór niekompletny.
+
+
+### 0.39 — jednoczesna próba Firecracker + Aya w cgroup uruchomionej VM (2026-10-15)
+
+**PASS (GitHub-hosted Ubuntu 24.04):** w trakcie rzeczywistego działania
+gościa Linux w jailed Firecracker/KVM podpięto Aya `cgroup_skb/egress`
+do **dokładnie tej samej hostowej grupy cgroup, co proces VM**.
+Hostowy próbnik A w tym cgroup traci TCP do `127.0.0.1` po attach,
+niezależny cgroup B zachowuje połączenie, A odzyskuje po detach;
+VM działa w czasie próby. [Wynik CI 38711385989](https://github.com/mojealterego/ocaf-runtime/actions/runs/38711385989),
+[raport i integralność](docs/STAGE039_COMBINED_VM_CGROUP_EGRESS_PROOF_2026-10-15.md).
+
+**Granica dowodu:** połączenia inicjuje proces **hostowy** dołączony
+do cgroup Firecracker, nie kod gościa. Obraz VM jest bez sieci,
+dlatego nie testowano pakietów emitowanych z maszyny wirtualnej.
+Nie jest to produkcyjny GO ani audyt dwóch niezależnych hostów.
+Etap 0.38 ma status roadmapy **COMPLETE (decyzja operatora)**,
+odbiór bezpieczeństwa A01–A12 pozostaje **INCOMPLETE**.
