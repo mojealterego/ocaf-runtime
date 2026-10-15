@@ -1,0 +1,49 @@
+name: OCAF 0.39 CircleCI KVM host provisioner config validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .circleci/config.yml
+      - .github/workflows/stage039-circleci-host-config-check.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  config-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install isolated PyYAML for CircleCI config syntax
+        run: |
+          python3 -m venv /tmp/ocaf039-yaml-validator
+          /tmp/ocaf039-yaml-validator/bin/pip install --quiet --disable-pip-version-check PyYAML==6.0.3
+      - name: Validate machine image, KVM ioctl proof and credit-safe manual trigger
+        run: |
+          /tmp/ocaf039-yaml-validator/bin/python - <<'PY'
+          from pathlib import Path
+          import yaml
+          root=yaml.safe_load(Path(".circleci/config.yml").read_text())
+          assert root["version"]==2.1
+          stage=root["parameters"]["run_stage039_kvm"]
+          assert stage=={"type":"boolean","default":False}
+          job=root["jobs"]["stage039-hardware-nested-kvm"]
+          assert job["machine"]["image"]=="android:current"
+          assert job["resource_class"]=="medium.gen2"
+          steps=job["steps"]
+          scripts="\n".join(x["run"]["command"] for x in steps if isinstance(x,dict) and "run" in x)
+          for required in ("stage039_kvm_ioctl.py","stage039_live_egress.py",
+                           "KVM_IOCTL_VM_CREATED_NOT_BOOTED","KERNEL_EBPF_EGRESS_ISOLATION_PASSED",
+                           "sha256sum -c -"):
+              assert required in scripts, required
+          assert root["workflows"]["stage039_nested_hardware_operator_request"]["jobs"]==[
+              "stage039-hardware-nested-kvm"]
+          assert not any("token" in str(k).lower() for k in job.get("environment",{}))
+          print("STAGE039_CIRCLECI_KVM_PROVISIONER_CONFIG_VALIDATED")
+          print("NO_ACTUAL_HOST_CREATED_BY_THIS_VALIDATOR")
+          PY
