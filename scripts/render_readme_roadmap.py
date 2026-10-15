@@ -78,8 +78,10 @@ def render_pinned_panel(builders:dict)->list[str]:
     """
     if not isinstance(builders,dict) or not isinstance(builders.get("products"),list):
         raise ReadmeRoadmapError("missing canonical Agents Builder product manifest")
+    if len(builders["products"])!=10 or not all(
+            isinstance(p,dict) for p in builders["products"]):
+        raise ReadmeRoadmapError("exactly ten canonical Builder products required")
     pairs={(p.get("platform"),p.get("mode")):p for p in builders["products"]}
-           if len(builders["products"])==10 and all(isinstance(p,dict) for p in builders["products"]) else {}
     platforms=(("Cloud","Chmurowy"),("Windows","Desktopowy Windows"),
                ("macOS","Desktopowy macOS"),("Android","Android"),("iOS","iOS"))
     if len(pairs)!=10 or any((platform,mode) not in pairs
