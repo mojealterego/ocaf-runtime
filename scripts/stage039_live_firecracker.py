@@ -132,6 +132,26 @@ def _private_base(path: Path) -> None:
         raise LiveFirecrackerError("operator jailer base must be root-owned and 0700")
 
 
+
+def _secure_staging_directories(root: Path) -> None:
+    """Prevent the runner's umask from making the chroot mutable or unreadable.
+
+    A 0002 umask makes intermediate mkdir(parents=True) directories 0775,
+    which breaks fail-closed stage039_firecracker_spec.build(); a 0077 umask
+    can make guest assets invisible to Firecracker's dropped UID.
+    """
+    if not root.is_absolute() or ".." in root.parts:
+        raise LiveFirecrackerError("untrusted jailer staging path")
+    guest = root / "guest"
+    guest.mkdir(parents=True, mode=0o755)
+    for directory, mode in ((root.parent.parent, 0o700),
+                            (root.parent, 0o700), (root, 0o755),
+                            (guest, 0o755)):
+        if directory.is_symlink() or directory.stat().st_uid not in {0, os.geteuid()}:
+            raise LiveFirecrackerError("untrusted jailer staging directory inode")
+        directory.chmod(mode)
+
+
 def _copy_pinned(src: Path, dest: Path, digest: str) -> None:
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
     sfd = dfd = None
@@ -217,10 +237,7 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
     try:
         cgroup.mkdir(mode=0o700)
         created = True
-        (root / "guest").mkdir(parents=True, mode=0o755)
-        # Private operator umask must not block the jailed UID from
-        # traversing the guest directory to its reviewed read-only images.
-        (root / "guest").chmod(0o755)
+        _secure_staging_directories(root)
         # The jailer itself creates its chroot at this conventional location;
         # pre-staging is supported by Firecracker's jailer documentation.
         for asset, file in (("guest_kernel", "vmlinux.bin"),
