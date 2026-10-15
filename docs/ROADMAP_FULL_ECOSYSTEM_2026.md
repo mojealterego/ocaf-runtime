@@ -680,3 +680,18 @@ CI wykonało 16 nowych unit/regression tests i 68 wcześniejszych,
 brak dostępnego hosta z uprawnieniami KVM i eBPF; żadnych dodatkowych
 płatnych VM nie stworzono. Plan akceptacji produkcyjnej nie zmienia
 warunków GO/NO-GO.
+
+
+### Aktualizacja 0.39.7 — Aya eBPF ELF zweryfikowany i gotowy do użycia na hoście
+
+`stage039/aya-ebpf-egress` kompiluje się do natywnego
+`bpfel-unknown-none` (test `readelf` PASS, SHA-256
+`992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95`,
+992 B). Pobrano i zweryfikowano `bpf-linker v0.11.0` po
+SHA-256; odrębny eBPF `Cargo.lock` jest w `main` i kolejny
+CI buduje z `--locked`. Wynik
+[GitHub Actions 38666442623](https://github.com/mojealterego/ocaf-runtime/actions/runs/38666442623)
+= **SUCCESS na cross-compile**, nie sukces sprzętowego
+`BPF_PROG_LOAD`/attach, negatywnego testu ruchu lub boot Firecracker.
+Self-hosted workflow `.github/workflows/stage039-live-kvm-aya.yml`
+pozostaje ścieżką rzeczywistych testów KVM/BPF.

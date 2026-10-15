@@ -306,3 +306,29 @@ lub osobno zatwierdzonego przez operatora realnego hosta KVM/BPF.
 Dopiero niezależne artefakty `kvm.json`, `boot.json`,
 `egress.json` z jednego `boot_id` mogą potwierdzić zrealizowanie
 prób (z zachowaniem dalszych osobnych kryteriów produkcyjnych).
+
+
+## 0.39.7 — rzeczywista kompilacja BPF ELF i zablokowane zależności
+
+**Wykonano rzeczywistą kompilację** źródła
+`stage039/aya-ebpf-egress/src/main.rs` do natywnego obiektu
+`bpfel-unknown-none` (architektura ELF `Linux BPF`, sekcja
+`cgroup_skb/egress` zweryfikowana poleceniem `readelf`).
+GitHub Actions **SUCCESS**:
+[run 38666442623](https://github.com/mojealterego/ocaf-runtime/actions/runs/38666442623).
+
+Weryfikowalny artefakt **`stage039-deny-egress.elf` ma SHA-256**
+`992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95`
+i rozmiar 992 bajty. Wraz z nim w archiwum znajduje się manifest
+`stage039-ebpf-elf.sha256`. Cargo.lock dla eBPF
+(`stage039/aya-ebpf-egress/Cargo.lock`) powstał z **tego samego**
+builda i został wprowadzony do `main`; workflow ponownie egzekwuje
+`cargo ... --locked`, toolchain Rust `nightly-2026-08-12`,
+a `bpf-linker v0.11.0` jest pobierany z weryfikacją SHA-256
+`10f62ba9ab7e544d538370552660efcb4f1a19153d5752bbf0f6b51f3bada450`.
+
+**Granica dowodu:** kompilacja ELF **nie jest** `BPF_PROG_LOAD`,
+`CgroupSkb::attach`, ani egzekwowaniem izolacji. Do tego potrzebny
+jest host z BPF/cgroup v2 i prawidłową polityką privileges.
+Rzeczywisty test negatywny na A/B i Firecracker guest boot pozostają
+**NO-GO**.
