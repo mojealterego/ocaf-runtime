@@ -3,7 +3,7 @@
   "version": "v11-original-builder-scope-restored",
   "repository": "mojealterego/ocaf-runtime",
   "branch": "main",
-  "main_count": 201,
+  "main_count": 204,
   "technical_count": 64,
   "reference_count": 33,
   "production_approved": false,
@@ -3443,6 +3443,78 @@
       "evidence": [],
       "source": "docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md",
       "source_class": "PDF_SOURCE_VERIFIED"
+    },
+    {
+      "id": "2.01",
+      "title": "AI Scientist reproducible research lifecycle",
+      "scope": "Optional supervised scientific discovery workflow inspired by Sakana AI Scientist: idea generation, cited novelty review, isolated experiment/code execution, LaTeX paper drafting, and independent simulated peer review; human approval for publication",
+      "acceptance": "Reproducible fixture records hypotheses, citations, dataset licenses, experiment seed/code/metrics, LaTeX compilation, review rubric and explicit publication consent",
+      "negative": "Reject invented citations, unsourced novelty, unbounded experiment spending, fabricated peer-review acceptance or automatic external publication",
+      "dependencies": [
+        "1.69",
+        "1.98",
+        "1.99"
+      ],
+      "pdf_pages": [
+        7,
+        8,
+        9
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "research",
+      "pdf_file": "Analiza AGI I Ludzkich AI (1).PDF",
+      "evidence": [],
+      "source": "docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md",
+      "source_class": "PDF_SOURCE_VERIFIED"
+    },
+    {
+      "id": "2.02",
+      "title": "OpenHands agent server and legacy repository adapter",
+      "scope": "Evaluate OpenHands/OpenDevin-style isolated agent server, command/browser tool boundaries, large legacy repository mapping, iterative log inspection and auditable patch proposals without uncontrolled branch creation",
+      "acceptance": "Version-pinned agent server fixture diagnoses a real failing repository test, proposes an atomic patch, reruns tests and records complete action/permission audit",
+      "negative": "Reject direct host shell escape, credential exposure, unrestricted browsing, unapproved write or false CI success",
+      "dependencies": [
+        "0.39",
+        "0.43",
+        "0.55",
+        "1.99"
+      ],
+      "pdf_pages": [
+        9,
+        10
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "research",
+      "pdf_file": "Analiza AGI I Ludzkich AI (1).PDF",
+      "evidence": [],
+      "source": "docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md",
+      "source_class": "PDF_SOURCE_VERIFIED"
+    },
+    {
+      "id": "2.03",
+      "title": "Theory-of-Mind evaluation and human approval gates",
+      "scope": "Evaluate ToM-SWE-like intention modeling only as a bounded opt-in planning aid; explicitly separate uncertain user preference inference from facts and maintain human-in-the-loop approval for consequential actions",
+      "acceptance": "Controlled tasks measure calibrated intent uncertainty, abstention, false-positive preference assumptions and correct human escalation with tenant and privacy isolation",
+      "negative": "Reject covert psychological profiling, claiming access to mental states, inferred consent or execution of high-risk action without explicit authorization",
+      "dependencies": [
+        "1.69",
+        "1.96",
+        "1.99"
+      ],
+      "pdf_pages": [
+        10,
+        11,
+        12
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "research",
+      "pdf_file": "Analiza AGI I Ludzkich AI (1).PDF",
+      "evidence": [],
+      "source": "docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md",
+      "source_class": "PDF_SOURCE_VERIFIED"
     }
   ],
   "technical": [
@@ -4739,5 +4811,5 @@
   "original_agents_builder_matrix": "docs/roadmap/agents_builder_products_v11.json",
   "lost_requirements_inventory": "docs/roadmap/missing_capabilities_v11.json",
   "stage_update_log": "docs/roadmap/STAGE_CHANGELOG.md",
-  "next_new_main_stage": "2.01"
+  "next_new_main_stage": "2.04"
 }
