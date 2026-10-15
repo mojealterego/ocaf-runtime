@@ -19,18 +19,39 @@ VM=re.compile(r"ocaf-[0-9a-f]{24}\Z")
 
 class GuestWasiError(ValueError):pass
 
+RNG_READY=(b"OCAF039_GUEST_CRNG_READY\n",
+           b"OCAF039_GUEST_CRNG_READY_AFTER_CPU_RNG\n")
+
+
 def verify_console(raw:bytes)->dict:
-    if (not isinstance(raw,bytes) or not 0<len(raw)<=1024*1024
-        or raw.count(INIT)!=1 or raw.count(OUTPUT)!=1 or raw.count(PASS)!=1
-        or FAILED in raw or raw.find(INIT)<0 or
-        raw.find(OUTPUT)<raw.find(INIT) or raw.find(PASS)<raw.find(OUTPUT)
-        or b"Linux version " not in raw):
-        raise GuestWasiError("genuine bounded Linux guest PID1 WASIp1 exit/serial proof absent")
+    """Require actual guest CRNG initialization before Wasmtime child output.
+
+    An old Linux 4.14 guest without entropy may block getrandom() forever.
+    Wasmtime must never report a successful fd_write when its guest kernel
+    RNG was uninitialized, the child exited nonzero, or markers are forged.
+    """
+    if not isinstance(raw,bytes) or not 0<len(raw)<=1024*1024:
+        raise GuestWasiError("guest serial empty or over limit")
+    boot=raw.find(INIT)
+    output=raw.find(OUTPUT)
+    done=raw.find(PASS)
+    crng=[(marker,raw.find(marker)) for marker in RNG_READY
+          if raw.count(marker)==1]
+    if (raw.count(INIT)!=1 or raw.count(OUTPUT)!=1 or raw.count(PASS)!=1
+        or sum(raw.count(m) for m in RNG_READY)!=1 or len(crng)!=1
+        or FAILED in raw or b"OCAF039_GUEST_HW_RNG_SEED_DENIED" in raw
+        or b"OCAF039_GUEST_CRNG_STILL_UNAVAILABLE" in raw
+        or b"Linux version " not in raw
+        or not 0<=boot<crng[0][1]<output<done):
+        raise GuestWasiError("genuine bounded Linux guest PID1 WASIp1 exit/CRNG proof absent")
     return {
         "guest_pid1_started":True,"wasi_preview1_fd_write_observed_inside_guest":True,
         "guest_wasmtime_child_exited_zero":True,
+        "guest_crng_ready_before_execution":True,
+        "guest_crng_seeded_by_cpu_rng":crng[0][0]==RNG_READY[1],
         "serial_sha256":hashlib.sha256(raw).hexdigest(),
     }
+
 
 def verify_brokered_pair(broker_report:dict,jailer_base:Path,rootfs_sha256:str)->dict:
     if (not isinstance(broker_report,dict)
