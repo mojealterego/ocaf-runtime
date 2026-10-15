@@ -1,0 +1,23 @@
+name: OCAF PDF roadmap coverage
+on:
+  push:
+    branches: [main]
+    paths:
+      - ROADMAP.md
+      - README.md
+      - docs/ROADMAP_FULL_ECOSYSTEM_2026.md
+      - docs/roadmap/canonical_v11_inventory.json
+      - docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md
+      - scripts/check_roadmap_pdf_coverage.py
+      - .github/workflows/roadmap-pdf-coverage.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check-pdf-roadmap-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check canonical PDF requirements and roadmap integrity
+        run: python3 scripts/check_roadmap_pdf_coverage.py
