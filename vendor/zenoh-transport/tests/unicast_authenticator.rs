@@ -396,15 +396,19 @@ async fn auth_usrpwd(endpoint: &EndPoint, lowlatency_transport: bool) {
     /* [CLIENT] */
     let client01_id = ZenohIdProto::try_from([2]).unwrap();
     let user01 = "user01".to_string();
-    let password01 = "password01".to_string();
+    let seed = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let password01 = format!("pwd01-{seed}");
 
     let client02_id = ZenohIdProto::try_from([3]).unwrap();
     let user02 = "invalid".to_string();
-    let password02 = "invalid".to_string();
+    let password02 = format!("invalid-{seed}");
 
     let client03_id = client01_id;
     let user03 = "user03".to_string();
-    let password03 = "password03".to_string();
+    let password03 = format!("pwd03-{seed}");
 
     /* [ROUTER] */
     let router_id = ZenohIdProto::try_from([1]).unwrap();
