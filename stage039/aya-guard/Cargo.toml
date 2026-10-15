@@ -1,0 +1,12 @@
+[package]
+name = "ocaf-stage039-aya-guard"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "MIT"
+description = "Host-side Aya cgroup SKB egress attachment for a single pre-authorized OCAF workload"
+
+[dependencies]
+aya = "=0.14.0"
+sha2 = "=0.10.9"
+libc = "0.2"
