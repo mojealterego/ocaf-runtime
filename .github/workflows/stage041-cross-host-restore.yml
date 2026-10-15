@@ -1,0 +1,160 @@
+name: OCAF 0.41 REAL separate-kernel PostgreSQL backup recovery (artifact transfer NOT physical DR)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage041-cross-host-restore.yml
+      - scripts/stage041_cross_host_restore.py
+      - scripts/stage041_backup_restore.py
+      - scripts/tests/test_stage041_cross_host_restore.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-kernel-backup:
+    name: Source Linux kernel A — actual PG custom backup after durable 25 rows
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Stage PostgreSQL 16 binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! test -x /usr/lib/postgresql/16/bin/pg_dump; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16
+          fi
+          test -x /usr/lib/postgresql/16/bin/pg_restore
+      - name: Start real PostgreSQL, write dataset, backup/restore and shut source down
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          BASE="/tmp/ocaf41-source-${GITHUB_RUN_ID}"
+          sudo -n install -d -o postgres -g postgres -m 0700 "$BASE" "$BASE/data"
+          sudo -n install -o postgres -g postgres -m 0500 \
+            "$GITHUB_WORKSPACE/scripts/stage041_backup_restore.py" "$BASE/source_driver.py"
+          sudo -n -u postgres python3 "$BASE/source_driver.py" \
+            --pg-bin-dir /usr/lib/postgresql/16/bin --output-dir "$BASE/data" \
+            --ack-ephemeral-postgres-backup-lab
+          mkdir -p stage041-cross-source
+          sudo -n cp "$BASE/data/backup-restore-report.json" stage041-cross-source/source.json
+          sudo -n cp "$BASE/data/snapshot.pgcustom" stage041-cross-source/snapshot.pgcustom
+          sudo -n chown "$(id -u):$(id -g)" stage041-cross-source/source.json stage041-cross-source/snapshot.pgcustom
+          python3 - <<'PY'
+          import hashlib,json,re,secrets
+          from pathlib import Path
+          root=Path("stage041-cross-source")
+          source=(root/"source.json").read_bytes()
+          r=json.loads(source)
+          snapshot=(root/"snapshot.pgcustom").read_bytes()
+          assert snapshot[:5]==b"PGDMP"
+          assert r["backup_sha256"]==hashlib.sha256(snapshot).hexdigest()
+          assert r["original_checksum"]==r["restored_checksum"]
+          assert r["original_rows"]==r["restored_rows"]==25
+          assert r["cross_host_restore_tested"] is False
+          assert r["production_approved"] is False
+          boot=Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+          assert re.fullmatch(r"[0-9a-f-]{36}",boot)
+          manifest={
+             "schema_version":1,"source_boot_id":boot,
+             "source_report_sha256":hashlib.sha256(source).hexdigest(),
+             "snapshot_sha256":hashlib.sha256(snapshot).hexdigest(),
+             "snapshot_size_bytes":len(snapshot),
+             "run_nonce":secrets.token_hex(8),
+             "production_approved":False,
+          }
+          (root/"manifest.json").write_text(json.dumps(manifest,sort_keys=True)+"\n")
+          print("STAGE041_REAL_SOURCE_POSTGRESQL_STOPPED_AND_PINNED_BACKUP_CREATED")
+          print("STAGE041_SOURCE_LINUX_KERNEL_BOOT_ID",boot)
+          PY
+      - name: Preserve real source backup and boot-bound digest
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage041-source-pgcustom
+          path: stage041-cross-source/
+          retention-days: 30
+          if-no-files-found: warn
+
+  new-kernel-recovery:
+    name: New Linux kernel B — verify artifact SHA, initdb and actual pg_restore
+    needs: [source-kernel-backup]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Download source-host immutable artifact into fresh VM
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: stage041-source-pgcustom
+          path: stage041-cross-download
+      - name: Independently check adversarial recovery tests
+        run: python3 -m unittest discover -s scripts/tests -p test_stage041_cross_host_restore.py -v
+      - name: Stage PostgreSQL 16 binaries on separate runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! test -x /usr/lib/postgresql/16/bin/pg_restore; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16
+          fi
+          test -x /usr/lib/postgresql/16/bin/initdb
+      - name: Recover into new real PostgreSQL and verify content hashes on second kernel
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          BASE="/tmp/ocaf41-recovery-${GITHUB_RUN_ID}"
+          sudo -n install -d -o postgres -g postgres -m 0700 "$BASE" "$BASE/inputs" "$BASE/evidence"
+          sudo -n install -o postgres -g postgres -m 0500 \
+            "$GITHUB_WORKSPACE/scripts/stage041_cross_host_restore.py" "$BASE/driver.py"
+          sudo -n install -o postgres -g postgres -m 0500 \
+            "$GITHUB_WORKSPACE/scripts/stage041_backup_restore.py" "$BASE/stage041_backup_restore.py"
+          for file in snapshot.pgcustom source.json manifest.json; do
+            sudo -n install -o postgres -g postgres -m 0600 \
+              "stage041-cross-download/$file" "$BASE/inputs/$file"
+          done
+          sudo -n -u postgres python3 "$BASE/driver.py" \
+            --snapshot "$BASE/inputs/snapshot.pgcustom" \
+            --source-report "$BASE/inputs/source.json" \
+            --manifest "$BASE/inputs/manifest.json" \
+            --pg-bin-dir /usr/lib/postgresql/16/bin \
+            --report "$BASE/evidence/recovery.json" \
+            --ack-cross-kernel-ephemeral-restore
+          mkdir -p stage041-cross-recovered
+          sudo -n cp "$BASE/evidence/recovery.json" stage041-cross-recovered/recovery.json
+          sudo -n chown "$(id -u):$(id -g)" stage041-cross-recovered/recovery.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path("stage041-cross-recovered/recovery.json").read_text())
+          assert d["status"]=="REAL_TWO_KERNEL_POSTGRESQL_SHA256_RESTORE_PASSED"
+          assert d["distinct_linux_kernels"] is True
+          assert d["source_boot_id"]!=d["recovery_boot_id"]
+          assert d["actual_postgres_restore_confirmed"] is True
+          assert d["fresh_postgres_process_started"] is True
+          assert d["original_rows"]==d["recovered_rows"]==25
+          assert d["original_checksum"]==d["recovered_checksum"]
+          assert d["rpo_at_backup_boundary_rows_lost"]==0
+          assert d["physical_host_disaster_recovery_tested"] is False
+          assert d["stage_041_complete"] is False
+          assert d["production_approved"] is False
+          print("STAGE041_REAL_DIFFERENT_LINUX_KERNEL_POSTGRESQL_SHA256_RECOVERY_PROVED")
+          PY
+      - name: Preserve recovered real PG data-hash and measured restoration time
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage041-verified-separate-kernel-postgres-restore
+          path: stage041-cross-recovered/
+          retention-days: 30
+          if-no-files-found: warn
