@@ -108,11 +108,14 @@ def prove_vm_host_cgroup_egress(*, proc: subprocess.Popen, vm_id: str,
     """Probe the exact *live VM host cgroup* with Aya and unaffected peer B."""
     if not 12 <= seconds <= 60:
         raise VmCgroupEgressError("bounded Aya attachment 12..60 seconds required")
-    host = egress.preflight()
-    vm_inode = require_vm_running(proc, vm_id, cgroup)
-    egress.verified_executable(loader, loader_sha)
-    if egress.sha256_file(program) != program_sha:
-        raise VmCgroupEgressError("pinned eBPF ELF digest mismatch")
+    try:
+        host = egress.preflight()
+        vm_inode = require_vm_running(proc, vm_id, cgroup)
+        egress.verified_executable(loader, loader_sha)
+        if egress.sha256_file(program) != program_sha:
+            raise VmCgroupEgressError("pinned eBPF ELF digest mismatch")
+    except egress.AcceptanceError as exc:
+        raise VmCgroupEgressError(str(exc)) from exc
 
     peer = egress.CGROUP_ROOT / (
         "ocaf-stage039-b-" + secrets.token_hex(8) + ".service")
