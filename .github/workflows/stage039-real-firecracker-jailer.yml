@@ -114,6 +114,20 @@ jobs:
           PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
           FC="$PREFIX/approved/firecracker"
           JAILER="$PREFIX/approved/jailer"
+          sudo -n python3 - "$PREFIX/jailer" <<'PY'
+          import os,sys,stat
+          from pathlib import Path
+          p=Path(sys.argv[1]); st=p.stat()
+          print("JAILER_BASE_PYTHON_INSPECTION",dict(path=str(p),
+              is_absolute=p.is_absolute(),is_symlink=p.is_symlink(),
+              is_dir=p.is_dir(),uid=st.st_uid,mode=oct(stat.S_IMODE(st.st_mode)),
+              group_or_world_bits=oct(st.st_mode & 0o077),effective_uid=os.geteuid()))
+          import sys
+          sys.path.insert(0,"scripts")
+          from stage039_live_firecracker import _private_base
+          _private_base(p)
+          print("JAILER_BASE_PYTHON_PREFLIGHT_PASSED")
+          PY
           sudo -n python3 scripts/stage039_live_firecracker.py \
             --manifest "$PREFIX/approved/request.json" --approved-root "$PREFIX/approved" \
             --firecracker "$FC" \
