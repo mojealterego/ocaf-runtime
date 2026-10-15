@@ -123,6 +123,33 @@ jobs:
             sudo -n install -o postgres -g postgres -m 0600 \
               "stage041-cross-download/$file" "$BASE/inputs/$file"
           done
+          sudo -n -u postgres python3 - "$BASE" <<'PY'
+          import json,shutil,sys
+          from pathlib import Path
+          sys.path.insert(0,sys.argv[1])
+          import stage041_cross_host_restore as recovery
+          d=Path(sys.argv[1])/"inputs"
+          original=d/"snapshot.pgcustom"
+          tampered=d/"tampered.pgcustom"
+          shutil.copyfile(original,tampered)
+          with tampered.open("r+b") as f:
+              old=f.read(1)
+              assert old
+              f.seek(0)
+              f.write(bytes([old[0]^1]))
+          boot=Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+          def rejected(p,boot_id):
+              try:
+                  recovery.validate_transfer(p,d/"source.json",d/"manifest.json",boot_id)
+              except recovery.CrossHostRestoreError:
+                  return True
+              return False
+          assert rejected(tampered,boot), "modified real cross-host PG archive accepted"
+          manifest=json.loads((d/"manifest.json").read_text())
+          assert rejected(original,manifest["source_boot_id"]), "fake matching source boot accepted"
+          tampered.unlink()
+          print("STAGE041_REAL_DESTINATION_REJECTED_TAMPERED_ARCHIVE_AND_REUSED_KERNEL_ID")
+          PY
           sudo -n -u postgres python3 "$BASE/driver.py" \
             --snapshot "$BASE/inputs/snapshot.pgcustom" \
             --source-report "$BASE/inputs/source.json" \
