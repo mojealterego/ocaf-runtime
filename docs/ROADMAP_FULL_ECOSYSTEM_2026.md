@@ -1,4 +1,4 @@
-# OCAF FULL ECOSYSTEM ROADMAP — consolidated evidence-led v8 (2026-10-15)
+# OCAF FULL ECOSYSTEM ROADMAP — consolidated evidence-led v9 (2026-10-15)
 
 ## Mandat operatora: ciągły rozwój bez odrębnych potwierdzeń (2026-10-15)
 
@@ -38,6 +38,12 @@ Pierwsze obowiązkowe priorytety wykonawcze: **rzeczywisty WASIp1 import wykonan
 Z 15-stronicowego `Dokument bez nazwy(2).PDF` wyodrębniono sześć filarów i dodano **40 nowych etapów 1.15–1.54**: Zenoh SHM/Automerge+Yrs/OTel; CoALA–UALA–Titans; Red Queen Gödel Machine + type-sitter; Sigma-Delta/Loihi 2 i ML-KEM; host+guest Aya/eBPF oraz zarządzanie kosztami i aplikacjami jednorazowymi; stateless L402/Macaroon/Lightning. Ponadto dopisano **12 podetapów 0.39.22–0.39.25, 0.40.7–0.40.10 oraz 0.41.7–0.41.10**. Każda nowa pozycja ma **właściciela modułowego, zależności, stronę PDF, test pozytywny i negatywny**. **Wszystkie nowe elementy mają status PLANNED**, bez fałszywego założenia, że prototyp z PDF działa już w repozytorium lub osiąga deklarowane opóźnienia i wydajność. [Tabela 52 pozycji](ROADMAP_APEX_TIER0_2026-10-15.md) · [Manifest JSON](roadmap/apex_tier0_extension.json).
 
 **Zachowany priorytet:** faktyczne WASI wewnątrz Firecracker i broker, streaming PostgreSQL między niezależnymi kernelami oraz długie testy niezawodności. Numery 1.15+ rozszerzają plan, nie zamykają niezrealizowanych kryteriów 0.39–0.41.
+
+## Revision v9 — 13-stronicowy plan Sovereign Workspace, +40 etapów +16 podetapów (2026-10-15)
+
+Nowy `Dokument bez nazwy(3).PDF` dostarcza **ośmiokrokowy plan badawczo-wdrożeniowy**, w tym sześć planowanych crate `ocaf-transport-crdt`, `ocaf-telemetry-ebpf`, `ocaf-cognition-rqgm`, `ocaf-economy-gov`, `ocaf-domain-swarms` oraz `ocaf-master-node`. Po usunięciu duplikatów z v8 rozszerzyliśmy główne etapy o **1.55–1.94 (40)**, dodając **16 nowych technicznych podetapów** w 0.39/0.40/0.41/0.42. Pełna numeracja główna od 0.00 do 1.94 wynosi teraz **195 identyfikatorów**; wszystkie 56 nowych pozycji mają status `PLANNED`. Każda posiada ownera, zależności, stronę PDF, mierzalną bramkę pozytywną i negatywną. To nie jest automatyczne wdrożenie kodu z PDF. [Tabela v9 (56 zadań)](ROADMAP_SOVEREIGN_WORKSPACE_V9_2026-10-15.md) · [JSON](roadmap/sovereign_workspace_v9.json).
+
+**Nadrzędne otwarte zadania:** rzeczywiste WASIp1 w zamkniętych VM Firecracker związane z brokerem i podpisanymi manifestami; live PostgreSQL WAL TCP między niezależnymi kernelami z fencing oraz testy chaos/soak. Bez fałszywych twierdzeń o wdrożeniu lub wynikach benchmarków.
 
 ## Mandatory scope and coverage
 
