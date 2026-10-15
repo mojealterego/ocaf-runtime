@@ -3,7 +3,7 @@
   "version": "v11-original-builder-scope-restored",
   "repository": "mojealterego/ocaf-runtime",
   "branch": "main",
-  "main_count": 198,
+  "main_count": 201,
   "technical_count": 64,
   "reference_count": 33,
   "production_approved": false,
@@ -3374,6 +3374,75 @@
       "evidence": [],
       "source": "docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md",
       "source_class": "PDF_SOURCE_VERIFIED"
+    },
+    {
+      "id": "1.98",
+      "title": "DSPy declarative optimization and holdout evaluation",
+      "scope": "Optional declarative LLM pipeline optimization using DSPy BootstrapFewShot, MIPRO and GEPA in isolated offline evaluation; freeze approved artifacts before deployment",
+      "acceptance": "Version-pinned holdout dataset and baseline show statistically reported quality, token cost and regression deltas with reproducible optimizer traces",
+      "negative": "Reject train/test contamination, unreviewed prompt mutation, uncontrolled tool calls and unsupported model performance claims",
+      "dependencies": [
+        "1.69",
+        "1.95"
+      ],
+      "pdf_pages": [
+        6,
+        7
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "research",
+      "pdf_file": "Analiza AGI I Ludzkich AI (1).PDF",
+      "evidence": [],
+      "source": "docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md",
+      "source_class": "PDF_SOURCE_VERIFIED"
+    },
+    {
+      "id": "1.99",
+      "title": "SWE-bench Verified and N-run agent reliability",
+      "scope": "Evaluate repository coding agents on license-reviewed SWE-bench Verified and optional multimodal fixtures; measure N-run pass rate, issue resolution, regression and sandbox containment",
+      "acceptance": "Reproducible benchmark runner records instance IDs, patch diffs, test logs, model/tool versions, multiple seeds and confidence intervals",
+      "negative": "Reject fabricated leaderboard ranks, leaked benchmark answers, cherry-picked successful runs or patches without tests",
+      "dependencies": [
+        "0.55",
+        "1.69",
+        "1.98"
+      ],
+      "pdf_pages": [
+        9,
+        10,
+        11
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "research",
+      "pdf_file": "Analiza AGI I Ludzkich AI (1).PDF",
+      "evidence": [],
+      "source": "docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md",
+      "source_class": "PDF_SOURCE_VERIFIED"
+    },
+    {
+      "id": "2.00",
+      "title": "Taskweaving dependency graph and multi-agent rollback",
+      "scope": "Experimental asynchronous taskweaving DAG scheduler inspired by BabyAGI-2 and LangGraph with explicit dependency edges, bounded concurrency, cancellation, idempotency and rollback for agent workflows",
+      "acceptance": "Fault-injection verifies cycle rejection, cancellation propagation, durable replay and no unauthorized side effects across tenant boundaries",
+      "negative": "Reject cyclic graph execution, implicit privileges, double side effects after retry or silent partial success",
+      "dependencies": [
+        "0.42",
+        "1.64",
+        "1.92"
+      ],
+      "pdf_pages": [
+        8,
+        9
+      ],
+      "status": "PLANNED",
+      "priority": "P1",
+      "owner": "research",
+      "pdf_file": "Analiza AGI I Ludzkich AI (1).PDF",
+      "evidence": [],
+      "source": "docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md",
+      "source_class": "PDF_SOURCE_VERIFIED"
     }
   ],
   "technical": [
@@ -4670,5 +4739,5 @@
   "original_agents_builder_matrix": "docs/roadmap/agents_builder_products_v11.json",
   "lost_requirements_inventory": "docs/roadmap/missing_capabilities_v11.json",
   "stage_update_log": "docs/roadmap/STAGE_CHANGELOG.md",
-  "next_new_main_stage": "1.98"
+  "next_new_main_stage": "2.01"
 }
