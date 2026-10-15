@@ -70,7 +70,7 @@ def verify_ledger_rows(rows:dict,reports:dict)->None:
             raise BindingError("broker reservation no longer matches durable active lease")
 
 
-def verify_binding(reports:dict,manifests:dict,actual:dict)->dict:
+def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=False)->dict:
     if (not isinstance(reports,dict) or not isinstance(manifests,dict)
         or set(reports)!=set(manifests)!=set(("a","b"))
         or not isinstance(actual,dict)
@@ -128,6 +128,16 @@ def verify_binding(reports:dict,manifests:dict,actual:dict)->dict:
                                     ("guest_rootfs","guest_rootfs_sha256"),
                                     ("firecracker","firecracker_sha256")))):
             raise BindingError("running guest/Firecracker digest diverged from admitted inputs")
+        if require_wasi:
+            guest=actual_vm.get("guest_wasi_execution")
+            if (not isinstance(guest,dict)
+                or guest.get("guest_pid1_started") is not True
+                or guest.get("wasi_preview1_fd_write_observed_inside_guest") is not True
+                or guest.get("guest_wasmtime_child_exited_zero") is not True
+                or guest.get("observed_before_vm_sigkill",True) is not True
+                or not isinstance(guest.get("serial_sha256"),str)
+                or re.fullmatch("[a-f0-9]{64}",guest["serial_sha256"]) is None):
+                raise BindingError("real guest WASIp1 success receipt missing before VM termination")
         crash=actual_vm.get("vm_sigkill_fault")
         if (not isinstance(crash,dict)
             or crash.get("status")!="VM_SIGKILL_CGROUP_SUBTREE_DRAINED"
@@ -159,7 +169,8 @@ def verify_binding(reports:dict,manifests:dict,actual:dict)->dict:
         "both_guest_kernel_boots_observed":True,
         "both_vm_cgroups_drained_after_sigkill":True,
         "tenant_b_survived_tenant_a_crash":True,
-        "wasi_executed_inside_guest":False,
+        "wasi_executed_inside_guest":bool(require_wasi),
+        "signed_wasi_manifest_verified":False,
         "production_approved":False,
         "stage_039_complete":False,
     }
@@ -209,7 +220,8 @@ async def _admit(ledger:broker.AdmissionLedger, approved_root:Path,
 
 def run_with_live_broker(*,manifest_a:Path,manifest_b:Path,
                          approved_root:Path, ledger_dir:Path,
-                         dual_arguments:dict)->dict:
+                         dual_arguments:dict,
+                         require_guest_wasi:bool=False)->dict:
     if (os.geteuid()!=0 or not ledger_dir.is_absolute()
         or ".." in ledger_dir.parts or ledger_dir.is_symlink()
         or ledger_dir.exists()):
@@ -234,8 +246,10 @@ def run_with_live_broker(*,manifest_a:Path,manifest_b:Path,
         verify_ledger_rows(rows,receipts)
         try:
             actual=dual.execute(manifest_a=manifest_a,manifest_b=manifest_b,
-                                approved_root=approved_root,**dual_arguments)
-            verification=verify_binding(receipts,manifests,actual)
+                                approved_root=approved_root,
+                                require_guest_wasi=require_guest_wasi,**dual_arguments)
+            verification=verify_binding(
+                receipts,manifests,actual,require_wasi=require_guest_wasi)
         finally:
             for rec in receipts.values():
                 if not ledger.release(workload_id=rec["workload_id"],
@@ -259,6 +273,8 @@ def main()->int:
         p.add_argument("--"+name,required=True)
     p.add_argument("--aya-seconds",type=int,default=15)
     p.add_argument("--timeout",type=int,default=90)
+    p.add_argument("--require-guest-wasi",action="store_true",
+                   help="wait for actual guest Wasmtime exit and WASIp1 fd_write before SIGKILL")
     p.add_argument("--ack-broker-two-jailed-vm-real-kvm",action="store_true")
     a=p.parse_args()
     if not a.ack_broker_two_jailed_vm_real_kvm:
@@ -267,6 +283,7 @@ def main()->int:
         r=run_with_live_broker(
             manifest_a=a.manifest_a,manifest_b=a.manifest_b,
             approved_root=a.approved_root,ledger_dir=a.ledger_dir,
+            require_guest_wasi=a.require_guest_wasi,
             dual_arguments=dict(firecracker=a.firecracker,
                  firecracker_sha=a.firecracker_sha256,
                  jailer=a.jailer,jailer_sha=a.jailer_sha256,
@@ -279,7 +296,8 @@ def main()->int:
         p.error(str(exc))
     print(json.dumps({"status":r["status"],
          "broker_vm_binding":r["broker_vm_binding"]["status"],
-         "wasi_executed_inside_guest":False,"production_approved":False}))
+         "wasi_executed_inside_guest":bool(r["broker_vm_binding"]["wasi_executed_inside_guest"]),
+         "production_approved":False}))
     return 0
 
 

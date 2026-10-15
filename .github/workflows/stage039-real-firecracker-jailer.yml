@@ -414,8 +414,10 @@ jobs:
             --aya-program "$PREFIX/approved/aya_cgroup_device" \
             --aya-program-sha256 992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95 \
             --aya-seconds 12 --timeout 110 \
+            --require-guest-wasi \
             --report "$GITHUB_WORKSPACE/stage039-real-guest-evidence/broker-wasi-vm.json" \
             --ack-broker-two-jailed-vm-real-kvm
+          sudo -n chown "$(id -u):$(id -g)" stage039-real-guest-evidence/broker-wasi-vm.json
           sudo -n python3 scripts/stage039_guest_wasi.py \
             --broker-report "$GITHUB_WORKSPACE/stage039-real-guest-evidence/broker-wasi-vm.json" \
             --jailer-base "$JBASE" \
@@ -429,6 +431,11 @@ jobs:
           from pathlib import Path
           v=json.loads(Path("stage039-real-guest-evidence/real-guest-wasi-execution.json").read_text())
           assert v["status"]=="TWO_REAL_BROKERED_JAILED_FIRECRACKER_GUESTS_WASIP1_FD_WRITE_EXECUTED"
+          raw=json.loads(Path("stage039-real-guest-evidence/broker-wasi-vm.json").read_text())
+          assert raw["broker_vm_binding"]["wasi_executed_inside_guest"] is True
+          assert raw["broker_vm_binding"]["signed_wasi_manifest_verified"] is False
+          for tenant in ("a","b"):
+              assert raw["tenant_"+tenant]["guest_wasi_execution"]["observed_before_vm_sigkill"] is True
           assert v["real_guest_wasi_execution_verified"] is True
           assert v["both_tenants_own_vm_and_broker_reservations"] is True
           assert set(v["tenant_receipts"])=={"a","b"}
@@ -450,6 +457,8 @@ jobs:
           set -euo pipefail
           PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
           echo "OCAF039_JAILER_FAILURE_DIAGNOSTIC_BEGIN"
+          sudo -n find stage039-real-guest-evidence -maxdepth 1 -type f -name '*.json' -exec chmod 0644 '{}' ';' || true
+          sudo -n find stage039-real-guest-evidence -maxdepth 1 -type f -name '*.json' -exec chown "$(id -u):$(id -g)" '{}' ';' || true
           sudo -n find "$PREFIX/jailer" -maxdepth 7 -name serial-console.log -type f \
             -exec tail -n 100 '{}' ';' || true
           sudo -n find "$PREFIX/jailer" -maxdepth 5 -type f -name 'firecracker*' -print || true

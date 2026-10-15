@@ -93,7 +93,8 @@ def execute(*, manifest_a:Path, manifest_b:Path, approved_root:Path,
             jailer_sha:str, chroot_base:Path,
             aya_loader:Path|None=None, aya_loader_sha:str|None=None,
             aya_program:Path|None=None, aya_program_sha:str|None=None,
-            aya_seconds:int=15, timeout:int=90) -> dict:
+            aya_seconds:int=15, timeout:int=90,
+            require_guest_wasi:bool=False) -> dict:
     ma = gate.parse_manifest(manifest_a.read_bytes())
     mb = gate.parse_manifest(manifest_b.read_bytes())
     validate_distinct_tenants(ma, mb)
@@ -151,7 +152,8 @@ def execute(*, manifest_a:Path, manifest_b:Path, approved_root:Path,
             uid=uid, gid=uid, timeout=timeout,
             aya_loader=aya_loader, aya_loader_sha=aya_loader_sha,
             aya_program=aya_program, aya_program_sha=aya_program_sha,
-            aya_seconds=aya_seconds, crash_after_proof=True, boot_hook=hook)
+            aya_seconds=aya_seconds, crash_after_proof=True,
+            boot_hook=hook,require_guest_wasi=require_guest_wasi)
 
     with ThreadPoolExecutor(max_workers=2,thread_name_prefix="ocaf39-tenant") as pool:
         fa = pool.submit(launch,manifest_a,1002,hook_a)

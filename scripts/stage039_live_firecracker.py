@@ -27,6 +27,7 @@ import stage039_vm_egress as vm_egress
 import stage039_vm_resources as vm_resources
 import stage039_vm_crash as vm_crash
 import stage039_microvm_gate as gate
+import stage039_guest_wasi as guest_wasi
 
 VALID_VM = re.compile(r"[a-z0-9][a-z0-9-]{0,63}\Z")
 VALID_CGROUP = re.compile(r"ocaf-stage039-vm-[0-9a-f]{16}\.service\Z")
@@ -278,13 +279,45 @@ def _api_state(sockpath: Path) -> dict:
         return {}
 
 
+def await_real_guest_wasi_execution(proc,serial_path:Path,*,seconds:int)->dict:
+    """Wait for a REAL Linux guest PID1->Wasmtime process result BEFORE VM SIGKILL.
+
+    Successful VM boot is not evidence of guest WASI execution. Guest output
+    must include exactly one PID1 marker, one WASIp1 fd_write payload, and
+    one zero-exit marker; fail closed on guest errors or a live guest timeout.
+    """
+    if (type(seconds) is not int or not 1<=seconds<=110
+        or not isinstance(serial_path,Path) or not serial_path.is_absolute()
+        or serial_path.is_symlink()):
+        raise LiveFirecrackerError("bounded actual guest WASI wait required")
+    deadline=time.monotonic()+seconds
+    tail=""
+    while time.monotonic()<deadline:
+        if proc.poll() is not None:
+            raise LiveFirecrackerError("jailed Firecracker exited before real guest WASI completion")
+        try:
+            tail=_bounded_console_evidence(serial_path)
+        except OSError as exc:
+            raise LiveFirecrackerError("real guest serial inaccessible") from exc
+        if "OCAF039_GUEST_WASI_EXECUTION_FAILED" in tail:
+            # Keep failure bounded: kernel logs are evidence, not an executable.
+            raise LiveFirecrackerError("real guest Wasmtime child failed: "+repr(tail[-1200:]))
+        if "OCAF039_GUEST_WASI_EXECUTION_PASS_EXIT_0" in tail:
+            try:
+                return guest_wasi.verify_console(tail.encode("utf-8"))
+            except guest_wasi.GuestWasiError as exc:
+                raise LiveFirecrackerError("invalid real guest WASI zero-exit proof") from exc
+        time.sleep(.25)
+    raise LiveFirecrackerError("real guest WASI fd_write deadline expired; console tail: "+repr(tail[-800:]))
+
+
 def run(*, manifest: Path, approved_root: Path, jailer: Path,
         jailer_sha: str, firecracker: Path, firecracker_sha: str,
         chroot_base: Path, uid: int, gid: int, timeout: int,
         aya_loader: Path | None = None, aya_loader_sha: str | None = None,
         aya_program: Path | None = None, aya_program_sha: str | None = None,
         aya_seconds: int = 15, crash_after_proof: bool = False,
-        boot_hook=None) -> dict:
+        boot_hook=None, require_guest_wasi: bool = False) -> dict:
     import secrets
     inputs = (aya_loader, aya_loader_sha, aya_program, aya_program_sha)
     if any(value is not None for value in inputs) and any(value is None for value in inputs):
@@ -378,6 +411,11 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
                     "serial_tail_sha256": hashlib.sha256(seen.encode()).hexdigest(),
                     "limit_note": "This confirms kernel boot console/API only. Aya egress must be proven separately.",
                 })
+                if require_guest_wasi:
+                    remaining=max(1,min(95,int(deadline-time.monotonic())))
+                    result["guest_wasi_execution"]=await_real_guest_wasi_execution(
+                        proc,log,seconds=remaining)
+                    result["guest_wasi_execution"]["observed_before_vm_sigkill"]=True
                 if boot_hook is not None:
                     # Test-only synchronization callback. The still-running
                     # process and cgroup inode are independently checked by

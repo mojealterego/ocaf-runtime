@@ -31,7 +31,8 @@ class GuestWasiBindings(unittest.TestCase):
                         "durable_sqlite_leases_matched":True,
                         "admission_before_vm_launch":True,
                         "durable_broker_leases_released_after_vm_crashes":True,
-                        "wasi_executed_inside_guest":False,
+                        "wasi_executed_inside_guest":True,
+                        "signed_wasi_manifest_verified":False,
                         "production_approved":False}}
             for tenant,c in (("a","a"),("b","b")):
                 vm="ocaf-"+c*24
