@@ -24,6 +24,7 @@ import subprocess
 import tempfile
 
 import stage039_guest_network as gn
+import stage039_guest_tc as guest_tc
 import stage039_live_firecracker as fc
 import stage039_vm_resources as vm_resources
 import stage039_vm_crash as vm_crash
@@ -112,7 +113,8 @@ def _live_evidence(proc,vm_id,cgroup,log,sock,tenant)->dict:
 def execute(*, firecracker:Path, firecracker_sha:str, jailer:Path, jailer_sha:str,
             jailer_base:Path, kernel:Path, kernel_sha:str, rootfs:Path,
             rootfs_sha:str, probe_source:Path, report_path:Path,
-            nonce_override:str|None=None)->dict:
+            nonce_override:str|None=None,
+            tc_bpf_source:Path|None=None)->dict:
     if os.geteuid()!=0 or os.uname().machine!="x86_64":
         raise JailedNetError("privileged ephemeral KVM host required")
     fc._verified_binary(firecracker,firecracker_sha)
@@ -134,6 +136,7 @@ def execute(*, firecracker:Path, firecracker_sha:str, jailer:Path, jailer_sha:st
     cgroups={}
     devices=[]
     firewall=False
+    tc_attached=False
     outputs={}
     observed={}
     try:
@@ -225,6 +228,39 @@ def execute(*, firecracker:Path, firecracker_sha:str, jailer:Path, jailer_sha:st
         gn._drain(sockets["A"]);gn._drain(sockets["B"])
         rec_a=gn._wait_new(sockets["A"],"A",nonce,baseline["A"],6)
         rec_b=gn._wait_new(sockets["B"],"B",nonce,during_b,6)
+        bpf_proof=None
+        bpf_phase=None
+        if tc_bpf_source is not None:
+            # Proper host path for guest-originated packets is TC ingress
+            # on the guest's TAP, not CgroupSkb of the host VMM process.
+            obj=lab/"ocaf039-guest-deny.o"
+            elf_sha=guest_tc.compile_bpf(source=tc_bpf_source,elf=obj)
+            bpf_proof=guest_tc.attach_on_guest_a_tap(tap=taps["A"],elf=obj)
+            tc_attached=True
+            gn._drain(sockets["A"]);gn._drain(sockets["B"])
+            b_during_tc=gn._wait_new(sockets["B"],"B",nonce,rec_b,5)
+            sockets["A"].settimeout(1.8)
+            a_received=False
+            try:
+                payload,origin=sockets["A"].recvfrom(1024)
+            except socket.timeout:
+                pass
+            else:
+                gn.verify_guest_datagram(payload,origin[0],"A",nonce)
+                a_received=True
+            guest_tc.detach_from_guest_a_tap(taps["A"])
+            tc_attached=False
+            gn._drain(sockets["A"]);gn._drain(sockets["B"])
+            a_tc_recovered=gn._wait_new(sockets["A"],"A",nonce,rec_a,6)
+            b_tc_recovered=gn._wait_new(sockets["B"],"B",nonce,b_during_tc,6)
+            bpf_phase=guest_tc.validate_guest_tc_phases(
+                before_a=rec_a,before_b=rec_b,
+                during_a_received=a_received,during_b=b_during_tc,
+                after_a=a_tc_recovered,after_b=b_tc_recovered)
+            bpf_proof.update(bpf_phase)
+            bpf_proof["bpf_elf_sha256"]=elf_sha
+            rec_a=a_tc_recovered
+            rec_b=b_tc_recovered
         a_proc,a_id,_,_=processes["A"]
         b_proc,b_id,_,_=processes["B"]
         a_kill=vm_crash.kill_and_verify(a_proc,a_id,cgroups["A"])
@@ -247,6 +283,8 @@ def execute(*, firecracker:Path, firecracker_sha:str, jailer:Path, jailer_sha:st
             "live_jailed_guest_a":observed["A"],"live_jailed_guest_b":observed["B"],
             "tenant_a_vm_sigkill":a_kill,"tenant_b_vm_sigkill":b_kill,
             "nft_dropped_guest_a_packets":max(counters),
+            "tc_ebpf_guest_tap":bpf_proof,
+            "tc_kernel_ebpf_guest_network_tested":bpf_proof is not None,
             "aya_cgroup_guest_network_tested":False,
             "two_independent_hosts":False,
             "multi_host_failover_tested":False,
@@ -262,6 +300,9 @@ def execute(*, firecracker:Path, firecracker_sha:str, jailer:Path, jailer_sha:st
                 try:proc.wait(timeout=5)
                 except subprocess.TimeoutExpired:pass
         for listener in sockets.values():listener.close()
+        if tc_attached:
+            try:guest_tc.detach_from_guest_a_tap(taps["A"])
+            except (OSError,ValueError):pass
         if firewall:
             subprocess.run(["nft","delete","table","inet",nft],
                            capture_output=True,check=False)
@@ -282,6 +323,8 @@ def main()->int:
         ap.add_argument("--"+arg,required=True)
     ap.add_argument("--ack-privileged-dual-jailed-guest-network-lab",action="store_true")
     ap.add_argument("--checkpoint-nonce",help="public run-scoped nonce from separately verified handoff state")
+    ap.add_argument("--tc-bpf-source",type=Path,
+                    help="optionally compile real TC ingress kernel BPF classifier from checked-in C")
     a=ap.parse_args()
     if not a.ack_privileged_dual_jailed_guest_network_lab:
         ap.error("explicit privileged dual jailed guest network acknowledgement required")
@@ -293,7 +336,8 @@ def main()->int:
                        kernel=a.kernel,kernel_sha=a.kernel_sha256,
                        rootfs=a.rootfs,rootfs_sha=a.rootfs_sha256,
                        probe_source=a.probe_source,report_path=a.report,
-                       nonce_override=a.checkpoint_nonce)
+                       nonce_override=a.checkpoint_nonce,
+                       tc_bpf_source=a.tc_bpf_source)
     except (OSError,ValueError,subprocess.SubprocessError) as exc:
         ap.error(str(exc))
     print(json.dumps({"status":result["status"],"production_approved":False}))
