@@ -46,7 +46,7 @@ def build(manifest_raw: bytes, approved_root: Path, jailer_root: Path) -> dict:
     config = {
         "boot-source": {
             "kernel_image_path": GUEST_KERNEL,
-            "boot_args": "console=ttyS0 reboot=k panic=1 pci=off",
+            "boot_args": "console=ttyS0 reboot=k panic=1 pci=off root=/dev/vda ro",
         },
         "drives": [{
             "drive_id": "rootfs",
