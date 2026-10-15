@@ -45,6 +45,7 @@ def vm(tenant,cg,vmid):
 
 def evidence():
     return {"status":"TWO_CONCURRENT_TENANTS_VM_BOOT_AND_FAULT_ISOLATION_PASSED",
+            "host_boot_id":"39a9d1b0-757b-48b6-a255-f157ffe3e5ec",
             "tenant_a":vm("a",1321,"ocaf-"+"a"*24),
             "tenant_b":vm("b",1322,"ocaf-"+"b"*24),
             "simultaneous_guest_boot":{"two_guests_simultaneously_running":True},
