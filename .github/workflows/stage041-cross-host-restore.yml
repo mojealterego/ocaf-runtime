@@ -127,7 +127,7 @@ jobs:
           import json,shutil,sys
           from pathlib import Path
           sys.path.insert(0,sys.argv[1])
-          import stage041_cross_host_restore as recovery
+          import driver as recovery
           d=Path(sys.argv[1])/"inputs"
           original=d/"snapshot.pgcustom"
           tampered=d/"tampered.pgcustom"
