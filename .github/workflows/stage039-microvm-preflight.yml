@@ -19,6 +19,9 @@ on:
       - scripts/tests/test_stage039_live_egress.py
       - scripts/stage039_live_firecracker.py
       - scripts/stage039_dual_tenant.py
+      - scripts/stage039_guest_network.py
+      - scripts/tests/test_stage039_guest_network.py
+      - stage039/guest-egress/**
       - scripts/tests/test_stage039_dual_tenant.py
       - scripts/stage039_vm_egress.py
       - scripts/stage039_vm_resources.py
@@ -93,6 +96,8 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_vm_crash.py -v
       - name: Dual-tenant concurrent Linux VM identity and host crash fail-closed contracts
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_dual_tenant.py -v
+      - name: Guest-originated UDP TAP/firewall contract (synthetic cases only)
+        run: python3 -m unittest discover -s scripts/tests -p test_stage039_guest_network.py -v
       - name: Python source syntax verification
         run: |
           python3 -m py_compile scripts/stage039_microvm_gate.py scripts/tests/test_stage039_microvm_gate.py
@@ -106,6 +111,7 @@ jobs:
           python3 -m py_compile scripts/stage039_vm_resources.py scripts/tests/test_stage039_vm_resources.py
           python3 -m py_compile scripts/stage039_vm_crash.py scripts/tests/test_stage039_vm_crash.py
           python3 -m py_compile scripts/stage039_dual_tenant.py scripts/tests/test_stage039_dual_tenant.py
+          python3 -m py_compile scripts/stage039_guest_network.py scripts/tests/test_stage039_guest_network.py
       - name: Observe KVM, cgroup v2, PID1 systemd, BTF and bpffs on actual CI Linux
         shell: bash
         run: |
