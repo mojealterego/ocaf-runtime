@@ -66,5 +66,23 @@ class LiveContract(unittest.TestCase):
         self.assertTrue(report["guest_kernel_console_seen"])
 
 
+    def test_guest_staging_is_readable_to_unprivileged_jailer_uid_even_with_private_umask(self):
+        import hashlib
+        import os
+        import tempfile
+        import stat
+        with tempfile.TemporaryDirectory() as base:
+            source=Path(base)/"kernel.src"
+            dest=Path(base)/"kernel.dest"
+            source.write_bytes(b"test-guest-image-data")
+            expected=hashlib.sha256(source.read_bytes()).hexdigest()
+            oldmask=os.umask(0o077)
+            try:
+                live._copy_pinned(source,dest,expected)
+            finally:
+                os.umask(oldmask)
+            self.assertEqual(stat.S_IMODE(dest.stat().st_mode),0o444)
+
+
 if __name__ == "__main__":
     unittest.main()
