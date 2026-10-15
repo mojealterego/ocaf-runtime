@@ -1,4 +1,9 @@
-# OCAF FULL ECOSYSTEM ROADMAP — consolidated evidence-led v5 (2026-10-15)
+# OCAF FULL ECOSYSTEM ROADMAP — consolidated evidence-led v6 (2026-10-15)
+
+## Mandat operatora: ciągły rozwój bez odrębnych potwierdzeń (2026-10-15)
+
+Operator zatwierdził **kontynuowanie wszystkich etapów i rozszerzanie roadmapy bez wstrzymywania developmentu dla niezależnych audytów lub osobnych podpisów**. Autoryzacja zapisana w [ops/OCAF_CONTINUOUS_DEVELOPMENT_POLICY_2026-10-15.json](../ops/OCAF_CONTINUOUS_DEVELOPMENT_POLICY_2026-10-15.json). Zakres: proces rozwoju; rzeczywiste techniczne testy nadal obowiązują. Można prowadzić 0.40 i 0.41, gdy 0.39 ma jeszcze zadania integracyjne; statusy historyczne stanowią rzetelny rejestr. [0.40/0.41: dowody rzeczywistych testów](STAGE040_041_REAL_POSTGRES_LABS_2026-10-15.md). **Wdrożenia i bezpieczeństwa produkcyjnego nie wolno domniemywać.**
+
 
 ## Ostateczny status prac 0.38
 
@@ -81,9 +86,9 @@ traceability. Version numbers advance only after real release approvals.
 | 0.36 | Identity/RPC | Application-layer certificate private-key proof + HMAC and pinning | Implement (opt-in) | Existing CI tests; genuine transport TLS peer binding remains blocked |
 | 0.37 | Identity/RPC | Separate TLS 1.3-bound ingress verifies live session leaf against RPC sender pin and SAN; CRL/reload/worker migration remains | Implemented experimentally / NO-GO | Real handshake and swapped-cert tests in CI; external PKI/CRL and multi-host still pending |
 | 0.38 | Execution | Restricted Wasmtime WASIp1 adapter (see [implementation](WASI_EXECUTION_038.md) and [acceptance contract](PRIORITY_038_EXECUTION_CONTRACT.md)) | **COMPLETE — OPERATOR-RECORDED MILESTONE / technical A01–A12 INCOMPLETE; production NO-GO** | Operator requested project-level closure and transition to 0.39; documented in [directive](STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md). Passing CI is not persistent two-host acceptance, independent signed security audit or verified production release. |
-| 0.39 | Execution | Firecracker microVM broker + Aya/eBPF isolation | **IN PROGRESS: REAL KVM_CREATE_VM PASS + REAL Aya attach/egress A/B PASS; jailed guest still NO-GO** | Verified live GitHub-hosted Linux kernel 6.17, API 12, program ID 93, A blocked/B allowed/A recovered in run 38704086975. Runner is ephemeral, not production; guest launch via jailer remains separate. [Primary evidence](STAGE039_REAL_KVM_AYA_PROOF_2026-10-15.md). |
-| 0.40 | HA | Three physical host PostgreSQL HA, real leader fencing and failover | P0 / NO-GO | Host power loss, split-brain, former leader effect-writes rejected |
-| 0.41 | Reliability | Backup/restore, partition chaos, recovery and prolonged soak | P0 / NO-GO | RTO/RPO SLO, restore proof, job audit recovery, operator acceptance |
+| 0.39 | Execution | Firecracker microVM broker + Aya/eBPF isolation | **CI HARDWARE LABS PASSED / BROKER→VM→WASI E2E OPEN** | Two concurrent jailed KVM guests, real guest-originated UDP, kernel TC/eBPF filter/restore, Aya host cgroup enforcement, SIGKILL survival, two distinct CI kernels and artifact-mediated cold restart. Local TLS1.3 mTLS netns partition + fencing. [Full ledger](STAGE039_ACTUAL_BOUNDARY_CLOSURE_2026-10-15.md). Independent signoffs **waived for development** by operator; no false claim of complete broker-to-guest WASI integration or three physical hosts. |
+| 0.40 | HA | Three physical host PostgreSQL HA, real leader fencing and failover | **REAL 3-POSTMASTER WAL / CRASH / RE-PARENT PASS (ONE HOST); PHYSICAL MULTI-HOST OPEN** | [Actual PostgreSQL 16 three-process CI 38726639320](https://github.com/mojealterego/ocaf-runtime/actions/runs/38726639320); still need physically independent host failure and split-brain fencing. |
+| 0.41 | Reliability | Backup/restore, partition chaos, recovery and prolonged soak | **REAL POSTGRES CUSTOM BACKUP/RESTORE SHA-256 PASS (ONE HOST); DR/SOAK OPEN** | [Actual pg_dump/pg_restore CI 38727035810](https://github.com/mojealterego/ocaf-runtime/actions/runs/38727035810); still need cross-host disaster recovery, retention, SLO load/soak. |
 | 0.42 | Release | Production hardening, SBOM/provenance, license and audit GO/NO-GO | P0 / NO-GO | External security review; release version not mistaken for priority number |
 | 0.43 | MCP | Dynamic discovery, semantic routing, manifest signature, Tree-sitter & JSON Schema | P1 | Untrusted tool metadata cannot inject policy; unknown tool never executes |
 | 0.44 | OAuth | OAuth 2.1 authorization code + PKCE, scoped tenant tokens, secret broker | P1 | PKCE, CSRF, confused deputy, issuer/audience/replay test matrix |
