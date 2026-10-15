@@ -1,0 +1,142 @@
+name: OCAF 0.39 REAL KVM Firecracker v1.17 jailed Linux guest boot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage039-real-firecracker-jailer.yml
+      - scripts/stage039_live_firecracker.py
+      - scripts/stage039_firecracker_spec.py
+      - scripts/stage039_kvm_ioctl.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-jailer-kvm-guest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Real kernel KVM_CREATE_VM as privileged root
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p stage039-real-guest-evidence
+          sudo -n python3 scripts/stage039_kvm_ioctl.py --report stage039-real-guest-evidence/kvm.json
+          sudo -n chown "$(id -u):$(id -g)" stage039-real-guest-evidence/kvm.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("stage039-real-guest-evidence/kvm.json").read_text())
+          assert r["kvm_vm_fd_created"] is True
+          assert r["status"]=="KVM_IOCTL_VM_CREATED_NOT_BOOTED"
+          print("STAGE039_REAL_KVM_KERNEL_CREATE_VM_PROVED")
+          PY
+      - name: Fetch official digest-pinned Firecracker, kernel and rootfs
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p /tmp/ocaf039-real-guest-source
+          cd /tmp/ocaf039-real-guest-source
+          curl --fail --silent --show-error --location --retry 2 --max-time 120 \
+            --proto '=https' --tlsv1.2 \
+            https://github.com/firecracker-microvm/firecracker/releases/download/v1.17.0/firecracker-v1.17.0-x86_64.tgz \
+            -o firecracker-v1.17.0-x86_64.tgz
+          echo '06094a1108ae9e82aa4c23a775aa92758f53f1175d422270d9d6162cb9ade558  firecracker-v1.17.0-x86_64.tgz' | sha256sum --check -
+          tar -xzf firecracker-v1.17.0-x86_64.tgz
+          curl --fail --silent --show-error --location --retry 2 --max-time 120 \
+            --proto '=https' --tlsv1.2 \
+            https://s3.amazonaws.com/spec.ccfc.min/img/hello/kernel/hello-vmlinux.bin -o hello-vmlinux.bin
+          curl --fail --silent --show-error --location --retry 2 --max-time 120 \
+            --proto '=https' --tlsv1.2 \
+            https://s3.amazonaws.com/spec.ccfc.min/img/hello/fsfiles/hello-rootfs.ext4 -o hello-rootfs.ext4
+          echo '882fa465c43ab7d92e31bd4167da3ad6a82cb9230f9b0016176df597c6014cef  hello-vmlinux.bin' | sha256sum --check -
+          echo '786f0612582cadcee4c8ad46e30e4cc93dff9a3c0b4ede3f3c597b4c241dd547  hello-rootfs.ext4' | sha256sum --check -
+          file hello-vmlinux.bin hello-rootfs.ext4
+      - name: Construct bounded root-owned image registry and signed digest contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
+          SOURCES="/tmp/ocaf039-real-guest-source"
+          sudo -n install -d -o root -g root -m 0700 "$PREFIX" "$PREFIX/approved" "$PREFIX/jailer"
+          sudo -n install -o root -g root -m 0555 \
+            "$SOURCES/release-v1.17.0-x86_64/firecracker-v1.17.0-x86_64" "$PREFIX/approved/firecracker"
+          sudo -n install -o root -g root -m 0555 \
+            "$SOURCES/release-v1.17.0-x86_64/jailer-v1.17.0-x86_64" "$PREFIX/approved/jailer"
+          sudo -n install -o root -g root -m 0444 \
+            "$SOURCES/hello-vmlinux.bin" "$PREFIX/approved/guest_kernel"
+          sudo -n install -o root -g root -m 0444 \
+            "$SOURCES/hello-rootfs.ext4" "$PREFIX/approved/guest_rootfs"
+          sudo -n install -o root -g root -m 0444 \
+            "$GITHUB_WORKSPACE/stage039/aya-ebpf-egress/prebuilt/stage039-deny-egress.elf" \
+            "$PREFIX/approved/aya_cgroup_device"
+          sudo -n python3 - "$PREFIX" <<'PY'
+          import hashlib,json,sys
+          from pathlib import Path
+          approved=Path(sys.argv[1])/"approved"
+          def asset(name):
+              file=approved/name
+              return {"path":str(file),"sha256":hashlib.sha256(file.read_bytes()).hexdigest()}
+          assets={key:asset(key) for key in
+                  ("firecracker","guest_kernel","guest_rootfs","aya_cgroup_device")}
+          pins={"guest_kernel":"882fa465c43ab7d92e31bd4167da3ad6a82cb9230f9b0016176df597c6014cef",
+                "guest_rootfs":"786f0612582cadcee4c8ad46e30e4cc93dff9a3c0b4ede3f3c597b4c241dd547",
+                "aya_cgroup_device":"992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95"}
+          assert all(assets[k]["sha256"]==v for k,v in pins.items())
+          request={"schema_version":1,"workload_id":"ocaf-fc-live-boot",
+                   "tenant_id":"tenant-a","agent_id":"agent-a",
+                   "isolation":{"hypervisor":"firecracker","jailer":True,
+                                "network":"none","guest_egress":False,
+                                "rootfs_readonly":True,"mmds_enabled":False,
+                                "seccomp":"default","vcpus":1,"mem_mib":256},
+                   "assets":assets}
+          (approved/"request.json").write_text(json.dumps(request,sort_keys=True)+"\n")
+          (approved/"request.json").chmod(0o600)
+          print("STAGE039_PINNED_ASSETS_MANIFEST_READY")
+          PY
+          sudo -n sha256sum "$PREFIX/approved/firecracker" "$PREFIX/approved/jailer" \
+            > stage039-real-guest-evidence/verified-vmm-binaries.sha256
+          sudo -n chown "$(id -u):$(id -g)" stage039-real-guest-evidence/verified-vmm-binaries.sha256
+      - name: ACTUAL root-privileged Firecracker jailer launches guest Linux on kernel KVM
+        shell: bash
+        run: |
+          set -euo pipefail
+          PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
+          FC="$PREFIX/approved/firecracker"
+          JAILER="$PREFIX/approved/jailer"
+          sudo -n python3 scripts/stage039_live_firecracker.py \
+            --manifest "$PREFIX/approved/request.json" --approved-root "$PREFIX/approved" \
+            --firecracker "$FC" \
+            --firecracker-sha256 "$(sudo -n sha256sum "$FC" | cut -d ' ' -f 1)" \
+            --jailer "$JAILER" \
+            --jailer-sha256 "$(sudo -n sha256sum "$JAILER" | cut -d ' ' -f 1)" \
+            --chroot-base "$PREFIX/jailer" --uid 1002 --gid 1002 \
+            --timeout 60 --report stage039-real-guest-evidence/guest-boot.json \
+            --ack-real-kvm-jailer-boot
+          sudo -n chown "$(id -u):$(id -g)" stage039-real-guest-evidence/guest-boot.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          boot=json.loads(Path("stage039-real-guest-evidence/guest-boot.json").read_text())
+          for name in ("firecracker_api_running","guest_kernel_console_seen","process_in_expected_cgroup"):
+              assert boot[name] is True,name
+          assert boot["status"]=="JAILED_FIRECRACKER_GUEST_KERNEL_BOOT_OBSERVED"
+          assert boot["ebpf_attached"] is False
+          assert boot["production_approved"] is False
+          print("STAGE039_REAL_FIRECRACKER_JAILER_GUEST_LINUX_BOOT_PROVED")
+          PY
+      - name: Preserve actual KVM boot and negative/error evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage039-real-firecracker-jailer-linux-evidence
+          path: stage039-real-guest-evidence/
+          retention-days: 30
+          if-no-files-found: warn
