@@ -89,6 +89,14 @@ class AdmissionLedger:
     def __init__(self, db: Path):
         self.path = Path(db)
         _check_directory(self.path)
+        # SQLite normally creates the database using the process umask, which
+        # may briefly expose the uninitialized inode as 0644. Create it
+        # exclusively with 0600 *before* sqlite3.connect touches the path.
+        if not self.path.exists():
+            flags = os.O_CREAT | os.O_EXCL | os.O_RDWR | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+            fd = os.open(self.path, flags, 0o600)
+            os.close(fd)
+        _check_directory(self.path)
         self.conn = sqlite3.connect(str(self.path), isolation_level=None, timeout=5)
         try:
             self.conn.execute("PRAGMA journal_mode=WAL")
