@@ -98,7 +98,14 @@ class FenceLedger:
             tenant TEXT PRIMARY KEY, epoch INTEGER NOT NULL,
             token TEXT NOT NULL, expires INTEGER NOT NULL)""")
 
-    def close(self):self.conn.close()
+    def close(self):
+        self.conn.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self,*exc):
+        self.close()
 
     def apply(self,request:dict,*,now:int)->dict:
         if type(now) is not int or now<0:
@@ -181,11 +188,6 @@ def _tls_client_context(cert,key,ca):
     return ctx
 
 
-def serve(*,bind:str,port:int,cert:Path,key:Path,ca:Path,db:Path,ready:Path):
-    ctx=_tls_server_context(cert,key,ca)
-    with FenceLedger(db) as _ : pass
-
-
 def server_forever(*,bind:str,port:int,cert:Path,key:Path,ca:Path,db:Path,ready:Path):
     ctx=_tls_server_context(cert,key,ca)
     ledger=FenceLedger(db)
@@ -233,10 +235,6 @@ def client_rpc(*,host:str,port:int,cert:Path,key:Path,ca:Path,request:dict):
             or response.get("production_approved") is not False):
         raise FenceError("untrusted or mismatched lease response")
     return response
-
-
-FenceLedger.__enter__=lambda self:self
-FenceLedger.__exit__=lambda self,*exc:self.close()
 
 
 def main()->int:
