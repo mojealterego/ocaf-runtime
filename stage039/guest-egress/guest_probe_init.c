@@ -7,7 +7,6 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <linux/if.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -57,7 +56,7 @@ static int set_ip(int s) {
 int main(void) {
     int console = open("/dev/console", O_WRONLY | O_NOCTTY);
     if (console >= 0)
-        dprintf(console, "OCAF039_GUEST_NETWORK_INIT_TENANT_%s\\n", TENANT);
+        dprintf(console, "OCAF039_GUEST_NETWORK_INIT_TENANT_%s\n", TENANT);
     int s = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
     if (s < 0) goto out;
     /* Virtio-net enumeration may lag the init exec. */
