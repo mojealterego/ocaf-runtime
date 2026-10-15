@@ -154,3 +154,55 @@ a nie podpisanego zdalnego agenta: zaufany front-end RPC i kontrola
 autoryzacji nadal pozostają obowiązkowe. Odczyt całych dużych hashów
 odbywa się synchronicznie — przed udostępnieniem jako usługa
 konieczne są ograniczenia pojemności/konkurencji i testy denial-of-service.
+
+
+## 0.39.4 — sprawdzenie API KVM na żywym jądrze (2026-10-15)
+
+`scripts/stage039_kvm_ioctl.py` wydaje prawdziwe IOCTL do `/dev/kvm`:
+`KVM_GET_API_VERSION` (oczekiwane `12`) oraz `KVM_CREATE_VM`
+(zwrócony VM fd jest natychmiast zamykany). Testy syntetycznego mock
+i realny Linux probe są odseparowane, a report nigdy nie twierdzi, że
+uruchomiono Firecracker lub guest. Osiem regresji przeszło.
+**Na aktualnym GitHub-hosted runnerze: NO-GO**; brak używalnego KVM.
+
+## 0.39.5 — konfiguracja Firecracker przygotowana, bez startu
+
+`scripts/stage039_firecracker_spec.py` waliduje manifest, pinuje
+SHA-256 czterech artefaktów i **ponownie hashuje** rzeczywiście
+wyłożone w zatwierdzonym chroot `/guest/vmlinux.bin` oraz
+`/guest/rootfs.ext4`. Tworzy Firecracker JSON:
+`boot-source`, `drives` z `is_read_only=true`,
+`machine-config` z bounded CPU/RAM, `network-interfaces=[]`.
+Sześć testów (także zmiana staged kernel/rootfs, symlink, writable
+katalogu, próba dodania sieci) PASS.
+
+**Pozostały blocker:** konfiguracja nie uruchamia procesu `jailer` ani
+Firecracker. Dopiero start binariów tej samej wersji, prawdziwy
+`InstanceInfo: Running` i dowód identyczności inode uruchomionych
+artefaktów może poświadczyć boot. Kopiowanie i sprawdzanie digestów
+przed startem nie zamyka samodzielnie problemu TOCTOU.
+
+## 0.39.7 — prawdziwy loader Aya, jeszcze bez kernel attach
+
+- `stage039/aya-ebpf-egress/src/main.rs`: program
+  `aya_ebpf::cgroup_skb(egress)`, wynik `0` powoduje drop pakietu
+  powiązanego z docelowym cgroup.
+- `stage039/aya-guard/src/main.rs`: osobne narzędzie Rust z użyciem
+  biblioteki Aya 0.14, statycznym SHA-256 ELF, `O_NOFOLLOW`, restrykcją
+  `/sys/fs/cgroup/.../ocaf-*.service`, jawnie potwierdzanym
+  `--ack-attach`, ograniczonym czasem życia attachment i odpięciem
+  na końcu. Kompilacja i trzy testy logiki loadera PASS.
+- **Nie** przeprowadzono jeszcze kompilacji eBPF `bpfel-unknown-none`,
+  realnego `BPF_PROG_LOAD`/attach ani negatywnego packet-egress testu.
+  Bez tych kroków `ebpf_attached=false` i etap 0.39 nadal NO-GO.
+
+Odczyt dowodów:
+[run 38663469207](https://github.com/mojealterego/ocaf-runtime/actions/runs/38663469207)
+zawiera **68 zaliczonych testów (65 Python + 3 Rust Aya)**.
+Test Linux-host i próba użycia KVM jawnie zwróciły NO-GO;
+sukces workflow oznacza poprawne, fail-closed wykrycie braku sprzętu.
+
+Zasady wykonywania na hoście: operator musi przedstawić autoryzowany
+systemd/cgroup-v2 Linux KVM, zatwierdzony jailer/Firecracker tej samej
+wersji, zakotwiczone digests kernel/rootfs, politykę eBPF cgroup
+i logi uruchomienia i ograniczenia egress. Bez tych dowodów brak GO.

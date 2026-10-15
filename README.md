@@ -875,3 +875,22 @@ polityką jednego tenant:agent na socket oraz operacjami admission/release
 na lokalnym SQLite. Zestaw regresji 0.39 obejmuje 12 testów admission,
 17 testów trwałych rezerwacji oraz 10 testów realnego IPC.
 Rzeczywistej VM Firecracker i attach Aya/eBPF jeszcze nie wykonano.
+
+
+### Aktualizacja roadmapy v5 / Firecracker + Aya (15.10.2026)
+
+Z dwóch dołączonych opracowań o **24 i 9 repozytoriach** powstała
+[macierz 33 adaptacji](docs/ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md)
+z odwołaniami do istniejących etapów i testami negatywnymi.
+[Pełna Roadmapa v5](docs/ROADMAP_FULL_ECOSYSTEM_2026.md) rozpisuje
+`0.39.1–0.39.11`.
+
+W `0.39.4–0.39.7` dodano: rzeczywisty probe `KVM_GET_API_VERSION`
+i `KVM_CREATE_VM` (`scripts/stage039_kvm_ioctl.py`),
+fail-closed generator zweryfikowanej konfiguracji jailer/Firecracker
+(`scripts/stage039_firecracker_spec.py`) oraz źródła
+`aya-ebpf` deny-all egress i skompilowany userspace Aya loader
+(`stage039/aya-guard`). CI uruchomiło **68 testów PASS**
+([workflow](https://github.com/mojealterego/ocaf-runtime/actions/runs/38663469207)).
+Aktualny host **nie ma działającego KVM**; Firecracker nie został
+uruchomiony, Aya nie został podpięty, brak produkcyjnej izolacji.
