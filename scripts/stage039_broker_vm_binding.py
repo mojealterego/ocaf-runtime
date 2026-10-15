@@ -1,0 +1,287 @@
+#!/usr/bin/env python3
+"""Stage 0.39.18: actual AF_UNIX SO_PEERCRED broker reservation -> jailed VM boot.
+
+The broker *reserves* two pinned, netless tenant workloads through real
+Linux kernel SO_PEERCRED, backed by a durable SQLite lease. ONLY AFTER
+both reservations are verified does stage039_dual_tenant launch two
+simultaneous jailed Firecracker guest kernels with Aya host-cgroup tests,
+kill A and verify B remains running. Boot identities, guest/rootfs digests,
+actual kernel cgroup inodes and SIGKILL receipts are bound back to the
+exact reservations, and both leases are finally released.
+
+This is not signed WASI execution inside Firecracker; no WASI runtime is
+present in the test rootfs. It is also not production admission authority.
+"""
+from __future__ import annotations
+
+import argparse
+import asyncio
+import base64
+from datetime import datetime,timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import secrets
+import socket
+import stat
+import struct
+import time
+
+import stage039_broker_ipc as ipc
+import stage039_broker_ledger as broker
+import stage039_dual_tenant as dual
+import stage039_microvm_gate as gate
+
+
+class BindingError(ValueError):
+    pass
+
+
+def _manifest(raw:bytes)->dict:
+    try:
+        obj=json.loads(raw,object_pairs_hook=gate._unique_object,
+                       parse_constant=gate._reject_nonfinite)
+    except (ValueError,UnicodeError,TypeError) as exc:
+        raise BindingError("untrusted JSON manifest") from exc
+    if not isinstance(obj,dict):
+        raise BindingError("workload manifest must be an object")
+    iso=obj.get("isolation")
+    if (not isinstance(iso,dict)
+        or iso.get("network")!="none" or iso.get("guest_egress") is not False
+        or iso.get("jailer") is not True):
+        raise BindingError("live broker/VM binding requires explicit netless jailed policy")
+    return obj
+
+
+def verify_ledger_rows(rows:dict,reports:dict)->None:
+    if set(rows)!=set(reports)!=set(("a","b")):
+        raise BindingError("both independent broker leases required")
+    for tenant in ("a","b"):
+        row=rows[tenant]
+        receipt=reports[tenant]
+        if (not isinstance(row,(tuple,list)) or len(row)!=6
+            or row[0]!=receipt.get("tenant_id")
+            or row[1]!=receipt.get("agent_id")
+            or row[2]!=receipt.get("workload_id")
+            or type(row[3]) is not int or row[3]!=receipt.get("leader_epoch")
+            or row[4]!=receipt.get("request_id")
+            or row[5]!="reserved"):
+            raise BindingError("broker reservation no longer matches durable active lease")
+
+
+def verify_binding(reports:dict,manifests:dict,actual:dict)->dict:
+    if (not isinstance(reports,dict) or not isinstance(manifests,dict)
+        or set(reports)!=set(manifests)!=set(("a","b"))
+        or not isinstance(actual,dict)
+        or actual.get("status")!="TWO_CONCURRENT_TENANTS_VM_BOOT_AND_FAULT_ISOLATION_PASSED"
+        or actual.get("production_approved") is not False
+        or actual.get("stage_039_complete") is not False
+        or actual.get("two_independent_hosts") is not False
+        or actual.get("guest_network_egress_tested") is not False
+        or not isinstance(actual.get("simultaneous_guest_boot"),dict)
+        or actual["simultaneous_guest_boot"].get("two_guests_simultaneously_running") is not True
+        or not isinstance(actual.get("fault_isolation"),dict)
+        or actual["fault_isolation"].get("tenant_b_survived_tenant_a_sigkill") is not True):
+        raise BindingError("real simultaneous jailed guest + tenant crash proof absent")
+    vmids=[]
+    inodes=[]
+    bootids=[]
+    requestids=[]
+    manifest_hashes=[]
+    for tenant in ("a","b"):
+        raw=manifests[tenant]
+        if not isinstance(raw,bytes) or not 0<len(raw)<=gate.MAX_MANIFEST_BYTES:
+            raise BindingError("missing bounded pinned manifest")
+        m=_manifest(raw)
+        rec=reports[tenant]
+        actual_vm=actual.get("tenant_"+tenant)
+        if (not isinstance(rec,dict) or not isinstance(actual_vm,dict)
+            or rec.get("status")!="RESERVED_NOT_EXECUTED"
+            or rec.get("microvm_launched") is not False
+            or rec.get("ebpf_attached") is not False
+            or rec.get("production_approved") is not False
+            or rec.get("stage_039_complete") is not False
+            or not isinstance(rec.get("request_id"),str)
+            or broker.REQ_ID.fullmatch(rec["request_id"]) is None
+            or type(rec.get("leader_epoch")) is not int or rec["leader_epoch"]<=0
+            or rec.get("manifest_sha256")!=hashlib.sha256(raw).hexdigest()
+            or any(rec.get(k)!=m.get(k) or actual_vm.get(k)!=m.get(k)
+                   for k in ("tenant_id","agent_id","workload_id"))
+            or actual_vm.get("status")!="JAILED_FIRECRACKER_GUEST_KERNEL_BOOT_OBSERVED"
+            or any(actual_vm.get(k) is not True for k in
+                   ("firecracker_api_running","guest_kernel_console_seen",
+                    "process_in_expected_cgroup"))
+            or actual_vm.get("production_approved") is not False
+            or type(actual_vm.get("cgroup_inode")) is not int
+            or actual_vm["cgroup_inode"]<=0
+            or not isinstance(actual_vm.get("vm_id"),str)
+            or dual.fc.VALID_VM.fullmatch(actual_vm["vm_id"]) is None
+            or not isinstance(actual_vm.get("host_boot_id"),str)
+            or len(actual_vm["host_boot_id"])<16):
+            raise BindingError("VM boot does not match authenticated broker reservation")
+        expected=m.get("assets")
+        if (not isinstance(expected,dict)
+            or any(not isinstance(expected.get(name),dict)
+                   or expected[name].get("sha256")!=actual_vm.get(key)
+                   for name,key in (("guest_kernel","guest_kernel_sha256"),
+                                    ("guest_rootfs","guest_rootfs_sha256"),
+                                    ("firecracker","firecracker_sha256")))):
+            raise BindingError("running guest/Firecracker digest diverged from admitted inputs")
+        crash=actual_vm.get("vm_sigkill_fault")
+        if (not isinstance(crash,dict)
+            or crash.get("status")!="VM_SIGKILL_CGROUP_SUBTREE_DRAINED"
+            or crash.get("cgroup_subtree_empty") is not True
+            or crash.get("sigkill_executed") is not True
+            or type(crash.get("sigkill_exit_code")) is not int
+            or crash["sigkill_exit_code"]!=-9
+            or crash.get("vm_cgroup_inode")!=actual_vm["cgroup_inode"]):
+            raise BindingError("original admitted VM SIGKILL and cgroup drain absent")
+        vmids.append(actual_vm["vm_id"])
+        inodes.append(actual_vm["cgroup_inode"])
+        bootids.append(actual_vm["host_boot_id"])
+        requestids.append(rec["request_id"])
+        manifest_hashes.append(rec["manifest_sha256"])
+    if len(set(vmids))!=2 or len(set(inodes))!=2 or len(set(requestids))!=2 or bootids[0]!=bootids[1]:
+        raise BindingError("reused VM, cgroup, replay ID or different kernel in one-host test")
+    if actual.get("host_boot_id")!=bootids[0]:
+        raise BindingError("VM host kernel identity changed")
+    return {
+        "status":"BROKER_SO_PEERCRED_TWO_REAL_JAILED_VM_BOOT_BOUND",
+        "schema_version":1,
+        "admission_before_vm_launch":True,
+        "real_kernel_so_peercred_authenticated_broker":True,
+        "durable_sqlite_leases_matched":True,
+        "two_distinct_tenant_request_ids":requestids,
+        "two_manifest_sha256":manifest_hashes,
+        "vm_ids":vmids,"cgroup_inodes":inodes,
+        "kernel_boot_id":bootids[0],
+        "both_guest_kernel_boots_observed":True,
+        "both_vm_cgroups_drained_after_sigkill":True,
+        "tenant_b_survived_tenant_a_crash":True,
+        "wasi_executed_inside_guest":False,
+        "production_approved":False,
+        "stage_039_complete":False,
+    }
+
+
+async def _admit(ledger:broker.AdmissionLedger, approved_root:Path,
+                 raw:dict[str,bytes], socket_dir:Path, now:int)->dict:
+    receipts={}
+    for tenant in ("a","b"):
+        m=gate.parse_manifest(raw[tenant])
+        service=ipc.BrokerIPC(socket_dir/("broker-"+tenant+".sock"),
+            ledger,approved_root,
+            ipc.PeerPolicy(
+                allowed_uids=frozenset({os.geteuid()}),
+                allowed_pairs=frozenset({(m["tenant_id"],m["agent_id"])})),
+            clock=lambda:now)
+        await service.start()
+        try:
+            req={
+                "schema_version":1,"request_id":secrets.token_hex(16),
+                "tenant_id":m["tenant_id"],"agent_id":m["agent_id"],
+                "workload_id":m["workload_id"],"leader_epoch":1,
+                "issued_unix_secs":now,"expires_unix_secs":now+300,
+                "manifest_sha256":hashlib.sha256(raw[tenant]).hexdigest(),
+            }
+            msg={"version":1,"op":"reserve",
+                 "request_b64":base64.b64encode(json.dumps(req).encode()).decode(),
+                 "manifest_b64":base64.b64encode(raw[tenant]).decode()}
+            payload=json.dumps(msg).encode()
+            reader,writer=await asyncio.open_unix_connection(str(service.path))
+            try:
+                writer.write(struct.pack("!I",len(payload))+payload)
+                await writer.drain()
+                size=struct.unpack("!I",await asyncio.wait_for(reader.readexactly(4),timeout=3))[0]
+                if not 0<size<=ipc.MAX_RESPONSE_BYTES:
+                    raise BindingError("oversized local broker response")
+                data=json.loads(await asyncio.wait_for(reader.readexactly(size),timeout=3))
+            finally:
+                writer.close();await writer.wait_closed()
+            if data.get("status")!="RESERVED_NOT_EXECUTED":
+                raise BindingError("kernel authenticated local broker denied reservation")
+            receipts[tenant]=data
+        finally:
+            await service.close()
+    return receipts
+
+
+def run_with_live_broker(*,manifest_a:Path,manifest_b:Path,
+                         approved_root:Path, ledger_dir:Path,
+                         dual_arguments:dict)->dict:
+    if (os.geteuid()!=0 or not ledger_dir.is_absolute()
+        or ".." in ledger_dir.parts or ledger_dir.is_symlink()
+        or ledger_dir.exists()):
+        raise BindingError("ephemeral real KVM runner requires fresh root-private broker directory")
+    ledger_dir.mkdir(mode=0o700,parents=False)
+    ledger_dir.chmod(0o700)
+    manifests={"a":manifest_a.read_bytes(),"b":manifest_b.read_bytes()}
+    for raw in manifests.values():
+        m=gate.parse_manifest(raw)
+        if m["isolation"]["network"]!="none" or m["isolation"]["guest_egress"] is not False:
+            raise BindingError("broker VM runtime may only execute pinned netless guest")
+        gate.inspect_manifest(raw,approved_root)
+    with broker.AdmissionLedger(ledger_dir/"admission.sqlite") as ledger:
+        now=int(time.time())
+        receipts=asyncio.run(_admit(ledger,approved_root,manifests,ledger_dir,now))
+        rows={}
+        for tenant,rec in receipts.items():
+            row=ledger.conn.execute(
+                "SELECT tenant_id,agent_id,workload_id,epoch,request_id,status "
+                "FROM workload_state WHERE workload_id=?",(rec["workload_id"],)).fetchone()
+            rows[tenant]=row
+        verify_ledger_rows(rows,receipts)
+        try:
+            actual=dual.execute(manifest_a=manifest_a,manifest_b=manifest_b,
+                                approved_root=approved_root,**dual_arguments)
+            verification=verify_binding(receipts,manifests,actual)
+        finally:
+            for rec in receipts.values():
+                if not ledger.release(workload_id=rec["workload_id"],
+                                      request_id=rec["request_id"],
+                                      epoch=rec["leader_epoch"]):
+                    raise BindingError("lease cleanup failed after VM test")
+        verification["durable_broker_leases_released_after_vm_crashes"]=True
+        verification["observed_at_utc"]=datetime.now(timezone.utc).isoformat()
+        actual["broker_vm_binding"]=verification
+        return actual
+
+
+def main()->int:
+    p=argparse.ArgumentParser(description=__doc__)
+    for name in ("manifest-a","manifest-b","approved-root","ledger-dir",
+                 "firecracker","jailer","chroot-base","aya-loader",
+                 "aya-program","report"):
+        p.add_argument("--"+name,required=True,type=Path)
+    for name in ("firecracker-sha256","jailer-sha256","aya-loader-sha256",
+                 "aya-program-sha256"):
+        p.add_argument("--"+name,required=True)
+    p.add_argument("--aya-seconds",type=int,default=15)
+    p.add_argument("--timeout",type=int,default=90)
+    p.add_argument("--ack-broker-two-jailed-vm-real-kvm",action="store_true")
+    a=p.parse_args()
+    if not a.ack_broker_two_jailed_vm_real_kvm:
+        p.error("explicit privileged KVM broker-to-VM acceptance required")
+    try:
+        r=run_with_live_broker(
+            manifest_a=a.manifest_a,manifest_b=a.manifest_b,
+            approved_root=a.approved_root,ledger_dir=a.ledger_dir,
+            dual_arguments=dict(firecracker=a.firecracker,
+                 firecracker_sha=a.firecracker_sha256,
+                 jailer=a.jailer,jailer_sha=a.jailer_sha256,
+                 chroot_base=a.chroot_base,
+                 aya_loader=a.aya_loader,aya_loader_sha=a.aya_loader_sha256,
+                 aya_program=a.aya_program,aya_program_sha=a.aya_program_sha256,
+                 aya_seconds=a.aya_seconds,timeout=a.timeout))
+        gate.save_report(a.report,r)
+    except (OSError,ValueError,asyncio.TimeoutError) as exc:
+        p.error(str(exc))
+    print(json.dumps({"status":r["status"],
+         "broker_vm_binding":r["broker_vm_binding"]["status"],
+         "wasi_executed_inside_guest":False,"production_approved":False}))
+    return 0
+
+
+if __name__=="__main__":
+    raise SystemExit(main())
