@@ -1,0 +1,104 @@
+name: OCAF 0.39 LIVE Firecracker jailer KVM and Aya egress acceptance
+
+on:
+  workflow_dispatch:
+    inputs:
+      authorized:
+        description: "Approved KVM host and isolated cgroup/eBPF smoke testing"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ocaf039-live
+  cancel-in-progress: false
+
+jobs:
+  live-kvm-aya:
+    if: ${{ inputs.authorized }
+    runs-on: [self-hosted, linux, x64, ocaf-kvm-ebpf]
+    timeout-minutes: 15
+    env:
+      MANIFEST: ${{ vars.OCAF039_MANIFEST }
+      APPROVED_ROOT: ${{ vars.OCAF039_APPROVED_ROOT }
+      FC: ${{ vars.OCAF039_FIRECRACKER }
+      FC_SHA: ${{ vars.OCAF039_FIRECRACKER_SHA256 }
+      JAILER: ${{ vars.OCAF039_JAILER }
+      JAILER_SHA: ${{ vars.OCAF039_JAILER_SHA256 }
+      JAIL_BASE: ${{ vars.OCAF039_CHROOT_BASE }
+      UID: ${{ vars.OCAF039_UNPRIV_UID }
+      GID: ${{ vars.OCAF039_UNPRIV_GID }
+      AYA: ${{ vars.OCAF039_AYA_LOADER }
+      AYA_SHA: ${{ vars.OCAF039_AYA_LOADER_SHA256 }
+      ELF: ${{ vars.OCAF039_EBPF_ELF }
+      ELF_SHA: ${{ vars.OCAF039_EBPF_ELF_SHA256 }
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Confirm pinned inputs exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          for key in MANIFEST APPROVED_ROOT FC FC_SHA JAILER JAILER_SHA JAIL_BASE UID GID AYA AYA_SHA ELF ELF_SHA; do
+            test -n "$(printenv "$key")" || { echo "::error::missing $key"; exit 1; }
+          done
+      - name: Actual KVM API ioctl
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p stage039-live-evidence
+          python3 scripts/stage039_kvm_ioctl.py --report stage039-live-evidence/kvm.json
+      - name: Genuine jailed Firecracker guest boot and cgroup measurement
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo -n python3 scripts/stage039_live_firecracker.py \
+            --manifest "$MANIFEST" --approved-root "$APPROVED_ROOT" \
+            --jailer "$JAILER" --jailer-sha256 "$JAILER_SHA" \
+            --firecracker "$FC" --firecracker-sha256 "$FC_SHA" \
+            --chroot-base "$JAIL_BASE" --uid "$UID" --gid "$GID" \
+            --timeout 60 --report stage039-live-evidence/boot.json \
+            --ack-real-kvm-jailer-boot
+      - name: Genuine Aya cgroup attach, negative egress and post-detach recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo -n python3 scripts/stage039_live_egress.py \
+            --loader "$AYA" --loader-sha256 "$AYA_SHA" \
+            --program "$ELF" --program-sha256 "$ELF_SHA" \
+            --seconds 30 --report stage039-live-evidence/egress.json \
+            --ack-privileged-loopback-test
+      - name: Evidence parity gate without production GO
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          base=Path("stage039-live-evidence")
+          k=json.loads((base/"kvm.json").read_text())
+          v=json.loads((base/"boot.json").read_text())
+          n=json.loads((base/"egress.json").read_text())
+          assert k["kvm_vm_fd_created"] is True
+          assert v["status"]=="JAILED_FIRECRACKER_GUEST_KERNEL_BOOT_OBSERVED"
+          assert v["guest_kernel_console_seen"] is True
+          assert v["process_in_expected_cgroup"] is True
+          assert n["status"]=="KERNEL_EBPF_EGRESS_ISOLATION_PASSED"
+          assert n["tenant_b_not_blocked"] is True
+          assert n["tenant_a_recovered_after_detach"] is True
+          for x in (k,v,n):
+              assert x["production_approved"] is False
+          print("STAGE039_REAL_HOST_FIRECRACKER_AYA_NEGATIVE_EGRESS_PASSED")
+          PY
+      - name: Preserve factual evidence, including partial failures
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage039-physical-kvm-and-ebpf-evidence
+          path: stage039-live-evidence/
+          retention-days: 30
+          if-no-files-found: warn
