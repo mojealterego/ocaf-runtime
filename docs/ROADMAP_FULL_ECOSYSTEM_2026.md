@@ -64,7 +64,7 @@ traceability. Version numbers advance only after real release approvals.
 | 0.36 | Identity/RPC | Application-layer certificate private-key proof + HMAC and pinning | Implement (opt-in) | Existing CI tests; genuine transport TLS peer binding remains blocked |
 | 0.37 | Identity/RPC | Separate TLS 1.3-bound ingress verifies live session leaf against RPC sender pin and SAN; CRL/reload/worker migration remains | Implemented experimentally / NO-GO | Real handshake and swapped-cert tests in CI; external PKI/CRL and multi-host still pending |
 | 0.38 | Execution | Restricted Wasmtime WASIp1 adapter (see [implementation](WASI_EXECUTION_038.md) and [acceptance contract](PRIORITY_038_EXECUTION_CONTRACT.md)) | **PARTIALLY IMPLEMENTED / P0 / NO-GO** | At SHA `361fefe` all seven named CI runs passed, including separate two-VM mTLS, two tenants on one VM and 5 x 20 real Wasmtime cycles. This is not combined two-tenant/two-host persistent staging, independent audit or operator-signed acceptance. See 2026-10-14 evidence appendix. |
-| 0.39 | Execution | Firecracker microVM broker + eBPF Aya controls + isolation attestations | P0 / NO-GO | Linux/KVM negative isolation, teardown, syscall/network constraints; mobile separate |
+| 0.39 | Execution | Firecracker microVM broker + eBPF Aya controls + isolation attestations | **STARTED — static admission + real host preflight; P0 / NO-GO** | `scripts/stage039_microvm_gate.py`, 12 regression tests and GitHub Actions host probe; no broker launch, KVM guest, Aya attach or isolation attestation yet; mobile separate. |
 | 0.40 | HA | Three physical host PostgreSQL HA, real leader fencing and failover | P0 / NO-GO | Host power loss, split-brain, former leader effect-writes rejected |
 | 0.41 | Reliability | Backup/restore, partition chaos, recovery and prolonged soak | P0 / NO-GO | RTO/RPO SLO, restore proof, job audit recovery, operator acceptance |
 | 0.42 | Release | Production hardening, SBOM/provenance, license and audit GO/NO-GO | P0 / NO-GO | External security review; release version not mistaken for priority number |
@@ -529,3 +529,9 @@ negligible proof verification) are hypotheses, not proven OCAF guarantees.
 Do not remove systemd/WASI sandbox controls or spend money to chase
 experimental targets without an approved study. Foundation stage 0.38
 remains the sole current execution priority.
+
+## Aktualizacja 2026-10-15 — uruchomiono development etapu 0.39 na polecenie operatora
+
+Rozpoczęto implementację **0.39.1 (fail-closed Firecracker/KVM/Aya admission i host preflight)** bez aktywowania mikromaszyn i bez produkcyjnego GO. Wykonane moduły: `scripts/stage039_microvm_gate.py`, `scripts/tests/test_stage039_microvm_gate.py`, `.github/workflows/stage039-microvm-preflight.yml` i kontrakt `docs/STAGE039_MICROVM_EBPF.md`. Tester kontroluje prawdziwe wymagania KVM/eBPF hosta i poprawność pinowania czterech artefaktów, ale świadomie nie fabrykuje wyniku uruchomienia VM, attach programu Aya ani izolacji produkcyjnej. Pozostałe funkcje 0.39.2–0.39.6 są otwarte.
+
+**Zachowujemy obowiązujące ograniczenia odbiorowe:** 0.38 = PARTIAL / NO-GO (A01–A12 niewypełnione), 0.39 = STARTED / NO-GO, zatwierdzenie wdrożenia = NO-GO. Wcześniejsze wpisy „0.39 zablokowany” dokumentowały regułę następstwa dla produkcyjnego zaliczenia; ta jawna dyspozycja rozpoczyna prace nad kodem, nie znosi wymagań bezpieczeństwa.
