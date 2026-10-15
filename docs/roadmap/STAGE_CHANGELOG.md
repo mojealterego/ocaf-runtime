@@ -45,3 +45,10 @@ production_approved: false
 - Każda pozycja posiada dosłowną etykietę `ZROBIONE — TEST W OGRANICZONYM ZAKRESIE` lub `DO ZROBIENIA`, jawny oryginalny numer ID, tytuł, zakres, kryterium i źródłowy status. `PASS` ograniczonego testu nie oznacza produkcyjnego ukończenia całości.
 - Generator: `scripts/render_readme_roadmap.py`, blok chroniony znacznikami HTML, testy anty-utrata/anty-fikcyjny-status, CI sprawdza zgodność z dwoma manifestami. **Bez nowych numerów etapów**: produkty pierwotne są wyłącznie wydzielonymi pozycjami kontrolnymi.
 - Przy zmianie statusu lub dopisaniu etapu generator jest obowiązkowym krokiem w tym samym commicie. Weryfikacja po wykonaniu przez GitHub Actions; nie deklarować wyniku przed zakończeniem.
+
+## 2026-10-15 — RESTORED_EXISTING / STATUS_CORRECTED — 29 historycznie wdrożonych komponentów
+
+- Wpisy **0.06–0.09 oraz 0.11–0.35** odzyskały stan **ZROBIONE — ZAKRES IMPLEMENTACJI** po weryfikacji oryginalnych sekcji README oraz istniejących plików źródłowych i testów. [Pełny audyt źródłowy](../HISTORICAL_IMPLEMENTATION_AUDIT_2026-10-15.md).
+- Nie zmieniono numeracji historycznych etapów ani 10 produktów Agents Builder. Etapy mają nadal otwarte niezależne kryteria odbioru, szczególnie 0.23/0.33 HA produkcyjne, 0.39 Firecracker/WASI, 0.40 interhost PostgreSQL i 0.41 DR.
+- Wcześniejszy [GitHub Actions Rust CI 38772115289](https://github.com/mojealterego/ocaf-runtime/actions/runs/38772115289): sukces dla ówczesnego commitu. Nowa walidacja statusów uruchamiana w roadmap-v11-builders; nie deklarować wyników przed zakończeniem.
+- Mapa statusów zachowana w `scripts/render_readme_roadmap.py`, test regresyjny wymaga obecności faktycznych ścieżek kodu/QA, a pierwsza sekcja README zawiera 269 numerowanych pozycji, z 29 poprawnymi oznaczeniami zakresu wdrożenia.
