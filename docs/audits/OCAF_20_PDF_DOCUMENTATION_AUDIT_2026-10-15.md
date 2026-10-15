@@ -111,3 +111,13 @@ Zaktualizowano `ROADMAP.md`, `docs/ROADMAP_FULL_ECOSYSTEM_2026.md`, `docs/roadma
 | Projekt i Mapa Drogowa Rewolucyjnej Architektury S..(3).PDF | 0.39–0.49, 0.50–0.55 | ISTNIEJĄCE |
 
 **Zakres zapewnienia:** ta mapa potwierdza obecność głównych obszarów funkcjonalnych w Roadmapie oraz naprawienie zidentyfikowanych braków nazwanych. Nie jest dowodem, że każda pojedyncza rekomendacja, przykładowy snippet i wariant API z 307 stron został odrębnie przepisany na zadanie. Nie jest też potwierdzeniem wykonania kodu ani testów. Wymagania `1.95–1.97` mają status **PLANNED**, a nie DONE.
+
+
+### Uzupełniająca kontrola źródłowa AGI PDF — dodatkowe trzy luki
+
+Po ponownym odczytaniu `Analiza AGI I Ludzkich AI (1).PDF` (wyciąg tekstowy: sekcje „DSPy: Koniec Epoki Prompterów”, „SWE-bench: Ewaluacja Sprawności Ludzkiej”, opis „taskweavingu”) stwierdzono brak w kanonicznym ROADMAP.md jawnych kryteriów:
+- `1.98` DSPy: BootstrapFewShot, MIPRO, GEPA, oddzielny zbiór holdout i kontrola kosztu oraz regresji;
+- `1.99` SWE-bench Verified, N-run reliability, testy powtarzalne, artefakty patch/test oraz zakaz fabrykowania wyników;
+- `2.00` taskweaving DAG, asynchroniczne zależności, rollback, idempotencja i fault injection.
+
+Po synchronizacji Roadmapy, manifestu, lustra i README: **201 głównych + 64 techniczne + 10 Agents Builder = 275 pozycji**; kolejny numer **2.01**. Wpisy są `PLANNED`, nie wykonane. Przypisanie wszystkich 20 PDF do rodzin etapów nie jest równoważne sprawdzeniu każdego indywidualnego zdania ani uruchomieniu testów źródłowych.
