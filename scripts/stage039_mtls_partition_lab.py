@@ -117,7 +117,7 @@ def execute(source:Path,report:Path)->dict:
                 raise MTLSLabError("unexpected netns internet route")
         inode={}
         for ns in (na,nb):
-            inode[ns]=int(_run(["ip","netns","exec",ns,"stat","-c","%i",
+            inode[ns]=int(_run(["ip","netns","exec",ns,"stat","-Lc","%i",
                                  "/proc/self/ns/net"]).stdout.strip())
         if inode[na]==inode[nb]:
             raise MTLSLabError("test network namespaces resolve to same kernel inode")
