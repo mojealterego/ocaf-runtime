@@ -121,3 +121,45 @@ Po ponownym odczytaniu `Analiza AGI I Ludzkich AI (1).PDF` (wyciąg tekstowy: se
 - `2.00` taskweaving DAG, asynchroniczne zależności, rollback, idempotencja i fault injection.
 
 Po synchronizacji Roadmapy, manifestu, lustra i README: **201 głównych + 64 techniczne + 10 Agents Builder = 275 pozycji**; kolejny numer **2.01**. Wpisy są `PLANNED`, nie wykonane. Przypisanie wszystkich 20 PDF do rodzin etapów nie jest równoważne sprawdzeniu każdego indywidualnego zdania ani uruchomieniu testów źródłowych.
+
+
+### Trzecia kontrola szczegółowa AGI — AI Scientist, OpenHands i ToM
+
+Na podstawie tekstu `Analiza AGI I Ludzkich AI (1).PDF`, rozdziałów „W Pełni Zautomatyzowany Cykl Badawczy: The AI Scientist”, „OpenHands (OpenDevin)” oraz „SWE-bench”, dodano brakujące, osobne kryteria:
+- `2.01` AI Scientist: cztery etapy generowania hipotez, eksperymentowania w sandboxie, przygotowania pracy LaTeX i niezależnej symulowanej recenzji, z kontrolą cytowań i zgodą człowieka na publikację;
+- `2.02` OpenHands: agent server, bezpieczny terminal/przeglądarka, analiza dużych repozytoriów, iteracyjna diagnoza i weryfikowalna poprawka;
+- `2.03` Theory-of-Mind: ograniczone testy wnioskowania o intencji, kalibracja niepewności i human-in-the-loop; nie przypisuje się modelom świadomości ani wiedzy o stanie umysłu.
+
+**Weryfikacja repo po zapisach:** kanoniczny manifest `main_count=204`, `technical=64`, `production_approved=false`, `next_new_main_stage=2.04`. W trzech tekstowych reprezentacjach (`ROADMAP.md`, mirror, `README.md`) potwierdzono po 204 wiersze etapów głównych. Liczba pozycji: **204+64+10=278**. Nie oznaczono żadnego nowego etapu jako wykonanego. Dane procentowe/AGI z PDF są twierdzeniami autorów źródła, nie niezależnie potwierdzonymi wynikami OCAF.
+
+### Macierz domen: 20 PDF a Roadmapa
+
+| Wymaganie z dokumentacji | Identyfikatory Roadmapy | Wynik śledzenia |
+|---|---|---|
+| Tokio/Rust, kontrakty i integracja crate | 0.42, 1.90–1.91 | PLAN ISTNIEJE |
+| Zenoh TLS/SHM/zero-copy | 0.29–0.30, 0.46 | PLAN ISTNIEJE |
+| CRDT Automerge/Yrs bez autorytetu | 0.46, 1.91 | PLAN ISTNIEJE |
+| OTLP/trace propagation | 0.47, 1.91 | PLAN ISTNIEJE |
+| Dynamic MCP, schema, Tree-sitter/AST | 0.43, 0.50, 1.91 | PLAN ISTNIEJE |
+| OAuth 2.1 PKCE i izolacja tokenów | 0.44 | PLAN ISTNIEJE |
+| ZKP i hybrydowe PQC | 0.45 | PLAN ISTNIEJE |
+| WASI, Firecracker, Aya/eBPF | 0.39, 0.63, 1.84 | PLAN ISTNIEJE; ODBIÓR OTWARTY |
+| PostgreSQL HA i recovery | 0.40–0.41 | PLAN ISTNIEJE; ODBIÓR OTWARTY |
+| L402/x402, budżet, escrow | 0.49, 1.85–1.89 | PLAN ISTNIEJE |
+| RAG, pamięć temporalna | 0.48, 1.65–1.68 | PLAN ISTNIEJE |
+| OWASP ASI, sandbox i audyt | 0.39, 0.43–0.45, 0.63 | PLAN ISTNIEJE |
+| Loihi 2 / SNN | 0.91 | PLAN ISTNIEJE; EKSPERYMENT |
+| Opto-holografia i topologiczne kodowanie | 0.93–0.94 | PLAN ISTNIEJE; BADANIA |
+| Neuromorfika i wetware | 0.91–0.92 | PLAN ISTNIEJE; BADANIA |
+| Agents Builder Cloud/Windows/macOS/Android/iOS Code/NoCode | 0.50–0.55, 10 produktów | PLAN ISTNIEJE; PRODUKTY NIEWYKONANE |
+| OpenCog Hyperon/MeTTa/PLN/ECAN | 1.95 | **ODZYSKANE Z PDF** |
+| ACT-R, Soar, LIDA | 1.96 | **ODZYSKANE Z PDF** |
+| Letta/MemGPT, Mem0, Cognee, Zep/Graphiti, LoCoMo/LongMemEval | 1.97 | **ODZYSKANE Z PDF** |
+| DSPy, BootstrapFewShot/MIPRO/GEPA | 1.98 | **ODZYSKANE Z PDF** |
+| SWE-bench Verified i N-run | 1.99 | **ODZYSKANE Z PDF** |
+| Taskweaving DAG / BabyAGI | 2.00 | **ODZYSKANE Z PDF** |
+| AI Scientist i czterofazowy cykl badawczy | 2.01 | **ODZYSKANE Z PDF** |
+| OpenHands/OpenDevin agent server | 2.02 | **ODZYSKANE Z PDF** |
+| ToM-SWE / human approval | 2.03 | **ODZYSKANE Z PDF** |
+
+**Werdykt śledzenia wymagań na poziomie domen:** wszystkie powyższe 25 wyodrębnionych domen mają teraz jawne identyfikatory Roadmapy. To weryfikacja zakresu planowania, **nie** poświadczenie kompletnej implementacji ani formalne potwierdzenie każdej z 307 stron na poziomie atomowego wymagania.
