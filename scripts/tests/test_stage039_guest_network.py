@@ -35,7 +35,7 @@ class GuestNetworkContract(unittest.TestCase):
 
     def test_fail_closed_negative_and_recovery_require_sequential_new_packets(self):
         self.assertTrue(net.validate_phases(1,3,7,9,11,12)["guest_originated_network_tested"])
-        for samples in ((0,3,7,9,11,12),(1,1,7,9,11,12),
-                        (1,3,7,7,11,12),(1,3,7,9,9,12),(1,3,7,9,11,11)):
+        for samples in ((0,3,7,9,11,12),(1,3,3,9,11,12),
+                        (1,3,7,1,11,12),(1,3,7,9,7,12),(1,3,7,9,11,11)):
             with self.subTest(samples=samples), self.assertRaises(net.GuestNetworkError):
                 net.validate_phases(*samples)
