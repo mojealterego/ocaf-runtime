@@ -65,6 +65,13 @@ class VmCgroupResourcesContracts(unittest.TestCase):
             with self.subTest(key=key,bad=bad), self.assertRaises(vm.VmResourceError):
                 vm.verify_resource_snapshot(data, guest_mem_mib=256)
 
+    def test_kernel_cpu_stats_may_include_namespaced_dotted_counters(self):
+        # Linux exposes core_sched.force_idle_usec on some kernels.
+        snap = healthy_snapshot()
+        snap["cpu.stat"] += "core_sched.force_idle_usec 0\\n"
+        result = vm.verify_resource_snapshot(snap, guest_mem_mib=256)
+        self.assertEqual(result["status"], "KERNEL_VM_CGROUP_LIMITS_ENFORCED")
+
     def test_fail_closed_if_oom_or_pids_max_is_recorded(self):
         for key, value in [
             ("memory.events", "oom 1\noom_kill 0\n"),
