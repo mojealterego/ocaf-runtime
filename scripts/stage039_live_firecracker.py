@@ -152,6 +152,9 @@ def _copy_pinned(src: Path, dest: Path, digest: str) -> None:
         os.fsync(dfd)
         if h.hexdigest() != digest:
             raise LiveFirecrackerError("guest input changed during secure staging")
+        # umask 077 would silently turn 0444 into 0400. Once jailed,
+        # Firecracker runs as the explicitly unprivileged UID, not root.
+        os.fchmod(dfd, 0o444)
     except OSError as exc:
         raise LiveFirecrackerError("failed to pin guest input") from exc
     finally:
@@ -215,6 +218,9 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
         cgroup.mkdir(mode=0o700)
         created = True
         (root / "guest").mkdir(parents=True, mode=0o755)
+        # Private operator umask must not block the jailed UID from
+        # traversing the guest directory to its reviewed read-only images.
+        (root / "guest").chmod(0o755)
         # The jailer itself creates its chroot at this conventional location;
         # pre-staging is supported by Firecracker's jailer documentation.
         for asset, file in (("guest_kernel", "vmlinux.bin"),
@@ -229,6 +235,7 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
             json.dump(staging["firecracker_config"], f, separators=(",", ":"))
             f.flush()
             os.fsync(f.fileno())
+            os.fchmod(f.fileno(), 0o444)
         cmd = build_jailer_command(jailer, firecracker, vm_id, uid, gid,
                                    chroot_base, cgroup_name)
         log = root.parent / "serial-console.log"
