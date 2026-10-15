@@ -34,6 +34,12 @@ class JailedNetError(ValueError):
     pass
 
 
+def bound_nonce(nonce: str) -> str:
+    if not isinstance(nonce, str) or gn.NONCE.fullmatch(nonce) is None:
+        raise JailedNetError("checkpoint nonce must be 16 lowercase hexadecimal bytes")
+    return nonce
+
+
 def tap_setup_command(tap: str, ip: str, uid: int) -> list[str]:
     if (not isinstance(tap, str) or gn.TAP.fullmatch(tap) is None
             or ip not in {gn.TARGET["A"]["host"], gn.TARGET["B"]["host"]}
@@ -105,7 +111,8 @@ def _live_evidence(proc,vm_id,cgroup,log,sock,tenant)->dict:
 
 def execute(*, firecracker:Path, firecracker_sha:str, jailer:Path, jailer_sha:str,
             jailer_base:Path, kernel:Path, kernel_sha:str, rootfs:Path,
-            rootfs_sha:str, probe_source:Path, report_path:Path)->dict:
+            rootfs_sha:str, probe_source:Path, report_path:Path,
+            nonce_override:str|None=None)->dict:
     if os.geteuid()!=0 or os.uname().machine!="x86_64":
         raise JailedNetError("privileged ephemeral KVM host required")
     fc._verified_binary(firecracker,firecracker_sha)
@@ -117,7 +124,7 @@ def execute(*, firecracker:Path, firecracker_sha:str, jailer:Path, jailer_sha:st
     gn._check_pinned(rootfs,rootfs_sha)
     if probe_source.is_symlink() or not probe_source.is_file():
         raise JailedNetError("untrusted guest PID1 source")
-    nonce=secrets.token_hex(8)
+    nonce=secrets.token_hex(8) if nonce_override is None else bound_nonce(nonce_override)
     suffix=secrets.token_hex(5)[:5]
     taps={"A":"oc39a"+suffix,"B":"oc39b"+suffix}
     nft="ocaf39"+secrets.token_hex(4)
@@ -230,6 +237,8 @@ def execute(*, firecracker:Path, firecracker_sha:str, jailer:Path, jailer_sha:st
             "status":"TWO_JAILED_GUEST_ORIGINATED_UDP_TENANTS_ISOLATED_AND_FAULTED",
             "schema_version":1,
             "observed_at_utc":datetime.now(timezone.utc).isoformat(),
+            "checkpoint_nonce":nonce,
+            "checkpoint_nonce_sha256":hashlib.sha256(nonce.encode("ascii")).hexdigest(),
             "host_boot_id":Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
             "scope":"two simultaneous real jailed Firecracker guests, host nftables TAP deny/recovery, one ephemeral runner",
             "jailer_used_for_both_guests":True,
@@ -272,6 +281,7 @@ def main()->int:
     for arg in ("firecracker-sha256","jailer-sha256","kernel-sha256","rootfs-sha256"):
         ap.add_argument("--"+arg,required=True)
     ap.add_argument("--ack-privileged-dual-jailed-guest-network-lab",action="store_true")
+    ap.add_argument("--checkpoint-nonce",help="public run-scoped nonce from separately verified handoff state")
     a=ap.parse_args()
     if not a.ack_privileged_dual_jailed_guest_network_lab:
         ap.error("explicit privileged dual jailed guest network acknowledgement required")
@@ -282,7 +292,8 @@ def main()->int:
                        jailer_base=a.jailer_base,
                        kernel=a.kernel,kernel_sha=a.kernel_sha256,
                        rootfs=a.rootfs,rootfs_sha=a.rootfs_sha256,
-                       probe_source=a.probe_source,report_path=a.report)
+                       probe_source=a.probe_source,report_path=a.report,
+                       nonce_override=a.checkpoint_nonce)
     except (OSError,ValueError,subprocess.SubprocessError) as exc:
         ap.error(str(exc))
     print(json.dumps({"status":result["status"],"production_approved":False}))
