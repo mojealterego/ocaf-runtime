@@ -1,0 +1,64 @@
+name: OCAF 0.39 Firecracker-KVM-Aya admission CI (NOT production approval)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage039-microvm-preflight.yml
+      - scripts/stage039_microvm_gate.py
+      - scripts/tests/test_stage039_microvm_gate.py
+      - docs/STAGE039_MICROVM_EBPF.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  microvm-admission:
+    name: Default-deny admission and factual Linux KVM/eBPF host observations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Regression suite - reject privilege escape, tampering and forged approval
+        run: python3 -m unittest discover -s scripts/tests -p test_stage039_microvm_gate.py -v
+      - name: Python source syntax verification
+        run: python3 -m py_compile scripts/stage039_microvm_gate.py scripts/tests/test_stage039_microvm_gate.py
+      - name: Observe KVM, cgroup v2, PID1 systemd, BTF and bpffs on actual CI Linux
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          python3 scripts/stage039_microvm_gate.py --host-only --report stage039-host-preflight.json
+          rc=$?
+          set -e
+          test "$rc" -eq 0 || test "$rc" -eq 1
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("stage039-host-preflight.json").read_text())
+          expected={'linux_x86_64','systemd_pid1','cgroup_v2_limits_available',
+                    'kvm_device_character','kvm_device_accessible',
+                    'btf_core_available','bpffs_mounted'}
+          if set(r.get('checks', {})) != expected:
+              raise SystemExit('incomplete host observation')
+          if (r.get('microvm_launched') is not False or
+              r.get('ebpf_attached') is not False or
+              r.get('stage_039_complete') is not False or
+              r.get('production_approved') is not False):
+              raise SystemExit('fabricated microVM/eBPF evidence')
+          target="HOST_PREREQUISITES_ONLY" if r['passed'] else "NO_GO"
+          if r['status'] != target:
+              raise SystemExit('host gate failed closed incorrectly')
+          print('STAGE039_LINUX_FACTUAL_PREFLIGHT:',r['status'])
+          PY
+      - name: Preserve read-only stage 0.39 evidence (not guest-VM attestation)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage039-linux-kvm-ebpf-readonly-preflight
+          path: stage039-host-preflight.json
+          retention-days: 30
+          if-no-files-found: warn
