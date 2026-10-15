@@ -18,6 +18,8 @@ on:
       - scripts/tests/test_render_readme_roadmap.py
       - scripts/validate_roadmap_v11.py
       - scripts/tests/test_validate_roadmap_v11.py
+      - scripts/tests/test_historical_implementation_evidence.py
+      - docs/HISTORICAL_IMPLEMENTATION_AUDIT_2026-10-15.md
       - .github/workflows/roadmap-v11-builders.yml
   workflow_dispatch:
 
@@ -38,6 +40,7 @@ jobs:
           set -euo pipefail
           python3 -m py_compile scripts/render_readme_roadmap.py scripts/tests/test_render_readme_roadmap.py
           python3 -m unittest discover -s scripts/tests -p test_render_readme_roadmap.py -v
+          python3 -m unittest discover -s scripts/tests -p test_historical_implementation_evidence.py -v
           python3 -m py_compile scripts/validate_roadmap_v11.py scripts/tests/test_validate_roadmap_v11.py
           python3 -m unittest discover -s scripts/tests -p test_validate_roadmap_v11.py -v
       - name: Ensure pinned root, original 10 products and historical status are identical and no new numbering invented
