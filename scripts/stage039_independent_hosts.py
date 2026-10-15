@@ -23,8 +23,12 @@ def verify_hosts(a:dict,b:dict)->dict:
         raise IndependentHostError("expected distinct tenant attestations")
     for key in ("host_boot_id","hostname"):
         if (not isinstance(a.get(key),str) or not isinstance(b.get(key),str)
-                or not a[key] or not b[key] or a[key]==b[key]):
-            raise IndependentHostError("two separate observed hosts required: "+key)
+                or not a[key] or not b[key]):
+            raise IndependentHostError("missing observed kernel-host evidence: "+key)
+    # Linux boot_id is kernel-instance evidence. Cloud-hosted runner image
+    # hostnames can be reused even for physically distinct ephemeral VMs.
+    if a["host_boot_id"] == b["host_boot_id"]:
+        raise IndependentHostError("both reports refer to the same kernel boot")
     ga,gb=a.get("guest"),b.get("guest")
     if not isinstance(ga,dict) or not isinstance(gb,dict):
         raise IndependentHostError("missing real guest boot evidence")
@@ -49,7 +53,8 @@ def verify_hosts(a:dict,b:dict)->dict:
         "status":"TWO_INDEPENDENT_EPHEMERAL_KERNEL_HOST_KVM_SIGKILL_PROVED",
         "verified_at_utc":datetime.now(timezone.utc).isoformat(),
         "two_separate_kernel_boot_ids_observed":True,
-        "two_distinct_hostnames_observed":True,
+        "hostnames_are_distinct":a["hostname"] != b["hostname"],
+        "hostname_uniqueness_required":False,
         "two_distinct_vm_ids_observed":True,
         "two_separate_guest_kernels_booted":True,
         "two_independent_vm_sigkill_and_cgroup_drain_tests":True,
