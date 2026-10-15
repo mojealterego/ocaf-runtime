@@ -95,6 +95,30 @@ jobs:
               raise SystemExit('host gate failed closed incorrectly')
           print('STAGE039_LINUX_FACTUAL_PREFLIGHT:',r['status'])
           PY
+      - name: Actual KVM ioctl VM-create on host if available, truthful NO-GO otherwise
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          python3 scripts/stage039_kvm_ioctl.py --report stage039-kvm-ioctl.json
+          rc=$?
+          set -e
+          test "$rc" -eq 0 || test "$rc" -eq 1
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("stage039-kvm-ioctl.json").read_text())
+          if any(r.get(k) is not False for k in (
+              "firecracker_booted", "guest_booted", "ebpf_attached",
+              "microvm_launched", "production_approved", "stage_039_complete")):
+              raise SystemExit("cannot infer actual guest boot from KVM ioctl")
+          if r.get("kvm_vm_fd_created") is True:
+              if r["status"] != "KVM_IOCTL_VM_CREATED_NOT_BOOTED" or r["api_version_verified"] is not True:
+                  raise SystemExit("invalid real ioctl evidence")
+          elif r.get("status") != "NO_GO":
+              raise SystemExit("missing KVM must remain NO_GO")
+          print("STAGE039_ACTUAL_KERNEL_KVM_IOCTL:",r["status"])
+          PY
       - name: Preserve read-only stage 0.39 evidence (not guest-VM attestation)
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -103,5 +127,6 @@ jobs:
           path: |
             stage039-host-preflight.json
             stage039-operator-release-state.json
+            stage039-kvm-ioctl.json
           retention-days: 30
           if-no-files-found: warn
