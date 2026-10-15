@@ -1,0 +1,39 @@
+name: OCAF canonical roadmap v10 full restoration — 195 + 64 + 33
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/roadmap-canonical-v10.yml
+      - docs/ROADMAP_FULL_ECOSYSTEM_2026.md
+      - docs/archive/ROADMAP_FULL_ECOSYSTEM_v9_2026-10-15.md
+      - docs/roadmap/canonical_v10_inventory.json
+      - scripts/validate_roadmap_canonical.py
+      - scripts/tests/test_validate_roadmap_canonical.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  no-loss-restoration-gate:
+    name: Verify 195 stages + 64 substages + 33 repositories, preserve original v9
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Run fail-closed canonical Roadmap invariants and tampering regression
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/validate_roadmap_canonical.py scripts/tests/test_validate_roadmap_canonical.py
+          python3 -m unittest discover -s scripts/tests -p test_validate_roadmap_canonical.py -v
+      - name: Verify no source stage, substep or upstream lost
+        run: |
+          set -euo pipefail
+          python3 scripts/validate_roadmap_canonical.py \
+            --inventory docs/roadmap/canonical_v10_inventory.json \
+            --roadmap docs/ROADMAP_FULL_ECOSYSTEM_2026.md \
+            --legacy-archive docs/archive/ROADMAP_FULL_ECOSYSTEM_v9_2026-10-15.md
+          echo "OCAF_CANONICAL_ROADMAP_195_MAIN_64_SUBSTAGES_33_REFERENCES_LOSSLESS"
