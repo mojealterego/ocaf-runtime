@@ -28,7 +28,7 @@ class GuestWasiBindings(unittest.TestCase):
                     "broker_vm_binding":{
                         "status":"BROKER_SO_PEERCRED_TWO_REAL_JAILED_VM_BOOT_BOUND",
                         "real_kernel_so_peercred_authenticated_broker":True,
-                        "durable_broker_leases_matched":True,
+                        "durable_sqlite_leases_matched":True,
                         "admission_before_vm_launch":True,
                         "durable_broker_leases_released_after_vm_crashes":True,
                         "wasi_executed_inside_guest":False,
