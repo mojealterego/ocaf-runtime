@@ -15,7 +15,8 @@ class LiveContract(unittest.TestCase):
             def poll(self): return None
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/"serial-console.log"
-            path.write_bytes(b"[    0.00] Linux version 6.1.0\\n"+INIT)
+            path.write_bytes(b"[    0.00] Linux version 6.1.0\\n"+INIT+
+                             b"OCAF039_GUEST_CRNG_READY\\n")
             def finish():
                 time.sleep(.12)
                 with path.open("ab") as f: f.write(OUTPUT+PASS)
