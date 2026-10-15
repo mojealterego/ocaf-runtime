@@ -7,6 +7,7 @@ on:
       - .github/workflows/stage039-real-firecracker-jailer.yml
       - scripts/stage039_live_firecracker.py
       - scripts/stage039_vm_egress.py
+      - scripts/stage039_vm_resources.py
       - scripts/stage039_live_egress.py
       - scripts/tests/test_stage039_vm_egress.py
       - stage039/aya-guard/**
@@ -180,7 +181,21 @@ jobs:
           assert egress["aya_detached"] is True
           assert egress["guest_network_egress_tested"] is False
           assert egress["production_approved"] is False
+          resources=boot["vm_resource_limits"]
+          assert resources["status"]=="KERNEL_VM_CGROUP_LIMITS_ENFORCED"
+          assert resources["kernel_limits"]["memory.swap.max"]=="0"
+          assert resources["kernel_limits"]["memory.oom.group"]=="1"
+          assert int(resources["kernel_limits"]["memory.max"])>0
+          assert int(resources["kernel_limits"]["pids.max"])==96
+          assert resources["observed_memory_peak_bytes"]>0
+          assert resources["observed_pids_peak"]>0
+          assert resources["kernel_oom_count"]==0
+          assert resources["kernel_oom_kill_count"]==0
+          assert resources["kernel_pids_quota_hits"]==0
+          assert resources["vm_cgroup_inode"]==egress["vm_cgroup_inode"]
+          assert resources["production_approved"] is False
           print("STAGE039_REAL_FIRECRACKER_JAILER_GUEST_LINUX_BOOT_PROVED")
+          print("STAGE039_LIVE_KERNEL_CGROUP_RESOURCE_LIMITS_AND_PEAKS_PROVED")
           print("STAGE039_LIVE_VM_HOST_CGROUP_AYA_EGRESS_NEGATIVE_AND_RECOVERY_PROVED")
           PY
       - name: Diagnose sandbox failure using only official public guest image boot logs
