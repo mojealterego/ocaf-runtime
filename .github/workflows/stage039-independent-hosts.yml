@@ -148,6 +148,19 @@ jobs:
               json.dumps(host,sort_keys=True,indent=2)+"\n")
           print("STAGE039_REAL_INDEPENDENT_LINUX_HOST_GUEST_SIGKILL_PROVED",tenant)
           PY
+      - name: Diagnose failure using bounded public demo guest serial console
+        if: failure()
+        shell: bash
+        env:
+          TENANT: ${{ matrix.tenant }}
+        run: |
+          set -euo pipefail
+          PREFIX="/opt/ocaf039-independent-${GITHUB_RUN_ID}-${TENANT}"
+          echo "OCAF039_INDEPENDENT_JAILER_FAILURE_DIAGNOSTICS"
+          sudo -n find "$PREFIX/jailer" -maxdepth 8 -type f -name serial-console.log \
+            -exec tail -n 70 '{}' ';' || true
+          sudo -n find "$PREFIX/jailer" -maxdepth 5 -type f -name firecracker.socket -print || true
+          sudo -n find "$PREFIX/jailer" -maxdepth 5 -type d -print || true
       - name: Preserve separate real machine evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
