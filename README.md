@@ -838,4 +838,20 @@ Signed WASIp1 wykonuje przypiętą kopię Wasmtime przez uszczelniony Linux `mem
 
 ## Etap 0.39 — mikroVM Firecracker/KVM i Aya/eBPF (rozpoczęty)
 
-**Zaimplementowano:** `scripts/stage039_microvm_gate.py` — fail-closed weryfikacja manifestu, podpisanych digestami SHA-256 artefaktów, deny-by-default polityki (jailer, brak sieci, RO rootfs, seccomp) i read-only host prerequisites (`/dev/kvm`, cgroup v2, systemd, bpffs, BTF). Testy: `scripts/tests/test_stage039_microvm_gate.py`, CI: `.github/workflows/stage039-microvm-preflight.yml`. **Nie uruchamia VM ani Aya/eBPF**; artefakty CI nie dowodzą izolacji. `0.38 PARTIAL / NO-GO`; `0.39 STARTED / NO-GO`; produkcja **NO-GO**.
+**Zaimplementowano:** `scripts/stage039_microvm_gate.py` — fail-closed weryfikacja manifestu, podpisanych digestami SHA-256 artefaktów, deny-by-default polityki (jailer, brak sieci, RO rootfs, seccomp) i read-only host prerequisites (`/dev/kvm`, cgroup v2, systemd, bpffs, BTF). Testy: `scripts/tests/test_stage039_microvm_gate.py`, CI: `.github/workflows/stage039-microvm-preflight.yml`. **Nie uruchamia VM ani Aya/eBPF**; artefakty CI nie dowodzą izolacji. `0.38 ADMINISTRATIVELY CLOSED (operator directive), odbiór techniczny A01–A12 NO-GO`; `0.39 IN PROGRESS / NO-GO`; produkcja **NO-GO**.
+
+
+### 0.39.2 — lokalny ledger brokera (transakcje i fencing)
+
+`scripts/stage039_broker_ledger.py` dodaje trwałe rezerwacje SQLite WAL,
+anty-replay `request_id`, wymaganie monotonicznego `leader_epoch`,
+własność `tenant:agent:workload`, TTL i bounded-capacity przy sprawdzonym
+pinowaniu manifestu i gotowości hosta. Nową bazę tworzy z mode 0600
+jeszcze przed wywołaniem `sqlite3.connect`. Testy: 
+`scripts/tests/test_stage039_broker_ledger.py`, 17 regresji na faktycznym SQLite,
+obok 12 testów statycznego admission. **To bramka admission, a nie
+rzeczywisty broker Firecracker ani uruchomiony Aya/eBPF.** 
+Dyspozycja operatora o administracyjnym zamknięciu 0.38:
+[docs/STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md](docs/STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md).
+Weryfikacja produkcyjna pozostaje zależna od rzeczywistych testów
+i raportu bezpieczeństwa; release gate nie jest omijany automatycznie.
