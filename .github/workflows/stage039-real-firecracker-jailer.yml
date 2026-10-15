@@ -149,6 +149,17 @@ jobs:
           assert boot["production_approved"] is False
           print("STAGE039_REAL_FIRECRACKER_JAILER_GUEST_LINUX_BOOT_PROVED")
           PY
+      - name: Diagnose sandbox failure using only official public guest image boot logs
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
+          echo "OCAF039_JAILER_FAILURE_DIAGNOSTIC_BEGIN"
+          sudo -n find "$PREFIX/jailer" -maxdepth 7 -name serial-console.log -type f \
+            -exec tail -n 100 '{}' ';' || true
+          sudo -n find "$PREFIX/jailer" -maxdepth 5 -type f -name 'firecracker*' -print || true
+          echo "OCAF039_JAILER_FAILURE_DIAGNOSTIC_END"
       - name: Preserve actual KVM boot and negative/error evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
