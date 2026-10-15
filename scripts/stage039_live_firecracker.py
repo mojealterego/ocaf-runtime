@@ -25,6 +25,7 @@ import stage039_firecracker_spec as spec
 import stage039_kvm_ioctl as kvm
 import stage039_vm_egress as vm_egress
 import stage039_vm_resources as vm_resources
+import stage039_vm_crash as vm_crash
 import stage039_microvm_gate as gate
 
 VALID_VM = re.compile(r"[a-z0-9][a-z0-9-]{0,63}\Z")
@@ -263,7 +264,7 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
         chroot_base: Path, uid: int, gid: int, timeout: int,
         aya_loader: Path | None = None, aya_loader_sha: str | None = None,
         aya_program: Path | None = None, aya_program_sha: str | None = None,
-        aya_seconds: int = 15) -> dict:
+        aya_seconds: int = 15, crash_after_proof: bool = False) -> dict:
     import secrets
     inputs = (aya_loader, aya_loader_sha, aya_program, aya_program_sha)
     if any(value is not None for value in inputs) and any(value is None for value in inputs):
@@ -367,6 +368,9 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
                 # including any effects accumulated by the Aya host probe.
                 result["vm_resource_limits"] = vm_resources.audit_running_resource_limits(
                     cgroup, guest_mem_mib, resource_plan["vm_cgroup_inode"])
+                if crash_after_proof:
+                    result["vm_sigkill_fault"] = vm_crash.kill_and_verify(
+                        proc, vm_id, cgroup, deadline_seconds=5)
                 return result
             except LiveFirecrackerError as exc:
                 last_rejection = str(exc)
@@ -410,6 +414,8 @@ def main() -> int:
     p.add_argument("--aya-seconds", type=int, default=15)
     p.add_argument("--ack-privileged-vm-cgroup-egress-probe", action="store_true")
     p.add_argument("--ack-real-kvm-jailer-boot", action="store_true")
+    p.add_argument("--ack-vm-sigkill-fault", action="store_true",
+                   help="SIGKILL only the newly launched and verified test VM")
     a = p.parse_args()
     if not a.ack_real_kvm_jailer_boot:
         p.error("acknowledge real jailed KVM guest launch with --ack-real-kvm-jailer-boot")
@@ -428,7 +434,8 @@ def main() -> int:
                      aya_loader_sha=a.aya_loader_sha256,
                      aya_program=a.aya_program,
                      aya_program_sha=a.aya_program_sha256,
-                     aya_seconds=a.aya_seconds)
+                     aya_seconds=a.aya_seconds,
+                     crash_after_proof=a.ack_vm_sigkill_fault)
         gate.save_report(a.report, result)
     except (OSError, ValueError, LiveFirecrackerError) as exc:
         p.error(str(exc))
