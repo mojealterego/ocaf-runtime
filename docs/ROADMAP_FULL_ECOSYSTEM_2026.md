@@ -1,4 +1,4 @@
-# OCAF FULL ECOSYSTEM ROADMAP — consolidated evidence-led v6 (2026-10-15)
+# OCAF FULL ECOSYSTEM ROADMAP — consolidated evidence-led v7 (2026-10-15)
 
 ## Mandat operatora: ciągły rozwój bez odrębnych potwierdzeń (2026-10-15)
 
@@ -26,6 +26,12 @@ traceability document:
 [33-repository adaptation matrix](ROADMAP_33_REPOSITORY_ADAPTATIONS_2026-10-15.md).
 Stage 0.39 execution milestones expanded below. Upstream descriptions and
 code examples in PDFs are *proposals*; they are not production-test evidence.
+
+## Revision v7 — dwa dodatkowe katalogi Rust, 29 stron (2026-10-15)
+
+Uwzględniono **dwa nowo dostarczone PDF-y**: 15-stronicowy przegląd `OmniNous/OmniHoncho/OmniCloudShield/OmniMask/OmniVox/OmniGrant` oraz 14-stronicowy przegląd `OmniZeroClick/OmniGraphiti/OmniDiT/OmniGameSubsystems/OmniMCPO/OmniCloudBurst`. Zgodnie z dokumentami i techniczną selekcją zostało zapisanych **15 dodatkowych etapów 1.00–1.14** oraz P0 testy **0.39.19–0.39.21, 0.40.3–0.40.5, 0.41.5–0.41.6** wraz z zależnościami i falsyfikowalnymi warunkami zakończenia. Nie uznajemy przykładowego kodu w PDF za wdrożony komponent; nie obiecujemy skuteczności ochrony przed zero-click, rzeczywistego DID/eSIM, nieposiadanej infrastruktury GPU, zewnętrznej certyfikacji ani dostępu do opłaconych API. **Wersja źródłowa i kompletna matryca śledzenia: [ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md](ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md).**
+
+Pierwsze obowiązkowe priorytety wykonawcze: **rzeczywisty WASIp1 import wykonany przez interpreter *wewnątrz* Firecracker guest i związany z autoryzacją brokera**, następnie **rzeczywiste PostgreSQL WAL streaming między osobnymi kernelami przez żywy TCP i fencing**, a dopiero potem **wielogodzinne testy chaos/soak**. Obserwacje pośrednie nadal mają własne dowody, lecz nie są równoznaczne z zamknięciem tych kryteriów.
 
 ## Mandatory scope and coverage
 
