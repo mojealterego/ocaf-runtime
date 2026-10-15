@@ -90,12 +90,19 @@ def preflight() -> dict:
         if not path.exists():
             raise AcceptanceError("cgroup-v2/BPF/BTF host prerequisite missing: " + str(path))
     mountpoint = False
+    bpf_mounted = False
     for line in Path("/proc/mounts").read_text().splitlines():
         cols = line.split()
-        if len(cols) > 2 and cols[1] == str(CGROUP_ROOT) and cols[2] == "cgroup2":
+        if len(cols) <= 2:
+            continue
+        if cols[1] == str(CGROUP_ROOT) and cols[2] == "cgroup2":
             mountpoint = True
+        if cols[1] == str(BPF_MOUNT) and cols[2] == "bpf":
+            bpf_mounted = True
     if not mountpoint:
         raise AcceptanceError("not a unified cgroup-v2 mount")
+    if not bpf_mounted:
+        raise AcceptanceError("bpffs must be mounted with filesystem type bpf")
     return {"kernel": os.uname().release,
             "boot_id": Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
             "hostname": socket.gethostname()}
