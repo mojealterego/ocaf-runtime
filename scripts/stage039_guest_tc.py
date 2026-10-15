@@ -9,6 +9,7 @@ OCAF stage039 ephemeral TAP, never to the machine's physical devices.
 from __future__ import annotations
 import hashlib
 import re
+import shutil
 from pathlib import Path
 
 import stage039_guest_network as gn
@@ -56,7 +57,10 @@ def compile_bpf(*, source:Path, elf:Path)->str:
         or not isinstance(elf,Path) or not elf.is_absolute()
         or elf.exists() or source == elf):
         raise TcGuestError("untrusted eBPF source or destination")
-    gn._run(["clang","-O2","-Wall","-Wextra","-Werror","-target","bpf",
+    compiler=shutil.which("clang-18") or shutil.which("clang")
+    if compiler is None:
+        raise TcGuestError("no pin-compatible LLVM BPF compiler on host")
+    gn._run([compiler,"-O2","-Wall","-Wextra","-Werror","-target","bpf",
              "-c",str(source),"-o",str(elf)],timeout=45)
     if not elf.is_file() or not 100<elf.stat().st_size<1048576:
         raise TcGuestError("BPF ELF build failed")
