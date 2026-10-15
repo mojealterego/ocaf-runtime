@@ -15,8 +15,8 @@ class LiveContract(unittest.TestCase):
             def poll(self): return None
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/"serial-console.log"
-            path.write_bytes(b"[    0.00] Linux version 6.1.0\\n"+INIT+
-                             b"OCAF039_GUEST_CRNG_READY\\n")
+            path.write_bytes(b"[    0.00] Linux version 6.1.0\n"+INIT+
+                             b"OCAF039_GUEST_CRNG_READY\n")
             def finish():
                 time.sleep(.12)
                 with path.open("ab") as f: f.write(OUTPUT+PASS)
@@ -27,10 +27,10 @@ class LiveContract(unittest.TestCase):
                 self.assertTrue(evidence["wasi_preview1_fd_write_observed_inside_guest"])
                 self.assertTrue(evidence["guest_wasmtime_child_exited_zero"])
             finally:t.join(timeout=1)
-            path.write_bytes(b"[    0.00] Linux version 6.1.0\\n"+INIT+FAILED)
+            path.write_bytes(b"[    0.00] Linux version 6.1.0\n"+INIT+FAILED)
             with self.assertRaisesRegex(live.LiveFirecrackerError,"failed"):
                 live.await_real_guest_wasi_execution(Live(),path,seconds=1)
-            path.write_bytes(b"[    0.00] Linux version 6.1.0\\n"+INIT)
+            path.write_bytes(b"[    0.00] Linux version 6.1.0\n"+INIT)
             with self.assertRaisesRegex(live.LiveFirecrackerError,"deadline"):
                 live.await_real_guest_wasi_execution(Live(),path,seconds=1)
 
@@ -40,7 +40,7 @@ class LiveContract(unittest.TestCase):
             def poll(self): return 143
         with tempfile.TemporaryDirectory() as folder:
             path=Path(folder)/"serial"
-            path.write_bytes(b"Linux version 6.1\\n")
+            path.write_bytes(b"Linux version 6.1\n")
             with self.assertRaisesRegex(live.LiveFirecrackerError,"exited"):
                 live.await_real_guest_wasi_execution(Dead(),path,seconds=1)
 
