@@ -6,6 +6,15 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import stage040_postgres_ha as h
 
 class PgBenchReliabilityContracts(unittest.TestCase):
+    def test_pg_basebackup_must_force_checkpoint_before_heavy_wal_soak(self):
+        argv=h.pg_basebackup_command("/usr/lib/postgresql/16/bin/pg_basebackup",15432,Path("/tmp/ocaf40-b"))
+        self.assertIn("--checkpoint=fast",argv)
+        self.assertIn("--wal-method=stream",argv)
+        self.assertEqual(argv[-1],"--write-recovery-conf")
+        for args in ((15432,Path("../unsafe")),(0,Path("/tmp/ocaf40-b")),(True,Path("/tmp/ocaf40-b"))):
+            with self.subTest(args=args),self.assertRaises(h.PostgresHAError):
+                h.pg_basebackup_command("/usr/lib/postgresql/16/bin/pg_basebackup",args[0],args[1])
+
     def test_pgbench_parses_actual_committed_load(self):
         raw="""pgbench (16.10)\ntransaction type: <builtin: TPC-B (sort of)>\nscaling factor: 1\nnumber of clients: 8\nnumber of threads: 2\nduration: 30 s\nnumber of transactions actually processed: 12345\nlatency average = 5.6 ms\ntps = 411.12 (without initial connection time)\n"""
         r=h.validate_pgbench_load(raw,30,8)
