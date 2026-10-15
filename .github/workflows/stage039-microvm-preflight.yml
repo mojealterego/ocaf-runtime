@@ -13,6 +13,8 @@ on:
       - scripts/tests/test_stage039_broker_ipc.py
       - scripts/stage039_kvm_ioctl.py
       - scripts/tests/test_stage039_kvm_ioctl.py
+      - stage039/aya-guard/**
+      - stage039/aya-ebpf-egress/**
       - scripts/release_readiness.py
       - scripts/tests/test_release_readiness.py
       - ops/OCAF_RELEASE_OPERATOR_DECISION_2026-10-15.json
@@ -61,6 +63,8 @@ jobs:
           PY
       - name: Kernel KVM API ioctl and real VM fd creation regression
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_kvm_ioctl.py -v
+      - name: Compile Aya userspace loader and run local-policy unit tests (NO kernel attachment in CI)
+        run: cargo test --manifest-path stage039/aya-guard/Cargo.toml --verbose
       - name: Python source syntax verification
         run: |
           python3 -m py_compile scripts/stage039_microvm_gate.py scripts/tests/test_stage039_microvm_gate.py
