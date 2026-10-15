@@ -11,6 +11,8 @@ on:
       - scripts/tests/test_stage039_broker_ledger.py
       - scripts/stage039_broker_ipc.py
       - scripts/stage039_broker_vm_binding.py
+      - scripts/stage039_guest_wasi.py
+      - scripts/tests/test_stage039_guest_wasi.py
       - scripts/tests/test_stage039_broker_vm_binding.py
       - scripts/tests/test_stage039_broker_ipc.py
       - scripts/stage039_kvm_ioctl.py
@@ -126,12 +128,15 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_mtls_fencing.py -v
       - name: Cryptographic signed audit/operator dossier has distinct Ed25519 verifier and NO production self-approval
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_signed_acceptance.py -v
+      - name: Validate actual guest WASI import and two-VM broker-bound serial receipts fail closed
+        run: python3 -m unittest discover -s scripts/tests -p test_stage039_guest_wasi.py -v
       - name: Python source syntax verification
         run: |
           python3 -m py_compile scripts/stage039_microvm_gate.py scripts/tests/test_stage039_microvm_gate.py
           python3 -m py_compile scripts/stage039_broker_ledger.py scripts/tests/test_stage039_broker_ledger.py
           python3 -m py_compile scripts/stage039_broker_ipc.py scripts/tests/test_stage039_broker_ipc.py
           python3 -m py_compile scripts/stage039_broker_vm_binding.py scripts/tests/test_stage039_broker_vm_binding.py
+          python3 -m py_compile scripts/stage039_guest_wasi.py scripts/tests/test_stage039_guest_wasi.py
           python3 -m py_compile scripts/stage039_kvm_ioctl.py scripts/tests/test_stage039_kvm_ioctl.py
           python3 -m py_compile scripts/stage039_firecracker_spec.py scripts/tests/test_stage039_firecracker_spec.py
           python3 -m py_compile scripts/stage039_live_egress.py scripts/tests/test_stage039_live_egress.py
