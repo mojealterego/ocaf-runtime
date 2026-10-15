@@ -1024,3 +1024,12 @@ nie produkcyjna infrastruktura HA. Nie dowiedziono rzeczywistej partycji
 między hostami, przełączenia usługi, host power loss lub podpisanego
 niezależnego audytu. **0.38 COMPLETE (decyzja operatora);
 0.39 IN PROGRESS; produkcja NO-GO.**
+
+
+### 0.39.12–0.39.14 — real jailed guest UDP + kernel TC eBPF + cross-kernel checkpoint (2026-10-15)
+
+**CI PASS**: two simultaneous isolated jailed Firecracker tenant VMs originate UDP from their own guest PID1 via distinct TAPs; nftables deny/recovery, tenant B survives tenant A SIGKILL, and a kernel **TC ingress eBPF** program attached specifically to tenant A TAP blocks **actual guest-originated UDP** while B remains reachable; after detach A recovers. [Real KVM TC/eBPF proof 38722682521](https://github.com/mojealterego/ocaf-runtime/actions/runs/38722682521).
+
+**CI PASS**: two separate hosted Linux kernels, first kills jailed guests, then a second boots new jailed guests and emits the same source-checkpoint nonce after a bounded, SHA-256-correlated GitHub artifact handoff. [Cross-kernel cold restart 38722139701](https://github.com/mojealterego/ocaf-runtime/actions/runs/38722139701).
+
+These are **ephemeral CI** tests; TC BPF is kernel classifier loaded by `tc` (not Aya userspace attach). Artifact-mediated cold restart is not real-time two-host mTLS RPC/failover. Independent audit and signed production/operator acceptance remain absent. **0.39 IN PROGRESS / production NO-GO.** [Detailed proof ledger](docs/STAGE039_NETWORK_EBPF_CROSS_HOST_EVIDENCE_2026-10-15.md).

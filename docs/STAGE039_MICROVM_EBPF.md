@@ -410,3 +410,12 @@ nie produkcyjna infrastruktura HA. Nie dowiedziono rzeczywistej partycji
 między hostami, przełączenia usługi, host power loss lub podpisanego
 niezależnego audytu. **0.38 COMPLETE (decyzja operatora);
 0.39 IN PROGRESS; produkcja NO-GO.**
+
+
+## 0.39.12–0.39.14 — real jailed guest egress through TC kernel eBPF
+
+Two real Firecracker tenants run concurrently **inside jailer**, both emit authenticated nonce-tagged UDP from the guest over separate TAP interfaces. Negative/peer/control and recovery proofs passed both with host nftables and with a **real kernel TC eBPF direct-action ingress classifier** on tenant A TAP. A kernel BPF program ID and ELF SHA256 were recorded before verified detachment. [Actual KVM CI 38722682521](https://github.com/mojealterego/ocaf-runtime/actions/runs/38722682521).
+
+Across two distinct ephemeral Linux kernels a source checkpoint after confirmed VM SIGKILL was delivered as an immutable GitHub Actions artifact and the second host booted new jailed guests, which emitted the same tagged UDP nonce. [CI 38722139701](https://github.com/mojealterego/ocaf-runtime/actions/runs/38722139701).
+
+No claim of real-time interhost mTLS RPC, physical host power-loss partition tests, Aya-program enforcement on **guest** traffic, or production readiness is made. [Evidence ledger and unresolved acceptance](STAGE039_NETWORK_EBPF_CROSS_HOST_EVIDENCE_2026-10-15.md).

@@ -802,3 +802,14 @@ nie produkcyjna infrastruktura HA. Nie dowiedziono rzeczywistej partycji
 między hostami, przełączenia usługi, host power loss lub podpisanego
 niezależnego audytu. **0.38 COMPLETE (decyzja operatora);
 0.39 IN PROGRESS; produkcja NO-GO.**
+
+
+## 0.39.12–0.39.14 — verified JAILED guest TAP TC BPF and cross-host cold restart (2026-10-15)
+
+`0.39.12: PASS` — actual guest-originated UDP with **both** Firecracker machines jailed; different tenant UID/VM/cgroup and host `nftables` negative/restore + A crash/B isolation. [38721552535](https://github.com/mojealterego/ocaf-runtime/actions/runs/38721552535).
+
+`0.39.13: PASS` — artifact-mediated checkpoint nonce preserved after SIGKILL and recovered by a **new** jailed guest on a **different** GitHub Actions Linux kernel; separate host `boot_id`, same nonce in guest UDP, both jobs real, [38722139701](https://github.com/mojealterego/ocaf-runtime/actions/runs/38722139701). Cold restart only; no online HA or durable host test.
+
+`0.39.14: PASS` — actual guest packet drops by **kernel TC eBPF** loaded on the TAP of a jailed tenant A while jailed tenant B packets still arrive; remove TC and prove A recovers, [38722682521](https://github.com/mojealterego/ocaf-runtime/actions/runs/38722682521). This is NOT Aya CgroupSkb filtering guest traffic.
+
+**Open release gates:** independent durable production host pair + authenticated interhost RPC/partition/failover and recovery, per-tenant network namespaces and soak tests, independent signed audit and real operator signature. [Full source-backed evidence ledger](STAGE039_NETWORK_EBPF_CROSS_HOST_EVIDENCE_2026-10-15.md). **Milestone 0.38 COMPLETE project-status, 0.39 still IN PROGRESS; prod NO-GO.**
