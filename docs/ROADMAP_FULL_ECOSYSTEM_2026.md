@@ -64,7 +64,7 @@ traceability. Version numbers advance only after real release approvals.
 | 0.36 | Identity/RPC | Application-layer certificate private-key proof + HMAC and pinning | Implement (opt-in) | Existing CI tests; genuine transport TLS peer binding remains blocked |
 | 0.37 | Identity/RPC | Separate TLS 1.3-bound ingress verifies live session leaf against RPC sender pin and SAN; CRL/reload/worker migration remains | Implemented experimentally / NO-GO | Real handshake and swapped-cert tests in CI; external PKI/CRL and multi-host still pending |
 | 0.38 | Execution | Restricted Wasmtime WASIp1 adapter (see [implementation](WASI_EXECUTION_038.md) and [acceptance contract](PRIORITY_038_EXECUTION_CONTRACT.md)) | **ADMINISTRATIVELY CLOSED BY OPERATOR DIRECTIVE / technical A01–A12 NO-GO** | Operator requested project-level closure and transition to 0.39; documented in [directive](STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md). Passing CI is not persistent two-host acceptance, independent signed security audit or verified production release. |
-| 0.39 | Execution | Firecracker microVM broker + eBPF Aya controls + isolation attestations | **IN PROGRESS — static admission + durable SQLite fencing/replay; P0 / NO-GO** | `scripts/stage039_microvm_gate.py` and `scripts/stage039_broker_ledger.py`, 29 regressions, real Linux host preflight; no Firecracker launch, KVM guest, Aya attach or signed isolation attestation; mobile separate. |
+| 0.39 | Execution | Firecracker microVM broker + eBPF Aya controls + isolation attestations | **IN PROGRESS — static admission + durable SQLite + kernel-authenticated AF_UNIX broker; P0 / isolation NO-GO** | `scripts/stage039_microvm_gate.py`, `scripts/stage039_broker_ledger.py`, `scripts/stage039_broker_ipc.py`; 39 regression tests (12+17+10), Linux KVM/eBPF host preflight. No live microVM, actual Aya attach or independent host attestation yet. |
 | 0.40 | HA | Three physical host PostgreSQL HA, real leader fencing and failover | P0 / NO-GO | Host power loss, split-brain, former leader effect-writes rejected |
 | 0.41 | Reliability | Backup/restore, partition chaos, recovery and prolonged soak | P0 / NO-GO | RTO/RPO SLO, restore proof, job audit recovery, operator acceptance |
 | 0.42 | Release | Production hardening, SBOM/provenance, license and audit GO/NO-GO | P0 / NO-GO | External security review; release version not mistaken for priority number |
@@ -539,3 +539,22 @@ Rozpoczęto implementację **0.39.1 (fail-closed Firecracker/KVM/Aya admission i
 ## Decyzja administracyjna i postęp 0.39.2 — 2026-10-15
 
 Na wyraźne polecenie operatora prace backlogowe 0.38 zostały **administracyjnie zamknięte**, a zespół przeszedł do 0.39. Jest to status zarządczy, a nie deklaracja rzeczywistych PASS dla A01–A12 ani zgoda systemu na ominięcie produkcyjnego release gate. Szczegóły w [dyspozycji](STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md). 0.39.2 dostarcza lokalny, trwały rejestr przyjęć `scripts/stage039_broker_ledger.py` z anty-replay, per-workload fencing leader_epoch, kontrolą capacity, TTL, trwałą SQLite WAL i odrzuceniem nieautoryzowanych konfiguracji. Udowodniono 17 testów broker ledger oraz 12 wcześniejszych testów statycznego admission w GitHub Actions. Nadal **nie** uruchomiono microVM ani nie podpięto Aya/eBPF; autoryzacja wdrożeniowa pozostaje NO-GO.
+
+
+## Operator release authorization and 0.39.3 — 2026-10-15
+
+Owner issued an explicit follow-up command to **remove the administrative production release hold**. Machine-readable decision:
+`ops/OCAF_RELEASE_OPERATOR_DECISION_2026-10-15.json` sets
+`administrative_release_blocked=false`. An explicit, two-flag
+`scripts/release_readiness.py --operator-override-policy <file>
+--ack-unverified-production-risk` execution authorizes administrative
+release continuation without deleting any technical failed/unknown checks.
+Default release readiness and external security verification remain
+fail-closed; this is **not** assurance certification or proof of deployment.
+
+Stage 0.39.3 now includes a bounded, kernel `SO_PEERCRED`-authenticated
+AF_UNIX IPC broker with per-UID and one-tenant/agent policies, framing and
+SQLite admission/release integration. Tested with 10 real socket regressions
+in addition to 29 earlier tests. Guest KVM launch and Aya enforcement
+remain incomplete. Development milestone started, production microVM
+isolation **NO-GO**.
