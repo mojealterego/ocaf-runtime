@@ -5,7 +5,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from scripts.release_readiness import REQUIRED_EVIDENCE, evaluate
+from scripts.release_readiness import REQUIRED_EVIDENCE, evaluate, apply_operator_override
 
 NOW = datetime(2026, 10, 13, 12, 0, tzinfo=timezone.utc)
 
@@ -111,6 +111,66 @@ checksum = "0123456789abcdef" * 4
         filename.symlink_to(target)
         report = evaluate(self.repo, manifest, NOW)
         self.assertIn('evidence_path_unsafe:' + REQUIRED_EVIDENCE[0], report['blockers'])
+
+
+    def operator_policy(self):
+        dest = self.root / 'directive.json'
+        policy = {
+            "schema_version": 1,
+            "git_branch": "main",
+            "operator_directive_date": "2026-10-15",
+            "operator_authorization_source": "explicit user instruction in ChatGPT conversation",
+            "operator_decision": "UNBLOCK_PRODUCTION_DEPLOYMENT",
+            "administrative_release_blocked": False,
+            "stage_038_administrative_status": "CLOSED_BY_OPERATOR",
+            "stage_039_development": "AUTHORIZED",
+            "safety_acceptance_a01_a12": "INCOMPLETE",
+            "third_party_audit_evidence": "INCOMPLETE",
+            "verified_production_readiness": False,
+            "production_deployed": False,
+            "risk_waiver_notes": "Operator explicitly accepts administrative release authorization, without falsely claiming evidence completion."
+        }
+        dest.write_text(json.dumps(policy), encoding='utf-8')
+        return dest
+
+    def test_operator_explicit_unblock_preserves_technical_failures(self):
+        raw = evaluate(self.repo, None, NOW)
+        self.assertIn('evidence_manifest_missing', raw['blockers'])
+        authorized = apply_operator_override(raw, self.operator_policy(), acknowledged=True)
+        self.assertTrue(authorized['administrative_release_unblocked'])
+        self.assertEqual(authorized['status'], 'OPERATOR_AUTHORIZED_UNVERIFIED')
+        self.assertFalse(authorized['production_approved'])
+        self.assertFalse(authorized['technical_evidence_passed'])
+        self.assertIn('evidence_manifest_missing', authorized['blockers'])
+
+    def test_operator_unblock_requires_own_explicit_acknowledgement(self):
+        raw = evaluate(self.repo, None, NOW)
+        with self.assertRaises(ValueError):
+            apply_operator_override(raw, self.operator_policy(), acknowledged=False)
+
+    def test_operator_unblock_rejects_malformed_or_unsupported_policy(self):
+        raw = evaluate(self.repo, None, NOW)
+        target = self.operator_policy()
+        for change in ({'operator_decision': 'BLOCKED'},
+                       {'verified_production_readiness': True},
+                       {'production_deployed': True},
+                       {'administrative_release_blocked': True},
+                       {'extra_unknown': 1}):
+            with self.subTest(change=change):
+                data = json.loads(target.read_text())
+                data.update(change)
+                target.write_text(json.dumps(data), encoding='utf-8')
+                with self.assertRaises(ValueError):
+                    apply_operator_override(raw, target, acknowledged=True)
+                target = self.operator_policy()
+
+    def test_operator_unblock_does_not_accept_policy_symlink(self):
+        raw = evaluate(self.repo, None, NOW)
+        target = self.operator_policy()
+        aliased = self.root / 'aliased-policy.json'
+        aliased.symlink_to(target)
+        with self.assertRaises(ValueError):
+            apply_operator_override(raw, aliased, acknowledged=True)
 
 
 if __name__ == '__main__':
