@@ -136,8 +136,13 @@ def run_lab(*,pg_bin:Path,report:Path)->dict:
             r=pgcmd(node,cmd,timeout=6,check=check)
             return r.stdout.strip() if check else r.returncode
         def start(node):
-            ctl(node,"-o",f"-p {port} -h {ip[node]}",
-                "-l",str(base/(node+".log")),"-w","start",timeout=35)
+            try:
+                ctl(node,"-o",f"-p {port} -h {ip[node]}",
+                    "-l",str(base/(node+".log")),"-w","start",timeout=35)
+            except NetnsPGError as exc:
+                logfile=base/(node+".log")
+                tail=logfile.read_text(errors="replace")[-2200:] if logfile.exists() else "no server log"
+                raise NetnsPGError("PostgreSQL "+node+" kernel netns start failed: "+tail) from exc
             running.add(node)
         pgcmd("a",[exe("initdb"),"-D",str(root["a"]),
                   "--auth-local=trust","--auth-host=trust",
