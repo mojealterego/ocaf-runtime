@@ -200,24 +200,58 @@ def _bounded_console_evidence(log: Path) -> str:
 
 
 def _api_state(sockpath: Path) -> dict:
+    """Read a bounded, Content-Length-framed Firecracker HTTP response.
+
+    Firecracker may keep the Unix socket open after sending its reply.
+    Waiting for EOF would turn a valid Running response into a timeout.
+    """
+    max_header = 8192
+    max_body = 24576
     try:
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.settimeout(1)
-        try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+            sock.settimeout(1)
             sock.connect(str(sockpath))
             sock.sendall(b"GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
-            result = b""
-            while len(result) < 32768:
-                b = sock.recv(8192)
-                if not b:
-                    break
-                result += b
-        finally:
-            sock.close()
-        header, data = result.split(b"\r\n\r\n", 1)
-        if b" 200 " not in header.split(b"\r\n", 1)[0]:
-            return {}
-        return json.loads(data)
+
+            received = bytearray()
+            while b"\r\n\r\n" not in received:
+                if len(received) > max_header:
+                    return {}
+                chunk = sock.recv(min(4096, max_header + 4 - len(received)))
+                if not chunk:
+                    return {}
+                received.extend(chunk)
+
+            header, body = bytes(received).split(b"\r\n\r\n", 1)
+            if len(header) > max_header:
+                return {}
+            lines = header.split(b"\r\n")
+            if not re.fullmatch(rb"HTTP/1\.[01] 200(?: [^\r\n]*)?", lines[0]):
+                return {}
+
+            lengths = []
+            for line in lines[1:]:
+                name, separator, value = line.partition(b":")
+                if not separator or not name:
+                    return {}
+                key = name.strip().lower()
+                if key == b"transfer-encoding":
+                    return {}
+                if key == b"content-length":
+                    raw_length = value.strip()
+                    if not raw_length or not raw_length.isdigit():
+                        return {}
+                    lengths.append(int(raw_length))
+            if len(lengths) != 1 or lengths[0] > max_body or len(body) > lengths[0]:
+                return {}
+
+            while len(body) < lengths[0]:
+                chunk = sock.recv(min(8192, lengths[0] - len(body)))
+                if not chunk:
+                    return {}
+                body += chunk
+            decoded = json.loads(body)
+            return decoded if isinstance(decoded, dict) else {}
     except (OSError, ValueError, UnicodeError):
         return {}
 
