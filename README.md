@@ -1001,3 +1001,26 @@ fałszywych zdarzeń. [Raport z wynikami i ograniczeniami](docs/STAGE039_VM_RESO
 **0.38 = COMPLETE (decyzja operatora), 0.39 = IN PROGRESS, produkcja = NO-GO.**
 Próba nie dowodzi odporności na awarię całego hosta ani izolacji
 ruchu emitowanego z wnętrza VM (gość bez interfejsu sieciowego).
+
+
+### 0.39 — rzeczywiste testy dwóch tenantów, ruchu guest UDP i oddzielnych hostów CI (2026-10-15)
+
+Zrealizowano **PASS dwóch równoczesnych jailed VM Firecracker/KVM**
+o różnych tenantach i inode cgroup; VM B pozostaje sprawna po SIGKILL VM A.
+W odrębnym rzeczywistym teście **dwa goście Firecracker inicjują UDP**
+na oddzielnych TAP; `nftables` blokuje tylko A, B działa, po zdjęciu
+blokady A odzyskuje ruch. [CI 38715926542](https://github.com/mojealterego/ocaf-runtime/actions/runs/38715926542).
+
+W dwóch oddzielnych jobach GitHub-hosted Linux uzyskano różne kernel
+`boot_id`, niezależne `KVM_CREATE_VM`, boot jailed Firecracker,
+SIGKILL VM i opróżnienie cgroup na **obu hostach**; osobny weryfikator
+porównał dowody i zakończył się PASS:
+[CI 38720667372](https://github.com/mojealterego/ocaf-runtime/actions/runs/38720667372).
+Szczegółowy [raport](docs/STAGE039_TWO_TENANTS_GUEST_NETWORK_INDEPENDENT_HOSTS_2026-10-15.md).
+
+**Rozgraniczenie:** test UDP korzystał z gości **bez jailer** i blokady
+`nftables`, nie Aya guest egress. Dwa hosty to efemeryczne VM CI,
+nie produkcyjna infrastruktura HA. Nie dowiedziono rzeczywistej partycji
+między hostami, przełączenia usługi, host power loss lub podpisanego
+niezależnego audytu. **0.38 COMPLETE (decyzja operatora);
+0.39 IN PROGRESS; produkcja NO-GO.**
