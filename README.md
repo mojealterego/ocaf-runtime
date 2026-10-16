@@ -1504,3 +1504,16 @@ Uzgodniono wymagania: PDF27 OmniSense (0.67); PDF28 OmniArbitrage (0.49), OmniCo
 
 ### PDF30–PDF33 — synchronizacja wymagań (2026-10-16)
 PDF30: aktywna inferencja, HDC i fraktalny rój → 0.67/0.98. PDF31: migracja wiedzy, proof-carrying code, energia i alignment → 0.55/0.63/0.98. PDF32: Agents Builder Cloud/Windows/macOS/Android/iOS × Code/NoCode, weryfikacja wizualna → 0.50–0.55. PDF33: OmniMath, Lean 4, egg/e-graph, Z3/cvc5 i ograniczone przeszukiwanie dowodów → 0.55/0.67. Status PLANNED_OR_UNVERIFIED. Przykłady PDF33 nie wykonują SMT ani Lean; kryteria i luki w ROADMAP.md.
+
+
+## PDF34–PDF36 — audyt wymagań i faz M0–M6 (2026-10-16)
+Źródło potwierdzone: raport „Kompleksowy Raport Badawczo-Architektoniczny: Koncepcja i Mapa Drogowa Systemu OCAF oraz JARVIS OMEGA INFINITY”, 12 stron (PDF34–36 w pakiecie użytkownika; przypisanie numeru konkretnego pliku wymaga osobnej identyfikacji). Wszystkie poniższe wymagania: PLANNED_OR_UNVERIFIED, bez dowodu testów repo/CI.
+- s. 2–3, M0: typowane SDK MCP rmcp/pmcp, stateless HTTP/streaming, control plane, zgodność protokołu, autoryzacja fail-closed. Kryterium: testy zgodności i obciążenie 500 równoległych żądań, bez założenia gwarantowanej przepustowości.
+- s. 3–4, M1: Zenoh pub/sub i query/reply, SHM/ZBytes zero-copy lokalnie, lifetime/ACL pamięci i fallback dla hostów zdalnych; CRDT Automerge/Yrs, offline-first, konflikt/recovery. Kryterium: wielohostowe testy izolacji, replay, trwałości i benchmark opóźnień; 10 000 agentów to cel eksperymentalny.
+- s. 4–5, M4: Tree-sitter/type-sitter do indeksacji kodu oraz semantyczny ranking narzędzi, redukcja JSON Schema; wymagana poprawność wyboru, negatywne testy prompt injection i niezależne ACL. KPI ≥95% trafności i ≥40% redukcji kontekstu to hipotezy do pomiaru.
+- s. 5–6, M2: CRDT, L402/macaroons/caveats, opcjonalne Lightning i ZKP Arkworks/Halo2. Wymagane wiążące dowody autoryzacji, replay protection, ledger/idempotencja, tenant isolation, audyt; żadnych automatycznych realnych płatności bez jawnego zatwierdzenia. Testy offline i negatywne.
+- s. 6–7, M3: Firecracker/KVM/Jailer/seccomp, WASI w gościu, broker uprawnień, Aya/eBPF, detekcja i odtwarzanie po kompromitacji. Brama 0.39; testy sprzętowe na realnym hoście, brak gwarancji izolacji <10 µs bez pomiarów.
+- s. 7–8, M4: PQC FIPS203 ML-KEM, FIPS204 ML-DSA, hybrydowy handshake X25519+ML-KEM, zarządzanie kluczami, downgrade resistance, interoperacyjność i rotacja. Wymagane testy kryptograficzne i integracyjne.
+- s. 8–10, M5–M6: neuromorficzny SNN/Loihi2 Hardware-in-the-Loop, fallback CPU/GPU, pomiar energy-delay product, sprzężenie PQC. Brak dostępu do sprzętu = R&D, nie INTEGRATED; KPI 90% EDP i <1 µs pełnego routingu/PQC niezweryfikowane.
+- s. 8–9: finansowanie FENG/NCBR/PARP/GAPR i ryzyka dostępności sprzętu są hipotezami biznesowymi, nie dowodami przyznania dotacji.
+Mapowanie: M0 do MCP/tool gateway; M1 do transport/cluster/registry; M2 do auth/ops; M3 do 0.39 i recovery; M4 do narzędzi/AST i security; M5–M6 do późnych etapów R&D. Zachować istniejące numery etapów i bramy 0.38–0.41. Liczby i twierdzenia marketingowe PDF nie są statusami implementacji.
