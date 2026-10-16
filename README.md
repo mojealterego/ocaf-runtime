@@ -1404,3 +1404,8 @@ Added **40 main roadmap stages 1.55–1.94 plus 16 technical subtasks**, reflect
 ### PDF 09 — wymagania systemów agentowych i symulacji społecznych
 
 Źródło: `Analiza AGI I Ludzkich AI (1).PDF`, s. 5–11. Kanoniczne szczegóły i kryteria odbioru: [ROADMAP.md](ROADMAP.md) oraz `docs/roadmap/canonical_v11_inventory.json`. Zakres: 2.03 Generative Agents/Lyfe/MetaMind/ToM-SWE (opt-in social simulations, intent hypotheses, sensitive data privacy); 1.98 DSPy (holdout optimization); 2.05 Agent-Zero/Hermes (supervised self-programming); 2.01 AI Scientist (reproducible experiments); 2.00 AutoGPT/BabyAGI (bounded task DAG); 2.06 GodMode (operator GUI/HITL); 2.02 OpenHands (sandboxed engineering); 1.99 SWE-bench Verified/mini-SWE-agent (N-run, regression and reproducibility). Wszystkie wymienione elementy są **wymaganiami planowanymi, nie potwierdzonymi integracjami**. Bez zmiany historycznej numeracji.
+
+
+### Nowe etapy po 207 historycznych pozycjach
+
+Dla wymagań PDF 09 utworzono **208–215**: 208 symulacje społeczne/ToM, 209 DSPy, 210 Agent-Zero/Hermes, 211 AI Scientist, 212 AutoGPT/BabyAGI, 213 GodMode, 214 OpenHands, 215 SWE-bench/mini-SWE-agent. Poprzednie etapy 1.98–2.06 pozostają historycznymi pozycjami badawczymi, nie są automatycznie ukończone. Następny numer: **216**. Status nowych etapów: PLANNED.
