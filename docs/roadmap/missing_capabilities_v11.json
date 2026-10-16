@@ -13,7 +13,7 @@
   },
   "counts": {
     "ten_original_agents_builder_variants": 10,
-    "scope_gaps": 27
+    "scope_gaps": 31
   },
   "items": [
     {
@@ -231,7 +231,40 @@
       "condition": "UNVERIFIED",
       "basis": "PDF20 pp.15-22; separate demo swarms only",
       "repair": "Versioned typed design/build/test artifacts, capability scoped auth, lifecycle, checkpoints and trace correlation"
+    },
+    {
+      "id": "PDF21-OMNIFORGE-001",
+      "component": "OmniForge Bevy ECS / Unreal C++ engine code generation and semantic repo-map",
+      "parent": "0.67",
+      "condition": "UNVERIFIED",
+      "basis": "PDF21 pp.20-23 hardcoded AST_SILNIKA_100%_UPDATED and system_ruch_gracza.rs",
+      "repair": "Version-pinned engine API indexing, typed patch generation, real Bevy/Unreal builds and regression tests"
+    },
+    {
+      "id": "PDF21-OMNIFORGE-002",
+      "component": "OmniForge GLSL/HLSL shader compilation, headless Vulkan profiling",
+      "parent": "0.98",
+      "condition": "UNVERIFIED",
+      "basis": "PDF21 pp.21-23 shader path and 144 FPS are hardcoded",
+      "repair": "Compile shader, validate SPIR-V, run reproducible GPU workloads with supported driver and hardware"
+    },
+    {
+      "id": "PDF21-OMNIFORGE-003",
+      "component": "OmniForge L402 3D PBR/mesh asset purchasing and provenance",
+      "parent": "0.49",
+      "condition": "UNVERIFIED",
+      "basis": "PDF21 pp.21-23 fake asset purchase and fixed path",
+      "repair": "Signed/authorized merchant integration, tenant budgets, license, receipt, replay protection, refunds and audit"
+    },
+    {
+      "id": "PDF21-OMNIFORGE-004",
+      "component": "OmniForge deterministic ECS physics ticks and sandbox execution",
+      "parent": "0.55",
+      "condition": "UNVERIFIED",
+      "basis": "PDF21 pp.21-23 test returns static framerate 144",
+      "repair": "Deterministic physics test corpus, reproducible sandbox runs, negative cases and per-engine version matrix"
     }
   ],
-  "pdf20_source": "PDF20 pp.18-21; OmniE2E is a swarm, not an additional Agents Builder product"
+  "pdf20_source": "PDF20 pp.18-21; OmniE2E is a swarm, not an additional Agents Builder product",
+  "pdf21_source": "PDF21 pp.20-23 OmniForge; source examples are stubs, not implementation"
 }
