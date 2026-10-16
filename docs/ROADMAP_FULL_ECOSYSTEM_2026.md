@@ -850,3 +850,35 @@ Kryteria odbioru: ROADMAP.md. Historyczne etapy bez renumeracji. Łącznie 222 e
 
 ### Etap 230 — PDF38: transport mobilny, lokalizacja i źródła RSS
 **Status: PLANNED.** Integracje 4G/5G, GNSS, MSISDN bez ujawniania danych, RSS, autoryzacja i ograniczenia platformowe. Odbiór: rzeczywista implementacja, testy pozytywne i negatywne, CI/SHA, właściwa infrastruktura; przykłady z PDF nie są dowodem implementacji.
+
+
+## PDF37–PDF40 — etapy 223–231 (2026-10-16)
+
+### Etap 223 — Taksonomia systemów agentowych i frameworków
+**Status: PLANNED.** PDF38 s.1–58; katalog implementacji i frameworków, klasyfikacja, ocena dojrzałości, nie utożsamiać referencji z integracją. Wymagane: typowane API Rust, fail-closed authorization, izolacja tenantów, testy negatywne i integracyjne, dowód CI oraz walidacja na właściwym środowisku. Przykłady PDF nie stanowią implementacji.
+
+### Etap 224 — Registry agent skills i 110+ umiejętności miękkich
+**Status: PLANNED.** PDF39 s.1–51; typowane kontrakty Rust, wersjonowanie, walidacja, sandbox, rejestr umiejętności i testy. Wymagane: typowane API Rust, fail-closed authorization, izolacja tenantów, testy negatywne i integracyjne, dowód CI oraz walidacja na właściwym środowisku. Przykłady PDF nie stanowią implementacji.
+
+### Etap 225 — Negocjacje wieloagentowe i aukcje zasobów
+**Status: PLANNED.** PDF39 s.3; licytacja GPU/API, fairness, quota, cost-latency-accuracy, dynamic throttling. Wymagane: typowane API Rust, fail-closed authorization, izolacja tenantów, testy negatywne i integracyjne, dowód CI oraz walidacja na właściwym środowisku. Przykłady PDF nie stanowią implementacji.
+
+### Etap 226 — Telemetry-driven routing, bandyty i feedback
+**Status: PLANNED.** PDF39 s.4–5; epsilon-greedy, metryki, RLHF/RLAIF z nadzorem i rollback. Wymagane: typowane API Rust, fail-closed authorization, izolacja tenantów, testy negatywne i integracyjne, dowód CI oraz walidacja na właściwym środowisku. Przykłady PDF nie stanowią implementacji.
+
+### Etap 227 — Konsensus ekspertów, samonaprawa i grounding
+**Status: PLANNED.** PDF39 s.5–9; weighted vote, bounded retries, actor-critic, dowody źródłowe. Wymagane: typowane API Rust, fail-closed authorization, izolacja tenantów, testy negatywne i integracyjne, dowód CI oraz walidacja na właściwym środowisku. Przykłady PDF nie stanowią implementacji.
+
+### Etap 228 — Bezpieczna dekompozycja DAG i delegacja narzędzi
+**Status: PLANNED.** PDF39 s.9–10; typed graph, semantic routing, uprawnienia i real tool calls. Wymagane: typowane API Rust, fail-closed authorization, izolacja tenantów, testy negatywne i integracyjne, dowód CI oraz walidacja na właściwym środowisku. Przykłady PDF nie stanowią implementacji.
+
+### Etap 229 — Polimorficzny transport i discovery łączności
+**Status: PLANNED.** PDF40 s.1–23; IrDA, BLE, NFC, UWB, Wi-Fi, Li-Fi, FSO, LPWAN; capability negotiation i zgodność urządzeń. Wymagane: typowane API Rust, fail-closed authorization, izolacja tenantów, testy negatywne i integracyjne, dowód CI oraz walidacja na właściwym środowisku. Przykłady PDF nie stanowią implementacji.
+
+### Etap 230 — Mobilny i przemysłowy edge networking
+**Status: PLANNED.** PDF40 s.12–24; LTE/5G, NB-IoT, LoRaWAN, Thread/Matter, telemetry, security, ograniczenia radiowe. Wymagane: typowane API Rust, fail-closed authorization, izolacja tenantów, testy negatywne i integracyjne, dowód CI oraz walidacja na właściwym środowisku. Przykłady PDF nie stanowią implementacji.
+
+### Etap 231 — Interoperacyjność komunikacji i adapterów OCAF
+**Status: PLANNED.** PDF40 s.24–118; katalog protokołów, polityka kompatybilności, testy hardware-in-loop, brak domniemanej integracji. Wymagane: typowane API Rust, fail-closed authorization, izolacja tenantów, testy negatywne i integracyjne, dowód CI oraz walidacja na właściwym środowisku. Przykłady PDF nie stanowią implementacji.
+
+PDF37: zakres MCP/Zenoh/PQC/neuromorfika przypisany do istniejących 216–222 bez duplikacji.
