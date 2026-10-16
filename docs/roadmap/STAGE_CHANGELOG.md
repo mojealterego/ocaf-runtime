@@ -123,3 +123,9 @@ production_approved: false
 - Added DesignKognitywista_MCP, FrontendCSTGenerator and WizualnyKrytykWasm with Figma access, real code generation, isolated visual diff, accessibility checks and bounded iterative review to existing 0.57.
 - Mapped swarm role registration and OmniDev handoff to 1.92, and verified UI integration without replacing the ten Agents Builder products to 0.55.
 - Updated canonical v11 manifest and both mirrored roadmaps. Hardcoded tokens, fixed components and fixed visual scores are stubs, not implementation or test evidence.
+
+## 2026-10-16 — PDF 07 OmniUX requirements
+
+- Reviewed 21-page PDF07, especially chapter 12 describing three OmniUX roles: DesignKognitywista_MCP, FrontendCSTGenerator, WizualnyKrytykWasm.
+- Restored concrete Figma MCP, CST code generation, visual rendering, accessibility and bounded auto-refactor requirements to stage 0.57, cross-swarm integration to 1.92, builder separation to 0.55.
+- Updated canonical v11 and both mirrored roadmaps. Source's constant Figma tokens, fixed React Button and 0.99 score are not production evidence.
