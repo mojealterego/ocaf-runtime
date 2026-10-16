@@ -135,3 +135,10 @@ production_approved: false
 - Assigned the three named OmniUX roles (DesignKognitywista MCP, FrontendCSTGenerator, WizualnyKrytykWasm) to 0.57; cross-swarm authorization/orchestration to 1.92 and Agents Builder product boundary to 0.55.
 - Rejected fixed design tokens, static component generation, fixed visual similarity score and unverified 98 percent claim as production evidence.
 - Canonical manifest and both roadmap mirrors updated. Functional implementation, hardware tests and independent acceptance not verified.
+
+## 2026-10-16 — User PDF nr 2: Rust + Zenoh / six-phase architecture
+
+- Source: `Dokument bez nazwy (6).PDF` (14 pages); distinct from previously catalogued PDF 02/40.
+- Reconciled all six phases and supplementary sections with existing stages 0.39, 0.43–0.49, 0.55, 0.63, 0.91, 1.92. Added Rig adapter evaluation, JSON Schema fuzzing, bounded CRDT telemetry, real settlement/offline/replay checks and performance verification.
+- Explicitly rejected mock L402 invoice, constant preimage, fake execution success and unmeasured latency claims as production evidence.
+- Both roadmap mirrors synchronized; no new stage, no code/test/CI PASS or production approval claimed.
