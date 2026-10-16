@@ -1,5 +1,7 @@
 <!-- OCAF_README_ROADMAP_BEGIN -->
 
+![UWAGA CZYTAĆ — ROADMAPA NA GÓRZE REPOZYTORIUM](https://img.shields.io/badge/UWAGA-CZYTA%C4%86%20ROADMAP%C4%98-red?style=for-the-badge&labelColor=8B0000)
+
 <div align="center">
 <h1><font color="red">🔴 UWAGA CZYTAĆ 🔴</font></h1>
 <h2><font color="red">PEŁNA ROADMAPA OCAF JEST NA SAMEJ GÓRZE REPOZYTORIUM — NIE USUWAĆ, NIE PRZENOSIĆ, NIE SKRACAĆ!</font></h2>
