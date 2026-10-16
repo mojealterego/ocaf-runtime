@@ -816,3 +816,18 @@ Liczba wpisów: **56**. Nie zmienia to **215 etapów głównych**, **64 podetap�
 | PDF29 | 0.39 / 0.63 | OmniLatent i OmniAdaptive: typowane tensory, cross-examination, work stealing, chaos i narzędzia efemeryczne | UNVERIFIED | Testy izolacji, limitów, sandboxa i sprzątania |
 
 Przykładowe fragmenty Rust z dokumentów nie są dowodami implementacji ani wynikami testów. Historyczna numeracja i dziesięć wariantów Agents Builder pozostają bez zmian.
+
+
+### PDF30–PDF33 — uzgodnienie semantyczne (2026-10-16)
+
+Dokumenty: PDF30 `Architektura ... (10)` (33 s.), PDF31 `(11)` (40 s.), PDF32 `(12)` (44 s.) i PDF33 `Jarvis.PDF` (8 s.). Kolejne wersje architektury są kumulatywne: powtarzające się wymagania nie tworzą nowych etapów. Status poniżej oznacza **PLANNED_OR_UNVERIFIED**, a nie potwierdzoną implementację.
+
+| Źródło | Wymaganie | Przypisanie | Wymagane dowody |
+|---|---|---|---|
+| PDF30, sekcje 25–27 | Aktywna inferencja, topologiczna analiza wiedzy, HDC i sparse processing, spójność Gödlowska, fraktalny rój i logika | 0.67 / 0.98 | Typowane kontrakty, ograniczony budżet, poprawność numeryczna, testy regresji i niezależna walidacja formalna |
+| PDF31, sekcje 28–31 | Migracja wiedzy i logika kategoryjna; niezależność od substratu i proof-carrying code; budżet energetyczny; super-alignment i epistemiczna kontrola | 0.55 / 0.63 / 0.98 | Weryfikacja certyfikatów, zgodność ABI/WASI, limity energii, fail-closed i testy negatywne |
+| PDF32, sekcja 32 | Uniwersalny Agents Builder: Cloud/Windows/macOS/Android/iOS, każdy Code i NoCode (10 wariantów) | 0.50–0.55 | GUI na platformie, typed graph IR, kompilator, trwałość, walidacja, testy i publikacja |
+| PDF32, sekcja 33 | Wizualna weryfikacja formalna i budżetowanie Agents Builder | 0.51 / 0.55 | Wyniki rzeczywistego solvera, ścieżki kontrprzykładów, limity zasobów i testy E2E |
+| PDF33, s. 1–8 | OmniMath: Lean 4/Coq kernel, e-graph (egg), SMT-LIB/Z3/cvc5, bounded proof search; modelowy konsensus nie zastępuje dowodu | 0.55 / 0.67 | Weryfikowalne artefakty proof kernel, poprawne sorty SMT, kontrola timeout/unknown, testy soundness i regresji |
+
+**Krytyczne ograniczenia:** PDF33 nie wywołuje faktycznie solwera SMT ani Lean; porównanie AST i heurystyka dopasowania tekstu `"(not (= x x))"` nie są dowodem. Implementacja `EGraphSimplifier` jest sekwencyjnym przepisywaniem korzenia, nie e-graph. Dokument PDF32 zawiera przykłady z wartościami stałymi, które nie dowodzą działania na docelowych platformach. Nie przyjmować deklaracji o zerowej halucynacji, pełnej rozstrzygalności SMT ani automatycznym zatwierdzeniu zmian. Zachować bramy bezpieczeństwa 0.38–0.41 i odbiór operatora.
