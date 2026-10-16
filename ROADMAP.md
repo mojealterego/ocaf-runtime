@@ -658,19 +658,19 @@ Status: PLANNED/UNVERIFIED. Wydajność podana w PDF (m.in. 49%, 16x, 67 Gbps, 5
 Wspólne kryteria: typed I/O, najmniejsze uprawnienia, izolacja tenantów, audyt, timeout/retry/backoff, backpressure, budżety, kontrola człowieka i bezpieczeństwo danych. Rejestracja adaptera lub wymienienie frameworka nie jest integracją end-to-end. Status wszystkich nowych obowiązków: **PLANNED/UNVERIFIED**, dopóki kod, testy i CI nie dowiodą więcej.
 
 
-## Nowe etapy realizacyjne PDF 09 — 2.07–2.14
+## Nowe etapy realizacyjne PDF 09 — 208–215
 
-Źródło: `Analiza AGI I Ludzkich AI (1).PDF`, s. 5–11. Wcześniejsze 1.98–2.06 są zachowanymi historycznymi etapami badawczymi (PLANNED), **nie ukończonymi wdrożeniami**. Poniższe osiem etapów to nowe, osobne etapy dostarczenia funkcjonalności, dopisane po dotychczasowym ostatnim 2.06; powiązania z wcześniejszymi etapami pozostają jako zależności, bez usuwania historii.
+Źródło: `Analiza AGI I Ludzkich AI (1).PDF`, s. 5–11. Wcześniejsze 1.98–2.06 są zachowanymi historycznymi etapami badawczymi (PLANNED), **nie ukończonymi wdrożeniami**. Poniższe osiem etapów to nowe, osobne etapy dostarczenia funkcjonalności, dopisane po 207 historycznych pozycjach (ostatni historyczny identyfikator: 2.06); powiązania z wcześniejszymi etapami pozostają jako zależności, bez usuwania historii.
 
 | Nowy etap | Zakres | Zależność | Warunek odbioru | Status |
 |---|---|---|---|---|
-| **2.07** | Generative Agents/Lyfe, MetaMind/ToM-SWE: symulacje społeczne, teoria umysłu, modelowanie intencji, ochrona danych afektywnych | 2.03 | Zgoda i kontrola dostępu, retencja/usuwanie, izolacja tenantów, E2E i testy manipulacji | PLANNED |
-| **2.08** | DSPy: BootstrapFewShot, MIPRO, GEPA, wersjonowane optymalizacje i rollback | 1.98 | Powtarzalny holdout, brak data leakage, budżety i zatwierdzenie artefaktów | PLANNED |
-| **2.09** | Agent-Zero/Hermes: kontrolowane samodoskonalenie i akwizycja umiejętności w sandboxie | 2.05 | Negatywne testy eskalacji, injection i wycieku sekretów; zatwierdzenie zmian | PLANNED |
-| **2.10** | AI Scientist: hipotezy, eksperymenty, pochodzenie wyników, publikacja pod nadzorem | 2.01 | Niezależna replikacja, walidacja cytowań, audyt, operator approval | PLANNED |
-| **2.11** | AutoGPT/BabyAGI: tworzenie i priorytetyzacja zadań, DAG, limity delegacji, recovery | 2.00 | Testy zapętleń, anulowania, awarii, izolacji i idempotencji | PLANNED |
-| **2.12** | GodMode: rzeczywisty GUI operatora i human-in-the-loop | 2.06 | E2E GUI, fail-closed autoryzacja, trwały audyt i anulowanie | PLANNED |
-| **2.13** | OpenHands: izolowany serwer agenta, narzędzia CLI/browser, kontrolowany patch workflow | 2.02 | Testy E2E na repo, sandbox escape, command injection, wyciek sekretów, rollback | PLANNED |
-| **2.14** | SWE-bench Verified, mini-SWE-agent baseline, N-run i regresje | 1.99 | Przypięte środowisko, wielokrotne pomiary, niezależna walidacja i odtwarzalność | PLANNED |
+| **208** | Generative Agents/Lyfe, MetaMind/ToM-SWE: symulacje społeczne, teoria umysłu, modelowanie intencji, ochrona danych afektywnych | 2.03 | Zgoda i kontrola dostępu, retencja/usuwanie, izolacja tenantów, E2E i testy manipulacji | PLANNED |
+| **209** | DSPy: BootstrapFewShot, MIPRO, GEPA, wersjonowane optymalizacje i rollback | 1.98 | Powtarzalny holdout, brak data leakage, budżety i zatwierdzenie artefaktów | PLANNED |
+| **210** | Agent-Zero/Hermes: kontrolowane samodoskonalenie i akwizycja umiejętności w sandboxie | 2.05 | Negatywne testy eskalacji, injection i wycieku sekretów; zatwierdzenie zmian | PLANNED |
+| **211** | AI Scientist: hipotezy, eksperymenty, pochodzenie wyników, publikacja pod nadzorem | 2.01 | Niezależna replikacja, walidacja cytowań, audyt, operator approval | PLANNED |
+| **212** | AutoGPT/BabyAGI: tworzenie i priorytetyzacja zadań, DAG, limity delegacji, recovery | 2.00 | Testy zapętleń, anulowania, awarii, izolacji i idempotencji | PLANNED |
+| **213** | GodMode: rzeczywisty GUI operatora i human-in-the-loop | 2.06 | E2E GUI, fail-closed autoryzacja, trwały audyt i anulowanie | PLANNED |
+| **214** | OpenHands: izolowany serwer agenta, narzędzia CLI/browser, kontrolowany patch workflow | 2.02 | Testy E2E na repo, sandbox escape, command injection, wyciek sekretów, rollback | PLANNED |
+| **215** | SWE-bench Verified, mini-SWE-agent baseline, N-run i regresje | 1.99 | Przypięte środowisko, wielokrotne pomiary, niezależna walidacja i odtwarzalność | PLANNED |
 
-Nie deklarować IMPLEMENTED/TESTED/INTEGRATED bez kodu, uruchomionych testów i dowodów przypiętych do SHA. Następny wolny numer etapu: **2.15**.
+Nie deklarować IMPLEMENTED/TESTED/INTEGRATED bez kodu, uruchomionych testów i dowodów przypiętych do SHA. Następny wolny numer etapu: **216**.
