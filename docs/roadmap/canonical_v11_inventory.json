@@ -5267,5 +5267,42 @@
     ],
     "status": "PLANNED_OR_UNVERIFIED",
     "main_count_unchanged": true
+  },
+  "pdf25_reconciliation": {
+    "source": "PDF25",
+    "swarm": "OmniSec",
+    "pages": "15-19",
+    "stages": [
+      "0.38",
+      "0.39",
+      "0.43",
+      "0.49",
+      "0.55",
+      "0.63",
+      "0.98"
+    ],
+    "status": "PLANNED_OR_UNVERIFIED"
+  },
+  "pdf26_reconciliation": {
+    "source": "PDF26",
+    "swarms": [
+      "OmniCog",
+      "OmniEvolve",
+      "OmniSense"
+    ],
+    "pages": "16-19",
+    "stages": [
+      "0.38",
+      "0.39",
+      "0.40",
+      "0.41",
+      "0.43",
+      "0.49",
+      "0.55",
+      "0.63",
+      "0.67",
+      "0.98"
+    ],
+    "status": "PLANNED_OR_UNVERIFIED"
   }
 }
