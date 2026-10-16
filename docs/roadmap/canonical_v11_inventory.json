@@ -651,7 +651,7 @@
     {
       "id": "0.55",
       "title": "AGENTS BUILDER — security/verification/packaging dla wszystkich 10 wariantów",
-      "scope": "Gwarantowany wspólny per-project auth, tenant isolation, typed graph verification, koszt i quota, sandbox preview WASI dla serwerów, ograniczony runner mobilny, podpisany eksport, bezpieczna publikacja, release gate i traceable run receipts — obowiązuje wszystkie pięć platform × Code/NoCode. PDF02_RECONCILIATION: Optional Python/TypeScript @tool typed-introspection adapter must reject ambiguous/untrusted signatures and docstring injection; generated MCP schema cannot grant execution without sandboxed capability approval.",
+      "scope": "Gwarantowany wspólny per-project auth, tenant isolation, typed graph verification, koszt i quota, sandbox preview WASI dla serwerów, ograniczony runner mobilny, podpisany eksport, bezpieczna publikacja, release gate i traceable run receipts — obowiązuje wszystkie pięć platform × Code/NoCode. PDF02_RECONCILIATION: Optional Python/TypeScript @tool typed-introspection adapter must reject ambiguous/untrusted signatures and docstring injection; generated MCP schema cannot grant execution without sandboxed capability approval. PDF07_OMNIUX: Verified OmniUX UI components may integrate into Agents Builder, but all ten platform Code and NoCode products require independent GUI, persistence, sandbox and target-platform tests.",
       "acceptance": "Macierz 10/10: real build+GUI E2E każdego wariantu, negative privilege-edge, cycles, cost overrun, podpisań i fake publishing, opublikowany hash artefaktu + stage report.",
       "negative": "Jeśli choć jedna z 10 pozycji bez testu rzeczywistego — status całego Agents Builder pozostaje INCOMPLETE; żadnego automatycznego signing/sideload/płatności.",
       "dependencies": [],
@@ -678,7 +678,7 @@
     {
       "id": "0.57",
       "title": "OmniUX",
-      "scope": "Figma design integration, accessible component UI and visual diff",
+      "scope": "Figma design integration, accessible component UI and visual diff PDF07_OMNIUX: Required DesignKognitywista_MCP (tenant-scoped Figma design tokens and layout), FrontendCSTGenerator (real typed UI source generation and build), WizualnyKrytykWasm (isolated visual and accessibility tests). Replace hardcoded Figma tokens, static button and fixed visual score with real outputs and evidence. Bounded iterative refinement, visual baselines and human approval required.",
       "acceptance": "Design token checks, visual regression, accessibility",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -3220,7 +3220,7 @@
     {
       "id": "1.92",
       "title": "Core domain swarms integration",
-      "scope": "Bind OmniDev OmniUX OmniE2E OmniForge OmniWeb OmniMath and OmniSec to capability registry PDF06_OMNIDEV: Wire the three OmniDev roles to capability registry, authenticated Zenoh transport and CRDT only for non-authoritative shared context. Enforce per-tenant permissions, least privilege, fencing, replay/idempotency and operator approval for repo writes. OmniDev is not a substitute for ten Agents Builder products.",
+      "scope": "Bind OmniDev OmniUX OmniE2E OmniForge OmniWeb OmniMath and OmniSec to capability registry PDF06_OMNIDEV: Wire the three OmniDev roles to capability registry, authenticated Zenoh transport and CRDT only for non-authoritative shared context. Enforce per-tenant permissions, least privilege, fencing, replay/idempotency and operator approval for repo writes. OmniDev is not a substitute for ten Agents Builder products. PDF07_OMNIUX: Register all three OmniUX roles separately with typed I/O, Figma scoped permissions, tenant isolation, provenance, bounded delegation, Zenoh messaging and auditable handoff to OmniDev.",
       "acceptance": "Seven swarms execute real authorized fixture tasks with trace and audit",
       "negative": "Reject fabricated tool completion and missing sandbox",
       "dependencies": [
