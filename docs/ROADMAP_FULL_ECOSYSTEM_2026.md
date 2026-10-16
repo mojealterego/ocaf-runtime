@@ -928,3 +928,86 @@ Etapy 232–246 opisane szczegółowo w ROADMAP.md; wszystkie PLANNED. PDF43–4
 ### Dokumenty 48–50 — kontrola duplikatów (2026-10-16)
 
 Ponownie przesłane materiały: **48 = Notes_261014_204557.pdf (127 stron)**, **49 = Dokument bez nazwy.PDF (14 stron)**, **50 = Architektura OmniContext Agent Framework (OCAF) w ..(1).PDF (61 stron)**. Są to te same dokumenty merytoryczne, które uprzednio zarejestrowano jako PDF 46, 47 i 45. **Nie dopisano nowych etapów**: ich wymagania zostały już wpisane pod identyfikatorami **247–277** (PDF 45: 247–265; PDF 46: 266–270; PDF 47: 271–277). Kolejny wolny identyfikator pozostaje **278**. Ponowne przesłanie dokumentu nie oznacza nowej funkcjonalności ani wykonania testów.
+
+
+## Etapy 301–320 — kolejne trzy dokumenty PDF (2026-10-16)
+
+### Etap 301 — OmniNous Atropos RL i CNA
+**Status: PLANNED.** Źródło: PDF51 s.1,4-6. Zbieranie trajektorii RL, ocena nagród, kontrolowane dostrajanie LoRA i sterowanie aktywacjami CNA; walidacja modelu, prywatności i limitów treningu.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 302 — OmniHoncho IdentityMind i Groupchat Arbiter
+**Status: PLANNED.** Źródło: PDF51 s.1,6-7. Pamięć preferencji z kontrolą zgody, retencją i usuwaniem danych; deterministyczny arbiter kolejności wypowiedzi.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 303 — OmniCloudShield AntiStealer
+**Status: PLANNED.** Źródło: PDF51 s.2,7-8. Ochrona poświadczeń, metadanych chmurowych i kanałów eksfiltracji; polityka fail-closed, testy negatywne.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 304 — OmniSentry VoIP Guard
+**Status: PLANNED.** Źródło: PDF51 s.2,7-8. Weryfikacja SIP/STIR-SHAKEN, polityki dla połączeń nieatestowanych, honeypot i audyt; bez fałszywych deklaracji blokowania.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 305 — OmniMask IdentityRelay
+**Status: PLANNED.** Źródło: PDF51 s.2,9-10. Prawdziwy broker aliasów e-mail, filtrowanie trackerów, cykl życia i izolacja tenantów; brak fikcyjnych domen.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 306 — OmniTelecom eSIM/PBX
+**Status: PLANNED.** Źródło: PDF51 s.2,9-10. Integracja rzeczywistych DID, PBX i profili eSIM zgodnie z GSMA, autoryzacja i zgodność regulacyjna; brak syntetycznych ICCID jako dowodu.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 307 — OmniVox BenchmarkRouter
+**Status: PLANNED.** Źródło: PDF51 s.2-3,10-11. Routing TTS lokalny/chmurowy według pomiarów TTFAB, RTF, MOS, prywatności, awarii i budżetu.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 308 — OmniGrant Architect i ERP
+**Status: PLANNED.** Źródło: PDF51 s.3,11-12. Walidowane źródła konkursów, kryteria TRL, budżety, kosztorysy i audyt pochodzenia danych.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 309 — OmniPlasmic AST Compiler
+**Status: PLANNED.** Źródło: PDF51 s.3,11-12. Kompilator wizualnego IR/AST i flag funkcji z kompatybilnością Agents Builder Code/NoCode 0.50–0.55.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 310 — Zenoh SHM + Automerge/Yrs + embedded
+**Status: PLANNED.** Źródło: PDF52 s.1; PDF53 s.1-2. Pomiar IPC zero-copy, CRDT convergence, obsługa zenoh-pico/nostd, backpressure i kompatybilność.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 311 — OpenTelemetry produkcyjny pipeline
+**Status: PLANNED.** Źródło: PDF52 s.1; PDF53 s.1-3. Batch exporter, propagacja kontekstu Tokio, ParentBased sampling, atrybuty środowiska, shutdown i testy utraty danych.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 312 — CoALA UALA Titans memory
+**Status: PLANNED.** Źródło: PDF52 s.1,5-6; PDF53 s.1,3. Oddzielna pamięć working/episodic/semantic/procedural, bramka niepewności, eksperymentalne Titans; izolacja i usuwanie pamięci.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 313 — Red Queen Gödel Machine i type-sitter
+**Status: PLANNED.** Źródło: PDF52 s.2,7-8; PDF53 s.1,3-4. Ewaluacja mutacji w epokach, examiner freeze, selective erasure, AST architecture guard i regresje; brak automatycznego wdrożenia mutacji.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 314 — Loihi 2 Sigma-Delta SDNN
+**Status: PLANNED.** Źródło: PDF52 s.2,8-9; PDF53 s.1,4. Eksperymentalny backend SDNN graded spikes, porównania energii i latencji na rzeczywistym sprzęcie.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 315 — mlkem-native PQC integration
+**Status: PLANNED.** Źródło: PDF52 s.2; PDF53 s.1,4. Weryfikacja pochodzenia biblioteki, ML-KEM handshake, hybrydowe profile, testy interoperacyjności i rotacji.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 316 — In-guest Aya eBPF EDR
+**Status: PLANNED.** Źródło: PDF52 s.2-3,10-11; PDF53 s.1-2,4,7-9. Rzeczywista sonda eBPF w jądrze gościa Firecracker, telemetria openat/connect/sendto, analiza anomalii i kontrolowane reakcje; powiązanie z 0.39.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 317 — Cost Exhaustion i Action Tool Verification
+**Status: PLANNED.** Źródło: PDF52 s.3,10-11; PDF53 s.2,4-5,10-11. Budżety tokenów i kosztów per tenant, bramki zatwierdzeń dla działań sprawczych, limity i testy TOCTOU.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 318 — Disposable Apps Lifecycle i Energy Scheduler
+**Status: PLANNED.** Źródło: PDF52 s.3; PDF53 s.2,4-5,10-11. TTL, archiwizacja, revocation uprawnień, bezpieczne usuwanie aplikacji i opcjonalny harmonogram energii.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 319 — L402 Macaroon settlement and caveats
+**Status: PLANNED.** Źródło: PDF52 s.3,11-12; PDF53 s.2,4-5,11-12. Weryfikacja payment preimage, HMAC, egzekwowanie caveats, replay protection i rzeczywiste rozliczenia; powiązanie z etapem 218.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+### Etap 320 — Sovereign Cargo workspace integration
+**Status: PLANNED.** Źródło: PDF53 s.2,5-13. Integracja istniejącego runtime i modułów domenowych bez duplikowania rdzenia; build, testy feature flags, E2E, SBOM i dowody CI.
+**Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
