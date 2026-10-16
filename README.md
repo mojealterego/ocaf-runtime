@@ -1496,3 +1496,7 @@ Audyt: `docs/audits/PDF22_OMNIWEB_SEMANTIC_REVIEW_2026-10-16.md`. S. 1–14: Zen
 
 ### PDF25–PDF26: OmniSec, OmniCog, OmniEvolve, OmniSense
 Wymagania przypisane do istniejących etapów 0.38–0.41, 0.43, 0.49, 0.55, 0.63, 0.67 i 0.98. Audyt: `docs/audits/PDF25_26_SEMANTIC_REVIEW_2026-10-16.md`. Status: PLANNED_OR_UNVERIFIED. Przykłady z PDF nie są dowodem wykonania; zachowano 10 produktów Agents Builder i numerację etapów.
+
+
+### PDF27–PDF29 (2026-10-16)
+Uzgodniono wymagania: PDF27 OmniSense (0.67); PDF28 OmniArbitrage (0.49), OmniContract/OmniChaos (0.43), OmniStrategy/OmniGraph (0.67); PDF29 OmniVerify/OmniHomeostasis (0.55), OmniCausal (0.98), OmniSleep/OmniPrune (0.67), OmniLatent/OmniAdaptive (0.39/0.63). Szczegółowe kryteria odbioru: ROADMAP.md. Status UNVERIFIED; przykłady z PDF nie stanowią implementacji.
