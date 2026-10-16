@@ -256,3 +256,7 @@ Uzgodniono wymagania: PDF27 OmniSense (0.67); PDF28 OmniArbitrage (0.49), OmniCo
 
 ### PDF30–PDF33 (2026-10-16)
 Przypisano: PDF30 aktywna inferencja/HDC/fraktalny rój (0.67, 0.98); PDF31 migracja wiedzy/PCC/energia/alignment (0.55, 0.63, 0.98); PDF32 dziesięć produktów Agents Builder Code/NoCode i wizualna weryfikacja (0.50–0.55); PDF33 OmniMath Lean 4/e-graph/SMT (0.55, 0.67). Status PLANNED_OR_UNVERIFIED; kryteria i zastrzeżenia w ROADMAP.md. Brak dowodów rzeczywistego solwera i kernela Lean w przykładzie PDF33.
+
+
+### 2026-10-16 — PDF34–PDF36
+Zaktualizowano ROADMAP.md, README.md i lustro roadmapy: MCP M0, Zenoh/SHM/CRDT M1, L402/ZKP M2, Firecracker/eBPF M3, Tree-sitter/PQC M4, neuromorfika M5 i HIL M6. Status: PLANNED_OR_UNVERIFIED; bez potwierdzenia benchmarków, testów sprzętowych i odbioru.
