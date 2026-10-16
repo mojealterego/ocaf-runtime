@@ -3585,7 +3585,7 @@
       "source_class": "PDF_SOURCE_VERIFIED"
     },
     {
-      "id": "2.07",
+      "id": "208",
       "title": "Social simulation and affective-data safeguards",
       "scope": "PDF09: Generative Agents/Lyfe multi-agent simulation; MetaMind/ToM-SWE opt-in intention hypotheses; sensitive affective data minimization, consent, retention and deletion.",
       "acceptance": "Independent simulation E2E, consent and privacy controls, tenant isolation, calibration and negative manipulation tests.",
@@ -3598,7 +3598,7 @@
       "source_class": "USER_PDF_REQUIREMENT"
     },
     {
-      "id": "2.08",
+      "id": "209",
       "title": "DSPy governed agent optimization",
       "scope": "PDF09: DSPy BootstrapFewShot/MIPRO/GEPA, versioned optimization pipelines, holdout, baseline, rollback.",
       "acceptance": "Pinned reproducible holdout results, data leakage tests, budget limits, operator approval.",
@@ -3611,7 +3611,7 @@
       "source_class": "USER_PDF_REQUIREMENT"
     },
     {
-      "id": "2.09",
+      "id": "210",
       "title": "Agent-Zero and Hermes controlled self-improvement",
       "scope": "PDF09: sandboxed terminal-driven skill acquisition and Hermes-like supervised code modification.",
       "acceptance": "No privilege escalation, prompt injection and exfiltration tests, signed artifacts, bounded iterations, reviewed changes.",
@@ -3624,7 +3624,7 @@
       "source_class": "USER_PDF_REQUIREMENT"
     },
     {
-      "id": "2.10",
+      "id": "211",
       "title": "AI Scientist supervised research automation",
       "scope": "PDF09: hypothesis, experiment, provenance, reproducible artifacts, citation checking, peer review and human-approved publication.",
       "acceptance": "Reproducible isolated experiments, independent verification and audit trail.",
@@ -3637,7 +3637,7 @@
       "source_class": "USER_PDF_REQUIREMENT"
     },
     {
-      "id": "2.11",
+      "id": "212",
       "title": "AutoGPT and BabyAGI bounded task orchestration",
       "scope": "PDF09: planning, task creation, prioritization, DAG, bounded delegation, cancellation and idempotent effects.",
       "acceptance": "Loop and budget tests, crash recovery, tenant isolation, duplicate-effect prevention.",
@@ -3650,7 +3650,7 @@
       "source_class": "USER_PDF_REQUIREMENT"
     },
     {
-      "id": "2.12",
+      "id": "213",
       "title": "GodMode operator supervision UI",
       "scope": "PDF09: real operator GUI for inspecting, approving, pausing and cancelling agent execution.",
       "acceptance": "E2E GUI, operator authorization, durable audit, fail-closed cancellation.",
@@ -3663,7 +3663,7 @@
       "source_class": "USER_PDF_REQUIREMENT"
     },
     {
-      "id": "2.13",
+      "id": "214",
       "title": "OpenHands autonomous software engineering integration",
       "scope": "PDF09: sandboxed agent server, command/browser tools, code navigation, diff review and governed patch application.",
       "acceptance": "Real-repository E2E, sandbox escape, command injection, secret exfiltration, rollback.",
@@ -3676,7 +3676,7 @@
       "source_class": "USER_PDF_REQUIREMENT"
     },
     {
-      "id": "2.14",
+      "id": "215",
       "title": "SWE-bench and mini-SWE-agent N-run validation",
       "scope": "PDF09: SWE-bench Verified, mini-SWE-agent baseline, multimodal fixtures, N-run reliability and regression evaluation.",
       "acceptance": "Pinned datasets and environment, repeated independent pass rate, cost and latency, reproducibility.",
@@ -4983,7 +4983,7 @@
   "original_agents_builder_matrix": "docs/roadmap/agents_builder_products_v11.json",
   "lost_requirements_inventory": "docs/roadmap/missing_capabilities_v11.json",
   "stage_update_log": "docs/roadmap/STAGE_CHANGELOG.md",
-  "next_new_main_stage": "2.15",
+  "next_new_main_stage": "216",
   "pdf40_reconciliation": {
     "date": "2026-10-16",
     "status": "PARTIAL_SOURCE_GROUNDED_REQUIREMENTS_ADDED_NOT_FULL_SEMANTIC_CERTIFICATION",
