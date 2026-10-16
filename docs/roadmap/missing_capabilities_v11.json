@@ -610,5 +610,36 @@
     "stages": "232-246",
     "status": "PLANNED",
     "partial_audit": true
+  },
+  "pdf51_53_reconciliation": {
+    "status": "PLANNED",
+    "stages": [
+      "301",
+      "302",
+      "303",
+      "304",
+      "305",
+      "306",
+      "307",
+      "308",
+      "309",
+      "310",
+      "311",
+      "312",
+      "313",
+      "314",
+      "315",
+      "316",
+      "317",
+      "318",
+      "319",
+      "320"
+    ],
+    "sources": [
+      "PDF51 (15 stron)",
+      "PDF52 (15 stron)",
+      "PDF53 (13 stron)"
+    ],
+    "note": "Kod przykładowy nie jest dowodem implementacji; wymaga weryfikacji na main"
   }
 }
