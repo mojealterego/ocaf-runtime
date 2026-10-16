@@ -46,3 +46,32 @@ Lokalny kontener nie rozwiązuje DNS `github.com`, więc `git clone`/`git ls-rem
 Z 532 wystąpień ekstraktor wyodrębnił **205 unikalnych fragmentów tekstowych** (identyczność SHA-256). Zapisano kompletny lokalny rejestr `OCAF_30_PDF_REQUIREMENTS_TRACE_2026-10-16.md` i maszynowy `OCAF_30_PDF_REQUIREMENTS_TRACE_2026-10-16.json` z lokalizacjami PDF/strona. Klasyfikacja: 139 kandydatów automatycznie przypisanych do rodzin etapów, 36 przypisanych po przeglądzie zakresu, 22 wymagające dalszego przeglądu i 8 wstępnie uznanych za materiał referencyjny. **Wszystkie klasy pozostają kandydatami**; nie ma dowodu, że ekstraktor wychwycił każde wymaganie z 535 stron. Rejestr lokalny nie jest publikowany automatycznie w repozytorium.
 
 **Rozstrzygnięcie audytowe:** ukończono spis źródeł, klasyfikację wykrytych fragmentów i sprawdzenie spójności Roadmapy. **Nie ukończono audytu zgodności kodu, testów ani odbioru produkcyjnego**. Oznaczenie PASS byłoby niezgodne z dostępnymi dowodami.
+
+## Ustalenia krytyczne — jakość dotychczasowego audytu
+
+**AUD-001 / HIGH: błędne twierdzenie o ręcznej klasyfikacji.** Lokalny skrypt `complete_ocaf_audit.py` nadaje etykietę `MANUALLY_CLASSIFIED_SCOPE_CANDIDATE` przez słownik `manual={...}` indeksowany kolejnością nieprzypisanych fragmentów. To klasyfikacja według zakodowanych indeksów, **nie dowód indywidualnej oceny semantycznej**. Wcześniejsze sformułowanie „36 przypisanych po przeglądzie” nie jest należycie udokumentowane. Wszystkie 205 fragmentów traktować jako kandydatów do walidacji, bez wyjątku.
+
+**AUD-002 / HIGH: wykrywanie zdań nie jest kompletnością wymagań.** Ekstrakcja 532 wystąpień z 535 stron jest filtrem heurystycznym. Nie zapewnia kompletności wobec tabel, diagramów, pseudokodu, przypisów ani normatywnych fragmentów poza filtrem. Status `PDF-R-xxx` jest identyfikatorem fragmentu, nie zweryfikowanego wymagania.
+
+**AUD-003 / HIGH: kontrola Roadmapy nie jest kontrolą implementacji.** Skrypt `scripts/check_30_pdf_audit_gate.py` weryfikuje liczby, spójność manifestu i 29 mapowań etapów. Nie sprawdza faktycznej zgodności semantycznej PDF, funkcji Rust ani wyników testów. Wymagania nie mogą otrzymać PASS na tej podstawie.
+
+**AUD-004 / HIGH: ograniczona reprezentatywność próby kodu.** Z repozytorium odczytano dodatkowo `src/lib.rs`, `src/runtime/mod.rs`, `src/cluster/mod.rs`, `src/rpc/mod.rs` oraz `scripts/check_roadmap_pdf_coverage.py`. Łącznie sprawdzono tekst dziewięciu głównych modułów `src` i `Cargo.toml`, nie wszystkie pliki `src/bin`, testy, workspace, vendor ani CI. Sam `Cargo.toml` wskazuje pięć patchowanych lokalnych crate'ów `vendor/zenoh-*` / `vendor/token-cell`, których audyt nie został przeprowadzony.
+
+**AUD-005 / HIGH: brak testów.** W środowisku lokalnym `cargo` jest niedostępne, a `git ls-remote https://github.com/mojealterego/ocaf-runtime HEAD` zwraca `Could not resolve host: github.com`. Bez kompletnego checkoutu i toolchainu nie ma podstaw do twierdzenia o wykonaniu `cargo test`, `clippy`, `cargo audit` czy testów infrastruktury.
+
+**AUD-006 / MEDIUM: nieudowodnione właściwości bezpieczeństwa.** W głównym `Cargo.toml` nie ma deklaracji `automerge`, `yrs`, `opentelemetry`, `aya`, `tree-sitter`, `arkworks`. To obserwacja o tym konkretnym manifeście, nie dowód nieistnienia tych funkcji w innych crate'ach. `src/executor/wasi.rs` dokumentuje, że WASI nie jest granicą host/microVM.
+
+### Status odbioru
+
+| Zakres | Stan | Podstawa |
+|---|---|---|
+| Inwentaryzacja plików PDF | DONE | 30 plików, 535 stron, 26 unikalnych ekstraktów |
+| Deduplikacja kandydatów | DONE | 532 wystąpienia, 205 unikalnych tekstów |
+| Kompletna ekstrakcja wymagań atomowych | OPEN | Heurystyka nie daje pełności |
+| Semantyczne przypisanie wszystkich wymagań | OPEN | Niezweryfikowane etykiety klasyfikatora |
+| Spójność numeracji Roadmapy | VERIFIED | 207 etapów + 64 techniczne + 10 produktów |
+| Zgodność wszystkich funkcji z kodem | OPEN | Niepełny checkout i przegląd |
+| Testy i bezpieczeństwo infrastruktury | OPEN | Brak uruchomionych testów |
+| Niezależny audyt / formalny odbiór | OPEN | Brak dowodów i zatwierdzenia |
+
+**Formalny werdykt audytu:** **FAIL / NOT READY FOR PRODUCTION APPROVAL** z powodu niewykazania kryteriów, a nie udowodnienia konkretnej eksploatowalnej podatności. Żaden nieprzeprowadzony test nie może zostać oznaczony jako PASS.
