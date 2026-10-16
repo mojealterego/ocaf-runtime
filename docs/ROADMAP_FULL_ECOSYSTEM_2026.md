@@ -1,6 +1,6 @@
 # OCAF — JEDYNA PEŁNA KANONICZNA ROADMAPA OD POCZĄTKU (v11, 15.10.2026)
 
-**PIN GITHUB: ten sam pełny dokument jest w katalogu głównym jako `/ROADMAP.md`, a pierwsza linia `README.md` kieruje tutaj.** 207 historycznych etapów głównych 0.00–2.06 + 24 nowe etapy 208–231 + 64 podetapy techniczne + 10 produktów Agents Builder = **305 pozycji**; 33 repozytoria referencyjne nie są etapami. **Następny nowy etap: `232`. Nie przenosimy ani nie renumerujemy historycznych identyfikatorów. Pełny rejestr 289 pozycji jest przypięty na początku `README.md` pod czerwonym nagłówkiem UWAGA CZYTAĆ.**
+**PIN GITHUB: ten sam pełny dokument jest w katalogu głównym jako `/ROADMAP.md`, a pierwsza linia `README.md` kieruje tutaj.** 207 historycznych etapów głównych 0.00–2.06 + 39 nowych etapów 208–246 + 64 podetapy techniczne + 10 produktów Agents Builder = **320 pozycji**; 33 repozytoria referencyjne nie są etapami. **Następny nowy etap: `247`. Nie przenosimy ani nie renumerujemy historycznych identyfikatorów. Pełny rejestr 289 pozycji jest przypięty na początku `README.md` pod czerwonym nagłówkiem UWAGA CZYTAĆ.**
 
 ## Najważniejsze: pierwotny AGENTS BUILDER — Code i NoCode na pięciu platformach
 
@@ -882,3 +882,7 @@ Kryteria odbioru: ROADMAP.md. Historyczne etapy bez renumeracji. Łącznie 222 e
 **Status: PLANNED.** PDF40 s.24–118; katalog protokołów, polityka kompatybilności, testy hardware-in-loop, brak domniemanej integracji. Wymagane: typowane API Rust, fail-closed authorization, izolacja tenantów, testy negatywne i integracyjne, dowód CI oraz walidacja na właściwym środowisku. Przykłady PDF nie stanowią implementacji.
 
 PDF37: zakres MCP/Zenoh/PQC/neuromorfika przypisany do istniejących 216–222 bez duplikacji.
+
+
+## PDF41–44 (2026-10-16)
+Etapy 232–246 opisane szczegółowo w ROADMAP.md; wszystkie PLANNED. PDF43–44: audyt częściowy, bez twierdzenia o pełnym pokryciu stron. Symulacje nie stanowią implementacji.
