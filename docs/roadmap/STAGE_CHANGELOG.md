@@ -380,3 +380,11 @@ Dodano 20 numerowanych etapów PLANNED. Zakres: Nous/CNA, Honcho, CloudShield, V
 
 ### Etap 333 — Audyt twierdzeń implementacyjnych z dokumentu DGM
 **Status: PLANNED.** Źródło: s.3–16, 18–31. Przykładowy kod nie zawiera rzeczywistego transportu Zenoh SHM, parsera AST/SMT, sondy eBPF, wykonywania MCP, pobierania GGUF ani commitów Git; zawiera symulowane testy, sztuczny SHA i niezweryfikowane benchmarki. Każdą deklarację PASS/produkcyjności zweryfikować niezależnym testem na main; nie nadpisywać Cargo.toml ani src/main.rs przykładami.
+
+
+## 2026-10-16 — ROADMAP_SYNC — stages 321–333, 606 repository proposal
+
+- Canonical roadmap and mirror headers corrected to 333 main stages / 407 tracked positions, next 334.
+- README stage summary and stage index synchronized; three v11 JSON manifests annotated with source audit and unverified implementation status.
+- Source audit: 17-page PDF54, 31-page DGM report, 15-page 606-repository report, Rust source sample. Security findings include L402 bypass, simulated execution and in-memory pseudo-CRDT.
+- Validation and production acceptance not asserted; historical main-array inventory still requires per-stage reconciliation.
