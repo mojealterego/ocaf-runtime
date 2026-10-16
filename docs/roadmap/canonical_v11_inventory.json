@@ -3,7 +3,7 @@
   "version": "v11-original-builder-scope-restored",
   "repository": "mojealterego/ocaf-runtime",
   "branch": "main",
-  "main_count": 231,
+  "main_count": 246,
   "technical_count": 64,
   "reference_count": 33,
   "production_approved": false,
@@ -5514,7 +5514,7 @@
     ],
     "roadmap": "ROADMAP.md"
   },
-  "next_new_main_milestone": "232",
+  "next_new_main_milestone": "247",
   "pdf37_40_reconciliation": {
     "status": "PLANNED",
     "stages": [
@@ -5529,5 +5529,10 @@
       "231"
     ],
     "note": "PDF37 overlaps 216–222; PDF38–40 mapped to 223–231"
+  },
+  "pdf41_44_reconciliation": {
+    "stages": "232-246",
+    "status": "PLANNED",
+    "partial_audit": true
   }
 }
