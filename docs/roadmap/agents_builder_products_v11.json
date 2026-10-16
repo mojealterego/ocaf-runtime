@@ -279,5 +279,54 @@
       "production_approved": false,
       "evidence": []
     }
-  ]
+  ],
+  "pdf20_omnie2e_integration": {
+    "source": "PDF20 pp.18-21",
+    "status": "PLANNED_UNVERIFIED",
+    "swarm_roles": [
+      "InzynierSwiftUI",
+      "InzynierKotlinCompose",
+      "InzynierQA_SelfHealing"
+    ],
+    "related_stages": [
+      "0.46",
+      "0.47",
+      "0.50",
+      "0.51",
+      "0.52",
+      "0.53",
+      "0.54",
+      "0.55",
+      "0.63",
+      "0.67",
+      "0.98"
+    ],
+    "product_count_unchanged": 10,
+    "requirements": [
+      {
+        "id": "PDF20-OMNIE2E-001",
+        "component": "OmniE2E dual-native Rust Core FFI SwiftUI Jetpack Compose",
+        "parent": "0.54",
+        "condition": "UNVERIFIED",
+        "basis": "PDF20 pp.18-21; source code is illustrative; no native platform build evidence in PDF",
+        "repair": "Implement versioned Rust FFI/ABI, SwiftUI and Jetpack Compose native builds with macOS Xcode and Android Gradle CI; verify real device E2E"
+      },
+      {
+        "id": "PDF20-OMNIE2E-002",
+        "component": "OmniE2E self-healing QA Playwright Appium",
+        "parent": "0.98",
+        "condition": "UNVERIFIED",
+        "basis": "PDF20 pp.19-21; stub returns requires_repair=true and prints message",
+        "repair": "Implement audited locator repair, preserve assertions, approval gate and regression tests on devices"
+      },
+      {
+        "id": "PDF20-OMNIE2E-003",
+        "component": "OmniDev OmniUX OmniE2E typed handoff",
+        "parent": "0.50",
+        "condition": "UNVERIFIED",
+        "basis": "PDF20 pp.15-22; separate demo swarms only",
+        "repair": "Versioned typed design/build/test artifacts, capability scoped auth, lifecycle, checkpoints and trace correlation"
+      }
+    ]
+  }
 }
