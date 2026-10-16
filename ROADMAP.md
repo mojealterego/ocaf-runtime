@@ -1225,3 +1225,10 @@ Pliki: Dokument bez nazwy (4).PDF, Dokument bez nazwy(1).PDF, Dokument bez nazwy
 **Krytyczne wady kodu (PDF s.9–15, gemini-code-1792181625524.rs.txt):** (1) L402 akceptuje dowolne dwie niepuste części bez sprawdzenia podpisu, preimage, caveats i replay — AUTH BYPASS; (2) execute_workspace_command zwraca fikcyjny exit code 0 bez uruchomienia polecenia, Firecracker lub eBPF; (3) git status/diff są syntetyczne; (4) rzekomy CRDT to nietrwały RwLock<HashMap>, bez Automerge/Zenoh; (5) weryfikacja AST to sprawdzenie substringów, fałszywy PASS; (6) fetch_add budżetu może przekroczyć limit i przepełnić licznik — wymagana atomowa rezerwacja CAS z checked_add; (7) sekrety są zaszyte na stałe; (8) rejestr domen nie wykonuje żadnej integracji. Przykładu NIE wdrażać do main.
 
 **Odbiór:** pełna lista 606 źródeł z SHA/licencją; 15 rzeczywistych narzędzi MCP; fail-closed authorization, testy negatywne L402 i path traversal; izolacja tenantów; trwałość/recovery; rzeczywisty guest-side eBPF; cargo fmt/clippy/test, integracyjne i E2E, wyniki związane z SHA. Wszystkie deklaracje implementacji wymagają weryfikacji w kodzie.
+
+
+## Audyt PDF AgentSpec/A2A i kodu Rust — 2026-10-16
+
+Zrodla: Dokument bez nazwy(6).PDF (4 strony), gemini-code-1792182157449.rs.txt (528 linii). Wymagania przypisano do istniejacych etapow: 0.39, 0.50–0.55, 317–319, 325–329, 332–333. Pelna macierz wymagan i luk znajduje sie w docs/ROADMAP_FULL_ECOSYSTEM_2026.md (sekcja Audyt kolejnych plikow — AgentSpec, A2A i Data Flywheel).
+
+Wymagane: typed AgentSpec z bezpiecznym hot reload i rollback; trzy rejestry AI; rzeczywisty A2A Zenoh SHM; BoundedOutcome i cztery poziomy autonomii; AgentBay sandbox z guest-side Aya eBPF; trwaly Data Flywheel, Titans i RQGM; OTel, FinOps, L402 i inwentaryzacja 606 repozytoriow. Przykladowy Rust nie zapewnia transportu A2A, wykonywania MCP, eBPF, L402, trwalosci ani rzeczywistych pomiarow SLA. Zidentyfikowano brak walidacji NaN w progach confidence, zaufanie do pola human_approved, brak weryfikacji trigger/stage, nieograniczony fetch_add i stale dane symulacyjne. Status PLANNED, bez testow i odbioru. Nie wdrazac przykladu jako runtime.
