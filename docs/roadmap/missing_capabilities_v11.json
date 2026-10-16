@@ -306,51 +306,51 @@
     },
     {
       "id": "PDF23-001",
-      "component": "O",
-      "parent": "m",
+      "component": "OmniStudio real media workflow graph and render",
+      "parent": "0.67",
       "condition": "UNVERIFIED",
-      "basis": "PDF23 semantic review 2026-10-16",
-      "repair": "n"
+      "basis": "PDF23 pp.15–17",
+      "repair": "Run versioned media workflow and validate rendered artifacts"
     },
     {
       "id": "PDF23-002",
-      "component": "0",
-      "parent": ".",
+      "component": "OmniStudio audio-video synchronization and rights",
+      "parent": "0.63",
       "condition": "UNVERIFIED",
-      "basis": "PDF23 semantic review 2026-10-16",
-      "repair": "6"
+      "basis": "PDF23 pp.15–17",
+      "repair": "Test audio alignment, explicit consent, license and provenance"
     },
     {
       "id": "PDF23-003",
-      "component": "R",
-      "parent": "u",
+      "component": "OmniDoc Typst compilation and PDF verification",
+      "parent": "0.67",
       "condition": "UNVERIFIED",
-      "basis": "PDF23 semantic review 2026-10-16",
-      "repair": "n"
+      "basis": "PDF23 pp.15–17",
+      "repair": "Compile actual Typst source and validate PDF and failure cases"
     },
     {
       "id": "PDF24-001",
-      "component": "O",
-      "parent": "m",
+      "component": "OmniGov atomic budget preauthorization",
+      "parent": "0.49",
       "condition": "UNVERIFIED",
-      "basis": "PDF24 semantic review 2026-10-16",
-      "repair": "n"
+      "basis": "PDF24 pp.16–18",
+      "repair": "Atomic reservations, wallet revocation and concurrency tests"
     },
     {
       "id": "PDF24-002",
-      "component": "0",
-      "parent": ".",
+      "component": "OmniGov tamper-evident policy audit",
+      "parent": "0.63",
       "condition": "UNVERIFIED",
-      "basis": "PDF24 semantic review 2026-10-16",
-      "repair": "4"
+      "basis": "PDF24 pp.16–18",
+      "repair": "Fail-closed authorization, signed immutable audit and separation of duties"
     },
     {
       "id": "PDF24-003",
-      "component": "A",
-      "parent": "t",
+      "component": "OmniFin cost metering and ROI accounting",
+      "parent": "0.67",
       "condition": "UNVERIFIED",
-      "basis": "PDF24 semantic review 2026-10-16",
-      "repair": "o"
+      "basis": "PDF24 pp.16–18",
+      "repair": "Reconcile token, compute and payment costs with audit evidence"
     },
     {
       "id": "PDF23-004",
