@@ -182,3 +182,7 @@ Na polecenie operatora zmieniono wyłącznie identyfikatory ośmiu nowo dopisany
 ## 2026-10-16 — PDF11: semantyczne uzgodnienie wymagań
 
 Źródło: `Kompleksowa Roadmapa Wdrożenia Ekosystemu OCAF w Rust.PDF` (11 stron). Audyt: `docs/audits/PDF11_RUST_ZENOH_SIX_PHASES_SEMANTIC_REVIEW_2026-10-16.md`. Sześć faz dokumentu przypisano do istniejących etapów `0.38`, `0.39`, `0.43`, `0.44`, `0.46`, `0.47`, `0.49`, `0.55`, `0.63`, `0.67`, `0.98`. Manifest, kanoniczna ROADMAPA, lustrzana ROADMAPA i przypięta tabela README zawierają odnośniki PDF11. Wskazane w PDF wyniki wydajności oraz przykładowa płatność L402 są demonstracją, nie dowodem wdrożenia. Status implementacji i odbiorów niezmieniony; 215 etapów głównych, 64 techniczne, 10 produktów Agents Builder.
+
+## 2026-10-16 — PDF12: audyt 13 stron i uzupełnienie ROADMAPY
+
+Źródło: `Dokument bez nazwy (2).PDF`. Strony 1–11 powtarzają zasadniczo PDF11, a strony 11–13 rozszerzają wymagania o Rig/rig-core, E2B Firecracker secret egress, OTel/Zenoh/CRDT, L402 offline/ZKP, fuzzing MCP, PQC i neuromorficzne Edge AI. Etapy: `0.39`, `0.42`, `0.43`, `0.44`, `0.46`, `0.47`, `0.49`, `0.63`, `0.64`, `0.98`. Raport: `docs/audits/PDF12_RUST_ZENOH_EXTENSIONS_SEMANTIC_REVIEW_2026-10-16.md`. Wymagania wpisano do manifestu, ROADMAPY, lustra i tabeli README bez zmiany numeracji. Status: wymagania udokumentowane; wdrożenie i testy niepotwierdzone.
