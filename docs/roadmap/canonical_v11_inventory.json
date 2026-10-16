@@ -444,8 +444,8 @@
     {
       "id": "0.39",
       "title": "Execution",
-      "scope": "Firecracker microVM broker + Aya/eBPF isolation PDF02_RECONCILIATION: Outbound HTTP egress broker injects credentials only after destination allowlist, DNS rebinding/SSRF defense and tenant capability authorization; guest cannot read raw credentials; fail closed on broker outage. PDF04_RECONCILIATION: Aya openat tracepoint example is not proof of guest-kernel isolation or ransomware detection; require actual Firecracker guest and enforced broker response with negative tests. PDF05: Firecracker guest-kernel isolation and Aya/eBPF enforcement must be demonstrated on actual hardware; openat example is not acceptance evidence.",
-      "acceptance": "[Real Linux KVM CI 38739812121](https://github.com/mojealterego/ocaf-runtime/actions/runs/38739812121): two per-tenant kernel SO_PEERCRED AF_UNIX broker reservations with SHA-pinned netless manifests persisted in SQLite BEFORE launching two simultaneous jailed Firecracker Linux guests; lease/VM id/cgroup/boot hash and SIGKILL/peer survival receipts bound, leases released. [Ledger](STAGE039_040_BROKER_KERNEL_PG_INDEPENDENCE_2026-10-15.md). Signed WASI **inside guest not implemented**; production NO-GO, independent signer gates waived for development only.",
+      "scope": "Firecracker microVM broker + Aya/eBPF isolation PDF02_RECONCILIATION: Outbound HTTP egress broker injects credentials only after destination allowlist, DNS rebinding/SSRF defense and tenant capability authorization; guest cannot read raw credentials; fail closed on broker outage. PDF04_RECONCILIATION: Aya openat tracepoint example is not proof of guest-kernel isolation or ransomware detection; require actual Firecracker guest and enforced broker response with negative tests. PDF05: Firecracker guest-kernel isolation and Aya/eBPF enforcement must be demonstrated on actual hardware; openat example is not acceptance evidence. PDF01–09: verify guest-isolated signed WASI execution; egress broker injects tenant-scoped credentials only for authorized allowlisted destinations; DNS rebinding/SSRF and broker outage fail-closed; Aya tracepoint is detection, not proven ransomware prevention.",
+      "acceptance": "[Real Linux KVM CI 38739812121](https://github.com/mojealterego/ocaf-runtime/actions/runs/38739812121): two per-tenant kernel SO_PEERCRED AF_UNIX broker reservations with SHA-pinned netless manifests persisted in SQLite BEFORE launching two simultaneous jailed Firecracker Linux guests; lease/VM id/cgroup/boot hash and SIGKILL/peer survival receipts bound, leases released. [Ledger](STAGE039_040_BROKER_KERNEL_PG_INDEPENDENCE_2026-10-15.md). Signed WASI **inside guest not implemented**; production NO-GO, independent signer gates waived for development only. Independent guest execution, egress deny/allow and cross-tenant negative tests; no acceptance from tracing-only.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
       "status": "ACTIVE_TECHNICAL_OPEN",
@@ -492,8 +492,8 @@
     {
       "id": "0.43",
       "title": "MCP",
-      "scope": "Dynamic discovery, semantic routing, manifest signature, Tree-sitter & JSON Schema PDF02_RECONCILIATION: Hypothesize-retrieve-invoke MCP discovery with short-lived schema load/unload, signed version-pinned manifests, per-tenant authorized tools/list, cache revocation and rug-pull regression; benchmark dynamic versus static schema context cost and function-call accuracy. PDF04_RECONCILIATION: Tree-sitter AST pattern matching cannot replace semantic JSON Schema validation or authorization; test indirect injection without literal marker and fail-closed tool schema admission. PDF05: Dynamic MCP schema admission needs independent JSON Schema and authorization checks; Tree-sitter keyword scanning is insufficient against indirect injection.",
-      "acceptance": "Untrusted tool metadata cannot inject policy; unknown tool never executes",
+      "scope": "Dynamic discovery, semantic routing, manifest signature, Tree-sitter & JSON Schema PDF02_RECONCILIATION: Hypothesize-retrieve-invoke MCP discovery with short-lived schema load/unload, signed version-pinned manifests, per-tenant authorized tools/list, cache revocation and rug-pull regression; benchmark dynamic versus static schema context cost and function-call accuracy. PDF04_RECONCILIATION: Tree-sitter AST pattern matching cannot replace semantic JSON Schema validation or authorization; test indirect injection without literal marker and fail-closed tool schema admission. PDF05: Dynamic MCP schema admission needs independent JSON Schema and authorization checks; Tree-sitter keyword scanning is insufficient against indirect injection. PDF01–09: Rust rmcp/pmcp and optional Rig integrations must be typed and validated, not assumed; benchmark dynamic tool-schema discovery with signed manifests, tenant authorization, version pinning, cache revocation and JSON Schema validation; compare 500+ tool routing against baseline.",
+      "acceptance": "Untrusted tool metadata cannot inject policy; unknown tool never executes Reject malicious metadata, schema rug-pull and unknown tool; record accuracy/context and throughput with SHA-pinned repeatable benchmarks.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
       "status": "PLANNED_OR_UNVERIFIED",
@@ -504,8 +504,8 @@
     {
       "id": "0.44",
       "title": "OAuth",
-      "scope": "OAuth 2.1 authorization code + PKCE, scoped tenant tokens, secret broker PDF02_RECONCILIATION: Managed OAuth per tenant/user/session binding, authorization-code PKCE/state, step-up authorization, refresh/revoke rotation and redacted logs; reject confused-deputy cross-session credentials and shared-client consent mixups.",
-      "acceptance": "PKCE, CSRF, confused deputy, issuer/audience/replay test matrix",
+      "scope": "OAuth 2.1 authorization code + PKCE, scoped tenant tokens, secret broker PDF02_RECONCILIATION: Managed OAuth per tenant/user/session binding, authorization-code PKCE/state, step-up authorization, refresh/revoke rotation and redacted logs; reject confused-deputy cross-session credentials and shared-client consent mixups. PDF01–09: per-user/per-tenant OAuth PKCE/state, refresh/revoke, secret redaction, confused-deputy protection; no raw credential inside LLM or guest.",
+      "acceptance": "PKCE, CSRF, confused deputy, issuer/audience/replay test matrix Cross-session credential replay and token mixup denied; revoke propagation and log-redaction tests.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
       "status": "PLANNED_OR_UNVERIFIED",
@@ -516,8 +516,8 @@
     {
       "id": "0.45",
       "title": "Crypto",
-      "scope": "Hybrid PQC ML-KEM/ML-DSA interoperability, ZKP caveat proof experiments PDF03_RECONCILIATION: ZKP caveat verification requires independent verifier, public-input binding, soundness and negative witness tests; PQC ML-KEM/ML-DSA claims require actual hybrid handshake transcript-binding and downgrade tests. PDF04_RECONCILIATION: Equality-only R1CS demo does not prove macaroon caveats; bind tenant/scope/expiry/nonce, token, action and verifier public inputs, with forged witness tests; rustls default provider is not evidence of negotiated ML-KEM/ML-DSA. PDF05: R1CS equality sample does not establish macaroon caveat soundness; require independent verifier and transcript-bound PQC negotiation tests.",
-      "acceptance": "No replacement of audited mTLS until standards/tests pass",
+      "scope": "Hybrid PQC ML-KEM/ML-DSA interoperability, ZKP caveat proof experiments PDF03_RECONCILIATION: ZKP caveat verification requires independent verifier, public-input binding, soundness and negative witness tests; PQC ML-KEM/ML-DSA claims require actual hybrid handshake transcript-binding and downgrade tests. PDF04_RECONCILIATION: Equality-only R1CS demo does not prove macaroon caveats; bind tenant/scope/expiry/nonce, token, action and verifier public inputs, with forged witness tests; rustls default provider is not evidence of negotiated ML-KEM/ML-DSA. PDF05: R1CS equality sample does not establish macaroon caveat soundness; require independent verifier and transcript-bound PQC negotiation tests. PDF01–09: independently verify ML-KEM/ML-DSA hybrid X25519+ML-KEM TLS binding and downgrade rejection; ZKP Arkworks/Halo2 examples require real proof/verifier and negative witnesses.",
+      "acceptance": "No replacement of audited mTLS until standards/tests pass Real handshake, signature and proof verification transcripts; reject downgrade and invalid witness.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
       "status": "PLANNED_OR_UNVERIFIED",
@@ -528,8 +528,8 @@
     {
       "id": "0.46",
       "title": "Transport",
-      "scope": "Zenoh SHM typed zero-copy, CRDT Automerge/Yrs for non-authoritative state PDF03_RECONCILIATION: Zenoh zero-copy SHM only for proven compatible local shared-memory paths, not automatically across MicroVM/hosts; CRDT non-authoritative only, with partition, convergence, tombstone and replay tests. PDF05: Zenoh SHM only within verified local memory domain; Automerge/Yrs need partition, tombstone and tenant ACL convergence tests.",
-      "acceptance": "Benchmarks and CRDT convergence; NEVER for leadership/payment authority",
+      "scope": "Zenoh SHM typed zero-copy, CRDT Automerge/Yrs for non-authoritative state PDF03_RECONCILIATION: Zenoh zero-copy SHM only for proven compatible local shared-memory paths, not automatically across MicroVM/hosts; CRDT non-authoritative only, with partition, convergence, tombstone and replay tests. PDF05: Zenoh SHM only within verified local memory domain; Automerge/Yrs need partition, tombstone and tenant ACL convergence tests. PDF01–09: Zenoh typed SHM and Automerge/Yrs offline-first only within verified memory boundaries; M1 target latency <35us and 10000 agents is a benchmark objective, not a result.",
+      "acceptance": "Benchmarks and CRDT convergence; NEVER for leadership/payment authority Measure local and interhost separately; partition, replay, convergence and 10000-agent stress with pinned hardware.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
       "status": "PLANNED_OR_UNVERIFIED",
@@ -540,8 +540,8 @@
     {
       "id": "0.47",
       "title": "Telemetry",
-      "scope": "W3C tracing propagation, OpenTelemetry/OTLP metrics, SLA and audit logs PDF03_RECONCILIATION: W3C trace propagation, bounded OTel batch queue, measured overhead and orderly flush/shutdown; zero overhead claims forbidden. PDF05: Explicit Tokio trace propagation, bounded OTLP batch export, flush and failure tests.",
-      "acceptance": "No secret leakage; trace replay across actual host boundaries",
+      "scope": "W3C tracing propagation, OpenTelemetry/OTLP metrics, SLA and audit logs PDF03_RECONCILIATION: W3C trace propagation, bounded OTel batch queue, measured overhead and orderly flush/shutdown; zero overhead claims forbidden. PDF05: Explicit Tokio trace propagation, bounded OTLP batch export, flush and failure tests. PDF01–09: M0 target 500 concurrent requests per instance and M1 latency objectives require measured p50/p95/p99, reproducible workloads, bounded tracing queues and trace propagation.",
+      "acceptance": "No secret leakage; trace replay across actual host boundaries Pinned benchmark harness and results tied to commit SHA, including failures.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
       "status": "PLANNED_OR_UNVERIFIED",
@@ -564,8 +564,8 @@
     {
       "id": "0.49",
       "title": "Economics",
-      "scope": "L402/x402 adapter, testnet invoice/preimage verification, offline escrow PDF02_RECONCILIATION: L402 Lightning macaroon/preimage flow and x402 payment rails are separate typed protocols; budget reserve/commit/refund, replay/idempotency, receipt and settlement authority must be independently verified. PDF04_RECONCILIATION: mocked_invoice and fixed preimage are not Lightning settlement; prohibit local RwLock budget as durable multi-tenant ledger, require authoritative atomic reserve/commit/refund, replay and recovery tests. PDF05: Mock Lightning invoice and local RwLock budget are not settlement; require durable tenant-scoped atomic accounting and replay protection.",
-      "acceptance": "Idempotent ledger, upper spend limits, explicit human confirmation",
+      "scope": "L402/x402 adapter, testnet invoice/preimage verification, offline escrow PDF02_RECONCILIATION: L402 Lightning macaroon/preimage flow and x402 payment rails are separate typed protocols; budget reserve/commit/refund, replay/idempotency, receipt and settlement authority must be independently verified. PDF04_RECONCILIATION: mocked_invoice and fixed preimage are not Lightning settlement; prohibit local RwLock budget as durable multi-tenant ledger, require authoritative atomic reserve/commit/refund, replay and recovery tests. PDF05: Mock Lightning invoice and local RwLock budget are not settlement; require durable tenant-scoped atomic accounting and replay protection. PDF06 pp.7–10: fixed simulated preimage settled_preimage_hash_77492104 and synthetic macaroon are explicitly invalid as settlement; separate L402 Lightning and x402 payment rails, verify invoice/preimage/macaroons and authority; reserve/commit/refund budget transactionally.",
+      "acceptance": "Idempotent ledger, upper spend limits, explicit human confirmation Reject fixed/fake preimages, replay, mismatched invoice, cross-tenant macaroon; idempotent reserve/settle/refund; no charge on failed tool call.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
       "status": "PLANNED_OR_UNVERIFIED",
@@ -666,8 +666,8 @@
     {
       "id": "0.56",
       "title": "OmniDev",
-      "scope": "AST/CST code agents, repo analysis, codegen, test harness PDF06_OMNIDEV: Architect(Tree-sitter CST/repository dependency graph), Security Critic(threat model, vulnerability and patch review), Executor(Firecracker guest build/test) are required distinct roles. Implement typed task/result/error contracts, real AST parsing, signed and validated git patches, bounded retry/delegation, deterministic test runner, logs, resource budgets and recovery. Reject hardcoded AST_MAP_100%_ACCURACY, git diff optymalny_kod and unconditional test success as stubs.",
-      "acceptance": "Compilable patches, tests, human-gated protected updates",
+      "scope": "AST/CST code agents, repo analysis, codegen, test harness PDF06_OMNIDEV: Architect(Tree-sitter CST/repository dependency graph), Security Critic(threat model, vulnerability and patch review), Executor(Firecracker guest build/test) are required distinct roles. Implement typed task/result/error contracts, real AST parsing, signed and validated git patches, bounded retry/delegation, deterministic test runner, logs, resource budgets and recovery. Reject hardcoded AST_MAP_100%_ACCURACY, git diff optymalny_kod and unconditional test success as stubs. PDF01–09: code-agent generated patches require AST/CST parsing, compilable sandbox build, real tests, security review and human gate; rmcp/pmcp examples are references, not integrated adapters.",
+      "acceptance": "Compilable patches, tests, human-gated protected updates Compile and run tests on generated patch; deny unsafe code and unapproved protected-branch writes.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
       "status": "PLANNED_OR_UNVERIFIED",
@@ -750,8 +750,8 @@
     {
       "id": "0.63",
       "title": "OmniSec",
-      "scope": "Purple Team validation in authorized scoped targets PDF02_RECONCILIATION: Version-pinned OWASP agentic ASI01–ASI10 threat matrix with independent negative tests for indirect prompt injection, tool misuse, identity spoofing, manifest rug pull, RCE, memory poisoning and cross-agent privilege escalation.",
-      "acceptance": "Authorization checks, non-destructive default, explicit approval",
+      "scope": "Purple Team validation in authorized scoped targets PDF02_RECONCILIATION: Version-pinned OWASP agentic ASI01–ASI10 threat matrix with independent negative tests for indirect prompt injection, tool misuse, identity spoofing, manifest rug pull, RCE, memory poisoning and cross-agent privilege escalation. PDF01–09: negative OWASP agentic matrix for prompt injection, manifest poisoning, sandbox escape, SSRF, tool-output injection and authorization bypass.",
+      "acceptance": "Authorization checks, non-destructive default, explicit approval Independent negative test receipts and explicit deny decisions.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
       "status": "PLANNED_OR_UNVERIFIED",
@@ -1050,8 +1050,8 @@
     {
       "id": "0.88",
       "title": "OmniSubstrate",
-      "scope": "Sandboxed Wasm/Cranelift specialization of *approved pure* hot paths, optional SIMD, exploratory FPGA PDF40_RECONCILIATION: WASM/Cranelift optymalizacje wyłącznie zatwierdzonych funkcji pure, test sandbox, benchmark A/B i rollback.",
-      "acceptance": "Equivalence tests, independent limits and signatures; performance measured vs baseline, deterministic fallback",
+      "scope": "Sandboxed Wasm/Cranelift specialization of *approved pure* hot paths, optional SIMD, exploratory FPGA PDF40_RECONCILIATION: WASM/Cranelift optymalizacje wyłącznie zatwierdzonych funkcji pure, test sandbox, benchmark A/B i rollback. PDF08 pp.8–9: Rust JIT/hot-swap of approved pure procedures only; staged deployment, proof or equivalence checks, health gates and rollback, not unconstrained runtime self-rewriting.",
+      "acceptance": "Equivalence tests, independent limits and signatures; performance measured vs baseline, deterministic fallback Sandbox compile, bounded CPU/memory, signed artifact and rollback on mismatch.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
       "status": "PLANNED_OR_UNVERIFIED",
@@ -1086,8 +1086,8 @@
     {
       "id": "0.91",
       "title": "Neuromorphic HIL / Loihi 2",
-      "scope": "Optional experimental SNN routing adapter with CPU/GPU fallback PDF03_RECONCILIATION: Loihi 2 remains optional hardware-in-the-loop research; require verified hardware SDK, same-workload energy-delay measurements and CPU fallback; no unverified performance multipliers. PDF04_RECONCILIATION: CPU LIF code is simulation only; Loihi 2 hardware integration requires SDK negotiation, real-device HIL benchmark and CPU fallback. PDF05: CPU LIF simulation is not Loihi 2 integration; require real HIL measurement and CPU fallback.",
-      "acceptance": "Actual device access and reproducible energy-delay-quality data; no claimed production acceleration",
+      "scope": "Optional experimental SNN routing adapter with CPU/GPU fallback PDF03_RECONCILIATION: Loihi 2 remains optional hardware-in-the-loop research; require verified hardware SDK, same-workload energy-delay measurements and CPU fallback; no unverified performance multipliers. PDF04_RECONCILIATION: CPU LIF code is simulation only; Loihi 2 hardware integration requires SDK negotiation, real-device HIL benchmark and CPU fallback. PDF05: CPU LIF simulation is not Loihi 2 integration; require real HIL measurement and CPU fallback. PDF07–08: Loihi 2 SNN hardware-in-the-loop M5 is optional research; quoted EDP multipliers are external claims, not OCAF measurements; CPU/GPU fallback mandatory.",
+      "acceptance": "Actual device access and reproducible energy-delay-quality data; no claimed production acceleration Same-workload hardware EDP, quality and fallback benchmarks, repeatable with device evidence.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
       "status": "PLANNED_OR_UNVERIFIED",
@@ -1098,8 +1098,8 @@
     {
       "id": "0.92",
       "title": "Biocomputing / wetware",
-      "scope": "Ethics-first feasibility study, not an implementation commitment of biologically based cognition",
-      "acceptance": "Independent scientific validation, safety/biosafety/legal and ethics review; no live human-derived materials under current scope",
+      "scope": "Ethics-first feasibility study, not an implementation commitment of biologically based cognition PDF08 pp.8–9: wetware/organoid/MEA proposals are speculative ethics-gated research only; prohibit claiming biological cognition as implementation.",
+      "acceptance": "Independent scientific validation, safety/biosafety/legal and ethics review; no live human-derived materials under current scope Independent feasibility and ethics assessment before any experiment.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
       "status": "PLANNED_OR_UNVERIFIED",
@@ -1110,8 +1110,8 @@
     {
       "id": "0.93",
       "title": "Optical/holographic state",
-      "scope": "Investigate optical storage/links as laboratory alternatives; do not replace authoritative PostgreSQL",
-      "acceptance": "Physical experimental design, measured bandwidth/latency, consistency under faults; reject zero-latency or nonlocal synchronization claims",
+      "scope": "Investigate optical storage/links as laboratory alternatives; do not replace authoritative PostgreSQL PDF08 pp.8–9: holographic zero-latency global state and topological gravity-proof cryptography are speculative; preserve PostgreSQL authoritative ledger and physical causality.",
+      "acceptance": "Physical experimental design, measured bandwidth/latency, consistency under faults; reject zero-latency or nonlocal synchronization claims No zero-latency or quantum/gravity security claims without experimentally verifiable proof.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
       "status": "PLANNED_OR_UNVERIFIED",
@@ -1167,8 +1167,8 @@
     {
       "id": "0.98",
       "title": "OmniEval-Lab + OmniFleet-C2",
-      "scope": "Replayable trajectory datasets, tamper-evident evals, secure skill provenance/hot reload with automatic rollback PDF40_RECONCILIATION: Katalog umiejętności: jawny manifest identyfikatorów, wersji, uprawnień, statusów i testów; weryfikacja liczby 110+ bez fałszywego zaliczania prototypów. Bounded epsilon-greedy routing i odtwarzalny feedback.",
-      "acceptance": "",
+      "scope": "Replayable trajectory datasets, tamper-evident evals, secure skill provenance/hot reload with automatic rollback PDF40_RECONCILIATION: Katalog umiejętności: jawny manifest identyfikatorów, wersji, uprawnień, statusów i testów; weryfikacja liczby 110+ bez fałszywego zaliczania prototypów. Bounded epsilon-greedy routing i odtwarzalny feedback. PDF07–08: M0–M5 KPI provenance; 500 concurrent requests, <35us latency, 10000 SHM agents, <125ms Firecracker cold start, <10us isolation and >=95% tool selection are unverified target metrics; register each with measurement protocol.",
+      "acceptance": " Reproducible hardware/workload/baseline, multiple trials, CI artifact SHA, confidence intervals; no marketing numbers as PASS.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
       "status": "PLANNED_OR_UNVERIFIED",
@@ -3220,8 +3220,8 @@
     {
       "id": "1.92",
       "title": "Core domain swarms integration",
-      "scope": "Bind OmniDev OmniUX OmniE2E OmniForge OmniWeb OmniMath and OmniSec to capability registry PDF06_OMNIDEV: Wire the three OmniDev roles to capability registry, authenticated Zenoh transport and CRDT only for non-authoritative shared context. Enforce per-tenant permissions, least privilege, fencing, replay/idempotency and operator approval for repo writes. OmniDev is not a substitute for ten Agents Builder products. PDF07_OMNIUX: Register all three OmniUX roles separately with typed I/O, Figma scoped permissions, tenant isolation, provenance, bounded delegation, Zenoh messaging and auditable handoff to OmniDev. PDF07: Register all three OmniUX roles with typed I/O, least-privilege credentials, tenant isolation, bounded delegation, auditable Zenoh transport and OmniDev handoff.",
-      "acceptance": "Seven swarms execute real authorized fixture tasks with trace and audit",
+      "scope": "Bind OmniDev OmniUX OmniE2E OmniForge OmniWeb OmniMath and OmniSec to capability registry PDF06_OMNIDEV: Wire the three OmniDev roles to capability registry, authenticated Zenoh transport and CRDT only for non-authoritative shared context. Enforce per-tenant permissions, least privilege, fencing, replay/idempotency and operator approval for repo writes. OmniDev is not a substitute for ten Agents Builder products. PDF07_OMNIUX: Register all three OmniUX roles separately with typed I/O, Figma scoped permissions, tenant isolation, provenance, bounded delegation, Zenoh messaging and auditable handoff to OmniDev. PDF07: Register all three OmniUX roles with typed I/O, least-privilege credentials, tenant isolation, bounded delegation, auditable Zenoh transport and OmniDev handoff. PDF01–09: OmniDev/OmniUX/OmniE2E/OmniForge/OmniWeb/OmniSec roles must have typed IO, per-tenant scopes, stop conditions and audited real backend invocations.",
+      "acceptance": "Seven swarms execute real authorized fixture tasks with trace and audit Integration E2E per role and denied capability negative tests.",
       "negative": "Reject fabricated tool completion and missing sandbox",
       "dependencies": [
         "1.91",
@@ -4991,5 +4991,28 @@
     "documents": 40,
     "source": "docs/roadmap/PDF_40_SEMANTIC_GAP_LEDGER_2026-10-16.md",
     "notes": "Do not assert all source requirements have been semantically verified; source-page-level review is still required."
+  },
+  "pdf01_09_reconciliation": {
+    "status": "REQUIREMENTS_RESTORED_TO_EXISTING_STAGES_IMPLEMENTATION_NOT_CERTIFIED",
+    "source": "docs/audits/PDF01_09_SOURCE_TO_ROADMAP_RECONCILIATION_2026-10-16.md",
+    "updated_stage_ids": [
+      "0.39",
+      "0.43",
+      "0.44",
+      "0.45",
+      "0.46",
+      "0.47",
+      "0.49",
+      "0.56",
+      "0.63",
+      "0.88",
+      "0.91",
+      "0.92",
+      "0.93",
+      "0.98",
+      "1.92"
+    ],
+    "source_set": "PDF 01–09, with revision numbering and duplicates requiring provenance review",
+    "production_approved": false
   }
 }
