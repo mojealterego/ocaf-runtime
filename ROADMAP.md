@@ -674,3 +674,7 @@ Wspólne kryteria: typed I/O, najmniejsze uprawnienia, izolacja tenantów, audyt
 | **215** | SWE-bench Verified, mini-SWE-agent baseline, N-run i regresje | 1.99 | Przypięte środowisko, wielokrotne pomiary, niezależna walidacja i odtwarzalność | PLANNED |
 
 Nie deklarować IMPLEMENTED/TESTED/INTEGRATED bez kodu, uruchomionych testów i dowodów przypiętych do SHA. Następny wolny numer etapu: **216**.
+
+## PDF15 — uzgodnienie wymagań (2026-10-16)
+
+Źródło: Architektura OCAF w Języku Rust(1).PDF, 20 stron. Etapy 0.38, 0.39, 0.42, 0.43, 0.44, 0.46, 0.47, 0.49, 0.55, 0.63, 0.64, 0.67, 0.98. Wymagania: Zenoh SHM, CRDT, OTel, dynamiczny MCP, OAuth PKCE, Firecracker/eBPF, L402/x402, RAG, OWASP ASI, PQC, ZKP, Loihi 2 i testy wydajności. Kod PDF to demonstracja z fikcyjnymi poświadczeniami płatności i odpowiedzią SUCCESS bez wywołania narzędzia; nie jest dowodem implementacji. Wymagane testy negatywne, izolacja tenantów, rzeczywiste rozliczenie i SHA. Szczegóły w docs/audits/PDF15_RUST_ARCHITECTURE_SEMANTIC_REVIEW_2026-10-16.md.
