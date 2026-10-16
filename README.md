@@ -1,5 +1,5 @@
 <!-- OCAF_README_ROADMAP_BEGIN -->
-**AKTUALNY STAN (2026-10-16): 231 etapów głównych (historyczne 0.00–2.06 oraz nowe 208–231), 64 podetapy techniczne, 10 produktów Agents Builder; razem 305 pozycji. Następny nowy etap: 232. Wcześniejsze liczniki 215/289/216 w historycznych blokach poniżej są nieaktualne i pozostawione dla zachowania archiwalnego brzmienia.**
+**AKTUALNY STAN (2026-10-16): 246 etapów głównych (historyczne 0.00–2.06 oraz nowe 208–246), 64 podetapy techniczne, 10 produktów Agents Builder; razem 320 pozycji. Następny nowy etap: 247. PDF41–44: audyt częściowy.** Wcześniejsze liczniki 215/289/216 w historycznych blokach poniżej są nieaktualne i pozostawione dla zachowania archiwalnego brzmienia.**
 
 
 [![UWAGA CZYTAĆ — ZAKAZ SAMOWOLKI](https://img.shields.io/badge/UWAGA%20CZYTA%C4%86-ZAKAZ%20SAMOWOLKI-ff0000?style=for-the-badge&labelColor=8b0000)](ROADMAP.md)
