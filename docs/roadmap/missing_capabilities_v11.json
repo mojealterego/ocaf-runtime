@@ -568,7 +568,7 @@
   },
   "pdf34_36_reconciliation": {
     "date": "2026-10-16",
-    "status": "PLANNED_OR_UNVERIFIED",
+    "status": "PLANNED",
     "source": "12-page OCAF/JARVIS OMEGA INFINITY report",
     "phases": [
       "M0 MCP typed stateless",
@@ -581,5 +581,14 @@
     ],
     "acceptance": "Evidence required; no benchmark or hardware acceptance inferred",
     "roadmap": "ROADMAP.md"
-  }
+  },
+  "pdf34_36_numbered_stages": [
+    "216",
+    "217",
+    "218",
+    "219",
+    "220",
+    "221",
+    "222"
+  ]
 }
