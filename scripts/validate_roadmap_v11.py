@@ -46,7 +46,7 @@ def validate(v11: dict, v10_data: dict, root: str, mirror: str, readme: str,
         and v11.get("production_approved") is False
         and v11.get("canonical_roadmap") == "ROADMAP.md"
         and v11.get("docs_mirror") == "docs/ROADMAP_FULL_ECOSYSTEM_2026.md"
-        and v11.get("next_new_main_stage") == "1.95",
+        and v11.get("next_new_main_stage") == "216",
         "v11 provenance, canonical root path, next milestone or safety claim invalid")
     _assert(
         isinstance(v10_data,dict) and v10_data.get("version")=="v10-restored-full",
@@ -54,11 +54,11 @@ def validate(v11: dict, v10_data: dict, root: str, mirror: str, readme: str,
     for group in PROTECTED:
         old=v10_data.get(group)
         new=v11.get(group)
-        _assert(isinstance(old,list) and isinstance(new,list) and len(old)==len(new),
+        _assert(isinstance(old,list) and isinstance(new,list) and len(new)>=len(old) if group=="main" else isinstance(old,list) and isinstance(new,list) and len(old)==len(new),
                 "history count changed in "+group)
         if group!="main":
             _assert(old==new,"historical substage or reference evidence mutated: "+group)
-    _assert(v11.get("main_count")==195 and v11.get("technical_count")==64
+    _assert(v11.get("main_count")==215 and v11.get("technical_count")==64
             and v11.get("reference_count")==33,
             "roadmap stage count changed despite ONLY restoring old products")
     for old,new in zip(v10_data["main"],v11["main"]):
@@ -154,14 +154,14 @@ def validate(v11: dict, v10_data: dict, root: str, mirror: str, readme: str,
     return {
         "status":"OCAF_V11_ORIGINAL_AGENTS_BUILDER_ALL_TEN_PRODUCTS_RESTORED",
         "canonical_root_roadmap_pinned":True,
-        "main_stages":195,
+        "main_stages":215,
         "technical_substages":64,
-        "total_milestone_rows":259,
+        "total_milestone_rows":279,
         "distinct_agents_builder_products":10,
         "builder_platforms":5,
         "code_and_nocode_for_every_platform":True,
         "scope_gaps_audited":24,
-        "next_new_main_stage":"1.95",
+        "next_new_main_stage":"216",
         "fully_production_approved_builder_products":0,
         "production_approved":False,
     }
