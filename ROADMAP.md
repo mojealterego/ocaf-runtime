@@ -868,3 +868,29 @@ Mapowanie: M0 do MCP/tool gateway; M1 do transport/cluster/registry; M2 do auth/
 
 ### Etap 222 — Kwantowo-neuromorficzne HIL z PQC
 **Status: PLANNED.** M6; PDF34–36 s.9–10; integracja i niezależne pomiary pełnego cyklu, <1us tylko hipoteza. Kryterium odbioru: rzeczywisty kod, testy negatywne, dowód CI/SHA i test infrastruktury właściwej dla etapu. Nie zastępuje historycznych etapów ani bram 0.38–0.41.
+
+
+## PDF37–38 — etapy 223–230 (2026-10-16)
+### Etap 223 — PDF37: protokoły negocjacji zasobów i dynamic throttling
+**Status: PLANNED.** Licytacje GPU/API, cost-latency-accuracy, polityki budżetowe i deterministyczny arbitraż. Odbiór: rzeczywista implementacja, testy pozytywne i negatywne, CI/SHA, właściwa infrastruktura; przykłady z PDF nie są dowodem implementacji.
+
+### Etap 224 — PDF37: telemetryczny routing modeli i kontrolowane RLAIF
+**Status: PLANNED.** Multi-armed bandits, epsilon-greedy, pomiar jakości, opóźnienia i regresji, bezpieczny feedback. Odbiór: rzeczywista implementacja, testy pozytywne i negatywne, CI/SHA, właściwa infrastruktura; przykłady z PDF nie są dowodem implementacji.
+
+### Etap 225 — PDF37: ważony konsensus ekspertów i ograniczona samonaprawa
+**Status: PLANNED.** Głosowanie domenowe, konflikty danych, limit prób, fail-closed i ślad decyzji. Odbiór: rzeczywista implementacja, testy pozytywne i negatywne, CI/SHA, właściwa infrastruktura; przykłady z PDF nie są dowodem implementacji.
+
+### Etap 226 — PDF37: Actor-Critic, grounding i weryfikacja faktów
+**Status: PLANNED.** Weryfikator niezależny od generatora, provenance, dowody, abstencja, bounded reasoning. Odbiór: rzeczywista implementacja, testy pozytywne i negatywne, CI/SHA, właściwa infrastruktura; przykłady z PDF nie są dowodem implementacji.
+
+### Etap 227 — PDF37: DAG delegowania i typowane tool calling
+**Status: PLANNED.** Graf zależności, semantic routing, least privilege, idempotencja, audyt wywołań. Odbiór: rzeczywista implementacja, testy pozytywne i negatywne, CI/SHA, właściwa infrastruktura; przykłady z PDF nie są dowodem implementacji.
+
+### Etap 228 — PDF38: wielotransportowa warstwa komunikacji urządzeń
+**Status: PLANNED.** Adaptery BLE, NFC, UWB, Wi-Fi Direct, IrDA, Li-Fi/OCC/FSO z capability negotiation i fallback. Odbiór: rzeczywista implementacja, testy pozytywne i negatywne, CI/SHA, właściwa infrastruktura; przykłady z PDF nie są dowodem implementacji.
+
+### Etap 229 — PDF38: brama IoT/LPWAN i przemysłowe protokoły
+**Status: PLANNED.** LoRaWAN, NB-IoT, LTE-M, Thread/Matter, Zigbee, 6LoWPAN, izolacja i bezpieczne provisioning. Odbiór: rzeczywista implementacja, testy pozytywne i negatywne, CI/SHA, właściwa infrastruktura; przykłady z PDF nie są dowodem implementacji.
+
+### Etap 230 — PDF38: transport mobilny, lokalizacja i źródła RSS
+**Status: PLANNED.** Integracje 4G/5G, GNSS, MSISDN bez ujawniania danych, RSS, autoryzacja i ograniczenia platformowe. Odbiór: rzeczywista implementacja, testy pozytywne i negatywne, CI/SHA, właściwa infrastruktura; przykłady z PDF nie są dowodem implementacji.
