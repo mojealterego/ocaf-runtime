@@ -1492,3 +1492,7 @@ Audyt: `docs/audits/PDF22_OMNIWEB_SEMANTIC_REVIEW_2026-10-16.md`. S. 1–14: Zen
 **PDF24, s. 16–18: OmniGov, OmniFin, OmniPhys.** OmniGov: egzekwowany przed płatnością strażnik budżetu, odwołanie uprawnień L402/OAuth, fail-closed policy i niezależny audyt. OmniFin: pomiar kosztów tokenów, płatności i CPU oraz rozliczalne ROI. OmniPhys: uwierzytelnione urządzenia IoT/edge, interlock, watchdog, bezpieczny stan awaryjny i hardware-in-loop. Przykładowy kod tylko drukuje komunikaty i zwraca stały raport; brak dowodów odcięcia portfela, księgowania lub fizycznego sterowania. Mapowanie: 0.38–0.39, 0.43, 0.49, 0.55, 0.63, 0.67, 0.98. Audyt: `docs/audits/PDF24_SEMANTIC_REVIEW_2026-10-16.md`.
 
 **Status:** PLANNED_OR_UNVERIFIED. Nowe roje nie zwiększają liczby 10 produktów Agents Builder; nie renumerować 215 etapów. Nie zaliczać prognoz, benchmarków bez pomiarów ani przykładowego kodu jako wdrożenia.
+
+
+### PDF25–PDF26: OmniSec, OmniCog, OmniEvolve, OmniSense
+Wymagania przypisane do istniejących etapów 0.38–0.41, 0.43, 0.49, 0.55, 0.63, 0.67 i 0.98. Audyt: `docs/audits/PDF25_26_SEMANTIC_REVIEW_2026-10-16.md`. Status: PLANNED_OR_UNVERIFIED. Przykłady z PDF nie są dowodem wykonania; zachowano 10 produktów Agents Builder i numerację etapów.
