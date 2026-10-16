@@ -340,3 +340,8 @@ PDF37: zakres MCP/Zenoh/PQC/neuromorfika przypisany do istniejących 216–222 b
 
 ## 2026-10-16 — PDF41–44
 Dodano etapy 232–246 (15 nowych etapów, PLANNED) do ROADMAP.md. Łącznie 246 głównych, 64 techniczne, 10 produktów = 320 pozycji; następny 247. Audyt PDF43–44 częściowy; brak dowodów implementacji i testów.
+
+
+### Dokumenty 48–50 — kontrola duplikatów (2026-10-16)
+
+Ponownie przesłane materiały: **48 = Notes_261014_204557.pdf (127 stron)**, **49 = Dokument bez nazwy.PDF (14 stron)**, **50 = Architektura OmniContext Agent Framework (OCAF) w ..(1).PDF (61 stron)**. Są to te same dokumenty merytoryczne, które uprzednio zarejestrowano jako PDF 46, 47 i 45. **Nie dopisano nowych etapów**: ich wymagania zostały już wpisane pod identyfikatorami **247–277** (PDF 45: 247–265; PDF 46: 266–270; PDF 47: 271–277). Kolejny wolny identyfikator pozostaje **278**. Ponowne przesłanie dokumentu nie oznacza nowej funkcjonalności ani wykonania testów.
