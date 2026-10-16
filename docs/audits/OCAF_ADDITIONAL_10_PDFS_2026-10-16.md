@@ -59,3 +59,10 @@ Wszystkie 30 nazw kontrolnych (Zenoh, Automerge, OTLP, Tree-sitter, Firecracker,
 ## Ograniczenia
 
 To kontrola 11 plików, ich rozdziałów i 16 grup wymagań. **Nie jest to pełna weryfikacja każdej linijki wszystkich 252 stron względem każdego pliku źródłowego repo**. Statusy implementacji pozostają `unverified` do czasu udokumentowanego przeglądu kodu i uruchomienia testów. Liczba pozycji kanonicznej Roadmapy pozostaje **281**.
+
+## Uzupełnienie po kontroli wszystkich stron (2026-10-16)
+
+- [Szczegółowa macierz 29 grup rozdziałów ↔ konkretne etapy Roadmapy](OCAF_BATCH2_CHAPTER_TO_ROADMAP_MATRIX_2026-10-16.md) — zastępuje ocenę opartą wyłącznie na obecności 30 nazw.
+- Lokalny artefakt dowodowy `OCAF_BATCH2_252_PAGE_TRACEABILITY.md` obejmuje wszystkie 252 strony, z identyfikatorem pliku, numerem strony, SHA-256 tekstu, nagłówkami i wykrytymi domenami. Pełny rejestr lokalny nie jest automatycznie tożsamy z plikiem na GitHub.
+- W `ROADMAP.md` i jej lustrzanej kopii skorygowano błędne historyczne podsumowanie 195/259 do aktualnego 207/281.
+- **Werdykt:** pokrycie zakresu w Roadmapie dla 29 grup rozdziałów; testy funkcjonalne, przegląd atomowych wymagań i produkcyjny odbiór niepotwierdzone.
