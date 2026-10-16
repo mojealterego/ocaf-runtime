@@ -3,7 +3,7 @@
   "version": "v11-original-builder-scope-restored",
   "repository": "mojealterego/ocaf-runtime",
   "branch": "main",
-  "main_count": 230,
+  "main_count": 231,
   "technical_count": 64,
   "reference_count": 33,
   "production_approved": false,
@@ -3800,6 +3800,13 @@
       "source": "PDF38",
       "description": "Integracje 4G/5G, GNSS, MSISDN bez ujawniania danych, RSS, autoryzacja i ograniczenia platformowe",
       "evidence": "Wymaganie z dokumentacji; niezweryfikowane w kodzie"
+    },
+    {
+      "id": "231",
+      "title": "Interoperacyjność komunikacji i adapterów OCAF",
+      "status": "PLANNED",
+      "source": "PDF40 s.24–118; katalog protokołów, polityka kompatybilności, testy hardware-in-loop, brak domniemanej integracji",
+      "evidence": "PDF requirements only; implementation not verified"
     }
   ],
   "technical": [
@@ -5096,7 +5103,7 @@
   "original_agents_builder_matrix": "docs/roadmap/agents_builder_products_v11.json",
   "lost_requirements_inventory": "docs/roadmap/missing_capabilities_v11.json",
   "stage_update_log": "docs/roadmap/STAGE_CHANGELOG.md",
-  "next_new_main_stage": "231",
+  "next_new_main_stage": "232",
   "pdf40_reconciliation": {
     "date": "2026-10-16",
     "status": "PARTIAL_SOURCE_GROUNDED_REQUIREMENTS_ADDED_NOT_FULL_SEMANTIC_CERTIFICATION",
@@ -5507,5 +5514,20 @@
     ],
     "roadmap": "ROADMAP.md"
   },
-  "next_new_main_milestone": "231"
+  "next_new_main_milestone": "232",
+  "pdf37_40_reconciliation": {
+    "status": "PLANNED",
+    "stages": [
+      "223",
+      "224",
+      "225",
+      "226",
+      "227",
+      "228",
+      "229",
+      "230",
+      "231"
+    ],
+    "note": "PDF37 overlaps 216–222; PDF38–40 mapped to 223–231"
+  }
 }
