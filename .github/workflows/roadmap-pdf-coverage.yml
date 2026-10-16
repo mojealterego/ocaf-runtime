@@ -9,6 +9,9 @@ on:
       - docs/roadmap/canonical_v11_inventory.json
       - docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md
       - scripts/check_roadmap_pdf_coverage.py
+      - scripts/check_30_pdf_audit_gate.py
+      - docs/audits/OCAF_30_PDF_FINAL_SOURCE_AUDIT_2026-10-16.md
+      - docs/audits/OCAF_BATCH2_CHAPTER_TO_ROADMAP_MATRIX_2026-10-16.md
       - .github/workflows/roadmap-pdf-coverage.yml
   workflow_dispatch:
 permissions:
@@ -20,4 +23,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check canonical PDF requirements and roadmap integrity
-        run: python3 scripts/check_roadmap_pdf_coverage.py
+        run: |
+          python3 scripts/check_roadmap_pdf_coverage.py
+          python3 scripts/check_30_pdf_audit_gate.py
