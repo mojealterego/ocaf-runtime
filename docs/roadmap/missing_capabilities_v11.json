@@ -605,5 +605,10 @@
   "pdf37_40_reconciliation": {
     "status": "PLANNED",
     "note": "PDF37 mapped to existing 216–222; PDF38–40 to 223–231"
+  },
+  "pdf41_44_reconciliation": {
+    "stages": "232-246",
+    "status": "PLANNED",
+    "partial_audit": true
   }
 }
