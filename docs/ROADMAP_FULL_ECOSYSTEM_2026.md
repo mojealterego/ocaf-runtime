@@ -628,6 +628,17 @@ Status: PLANNED/UNVERIFIED; nie potwierdzono testów ani wdrożenia. Bez dodawan
 
 Status: PLANNED/UNVERIFIED. Wydajność podana w PDF (m.in. 49%, 16x, 67 Gbps, 5–35 mikrosekund, 125 ms, 5 MB, 0.0008x EDP) nie stanowi dowodu pomiarowego OCAF. M0–M5 nie zmieniają numeracji etapów.
 
+## PDF użytkownika 7 — M6: hiperoptymalizacja kwantowo-neuromorficzna (2026-10-16)
+
+Źródło: `Projekt i Mapa Drogowa Rewolucyjnej Architektury S..(2) (1).PDF`, 12 stron. Fazy M0–M5 i pozostałe wymagania z s. 1–10 powtarzają wcześniejszy zakres PDF 5/6; **nowe jawne wymaganie M6** znajduje się na s. 10 (kontynuacja tabeli/sekcji roadmapy). Bez renumeracji i bez dublowania wdrożeń.
+
+- **M6 (s. 10)**: eksperymentalna integracja SNN/Loihi 2 w Hardware-in-the-Loop z dedykowanym akceleratorem kryptografii postkwantowej ML-KEM/ML-DSA (FIPS 203/204); minimalizacja narzutów transferu i synchronizacji; CPU/software fallback, polityka bezpieczeństwa, integralność pakietu decyzyjnego — przypisanie do istniejących **0.91 (neuromorfika/HIL), 0.45 (PQC), 0.63 (bezpieczny runtime i testy)**. Rozróżnić przyspieszenie pojedynczej operacji od pełnego cyklu routing + kryptografia.
+- **KPI M6 (s. 10)**: docelowa latencja pełnego cyklu routing + PQC < 1 µs. Jest to **hipoteza badawcza, nie osiągnięty wynik**; wymaga precyzyjnej definicji początku/końca pomiaru, p50/p95/p99, powtarzalnego HIL na rzeczywistym sprzęcie, śladu kryptograficznej poprawności, baseline CPU/GPU, pomiaru transferów PCIe, ograniczeń platformy i niezależnej replikacji. Jeśli pełny cykl jest niewykonalny, wykazać to pomiarami zamiast deklarować PASS.
+- **M0–M5 (s. 9–10)**: zachowane istniejące przypisania: M0 0.43/0.44/0.46; M1 0.46/0.47; M2 0.45/0.49; M3 0.39/0.41/0.47/0.63; M4 0.43/0.45/0.63; M5 0.91. KPI z PDF (500 concurrent, <35 µs, >10k agents, <500 ms, <125 ms, <5 MB, <10 µs, >=95% tool accuracy, >=40% context reduction, >=90% EDP reduction) wymagają osobnych dowodów i nie są potwierdzone.
+- **Bezpieczeństwo/semantyka (s. 4–7)**: zero-copy SHM nie oznacza zerowego transferu między hostami/VM; host eBPF nie gwarantuje wglądu w syscalle gościa; Rust nie zapewnia absolutnej wolności od wszystkich błędów; CRDT nie zastępuje autorytatywnego księgowania; deklaracje ZKP o ukryciu caveats wymagają formalnego modelu zagrożeń i rzeczywistego protokołu. Nie oznaczać jako IMPLEMENTED bez kodu, testów i dowodów.
+
+**Status:** wymagania przypisane do istniejących etapów, **PLANNED/UNVERIFIED**; brak dowodów sprzętowego M6, testów HIL, niezależnej walidacji KPI i produkcyjnego wdrożenia.
+
 
 ### PDF 09 — wymagania agentowe, symulacje społeczne i benchmarki (uzgodnienie 2026-10-16)
 
