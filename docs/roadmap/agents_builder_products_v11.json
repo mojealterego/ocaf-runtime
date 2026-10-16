@@ -328,5 +328,28 @@
         "repair": "Versioned typed design/build/test artifacts, capability scoped auth, lifecycle, checkpoints and trace correlation"
       }
     ]
+  },
+  "pdf21_omniforge_integration": {
+    "source": "PDF21 pp.20-23",
+    "status": "PLANNED_OR_UNVERIFIED",
+    "swarm": "OmniForge",
+    "roles": [
+      "InzynierSilnika_CPP_Rust",
+      "ArchitektShaderow_GPU",
+      "RezyserZasobow_3D"
+    ],
+    "related_stages": [
+      "0.43",
+      "0.46",
+      "0.47",
+      "0.49",
+      "0.50",
+      "0.55",
+      "0.63",
+      "0.67",
+      "0.98"
+    ],
+    "products_unchanged": 10,
+    "rule": "GameDev swarm may provide templates/tooling to Builders but is not an eleventh Builder variant; require separate 10 product builds."
   }
 }
