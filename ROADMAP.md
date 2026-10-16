@@ -571,3 +571,26 @@ OmniDev pozostaje **odrębnym rojem agentów kodujących**, nie zastępuje dzies
 | 0.55 | Integracja zweryfikowanych komponentów z Agents Builder; bez zastępowania dziesięciu odrębnych wariantów Code/NoCode. |
 
 Stan: PLANNED/UNVERIFIED; nie deklarować implementacji na podstawie przykładów kodu ani liczb wydajnościowych z PDF.
+
+
+### Audyt dokumentu użytkownika nr 2 — Rust/Zenoh i sześć faz OCAF (14 stron, 2026-10-16)
+
+Źródło: `Dokument bez nazwy (6).PDF` (14 stron). Jest to nowo przekazany dokument, odrębny od wcześniejszego PDF 02/40 o podobnym numerze. Wymagania przypisane do **istniejących etapów**, bez renumeracji:
+
+| Etap | Źródło (strony) | Obowiązkowy zakres i testy odbioru |
+|---|---|---|
+| 0.43 | 2–3, 5–9, 13–14 | Dynamiczny MCP tool discovery/Queryable i JSON Schema 2020-12, bezpieczna walidacja nieufnych schematów, schema fuzzing, per-tenant allowlist, timeout i odwołanie rejestracji; pomiar czasu odkrywania bez deklarowania stałego <1 ms. |
+| 0.46 | 1–3, 5–8, 12, 14 | Rust/Tokio + Zenoh Pub/Sub/Queryable, SHM zero-copy tylko na wspólnym hoście, ACL i izolacja tenantów, bezpieczna synchronizacja CRDT; CRDT nie zastępuje fencing/lease/authority koordynatora. Benchmarki p50/p95/p99 w IPC i LAN z odtwarzalną konfiguracją. |
+| 0.39 | 2–3, 12–14 | Rzeczywisty Firecracker/KVM lub zweryfikowany backend izolacyjny, ograniczenia cgroups v2, broker sekretów/egress, brak ujawnienia kluczy w gościu, cleanup i negatywne testy RCE; samonaprawa kodu tylko po izolowanych testach i zatwierdzeniu polityki. |
+| 0.44 | 2–3, 13 | OAuth PKCE, discovery RFC 8414, powiązanie tokenów z tenantem i sesją, rotacja/odwołanie, brak confused deputy i unikalne autoryzowane MCP endpointy. |
+| 0.49 | 2–3, 4–11, 13–14 | Prawdziwy L402/Lightning i x402, HTTP 402, walidacja Macaroon caveats i sha256(preimage)=payment_hash, offline/replay policy, trwały atomowy budżet per tenant, reserve/commit/refund, audyt settlement; stałe faktury/preimage z przykładu są symulacją, nie płatnością. |
+| 0.48 | 2–3 | Enterprise RAG, parser i wyszukiwanie wektorowe, tenant ACL, provenance, kontrola prompt injection i negatywne testy zatruwania treści. |
+| 0.45 | 14 | ZKP dla delegowanych uprawnień/płatności i post-quantum crypto z interoperacyjnością, polityką downgrade oraz testami kryptograficznymi; bez deklaracji gotowości na podstawie propozycji. |
+| 0.47 | 14 | OpenTelemetry: tracing Zenoh, CRDT convergence/conflicts, bounded exporter, metryki p95/p99 i kontrolowane zamykanie. |
+| 0.55 | 2–3 | Code-as-a-Tool: typowane narzędzia Rust (w tym proceduralne #[tool] po weryfikacji kompatybilności), bezpieczne generowanie schematów i sandbox; nie zastępuje dziesięciu produktów Agents Builder. |
+| 0.63 | 2–3, 12–14 | OWASP ASI: testy negatywne tool poisoning, indirect prompt injection, unauthorized execution, secret exfiltration, sandbox escape, cross-tenant access. |
+| 0.91 | 14 | Akceleracja neuromorficzna jako R&D; realny hardware-in-the-loop, CPU fallback i porównawcze benchmarki. |
+
+**Dodatkowe kryterium Rig (s. 12–13):** ocenić adapter `rig-core` do istniejącego runtime bez duplikowania rdzenia; wymagane testy integracyjne lokalnych i zdalnych providerów, uprawnień narzędzi, timeoutów, błędów i kompatybilności wersji (etapy 0.43 i 1.92). 
+
+**Ocena dowodów:** przykład `src/main.rs` nie jest gotową implementacją: odpowiada fikcyjnym wynikiem, generuje `lnbc_*_test_invoice`, przyjmuje dowolny niepusty token/preimage, odejmuje saldo `RwLock` i używa stałego `settled_preimage_hash_77492104` (s. 6–10). Tekstowe deklaracje 5–500 µs, 67 Gbps, <1 ms, 400 ms oraz rozmiarów RAM nie są pomiarami OCAF; wymagają osobnego benchmarku. Dokument błędnie utożsamia brak GC z gwarancją deterministycznej latencji i brakiem wycieków pamięci. Status: **PLANNED/UNVERIFIED**; brak dowodów wdrożenia, testów E2E i akceptacji produkcyjnej. **Bez nowego etapu 2.07.**
