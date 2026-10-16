@@ -800,3 +800,19 @@ Wymagania przypisane do istniejących etapów 0.38–0.41, 0.43, 0.49, 0.55, 0.6
 | `PDF26-007` | `0.67` | OmniSense predictive benchmark validation | `UNVERIFIED` | Benchmark Reflexion/JEPA versus baseline and budget |
 
 Liczba wpisów: **56**. Nie zmienia to **215 etapów głównych**, **64 podetapów technicznych** ani **10 produktów Agents Builder**.
+
+
+### PDF27–PDF29 — uzgodnienie wymagań (2026-10-16)
+
+| Dokument | Etap | Wymaganie | Status | Kryterium odbioru |
+|---|---|---|---|---|
+| PDF27 | 0.67 | OmniSense: GoT, ograniczone MCTS, predykcja JEPA | UNVERIFIED | Testy limitów przeszukiwania, jakości predykcji i przerwania |
+| PDF28 | 0.49 | OmniArbitrage: BATNA, triage, SLA, retry/jitter i eskalacja | UNVERIFIED | Testy rzeczywistych dostawców, awarii, budżetu i timeoutów |
+| PDF28 | 0.43 | OmniContract i OmniChaos: schematy, clarification, circuit breaker | UNVERIFIED | Testy odrzucania danych, degradacji i przywrócenia |
+| PDF28 | 0.67 | OmniStrategy i OmniGraph: DAG, pamięć porażek, spekulacja, graf wiedzy | UNVERIFIED | Testy cykli, zależności, wykonania i pochodzenia |
+| PDF29 | 0.55 | OmniVerify i OmniHomeostasis: niezmienniki SMT, koszt obliczeń | UNVERIFIED | Rzeczywisty solver, kontrprzykłady, limity i fail-closed |
+| PDF29 | 0.98 | OmniCausal: kontrfakty, sześć bramek RSI, shadow i rollback | UNVERIFIED | Dowody wszystkich bramek, autoryzacja operatora i rollback |
+| PDF29 | 0.67 | OmniSleep i OmniPrune: replay, cache, HNSW, decay | UNVERIFIED | Izolacja tenantów, retencja, odzyskiwanie i benchmark |
+| PDF29 | 0.39 / 0.63 | OmniLatent i OmniAdaptive: typowane tensory, cross-examination, work stealing, chaos i narzędzia efemeryczne | UNVERIFIED | Testy izolacji, limitów, sandboxa i sprzątania |
+
+Przykładowe fragmenty Rust z dokumentów nie są dowodami implementacji ani wynikami testów. Historyczna numeracja i dziesięć wariantów Agents Builder pozostają bez zmian.
