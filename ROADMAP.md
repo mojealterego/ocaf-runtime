@@ -503,3 +503,20 @@ W ramach weryfikacji źródeł uzupełniono manifest `docs/roadmap/canonical_v11
 | 0.63 | Wersjonowana macierz ASI01–ASI10 i negatywne testy bezpieczeństwa. |
 
 Status: wymagania planowane lub niezweryfikowane; nie oznacza implementacji ani odbioru. Nie utworzono 2.07, ponieważ zakres należy do istniejących etapów.
+
+
+### PDF 04/40 — uzupełnienia wymagań istniejących etapów
+
+Źródło: `Analiza Architektury Systemu OCAF(2).PDF` (17 stron). Weryfikacja tekstu źródłowego wskazała przykłady demonstracyjne, których nie wolno zaliczać jako implementacji.
+
+| Etap | Obowiązkowe kryterium i przypadek negatywny |
+|---|---|
+| 0.39 | Aya `openat` jako przykład nie dowodzi izolacji gościa Firecracker ani wykrywania ransomware; wymagany realny guest i egzekwowany broker. |
+| 0.43 | AST Tree-sitter nie zastępuje walidacji semantycznej schematów i autoryzacji; testy injection bez dosłownego znacznika. |
+| 0.45 | Demonstracyjny R1CS `witness == public` nie dowodzi caveats macaroon; wymagany niezależny verifier związany z tenant, scope, expiry, nonce, tokenem i akcją. Sam `rustls::aws_lc_rs::default_provider()` nie dowodzi wynegocjowania PQC. |
+| 0.48 | Stały wektor `vec![0.5;1024]` to stub; wymagany wersjonowany embedding model, retrieval fixtures, ACL, provenance i propagacja usunięcia. |
+| 0.49 | `mocked_invoice`, stały preimage i `RwLock` budżetu nie stanowią realnego settlement ani atomowego escrow; wymagany trwały per-tenant reserve/commit/refund i replay/recovery. |
+| 0.91 | CPU LIF jest symulacją, nie Loihi 2 HIL; wymagany rzeczywisty adapter sprzętowy, benchmark i fallback. |
+| 0.46–0.47 | Potwierdzić realny Zenoh SHM i propagację kontekstu OpenTelemetry, bez nieuzasadnionych deklaracji zero-copy między hostami. |
+
+Wymagania dopisano do istniejących etapów manifestu v11; **nie dodano 2.07**. Status: PLANNED/UNVERIFIED, bez dowodu testów lub produkcyjnego odbioru.
