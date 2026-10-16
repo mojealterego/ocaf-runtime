@@ -554,5 +554,16 @@
       "PDF29-003",
       "PDF29-004"
     ]
+  },
+  "pdf30_33_source": {
+    "date": "2026-10-16",
+    "status": "PLANNED_OR_UNVERIFIED",
+    "gaps": [
+      "PDF30: active inference/HDC/fractal swarm",
+      "PDF31: proof-carrying code/energy/alignment",
+      "PDF32: ten platform builders/visual verification",
+      "PDF33: real Lean4/SMT/e-graph integration"
+    ],
+    "roadmap": "ROADMAP.md"
   }
 }
