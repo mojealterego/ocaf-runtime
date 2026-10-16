@@ -13,7 +13,7 @@
   },
   "counts": {
     "ten_original_agents_builder_variants": 10,
-    "scope_gaps": 36
+    "scope_gaps": 56
   },
   "items": [
     {
@@ -375,11 +375,101 @@
       "condition": "UNVERIFIED",
       "basis": "PDF24 pp.16-18",
       "repair": "Concurrent budget reservation and cutoff tests under network partitions"
+    },
+    {
+      "id": "PDF25-001",
+      "component": "OmniSec typed roles and authorization",
+      "parent": "0.43",
+      "condition": "UNVERIFIED",
+      "basis": "PDF25/PDF26 semantic audit 2026-10-16",
+      "repair": "Define role I/O, permissions and bounded delegation"
+    },
+    {
+      "id": "PDF25-002",
+      "component": "OmniRed authorized isolated scope",
+      "parent": "0.39",
+      "condition": "UNVERIFIED",
+      "basis": "PDF25/PDF26 semantic audit 2026-10-16",
+      "repair": "Enforce target allowlist, approvals and sandbox egress"
+    },
+    {
+      "id": "PDF25-003",
+      "component": "OmniSec evidence-backed adversarial validation",
+      "parent": "0.98",
+      "condition": "UNVERIFIED",
+      "basis": "PDF25/PDF26 semantic audit 2026-10-16",
+      "repair": "Run authorized negative tests and preserve artifacts"
+    },
+    {
+      "id": "PDF25-004",
+      "component": "OmniBlue signed rule lifecycle",
+      "parent": "0.63",
+      "condition": "UNVERIFIED",
+      "basis": "PDF25/PDF26 semantic audit 2026-10-16",
+      "repair": "Implement eBPF triage, approval, rollback and false-positive tests"
+    },
+    {
+      "id": "PDF26-001",
+      "component": "OmniCog four memory layers",
+      "parent": "0.63",
+      "condition": "UNVERIFIED",
+      "basis": "PDF25/PDF26 semantic audit 2026-10-16",
+      "repair": "Implement typed separated memory stores and retention"
+    },
+    {
+      "id": "PDF26-002",
+      "component": "OmniCog bitemporal persistence and recovery",
+      "parent": "0.41",
+      "condition": "UNVERIFIED",
+      "basis": "PDF25/PDF26 semantic audit 2026-10-16",
+      "repair": "Test tenant-isolated as-of recovery, conflicts and partitions"
+    },
+    {
+      "id": "PDF26-003",
+      "component": "OmniCog provenance and poisoning resistance",
+      "parent": "0.49",
+      "condition": "UNVERIFIED",
+      "basis": "PDF25/PDF26 semantic audit 2026-10-16",
+      "repair": "Enforce trust, deletion and procedural memory review"
+    },
+    {
+      "id": "PDF26-004",
+      "component": "OmniEvolve isolated reproducible mutation",
+      "parent": "0.55",
+      "condition": "UNVERIFIED",
+      "basis": "PDF25/PDF26 semantic audit 2026-10-16",
+      "repair": "Sandbox builds, sign candidates and test resource limits"
+    },
+    {
+      "id": "PDF26-005",
+      "component": "OmniEvolve independent adversarial gate",
+      "parent": "0.98",
+      "condition": "UNVERIFIED",
+      "basis": "PDF25/PDF26 semantic audit 2026-10-16",
+      "repair": "Require regression tests, human approval and rollback"
+    },
+    {
+      "id": "PDF26-006",
+      "component": "OmniSense bounded graph search",
+      "parent": "0.43",
+      "condition": "UNVERIFIED",
+      "basis": "PDF25/PDF26 semantic audit 2026-10-16",
+      "repair": "Implement AB-MCTS budget and termination controls"
+    },
+    {
+      "id": "PDF26-007",
+      "component": "OmniSense predictive benchmark validation",
+      "parent": "0.67",
+      "condition": "UNVERIFIED",
+      "basis": "PDF25/PDF26 semantic audit 2026-10-16",
+      "repair": "Benchmark Reflexion/JEPA versus baseline and budget"
     }
   ],
   "pdf20_source": "PDF20 pp.18-21; OmniE2E is a swarm, not an additional Agents Builder product",
   "pdf21_source": "PDF21 pp.20-23 OmniForge; source examples are stubs, not implementation",
   "pdf22_source": "PDF22 pp.14-17 OmniWeb; source functions return hardcoded data and no browser, payment or deployment",
   "pdf23_source": "PDF23 pp.15-17 OmniStudio OmniDoc; fixed output names are stubs",
-  "pdf24_source": "PDF24 pp.16-18 OmniGov OmniFin OmniPhys; print statements are stubs"
+  "pdf24_source": "PDF24 pp.16-18 OmniGov OmniFin OmniPhys; print statements are stubs",
+  "pdf25_source": "PDF25 pp.15-19 OmniSec; stubbed attack and remediation",
+  "pdf26_source": "PDF26 pp.16-19 OmniCog, OmniEvolve, OmniSense; non-persistent and constant-score examples"
 }
