@@ -638,3 +638,21 @@ Status: PLANNED/UNVERIFIED. Wydajność podana w PDF (m.in. 49%, 16x, 67 Gbps, 5
 - **Bezpieczeństwo/semantyka (s. 4–7)**: zero-copy SHM nie oznacza zerowego transferu między hostami/VM; host eBPF nie gwarantuje wglądu w syscalle gościa; Rust nie zapewnia absolutnej wolności od wszystkich błędów; CRDT nie zastępuje autorytatywnego księgowania; deklaracje ZKP o ukryciu caveats wymagają formalnego modelu zagrożeń i rzeczywistego protokołu. Nie oznaczać jako IMPLEMENTED bez kodu, testów i dowodów.
 
 **Status:** wymagania przypisane do istniejących etapów, **PLANNED/UNVERIFIED**; brak dowodów sprzętowego M6, testów HIL, niezależnej walidacji KPI i produkcyjnego wdrożenia.
+
+
+### PDF 09 — wymagania agentowe, symulacje społeczne i benchmarki (uzgodnienie 2026-10-16)
+
+Źródło: `Analiza AGI I Ludzkich AI (1).PDF` (14 stron), s. 5–11. **Obowiązki do wykonania i weryfikacji, nie dowód wdrożenia.** Przypisano do istniejących etapów bez zmiany ich identyfikatorów:
+
+| Etap | Strony | Wymagania obowiązkowe | Kryteria odbioru i testy negatywne |
+|---|---|---|---|
+| **2.03** | 5–6 | Generative Agents, Lyfe, MetaMind i ToM-SWE: sandboxowane symulacje społeczne, wieloagentowe interakcje, modelowanie intencji i teorii umysłu jako hipotez; opt-in, separacja danych afektywnych/psychologicznych, minimalizacja i retencja danych wrażliwych. | Zgoda, kontrola dostępu per tenant, usuwanie danych, izolacja symulacji, ewaluacja kalibracji i niepewności, red-teaming manipulacji; brak przypisywania modelowanych stanów mentalnych realnym osobom jako faktów. |
+| **1.98** | 6–8 | DSPy: wersjonowane pipeline'y, BootstrapFewShot/MIPRO/GEPA, zestawy treningowe i holdout, kontrolowane eksperymenty i rollback konfiguracji. | Reprodukowalne porównania baseline/holdout, brak data leakage, limit kosztu/tokenów, testy regresji i wymóg zatwierdzenia artefaktu przed publikacją. |
+| **2.05** | 6–8 | Agent-Zero i Hermes: izolowane eksperymenty samoprogramowania, nabywania umiejętności, zapisu wiedzy i planowania z jawnym review zmian. | Fail-closed sandbox, brak autonomicznej eskalacji uprawnień, podpisy artefaktów, limity iteracji/delegacji, manual approval dla zmian w produkcji, testy prompt/tool-output injection. |
+| **2.01** | 6–8 | AI Scientist: generowanie hipotez, automatyzacja eksperymentów, odtwarzalny pipeline, analiza wyników, wersjonowanie danych i artefaktów oraz nadzorowana publikacja. | Powtarzalność na odizolowanych danych, ślad pochodzenia, niezależna kontrola wyników, ograniczenia zasobów, kontrola fabrykowanych cytowań i zatwierdzenie człowieka. |
+| **2.00** | 8–9 | AutoGPT i BabyAGI: hierarchia zadań, DAG zależności, priorytetyzacja, planowanie i anulowanie, bounded recursion/fan-out, checkpointy i idempotentne efekty. | Testy zapętlenia, duplikatów, awarii i recovery, wyczerpania budżetu, izolacji tenantów oraz poprawnego przerwania całego drzewa delegacji. |
+| **2.06** | 8–9 | GodMode: kontrolny interfejs człowieka do przeglądu planów, decyzji, uprawnień i anulowania zadań. | Rzeczywiste GUI, autoryzacja operatora, trwały audit trail, wstrzymanie i odwołanie bez obejścia polityk. |
+| **2.02** | 8–9 | OpenHands: agent inżynieryjny z izolowanym serwerem narzędzi, wykonywaniem komend i przeglądarką, kontrolą zmian w repozytorium, przeglądem diff i zatwierdzaniem. | Testy sandbox escape, command injection, secret exfiltration, niezaufanych logów i repozytoriów, atomowy rollback, E2E na prawdziwym repo. |
+| **1.99** | 9–11 | SWE-bench Verified, mini-SWE-agent jako niezależny baseline, N-run testy wielokrotne, ewaluacja niezawodności, regresji i odtwarzalności. | Przypięte wersje zbiorów i środowiska, N-run pass rate, przedziały ufności, koszt, latencja, niezależna walidacja patchy i testy na odizolowanych instancjach; bez przypisywania wyników innych projektów OCAF. |
+
+Wspólne kryteria: typed I/O, najmniejsze uprawnienia, izolacja tenantów, audyt, timeout/retry/backoff, backpressure, budżety, kontrola człowieka i bezpieczeństwo danych. Rejestracja adaptera lub wymienienie frameworka nie jest integracją end-to-end. Status wszystkich nowych obowiązków: **PLANNED/UNVERIFIED**, dopóki kod, testy i CI nie dowiodą więcej.
