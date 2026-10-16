@@ -142,3 +142,9 @@ production_approved: false
 - Reconciled all six phases and supplementary sections with existing stages 0.39, 0.43–0.49, 0.55, 0.63, 0.91, 1.92. Added Rig adapter evaluation, JSON Schema fuzzing, bounded CRDT telemetry, real settlement/offline/replay checks and performance verification.
 - Explicitly rejected mock L402 invoice, constant preimage, fake execution success and unmeasured latency claims as production evidence.
 - Both roadmap mirrors synchronized; no new stage, no code/test/CI PASS or production approval claimed.
+
+## 2026-10-16 — User document 3 Rust architecture
+
+- Reviewed 15-page source and mapped requirements to existing stages 0.39, 0.41, 0.43–0.47, 0.49, 0.63, 0.91.
+- Topics: Zenoh SHM, CRDT, OTLP, L402, ZKP, MCP, Tree-sitter, OAuth, Firecracker, eBPF, PQC, Loihi 2.
+- Evidence remains unverified; document benchmarks are not repository measurements. No new stages.
