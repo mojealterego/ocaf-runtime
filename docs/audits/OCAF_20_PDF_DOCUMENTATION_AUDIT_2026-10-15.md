@@ -163,3 +163,19 @@ Na podstawie tekstu `Analiza AGI I Ludzkich AI (1).PDF`, rozdziałów „W Pełn
 | ToM-SWE / human approval | 2.03 | **ODZYSKANE Z PDF** |
 
 **Werdykt śledzenia wymagań na poziomie domen:** wszystkie powyższe 25 wyodrębnionych domen mają teraz jawne identyfikatory Roadmapy. To weryfikacja zakresu planowania, **nie** poświadczenie kompletnej implementacji ani formalne potwierdzenie każdej z 307 stron na poziomie atomowego wymagania.
+
+
+### Kontrola literalnych nazw na stronach źródłowych — wymagania 2.04–2.06
+
+W dokumencie `Analiza AGI I Ludzkich AI (1).PDF` zweryfikowano dodatkowo nazwy, które nie występowały w kanonicznej Roadmapie mimo ogólnych pozycji o pamięci, agentach i poznaniu:
+
+| Strona PDF | Dosłowny element źródłowy | Nowy etap | Status |
+|---|---|---|---|
+| 2 | NuNet, PRIMUS | 2.06 | PLANNED, wyłącznie badania |
+| 3 | EideticEngine, Thought Chain Management, `_run_periodic_tasks` | 2.04 | PLANNED, testy metapoznawcze |
+| 7 | Agent-Zero/Agent0, Bonfire, Frankenstein/ZAO | 2.05 | PLANNED, izolowany eksperyment |
+| 8–9 | GodMode, human-in-the-loop | 2.06 | PLANNED, UI nadzoru |
+
+Wymagania zostały dopisane do `ROADMAP.md`, `README.md`, kopii w `docs` oraz manifestu kanonicznego. Obecny zakres: **207 etapów głównych + 64 podetapy techniczne + 10 produktów Agents Builder = 281 pozycji**. Nowe identyfikatory **1.95–2.06** (12), następny **2.07**. Wprowadzono weryfikację tych 12 identyfikatorów w `scripts/check_roadmap_pdf_coverage.py`.
+
+**Zastrzeżenie źródłowe:** zdania PDF o AGI, świadomości, autonomicznej ewolucji i wynikach benchmarków są tezami dokumentu. Nie uznaje się ich automatycznie za fakty ani za zaakceptowane wymagania nieograniczonego samomodyfikowania. Wymagania techniczne formułują kontrolowane, audytowalne eksperymenty.
