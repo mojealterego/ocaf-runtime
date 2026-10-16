@@ -466,7 +466,7 @@ Każda zmiana statusu wymaga zapisanego **SHA commitu**, linku do zakończonego 
 
 ## Rejestr braków z audytu 40 PDF — stan OPEN
 
-Wykryte wymagania nieuwzględnione explicite w dotychczasowym zakresie: katalog 110+ umiejętności i modułów, aukcje GPU/API, router epsilon-greedy z guardrails, decyzje zakresowe dla protokołów radiowych i optycznych, rzeczywiste dowody RAPL/STARK/L402 oraz ADR dla frameworków agentowych. Każda pozycja ma dokument źródłowy, stronę, proponowany etap, kryteria akceptacji i status **OPEN**: [PDF_40_SEMANTIC_GAP_LEDGER_2026-10-16.md](roadmap/PDF_40_SEMANTIC_GAP_LEDGER_2026-10-16.md). **Nie oznaczać tej listy jako kompletnej semantycznej weryfikacji wszystkich 902 stron.**
+Wykryte wymagania nieuwzględnione explicite w dotychczasowym zakresie: katalog 110+ umiejętności i modułów, aukcje GPU/API, router epsilon-greedy z guardrails, decyzje zakresowe dla protokołów radiowych i optycznych, rzeczywiste dowody RAPL/STARK/L402 oraz ADR dla frameworków agentowych. Każda pozycja ma dokument źródłowy, stronę, proponowany etap, kryteria akceptacji i status **OPEN**: [PDF_40_SEMANTIC_GAP_LEDGER_2026-10-16.md](docs/roadmap/PDF_40_SEMANTIC_GAP_LEDGER_2026-10-16.md). **Nie oznaczać tej listy jako kompletnej semantycznej weryfikacji wszystkich 902 stron.**
 
 
 ## Uzgodnienie wymagań PDF40 z etapami (16.10.2026)
