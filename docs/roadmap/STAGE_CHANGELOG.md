@@ -111,3 +111,9 @@ production_approved: false
 
 - Mapped all 18 pages of `Analiza Architektury Systemu OCAF(3).PDF` to existing main stages 0.39, 0.43, 0.45, 0.46, 0.47, 0.48, 0.49, 0.91 and 1.97.
 - Updated canonical v11 scope and both roadmap copies. No 2.07 added. All PDF05 requirements remain PLANNED/UNVERIFIED pending implementation, tests and independent acceptance.
+
+## 2026-10-16 — PDF 06 OmniDev full scope recovery
+
+- Recovered all three named OmniDev roles from PDF06 pp.15–17: Tree-sitter Architect, Security Critic, Firecracker Executor, plus patch generation, bounded correction loop, Zenoh/CRDT and performance evaluation.
+- Updated existing 0.56, 1.92, 1.99 in canonical v11 and mirrored roadmaps with explicit contracts and rejection of hardcoded AST, diff and unconditional test PASS.
+- OmniDev is a coding swarm, distinct from the ten Agents Builder Code/NoCode products. No new stage required, but all agents and elements remain mandatory deliverables with evidence-based acceptance.
