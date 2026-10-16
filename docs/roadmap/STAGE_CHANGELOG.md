@@ -162,3 +162,10 @@ production_approved: false
 - Source phases M0–M5 map to existing stages: M0 0.43/0.44/0.46; M1 0.46/0.47; M2 0.45/0.49; M3 0.39/0.41/0.47/0.63; M4 0.43/0.45/0.63; M5 0.91.
 - Explicit product requirement JARVIS OMEGA INFINITY mapped to 1.92; funding research for FENG/NCBR, PARP, Silesian Startup Foundation, GAPR/BUR, KFS mapped to 1.92. Neither is evidence of implementation or grant eligibility.
 - Source performance claims require benchmarks. No new stages or numbering changes.
+
+## 2026-10-16 — User PDF 06: OCAF / JARVIS OMEGA INFINITY — duplicate-source reconciliation
+
+- Source: `Projekt i Mapa Drogowa Rewolucyjnej Architektury S..(1) (1).PDF` (12 pages), independently supplied as user file 6; source content and page structure coincide with user PDF 05. Treat as a separate source record, not a second implementation or new capability.
+- Page mapping verified: MCP/rmcp/pmcp/schemars and tool routing (pp. 1–3, 8–9) -> 0.43/0.44/0.46; Zenoh/SHM/CRDT/OTLP (pp. 3–4, 9–10) -> 0.46/0.47; L402/Lightning/Macaroons/ZKP (pp. 4–5, 10) -> 0.45/0.49; Firecracker/Jailer/Aya/eBPF, containment and recovery (pp. 5–6, 10) -> 0.39/0.41/0.47/0.63; PQC and Tree-sitter (pp. 4, 7, 10) -> 0.43/0.45/0.63; Loihi 2 SNN/HIL (pp. 7–8, 10–11) -> 0.91; JARVIS OMEGA INFINITY product (pp. 1, 8) and grant eligibility diligence (pp. 8–9) -> 1.92.
+- Roadmap obligations already incorporated during PDF 05 reconciliation in both ROADMAP.md and docs/ROADMAP_FULL_ECOSYSTEM_2026.md. No duplicated requirements or renumbering needed.
+- Caveats: figures for throughput, latency, memory, EDP and grants are unverified source assertions, not project benchmarks or confirmed funding; host eBPF cannot guarantee guest syscall visibility; offline CRDT promises cannot replace authoritative settlement. Status PLANNED/UNVERIFIED. No tests or deployment claimed.
