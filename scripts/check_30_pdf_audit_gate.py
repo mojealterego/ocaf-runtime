@@ -17,7 +17,7 @@ MANIFEST = ROOT / "docs/roadmap/canonical_v11_inventory.json"
 ROADMAP = ROOT / "ROADMAP.md"
 MIRROR = ROOT / "docs/ROADMAP_FULL_ECOSYSTEM_2026.md"
 README = ROOT / "README.md"
-MAIN_RE = re.compile(r"^\\| \\*\\*((?:0|1|2)\\.\\d{2})\\*\\* \\|", re.MULTILINE)
+MAIN_RE = re.compile(r"^\| \*\*((?:0|1|2)\.\d{2})\*\* \|", re.MULTILINE)
 
 def check() -> None:
     inventory = json.loads(MANIFEST.read_text(encoding="utf-8"))
@@ -36,12 +36,12 @@ def check() -> None:
     for token in ("30", "535", "26", "532", "205", "NIEZAMKNIĘTY"):
         assert token in audit, f"missing audit provenance/status: {token}"
     crosswalk = CROSSWALK.read_text(encoding="utf-8")
-    rows = re.findall(r"^\\|\\s*\\d+\\s*\\|.*?KOD NIEPOTWIERDZONY\\s*\\|$", crosswalk, re.MULTILINE)
+    rows = re.findall(r"^\|\s*\d+\s*\|.*?KOD NIEPOTWIERDZONY\s*\|$", crosswalk, re.MULTILINE)
     assert len(rows) == 29, f"expected 29 scoped chapter rows, got {len(rows)}"
     stage_set = set(ids)
     for row in rows:
         cells = [c.strip() for c in row.strip("|").split("|")]
-        referenced = re.findall(r"\\b(?:0|1|2)\\.\\d{2}\\b", cells[3])
+        referenced = re.findall(r"\b(?:0|1|2)\.\d{2}\b", cells[3])
         assert referenced and set(referenced) <= stage_set, f"unknown stage in crosswalk: {row}"
     print("PASS: roadmap identity and PDF audit provenance; production remains NOT APPROVED")
     print("NOT TESTED: cargo, security, infrastructure, source-to-requirement implementation")
