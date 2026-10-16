@@ -13,7 +13,7 @@
   },
   "counts": {
     "ten_original_agents_builder_variants": 10,
-    "scope_gaps": 31
+    "scope_gaps": 36
   },
   "items": [
     {
@@ -263,8 +263,49 @@
       "condition": "UNVERIFIED",
       "basis": "PDF21 pp.21-23 test returns static framerate 144",
       "repair": "Deterministic physics test corpus, reproducible sandbox runs, negative cases and per-engine version matrix"
+    },
+    {
+      "id": "PDF22-OMNIWEB-001",
+      "component": "OmniWeb authorized browser navigation and isolated worker",
+      "parent": "0.60",
+      "condition": "UNVERIFIED",
+      "basis": "PDF22 pp.15-17 fixed HTML; no actual browser",
+      "repair": "Real browser E2E on permitted test sites; allowlist, SSRF, session isolation and consent"
+    },
+    {
+      "id": "PDF22-OMNIWEB-002",
+      "component": "OmniWeb DOM/JSON schema extraction and self-healing",
+      "parent": "0.60",
+      "condition": "UNVERIFIED",
+      "basis": "PDF22 pp.15-17 fixed laptop JSON",
+      "repair": "Schema validated extraction on controlled changing layouts with precision/recall and provenance"
+    },
+    {
+      "id": "PDF22-OMNIWEB-003",
+      "component": "OmniWeb full-stack app / REST API generation and deployment",
+      "parent": "0.60",
+      "condition": "UNVERIFIED",
+      "basis": "PDF22 pp.16-17 fixed URL",
+      "repair": "Build, test, security scan, deploy to controlled environment and verify health"
+    },
+    {
+      "id": "PDF22-OMNIWEB-004",
+      "component": "OmniWeb optional L402 proxy procurement",
+      "parent": "0.49",
+      "condition": "UNVERIFIED",
+      "basis": "PDF22 pp.15-17 print statement claims proxy purchase",
+      "repair": "Licensed supplier, approval, spending cap, actual settlement and receipt; no anti-bot evasion"
+    },
+    {
+      "id": "PDF22-OMNIWEB-005",
+      "component": "OmniWeb hostile-web-content and authorization negative tests",
+      "parent": "0.63",
+      "condition": "UNVERIFIED",
+      "basis": "PDF22 pp.14-17 no negative tests",
+      "repair": "SSRF, prompt injection, cross-tenant cookies, private network denial, abuse controls"
     }
   ],
   "pdf20_source": "PDF20 pp.18-21; OmniE2E is a swarm, not an additional Agents Builder product",
-  "pdf21_source": "PDF21 pp.20-23 OmniForge; source examples are stubs, not implementation"
+  "pdf21_source": "PDF21 pp.20-23 OmniForge; source examples are stubs, not implementation",
+  "pdf22_source": "PDF22 pp.14-17 OmniWeb; source functions return hardcoded data and no browser, payment or deployment"
 }
