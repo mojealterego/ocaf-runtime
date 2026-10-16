@@ -1478,3 +1478,8 @@ Dla wymagań PDF 09 utworzono **208–215**: 208 symulacje społeczne/ToM, 209 D
 
 
 **PDF20 (24 strony):** [audyt OmniE2E](docs/audits/PDF20_OMNIE2E_SEMANTIC_REVIEW_2026-10-16.md). Nowe wymagania: SwiftUI, Jetpack Compose, Rust FFI, natywne buildy Xcode/Gradle, Playwright/Appium, bezpieczne self-healing E2E, handoff OmniDev → OmniUX → OmniE2E. Etapy 0.46–0.47, 0.50–0.55, 0.63, 0.67, 0.98. PLANNED/UNVERIFIED.
+
+
+## PDF22 — OmniWeb / OmniScrape (19 stron, 2026-10-16)
+
+Audyt: `docs/audits/PDF22_OMNIWEB_SEMANTIC_REVIEW_2026-10-16.md`. S. 1–14: Zenoh/SHM, CRDT, OTLP, MCP, OAuth/ZKP, Firecracker/eBPF, L402, RAG/ASI, PQC/Loihi, OmniDev, OmniUX, OmniE2E, OmniForge — przeważnie powtórzenia. **S. 14–17: nowy rój OmniWeb**: `NawigatorAntyBot_Wasm`, `EkstraktorSemantyczny_DOM`, `InzynierWWW_FullStack`; autoryzowana nawigacja przeglądarką, ekstrakcja DOM do JSON/Markdown z walidacją schematu, generator aplikacji WWW/REST API, opcjonalne kontrolowane rozliczenia L402. Etapy 0.39, 0.43, 0.49, 0.55, **0.60 (OmniWeb)**, 0.63, 0.67, 0.98; luki zapisane w `missing_capabilities_v11.json`. S. 17: pięć rojów, nie pięć produktów Builder; nadal dziesięć wariantów Agents Builder. S. 18–19: bibliografia. Funkcje PDF zwracają stałe HTML/JSON/URL i drukują komunikat o zakupie proxy — brak prawdziwej implementacji. Obchodzenie CAPTCHA i zabezpieczeń bez autoryzacji nie jest kryterium odbioru. Status PLANNED_OR_UNVERIFIED; liczba etapów bez zmian.
