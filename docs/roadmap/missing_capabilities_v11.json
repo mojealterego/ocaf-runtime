@@ -590,5 +590,20 @@
     "220",
     "221",
     "222"
-  ]
+  ],
+  "pdf37_40_numbered_stages": [
+    "223",
+    "224",
+    "225",
+    "226",
+    "227",
+    "228",
+    "229",
+    "230",
+    "231"
+  ],
+  "pdf37_40_reconciliation": {
+    "status": "PLANNED",
+    "note": "PDF37 mapped to existing 216–222; PDF38–40 to 223–231"
+  }
 }
