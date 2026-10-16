@@ -462,3 +462,8 @@ Każda zmiana statusu wymaga zapisanego **SHA commitu**, linku do zakończonego 
 **Ograniczenia operatora:** tylko gałąź `main`; nie uruchamiać płatnych usług ani operacji poza autoryzacją; brak konieczności osobnych podpisów zewnętrznych **jako warunku rozwoju**, ale wymagane rzetelne testy rzeczywistych funkcji. Nigdy nie oznaczać niewykonanego kryterium jako PASS.
 
 **Nie należy ponownie zastępować tej Roadmapy skrótem 3–10 tematów.** Ta macierz odtwarza 207 etapów, 64 podetapy, 10 produktów Agents Builder i wszystkie 33 nazwane źródła, utrzymując pełną historię jako archiwum.
+
+
+## Rejestr braków z audytu 40 PDF — stan OPEN
+
+Wykryte wymagania nieuwzględnione explicite w dotychczasowym zakresie: katalog 110+ umiejętności i modułów, aukcje GPU/API, router epsilon-greedy z guardrails, decyzje zakresowe dla protokołów radiowych i optycznych, rzeczywiste dowody RAPL/STARK/L402 oraz ADR dla frameworków agentowych. Każda pozycja ma dokument źródłowy, stronę, proponowany etap, kryteria akceptacji i status **OPEN**: [PDF_40_SEMANTIC_GAP_LEDGER_2026-10-16.md](roadmap/PDF_40_SEMANTIC_GAP_LEDGER_2026-10-16.md). **Nie oznaczać tej listy jako kompletnej semantycznej weryfikacji wszystkich 902 stron.**
