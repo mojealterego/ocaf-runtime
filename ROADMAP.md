@@ -1253,3 +1253,20 @@ Wymagane: typed AgentSpec z bezpiecznym hot reload i rollback; trzy rejestry AI;
 | Deklaracje compliance-by-construction i zastosowań medycznych/finansowych bez formalnych artefaktów i audytu | 328, 333 | Określony zakres dowodu, ograniczenia i kontrprzykłady; osobna ocena regulacyjna, niezależny audyt i decyzja operatora; nie deklarować gwarancji globalnego bezpieczeństwa |
 
 **Wniosek:** nie scalać przykładowego `main.rs` z istniejącym runtime. Dopiero działający kod, testy i dowody przypięte do SHA mogą zmienić status z PLANNED na IMPLEMENTED/TESTED. Brak podstaw do uznania bezpieczeństwa produkcyjnego.
+
+
+## Audyt Safe-OCS v4 — załączniki Cargo.toml i Rust 837 linii (2026-10-17)
+
+**Źródła:** `gemini-code-1792192516690.txt` (manifest 19 linii) oraz `gemini-code-1792192522716.rs.txt` (837 linii). **Status: SOURCE_REVIEWED / PLANNED / NOT_INTEGRATED / NOT_TESTED.** Nie uznawać deklaracji „produkcyjny”, „MCP 2026-07-28”, „<1ms”, „matematycznie udowodniony”, „bezpieczna samoreplikacja” bez odrębnych dowodów. Nie zastępować istniejącego runtime.
+
+| Wymaganie / defekt z załączników | Etapy istniejące | Kryterium odbioru |
+|---|---|---|
+| Zenoh 1.x Queryable, dynamiczne narzędzia, A2A; rejestr tylko in-memory, brak ACL/tenant-binding, delegacja zwraca stały status `COMPLETED_DETERMINISTICALLY` bez wykonania pracy (Rust w.487–525, 682–715, 790–820) | 0.39, 0.50–0.55, 325–326, 329 | Uwierzytelnienie i autoryzacja narzędzi, tenant-bound routing, podpisy i schematy, trwałość rejestru, realny executor, retry/idempotency, E2E, p95/p99 |
+| MCP HTTP/JSON-RPC, deklarowana specyfikacja 2026-07-28; `x-mcp-issuer` jest opcjonalnym nagłówkiem od klienta, brak weryfikacji tokenu, JWT/JWKS, audience, scope, expiry, podpisu i OIDC (Rust w.542–581) | 0.50–0.55, 317, 329 | Zgodność z rzeczywiście opublikowaną wersją specyfikacji MCP, poprawne OAuth/OIDC resource-server validation i fail-closed policy; testy anonimowego żądania i fałszywego issuer |
+| Fałszywe dowody formalne: dowolna odpowiedź Zenoh, także niepoprawna, staje się `MATHEMATICALLY_PROVEN`; odpowiedź HTTP 2xx również; awaria obu proverów kończy się `VERIFIED` (Rust w.203–294) | 326, 328, 333 | Typowane PROVEN/REFUTED/INCONCLUSIVE, podpis i tożsamość solvera, sprawdzenie hash/goals/certificate, timeout fail-closed, negatywne testy spoofing i offline |
+| `SecurityGate` używa substringów zamiast parsera; `forbid(unsafe_code)` dotyczy tylko crate, nie wszystkich zależności; `resolve_safe_path` odrzuca `..`, ale nie symlinki i TOCTOU (Rust w.136–196, 356–380) | 0.38–0.41, 0.55, 328–329 | AST/semantyka, polityki zależności, bezpieczne operacje openat2 lub równoważne, testy symlink/hardlink/race i izolacja katalogów |
+| Docker build faktycznie wywoływany, ale bind-mount `workspace:rw` naraża host na modyfikacje; brak userns/seccomp/read-only rootfs/egress policy dla demona, pinowania obrazów; timeout procesu nie dowodzi zabicia kontenera (Rust w.342–448) | 0.39, 0.55, 320, 329 | Izolowany worker na docelowym hoście, nieuprzywilejowany runtime, read-only inputs + output staging, digest-pinned images, cleanup, limit logów, testy ucieczki i awarii; osobne build vs deploy |
+| Titans/R3Mem: hash z fragmentu SHA256 udaje surprise; `internal_weights` to scalar; pełny raw_trace pozostaje w HashMap, brak kompresji/trwałości/retencji/izolacji (Rust w.35–78, 297–340) | 312, 322, 327 | Jawna klasyfikacja heurystyki, trwałość i odzyskiwanie, kontrola dostępu, retencja, testy pamięci i jakości |
+| Endpoint `0.0.0.0:8080` plain HTTP; brak mTLS, auth, limits; dynamiczne narzędzia mogą nadpisać nazwy narzędzi w listowaniu; niezweryfikowane SEP-2549 ttlMs/cacheScope (Rust w.650–670, 764–834) | 0.38–0.41, 0.50–0.55, 329 | TLS-bound identity, per-principal cache isolation, rate/size limits, walidacja specyfikacji, negatywne testy duplikatów i injection |
+
+**Decyzja:** przykładowego Cargo.toml/main.rs nie scalać do OCAF. Nie ma dowodu `cargo check`, `cargo test`, działania Docker/Zenoh/MCP, audytu zewnętrznego ani benchmarków. Przypisanie do istniejących etapów, bez dodawania numerów; brak podstaw do statusu IMPLEMENTED/PRODUCTION_APPROVED.
