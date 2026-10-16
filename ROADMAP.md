@@ -1237,3 +1237,19 @@ Wymagane: typed AgentSpec z bezpiecznym hot reload i rollback; trzy rejestry AI;
 ## Ostatni dokument: sześciopakietowy Cargo Workspace — audyt 60-stronicowego PDF
 
 Źródło: Notes_261016_234639.pdf. Przypisano do istniejących etapów 0.38–0.41, 0.50–0.55, 317–319, 325–333 sześć proponowanych crates: ocaf-transport-crdt, ocaf-telemetry-ebpf, ocaf-cognition-rqgm, ocaf-economy-gov, ocaf-mcp-swarms, ocaf-master-node. Wymagane rzeczywiste Zenoh/CRDT/PQC, Firecracker guest Aya/eBPF, OTel, CoALA/Titans/RQGM, L402, MCP 15 tools, Builder Code/NoCode na pięciu platformach i dowody integracji 606 repozytoriów. Status SOURCE_REVIEWED/PLANNED. PDF zawiera szkic kodu, nie potwierdzoną produkcyjną implementację; nie nadpisywać istniejącego runtime. Macierz wymagań i luk: docs/ROADMAP_FULL_ECOSYSTEM_2026.md.
+
+
+## Audyt Safe-OCS — Rust / Zenoh / MCP / ImandraX (2026-10-17)
+
+**Źródło:** przekazany w rozmowie opis architektury i przykładowy kod Rust Safe-OCS. **Klasyfikacja: SOURCE_REVIEWED / PLANNED / NOT_IMPLEMENTED; nie TESTED ani FORMALLY_VERIFIED.** Jest to przypisanie do istniejących etapów, bez dodawania numeru i bez integracji przykładowego kodu.
+
+| Wymaganie / stwierdzona luka | Przypisanie | Kryterium odbioru |
+|---|---|---|
+| Zenoh jako transport komunikacji i adapter MCP↔Zenoh; brak działającego listenera, `run_zenoh_transport` jest zakomentowane; <1 ms nieudowodnione | 0.39, 0.50–0.55, 329 | Rzeczywisty transport, uwierzytelnianie, izolacja tenantów, backpressure, E2E i benchmark p50/p95/p99 na docelowych hostach |
+| Serwer MCP Rust (`pmcp` / deklarowane `rust-mcp-sdk`); niezweryfikowane API `McpServer::new` i `Tool::new` | 0.50–0.55, 329 | Przypięta wersja zależności, zgodny protokół MCP, wywoływalne narzędzia, walidacja schematów, fail-closed authorization, testy negatywne |
+| Weryfikacja ImandraX / AST / SMT; filtr `contains("unsafe {")` i `contains("ptr::")` nie jest analizą składni ani dowodem; odpowiedzi Zenoh nie są sprawdzane, a funkcja zawsze zwraca MATHEMATICALLY PROVEN | 326, 328, 333 | Parsowanie AST, jawne własności i założenia, autentyczna odpowiedź weryfikatora związana z hashem artefaktu; stany VERIFIED/REJECTED/INCONCLUSIVE, fail-closed przy timeoutach, kontrprzykładach i błędach |
+| Kompilacja w sandbox; kod nie uruchamia kompilatora, Dockera ani Firecracker i zawsze zwraca SECURE DEPLOYMENT | 0.39, 0.55, 329, 333 | Realny izolowany executor, limity CPU/RAM/czasu/sieci, nieuprzywilejowany kontekst, weryfikacja kodu wyjścia i artefaktu, testy negatywne, brak fikcyjnych statusów |
+| Bezpieczeństwo pamięci i bezpieczeństwo operacyjne; Rust ownership nie gwarantuje braku wszystkich błędów, filtr tekstowy `unsafe` można obejść; brak ACL/replay/idempotency | 0.38–0.41, 0.55, 326, 329 | Audyt unsafe/FFI/zależności, mTLS, tenant-bound RBAC/ABAC, replay protection, fencing, idempotency, testy awarii i izolacji |
+| Deklaracje compliance-by-construction i zastosowań medycznych/finansowych bez formalnych artefaktów i audytu | 328, 333 | Określony zakres dowodu, ograniczenia i kontrprzykłady; osobna ocena regulacyjna, niezależny audyt i decyzja operatora; nie deklarować gwarancji globalnego bezpieczeństwa |
+
+**Wniosek:** nie scalać przykładowego `main.rs` z istniejącym runtime. Dopiero działający kod, testy i dowody przypięte do SHA mogą zmienić status z PLANNED na IMPLEMENTED/TESTED. Brak podstaw do uznania bezpieczeństwa produkcyjnego.
