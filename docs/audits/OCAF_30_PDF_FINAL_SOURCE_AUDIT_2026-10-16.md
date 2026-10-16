@@ -40,3 +40,9 @@ W źródłowych PDF zidentyfikowano nieprodukcyjne przykłady: `mock_paid_preima
 Lokalny kontener nie rozwiązuje DNS `github.com`, więc `git clone`/`git ls-remote` nie działają. Nie jest zainstalowany `cargo`. GitHub connector udostępnia odczyt i edycję konkretnych plików, ale nie zastępuje pełnego checkoutu i testów na infrastrukturze. W związku z tym pełny audyt wdrożenia nie został wykonany i nie jest deklarowany jako ukończony.
 
 **Zasada odbioru:** każda bramka bez weryfikowalnego artefaktu jest OPEN, a nie PASS.
+
+## Finalizacja deduplikacji i klasyfikacji fragmentów dokumentacji
+
+Z 532 wystąpień ekstraktor wyodrębnił **205 unikalnych fragmentów tekstowych** (identyczność SHA-256). Zapisano kompletny lokalny rejestr `OCAF_30_PDF_REQUIREMENTS_TRACE_2026-10-16.md` i maszynowy `OCAF_30_PDF_REQUIREMENTS_TRACE_2026-10-16.json` z lokalizacjami PDF/strona. Klasyfikacja: 139 kandydatów automatycznie przypisanych do rodzin etapów, 36 przypisanych po przeglądzie zakresu, 22 wymagające dalszego przeglądu i 8 wstępnie uznanych za materiał referencyjny. **Wszystkie klasy pozostają kandydatami**; nie ma dowodu, że ekstraktor wychwycił każde wymaganie z 535 stron. Rejestr lokalny nie jest publikowany automatycznie w repozytorium.
+
+**Rozstrzygnięcie audytowe:** ukończono spis źródeł, klasyfikację wykrytych fragmentów i sprawdzenie spójności Roadmapy. **Nie ukończono audytu zgodności kodu, testów ani odbioru produkcyjnego**. Oznaczenie PASS byłoby niezgodne z dostępnymi dowodami.
