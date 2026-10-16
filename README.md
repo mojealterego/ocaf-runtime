@@ -1,5 +1,5 @@
 <!-- OCAF_README_ROADMAP_BEGIN -->
-**AKTUALNY STAN (2026-10-16): 320 etapów głównych, 64 podetapy techniczne, 10 produktów Agents Builder; razem 394 pozycje. Następny nowy etap: 321. PDF41–44: audyt częściowy.**
+**AKTUALNY STAN (2026-10-16): 333 etapy główne, 64 podetapy techniczne, 10 produktów Agents Builder; razem 407 pozycji. Następny etap: 334. Audyt 606 repozytoriów: planowany, bez dowodów integracji.**
 
 
 [![UWAGA CZYTAĆ — ZAKAZ SAMOWOLKI](https://img.shields.io/badge/UWAGA%20CZYTA%C4%86-ZAKAZ%20SAMOWOLKI-ff0000?style=for-the-badge&labelColor=8b0000)](ROADMAP.md)
@@ -1654,3 +1654,21 @@ Ponownie przesłane materiały: **48 = Notes_261014_204557.pdf (127 stron)**, **
 | **318** | Disposable Apps Lifecycle i Energy Scheduler (PDF52 s.3; PDF53 s.2,4-5,10-11) | **PLANNED** |
 | **319** | L402 Macaroon settlement and caveats (PDF52 s.3,11-12; PDF53 s.2,4-5,11-12) | **PLANNED** |
 | **320** | Sovereign Cargo workspace integration (PDF53 s.2,5-13) | **PLANNED** |
+
+
+<!-- OCAF_321_333_SYNC -->
+| Etap | Zakres | Status |
+|---|---|---|
+| **321** | Architektury poznawcze i neuro-symboliczne | **PLANNED** |
+| **322** | Pamięć agentowa i konsolidacja wiedzy | **PLANNED** |
+| **323** | Symulacje społeczne i Theory of Mind | **PLANNED** |
+| **324** | Samooptymalizacja i autonomiczne badania | **PLANNED** |
+| **325** | Inżynieria agentowa i ewaluacje | **PLANNED** |
+| **326** | DGM/RQGM: kontrolowana ewolucja | **PLANNED** |
+| **327** | CoALA/Titans, HDC i bitemporalne CRDT | **PLANNED** |
+| **328** | GoT/AB-MCTS/JEPA oraz AST/SMT | **PLANNED** |
+| **329** | Firecracker, eBPF i MCP/L402 | **PLANNED** |
+| **330** | OmniModelScout: walidacja GGUF | **PLANNED** |
+| **331** | TechRecon i Strategist | **PLANNED** |
+| **332** | AppForge 66 i GameBuilder | **PLANNED** |
+| **333** | Audyt implementacji DGM i konsolidacji 606 repozytoriów | **PLANNED** |
