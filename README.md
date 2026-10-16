@@ -21,6 +21,14 @@
 
 **Pełny rejestr w ramkach poniżej:** wszystkie 215 etapów głównych, 64 podetapy techniczne i 10 produktów Agents Builder — od początku repozytorium do ostatnich zarejestrowanych funkcji. Każdy punkt ma własny numer, opis i status. [Dokument kanoniczny](ROADMAP.md) · [Rejestr zmian](docs/roadmap/STAGE_CHANGELOG.md).
 
+## NAWIGACJA — GDZIE SĄ POZOSTAŁE ETAPY?
+
+**ROADMAPA NIE KOŃCZY SIĘ NA 0.42.2 ANI 0.42.4.** Etapy główne **0.00–2.06 oraz 208–215** są w pierwszej części poniższej tabeli. Następnie następuje **osobny blok 64 technicznych podetapów**, kończący się na **0.42.4**, a dalej **10 produktów Agents Builder**. To podział według typu pozycji, **nie koniec etapów głównych**.
+
+**[OTWÓRZ PEŁNĄ KANONICZNĄ ROADMAPĘ — wszystkie etapy od początku do końca](ROADMAP.md)** · [Manifest identyfikatorów](docs/roadmap/canonical_v11_inventory.json)
+
+**Licznik:** 215 etapów głównych + 64 techniczne + 10 produktów = **289 pozycji**. Ostatni główny etap: **215**. Następny nowy etap: **216**. **ZAKAZ SAMOWOLKI:** nie usuwać, nie skracać i nie renumerować.
+
 ## Pełny rejestr historyczny i bieżący (1–289)
 
 **To jest pierwsza sekcja README.md i pełna lista statusów, nie tylko odsyłacz.** Każdy numer ma status odzwierciedlający oddzielnie wykonanie, historyczne dowody i odbiór produkcyjny. `ETAP UKOŃCZONY` w punktach 0.00–0.38 oznacza zamknięcie etapów zgodnie z dyspozycją właściciela projektu, a nie niezależnie potwierdzoną gotowość produkcyjną; `ZROBIONE — ZAKRES IMPLEMENTACJI` oznacza kod i testy historyczne obecne w repo (NIE pełny odbiór ani produkcję); `ZROBIONE — TEST W OGRANICZONYM ZAKRESIE` oznacza wyłącznie potwierdzoną próbę laboratoryjną.
