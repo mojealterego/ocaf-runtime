@@ -3,7 +3,7 @@
   "version": "v11-original-builder-scope-restored",
   "repository": "mojealterego/ocaf-runtime",
   "branch": "main",
-  "main_count": 215,
+  "main_count": 222,
   "technical_count": 64,
   "reference_count": 33,
   "production_approved": false,
@@ -3687,6 +3687,55 @@
       "status": "PLANNED",
       "source": "Analiza AGI I Ludzkich AI (1).PDF, pp. 5-11",
       "source_class": "USER_PDF_REQUIREMENT"
+    },
+    {
+      "id": "216",
+      "title": "MCP stateless control plane",
+      "status": "PLANNED",
+      "source": "PDF34–PDF36",
+      "evidence": "No implementation verification"
+    },
+    {
+      "id": "217",
+      "title": "Zenoh SHM and CRDT",
+      "status": "PLANNED",
+      "source": "PDF34–PDF36",
+      "evidence": "No implementation verification"
+    },
+    {
+      "id": "218",
+      "title": "L402 Macaroons ZKP",
+      "status": "PLANNED",
+      "source": "PDF34–PDF36",
+      "evidence": "No implementation verification"
+    },
+    {
+      "id": "219",
+      "title": "Firecracker KVM Aya eBPF",
+      "status": "PLANNED",
+      "source": "PDF34–PDF36",
+      "evidence": "No implementation verification"
+    },
+    {
+      "id": "220",
+      "title": "Tree-sitter and hybrid PQC",
+      "status": "PLANNED",
+      "source": "PDF34–PDF36",
+      "evidence": "No implementation verification"
+    },
+    {
+      "id": "221",
+      "title": "Neuromorphic SNN Loihi2",
+      "status": "PLANNED",
+      "source": "PDF34–PDF36",
+      "evidence": "No implementation verification"
+    },
+    {
+      "id": "222",
+      "title": "Quantum neuromorphic HIL PQC",
+      "status": "PLANNED",
+      "source": "PDF34–PDF36",
+      "evidence": "No implementation verification"
     }
   ],
   "technical": [
@@ -5393,5 +5442,6 @@
       "M6 HIL"
     ],
     "roadmap": "ROADMAP.md"
-  }
+  },
+  "next_new_main_milestone": "223"
 }
