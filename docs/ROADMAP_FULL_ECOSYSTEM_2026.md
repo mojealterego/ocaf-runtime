@@ -539,3 +539,19 @@ Wymagania dopisano do istniejących etapów manifestu v11; **nie dodano 2.07**. 
 | 1.97 | Weryfikacja benchmarków agentów kodujących, brak domniemanej integracji. |
 
 Stan: PLANNED/UNVERIFIED. Brak nowego etapu 2.07.
+
+
+### PDF 06/40 — OmniDev: obowiązkowa implementacja, nie demonstracja
+
+Źródło: `Analiza Architektury Systemu OCAF(4).PDF`, strony 15–17. **Żaden opisany agent ani komponent nie może zostać pominięty**: każdy musi mieć etap, kontrakt, implementację, test, dowód i status.
+
+| Etap | Wymagany produkt / komponent | Kryteria odbioru |
+|---|---|---|
+| 0.56 | OmniDev Architect (Tree-sitter CST, repo graph) | Realne parsowanie plików, analiza zależności i wpływu, aktualizacja indeksu, testy błędów parsera; zakaz stałego `AST_MAP_100%_ACCURACY`. |
+| 0.56 | OmniDev Security Critic | Niezależna analiza patchy, uprawnień, injection, podatności, regresji i polityk; negatywne testy. |
+| 0.56 | OmniDev Firecracker Executor | Rzeczywisty guest, podpisane poprawki, kompilacja, testy i zwrot artefaktów; zakaz stałego `WynikTestu { sukces: true }`. |
+| 0.56 | Generator i pętla naprawy | Poprawny git diff, kontrola konfliktów, ograniczone próby, idempotencja, timeouty, checkpointy i audyt; zakaz stałego `git diff optymalny_kod`. |
+| 1.92 | Rój OmniDev Zenoh/CRDT | Typowane komunikaty i role, uwierzytelnienie, izolacja tenantów, kontrola zasobów, brak nieograniczonej delegacji; CRDT nieautorytatywny. |
+| 1.99 | Benchmarki OmniDev | SWE-bench/TerminalBench z przypiętymi wersjami, N-run, kosztami i latencją; deklaracje >94% i <125 ms z PDF nie są dowodami. |
+
+OmniDev pozostaje **odrębnym rojem agentów kodujących**, nie zastępuje dziesięciu produktów Agents Builder Code/NoCode. Status: PLANNED/UNVERIFIED do czasu sprawdzenia kodu, testów i odbioru.
