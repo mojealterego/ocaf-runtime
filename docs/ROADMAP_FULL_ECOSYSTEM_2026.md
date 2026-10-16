@@ -1,6 +1,6 @@
 # OCAF — JEDYNA PEŁNA KANONICZNA ROADMAPA OD POCZĄTKU (v11, 15.10.2026)
 
-**PIN GITHUB: ten sam pełny dokument jest w katalogu głównym jako `/ROADMAP.md`, a pierwsza linia `README.md` kieruje tutaj.** 207 historycznych etapów głównych 0.00–2.06 + 39 nowych etapów 208–246 + 64 podetapy techniczne + 10 produktów Agents Builder = **320 pozycji**; 33 repozytoria referencyjne nie są etapami. **Następny nowy etap: `247`. Nie przenosimy ani nie renumerujemy historycznych identyfikatorów. Pełny rejestr 289 pozycji jest przypięty na początku `README.md` pod czerwonym nagłówkiem UWAGA CZYTAĆ.**
+**PIN GITHUB: pełna Roadmapa znajduje się w `/ROADMAP.md`, a README kieruje do niej.** 207 etapów historycznych + 126 etapów 208–333 + 64 podetapy techniczne + 10 produktów Agents Builder = **407 pozycji**; 33 repozytoria referencyjne nie są etapami. **Następny nowy etap: `334`.** Zachować wszystkie historyczne identyfikatory; statusy wymagają dowodów.
 
 ## Najważniejsze: pierwotny AGENTS BUILDER — Code i NoCode na pięciu platformach
 
