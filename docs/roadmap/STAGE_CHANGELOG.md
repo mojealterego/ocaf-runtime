@@ -106,3 +106,8 @@ production_approved: false
 - Explicitly classify mock Lightning invoice/preimage, constant RAG embedding, equality-only ZKP circuit, CPU LIF demo, Aya host tracepoint and default rustls provider as **not** production integration evidence.
 - Synced full `ROADMAP.md` and `docs/ROADMAP_FULL_ECOSYSTEM_2026.md` including PDF 02 and PDF 04 matrices; canonical manifest remains 207 main, 64 technical, 10 Agents Builder variants, 33 reference repositories.
 - No implementation or CI PASS claimed; operator acceptance and semantic review of PDF 05–40 remain open.
+
+## 2026-10-16 — PDF 05 existing-stage allocation
+
+- Mapped all 18 pages of `Analiza Architektury Systemu OCAF(3).PDF` to existing main stages 0.39, 0.43, 0.45, 0.46, 0.47, 0.48, 0.49, 0.91 and 1.97.
+- Updated canonical v11 scope and both roadmap copies. No 2.07 added. All PDF05 requirements remain PLANNED/UNVERIFIED pending implementation, tests and independent acceptance.
