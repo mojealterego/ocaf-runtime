@@ -1,0 +1,31 @@
+name: OMEGA OCAF APEX E2E validation
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'integrations/omega-ocaf-apex/**'
+      - '.github/workflows/omega-ocaf-apex-e2e.yml'
+permissions:
+  contents: read
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate integration contract
+        run: python3 integrations/omega-ocaf-apex/validate.py
+      - name: Live OpenAI inference (when configured)
+        if: ${{ env.OPENAI_API_KEY != '' }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python3 integrations/omega-ocaf-apex/openai_probe.py
+      - name: Report unavailable inference evidence
+        if: ${{ env.OPENAI_API_KEY == '' }}
+        run: echo 'Live inference NOT VERIFIED; configure OPENAI_API_KEY repository secret.'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
