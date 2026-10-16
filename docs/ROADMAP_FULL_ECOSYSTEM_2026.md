@@ -1011,3 +1011,19 @@ Ponownie przesłane materiały: **48 = Notes_261014_204557.pdf (127 stron)**, **
 ### Etap 320 — Sovereign Cargo workspace integration
 **Status: PLANNED.** Źródło: PDF53 s.2,5-13. Integracja istniejącego runtime i modułów domenowych bez duplikowania rdzenia; build, testy feature flags, E2E, SBOM i dowody CI.
 **Odbiór:** kod w istniejącym Rust runtime, kontrakty i uprawnienia, testy negatywne, integracja, pomiary oraz powiązane dowody SHA/CI; przykłady z PDF nie są implementacją.
+
+
+### Etap 321 — Cognitive architectures and neuro-symbolic reasoning (PDF54)
+**Status: PLANNED.** Źródło: „Architektura Przyszłości: Kompleksowa Analiza Ekosystemu AGI, ASI oraz Symulacji Cech Ludzkich w Sztucznej Inteligencji”, s.1–3. Ocena adapterów OpenCog Hyperon/DAS/MeTTa, PLN/ECAN, ACT-R, Soar, LIDA i EideticEngine; typed contracts, resource limits, sandbox, deterministyczne testy i dowody integracji. Nie utożsamiać symulacji poznawczej ze świadomością.
+
+### Etap 322 — Temporal agent memory and knowledge consolidation (PDF54)
+**Status: PLANNED.** Źródło: PDF54 s.3–5. Ocena Letta/MemGPT, Mem0, Cognee, Graphiti i Zep; pamięć epizodyczna/semantyczna/proceduralna, bitemporalność, provenance, korekta i usuwanie danych, izolacja tenantów, hybrydowe wyszukiwanie i ewaluacja LoCoMo/LongMemEval. Powiązać z istniejącymi etapami pamięci, bez dublowania rdzenia.
+
+### Etap 323 — Social simulation, affective AI and Theory of Mind (PDF54)
+**Status: PLANNED.** Źródło: PDF54 s.5–7. Generative Agents, Lyfe Agents, EmoLLM, Mind-Agent, MetaMind, ToM-SWE; symulacja zachowań i hipotez intencji, jawne oznaczanie niepewności, zgoda, ochrona danych wrażliwych, testy stronniczości i zakaz traktowania inferencji emocji jako diagnozy.
+
+### Etap 324 — Controlled self-optimization and autonomous research (PDF54)
+**Status: PLANNED.** Źródło: PDF54 s.7–9. DSPy/BootstrapFewShot/MIPRO/GEPA, Agent-Zero, Hermes i The AI Scientist: wersjonowane eksperymenty, kontrolowane propozycje zmian, odizolowane wykonanie, metryki, budżety, review gates, rollback i powtarzalność. Bez samowolnych zmian produkcyjnych.
+
+### Etap 325 — Autonomous software engineering and rigorous evaluations (PDF54)
+**Status: PLANNED.** Źródło: PDF54 s.9–13. AutoGPT, BabyAGI, GodMode, OpenHands, mini-SWE-agent, SWE-bench Verified i Multimodal, N-run reliability; bounded task loops, human-in-the-loop, sandbox, testy regresji, kontrola przecieków benchmarkowych i ślad audytowy. Wyniki tabeli z s.11–12 są twierdzeniami źródła, nie potwierdzonymi wynikami OCAF.
