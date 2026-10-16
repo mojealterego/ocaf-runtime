@@ -388,3 +388,9 @@ Dodano 20 numerowanych etapów PLANNED. Zakres: Nous/CNA, Honcho, CloudShield, V
 - README stage summary and stage index synchronized; three v11 JSON manifests annotated with source audit and unverified implementation status.
 - Source audit: 17-page PDF54, 31-page DGM report, 15-page 606-repository report, Rust source sample. Security findings include L402 bypass, simulated execution and in-memory pseudo-CRDT.
 - Validation and production acceptance not asserted; historical main-array inventory still requires per-stage reconciliation.
+
+## 2026-10-16 — SOURCE_REVIEWED — PDF AgentSpec/A2A 4 strony i Rust 528 linii
+
+- Wymagania przypisane do istniejących etapów 0.39, 0.50–0.55, 317–319, 325–329, 332–333; bez zmiany numeracji.
+- Audyt wykazał brak transportu A2A/Zenoh, brak wykonywania MCP i eBPF, symulowane SLA/Titans/RQGM, luki w autoryzacji i FinOps, NaN bypass.
+- Status PLANNED; brak dowodów testów, wdrożenia i akceptacji.
