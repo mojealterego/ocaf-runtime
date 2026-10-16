@@ -5891,5 +5891,50 @@
       "No durable flywheel or 606 repository integration"
     ],
     "acceptance": "Requires independent code/tests/CI evidence on main"
+  },
+  "final_pdf_six_crate_audit_20261016": {
+    "source": "Notes_261016_234639.pdf",
+    "pages": 60,
+    "status": "SOURCE_REVIEWED_PLANNED",
+    "crates": [
+      "ocaf-transport-crdt",
+      "ocaf-telemetry-ebpf",
+      "ocaf-cognition-rqgm",
+      "ocaf-economy-gov",
+      "ocaf-mcp-swarms",
+      "ocaf-master-node"
+    ],
+    "mapped_stages": [
+      "0.38",
+      "0.39",
+      "0.40",
+      "0.41",
+      "0.50",
+      "0.51",
+      "0.52",
+      "0.53",
+      "0.54",
+      "0.55",
+      "317",
+      "318",
+      "319",
+      "325",
+      "326",
+      "327",
+      "328",
+      "329",
+      "330",
+      "331",
+      "332",
+      "333"
+    ],
+    "gaps": [
+      "Unverified compile and tests",
+      "Unverified real Zenoh SHM/CRDT/PQC",
+      "No proven in-guest eBPF enforcement",
+      "No verified L402 caveats and replay protection",
+      "No verified 15 MCP tools and 606 integrated repos",
+      "No verified multi-host isolation, CI or operator acceptance"
+    ]
   }
 }
