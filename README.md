@@ -1467,3 +1467,6 @@ Dla wymagań PDF 09 utworzono **208–215**: 208 symulacje społeczne/ToM, 209 D
 
 
 **PDF17 (18 stron, 2026-10-16):** [Audyt](docs/audits/PDF17_OCAF_RUST_ARCHITECTURE_SEMANTIC_REVIEW_2026-10-16.md). Dodatkowe luki: ACP/OpenHands adapter (0.43/0.44/0.55), Aider-style Tree-sitter repo-map (0.43/0.67), reproducible SWE-bench Verified coding-agent eval (0.51/0.98). PLANNED/UNVERIFIED.
+
+
+**PDF18 (19 stron):** [audyt OmniDev](docs/audits/PDF18_OCAF_OMNIDEV_SEMANTIC_REVIEW_2026-10-16.md). Wymagania: Architect Tree-sitter, Security Critic, Firecracker Executor, Zenoh/CRDT, test-driven generation, recovery, E2E i benchmarki. Etapy 0.43, 0.46–0.47, 0.55, 0.63, 0.67, 0.98. PLANNED/UNVERIFIED.
