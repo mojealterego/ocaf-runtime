@@ -3,7 +3,7 @@
   "version": "v11-original-builder-scope-restored",
   "repository": "mojealterego/ocaf-runtime",
   "branch": "main",
-  "main_count": 204,
+  "main_count": 207,
   "technical_count": 64,
   "reference_count": 33,
   "production_approved": false,
@@ -3515,6 +3515,74 @@
       "evidence": [],
       "source": "docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md",
       "source_class": "PDF_SOURCE_VERIFIED"
+    },
+    {
+      "id": "2.04",
+      "title": "EideticEngine metacognitive memory-control evaluation",
+      "scope": "Compare EideticEngine-inspired hierarchical episodic/semantic/procedural memory, context reconstruction and bounded periodic metacognitive plan review against existing OCAF memory policy",
+      "acceptance": "Reproducible long-horizon task fixtures measure recall, contradictory evidence handling, review cadence, budget and deletion behavior",
+      "negative": "Reject unsupported consciousness claims, hidden infinite reflection loops or resurrected revoked memory",
+      "dependencies": [
+        "1.65",
+        "1.67",
+        "1.97"
+      ],
+      "pdf_pages": [
+        3
+      ],
+      "status": "PLANNED",
+      "priority": "P2",
+      "owner": "research",
+      "pdf_file": "Analiza AGI I Ludzkich AI (1).PDF",
+      "evidence": [],
+      "source": "docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md",
+      "source_class": "PDF_SOURCE_VERIFIED"
+    },
+    {
+      "id": "2.05",
+      "title": "Agent-Zero and Bonfire self-programming research sandbox",
+      "scope": "Study Agent-Zero/Agent0 terminal-driven skill acquisition and Bonfire knowledge engrames using isolated offline reproducible experiments with human-reviewed code changes",
+      "acceptance": "Version-pinned local fixtures capture tool traces, code diffs, provenance, test outcomes and strict runtime limits without exposing host credentials",
+      "negative": "Reject unsupervised recursive self-modification, direct host execution, uncontrolled network access or claimed AGI progress without independent evaluation",
+      "dependencies": [
+        "0.39",
+        "1.99",
+        "2.02"
+      ],
+      "pdf_pages": [
+        7
+      ],
+      "status": "PLANNED",
+      "priority": "P2",
+      "owner": "research",
+      "pdf_file": "Analiza AGI I Ludzkich AI (1).PDF",
+      "evidence": [],
+      "source": "docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md",
+      "source_class": "PDF_SOURCE_VERIFIED"
+    },
+    {
+      "id": "2.06",
+      "title": "NuNet PRIMUS and GodMode experimental orchestration interfaces",
+      "scope": "Evaluate NuNet decentralized resource scheduling and PRIMUS architecture only as research proposals; evaluate GodMode visual human-in-the-loop task oversight with clear cancellation and authorization controls",
+      "acceptance": "Offline mocked adapters and visual task fixture demonstrate explicit consent, bounded resources, revocation, graph visibility and failure isolation",
+      "negative": "Reject unauthorized blockchain settlement, untrusted decentralized execution, silent background operations or false production readiness",
+      "dependencies": [
+        "1.95",
+        "2.00",
+        "2.03"
+      ],
+      "pdf_pages": [
+        2,
+        8,
+        9
+      ],
+      "status": "PLANNED",
+      "priority": "P2",
+      "owner": "research",
+      "pdf_file": "Analiza AGI I Ludzkich AI (1).PDF",
+      "evidence": [],
+      "source": "docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md",
+      "source_class": "PDF_SOURCE_VERIFIED"
     }
   ],
   "technical": [
@@ -4811,5 +4879,5 @@
   "original_agents_builder_matrix": "docs/roadmap/agents_builder_products_v11.json",
   "lost_requirements_inventory": "docs/roadmap/missing_capabilities_v11.json",
   "stage_update_log": "docs/roadmap/STAGE_CHANGELOG.md",
-  "next_new_main_stage": "2.04"
+  "next_new_main_stage": "2.07"
 }
