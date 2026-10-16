@@ -178,3 +178,7 @@ Na polecenie operatora dopisano osiem nowych etapów **po 2.06**, zamiast trakto
 
 ## Korekta numeracji nowych etapów PDF 09 (2026-10-16)
 Na polecenie operatora zmieniono wyłącznie identyfikatory ośmiu nowo dopisanych etapów: 2.07–2.14 -> **208–215**. Zachowano bez zmian 207 historycznych pozycji (ostatni historyczny identyfikator 2.06). Mapowanie: 208 społeczne/ToM, 209 DSPy, 210 Agent-Zero/Hermes, 211 AI Scientist, 212 AutoGPT/BabyAGI, 213 GodMode, 214 OpenHands, 215 SWE-bench/mini-SWE-agent. Manifest: 215 etapów głównych, następny 216. Wszystkie PLANNED.
+
+## 2026-10-16 — PDF11: semantyczne uzgodnienie wymagań
+
+Źródło: `Kompleksowa Roadmapa Wdrożenia Ekosystemu OCAF w Rust.PDF` (11 stron). Audyt: `docs/audits/PDF11_RUST_ZENOH_SIX_PHASES_SEMANTIC_REVIEW_2026-10-16.md`. Sześć faz dokumentu przypisano do istniejących etapów `0.38`, `0.39`, `0.43`, `0.44`, `0.46`, `0.47`, `0.49`, `0.55`, `0.63`, `0.67`, `0.98`. Manifest, kanoniczna ROADMAPA, lustrzana ROADMAPA i przypięta tabela README zawierają odnośniki PDF11. Wskazane w PDF wyniki wydajności oraz przykładowa płatność L402 są demonstracją, nie dowodem wdrożenia. Status implementacji i odbiorów niezmieniony; 215 etapów głównych, 64 techniczne, 10 produktów Agents Builder.
