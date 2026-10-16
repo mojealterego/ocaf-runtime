@@ -1,5 +1,5 @@
 <!-- OCAF_README_ROADMAP_BEGIN -->
-**AKTUALNY STAN (2026-10-16): 246 etapów głównych (historyczne 0.00–2.06 oraz nowe 208–246), 64 podetapy techniczne, 10 produktów Agents Builder; razem 320 pozycji. Następny nowy etap: 247. PDF41–44: audyt częściowy.** Wcześniejsze liczniki 215/289/216 w historycznych blokach poniżej są nieaktualne i pozostawione dla zachowania archiwalnego brzmienia.**
+**AKTUALNY STAN (2026-10-16): 277 etapów głównych (historyczne 0.00–2.06 oraz nowe 208–277), 64 podetapy techniczne, 10 produktów Agents Builder; razem 351 pozycji. Następny nowy etap: 278. PDF41–44: audyt częściowy.** Wcześniejsze liczniki 215/289/216 w historycznych blokach poniżej są nieaktualne i pozostawione dla zachowania archiwalnego brzmienia.**
 
 
 [![UWAGA CZYTAĆ — ZAKAZ SAMOWOLKI](https://img.shields.io/badge/UWAGA%20CZYTA%C4%86-ZAKAZ%20SAMOWOLKI-ff0000?style=for-the-badge&labelColor=8b0000)](ROADMAP.md)
@@ -1588,3 +1588,40 @@ Kryteria odbioru: ROADMAP.md. Historyczne etapy bez renumeracji. Łącznie 222 e
 **Status: PLANNED.** PDF40 s.24–118; katalog protokołów, polityka kompatybilności, testy hardware-in-loop, brak domniemanej integracji. Wymagane: typowane API Rust, fail-closed authorization, izolacja tenantów, testy negatywne i integracyjne, dowód CI oraz walidacja na właściwym środowisku. Przykłady PDF nie stanowią implementacji.
 
 PDF37: zakres MCP/Zenoh/PQC/neuromorfika przypisany do istniejących 216–222 bez duplikacji.
+
+
+## Rozszerzenie z dokumentów PDF 45–47 (2026-10-16)
+
+| Etap / numer | Opis | Status |
+| :-- | :-- | :-- |
+| **247** | **Zenoh SHM zero-copy i typowane bufory** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **248** | **CRDT Automerge/Yrs i synchronizacja pamięci** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **249** | **OpenTelemetry: propagacja kontekstu Tokio** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **250** | **MCP schema fusion: Tree-sitter CST/AST** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **251** | **OAuth/Macaroons i weryfikowalne uprawnienia ZKP** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **252** | **Firecracker eBPF runtime threat detection** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **253** | **Ekonomia M2M L402 i offline payment queue** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **254** | **Hybrydowe PQC ML-KEM/ML-DSA** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **255** | **OmniDev: wieloagentowa inżynieria kodu** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **256** | **OmniUX: Figma MCP i visual regression** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **257** | **OmniE2E: Android/iOS i testy GUI** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **258** | **OmniForge: ECS i headless Vulkan** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **259** | **OmniCog: neuro-symboliczne wnioskowanie** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **260** | **OmniContext: kontekst i pamięć grafowa** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **261** | **OmniAgent Builders: platformy Code/NoCode** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **262** | **Kontrola kosztów i budżetów autonomii** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **263** | **Formalne kontrakty bezpieczeństwa narzędzi** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **264** | **Weryfikacja wydajności i benchmarków** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **265** | **Integracja agentów specjalistycznych** — wymaganie z PDF 45; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **266** | **Ontologie i reprezentacja wiedzy AI** — wymaganie z PDF 46; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **267** | **Logika formalna i dowody SAT/SMT** — wymaganie z PDF 46; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **268** | **Algorytmy wyszukiwania i planowania** — wymaganie z PDF 46; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **269** | **Probabilistyka i niepewność w agentach** — wymaganie z PDF 46; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **270** | **Ewaluacja generalizacji i optymalizacji** — wymaganie z PDF 46; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **271** | **OmniSeek-Local: lokalni agenci i bounded DAG** — wymaganie z PDF 47; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **272** | **OmniFlow-Pieces: workflow Code/NoCode** — wymaganie z PDF 47; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **273** | **OmniDroid-GUI: Android Accessibility i HITL** — wymaganie z PDF 47; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **274** | **OmniEval-Lab: ewaluacja trajektorii** — wymaganie z PDF 47; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **275** | **OmniFleet-C2: rejestr i hot reload Skills** — wymaganie z PDF 47; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **276** | **OmniVoice-Duplex i OmniCinema** — wymaganie z PDF 47; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
+| **277** | **OmniAgro-KG: domenowy graf wiedzy** — wymaganie z PDF 47; implementacja Rust, kontrakty, izolacja tenantów, testy i dowody integracyjne; bez uznawania przykładów dokumentacyjnych za gotowy kod. | **DO ZROBIENIA** |
