@@ -444,7 +444,7 @@
     {
       "id": "0.39",
       "title": "Execution",
-      "scope": "Firecracker microVM broker + Aya/eBPF isolation",
+      "scope": "Firecracker microVM broker + Aya/eBPF isolation PDF02_RECONCILIATION: Outbound HTTP egress broker injects credentials only after destination allowlist, DNS rebinding/SSRF defense and tenant capability authorization; guest cannot read raw credentials; fail closed on broker outage.",
       "acceptance": "[Real Linux KVM CI 38739812121](https://github.com/mojealterego/ocaf-runtime/actions/runs/38739812121): two per-tenant kernel SO_PEERCRED AF_UNIX broker reservations with SHA-pinned netless manifests persisted in SQLite BEFORE launching two simultaneous jailed Firecracker Linux guests; lease/VM id/cgroup/boot hash and SIGKILL/peer survival receipts bound, leases released. [Ledger](STAGE039_040_BROKER_KERNEL_PG_INDEPENDENCE_2026-10-15.md). Signed WASI **inside guest not implemented**; production NO-GO, independent signer gates waived for development only.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -492,7 +492,7 @@
     {
       "id": "0.43",
       "title": "MCP",
-      "scope": "Dynamic discovery, semantic routing, manifest signature, Tree-sitter & JSON Schema",
+      "scope": "Dynamic discovery, semantic routing, manifest signature, Tree-sitter & JSON Schema PDF02_RECONCILIATION: Hypothesize-retrieve-invoke MCP discovery with short-lived schema load/unload, signed version-pinned manifests, per-tenant authorized tools/list, cache revocation and rug-pull regression; benchmark dynamic versus static schema context cost and function-call accuracy.",
       "acceptance": "Untrusted tool metadata cannot inject policy; unknown tool never executes",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -504,7 +504,7 @@
     {
       "id": "0.44",
       "title": "OAuth",
-      "scope": "OAuth 2.1 authorization code + PKCE, scoped tenant tokens, secret broker",
+      "scope": "OAuth 2.1 authorization code + PKCE, scoped tenant tokens, secret broker PDF02_RECONCILIATION: Managed OAuth per tenant/user/session binding, authorization-code PKCE/state, step-up authorization, refresh/revoke rotation and redacted logs; reject confused-deputy cross-session credentials and shared-client consent mixups.",
       "acceptance": "PKCE, CSRF, confused deputy, issuer/audience/replay test matrix",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -552,7 +552,7 @@
     {
       "id": "0.48",
       "title": "Data",
-      "scope": "Enterprise ingest, connectors, retrieval, provenance, bitemporal policy",
+      "scope": "Enterprise ingest, connectors, retrieval, provenance, bitemporal policy PDF02_RECONCILIATION: Recursive PDF/log/source ingest with ACL and provenance per chunk, incremental indexing, deletion/revocation propagation, overlap boundary tests and quarantine of prompt-bearing external content.",
       "acceptance": "Tenant isolation, document provenance, deterministic authorization",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -564,7 +564,7 @@
     {
       "id": "0.49",
       "title": "Economics",
-      "scope": "L402/x402 adapter, testnet invoice/preimage verification, offline escrow",
+      "scope": "L402/x402 adapter, testnet invoice/preimage verification, offline escrow PDF02_RECONCILIATION: L402 Lightning macaroon/preimage flow and x402 payment rails are separate typed protocols; budget reserve/commit/refund, replay/idempotency, receipt and settlement authority must be independently verified.",
       "acceptance": "Idempotent ledger, upper spend limits, explicit human confirmation",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -651,7 +651,7 @@
     {
       "id": "0.55",
       "title": "AGENTS BUILDER — security/verification/packaging dla wszystkich 10 wariantów",
-      "scope": "Gwarantowany wspólny per-project auth, tenant isolation, typed graph verification, koszt i quota, sandbox preview WASI dla serwerów, ograniczony runner mobilny, podpisany eksport, bezpieczna publikacja, release gate i traceable run receipts — obowiązuje wszystkie pięć platform × Code/NoCode.",
+      "scope": "Gwarantowany wspólny per-project auth, tenant isolation, typed graph verification, koszt i quota, sandbox preview WASI dla serwerów, ograniczony runner mobilny, podpisany eksport, bezpieczna publikacja, release gate i traceable run receipts — obowiązuje wszystkie pięć platform × Code/NoCode. PDF02_RECONCILIATION: Optional Python/TypeScript @tool typed-introspection adapter must reject ambiguous/untrusted signatures and docstring injection; generated MCP schema cannot grant execution without sandboxed capability approval.",
       "acceptance": "Macierz 10/10: real build+GUI E2E każdego wariantu, negative privilege-edge, cycles, cost overrun, podpisań i fake publishing, opublikowany hash artefaktu + stage report.",
       "negative": "Jeśli choć jedna z 10 pozycji bez testu rzeczywistego — status całego Agents Builder pozostaje INCOMPLETE; żadnego automatycznego signing/sideload/płatności.",
       "dependencies": [],
@@ -750,7 +750,7 @@
     {
       "id": "0.63",
       "title": "OmniSec",
-      "scope": "Purple Team validation in authorized scoped targets",
+      "scope": "Purple Team validation in authorized scoped targets PDF02_RECONCILIATION: Version-pinned OWASP agentic ASI01–ASI10 threat matrix with independent negative tests for indirect prompt injection, tool misuse, identity spoofing, manifest rug pull, RCE, memory poisoning and cross-agent privilege escalation.",
       "acceptance": "Authorization checks, non-destructive default, explicit approval",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
