@@ -2,7 +2,7 @@
 
 ## Zakres i dowody
 
-Przetworzono **11 nowych plików PDF, 252 strony** w rodzinie `Architektura OmniContext Agent Framework (OCAF) w ..`. To kolejne rewizje jednej rozwijanej architektury: nie należy liczyć powtórzeń rozdziałów jako niezależnych funkcji. Ostatnia wersja `..(10).PDF` liczy 33 strony i zawiera rozdziały 1–28. Weryfikacja została przeprowadzona na ekstrakcji tekstowej `pdftotext -layout`, nie na kompilacji przykładowych fragmentów kodu.
+Przetworzono **11 plików PDF w rodzinie rewizji, 252 strony, z czego 10 nowych plików ma 228 stron** w rodzinie `Architektura OmniContext Agent Framework (OCAF) w ..`. To kolejne rewizje jednej rozwijanej architektury: nie należy liczyć powtórzeń rozdziałów jako niezależnych funkcji. Ostatnia wersja `..(10).PDF` liczy 33 strony i zawiera rozdziały 1–28. Weryfikacja została przeprowadzona na ekstrakcji tekstowej `pdftotext -layout`, nie na kompilacji przykładowych fragmentów kodu.
 
 | Plik źródłowy | Strony |
 |---|---:|
@@ -66,3 +66,9 @@ To kontrola 11 plików, ich rozdziałów i 16 grup wymagań. **Nie jest to pełn
 - Lokalny artefakt dowodowy `OCAF_BATCH2_252_PAGE_TRACEABILITY.md` obejmuje wszystkie 252 strony, z identyfikatorem pliku, numerem strony, SHA-256 tekstu, nagłówkami i wykrytymi domenami. Pełny rejestr lokalny nie jest automatycznie tożsamy z plikiem na GitHub.
 - W `ROADMAP.md` i jej lustrzanej kopii skorygowano błędne historyczne podsumowanie 195/259 do aktualnego 207/281.
 - **Werdykt:** pokrycie zakresu w Roadmapie dla 29 grup rozdziałów; testy funkcjonalne, przegląd atomowych wymagań i produkcyjny odbiór niepotwierdzone.
+
+## Korekta kompletnego korpusu (2026-10-16)
+
+Ponowny odczyt wszystkich plików w katalogu roboczym potwierdził **30 PDF, 535 stron i 26 unikalnych tekstów** (hash SHA-256 tekstu ekstrakcji). Poprzednie **31 PDF / 559 stron** było błędem podwójnego liczenia wcześniej zinwentaryzowanego pliku 24-stronicowego. Druga paczka dostarczyła 10 nowych plików i 228 stron; rodzina obejmuje także wcześniejszą rewizję 24-stronicową, stąd 11 plików / 252 strony.
+
+Rejestr każdej z 535 stron i deduplikacji został wygenerowany lokalnie jako `OCAF_30_PDF_COMPLETE_SOURCE_REGISTER_2026-10-16.json`; jego istnienie nie oznacza jeszcze kompletnej walidacji wymagań atomowych względem całego kodu.
