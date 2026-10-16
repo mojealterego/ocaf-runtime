@@ -392,5 +392,10 @@
     "classification": "operational swarms, not Agents Builder products",
     "status": "PLANNED_OR_UNVERIFIED",
     "audit": "docs/audits/PDF25_26_SEMANTIC_REVIEW_2026-10-16.md"
+  },
+  "pdf30_33_reconciliation": {
+    "status": "PLANNED_OR_UNVERIFIED",
+    "pdf32": "Ten Code/NoCode builder products across five platforms; no new product count",
+    "pdf33": "OmniMath is a capability, not a builder product"
   }
 }
