@@ -336,3 +336,7 @@ PDF37: zakres MCP/Zenoh/PQC/neuromorfika przypisany do istniejących 216–222 b
 - README.md: przypięto aktualny licznik u góry, stare historyczne liczniki pozostawiono jawnie oznaczone jako nieaktualne.
 - Manifest canonical_v11_inventory.json: main_count=231, next_new_main_milestone=232 (potwierdzone odczytem).
 - PDF37 pokrywa 216–222; PDF38–40 opisują 223–231. Wszystkie nowe etapy pozostają PLANNED, bez domniemanych testów i odbioru.
+
+
+## 2026-10-16 — PDF41–44
+Dodano etapy 232–246 (15 nowych etapów, PLANNED) do ROADMAP.md. Łącznie 246 głównych, 64 techniczne, 10 produktów = 320 pozycji; następny 247. Audyt PDF43–44 częściowy; brak dowodów implementacji i testów.
