@@ -1052,3 +1052,14 @@ Ponownie przesłane materiały: **48 = Notes_261014_204557.pdf (127 stron)**, **
 
 ### Etap 333 — Audyt twierdzeń implementacyjnych z dokumentu DGM
 **Status: PLANNED.** Źródło: s.3–16, 18–31. Przykładowy kod nie zawiera rzeczywistego transportu Zenoh SHM, parsera AST/SMT, sondy eBPF, wykonywania MCP, pobierania GGUF ani commitów Git; zawiera symulowane testy, sztuczny SHA i niezweryfikowane benchmarki. Każdą deklarację PASS/produkcyjności zweryfikować niezależnym testem na main; nie nadpisywać Cargo.toml ani src/main.rs przykładami.
+
+
+## Audyt: konsolidacja 606 repozytoriów — PDF 15 stron i załączony Rust
+
+**Status: SOURCE_REVIEWED / PLANNED; nie IMPLEMENTED.** PDF s.1–3 proponuje osiem domen: MCP Builder (75), Swarm Coder (90), Flow Studio (65), Cognitive Memory (55), Telecom/Voice/eSIM (85), Media/GameDev (80), Mobile Edge (60), CyberSec/ERP (96). Liczby sumują się do 606, ale nie dostarczono kompletnej listy URL/SHA/licencji ani dowodów integracji. Wymagane: macierz źródeł, analiza licencji, adaptery, testy E2E, dowody działania, bez zastępowania istniejącego rdzenia Rust.
+
+**Powiązania:** 0.39 Firecracker/eBPF; 0.50–0.55 Agents Builder (10 produktów); 326 bounded repair; 327 CRDT/pamięć; 328 AST/SMT; 329 MCP i telemetria; 332 GameBuilder. Nowe domeny wymagają weryfikacji SIP/eSIM, multimediów, mobile edge oraz migracji 15 narzędzi mcp-coding-agent z kontraktami I/O i kontrolą uprawnień.
+
+**Krytyczne wady kodu (PDF s.9–15, gemini-code-1792181625524.rs.txt):** (1) L402 akceptuje dowolne dwie niepuste części bez sprawdzenia podpisu, preimage, caveats i replay — AUTH BYPASS; (2) execute_workspace_command zwraca fikcyjny exit code 0 bez uruchomienia polecenia, Firecracker lub eBPF; (3) git status/diff są syntetyczne; (4) rzekomy CRDT to nietrwały RwLock<HashMap>, bez Automerge/Zenoh; (5) weryfikacja AST to sprawdzenie substringów, fałszywy PASS; (6) fetch_add budżetu może przekroczyć limit i przepełnić licznik — wymagana atomowa rezerwacja CAS z checked_add; (7) sekrety są zaszyte na stałe; (8) rejestr domen nie wykonuje żadnej integracji. Przykładu NIE wdrażać do main.
+
+**Odbiór:** pełna lista 606 źródeł z SHA/licencją; 15 rzeczywistych narzędzi MCP; fail-closed authorization, testy negatywne L402 i path traversal; izolacja tenantów; trwałość/recovery; rzeczywisty guest-side eBPF; cargo fmt/clippy/test, integracyjne i E2E, wyniki związane z SHA. Wszystkie deklaracje implementacji wymagają weryfikacji w kodzie.
