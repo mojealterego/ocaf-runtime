@@ -117,3 +117,9 @@ production_approved: false
 - Recovered all three named OmniDev roles from PDF06 pp.15–17: Tree-sitter Architect, Security Critic, Firecracker Executor, plus patch generation, bounded correction loop, Zenoh/CRDT and performance evaluation.
 - Updated existing 0.56, 1.92, 1.99 in canonical v11 and mirrored roadmaps with explicit contracts and rejection of hardcoded AST, diff and unconditional test PASS.
 - OmniDev is a coding swarm, distinct from the ten Agents Builder Code/NoCode products. No new stage required, but all agents and elements remain mandatory deliverables with evidence-based acceptance.
+
+## 2026-10-16 — PDF 07 OmniUX role recovery
+
+- Added DesignKognitywista_MCP, FrontendCSTGenerator and WizualnyKrytykWasm with Figma access, real code generation, isolated visual diff, accessibility checks and bounded iterative review to existing 0.57.
+- Mapped swarm role registration and OmniDev handoff to 1.92, and verified UI integration without replacing the ten Agents Builder products to 0.55.
+- Updated canonical v11 manifest and both mirrored roadmaps. Hardcoded tokens, fixed components and fixed visual scores are stubs, not implementation or test evidence.
