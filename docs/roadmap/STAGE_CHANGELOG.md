@@ -98,3 +98,11 @@ production_approved: false
 - Evidence and page-level mapping: `docs/audits/PDF40_03_ARCHITEKTURA_SYSTEMU_OCAF_SEMANTIC_REVIEW_2026-10-16.md`.
 - Reconciled existing stages 0.45 (ZKP/PQC verifier), 0.46 (local Zenoh SHM and non-authoritative CRDT), 0.47 (OTel queues/shutdown), 0.91 (Loihi hardware/CPU fallback) in canonical manifest. Existing technical sub-stages already describe the remainder.
 - No stage 2.07 justified; no implementation, performance, test or operator acceptance claimed. Mirror synchronization remains subject to independent verification.
+
+## 2026-10-16 — PDF 01–04 roadmap reconciliation and mirror sync
+
+- Reviewed source PDF 01 (14 pages), PDF 02 (13), PDF 03 (15), PDF 04 (17): 59 source pages in four files; mapped research references, requirements and illustrative snippets to existing canonical stages.
+- PDF 01 already maps to existing 1.95–2.06 research stages; avoid duplicate 2.07. PDF 02 restores 0.39, 0.43, 0.44, 0.48, 0.49, 0.55, 0.63; PDF 03 adds 0.45, 0.46, 0.47, 0.91; PDF 04 adds fail-closed acceptance constraints to 0.39, 0.43, 0.45, 0.48, 0.49, 0.91.
+- Explicitly classify mock Lightning invoice/preimage, constant RAG embedding, equality-only ZKP circuit, CPU LIF demo, Aya host tracepoint and default rustls provider as **not** production integration evidence.
+- Synced full `ROADMAP.md` and `docs/ROADMAP_FULL_ECOSYSTEM_2026.md` including PDF 02 and PDF 04 matrices; canonical manifest remains 207 main, 64 technical, 10 Agents Builder variants, 33 reference repositories.
+- No implementation or CI PASS claimed; operator acceptance and semantic review of PDF 05–40 remain open.
