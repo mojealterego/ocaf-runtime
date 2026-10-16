@@ -444,7 +444,7 @@
     {
       "id": "0.39",
       "title": "Execution",
-      "scope": "Firecracker microVM broker + Aya/eBPF isolation PDF02_RECONCILIATION: Outbound HTTP egress broker injects credentials only after destination allowlist, DNS rebinding/SSRF defense and tenant capability authorization; guest cannot read raw credentials; fail closed on broker outage. PDF04_RECONCILIATION: Aya openat tracepoint example is not proof of guest-kernel isolation or ransomware detection; require actual Firecracker guest and enforced broker response with negative tests.",
+      "scope": "Firecracker microVM broker + Aya/eBPF isolation PDF02_RECONCILIATION: Outbound HTTP egress broker injects credentials only after destination allowlist, DNS rebinding/SSRF defense and tenant capability authorization; guest cannot read raw credentials; fail closed on broker outage. PDF04_RECONCILIATION: Aya openat tracepoint example is not proof of guest-kernel isolation or ransomware detection; require actual Firecracker guest and enforced broker response with negative tests. PDF05: Firecracker guest-kernel isolation and Aya/eBPF enforcement must be demonstrated on actual hardware; openat example is not acceptance evidence.",
       "acceptance": "[Real Linux KVM CI 38739812121](https://github.com/mojealterego/ocaf-runtime/actions/runs/38739812121): two per-tenant kernel SO_PEERCRED AF_UNIX broker reservations with SHA-pinned netless manifests persisted in SQLite BEFORE launching two simultaneous jailed Firecracker Linux guests; lease/VM id/cgroup/boot hash and SIGKILL/peer survival receipts bound, leases released. [Ledger](STAGE039_040_BROKER_KERNEL_PG_INDEPENDENCE_2026-10-15.md). Signed WASI **inside guest not implemented**; production NO-GO, independent signer gates waived for development only.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -492,7 +492,7 @@
     {
       "id": "0.43",
       "title": "MCP",
-      "scope": "Dynamic discovery, semantic routing, manifest signature, Tree-sitter & JSON Schema PDF02_RECONCILIATION: Hypothesize-retrieve-invoke MCP discovery with short-lived schema load/unload, signed version-pinned manifests, per-tenant authorized tools/list, cache revocation and rug-pull regression; benchmark dynamic versus static schema context cost and function-call accuracy. PDF04_RECONCILIATION: Tree-sitter AST pattern matching cannot replace semantic JSON Schema validation or authorization; test indirect injection without literal marker and fail-closed tool schema admission.",
+      "scope": "Dynamic discovery, semantic routing, manifest signature, Tree-sitter & JSON Schema PDF02_RECONCILIATION: Hypothesize-retrieve-invoke MCP discovery with short-lived schema load/unload, signed version-pinned manifests, per-tenant authorized tools/list, cache revocation and rug-pull regression; benchmark dynamic versus static schema context cost and function-call accuracy. PDF04_RECONCILIATION: Tree-sitter AST pattern matching cannot replace semantic JSON Schema validation or authorization; test indirect injection without literal marker and fail-closed tool schema admission. PDF05: Dynamic MCP schema admission needs independent JSON Schema and authorization checks; Tree-sitter keyword scanning is insufficient against indirect injection.",
       "acceptance": "Untrusted tool metadata cannot inject policy; unknown tool never executes",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -516,7 +516,7 @@
     {
       "id": "0.45",
       "title": "Crypto",
-      "scope": "Hybrid PQC ML-KEM/ML-DSA interoperability, ZKP caveat proof experiments PDF03_RECONCILIATION: ZKP caveat verification requires independent verifier, public-input binding, soundness and negative witness tests; PQC ML-KEM/ML-DSA claims require actual hybrid handshake transcript-binding and downgrade tests. PDF04_RECONCILIATION: Equality-only R1CS demo does not prove macaroon caveats; bind tenant/scope/expiry/nonce, token, action and verifier public inputs, with forged witness tests; rustls default provider is not evidence of negotiated ML-KEM/ML-DSA.",
+      "scope": "Hybrid PQC ML-KEM/ML-DSA interoperability, ZKP caveat proof experiments PDF03_RECONCILIATION: ZKP caveat verification requires independent verifier, public-input binding, soundness and negative witness tests; PQC ML-KEM/ML-DSA claims require actual hybrid handshake transcript-binding and downgrade tests. PDF04_RECONCILIATION: Equality-only R1CS demo does not prove macaroon caveats; bind tenant/scope/expiry/nonce, token, action and verifier public inputs, with forged witness tests; rustls default provider is not evidence of negotiated ML-KEM/ML-DSA. PDF05: R1CS equality sample does not establish macaroon caveat soundness; require independent verifier and transcript-bound PQC negotiation tests.",
       "acceptance": "No replacement of audited mTLS until standards/tests pass",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -528,7 +528,7 @@
     {
       "id": "0.46",
       "title": "Transport",
-      "scope": "Zenoh SHM typed zero-copy, CRDT Automerge/Yrs for non-authoritative state PDF03_RECONCILIATION: Zenoh zero-copy SHM only for proven compatible local shared-memory paths, not automatically across MicroVM/hosts; CRDT non-authoritative only, with partition, convergence, tombstone and replay tests.",
+      "scope": "Zenoh SHM typed zero-copy, CRDT Automerge/Yrs for non-authoritative state PDF03_RECONCILIATION: Zenoh zero-copy SHM only for proven compatible local shared-memory paths, not automatically across MicroVM/hosts; CRDT non-authoritative only, with partition, convergence, tombstone and replay tests. PDF05: Zenoh SHM only within verified local memory domain; Automerge/Yrs need partition, tombstone and tenant ACL convergence tests.",
       "acceptance": "Benchmarks and CRDT convergence; NEVER for leadership/payment authority",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -540,7 +540,7 @@
     {
       "id": "0.47",
       "title": "Telemetry",
-      "scope": "W3C tracing propagation, OpenTelemetry/OTLP metrics, SLA and audit logs PDF03_RECONCILIATION: W3C trace propagation, bounded OTel batch queue, measured overhead and orderly flush/shutdown; zero overhead claims forbidden.",
+      "scope": "W3C tracing propagation, OpenTelemetry/OTLP metrics, SLA and audit logs PDF03_RECONCILIATION: W3C trace propagation, bounded OTel batch queue, measured overhead and orderly flush/shutdown; zero overhead claims forbidden. PDF05: Explicit Tokio trace propagation, bounded OTLP batch export, flush and failure tests.",
       "acceptance": "No secret leakage; trace replay across actual host boundaries",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -552,7 +552,7 @@
     {
       "id": "0.48",
       "title": "Data",
-      "scope": "Enterprise ingest, connectors, retrieval, provenance, bitemporal policy PDF02_RECONCILIATION: Recursive PDF/log/source ingest with ACL and provenance per chunk, incremental indexing, deletion/revocation propagation, overlap boundary tests and quarantine of prompt-bearing external content. PDF04_RECONCILIATION: Constant vec![0.5;1024] is a placeholder, not a production embedding; require versioned model, retrieval fixtures, ACL, provenance and deletion propagation.",
+      "scope": "Enterprise ingest, connectors, retrieval, provenance, bitemporal policy PDF02_RECONCILIATION: Recursive PDF/log/source ingest with ACL and provenance per chunk, incremental indexing, deletion/revocation propagation, overlap boundary tests and quarantine of prompt-bearing external content. PDF04_RECONCILIATION: Constant vec![0.5;1024] is a placeholder, not a production embedding; require versioned model, retrieval fixtures, ACL, provenance and deletion propagation. PDF05: Constant embedding vector is only a stub; require real model, retrieval quality fixtures, chunk ACL and provenance.",
       "acceptance": "Tenant isolation, document provenance, deterministic authorization",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -564,7 +564,7 @@
     {
       "id": "0.49",
       "title": "Economics",
-      "scope": "L402/x402 adapter, testnet invoice/preimage verification, offline escrow PDF02_RECONCILIATION: L402 Lightning macaroon/preimage flow and x402 payment rails are separate typed protocols; budget reserve/commit/refund, replay/idempotency, receipt and settlement authority must be independently verified. PDF04_RECONCILIATION: mocked_invoice and fixed preimage are not Lightning settlement; prohibit local RwLock budget as durable multi-tenant ledger, require authoritative atomic reserve/commit/refund, replay and recovery tests.",
+      "scope": "L402/x402 adapter, testnet invoice/preimage verification, offline escrow PDF02_RECONCILIATION: L402 Lightning macaroon/preimage flow and x402 payment rails are separate typed protocols; budget reserve/commit/refund, replay/idempotency, receipt and settlement authority must be independently verified. PDF04_RECONCILIATION: mocked_invoice and fixed preimage are not Lightning settlement; prohibit local RwLock budget as durable multi-tenant ledger, require authoritative atomic reserve/commit/refund, replay and recovery tests. PDF05: Mock Lightning invoice and local RwLock budget are not settlement; require durable tenant-scoped atomic accounting and replay protection.",
       "acceptance": "Idempotent ledger, upper spend limits, explicit human confirmation",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -1086,7 +1086,7 @@
     {
       "id": "0.91",
       "title": "Neuromorphic HIL / Loihi 2",
-      "scope": "Optional experimental SNN routing adapter with CPU/GPU fallback PDF03_RECONCILIATION: Loihi 2 remains optional hardware-in-the-loop research; require verified hardware SDK, same-workload energy-delay measurements and CPU fallback; no unverified performance multipliers. PDF04_RECONCILIATION: CPU LIF code is simulation only; Loihi 2 hardware integration requires SDK negotiation, real-device HIL benchmark and CPU fallback.",
+      "scope": "Optional experimental SNN routing adapter with CPU/GPU fallback PDF03_RECONCILIATION: Loihi 2 remains optional hardware-in-the-loop research; require verified hardware SDK, same-workload energy-delay measurements and CPU fallback; no unverified performance multipliers. PDF04_RECONCILIATION: CPU LIF code is simulation only; Loihi 2 hardware integration requires SDK negotiation, real-device HIL benchmark and CPU fallback. PDF05: CPU LIF simulation is not Loihi 2 integration; require real HIL measurement and CPU fallback.",
       "acceptance": "Actual device access and reproducible energy-delay-quality data; no claimed production acceleration",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -3350,7 +3350,7 @@
     {
       "id": "1.97",
       "title": "Agent memory interoperability and longitudinal evaluation",
-      "scope": "Evaluate Letta/MemGPT virtual memory and Mem0/Cognee/Zep/Graphiti graph memory as optional provenance-aware backends; use LoCoMo and LongMemEval longitudinal memory fixtures with retention, deletion, contradiction and tenant separation PDF40_RECONCILIATION: Taksonomia zewnętrznych frameworków to literatura; każda integracja wymaga ADR, licencji, capability gate, testów i oddzielnego statusu.",
+      "scope": "Evaluate Letta/MemGPT virtual memory and Mem0/Cognee/Zep/Graphiti graph memory as optional provenance-aware backends; use LoCoMo and LongMemEval longitudinal memory fixtures with retention, deletion, contradiction and tenant separation PDF40_RECONCILIATION: Taksonomia zewnętrznych frameworków to literatura; każda integracja wymaga ADR, licencji, capability gate, testów i oddzielnego statusu. PDF05: Coding-agent product and SWE-bench comparisons are external research; validate source, benchmark methodology, version and date; do not count reference as integrated adapter.",
       "acceptance": "Reproducible version-pinned benchmark publishes retrieval precision, temporal consistency, deletion propagation, tenant leakage and cost/latency relative to existing memory baseline",
       "negative": "Reject benchmark contamination, revoked memory resurrection, cross-tenant leakage or unlicensed dataset ingestion",
       "dependencies": [
