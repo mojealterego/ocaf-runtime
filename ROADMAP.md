@@ -926,3 +926,52 @@ Mapowanie: M0 do MCP/tool gateway; M1 do transport/cluster/registry; M2 do auth/
 **Status: PLANNED.** PDF40 s.24–118; katalog protokołów, polityka kompatybilności, testy hardware-in-loop, brak domniemanej integracji. Wymagane: typowane API Rust, fail-closed authorization, izolacja tenantów, testy negatywne i integracyjne, dowód CI oraz walidacja na właściwym środowisku. Przykłady PDF nie stanowią implementacji.
 
 PDF37: zakres MCP/Zenoh/PQC/neuromorfika przypisany do istniejących 216–222 bez duplikacji.
+
+
+## Audyt wejściowy PDF41–44 — etapy 232–246 (2026-10-16)
+Wpisy są wymaganiami **PLANNED**. Każdy wymaga analizy istniejącego kodu, testów pozytywnych/negatywnych, integracji, audytu i dowodu z docelowego środowiska. Deklaracje osiągów, symulacje, przykładowe kody i stuby w PDF nie stanowią dowodu implementacji. Wpisy PDF43–44 są wstępnym zakresem i nie oznaczają zakończonego audytu wszystkich stron.
+
+### Etap 232 — OmniThermo — rzeczywiste budżety energetyczne i Cost Exhaustion
+**Status: PLANNED.** PDF41 s.1–9: Linux RAPL/powercap, liczniki energii, polityki throttling, izolacja tenantów, sprzętowe testy i kalibracja; przedstawiony kod jest estymatorem, nie pomiarem.
+
+### Etap 233 — OmniProof-STARK — dowody obliczeń i polityk
+**Status: PLANNED.** PDF41 s.2–3,9–11: poprawny prover/verifier STARK z AIR, soundness, public inputs, binding task/tenant, benchmark i negatywne dowody; SHA-256 stub nie jest dowodem ZK.
+
+### Etap 234 — OmniMacro — hierarchiczna kondensacja rojów
+**Status: PLANNED.** PDF41 s.3,12–14: mierzalne causal emergence/information bottleneck, zachowanie uprawnień i audytu przy agregacji, rollback, testy skali; próg entropii nie dowodzi emergencji.
+
+### Etap 235 — OmniMarket-L402+ — kanały stanowe M2M
+**Status: PLANNED.** PDF41 s.4,15–18: autoryzowane depozyty, podpisane aktualizacje, nonce, replay protection, rozliczenie i dispute/recovery, audyt finansowy; przykładowe saldo w RAM nie jest kanałem płatniczym.
+
+### Etap 236 — OmniSubstrate — JIT Cranelift/WASM i przenośność
+**Status: PLANNED.** PDF41 s.4,18–21: polityki kompilacji i cache, sandbox, signed artifacts, kontrola CPU/SIMD, deterministyczne testy; FPGA/ASIC wyłącznie po walidacji sprzętowej.
+
+### Etap 237 — Lean4 Proof-Carrying RSI — bezpieczny hot-swap
+**Status: PLANNED.** PDF41 s.5,18–25: niezależny checker dowodów, związanie certyfikatu z binarką i wersją, transakcyjny rollback, izolacja i testy regresji; pojedynczy test Hoare nie jest formalnym dowodem.
+
+### Etap 238 — OmniUX i OmniE2E — rzeczywiste pipeline GUI i mobilne
+**Status: PLANNED.** PDF42 s.7–9: Figma MCP, typed AST/CST, wizualne E2E Android/iOS, artifact signing, device farm, dowody uruchomienia; spójność z Agents Builder 0.50–0.55.
+
+### Etap 239 — OmniForge i OmniWeb — domenowe roje wykonawcze
+**Status: PLANNED.** PDF42 s.9–10: Bevy/ECS, Vulkan GPU testy, uprawnione pozyskiwanie danych web, robots/ToS, SSRF i sandbox; bez obchodzenia zabezpieczeń.
+
+### Etap 240 — OmniStudio i OmniDoc — multimedia i Typst
+**Status: PLANNED.** PDF42 s.10–11: pipeline media/audio, deterministyczny render Typst, provenance, licencje, testy wyjściowych artefaktów.
+
+### Etap 241 — OmniGov OmniFin OmniPhys OmniSec — governance i purple team
+**Status: PLANNED.** PDF42 s.11–12: FinOps hard caps, policy engine, fizyczny IoT gateway, bezpieczne ćwiczenia red/blue z autoryzacją, testy negatywne.
+
+### Etap 242 — OmniCog OmniEvolve OmniSense — pamięć i kontrolowana ewolucja
+**Status: PLANNED.** PDF42 s.12–14: bitemporal persistence, point-in-time, GoT/MCTS/JEPA, adversarial gating, replay i ewaluacje; bez domniemania formalnej poprawności.
+
+### Etap 243 — OmniArbitrage OmniContract OmniChaos — kontrakty i routing
+**Status: PLANNED.** PDF42 s.14–17: rzeczywisty provider failover, typed schema validation, circuit breakers, latency/cost budgets, HITL i recovery.
+
+### Etap 244 — OmniStrategy OmniGraph OmniVerify OmniHomeostasis — planowanie i weryfikacja
+**Status: PLANNED.** PDF42 s.17–20: DAG executor z detekcją cykli, trwałe checkpointy, memory of failures, SMT z zakresem twierdzeń, bezpieczny regulator kosztów.
+
+### Etap 245 — PDF43 — weryfikacja i rozszerzenie specyfikacji
+**Status: PLANNED.** PDF43 Notes_261014_134626.pdf: obowiązki wymagają szczegółowego mapowania strona→kod→test; brak automatycznego uznania fragmentów za implementację.
+
+### Etap 246 — PDF44 — soft skills jako typowane kontrakty agentów
+**Status: PLANNED.** PDF44 SKILL Miękkie w Kodzie Rust(1).PDF: polityki komunikacji, negocjacji i delegacji, schema, audyt, testy; zachować istniejący etap 224 i nie utożsamiać katalogu skills z działającym runtime.
