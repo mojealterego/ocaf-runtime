@@ -726,3 +726,69 @@ Audyt: `docs/audits/PDF21_OMNIFORGE_SEMANTIC_REVIEW_2026-10-16.md`. S. 1–20: Z
 
 ### PDF25–PDF26 — audyt semantyczny 2026-10-16
 PDF25 (21 stron, rozdz. 23–24, s. 15–19): **OmniSec** (OmniRed/OmniBlue), wyłącznie autoryzowany Purple Team, kontrolowany scope, izolacja Firecracker, eBPF, triage, zatwierdzanie i rollback reguł. Powiązania: **0.38–0.39, 0.43, 0.49, 0.55, 0.63, 0.98**. PDF26 (21 stron, rozdz. 26–28, s. 16–19): **OmniCog** (working/episodic/semantic/procedural, trwały bitemporal graph, CRDT, izolacja tenantów, PITR), **OmniEvolve** (sandboxed mutation, niezależne adversarial gating, testy regresji, podpisy, approval, rollback), **OmniSense** (bounded Graph-of-Thought/AB-MCTS, Reflexion, opcjonalny JEPA, benchmarki). Powiązania: **0.38–0.41, 0.43, 0.49, 0.55, 0.63, 0.67, 0.98**. Status **PLANNED_OR_UNVERIFIED**: przykłady PDF są stubami; nie wykazano rzeczywistych testów ani wdrożeń. Szczegóły: `docs/audits/PDF25_26_SEMANTIC_REVIEW_2026-10-16.md`. Nie tworzy się nowych etapów ani produktów Agents Builder.
+
+
+## Rejestr wymagań do realizacji — 56 pozycji (synchronizacja 2026-10-16)
+
+Źródło kanoniczne: `docs/roadmap/missing_capabilities_v11.json`. Każdy wpis poniżej jest przypisany do historycznego etapu lub zakresu etapów, **bez tworzenia nowego etapu i bez uznawania implementacji**. `MISSING` i `UNVERIFIED` nie oznaczają tego samego. Szczegółowe kryteria i źródła w rejestrze JSON; po wykonaniu testów dopisać dowody SHA, CI, host i operatora.
+
+| ID | Etap istniejący | Wymaganie | Status | Warunek realizacji / weryfikacji |
+|---|---|---|---|---|
+| `INV-001` | `0.52` | Agents Builder Cloud Code | `MISSING` | Write Cloud Code editor, typed IR/project persistence, browser E2E |
+| `INV-002` | `0.52` | Agents Builder Cloud NoCode | `MISSING` | Build interactive Cloud canvas and graph roundtrip |
+| `INV-003` | `0.53` | Agents Builder Windows Code | `MISSING` | Separate signed Windows Code IDE and installer test |
+| `INV-004` | `0.53` | Agents Builder Windows NoCode | `MISSING` | Separate native Windows visual builder, offline save/reopen |
+| `INV-005` | `0.53` | Agents Builder macOS Code | `MISSING` | Build macOS Code IDE with reproducible macOS CI and notarization-ready config |
+| `INV-006` | `0.53` | Agents Builder macOS NoCode | `MISSING` | Build native macOS graph editor/preview/roundtrip |
+| `INV-007` | `0.54` | Agents Builder Android Code | `MISSING` | Build mobile Code DSL project editor with UniFFI core and instrumentation |
+| `INV-008` | `0.54` | Agents Builder Android NoCode | `MISSING` | Build offline Compose graph editor with E2E |
+| `INV-009` | `0.54` | Agents Builder iOS Code | `MISSING` | Build iOS Code DSL editor, actual iOS simulator smoke |
+| `INV-010` | `0.54` | Agents Builder iOS NoCode | `MISSING` | Build iOS graph canvas and simulator UI roundtrip |
+| `INV-011` | `0.50` | Shared Agents Builder IR, compiler and debugger | `MISSING` | Typed DAG project IR, compiler, agent preview and versioning |
+| `INV-012` | `0.51` | Shared bidirectional Code↔NoCode editor | `MISSING` | Supported DSL Code/visual conversion with lossiness detection |
+| `INV-013` | `0.55` | Agents Builder sandbox, security and publishing | `MISSING` | Per-project tool grants, cost limits, preview, signed export and consent |
+| `INV-014` | `0.56–0.77` | Specialized Omni* domain swarms | `PLANNED_UNVERIFIED` | Per-swarm registry, defined real entrypoint, capability manifest and E2E |
+| `INV-015` | `0.39` | True Firecracker broker→guest WASI execution | `ACTIVE_TECHNICAL_OPEN` | Signed WASI module and broker-bound guest exec, actual completion report and tampered module rejection |
+| `INV-016` | `0.40` | PostgreSQL TCP WAL replication across independent kernels | `ACTIVE_TECHNICAL_OPEN` | Three durable Linux hosts with secure live TCP, witness fencing and stale-primary write denial |
+| `INV-017` | `0.41` | Reliability prolonged soak, real infrastructure RTO/RPO | `ACTIVE_TECHNICAL_OPEN` | 30/60/120-minute soak, host power loss, trusted offsite restore, loss analysis |
+| `INV-018` | `0.43–0.44` | Dynamic third-party MCP and OAuth user consent | `PLANNED_UNVERIFIED` | Strict MCP lifecycle, OAuth PKCE and connector isolation test |
+| `INV-019` | `0.46–0.48` | CRDT memory + OpenTelemetry actual exports | `PLANNED_UNVERIFIED` | CRDT convergence, OTLP exporter real collector and privacy filter |
+| `INV-020` | `0.78–0.89` | Domain-specific OmniMath Lean/SMT verified checker | `PLANNED_UNVERIFIED` | Independent checker, typed proofs and real solver E2E |
+| `INV-021` | `0.00–0.10` | Historical milestone specifications 0.00–0.10 | `UNKNOWN_SOURCE` | Recover old commits/specs before filling metadata or claiming Done |
+| `INV-022` | `0.11–0.35` | Original stage details 0.11–0.35 | `HISTORY_PARTIAL` | Link each historical commit/tests to acceptance contract; mark partial until verified |
+| `INV-023` | `1.55–1.94` | Six Sovereign Workspace crates | `PLANNED_UNVERIFIED` | Create incremental cargo workspace and package CI without dropping current runtime |
+| `INV-024` | `0.43–1.94` | Repository 33 reference integrations | `REFERENCE_ONLY` | For each source pin license+commit, test actual adapter, add real evidence and status |
+| `PDF20-OMNIE2E-001` | `0.54` | OmniE2E dual-native Rust Core FFI SwiftUI Jetpack Compose | `UNVERIFIED` | Implement versioned Rust FFI/ABI, SwiftUI and Jetpack Compose native builds with macOS Xcode and Android Gradle CI; verify real device E2E |
+| `PDF20-OMNIE2E-002` | `0.98` | OmniE2E self-healing QA Playwright Appium | `UNVERIFIED` | Implement audited locator repair, preserve assertions, approval gate and regression tests on devices |
+| `PDF20-OMNIE2E-003` | `0.50` | OmniDev OmniUX OmniE2E typed handoff | `UNVERIFIED` | Versioned typed design/build/test artifacts, capability scoped auth, lifecycle, checkpoints and trace correlation |
+| `PDF21-OMNIFORGE-001` | `0.67` | OmniForge Bevy ECS / Unreal C++ engine code generation and semantic repo-map | `UNVERIFIED` | Version-pinned engine API indexing, typed patch generation, real Bevy/Unreal builds and regression tests |
+| `PDF21-OMNIFORGE-002` | `0.98` | OmniForge GLSL/HLSL shader compilation, headless Vulkan profiling | `UNVERIFIED` | Compile shader, validate SPIR-V, run reproducible GPU workloads with supported driver and hardware |
+| `PDF21-OMNIFORGE-003` | `0.49` | OmniForge L402 3D PBR/mesh asset purchasing and provenance | `UNVERIFIED` | Signed/authorized merchant integration, tenant budgets, license, receipt, replay protection, refunds and audit |
+| `PDF21-OMNIFORGE-004` | `0.55` | OmniForge deterministic ECS physics ticks and sandbox execution | `UNVERIFIED` | Deterministic physics test corpus, reproducible sandbox runs, negative cases and per-engine version matrix |
+| `PDF22-OMNIWEB-001` | `0.60` | OmniWeb authorized browser navigation and isolated worker | `UNVERIFIED` | Real browser E2E on permitted test sites; allowlist, SSRF, session isolation and consent |
+| `PDF22-OMNIWEB-002` | `0.60` | OmniWeb DOM/JSON schema extraction and self-healing | `UNVERIFIED` | Schema validated extraction on controlled changing layouts with precision/recall and provenance |
+| `PDF22-OMNIWEB-003` | `0.60` | OmniWeb full-stack app / REST API generation and deployment | `UNVERIFIED` | Build, test, security scan, deploy to controlled environment and verify health |
+| `PDF22-OMNIWEB-004` | `0.49` | OmniWeb optional L402 proxy procurement | `UNVERIFIED` | Licensed supplier, approval, spending cap, actual settlement and receipt; no anti-bot evasion |
+| `PDF22-OMNIWEB-005` | `0.63` | OmniWeb hostile-web-content and authorization negative tests | `UNVERIFIED` | SSRF, prompt injection, cross-tenant cookies, private network denial, abuse controls |
+| `PDF23-001` | `0.67` | OmniStudio real media workflow graph and render | `UNVERIFIED` | Run versioned media workflow and validate rendered artifacts |
+| `PDF23-002` | `0.63` | OmniStudio audio-video synchronization and rights | `UNVERIFIED` | Test audio alignment, explicit consent, license and provenance |
+| `PDF23-003` | `0.67` | OmniDoc Typst compilation and PDF verification | `UNVERIFIED` | Compile actual Typst source and validate PDF and failure cases |
+| `PDF24-001` | `0.49` | OmniGov atomic budget preauthorization | `UNVERIFIED` | Atomic reservations, wallet revocation and concurrency tests |
+| `PDF24-002` | `0.63` | OmniGov tamper-evident policy audit | `UNVERIFIED` | Fail-closed authorization, signed immutable audit and separation of duties |
+| `PDF24-003` | `0.67` | OmniFin cost metering and ROI accounting | `UNVERIFIED` | Reconcile token, compute and payment costs with audit evidence |
+| `PDF23-004` | `0.50` | OmniStudio OmniDoc typed handoff and isolation | `UNVERIFIED` | Versioned typed schema, cross-tenant denial and trace correlation |
+| `PDF24-004` | `0.39` | OmniPhys safe edge control and emergency stop | `UNVERIFIED` | Hardware-in-loop interlocks, watchdog, device identity and safe offline state |
+| `PDF24-005` | `0.98` | OmniGov cost exhaustion adversarial E2E | `UNVERIFIED` | Concurrent budget reservation and cutoff tests under network partitions |
+| `PDF25-001` | `0.43` | OmniSec typed roles and authorization | `UNVERIFIED` | Define role I/O, permissions and bounded delegation |
+| `PDF25-002` | `0.39` | OmniRed authorized isolated scope | `UNVERIFIED` | Enforce target allowlist, approvals and sandbox egress |
+| `PDF25-003` | `0.98` | OmniSec evidence-backed adversarial validation | `UNVERIFIED` | Run authorized negative tests and preserve artifacts |
+| `PDF25-004` | `0.63` | OmniBlue signed rule lifecycle | `UNVERIFIED` | Implement eBPF triage, approval, rollback and false-positive tests |
+| `PDF26-001` | `0.63` | OmniCog four memory layers | `UNVERIFIED` | Implement typed separated memory stores and retention |
+| `PDF26-002` | `0.41` | OmniCog bitemporal persistence and recovery | `UNVERIFIED` | Test tenant-isolated as-of recovery, conflicts and partitions |
+| `PDF26-003` | `0.49` | OmniCog provenance and poisoning resistance | `UNVERIFIED` | Enforce trust, deletion and procedural memory review |
+| `PDF26-004` | `0.55` | OmniEvolve isolated reproducible mutation | `UNVERIFIED` | Sandbox builds, sign candidates and test resource limits |
+| `PDF26-005` | `0.98` | OmniEvolve independent adversarial gate | `UNVERIFIED` | Require regression tests, human approval and rollback |
+| `PDF26-006` | `0.43` | OmniSense bounded graph search | `UNVERIFIED` | Implement AB-MCTS budget and termination controls |
+| `PDF26-007` | `0.67` | OmniSense predictive benchmark validation | `UNVERIFIED` | Benchmark Reflexion/JEPA versus baseline and budget |
+
+Liczba wpisów: **56**. Nie zmienia to **215 etapów głównych**, **64 podetapów technicznych** ani **10 produktów Agents Builder**.
