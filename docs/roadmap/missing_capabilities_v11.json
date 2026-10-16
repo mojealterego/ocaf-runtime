@@ -303,9 +303,59 @@
       "condition": "UNVERIFIED",
       "basis": "PDF22 pp.14-17 no negative tests",
       "repair": "SSRF, prompt injection, cross-tenant cookies, private network denial, abuse controls"
+    },
+    {
+      "id": "PDF23-001",
+      "component": "O",
+      "parent": "m",
+      "condition": "UNVERIFIED",
+      "basis": "PDF23 semantic review 2026-10-16",
+      "repair": "n"
+    },
+    {
+      "id": "PDF23-002",
+      "component": "0",
+      "parent": ".",
+      "condition": "UNVERIFIED",
+      "basis": "PDF23 semantic review 2026-10-16",
+      "repair": "6"
+    },
+    {
+      "id": "PDF23-003",
+      "component": "R",
+      "parent": "u",
+      "condition": "UNVERIFIED",
+      "basis": "PDF23 semantic review 2026-10-16",
+      "repair": "n"
+    },
+    {
+      "id": "PDF24-001",
+      "component": "O",
+      "parent": "m",
+      "condition": "UNVERIFIED",
+      "basis": "PDF24 semantic review 2026-10-16",
+      "repair": "n"
+    },
+    {
+      "id": "PDF24-002",
+      "component": "0",
+      "parent": ".",
+      "condition": "UNVERIFIED",
+      "basis": "PDF24 semantic review 2026-10-16",
+      "repair": "4"
+    },
+    {
+      "id": "PDF24-003",
+      "component": "A",
+      "parent": "t",
+      "condition": "UNVERIFIED",
+      "basis": "PDF24 semantic review 2026-10-16",
+      "repair": "o"
     }
   ],
   "pdf20_source": "PDF20 pp.18-21; OmniE2E is a swarm, not an additional Agents Builder product",
   "pdf21_source": "PDF21 pp.20-23 OmniForge; source examples are stubs, not implementation",
-  "pdf22_source": "PDF22 pp.14-17 OmniWeb; source functions return hardcoded data and no browser, payment or deployment"
+  "pdf22_source": "PDF22 pp.14-17 OmniWeb; source functions return hardcoded data and no browser, payment or deployment",
+  "pdf23_source": "PDF23 pp.15-17 OmniStudio OmniDoc; fixed output names are stubs",
+  "pdf24_source": "PDF24 pp.16-18 OmniGov OmniFin OmniPhys; print statements are stubs"
 }
