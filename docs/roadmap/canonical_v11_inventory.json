@@ -5378,5 +5378,20 @@
         ]
       }
     ]
+  },
+  "pdf34_36_reconciliation": {
+    "date": "2026-10-16",
+    "status": "PLANNED_OR_UNVERIFIED",
+    "source": "OCAF JARVIS OMEGA INFINITY report, 12 pages",
+    "phases": [
+      "M0 MCP",
+      "M1 Zenoh SHM CRDT",
+      "M2 L402 ZKP",
+      "M3 Firecracker eBPF",
+      "M4 Tree-sitter PQC",
+      "M5 neuromorphic",
+      "M6 HIL"
+    ],
+    "roadmap": "ROADMAP.md"
   }
 }
