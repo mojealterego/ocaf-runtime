@@ -792,3 +792,7 @@ PDF25 (21 stron, rozdz. 23–24, s. 15–19): **OmniSec** (OmniRed/OmniBlue), wy
 | `PDF26-007` | `0.67` | OmniSense predictive benchmark validation | `UNVERIFIED` | Benchmark Reflexion/JEPA versus baseline and budget |
 
 Liczba wpisów: **56**. Nie zmienia to **215 etapów głównych**, **64 podetapów technicznych** ani **10 produktów Agents Builder**.
+
+
+### PDF27–PDF29 (2026-10-16)
+Uzgodniono wymagania: PDF27 OmniSense (0.67); PDF28 OmniArbitrage (0.49), OmniContract/OmniChaos (0.43), OmniStrategy/OmniGraph (0.67); PDF29 OmniVerify/OmniHomeostasis (0.55), OmniCausal (0.98), OmniSleep/OmniPrune (0.67), OmniLatent/OmniAdaptive (0.39/0.63). Szczegółowe kryteria odbioru: ROADMAP.md. Status UNVERIFIED; przykłady z PDF nie stanowią implementacji.
