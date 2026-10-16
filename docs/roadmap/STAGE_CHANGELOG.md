@@ -75,3 +75,12 @@ production_approved: false
 - Cross-reference: `docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md`.
 - This is a documentation coverage and consistency gate, **not** a proof that all implementation, security, multi-host or release acceptance tests passed.
 
+
+## 2026-10-16 — Further source-PDF recovery (1.95–2.06)
+
+- Extracted and checked all 307 pages from 20 provided PDFs, yielding 16 unique text bodies and 3 exact-text duplicate groups (2 + 3 + 2 files).
+- Additional omissions in `Analiza AGI I Ludzkich AI (1).PDF`: EideticEngine metacognitive memory control (p. 3), Agent-Zero/Bonfire self-programming experiments (p. 7), NuNet/PRIMUS (p. 2), GodMode HITL interface (pp. 8–9).
+- Added stages `2.04`–`2.06` on main, with explicit negative safety acceptance criteria; total **207 main + 64 technical + 10 builder products = 281**. Next new ID: `2.07`.
+- Updated the fail-closed roadmap guard to check all twelve new stage IDs, 20 source filenames, manifest counts, status and mirror equality.
+- Local page-level extraction is a traceability index, not proof of full atomic requirement coverage or successful implementation. `production_approved=false`; CI and production sign-off must be verified separately.
+
