@@ -91,3 +91,10 @@ production_approved: false
 - Added explicit missing requirements to `canonical_v11_inventory.json` under stages 0.39 (MicroVM egress broker), 0.43 (MCP dynamic schema and manifest revocation), 0.44 (OAuth tenant/session binding), 0.48 (RAG ACL/provenance/deletion), 0.49 (L402/x402 settlement), 0.55 (Python/TypeScript tool introspection), and 0.63 (ASI01–ASI10 negative tests).
 - Updated root `ROADMAP.md` with the stage-to-requirement matrix. No new stage: 207 main, 64 technical, 10 builder variants; next available ID 2.07.
 - All added requirements remain PLANNED/UNVERIFIED; no implementation, CI or operator acceptance claimed. The mirror `docs/ROADMAP_FULL_ECOSYSTEM_2026.md` still needs to be synchronized if not changed in the same commit.
+
+## 2026-10-16 — PDF 03/40: revised OCAF architecture report
+
+- Reviewed all 15 pages of `Analiza Architektury Systemu OCAF(1).PDF`, including the added chapter 8 on Zenoh/CRDT, OpenTelemetry/Aya, ZKP, Tree-sitter, PQC and Loihi 2 (pp. 11–13).
+- Evidence and page-level mapping: `docs/audits/PDF40_03_ARCHITEKTURA_SYSTEMU_OCAF_SEMANTIC_REVIEW_2026-10-16.md`.
+- Reconciled existing stages 0.45 (ZKP/PQC verifier), 0.46 (local Zenoh SHM and non-authoritative CRDT), 0.47 (OTel queues/shutdown), 0.91 (Loihi hardware/CPU fallback) in canonical manifest. Existing technical sub-stages already describe the remainder.
+- No stage 2.07 justified; no implementation, performance, test or operator acceptance claimed. Mirror synchronization remains subject to independent verification.
