@@ -3,7 +3,7 @@
   "version": "v11-original-builder-scope-restored",
   "repository": "mojealterego/ocaf-runtime",
   "branch": "main",
-  "main_count": 300,
+  "main_count": 251,
   "technical_count": 64,
   "reference_count": 33,
   "production_approved": false,
@@ -3807,6 +3807,226 @@
       "status": "PLANNED",
       "source": "PDF40 s.24–118; katalog protokołów, polityka kompatybilności, testy hardware-in-loop, brak domniemanej integracji",
       "evidence": "PDF requirements only; implementation not verified"
+    },
+    {
+      "id": "301",
+      "title": "OmniNous Atropos RL i CNA",
+      "scope": "Zbieranie trajektorii RL, ocena nagród, kontrolowane dostrajanie LoRA i sterowanie aktywacjami CNA; walidacja modelu, prywatności i limitów treningu.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF51 s.1,4-6",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "302",
+      "title": "OmniHoncho IdentityMind i Groupchat Arbiter",
+      "scope": "Pamięć preferencji z kontrolą zgody, retencją i usuwaniem danych; deterministyczny arbiter kolejności wypowiedzi.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF51 s.1,6-7",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "303",
+      "title": "OmniCloudShield AntiStealer",
+      "scope": "Ochrona poświadczeń, metadanych chmurowych i kanałów eksfiltracji; polityka fail-closed, testy negatywne.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF51 s.2,7-8",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "304",
+      "title": "OmniSentry VoIP Guard",
+      "scope": "Weryfikacja SIP/STIR-SHAKEN, polityki dla połączeń nieatestowanych, honeypot i audyt; bez fałszywych deklaracji blokowania.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF51 s.2,7-8",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "305",
+      "title": "OmniMask IdentityRelay",
+      "scope": "Prawdziwy broker aliasów e-mail, filtrowanie trackerów, cykl życia i izolacja tenantów; brak fikcyjnych domen.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF51 s.2,9-10",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "306",
+      "title": "OmniTelecom eSIM/PBX",
+      "scope": "Integracja rzeczywistych DID, PBX i profili eSIM zgodnie z GSMA, autoryzacja i zgodność regulacyjna; brak syntetycznych ICCID jako dowodu.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF51 s.2,9-10",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "307",
+      "title": "OmniVox BenchmarkRouter",
+      "scope": "Routing TTS lokalny/chmurowy według pomiarów TTFAB, RTF, MOS, prywatności, awarii i budżetu.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF51 s.2-3,10-11",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "308",
+      "title": "OmniGrant Architect i ERP",
+      "scope": "Walidowane źródła konkursów, kryteria TRL, budżety, kosztorysy i audyt pochodzenia danych.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF51 s.3,11-12",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "309",
+      "title": "OmniPlasmic AST Compiler",
+      "scope": "Kompilator wizualnego IR/AST i flag funkcji z kompatybilnością Agents Builder Code/NoCode 0.50–0.55.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF51 s.3,11-12",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "310",
+      "title": "Zenoh SHM + Automerge/Yrs + embedded",
+      "scope": "Pomiar IPC zero-copy, CRDT convergence, obsługa zenoh-pico/nostd, backpressure i kompatybilność.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF52 s.1; PDF53 s.1-2",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "311",
+      "title": "OpenTelemetry produkcyjny pipeline",
+      "scope": "Batch exporter, propagacja kontekstu Tokio, ParentBased sampling, atrybuty środowiska, shutdown i testy utraty danych.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF52 s.1; PDF53 s.1-3",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "312",
+      "title": "CoALA UALA Titans memory",
+      "scope": "Oddzielna pamięć working/episodic/semantic/procedural, bramka niepewności, eksperymentalne Titans; izolacja i usuwanie pamięci.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF52 s.1,5-6; PDF53 s.1,3",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "313",
+      "title": "Red Queen Gödel Machine i type-sitter",
+      "scope": "Ewaluacja mutacji w epokach, examiner freeze, selective erasure, AST architecture guard i regresje; brak automatycznego wdrożenia mutacji.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF52 s.2,7-8; PDF53 s.1,3-4",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "314",
+      "title": "Loihi 2 Sigma-Delta SDNN",
+      "scope": "Eksperymentalny backend SDNN graded spikes, porównania energii i latencji na rzeczywistym sprzęcie.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF52 s.2,8-9; PDF53 s.1,4",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "315",
+      "title": "mlkem-native PQC integration",
+      "scope": "Weryfikacja pochodzenia biblioteki, ML-KEM handshake, hybrydowe profile, testy interoperacyjności i rotacji.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF52 s.2; PDF53 s.1,4",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "316",
+      "title": "In-guest Aya eBPF EDR",
+      "scope": "Rzeczywista sonda eBPF w jądrze gościa Firecracker, telemetria openat/connect/sendto, analiza anomalii i kontrolowane reakcje; powiązanie z 0.39.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF52 s.2-3,10-11; PDF53 s.1-2,4,7-9",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "317",
+      "title": "Cost Exhaustion i Action Tool Verification",
+      "scope": "Budżety tokenów i kosztów per tenant, bramki zatwierdzeń dla działań sprawczych, limity i testy TOCTOU.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF52 s.3,10-11; PDF53 s.2,4-5,10-11",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "318",
+      "title": "Disposable Apps Lifecycle i Energy Scheduler",
+      "scope": "TTL, archiwizacja, revocation uprawnień, bezpieczne usuwanie aplikacji i opcjonalny harmonogram energii.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF52 s.3; PDF53 s.2,4-5,10-11",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "319",
+      "title": "L402 Macaroon settlement and caveats",
+      "scope": "Weryfikacja payment preimage, HMAC, egzekwowanie caveats, replay protection i rzeczywiste rozliczenia; powiązanie z etapem 218.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF52 s.3,11-12; PDF53 s.2,4-5,11-12",
+      "source_class": "PDF_REQUIREMENT"
+    },
+    {
+      "id": "320",
+      "title": "Sovereign Cargo workspace integration",
+      "scope": "Integracja istniejącego runtime i modułów domenowych bez duplikowania rdzenia; build, testy feature flags, E2E, SBOM i dowody CI.",
+      "acceptance": "Kod, testy bezpieczeństwa, integracja i dowody SHA/CI na docelowym środowisku",
+      "negative": "Przykład dokumentacyjny nie stanowi dowodu wdrożenia",
+      "dependencies": [],
+      "status": "PLANNED",
+      "source": "PDF53 s.2,5-13",
+      "source_class": "PDF_REQUIREMENT"
     }
   ],
   "technical": [
@@ -5514,7 +5734,7 @@
     ],
     "roadmap": "ROADMAP.md"
   },
-  "next_new_main_milestone": "301",
+  "next_new_main_milestone": "321",
   "pdf37_40_reconciliation": {
     "status": "PLANNED",
     "stages": [
@@ -5567,5 +5787,32 @@
       "Dokument bez nazwy(1).PDF",
       "Dokument bez nazwy (5).PDF"
     ]
+  },
+  "pdf51_53_reconciliation": {
+    "status": "PLANNED",
+    "stages": [
+      "301",
+      "302",
+      "303",
+      "304",
+      "305",
+      "306",
+      "307",
+      "308",
+      "309",
+      "310",
+      "311",
+      "312",
+      "313",
+      "314",
+      "315",
+      "316",
+      "317",
+      "318",
+      "319",
+      "320"
+    ],
+    "source_pages": "PDF51:15; PDF52:15; PDF53:13",
+    "note": "Wymagania powiązane z 218, 0.39, 0.50-0.55; przykładowy kod nie jest implementacją"
   }
 }
