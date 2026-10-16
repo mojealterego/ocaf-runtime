@@ -260,3 +260,14 @@ Przypisano: PDF30 aktywna inferencja/HDC/fraktalny rój (0.67, 0.98); PDF31 migr
 
 ### 2026-10-16 — PDF34–PDF36
 Zaktualizowano ROADMAP.md, README.md i lustro roadmapy: MCP M0, Zenoh/SHM/CRDT M1, L402/ZKP M2, Firecracker/eBPF M3, Tree-sitter/PQC M4, neuromorfika M5 i HIL M6. Status: PLANNED_OR_UNVERIFIED; bez potwierdzenia benchmarków, testów sprzętowych i odbioru.
+
+
+## PDF34–PDF36 — numerowane etapy główne 216–222 (2026-10-16)
+- **216** — MCP stateless control plane — PLANNED
+- **217** — Zenoh SHM i CRDT — PLANNED
+- **218** — L402 Macaroons ZKP — PLANNED
+- **219** — Firecracker KVM Aya eBPF — PLANNED
+- **220** — Tree-sitter i hybrydowe PQC — PLANNED
+- **221** — Neuromorficzne SNN Loihi 2 — PLANNED
+- **222** — Kwantowo-neuromorficzne HIL PQC — PLANNED
+Kryteria odbioru: ROADMAP.md. Historyczne etapy bez renumeracji. Łącznie 222 etapy główne.
