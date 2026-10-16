@@ -51,6 +51,9 @@ REQUIRED = {
     "2.01": "AI Scientist",
     "2.02": "OpenHands",
     "2.03": "Theory-of-Mind",
+    "2.04": "EideticEngine",
+    "2.05": "Agent-Zero",
+    "2.06": "NuNet",
 }
 
 def fail(message: str) -> None:
@@ -67,7 +70,7 @@ def main() -> None:
         fail("manifest counts mismatch")
     if inventory.get("production_approved") is not False:
         fail("production_approved cannot be true without independent evidence")
-    if ids[-1] != "2.03" or inventory.get("next_new_main_stage") != "2.04":
+    if ids[-1] != "2.06" or inventory.get("next_new_main_stage") != "2.07":
         fail("unexpected last/next main-stage ID")
     for sid, keyword in REQUIRED.items():
         stage = next((s for s in main_stages if s["id"] == sid), None)
@@ -95,8 +98,8 @@ def main() -> None:
         for sid in REQUIRED:
             if sid not in rows:
                 fail(f"{name}: missing PDF-recovered stage {sid}")
-    if "278" not in readme or "204" not in readme:
-        fail("README total does not reflect 204+64+10=278")
+    if "281" not in readme or "207" not in readme:
+        fail("README total does not reflect 207+64+10=281")
     audit = AUDIT.read_text(encoding="utf-8")
     if len(SOURCE_PDFS) != 20 or len(set(SOURCE_PDFS)) != 20:
         fail("source PDF inventory must contain 20 distinct filenames")
@@ -108,7 +111,7 @@ def main() -> None:
     for sid in REQUIRED:
         if sid not in audit:
             fail(f"audit missing trace for {sid}")
-    print("PASS: 204 main stages, 64 technical, 10 builder products; 9 PDF-recovered stages traced")
+    print("PASS: 207 main stages, 64 technical, 10 builder products; 12 PDF-recovered stages traced")
     print("NOTE: static roadmap consistency only; not code/CI/production certification")
 
 if __name__ == "__main__":
