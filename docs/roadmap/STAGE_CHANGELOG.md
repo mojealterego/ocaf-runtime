@@ -329,3 +329,10 @@ Kryteria odbioru: ROADMAP.md. Historyczne etapy bez renumeracji. Łącznie 222 e
 **Status: PLANNED.** PDF40 s.24–118; katalog protokołów, polityka kompatybilności, testy hardware-in-loop, brak domniemanej integracji. Wymagane: typowane API Rust, fail-closed authorization, izolacja tenantów, testy negatywne i integracyjne, dowód CI oraz walidacja na właściwym środowisku. Przykłady PDF nie stanowią implementacji.
 
 PDF37: zakres MCP/Zenoh/PQC/neuromorfika przypisany do istniejących 216–222 bez duplikacji.
+
+
+## 2026-10-16 — Synchronizacja liczników etapów 216–231
+- ROADMAP.md i docs/ROADMAP_FULL_ECOSYSTEM_2026.md: 207 historycznych etapów + 24 nowe etapy 208–231 = 231 etapów głównych; 64 techniczne, 10 produktów Agents Builder, razem 305 pozycji.
+- README.md: przypięto aktualny licznik u góry, stare historyczne liczniki pozostawiono jawnie oznaczone jako nieaktualne.
+- Manifest canonical_v11_inventory.json: main_count=231, next_new_main_milestone=232 (potwierdzone odczytem).
+- PDF37 pokrywa 216–222; PDF38–40 opisują 223–231. Wszystkie nowe etapy pozostają PLANNED, bez domniemanych testów i odbioru.
