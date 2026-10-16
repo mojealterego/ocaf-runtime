@@ -3,7 +3,7 @@
   "version": "v11-original-builder-scope-restored",
   "repository": "mojealterego/ocaf-runtime",
   "branch": "main",
-  "main_count": 207,
+  "main_count": 215,
   "technical_count": 64,
   "reference_count": 33,
   "production_approved": false,
@@ -3583,6 +3583,110 @@
       "evidence": [],
       "source": "docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md",
       "source_class": "PDF_SOURCE_VERIFIED"
+    },
+    {
+      "id": "2.07",
+      "title": "Social simulation and affective-data safeguards",
+      "scope": "PDF09: Generative Agents/Lyfe multi-agent simulation; MetaMind/ToM-SWE opt-in intention hypotheses; sensitive affective data minimization, consent, retention and deletion.",
+      "acceptance": "Independent simulation E2E, consent and privacy controls, tenant isolation, calibration and negative manipulation tests.",
+      "negative": "Do not treat source benchmark scores, reference repositories or planned adapters as verified OCAF integration.",
+      "dependencies": [
+        "2.03"
+      ],
+      "status": "PLANNED",
+      "source": "Analiza AGI I Ludzkich AI (1).PDF, pp. 5-11",
+      "source_class": "USER_PDF_REQUIREMENT"
+    },
+    {
+      "id": "2.08",
+      "title": "DSPy governed agent optimization",
+      "scope": "PDF09: DSPy BootstrapFewShot/MIPRO/GEPA, versioned optimization pipelines, holdout, baseline, rollback.",
+      "acceptance": "Pinned reproducible holdout results, data leakage tests, budget limits, operator approval.",
+      "negative": "Do not treat source benchmark scores, reference repositories or planned adapters as verified OCAF integration.",
+      "dependencies": [
+        "1.98"
+      ],
+      "status": "PLANNED",
+      "source": "Analiza AGI I Ludzkich AI (1).PDF, pp. 5-11",
+      "source_class": "USER_PDF_REQUIREMENT"
+    },
+    {
+      "id": "2.09",
+      "title": "Agent-Zero and Hermes controlled self-improvement",
+      "scope": "PDF09: sandboxed terminal-driven skill acquisition and Hermes-like supervised code modification.",
+      "acceptance": "No privilege escalation, prompt injection and exfiltration tests, signed artifacts, bounded iterations, reviewed changes.",
+      "negative": "Do not treat source benchmark scores, reference repositories or planned adapters as verified OCAF integration.",
+      "dependencies": [
+        "2.05"
+      ],
+      "status": "PLANNED",
+      "source": "Analiza AGI I Ludzkich AI (1).PDF, pp. 5-11",
+      "source_class": "USER_PDF_REQUIREMENT"
+    },
+    {
+      "id": "2.10",
+      "title": "AI Scientist supervised research automation",
+      "scope": "PDF09: hypothesis, experiment, provenance, reproducible artifacts, citation checking, peer review and human-approved publication.",
+      "acceptance": "Reproducible isolated experiments, independent verification and audit trail.",
+      "negative": "Do not treat source benchmark scores, reference repositories or planned adapters as verified OCAF integration.",
+      "dependencies": [
+        "2.01"
+      ],
+      "status": "PLANNED",
+      "source": "Analiza AGI I Ludzkich AI (1).PDF, pp. 5-11",
+      "source_class": "USER_PDF_REQUIREMENT"
+    },
+    {
+      "id": "2.11",
+      "title": "AutoGPT and BabyAGI bounded task orchestration",
+      "scope": "PDF09: planning, task creation, prioritization, DAG, bounded delegation, cancellation and idempotent effects.",
+      "acceptance": "Loop and budget tests, crash recovery, tenant isolation, duplicate-effect prevention.",
+      "negative": "Do not treat source benchmark scores, reference repositories or planned adapters as verified OCAF integration.",
+      "dependencies": [
+        "2.00"
+      ],
+      "status": "PLANNED",
+      "source": "Analiza AGI I Ludzkich AI (1).PDF, pp. 5-11",
+      "source_class": "USER_PDF_REQUIREMENT"
+    },
+    {
+      "id": "2.12",
+      "title": "GodMode operator supervision UI",
+      "scope": "PDF09: real operator GUI for inspecting, approving, pausing and cancelling agent execution.",
+      "acceptance": "E2E GUI, operator authorization, durable audit, fail-closed cancellation.",
+      "negative": "Do not treat source benchmark scores, reference repositories or planned adapters as verified OCAF integration.",
+      "dependencies": [
+        "2.06"
+      ],
+      "status": "PLANNED",
+      "source": "Analiza AGI I Ludzkich AI (1).PDF, pp. 5-11",
+      "source_class": "USER_PDF_REQUIREMENT"
+    },
+    {
+      "id": "2.13",
+      "title": "OpenHands autonomous software engineering integration",
+      "scope": "PDF09: sandboxed agent server, command/browser tools, code navigation, diff review and governed patch application.",
+      "acceptance": "Real-repository E2E, sandbox escape, command injection, secret exfiltration, rollback.",
+      "negative": "Do not treat source benchmark scores, reference repositories or planned adapters as verified OCAF integration.",
+      "dependencies": [
+        "2.02"
+      ],
+      "status": "PLANNED",
+      "source": "Analiza AGI I Ludzkich AI (1).PDF, pp. 5-11",
+      "source_class": "USER_PDF_REQUIREMENT"
+    },
+    {
+      "id": "2.14",
+      "title": "SWE-bench and mini-SWE-agent N-run validation",
+      "scope": "PDF09: SWE-bench Verified, mini-SWE-agent baseline, multimodal fixtures, N-run reliability and regression evaluation.",
+      "acceptance": "Pinned datasets and environment, repeated independent pass rate, cost and latency, reproducibility.",
+      "negative": "Do not treat source benchmark scores, reference repositories or planned adapters as verified OCAF integration.",
+      "dependencies": [
+        "1.99"
+      ],
+      "status": "PLANNED",
+      "source": "Analiza AGI I Ludzkich AI (1).PDF, pp. 5-11",
+      "source_class": "USER_PDF_REQUIREMENT"
     }
   ],
   "technical": [
@@ -4879,7 +4983,7 @@
   "original_agents_builder_matrix": "docs/roadmap/agents_builder_products_v11.json",
   "lost_requirements_inventory": "docs/roadmap/missing_capabilities_v11.json",
   "stage_update_log": "docs/roadmap/STAGE_CHANGELOG.md",
-  "next_new_main_stage": "2.07",
+  "next_new_main_stage": "2.15",
   "pdf40_reconciliation": {
     "date": "2026-10-16",
     "status": "PARTIAL_SOURCE_GROUNDED_REQUIREMENTS_ADDED_NOT_FULL_SEMANTIC_CERTIFICATION",
