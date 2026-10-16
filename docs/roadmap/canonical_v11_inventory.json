@@ -3,7 +3,7 @@
   "version": "v11-original-builder-scope-restored",
   "repository": "mojealterego/ocaf-runtime",
   "branch": "main",
-  "main_count": 222,
+  "main_count": 230,
   "technical_count": 64,
   "reference_count": 33,
   "production_approved": false,
@@ -3736,6 +3736,70 @@
       "status": "PLANNED",
       "source": "PDF34–PDF36",
       "evidence": "No implementation verification"
+    },
+    {
+      "id": "223",
+      "title": "PDF37: protokoły negocjacji zasobów i dynamic throttling",
+      "status": "PLANNED",
+      "source": "PDF37",
+      "description": "Licytacje GPU/API, cost-latency-accuracy, polityki budżetowe i deterministyczny arbitraż",
+      "evidence": "Wymaganie z dokumentacji; niezweryfikowane w kodzie"
+    },
+    {
+      "id": "224",
+      "title": "PDF37: telemetryczny routing modeli i kontrolowane RLAIF",
+      "status": "PLANNED",
+      "source": "PDF37",
+      "description": "Multi-armed bandits, epsilon-greedy, pomiar jakości, opóźnienia i regresji, bezpieczny feedback",
+      "evidence": "Wymaganie z dokumentacji; niezweryfikowane w kodzie"
+    },
+    {
+      "id": "225",
+      "title": "PDF37: ważony konsensus ekspertów i ograniczona samonaprawa",
+      "status": "PLANNED",
+      "source": "PDF37",
+      "description": "Głosowanie domenowe, konflikty danych, limit prób, fail-closed i ślad decyzji",
+      "evidence": "Wymaganie z dokumentacji; niezweryfikowane w kodzie"
+    },
+    {
+      "id": "226",
+      "title": "PDF37: Actor-Critic, grounding i weryfikacja faktów",
+      "status": "PLANNED",
+      "source": "PDF37",
+      "description": "Weryfikator niezależny od generatora, provenance, dowody, abstencja, bounded reasoning",
+      "evidence": "Wymaganie z dokumentacji; niezweryfikowane w kodzie"
+    },
+    {
+      "id": "227",
+      "title": "PDF37: DAG delegowania i typowane tool calling",
+      "status": "PLANNED",
+      "source": "PDF37",
+      "description": "Graf zależności, semantic routing, least privilege, idempotencja, audyt wywołań",
+      "evidence": "Wymaganie z dokumentacji; niezweryfikowane w kodzie"
+    },
+    {
+      "id": "228",
+      "title": "PDF38: wielotransportowa warstwa komunikacji urządzeń",
+      "status": "PLANNED",
+      "source": "PDF38",
+      "description": "Adaptery BLE, NFC, UWB, Wi-Fi Direct, IrDA, Li-Fi/OCC/FSO z capability negotiation i fallback",
+      "evidence": "Wymaganie z dokumentacji; niezweryfikowane w kodzie"
+    },
+    {
+      "id": "229",
+      "title": "PDF38: brama IoT/LPWAN i przemysłowe protokoły",
+      "status": "PLANNED",
+      "source": "PDF38",
+      "description": "LoRaWAN, NB-IoT, LTE-M, Thread/Matter, Zigbee, 6LoWPAN, izolacja i bezpieczne provisioning",
+      "evidence": "Wymaganie z dokumentacji; niezweryfikowane w kodzie"
+    },
+    {
+      "id": "230",
+      "title": "PDF38: transport mobilny, lokalizacja i źródła RSS",
+      "status": "PLANNED",
+      "source": "PDF38",
+      "description": "Integracje 4G/5G, GNSS, MSISDN bez ujawniania danych, RSS, autoryzacja i ograniczenia platformowe",
+      "evidence": "Wymaganie z dokumentacji; niezweryfikowane w kodzie"
     }
   ],
   "technical": [
@@ -5032,7 +5096,7 @@
   "original_agents_builder_matrix": "docs/roadmap/agents_builder_products_v11.json",
   "lost_requirements_inventory": "docs/roadmap/missing_capabilities_v11.json",
   "stage_update_log": "docs/roadmap/STAGE_CHANGELOG.md",
-  "next_new_main_stage": "216",
+  "next_new_main_stage": "231",
   "pdf40_reconciliation": {
     "date": "2026-10-16",
     "status": "PARTIAL_SOURCE_GROUNDED_REQUIREMENTS_ADDED_NOT_FULL_SEMANTIC_CERTIFICATION",
@@ -5443,5 +5507,5 @@
     ],
     "roadmap": "ROADMAP.md"
   },
-  "next_new_main_milestone": "223"
+  "next_new_main_milestone": "231"
 }
