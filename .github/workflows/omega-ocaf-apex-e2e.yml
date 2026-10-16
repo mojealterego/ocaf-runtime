@@ -12,6 +12,8 @@ jobs:
   integration:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -21,11 +23,7 @@ jobs:
         run: python3 integrations/omega-ocaf-apex/validate.py
       - name: Live OpenAI inference (when configured)
         if: ${{ env.OPENAI_API_KEY != '' }}
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: python3 integrations/omega-ocaf-apex/openai_probe.py
       - name: Report unavailable inference evidence
         if: ${{ env.OPENAI_API_KEY == '' }}
         run: echo 'Live inference NOT VERIFIED; configure OPENAI_API_KEY repository secret.'
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
