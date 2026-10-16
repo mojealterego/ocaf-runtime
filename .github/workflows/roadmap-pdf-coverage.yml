@@ -21,7 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      with:
+        persist-credentials: false
       - name: Check canonical PDF requirements and roadmap integrity
         run: |
           python3 scripts/check_roadmap_pdf_coverage.py
