@@ -5304,5 +5304,40 @@
       "0.98"
     ],
     "status": "PLANNED_OR_UNVERIFIED"
+  },
+  "pdf27_29_reconciliation": {
+    "date": "2026-10-16",
+    "documents": [
+      {
+        "pdf": 27,
+        "pages": 16,
+        "stages": [
+          "0.67"
+        ]
+      },
+      {
+        "pdf": 28,
+        "pages": 22,
+        "stages": [
+          "0.43",
+          "0.49",
+          "0.67"
+        ]
+      },
+      {
+        "pdf": 29,
+        "pages": 28,
+        "stages": [
+          "0.39",
+          "0.55",
+          "0.63",
+          "0.67",
+          "0.98"
+        ]
+      }
+    ],
+    "status": "UNVERIFIED",
+    "missing_capability_count": 8,
+    "roadmap": "ROADMAP.md"
   }
 }
