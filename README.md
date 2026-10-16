@@ -1,5 +1,5 @@
 <!-- OCAF_README_ROADMAP_BEGIN -->
-**AKTUALNY STAN (2026-10-16): 277 etapów głównych (historyczne 0.00–2.06 oraz nowe 208–277), 64 podetapy techniczne, 10 produktów Agents Builder; razem 351 pozycji. Następny nowy etap: 278. PDF41–44: audyt częściowy.** Wcześniejsze liczniki 215/289/216 w historycznych blokach poniżej są nieaktualne i pozostawione dla zachowania archiwalnego brzmienia.**
+**AKTUALNY STAN (2026-10-16): 320 etapów głównych, 64 podetapy techniczne, 10 produktów Agents Builder; razem 394 pozycje. Następny nowy etap: 321. PDF41–44: audyt częściowy.**
 
 
 [![UWAGA CZYTAĆ — ZAKAZ SAMOWOLKI](https://img.shields.io/badge/UWAGA%20CZYTA%C4%86-ZAKAZ%20SAMOWOLKI-ff0000?style=for-the-badge&labelColor=8b0000)](ROADMAP.md)
@@ -1630,3 +1630,27 @@ PDF37: zakres MCP/Zenoh/PQC/neuromorfika przypisany do istniejących 216–222 b
 ### Dokumenty 48–50 — kontrola duplikatów (2026-10-16)
 
 Ponownie przesłane materiały: **48 = Notes_261014_204557.pdf (127 stron)**, **49 = Dokument bez nazwy.PDF (14 stron)**, **50 = Architektura OmniContext Agent Framework (OCAF) w ..(1).PDF (61 stron)**. Są to te same dokumenty merytoryczne, które uprzednio zarejestrowano jako PDF 46, 47 i 45. **Nie dopisano nowych etapów**: ich wymagania zostały już wpisane pod identyfikatorami **247–277** (PDF 45: 247–265; PDF 46: 266–270; PDF 47: 271–277). Kolejny wolny identyfikator pozostaje **278**. Ponowne przesłanie dokumentu nie oznacza nowej funkcjonalności ani wykonania testów.
+
+
+## Etapy 301–320 — nowe dokumenty (2026-10-16)
+
+| **301** | OmniNous Atropos RL i CNA (PDF51 s.1,4-6) | **PLANNED** |
+| **302** | OmniHoncho IdentityMind i Groupchat Arbiter (PDF51 s.1,6-7) | **PLANNED** |
+| **303** | OmniCloudShield AntiStealer (PDF51 s.2,7-8) | **PLANNED** |
+| **304** | OmniSentry VoIP Guard (PDF51 s.2,7-8) | **PLANNED** |
+| **305** | OmniMask IdentityRelay (PDF51 s.2,9-10) | **PLANNED** |
+| **306** | OmniTelecom eSIM/PBX (PDF51 s.2,9-10) | **PLANNED** |
+| **307** | OmniVox BenchmarkRouter (PDF51 s.2-3,10-11) | **PLANNED** |
+| **308** | OmniGrant Architect i ERP (PDF51 s.3,11-12) | **PLANNED** |
+| **309** | OmniPlasmic AST Compiler (PDF51 s.3,11-12) | **PLANNED** |
+| **310** | Zenoh SHM + Automerge/Yrs + embedded (PDF52 s.1; PDF53 s.1-2) | **PLANNED** |
+| **311** | OpenTelemetry produkcyjny pipeline (PDF52 s.1; PDF53 s.1-3) | **PLANNED** |
+| **312** | CoALA UALA Titans memory (PDF52 s.1,5-6; PDF53 s.1,3) | **PLANNED** |
+| **313** | Red Queen Gödel Machine i type-sitter (PDF52 s.2,7-8; PDF53 s.1,3-4) | **PLANNED** |
+| **314** | Loihi 2 Sigma-Delta SDNN (PDF52 s.2,8-9; PDF53 s.1,4) | **PLANNED** |
+| **315** | mlkem-native PQC integration (PDF52 s.2; PDF53 s.1,4) | **PLANNED** |
+| **316** | In-guest Aya eBPF EDR (PDF52 s.2-3,10-11; PDF53 s.1-2,4,7-9) | **PLANNED** |
+| **317** | Cost Exhaustion i Action Tool Verification (PDF52 s.3,10-11; PDF53 s.2,4-5,10-11) | **PLANNED** |
+| **318** | Disposable Apps Lifecycle i Energy Scheduler (PDF52 s.3; PDF53 s.2,4-5,10-11) | **PLANNED** |
+| **319** | L402 Macaroon settlement and caveats (PDF52 s.3,11-12; PDF53 s.2,4-5,11-12) | **PLANNED** |
+| **320** | Sovereign Cargo workspace integration (PDF53 s.2,5-13) | **PLANNED** |
