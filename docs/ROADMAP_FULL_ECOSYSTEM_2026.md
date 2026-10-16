@@ -467,3 +467,22 @@ Każda zmiana statusu wymaga zapisanego **SHA commitu**, linku do zakończonego 
 ## Rejestr braków z audytu 40 PDF — stan OPEN
 
 Wykryte wymagania nieuwzględnione explicite w dotychczasowym zakresie: katalog 110+ umiejętności i modułów, aukcje GPU/API, router epsilon-greedy z guardrails, decyzje zakresowe dla protokołów radiowych i optycznych, rzeczywiste dowody RAPL/STARK/L402 oraz ADR dla frameworków agentowych. Każda pozycja ma dokument źródłowy, stronę, proponowany etap, kryteria akceptacji i status **OPEN**: [PDF_40_SEMANTIC_GAP_LEDGER_2026-10-16.md](roadmap/PDF_40_SEMANTIC_GAP_LEDGER_2026-10-16.md). **Nie oznaczać tej listy jako kompletnej semantycznej weryfikacji wszystkich 902 stron.**
+
+
+## Uzgodnienie wymagań PDF40 z etapami (16.10.2026)
+
+W ramach weryfikacji źródeł uzupełniono manifest `docs/roadmap/canonical_v11_inventory.json` o wymagania następujących istniejących etapów (bez renumeracji):
+
+| Etap | Doprecyzowanie zakresu i bramka akceptacji |
+|---|---|
+| 0.95 | Negocjacje zasobów: walidacja ofert NaN/Inf, fairness, tenant budget, deterministyczny arbitraż, brak starvation. |
+| 0.98 | Wersjonowany manifest umiejętności i modułów (katalog 110+ jako zakres do audytu), ograniczony epsilon-greedy routing, replay telemetry feedback. |
+| 1.58 | Jawny rejestr zakresu BLE/NFC/UWB/Zigbee/Z-Wave/IrDA/Li-Fi/FSO; osobne adaptery, uprawnienia i testy sprzętowe. |
+| 0.90 | RAPL z rzeczywistego sprzętu, obsługa wrap-around, brak sensora, brak uprawnień, fail-safe. |
+| 0.85 | Niezależny prover/verifier STARK; hash commitment lub stub nie stanowią dowodu. |
+| 0.87 | Podpisane stany kanałów L402+, nonce, ochrona replay, settlement i dispute. |
+| 0.89 | Niezależna walidacja Lean/SMT dowodu związanego z artefaktem, zatwierdzenie i rollback. |
+| 0.88 | Sandbox WASM/Cranelift, A/B benchmark, kontrola funkcji pure, rollback. |
+| 1.97 | Każda integracja frameworka z taksonomii wymaga osobnego ADR, kontroli licencji, threat modelu i testów. |
+
+**Status:** doprecyzowanie wymagań nie oznacza implementacji, zaliczenia testów ani pełnego zakończenia semantycznego audytu 40 PDF. Macierz 902 stron zawiera kandydatów, których interpretacja pozostaje do zweryfikowania.
