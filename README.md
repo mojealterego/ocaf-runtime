@@ -321,6 +321,25 @@
 
 Przy **każdym** zakończonym etapie aktualizować w tym samym commicie: odpowiedni status pozycji powyżej, `ROADMAP.md`, jego identyczną kopię `docs/ROADMAP_FULL_ECOSYSTEM_2026.md`, maszynowy `docs/roadmap/canonical_v11_inventory.json`, `docs/roadmap/STAGE_CHANGELOG.md`, wyniki pozytywnych i negatywnych testów, commit i zakończony run GitHub Actions. Wszelkie nowe wymagania dostają wyłącznie **kolejny wolny identyfikator** (teraz 216), a odzyskane historyczne wymagania zachowują oryginalny. Lista 1–289 jest deterministycznie odtwarzana z manifestów, żeby zmiany statusów nie były ręcznie pomijane.
 
+
+### Uzgodnienie źródeł PDF 01–09 z jedną Roadmapą
+
+Rejestr źródłowy (nie oznacza zakończenia implementacji):
+
+| PDF | Zakres zachowany w roadmapie | Etapy / stan |
+|---|---|---|
+| 01 | Wymagania infrastruktury, agentów i bezpieczeństwa | 0.39, 0.43–0.44, 0.48–0.49, 0.55, 0.63; wymagają testów |
+| 02 | Rust/Zenoh, bezpieczeństwo transportu i integracje | 0.39, 0.43–0.49, 0.55, 0.63, 0.91, 1.92; wymagają testów |
+| 03 | Architektura Rust, SHM/CRDT, MCP, Firecracker/Aya, PQC | 0.39, 0.43–0.49, 0.55, 0.63, 0.91; wymagają testów |
+| 04 | Drugi egzemplarz materiału PDF 03 | Zachowano osobne pochodzenie, bez dublowania funkcji |
+| 05 | JARVIS OMEGA INFINITY, fazy M0–M5 | 0.39, 0.41, 0.43–0.49, 0.63, 0.91, 1.92 |
+| 06 | Drugi egzemplarz materiału PDF 05 | Zachowano osobne pochodzenie, bez dublowania funkcji |
+| 07 | Rozszerzenia architektury, M6 i ograniczenia wdrożeniowe | Historyczne wpisy w ROADMAP; szczegółowa semantyczna zgodność wymaga dalszego audytu |
+| 08 | M7 wetware, M8 holograficzny stan, M9 kryptografia topologiczna | 0.91, 0.46–0.47, 0.45/0.63; badawcze, nie zaimplementowane |
+| 09 | Symulacje społeczne, ToM, DSPy, Agent-Zero/Hermes, AI Scientist, AutoGPT/BabyAGI, GodMode, OpenHands, SWE-bench | **Nowe etapy 208–215** (PLANNED), powiązane z 1.98–2.06 |
+
+**Reguła źródłowa:** pliki PDF 01–09 są uwzględnione jako źródła wymagań; nie jest to certyfikacja kompletności semantycznej wszystkich stron. Nie przenosić tej tabeli ani głównej Roadmapy poza początek README. Dalsze odkryte luki dodawać bez usuwania historycznych wpisów.
+
 <!-- OCAF_README_ROADMAP_END -->
 
 > **📌 [PEŁNA ROADMAPA OCAF OD SAMEGO POCZĄTKU — ROADMAP.md](ROADMAP.md)** · [Etapy 0.00–1.94 i statusy wykonania](ROADMAP.md#statystyka-wykonania-i-uczciwe-oznaczenia) · [10 pierwotnych Agents Builder Code / NoCode](docs/AGENTS_BUILDER_CODE_NOCODE_5_PLATFORMS.md) · [inwentaryzacja braków](docs/INVENTORY_LOST_REQUIREMENTS_2026-10-15.md) · [dziennik zmian po każdym etapie](docs/roadmap/STAGE_CHANGELOG.md)  
