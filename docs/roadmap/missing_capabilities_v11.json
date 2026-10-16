@@ -351,6 +351,30 @@
       "condition": "UNVERIFIED",
       "basis": "PDF24 semantic review 2026-10-16",
       "repair": "o"
+    },
+    {
+      "id": "PDF23-004",
+      "component": "OmniStudio OmniDoc typed handoff and isolation",
+      "parent": "0.50",
+      "condition": "UNVERIFIED",
+      "basis": "PDF23 pp.15-17",
+      "repair": "Versioned typed schema, cross-tenant denial and trace correlation"
+    },
+    {
+      "id": "PDF24-004",
+      "component": "OmniPhys safe edge control and emergency stop",
+      "parent": "0.39",
+      "condition": "UNVERIFIED",
+      "basis": "PDF24 pp.16-18",
+      "repair": "Hardware-in-loop interlocks, watchdog, device identity and safe offline state"
+    },
+    {
+      "id": "PDF24-005",
+      "component": "OmniGov cost exhaustion adversarial E2E",
+      "parent": "0.98",
+      "condition": "UNVERIFIED",
+      "basis": "PDF24 pp.16-18",
+      "repair": "Concurrent budget reservation and cutoff tests under network partitions"
     }
   ],
   "pdf20_source": "PDF20 pp.18-21; OmniE2E is a swarm, not an additional Agents Builder product",
