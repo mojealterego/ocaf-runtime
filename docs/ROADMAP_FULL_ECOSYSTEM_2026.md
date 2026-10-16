@@ -594,3 +594,22 @@ Stan: PLANNED/UNVERIFIED; nie deklarować implementacji na podstawie przykładó
 **Dodatkowe kryterium Rig (s. 12–13):** ocenić adapter `rig-core` do istniejącego runtime bez duplikowania rdzenia; wymagane testy integracyjne lokalnych i zdalnych providerów, uprawnień narzędzi, timeoutów, błędów i kompatybilności wersji (etapy 0.43 i 1.92). 
 
 **Ocena dowodów:** przykład `src/main.rs` nie jest gotową implementacją: odpowiada fikcyjnym wynikiem, generuje `lnbc_*_test_invoice`, przyjmuje dowolny niepusty token/preimage, odejmuje saldo `RwLock` i używa stałego `settled_preimage_hash_77492104` (s. 6–10). Tekstowe deklaracje 5–500 µs, 67 Gbps, <1 ms, 400 ms oraz rozmiarów RAM nie są pomiarami OCAF; wymagają osobnego benchmarku. Dokument błędnie utożsamia brak GC z gwarancją deterministycznej latencji i brakiem wycieków pamięci. Status: **PLANNED/UNVERIFIED**; brak dowodów wdrożenia, testów E2E i akceptacji produkcyjnej. **Bez nowego etapu 2.07.**
+
+
+### Dokument użytkownika 3 — Architektura OCAF w Języku Rust (15 stron)
+
+Przypisanie do istniejących etapów; wymagania projektowe nie stanowią dowodu wdrożenia.
+
+| Strony PDF | Etapy | Wymagania i weryfikacja |
+|---|---|---|
+| 1–3, 12 | 0.46 | Zenoh Pub/Sub/Query, host-local Shared Memory, Typed<T>, waitable SHM, fallback i backpressure; Automerge/Yrs, CRDT DAG, delta sync, offline-first, konwergencja i izolacja tenantów. |
+| 3, 12 | 0.47 | OTLP, tracing, propagacja spanów Tokio, batch exporter, bounded buffers, sampling, flush i shutdown. |
+| 4–5, 12 | 0.49 | HTTP 402, Lightning/L402, Macaroons, caveats, rzeczywiste settlement, trwały ledger, idempotencja i ograniczone ryzyko offline promises. CRDT nie jest autorytatywnym saldem. |
+| 4–5, 12 | 0.45 | Arkworks/Halo2, ZKP dla warunków uprawnień, ZKPoU, verifiable inference i Halo2-Plutus jako oddzielne wymagania badawcze. |
+| 5–7, 12 | 0.43, 0.44, 0.63 | MCP tools/list, JSON Schema, selekcja narzędzi, Tree-sitter CST/type-sitter, OAuth/PKCE, ochrona confused deputy, ASI01/ASI02 i testy prompt/tool injection. |
+| 7–8, 12 | 0.39, 0.41 | Firecracker/KVM, Jailer, seccomp, cgroups v2, Aya/eBPF, detekcja anomalii, false positives, kwarantanna, fencing, checkpoint/recovery. |
+| 8–10, 12 | 0.45 | ML-KEM FIPS 203, ML-DSA FIPS 204, rustls/aws-lc-rs, hybrid TLS, downgrade protection, interoperacyjność i limity pamięci ARM/no_std. |
+| 10–11, 12 | 0.91 | Loihi 2 SNN/LIF/STDP, rust-snns/ferromorphic, rzeczywisty hardware-in-the-loop, CPU fallback i pomiary energii oraz opóźnień. |
+| 13–15 | 0.43, 0.45, 0.46, 0.91 | Bibliografia i tabele wymagają weryfikacji; liczby wydajnościowe nie są pomiarami OCAF. |
+
+Status: PLANNED/UNVERIFIED; nie potwierdzono testów ani wdrożenia. Bez dodawania nowego etapu.
