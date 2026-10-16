@@ -198,3 +198,7 @@ Audyt MCP dynamic tools, OAuth, Firecracker, L402/x402, RAG, OWASP ASI, Zenoh/CR
 ## 2026-10-16 — PDF15
 
 Uzgodniono wymagania 20-stronicowego dokumentu z etapami 0.38, 0.39, 0.42, 0.43, 0.44, 0.46, 0.47, 0.49, 0.55, 0.63, 0.64, 0.67, 0.98. Kod przykładowy nie wykonuje rzeczywistego narzędzia i nie weryfikuje płatności L402. Raport: docs/audits/PDF15_RUST_ARCHITECTURE_SEMANTIC_REVIEW_2026-10-16.md. Status: udokumentowane wymagania, nie testy ani wdrożenie.
+
+## 2026-10-16 — Kontrola trwałości synchronizacji PDF1–PDF15
+
+Zweryfikowano obecność sekcji PDF15 w `ROADMAP.md` i `docs/ROADMAP_FULL_ECOSYSTEM_2026.md` oraz wpisów PDF11–PDF15 w niniejszym dzienniku. Weryfikacja nie stanowi ponownego audytu wszystkich stron ani dowodu implementacji wymagań. Zachowano numerację i statusy etapów; bez nowych zweryfikowanych wymagań nie dopisano fikcyjnego etapu 216. Weryfikacja kodu, testów i infrastruktury pozostaje odrębnym obowiązkiem odbiorowym.
