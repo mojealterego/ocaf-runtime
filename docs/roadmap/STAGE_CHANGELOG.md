@@ -235,3 +235,12 @@ Audyt: `docs/audits/PDF21_OMNIFORGE_SEMANTIC_REVIEW_2026-10-16.md`. S. 1–20: Z
 
 
 PDF22 (19 stron, OmniWeb/OmniScrape): audyt `docs/audits/PDF22_OMNIWEB_SEMANTIC_REVIEW_2026-10-16.md`. Nowe wymagania s.14–17: trzy role (NawigatorAntyBot_Wasm, EkstraktorSemantyczny_DOM, InzynierWWW_FullStack), autoryzowana automatyzacja przeglądarki, ekstrakcja DOM/JSON, budowa aplikacji WWW/REST API, kontrolowane rozliczenia L402. Powiązane etapy 0.39, 0.43, 0.49, 0.55, 0.60, 0.63, 0.67, 0.98. Kod źródłowy PDF jest stubem. Bez nieautoryzowanego obchodzenia CAPTCHA lub anty-botów. Status PLANNED_OR_UNVERIFIED.
+
+
+## PDF23–PDF24 — synchronizacja wymagań (2026-10-16)
+
+**PDF23, s. 15–17: OmniStudio i OmniDoc.** Rój generowania multimediów (graf renderingu obrazu/wideo/audio, synchronizacja, zgody i licencje) oraz generator dokumentacji (rzeczywista kompilacja Typst do PDF, wersjonowane szablony, kontrola artefaktów). Wymagane wykonawcze adaptery, typed handoff, budżety, sandbox, audyt i testy E2E. Przykład zwraca stałe nazwy MP4/WAV/PDF — nie dowodzi implementacji. Mapowanie: 0.43, 0.46–0.47, 0.49–0.50, 0.55, 0.63, 0.67, 0.98. Audyt: `docs/audits/PDF23_SEMANTIC_REVIEW_2026-10-16.md`.
+
+**PDF24, s. 16–18: OmniGov, OmniFin, OmniPhys.** OmniGov: egzekwowany przed płatnością strażnik budżetu, odwołanie uprawnień L402/OAuth, fail-closed policy i niezależny audyt. OmniFin: pomiar kosztów tokenów, płatności i CPU oraz rozliczalne ROI. OmniPhys: uwierzytelnione urządzenia IoT/edge, interlock, watchdog, bezpieczny stan awaryjny i hardware-in-loop. Przykładowy kod tylko drukuje komunikaty i zwraca stały raport; brak dowodów odcięcia portfela, księgowania lub fizycznego sterowania. Mapowanie: 0.38–0.39, 0.43, 0.49, 0.55, 0.63, 0.67, 0.98. Audyt: `docs/audits/PDF24_SEMANTIC_REVIEW_2026-10-16.md`.
+
+**Status:** PLANNED_OR_UNVERIFIED. Nowe roje nie zwiększają liczby 10 produktów Agents Builder; nie renumerować 215 etapów. Nie zaliczać prognoz, benchmarków bez pomiarów ani przykładowego kodu jako wdrożenia.
