@@ -212,3 +212,8 @@ Zweryfikowano obecność sekcji PDF15 w `ROADMAP.md` i `docs/ROADMAP_FULL_ECOSYS
 ## PDF17 (2026-10-16)
 
 18 stron; audyt: docs/audits/PDF17_OCAF_RUST_ARCHITECTURE_SEMANTIC_REVIEW_2026-10-16.md. Nowe kryteria z s. 15-16: adapter ACP OpenHands (0.43, 0.44, 0.55), Tree-sitter repo-map Aider (0.43, 0.67), odtwarzalny SWE-bench coding agents (0.51, 0.98). Wymagane testy kontraktowe, ACL, izolacja i benchmarki. Status PLANNED/UNVERIFIED. Bez zmiany numeracji.
+
+
+## PDF18 — OCAF Rust i OmniDev (19 stron; 2026-10-16)
+
+Źródło: Analiza Architektury Systemu OCAF(4).PDF. Audyt: audits/PDF18_OCAF_OMNIDEV_SEMANTIC_REVIEW_2026-10-16.md. Strony 1–15: Zenoh SHM, CRDT, OTLP, MCP/Tree-sitter, OAuth/ZKP, Firecracker/Aya, L402, RAG/ASI, PQC/Loihi i sześć faz — mapowanie 0.39, 0.42–0.49, 0.55, 0.63–0.64, 0.67, 0.91, 0.98. Strony 15–17: OmniDev (oddzielny od 10 produktów Agents Builder) — role Architect Tree-sitter, Security Critic i Firecracker Executor, Zenoh/CRDT, repo graph, generowanie łatek, sandboxed test-driven generation, recovery i audyt; mapowanie 0.43, 0.46–0.47, 0.55, 0.63, 0.67, 0.98. Wymagane typowane kontrakty, uprawnienia, limity, E2E i benchmarki. Kod PDF zawiera stałe wyniki i zawsze sukces; 94%, 125 ms, Zero Hallucination i 100% accuracy nie są zweryfikowane. Status PLANNED/UNVERIFIED; numeracja etapów bez zmian.
