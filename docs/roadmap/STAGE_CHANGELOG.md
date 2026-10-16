@@ -345,3 +345,7 @@ Dodano etapy 232–246 (15 nowych etapów, PLANNED) do ROADMAP.md. Łącznie 246
 ### Dokumenty 48–50 — kontrola duplikatów (2026-10-16)
 
 Ponownie przesłane materiały: **48 = Notes_261014_204557.pdf (127 stron)**, **49 = Dokument bez nazwy.PDF (14 stron)**, **50 = Architektura OmniContext Agent Framework (OCAF) w ..(1).PDF (61 stron)**. Są to te same dokumenty merytoryczne, które uprzednio zarejestrowano jako PDF 46, 47 i 45. **Nie dopisano nowych etapów**: ich wymagania zostały już wpisane pod identyfikatorami **247–277** (PDF 45: 247–265; PDF 46: 266–270; PDF 47: 271–277). Kolejny wolny identyfikator pozostaje **278**. Ponowne przesłanie dokumentu nie oznacza nowej funkcjonalności ani wykonania testów.
+
+
+## 2026-10-16 — PDF51–53 — etapy 301–320
+Dodano 20 numerowanych etapów PLANNED. Zakres: Nous/CNA, Honcho, CloudShield, VoIP, IdentityRelay, eSIM/PBX, TTS, Grants, Plasmic, Zenoh/CRDT, OTel, CoALA/Titans, RQGM, SDNN, PQC, in-guest eBPF, FinOps, disposable apps, L402 i integracja Cargo. Bez dowodów wykonania testów. Następny 321.
