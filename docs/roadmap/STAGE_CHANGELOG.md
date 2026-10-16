@@ -207,3 +207,8 @@ Zweryfikowano obecność sekcji PDF15 w `ROADMAP.md` i `docs/ROADMAP_FULL_ECOSYS
 ## PDF16 — Analiza Architektury Systemu OCAF(2), 17 stron (2026-10-16)
 
 Źródło: `Analiza Architektury Systemu OCAF(2).PDF`. Audyt: [PDF16 — mapowanie semantyczne](audits/PDF16_OCAF_ARCHITECTURE_SEMANTIC_REVIEW_2026-10-16.md). Przypisanie bez renumeracji: 0.39 (Firecracker/Jailer/Aya, granica host/guest), 0.42/0.47 (OTLP i propagacja spanów Tokio), 0.43/0.44/0.63 (MCP JSON Schema, Tree-sitter, negatywne testy prompt injection), 0.44/0.45 (OAuth PKCE, ZKP caveats i PQC), 0.46/0.47 (Zenoh SHM, Automerge/Yrs, offline merge), 0.49 (L402/Lightning, ledger i settlement), 0.55 (izolacja wykonania), 0.64/0.67/0.98 (RAG i OWASP ASI), 0.91 (Loihi2 HIL i CPU fallback). Kryteria uzupełniające: rzeczywisty eksport OTLP i trace continuity, walidacja schematu niezależna od CST, związanie dowodu ZKP z autoryzacją, testy granic obserwowalności eBPF, weryfikacja płatności i limity budżetów, dowód wynegocjowania PQC, benchmarki deklaracji <1 ms / -80% / <1 s. Przykłady źródłowe zawierają mocked L402, stałe embeddingi i niewykonywaną logikę detekcji; nie stanowią implementacji. Status: PLANNED/UNVERIFIED, bez zmiany istniejących statusów etapów.
+
+
+## PDF17 (2026-10-16)
+
+18 stron; audyt: docs/audits/PDF17_OCAF_RUST_ARCHITECTURE_SEMANTIC_REVIEW_2026-10-16.md. Nowe kryteria z s. 15-16: adapter ACP OpenHands (0.43, 0.44, 0.55), Tree-sitter repo-map Aider (0.43, 0.67), odtwarzalny SWE-bench coding agents (0.51, 0.98). Wymagane testy kontraktowe, ACL, izolacja i benchmarki. Status PLANNED/UNVERIFIED. Bez zmiany numeracji.
