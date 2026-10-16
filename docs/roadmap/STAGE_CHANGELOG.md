@@ -148,3 +148,10 @@ production_approved: false
 - Reviewed 15-page source and mapped requirements to existing stages 0.39, 0.41, 0.43–0.47, 0.49, 0.63, 0.91.
 - Topics: Zenoh SHM, CRDT, OTLP, L402, ZKP, MCP, Tree-sitter, OAuth, Firecracker, eBPF, PQC, Loihi 2.
 - Evidence remains unverified; document benchmarks are not repository measurements. No new stages.
+
+## 2026-10-16 — User document 4 Rust architecture source cross-check
+
+- Source: `Architektura OCAF w Języku RustPDF_261012_042941.pdf` (15 pages), supplied as document 4.
+- Reviewed sections and page locations: Zenoh/CRDT (1–3), OTLP (3), L402/ZKP (4–5), MCP/Tree-sitter/OAuth (5–7), Firecracker/eBPF (7–8), PQC (8–10), Loihi 2 (10–11), synthesis/references (12–15).
+- Same nine architectural topics and page mapping as user document 3; cross-referenced to the document 3 roadmap section rather than duplicating stage obligations.
+- Existing stage mapping: 0.39, 0.41, 0.43–0.47, 0.49, 0.63, 0.91. No new requirement or implementation evidence identified; no stage renumbering.
