@@ -1461,3 +1461,6 @@ Added **40 main roadmap stages 1.55–1.94 plus 16 technical subtasks**, reflect
 ### Nowe etapy po 207 historycznych pozycjach
 
 Dla wymagań PDF 09 utworzono **208–215**: 208 symulacje społeczne/ToM, 209 DSPy, 210 Agent-Zero/Hermes, 211 AI Scientist, 212 AutoGPT/BabyAGI, 213 GodMode, 214 OpenHands, 215 SWE-bench/mini-SWE-agent. Poprzednie etapy 1.98–2.06 pozostają historycznymi pozycjami badawczymi, nie są automatycznie ukończone. Następny numer: **216**. Status nowych etapów: PLANNED.
+
+
+**PDF16 (2026-10-16):** 17 stron przypisano do istniejących etapów 0.39, 0.42–0.49, 0.55, 0.63–0.64, 0.67, 0.91 i 0.98. [Raport audytu](docs/audits/PDF16_OCAF_ARCHITECTURE_SEMANTIC_REVIEW_2026-10-16.md). Kryteria: OTLP trace continuity, MCP schema/injection, ZKP, Firecracker/eBPF, real L402 settlement, PQC handshake, RAG E2E, Loihi HIL. PLANNED/UNVERIFIED.
