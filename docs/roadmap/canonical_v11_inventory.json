@@ -1014,7 +1014,7 @@
     {
       "id": "0.85",
       "title": "OmniProof-STARK",
-      "scope": "Research a real verifier for formally specified task predicates, not unrestricted model reasoning",
+      "scope": "Research a real verifier for formally specified task predicates, not unrestricted model reasoning PDF40_RECONCILIATION: SHA-256 commitment i stub nie stanowią dowodu STARK; wymagać niezależnego prover/verifier i testów negatywnych.",
       "acceptance": "Concrete relation, witness/public statement separation, soundness assumptions, valid/invalid/corrupted-proof tests, measured proof sizes/costs",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -1038,7 +1038,7 @@
     {
       "id": "0.87",
       "title": "OmniMarket-L402+",
-      "scope": "Optional payment-channel state machine atop 0.49; no direct production settlement authority",
+      "scope": "Optional payment-channel state machine atop 0.49; no direct production settlement authority PDF40_RECONCILIATION: Kanały rozliczeniowe wymagają kryptograficznie podpisanych stanów, nonce, ochrony replay, settlement i dispute; transfer sald w pamięci nie wystarcza.",
       "acceptance": "Signed sequence/nonces, channel conservation, two-sided dispute and timeout handling, durable replay and manual spending limits",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -1050,7 +1050,7 @@
     {
       "id": "0.88",
       "title": "OmniSubstrate",
-      "scope": "Sandboxed Wasm/Cranelift specialization of *approved pure* hot paths, optional SIMD, exploratory FPGA",
+      "scope": "Sandboxed Wasm/Cranelift specialization of *approved pure* hot paths, optional SIMD, exploratory FPGA PDF40_RECONCILIATION: WASM/Cranelift optymalizacje wyłącznie zatwierdzonych funkcji pure, test sandbox, benchmark A/B i rollback.",
       "acceptance": "Equivalence tests, independent limits and signatures; performance measured vs baseline, deterministic fallback",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -1062,7 +1062,7 @@
     {
       "id": "0.89",
       "title": "Proof-Carrying RSI",
-      "scope": "Candidate code changes with independently checkable Lean/SMT contracts and human-authorized deployment",
+      "scope": "Candidate code changes with independently checkable Lean/SMT contracts and human-authorized deployment PDF40_RECONCILIATION: Proof-carrying RSI: dowód Lean/SMT powiązany z hashem artefaktu, niezależny checker, kontrola wdrożenia i atomowy rollback.",
       "acceptance": "Real proof kernel, property scope, compiled artifact binding, adversarial invalid proofs; no automated production hot-swap",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -1074,7 +1074,7 @@
     {
       "id": "0.90",
       "title": "OmniThermo-Governor",
-      "scope": "Hardware-sourced RAPL/power telemetry and budget policy extending 0.82/0.65",
+      "scope": "Hardware-sourced RAPL/power telemetry and budget policy extending 0.82/0.65 PDF40_RECONCILIATION: Odróżnić RAPL od symulacji CPU; obsłużyć wrap-around, odmowę dostępu, brak sensora, limity energii i rollback.",
       "acceptance": "Calibration vs wall power, sensor absence/rollover, per-tenant attribution error, enforcement tests; simulated values labelled",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -1134,7 +1134,7 @@
     {
       "id": "0.95",
       "title": "OmniSeek-Local + bounded multi-agent DAG",
-      "scope": "Local adapter, budgeted recursion, explicit approved web/file/tool capabilities, no tenant leak",
+      "scope": "Local adapter, budgeted recursion, explicit approved web/file/tool capabilities, no tenant leak PDF40_RECONCILIATION: Negocjacje zasobów agentów: walidacja ofert i kosztów, fairness, limity per tenant, brak starvation; audytowalne rozstrzygnięcia.",
       "acceptance": "",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -1167,7 +1167,7 @@
     {
       "id": "0.98",
       "title": "OmniEval-Lab + OmniFleet-C2",
-      "scope": "Replayable trajectory datasets, tamper-evident evals, secure skill provenance/hot reload with automatic rollback",
+      "scope": "Replayable trajectory datasets, tamper-evident evals, secure skill provenance/hot reload with automatic rollback PDF40_RECONCILIATION: Katalog umiejętności: jawny manifest identyfikatorów, wersji, uprawnień, statusów i testów; weryfikacja liczby 110+ bez fałszywego zaliczania prototypów. Bounded epsilon-greedy routing i odtwarzalny feedback.",
       "acceptance": "",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -2387,7 +2387,7 @@
     {
       "id": "1.58",
       "title": "Edge Zenoh interoperability",
-      "scope": "Pin zenoh-pico/no_std compatibility with cloud peers",
+      "scope": "Pin zenoh-pico/no_std compatibility with cloud peers PDF40_RECONCILIATION: Dla BLE/NFC/UWB/Zigbee/Z-Wave/IrDA/Li-Fi/FSO utrzymać jawny rejestr REQUIRED/OPTIONAL/RESEARCH/OUT_OF_SCOPE; nie deklarować obsługi bez adaptera i testu sprzętowego.",
       "acceptance": "Real device or labeled emulator demonstrates suspend reconnect and queued delivery",
       "negative": "Reject unsupported MCU claimed as measured hardware",
       "dependencies": [
@@ -3350,7 +3350,7 @@
     {
       "id": "1.97",
       "title": "Agent memory interoperability and longitudinal evaluation",
-      "scope": "Evaluate Letta/MemGPT virtual memory and Mem0/Cognee/Zep/Graphiti graph memory as optional provenance-aware backends; use LoCoMo and LongMemEval longitudinal memory fixtures with retention, deletion, contradiction and tenant separation",
+      "scope": "Evaluate Letta/MemGPT virtual memory and Mem0/Cognee/Zep/Graphiti graph memory as optional provenance-aware backends; use LoCoMo and LongMemEval longitudinal memory fixtures with retention, deletion, contradiction and tenant separation PDF40_RECONCILIATION: Taksonomia zewnętrznych frameworków to literatura; każda integracja wymaga ADR, licencji, capability gate, testów i oddzielnego statusu.",
       "acceptance": "Reproducible version-pinned benchmark publishes retrieval precision, temporal consistency, deletion propagation, tenant leakage and cost/latency relative to existing memory baseline",
       "negative": "Reject benchmark contamination, revoked memory resurrection, cross-tenant leakage or unlicensed dataset ingestion",
       "dependencies": [
@@ -4879,5 +4879,13 @@
   "original_agents_builder_matrix": "docs/roadmap/agents_builder_products_v11.json",
   "lost_requirements_inventory": "docs/roadmap/missing_capabilities_v11.json",
   "stage_update_log": "docs/roadmap/STAGE_CHANGELOG.md",
-  "next_new_main_stage": "2.07"
+  "next_new_main_stage": "2.07",
+  "pdf40_reconciliation": {
+    "date": "2026-10-16",
+    "status": "PARTIAL_SOURCE_GROUNDED_REQUIREMENTS_ADDED_NOT_FULL_SEMANTIC_CERTIFICATION",
+    "covered_pages": 902,
+    "documents": 40,
+    "source": "docs/roadmap/PDF_40_SEMANTIC_GAP_LEDGER_2026-10-16.md",
+    "notes": "Do not assert all source requirements have been semantically verified; source-page-level review is still required."
+  }
 }
