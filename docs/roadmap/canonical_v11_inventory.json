@@ -5848,5 +5848,48 @@
     "next_stage": "334",
     "note": "No code integration or CI pass implied"
   },
-  "main_count_basis": "207 historical + 126 appended stages; detailed main array remains legacy and requires reconciliation"
+  "main_count_basis": "207 historical + 126 appended stages; detailed main array remains legacy and requires reconciliation",
+  "agentspec_a2a_flywheel_audit_20261016": {
+    "status": "PLANNED_SOURCE_REVIEWED",
+    "sources": [
+      {
+        "file": "Dokument bez nazwy(6).PDF",
+        "pages": 4
+      },
+      {
+        "file": "gemini-code-1792182157449.rs.txt",
+        "lines": 528
+      }
+    ],
+    "mapped_stages": [
+      "0.39",
+      "0.50",
+      "0.51",
+      "0.52",
+      "0.53",
+      "0.54",
+      "0.55",
+      "317",
+      "318",
+      "319",
+      "325",
+      "326",
+      "327",
+      "328",
+      "329",
+      "332",
+      "333"
+    ],
+    "gaps": [
+      "No real Zenoh A2A transport or MCP execution",
+      "No in-guest Aya eBPF",
+      "No actual L402 verification",
+      "Hardcoded secret and fabricated latency",
+      "NaN confidence bypass",
+      "Unauthenticated human_approved and sender identity",
+      "Non-atomic cost budget",
+      "No durable flywheel or 606 repository integration"
+    ],
+    "acceptance": "Requires independent code/tests/CI evidence on main"
+  }
 }
