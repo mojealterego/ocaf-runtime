@@ -367,5 +367,15 @@
       "0.67",
       "0.98"
     ]
+  },
+  "pdf23_omnistudio_omnidoc": {
+    "source": "PDF23 pp.15-17",
+    "status": "PLANNED_OR_UNVERIFIED",
+    "builder_product_count_unchanged": 10
+  },
+  "pdf24_omnigov_omnifin_omniphys": {
+    "source": "PDF24 pp.16-18",
+    "status": "PLANNED_OR_UNVERIFIED",
+    "builder_product_count_unchanged": 10
   }
 }
