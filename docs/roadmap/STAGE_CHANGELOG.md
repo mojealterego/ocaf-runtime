@@ -175,3 +175,6 @@ production_approved: false
 
 ## 2026-10-16 — PDF 09: nowe etapy realizacyjne 2.07–2.14
 Na polecenie operatora dopisano osiem nowych etapów **po 2.06**, zamiast traktować wcześniej istniejące badawcze 1.98–2.06 jako zakończone: 2.07 symulacje społeczne/ToM i dane wrażliwe (zależność 2.03), 2.08 DSPy (1.98), 2.09 Agent-Zero/Hermes (2.05), 2.10 AI Scientist (2.01), 2.11 AutoGPT/BabyAGI (2.00), 2.12 GodMode (2.06), 2.13 OpenHands (2.02), 2.14 SWE-bench/mini-SWE-agent/N-run (1.99). Obie roadmapy i canonical_v11_inventory.json zaktualizowane; manifest: 215 etapów głównych, 64 techniczne, 33 referencje, następny numer 2.15. Wszystkie nowe etapy PLANNED; nie wykonano implementacji ani testów.
+
+## Korekta numeracji nowych etapów PDF 09 (2026-10-16)
+Na polecenie operatora zmieniono wyłącznie identyfikatory ośmiu nowo dopisanych etapów: 2.07–2.14 -> **208–215**. Zachowano bez zmian 207 historycznych pozycji (ostatni historyczny identyfikator 2.06). Mapowanie: 208 społeczne/ToM, 209 DSPy, 210 Agent-Zero/Hermes, 211 AI Scientist, 212 AutoGPT/BabyAGI, 213 GodMode, 214 OpenHands, 215 SWE-bench/mini-SWE-agent. Manifest: 215 etapów głównych, następny 216. Wszystkie PLANNED.
