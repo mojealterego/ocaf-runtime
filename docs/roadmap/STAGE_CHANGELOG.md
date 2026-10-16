@@ -252,3 +252,7 @@ Wymagania przypisane do istniejących etapów 0.38–0.41, 0.43, 0.49, 0.55, 0.6
 
 ### PDF27–PDF29 (2026-10-16)
 Uzgodniono wymagania: PDF27 OmniSense (0.67); PDF28 OmniArbitrage (0.49), OmniContract/OmniChaos (0.43), OmniStrategy/OmniGraph (0.67); PDF29 OmniVerify/OmniHomeostasis (0.55), OmniCausal (0.98), OmniSleep/OmniPrune (0.67), OmniLatent/OmniAdaptive (0.39/0.63). Szczegółowe kryteria odbioru: ROADMAP.md. Status UNVERIFIED; przykłady z PDF nie stanowią implementacji.
+
+
+### PDF30–PDF33 (2026-10-16)
+Przypisano: PDF30 aktywna inferencja/HDC/fraktalny rój (0.67, 0.98); PDF31 migracja wiedzy/PCC/energia/alignment (0.55, 0.63, 0.98); PDF32 dziesięć produktów Agents Builder Code/NoCode i wizualna weryfikacja (0.50–0.55); PDF33 OmniMath Lean 4/e-graph/SMT (0.55, 0.67). Status PLANNED_OR_UNVERIFIED; kryteria i zastrzeżenia w ROADMAP.md. Brak dowodów rzeczywistego solwera i kernela Lean w przykładzie PDF33.
