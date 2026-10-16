@@ -155,3 +155,10 @@ production_approved: false
 - Reviewed sections and page locations: Zenoh/CRDT (1–3), OTLP (3), L402/ZKP (4–5), MCP/Tree-sitter/OAuth (5–7), Firecracker/eBPF (7–8), PQC (8–10), Loihi 2 (10–11), synthesis/references (12–15).
 - Same nine architectural topics and page mapping as user document 3; cross-referenced to the document 3 roadmap section rather than duplicating stage obligations.
 - Existing stage mapping: 0.39, 0.41, 0.43–0.47, 0.49, 0.63, 0.91. No new requirement or implementation evidence identified; no stage renumbering.
+
+## 2026-10-16 — User PDF 05: OCAF and JARVIS OMEGA INFINITY
+
+- Reviewed 12 pages of `Projekt i Mapa Drogowa Rewolucyjnej Architektury S.. (1).PDF`.
+- Source phases M0–M5 map to existing stages: M0 0.43/0.44/0.46; M1 0.46/0.47; M2 0.45/0.49; M3 0.39/0.41/0.47/0.63; M4 0.43/0.45/0.63; M5 0.91.
+- Explicit product requirement JARVIS OMEGA INFINITY mapped to 1.92; funding research for FENG/NCBR, PARP, Silesian Startup Foundation, GAPR/BUR, KFS mapped to 1.92. Neither is evidence of implementation or grant eligibility.
+- Source performance claims require benchmarks. No new stages or numbering changes.
