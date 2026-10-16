@@ -520,3 +520,22 @@ Status: wymagania planowane lub niezweryfikowane; nie oznacza implementacji ani 
 | 0.46–0.47 | Potwierdzić realny Zenoh SHM i propagację kontekstu OpenTelemetry, bez nieuzasadnionych deklaracji zero-copy między hostami. |
 
 Wymagania dopisano do istniejących etapów manifestu v11; **nie dodano 2.07**. Status: PLANNED/UNVERIFIED, bez dowodu testów lub produkcyjnego odbioru.
+
+
+### PDF 05/40 — przypisanie wymagań do istniejących etapów
+
+Źródło: `Analiza Architektury Systemu OCAF(3).PDF` (18 stron). Przypisanie w manifeście v11, bez uznawania kodu demonstracyjnego za implementację.
+
+| Etap | Wymagania PDF 05 |
+|---|---|
+| 0.39 | Firecracker guest isolation, Aya/eBPF, wymuszenie polityki. |
+| 0.43 | MCP dynamic discovery, JSON Schema, Tree-sitter, negatywne testy injection. |
+| 0.45 | ZKP caveat verifier, ML-KEM/ML-DSA i ochrona downgrade. |
+| 0.46 | Zenoh SHM, Automerge/Yrs, testy convergence i tenant ACL. |
+| 0.47 | Tokio trace propagation, bounded OTLP exporter, shutdown. |
+| 0.48 | RAG, embedding model, ACL, provenance. |
+| 0.49 | L402/Lightning, atomowy budżet i trwały settlement. |
+| 0.91 | Loihi 2 HIL i fallback CPU. |
+| 1.97 | Weryfikacja benchmarków agentów kodujących, brak domniemanej integracji. |
+
+Stan: PLANNED/UNVERIFIED. Brak nowego etapu 2.07.
