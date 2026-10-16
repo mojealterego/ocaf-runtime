@@ -555,3 +555,19 @@ Stan: PLANNED/UNVERIFIED. Brak nowego etapu 2.07.
 | 1.99 | Benchmarki OmniDev | SWE-bench/TerminalBench z przypiętymi wersjami, N-run, kosztami i latencją; deklaracje >94% i <125 ms z PDF nie są dowodami. |
 
 OmniDev pozostaje **odrębnym rojem agentów kodujących**, nie zastępuje dziesięciu produktów Agents Builder Code/NoCode. Status: PLANNED/UNVERIFIED do czasu sprawdzenia kodu, testów i odbioru.
+
+
+### PDF 07/40 — OmniUX i wszystkie role projektowania UI
+
+Źródło: `Analiza Architektury Systemu OCAF(5).PDF` (21 stron). Wymagania przypisane do istniejących etapów; przykłady z wartościami stałymi nie są implementacją.
+
+| Etap | Obowiązkowy element i kryterium |
+|---|---|
+| 0.57 | `DesignKognitywista_MCP`: rzeczywiste Figma MCP, kontrola uprawnień tenantów, odczyt węzłów, Auto Layout i design tokens, provenance. |
+| 0.57 | `FrontendCSTGenerator`: typowane generowanie komponentów UI, walidacja AST/CST, kompilacja i artefakty; zakaz statycznego kodu Button jako dowodu działania. |
+| 0.57 | `WizualnyKrytykWasm`: izolowany rendering, visual diff na wielu viewportach, testy WCAG/kontrastu, raport z rzeczywistym wynikiem; stały score 0.99 nie jest dowodem. |
+| 0.57 | Iteracyjny cykl projektowanie–kod–render–ocena–poprawka z ograniczoną liczbą prób, bazową referencją i zatwierdzeniem zmian. |
+| 1.92 | Rejestracja trzech ról OmniUX, typowane I/O, ograniczenia delegacji, Zenoh, tenant isolation i ślad audytowy przekazania do OmniDev. |
+| 0.55 | Integracja zweryfikowanych komponentów z Agents Builder; bez zastępowania dziesięciu odrębnych wariantów Code/NoCode. |
+
+Stan: PLANNED/UNVERIFIED; nie deklarować implementacji na podstawie przykładów kodu ani liczb wydajnościowych z PDF.
