@@ -1517,3 +1517,14 @@ PDF30: aktywna inferencja, HDC i fraktalny rój → 0.67/0.98. PDF31: migracja w
 - s. 8–10, M5–M6: neuromorficzny SNN/Loihi2 Hardware-in-the-Loop, fallback CPU/GPU, pomiar energy-delay product, sprzężenie PQC. Brak dostępu do sprzętu = R&D, nie INTEGRATED; KPI 90% EDP i <1 µs pełnego routingu/PQC niezweryfikowane.
 - s. 8–9: finansowanie FENG/NCBR/PARP/GAPR i ryzyka dostępności sprzętu są hipotezami biznesowymi, nie dowodami przyznania dotacji.
 Mapowanie: M0 do MCP/tool gateway; M1 do transport/cluster/registry; M2 do auth/ops; M3 do 0.39 i recovery; M4 do narzędzi/AST i security; M5–M6 do późnych etapów R&D. Zachować istniejące numery etapów i bramy 0.38–0.41. Liczby i twierdzenia marketingowe PDF nie są statusami implementacji.
+
+
+## PDF34–PDF36 — numerowane etapy główne 216–222 (2026-10-16)
+- **216** — MCP stateless control plane — PLANNED
+- **217** — Zenoh SHM i CRDT — PLANNED
+- **218** — L402 Macaroons ZKP — PLANNED
+- **219** — Firecracker KVM Aya eBPF — PLANNED
+- **220** — Tree-sitter i hybrydowe PQC — PLANNED
+- **221** — Neuromorficzne SNN Loihi 2 — PLANNED
+- **222** — Kwantowo-neuromorficzne HIL PQC — PLANNED
+Kryteria odbioru: ROADMAP.md. Historyczne etapy bez renumeracji. Łącznie 222 etapy główne.
