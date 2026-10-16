@@ -683,3 +683,16 @@ Nie deklarować IMPLEMENTED/TESTED/INTEGRATED bez kodu, uruchomionych testów i 
 ## PDF16 — Analiza Architektury Systemu OCAF(2), 17 stron (2026-10-16)
 
 Źródło: `Analiza Architektury Systemu OCAF(2).PDF`. Audyt: [PDF16 — mapowanie semantyczne](docs/audits/PDF16_OCAF_ARCHITECTURE_SEMANTIC_REVIEW_2026-10-16.md). Przypisanie bez renumeracji: 0.39 (Firecracker/Jailer/Aya, granica host/guest), 0.42/0.47 (OTLP i propagacja spanów Tokio), 0.43/0.44/0.63 (MCP JSON Schema, Tree-sitter, negatywne testy prompt injection), 0.44/0.45 (OAuth PKCE, ZKP caveats i PQC), 0.46/0.47 (Zenoh SHM, Automerge/Yrs, offline merge), 0.49 (L402/Lightning, ledger i settlement), 0.55 (izolacja wykonania), 0.64/0.67/0.98 (RAG i OWASP ASI), 0.91 (Loihi2 HIL i CPU fallback). Kryteria uzupełniające: rzeczywisty eksport OTLP i trace continuity, walidacja schematu niezależna od CST, związanie dowodu ZKP z autoryzacją, testy granic obserwowalności eBPF, weryfikacja płatności i limity budżetów, dowód wynegocjowania PQC, benchmarki deklaracji <1 ms / -80% / <1 s. Przykłady źródłowe zawierają mocked L402, stałe embeddingi i niewykonywaną logikę detekcji; nie stanowią implementacji. Status: PLANNED/UNVERIFIED, bez zmiany istniejących statusów etapów.
+
+
+## PDF17 — wymagania uzgodnione 2026-10-16
+
+Źródło: Analiza Architektury Systemu OCAF(3).PDF, 18 stron. Szczegóły: docs/audits/PDF17_OCAF_RUST_ARCHITECTURE_SEMANTIC_REVIEW_2026-10-16.md.
+
+- Strony 1–15: Zenoh SHM, CRDT, OTLP, MCP, OAuth/ZKP, Firecracker/Aya, L402, RAG/ASI, PQC/Loihi i fazy wdrożenia — istniejące etapy 0.39, 0.42–0.49, 0.55, 0.63–0.64, 0.67, 0.91, 0.98. Nie oznaczać demonstracyjnego kodu jako wdrożenia.
+- Strony 15–16: Agent Client Protocol (ACP) dla OpenHands i innych zewnętrznych agentów — etapy 0.43, 0.44, 0.55; negocjacja, uprawnienia, izolacja, timeouty i testy kontraktowe E2E.
+- Strony 15–16: mapa repozytorium Tree-sitter inspirowana Aider — etapy 0.43, 0.67; graf symboli i zależności, ranking kontekstu, budżet tokenów i testy regresji.
+- Strony 15–16: porównywalna ewaluacja coding agents na SWE-bench Verified — etapy 0.51, 0.98; wersjonowane dane, baseline, koszty, opóźnienia i reprodukowalność. Liczby z PDF są niezweryfikowane.
+- Strony 17–18: podsumowanie i bibliografia; nie stanowią dowodów wdrożenia.
+
+Status nowych kryteriów: PLANNED / UNVERIFIED. Bez renumeracji i bez nowego etapu 216.
