@@ -84,3 +84,10 @@ production_approved: false
 - Updated the fail-closed roadmap guard to check all twelve new stage IDs, 20 source filenames, manifest counts, status and mirror equality.
 - Local page-level extraction is a traceability index, not proof of full atomic requirement coverage or successful implementation. `production_approved=false`; CI and production sign-off must be verified separately.
 
+
+## 2026-10-16 — PDF 02/40: recovery of existing-stage requirements
+
+- Source: `Analiza Architektury Systemu OCAF (1).PDF` (13 pages); review: `docs/audits/PDF40_02_ARCHITEKTURA_SYSTEMU_OCAF_SEMANTIC_REVIEW_2026-10-16.md`.
+- Added explicit missing requirements to `canonical_v11_inventory.json` under stages 0.39 (MicroVM egress broker), 0.43 (MCP dynamic schema and manifest revocation), 0.44 (OAuth tenant/session binding), 0.48 (RAG ACL/provenance/deletion), 0.49 (L402/x402 settlement), 0.55 (Python/TypeScript tool introspection), and 0.63 (ASI01–ASI10 negative tests).
+- Updated root `ROADMAP.md` with the stage-to-requirement matrix. No new stage: 207 main, 64 technical, 10 builder variants; next available ID 2.07.
+- All added requirements remain PLANNED/UNVERIFIED; no implementation, CI or operator acceptance claimed. The mirror `docs/ROADMAP_FULL_ECOSYSTEM_2026.md` still needs to be synchronized if not changed in the same commit.
