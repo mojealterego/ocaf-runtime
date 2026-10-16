@@ -186,3 +186,7 @@ Na polecenie operatora zmieniono wyłącznie identyfikatory ośmiu nowo dopisany
 ## 2026-10-16 — PDF12: audyt 13 stron i uzupełnienie ROADMAPY
 
 Źródło: `Dokument bez nazwy (2).PDF`. Strony 1–11 powtarzają zasadniczo PDF11, a strony 11–13 rozszerzają wymagania o Rig/rig-core, E2B Firecracker secret egress, OTel/Zenoh/CRDT, L402 offline/ZKP, fuzzing MCP, PQC i neuromorficzne Edge AI. Etapy: `0.39`, `0.42`, `0.43`, `0.44`, `0.46`, `0.47`, `0.49`, `0.63`, `0.64`, `0.98`. Raport: `docs/audits/PDF12_RUST_ZENOH_EXTENSIONS_SEMANTIC_REVIEW_2026-10-16.md`. Wymagania wpisano do manifestu, ROADMAPY, lustra i tabeli README bez zmiany numeracji. Status: wymagania udokumentowane; wdrożenie i testy niepotwierdzone.
+
+## 2026-10-16 — PDF13: Architektura OCAF w Rust
+
+Audyt 15 stron: Zenoh SHM, CRDT Automerge/Yrs, OpenTelemetry, L402/ZKP, MCP Tree-sitter, OAuth, Firecracker/Aya, PQC FIPS 203/204 i Loihi 2. Etapy 0.39, 0.42, 0.43, 0.44, 0.46, 0.47, 0.49, 0.63, 0.64, 0.67, 0.98. Źródłowe deklaracje wydajności i integracji wymagają niezależnych dowodów.
