@@ -666,7 +666,7 @@
     {
       "id": "0.56",
       "title": "OmniDev",
-      "scope": "AST/CST code agents, repo analysis, codegen, test harness",
+      "scope": "AST/CST code agents, repo analysis, codegen, test harness PDF06_OMNIDEV: Architect(Tree-sitter CST/repository dependency graph), Security Critic(threat model, vulnerability and patch review), Executor(Firecracker guest build/test) are required distinct roles. Implement typed task/result/error contracts, real AST parsing, signed and validated git patches, bounded retry/delegation, deterministic test runner, logs, resource budgets and recovery. Reject hardcoded AST_MAP_100%_ACCURACY, git diff optymalny_kod and unconditional test success as stubs.",
       "acceptance": "Compilable patches, tests, human-gated protected updates",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -3220,7 +3220,7 @@
     {
       "id": "1.92",
       "title": "Core domain swarms integration",
-      "scope": "Bind OmniDev OmniUX OmniE2E OmniForge OmniWeb OmniMath and OmniSec to capability registry",
+      "scope": "Bind OmniDev OmniUX OmniE2E OmniForge OmniWeb OmniMath and OmniSec to capability registry PDF06_OMNIDEV: Wire the three OmniDev roles to capability registry, authenticated Zenoh transport and CRDT only for non-authoritative shared context. Enforce per-tenant permissions, least privilege, fencing, replay/idempotency and operator approval for repo writes. OmniDev is not a substitute for ten Agents Builder products.",
       "acceptance": "Seven swarms execute real authorized fixture tasks with trace and audit",
       "negative": "Reject fabricated tool completion and missing sandbox",
       "dependencies": [
@@ -3400,7 +3400,7 @@
     {
       "id": "1.99",
       "title": "SWE-bench Verified and N-run agent reliability",
-      "scope": "Evaluate repository coding agents on license-reviewed SWE-bench Verified and optional multimodal fixtures; measure N-run pass rate, issue resolution, regression and sandbox containment",
+      "scope": "Evaluate repository coding agents on license-reviewed SWE-bench Verified and optional multimodal fixtures; measure N-run pass rate, issue resolution, regression and sandbox containment PDF06_OMNIDEV: Reproduce claimed SWE-bench, TerminalBench, greater-than-94-percent success and under-125-ms compile/test on pinned hardware, dataset and harness, reporting N-run variance, costs and latency; treat source figures as unverified.",
       "acceptance": "Reproducible benchmark runner records instance IDs, patch diffs, test logs, model/tool versions, multiple seeds and confidence intervals",
       "negative": "Reject fabricated leaderboard ranks, leaked benchmark answers, cherry-picked successful runs or patches without tests",
       "dependencies": [
