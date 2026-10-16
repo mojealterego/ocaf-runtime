@@ -1,0 +1,19 @@
+# OCAF — semantyczny rejestr luk z korpusu 40 PDF
+
+**Źródła:** 40 PDF, 902 strony; 33 unikalne ekstrakty całych plików. **Zakres tego rejestru:** udokumentowane konkretne rozbieżności i decyzje o zakresie, nie certyfikacja wszystkich 902 stron. Wcześniejsza macierz 902 wierszy była klasyfikatorem słów, nie weryfikacją semantyczną. Status wszystkich poniższych wymagań: OPEN, dopóki nie istnieją dowody implementacji i testów.
+
+| ID | PDF, strony | Ustalenie ze źródła | Obecny etap | Luka / decyzja | Kryteria akceptacji |
+|---|---|---|---|---|---|
+| GAP-40-001 | `SKILL Miękkie w Kodzie Rust.PDF` 1–2 | Plan katalogu **ponad 110** umiejętności miękkich i podobnej liczby modułów; wspólny interfejs `Umiejetnosc` | 0.95, 0.98, 1.25 | Roadmapa nie zawiera jawnego, wersjonowanego rejestru 110+ umiejętności ani wymagania pokrycia per skill | manifest skill_id/owner/capability/semver, deterministyczne testy każdej implementacji, status NOT_IMPLEMENTED dla braków; nie deklarować liczby zrealizowanych bez audytu |
+| GAP-40-002 | `SKILL Miękkie w Kodzie Rust.PDF` 2–3 | Licytacja zasobów GPU/API, koszt–latency–accuracy, dynamic throttling | 0.95, 0.82, 1.89 | Brak jawnej specyfikacji aukcji wieloagentowej | walidacja NaN/Inf/ujemnych ofert, rozliczalny budżet per tenant, deterministyczny tie-break, fairness, bounded retries i negative tests |
+| GAP-40-003 | `SKILL Miękkie w Kodzie Rust.PDF` 4–5 | Epsilon-greedy multi-armed bandit na rzeczywistej telemetrii | 0.47, 0.95, 0.98 | Wymaganie osobnego eksperymentalnego routera z guardrails | pomiar jakości i p95/p99 latency, trwałe metryki, ograniczenie eksploracji, seed replay, fail-closed dla pustej listy modeli |
+| GAP-40-004 | `Komunikacja .pdf` 1–10 | Katalog IrDA, CIR, Bluetooth Classic/BLE, NFC, UWB, Zigbee, Z-Wave, Li-Fi, FSO | 1.17, 1.58, 0.93 | Obecne etapy Zenoh pico i optyki nie stanowią implementacji ani nawet kompletnej specyfikacji adapterów każdego medium | jawna macierz REQUIRED/OPTIONAL/RESEARCH/OUT_OF_SCOPE, oddzielne feature flags, uprawnienia i testy sprzętowe; nie wymuszać wszystkich wymienionych technologii jako wymagania |
+| GAP-40-005 | `Dokument bez nazwy (1).PDF` 1–4 | OmniThermo-Governor RAPL, OmniProof-STARK, OmniMarket-L402+ | 0.90, 0.85, 0.87 | Przykłady kodu są symulacjami/stubami, nie dowodem produkcji | rzeczywisty sysfs RAPL, niezależny STARK verifier, podpisane i odtwarzalne rozliczenia; testy błędów |
+| GAP-40-006 | `Taksonomia współczesnych systemów agentowych.PDF` 1, 20 | Katalog frameworków i przykładowy kod zawierający `pass` i symulowane przenoszenie stanu | 1.97–2.06 | Źródło referencyjne; nie przepisywać całej taksonomii jako zobowiązania wdrożeniowego | dla każdego wybieranego frameworka osobna decyzja ADR, licencja, threat model, adapter, benchmark i test; stuby nie zaliczają implementacji |
+| GAP-40-007 | `Architektura OmniContext Agent Framework (OCAF) w ..(12).PDF` 35; `Dokument bez nazwy (1).PDF` 3 | RAPL oraz energetyczne budżetowanie; źródło zestawia sensor i model termiczny | 0.82, 0.90, 1.89 | Odseparować estymator energii od pomiaru rzeczywistego; nie raportować estymacji jako RAPL | test real_backend, wraparound licznika, permission denied, brak sensora, throttling i rollback |
+
+## Decyzja o numeracji
+Nie renumerować istniejących 207 etapów. Wprowadzić GAP-40-001…007 jako wymagania **OPEN** w ramach wskazanych etapów i osobnego backlogu. Dodawanie nowego etapu dopiero po potwierdzeniu, że zakres nie mieści się w istniejącym, i jednoczesnej aktualizacji manifestu, obu kopii Roadmapy, README oraz CI.
+
+## Nierozstrzygnięta część audytu
+Każda z 902 stron została zindeksowana, lecz nie wszystkie twierdzenia normatywne zostały ręcznie rozbite na atomowe wymagania i porównane semantycznie z pełnym opisem 281 pozycji Roadmapy. W szczególności 116 stron wymagało dalszej klasyfikacji w poprzednim przeglądzie, a jedna kontroli wizualnej. Nie wolno oznaczać tego audytu jako zakończonego.
