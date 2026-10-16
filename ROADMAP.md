@@ -613,3 +613,17 @@ Przypisanie do istniejących etapów; wymagania projektowe nie stanowią dowodu 
 | 13–15 | 0.43, 0.45, 0.46, 0.91 | Bibliografia i tabele wymagają weryfikacji; liczby wydajnościowe nie są pomiarami OCAF. |
 
 Status: PLANNED/UNVERIFIED; nie potwierdzono testów ani wdrożenia. Bez dodawania nowego etapu.
+
+
+### PDF użytkownika 5 — OCAF i JARVIS OMEGA INFINITY (12 stron)
+
+- M0 (s. 2, 8–9): Rust rmcp/pmcp, schemars, MCP HTTP/SSE, gateway i control plane — etapy 0.43, 0.44, 0.46.
+- M1 (s. 3–4, 9–10): Zenoh Pub/Sub/Query, SHM i host-local zero-copy, Automerge/Yrs CRDT, Bloom/offline-first — 0.46, 0.47.
+- M2 (s. 4–5, 10): HTTP 402, L402/Lightning, Macaroons, ZKP Arkworks/Halo2, offline promises — 0.45, 0.49. Wymagany trwały ledger i prawdziwe settlement; CRDT nie jest saldem.
+- M3 (s. 5–6, 10): Firecracker/KVM/Jailer/seccomp/cgroups, Aya/eBPF, OTLP, recovery — 0.39, 0.41, 0.47, 0.63. Wymagane testy izolacji, błędów i false positives; eBPF hosta nie widzi automatycznie całego wnętrza VM.
+- M4 (s. 4, 7, 10): Tree-sitter/type-sitter, JSON Schema i selekcja narzędzi, ML-KEM/ML-DSA FIPS 203/204, hybrydowy TLS — 0.43, 0.45, 0.63.
+- M5 (s. 7–8, 10–11): Intel Loihi 2, SNN, rust-snns/ferromorphic, rzeczywisty HIL i CPU fallback — 0.91.
+- Produkt JARVIS OMEGA INFINITY (s. 1, 8): adaptacyjny asystent nad istniejącym runtime, pamięć z kontrolą uprawnień, E2E i audyt — 1.92; odrębny od dziesięciu wariantów Agents Builder.
+- Finansowanie (s. 8–9): due diligence FENG/NCBR, PARP Platformy Startowe, Silesian Startup Foundation, GAPR/BUR, KFS: aktualne nabory, terminy, kwalifikowalność, TRL, koszty i wkład własny — 1.92. Kwoty z PDF wymagają niezależnej weryfikacji.
+
+Status: PLANNED/UNVERIFIED. Wydajność podana w PDF (m.in. 49%, 16x, 67 Gbps, 5–35 mikrosekund, 125 ms, 5 MB, 0.0008x EDP) nie stanowi dowodu pomiarowego OCAF. M0–M5 nie zmieniają numeracji etapów.
