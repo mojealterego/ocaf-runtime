@@ -13,7 +13,7 @@
   },
   "counts": {
     "ten_original_agents_builder_variants": 10,
-    "scope_gaps": 56
+    "scope_gaps": 64
   },
   "items": [
     {
@@ -463,6 +463,70 @@
       "condition": "UNVERIFIED",
       "basis": "PDF25/PDF26 semantic audit 2026-10-16",
       "repair": "Benchmark Reflexion/JEPA versus baseline and budget"
+    },
+    {
+      "id": "PDF27-001",
+      "component": "OmniSense GoT/MCTS/JEPA validation",
+      "parent": "0.67",
+      "condition": "UNVERIFIED",
+      "basis": "PDF27-29 semantic requirement; document sample code is not evidence of implementation",
+      "repair": "Implement production contracts, negative and integration tests and verifiable acceptance evidence"
+    },
+    {
+      "id": "PDF28-001",
+      "component": "OmniArbitrage SLA and BATNA",
+      "parent": "0.49",
+      "condition": "UNVERIFIED",
+      "basis": "PDF27-29 semantic requirement; document sample code is not evidence of implementation",
+      "repair": "Implement production contracts, negative and integration tests and verifiable acceptance evidence"
+    },
+    {
+      "id": "PDF28-002",
+      "component": "OmniContract and OmniChaos",
+      "parent": "0.43",
+      "condition": "UNVERIFIED",
+      "basis": "PDF27-29 semantic requirement; document sample code is not evidence of implementation",
+      "repair": "Implement production contracts, negative and integration tests and verifiable acceptance evidence"
+    },
+    {
+      "id": "PDF28-003",
+      "component": "OmniStrategy and OmniGraph",
+      "parent": "0.67",
+      "condition": "UNVERIFIED",
+      "basis": "PDF27-29 semantic requirement; document sample code is not evidence of implementation",
+      "repair": "Implement production contracts, negative and integration tests and verifiable acceptance evidence"
+    },
+    {
+      "id": "PDF29-001",
+      "component": "OmniVerify and OmniHomeostasis",
+      "parent": "0.55",
+      "condition": "UNVERIFIED",
+      "basis": "PDF27-29 semantic requirement; document sample code is not evidence of implementation",
+      "repair": "Implement production contracts, negative and integration tests and verifiable acceptance evidence"
+    },
+    {
+      "id": "PDF29-002",
+      "component": "OmniCausal six-stage RSI",
+      "parent": "0.98",
+      "condition": "UNVERIFIED",
+      "basis": "PDF27-29 semantic requirement; document sample code is not evidence of implementation",
+      "repair": "Implement production contracts, negative and integration tests and verifiable acceptance evidence"
+    },
+    {
+      "id": "PDF29-003",
+      "component": "OmniSleep and OmniPrune",
+      "parent": "0.67",
+      "condition": "UNVERIFIED",
+      "basis": "PDF27-29 semantic requirement; document sample code is not evidence of implementation",
+      "repair": "Implement production contracts, negative and integration tests and verifiable acceptance evidence"
+    },
+    {
+      "id": "PDF29-004",
+      "component": "OmniLatent and OmniAdaptive",
+      "parent": "0.39/0.63",
+      "condition": "UNVERIFIED",
+      "basis": "PDF27-29 semantic requirement; document sample code is not evidence of implementation",
+      "repair": "Implement production contracts, negative and integration tests and verifiable acceptance evidence"
     }
   ],
   "pdf20_source": "PDF20 pp.18-21; OmniE2E is a swarm, not an additional Agents Builder product",
@@ -471,5 +535,24 @@
   "pdf23_source": "PDF23 pp.15-17 OmniStudio OmniDoc; fixed output names are stubs",
   "pdf24_source": "PDF24 pp.16-18 OmniGov OmniFin OmniPhys; print statements are stubs",
   "pdf25_source": "PDF25 pp.15-19 OmniSec; stubbed attack and remediation",
-  "pdf26_source": "PDF26 pp.16-19 OmniCog, OmniEvolve, OmniSense; non-persistent and constant-score examples"
+  "pdf26_source": "PDF26 pp.16-19 OmniCog, OmniEvolve, OmniSense; non-persistent and constant-score examples",
+  "pdf27_29_source": {
+    "date": "2026-10-16",
+    "pages": 66,
+    "documents": [
+      27,
+      28,
+      29
+    ],
+    "requirements": [
+      "PDF27-001",
+      "PDF28-001",
+      "PDF28-002",
+      "PDF28-003",
+      "PDF29-001",
+      "PDF29-002",
+      "PDF29-003",
+      "PDF29-004"
+    ]
+  }
 }
