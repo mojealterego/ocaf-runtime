@@ -516,7 +516,7 @@
     {
       "id": "0.45",
       "title": "Crypto",
-      "scope": "Hybrid PQC ML-KEM/ML-DSA interoperability, ZKP caveat proof experiments",
+      "scope": "Hybrid PQC ML-KEM/ML-DSA interoperability, ZKP caveat proof experiments PDF03_RECONCILIATION: ZKP caveat verification requires independent verifier, public-input binding, soundness and negative witness tests; PQC ML-KEM/ML-DSA claims require actual hybrid handshake transcript-binding and downgrade tests.",
       "acceptance": "No replacement of audited mTLS until standards/tests pass",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -528,7 +528,7 @@
     {
       "id": "0.46",
       "title": "Transport",
-      "scope": "Zenoh SHM typed zero-copy, CRDT Automerge/Yrs for non-authoritative state",
+      "scope": "Zenoh SHM typed zero-copy, CRDT Automerge/Yrs for non-authoritative state PDF03_RECONCILIATION: Zenoh zero-copy SHM only for proven compatible local shared-memory paths, not automatically across MicroVM/hosts; CRDT non-authoritative only, with partition, convergence, tombstone and replay tests.",
       "acceptance": "Benchmarks and CRDT convergence; NEVER for leadership/payment authority",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -540,7 +540,7 @@
     {
       "id": "0.47",
       "title": "Telemetry",
-      "scope": "W3C tracing propagation, OpenTelemetry/OTLP metrics, SLA and audit logs",
+      "scope": "W3C tracing propagation, OpenTelemetry/OTLP metrics, SLA and audit logs PDF03_RECONCILIATION: W3C trace propagation, bounded OTel batch queue, measured overhead and orderly flush/shutdown; zero overhead claims forbidden.",
       "acceptance": "No secret leakage; trace replay across actual host boundaries",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
@@ -1086,7 +1086,7 @@
     {
       "id": "0.91",
       "title": "Neuromorphic HIL / Loihi 2",
-      "scope": "Optional experimental SNN routing adapter with CPU/GPU fallback",
+      "scope": "Optional experimental SNN routing adapter with CPU/GPU fallback PDF03_RECONCILIATION: Loihi 2 remains optional hardware-in-the-loop research; require verified hardware SDK, same-workload energy-delay measurements and CPU fallback; no unverified performance multipliers.",
       "acceptance": "Actual device access and reproducible energy-delay-quality data; no claimed production acceleration",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
