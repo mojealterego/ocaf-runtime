@@ -394,3 +394,7 @@ Dodano 20 numerowanych etapów PLANNED. Zakres: Nous/CNA, Honcho, CloudShield, V
 - Wymagania przypisane do istniejących etapów 0.39, 0.50–0.55, 317–319, 325–329, 332–333; bez zmiany numeracji.
 - Audyt wykazał brak transportu A2A/Zenoh, brak wykonywania MCP i eBPF, symulowane SLA/Titans/RQGM, luki w autoryzacji i FinOps, NaN bypass.
 - Status PLANNED; brak dowodów testów, wdrożenia i akceptacji.
+
+## 2026-10-16 — audyt ostatniego PDF (60 stron)
+
+Notes_261016_234639.pdf: sześć proponowanych crates Cargo Workspace (transport/CRDT/PQC, telemetry/eBPF, cognition/RQGM, economy/L402, MCP/swarms, master node). Wymagania przypisano do istniejących etapów 0.38–0.41, 0.50–0.55, 317–319, 325–333. Status SOURCE_REVIEWED/PLANNED, brak dowodów kompilacji, testów, wielohostowego wdrożenia i odbioru. Szczegóły w pełnej roadmapie.
