@@ -1464,3 +1464,6 @@ Dla wymagań PDF 09 utworzono **208–215**: 208 symulacje społeczne/ToM, 209 D
 
 
 **PDF16 (2026-10-16):** 17 stron przypisano do istniejących etapów 0.39, 0.42–0.49, 0.55, 0.63–0.64, 0.67, 0.91 i 0.98. [Raport audytu](docs/audits/PDF16_OCAF_ARCHITECTURE_SEMANTIC_REVIEW_2026-10-16.md). Kryteria: OTLP trace continuity, MCP schema/injection, ZKP, Firecracker/eBPF, real L402 settlement, PQC handshake, RAG E2E, Loihi HIL. PLANNED/UNVERIFIED.
+
+
+**PDF17 (18 stron, 2026-10-16):** [Audyt](docs/audits/PDF17_OCAF_RUST_ARCHITECTURE_SEMANTIC_REVIEW_2026-10-16.md). Dodatkowe luki: ACP/OpenHands adapter (0.43/0.44/0.55), Aider-style Tree-sitter repo-map (0.43/0.67), reproducible SWE-bench Verified coding-agent eval (0.51/0.98). PLANNED/UNVERIFIED.
