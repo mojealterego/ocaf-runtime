@@ -1189,3 +1189,28 @@ Pliki: Dokument bez nazwy (4).PDF, Dokument bez nazwy(1).PDF, Dokument bez nazwy
 
 ### Etap 325 — Autonomous software engineering and rigorous evaluations (PDF54)
 **Status: PLANNED.** Źródło: PDF54 s.9–13. AutoGPT, BabyAGI, GodMode, OpenHands, mini-SWE-agent, SWE-bench Verified i Multimodal, N-run reliability; bounded task loops, human-in-the-loop, sandbox, testy regresji, kontrola przecieków benchmarkowych i ślad audytowy. Wyniki tabeli z s.11–12 są twierdzeniami źródła, nie potwierdzonymi wynikami OCAF.
+
+
+### Etap 326 — DGM/RQGM: kontrolowana ewolucja i niezależny egzaminator
+**Status: PLANNED.** Źródło: nowy dokument audytu DGM/OCAF, s.1–2, 11–13, 25–26. Wersjonowany genotyp AST/WASI, zamrożony egzaminator w epoce, kontrprzykłady, selektywna retencja ocen, bramki AST/kompilacji/testów, transakcyjny commit tylko na main po rzeczywistej walidacji; rollback, audyt i limity. Zakaz symulowanych PASS/SHA.
+
+### Etap 327 — Pamięć CoALA/Titans, HDC i bitemporalne CRDT
+**Status: PLANNED.** Źródło: s.1–2, 5–8. Cztery typy pamięci, test-time memorization jako eksperymentalny adapter, HDC/VSA, indeks ANN, valid_time/transaction_time, korekty retrospektywne, PITR, izolacja tenantów i testy współbieżności. Powiązać z etapem 322; nie dublować pamięci.
+
+### Etap 328 — GoT/AB-MCTS/JEPA oraz weryfikacja AST/SMT
+**Status: PLANNED.** Źródło: s.2, 8–10. Ograniczone budżetem wyszukiwanie, ewaluacja predykcji, parser Tree-sitter, graf zależności, SMT Z3/cvc5 i sprawdzalne niezmienniki; heurystyka nie stanowi dowodu formalnego.
+
+### Etap 329 — Firecracker guest observability, eBPF i gateway MCP/L402
+**Status: PLANNED.** Źródło: s.2, 11–14. Rzeczywiste sondy Aya/eBPF wewnątrz gościa (zależnie od jądra), egzekwowanie polityk, mTLS, autoryzacja narzędzi, odporna na wyścigi rezerwacja budżetu, weryfikacja caveats i replay, telemetria OTel, opcjonalne L402/PQC. Powiązać z bramami 0.39 i 0.55.
+
+### Etap 330 — OmniModelScout: bezpieczne wykrywanie i walidacja GGUF
+**Status: PLANNED.** Źródło: s.17, 19–22, 29–30. Parser całych metadanych GGUF bez fikcyjnej architektury/kwantyzacji, limit wielkości i zasobów, kontrola źródła, SSRF, checksum z zaufanego manifestu, bezpieczne pobieranie i atomowy zapis; testy uszkodzonych plików. Nazwa pliku ani 24 bajty nagłówka nie potwierdzają bezpieczeństwa modelu.
+
+### Etap 331 — TechRecon i Strategist: bezpieczny zwiad techniczny
+**Status: PLANNED.** Źródło: s.23–25, 29–30. Źródła OSINT/MCP z provenance, parsery, limity, ochrona przed prompt injection i SSRF, deduplikacja, ocena wiarygodności, propozycje roadmapy wymagające przeglądu, brak samodzielnej modyfikacji polityk.
+
+### Etap 332 — AppForge 66 produktów i GameBuilder SDK
+**Status: PLANNED.** Źródło: s.18, 26–29. Zweryfikować macierz 33 aplikacji niszowych i 33 narzędzi deweloperskich; wymagania, działające artefakty i testy per produkt. GameBuilder: ECS, fizyka, rendering, zasoby, GUI i testy. Pętle generujące same nazwy manifestów nie oznaczają 66 aplikacji.
+
+### Etap 333 — Audyt twierdzeń implementacyjnych z dokumentu DGM
+**Status: PLANNED.** Źródło: s.3–16, 18–31. Przykładowy kod nie zawiera rzeczywistego transportu Zenoh SHM, parsera AST/SMT, sondy eBPF, wykonywania MCP, pobierania GGUF ani commitów Git; zawiera symulowane testy, sztuczny SHA i niezweryfikowane benchmarki. Każdą deklarację PASS/produkcyjności zweryfikować niezależnym testem na main; nie nadpisywać Cargo.toml ani src/main.rs przykładami.
