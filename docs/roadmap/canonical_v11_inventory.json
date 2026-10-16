@@ -3378,8 +3378,8 @@
     {
       "id": "1.98",
       "title": "DSPy declarative optimization and holdout evaluation",
-      "scope": "Optional declarative LLM pipeline optimization using DSPy BootstrapFewShot, MIPRO and GEPA in isolated offline evaluation; freeze approved artifacts before deployment",
-      "acceptance": "Version-pinned holdout dataset and baseline show statistically reported quality, token cost and regression deltas with reproducible optimizer traces",
+      "scope": "Optional declarative LLM pipeline optimization using DSPy BootstrapFewShot, MIPRO and GEPA in isolated offline evaluation; freeze approved artifacts before deployment PDF09 (s.6–8): DSPy versioned optimization experiments, holdout and baseline comparisons, cost limits, artifact freeze and rollback.",
+      "acceptance": "Version-pinned holdout dataset and baseline show statistically reported quality, token cost and regression deltas with reproducible optimizer traces PDF09: reproducible runs, no training/holdout leakage, regression tests, human approval.",
       "negative": "Reject train/test contamination, unreviewed prompt mutation, uncontrolled tool calls and unsupported model performance claims",
       "dependencies": [
         "1.69",
@@ -3400,8 +3400,8 @@
     {
       "id": "1.99",
       "title": "SWE-bench Verified and N-run agent reliability",
-      "scope": "Evaluate repository coding agents on license-reviewed SWE-bench Verified and optional multimodal fixtures; measure N-run pass rate, issue resolution, regression and sandbox containment PDF06_OMNIDEV: Reproduce claimed SWE-bench, TerminalBench, greater-than-94-percent success and under-125-ms compile/test on pinned hardware, dataset and harness, reporting N-run variance, costs and latency; treat source figures as unverified.",
-      "acceptance": "Reproducible benchmark runner records instance IDs, patch diffs, test logs, model/tool versions, multiple seeds and confidence intervals",
+      "scope": "Evaluate repository coding agents on license-reviewed SWE-bench Verified and optional multimodal fixtures; measure N-run pass rate, issue resolution, regression and sandbox containment PDF06_OMNIDEV: Reproduce claimed SWE-bench, TerminalBench, greater-than-94-percent success and under-125-ms compile/test on pinned hardware, dataset and harness, reporting N-run variance, costs and latency; treat source figures as unverified. PDF09 (s.9–11): SWE-bench Verified and mini-SWE-agent baseline, repeated N-run evaluation, reliability, regression, cost and latency.",
+      "acceptance": "Reproducible benchmark runner records instance IDs, patch diffs, test logs, model/tool versions, multiple seeds and confidence intervals PDF09: pinned dataset and environment, independent patch validation, N-run pass rate and reproducibility.",
       "negative": "Reject fabricated leaderboard ranks, leaked benchmark answers, cherry-picked successful runs or patches without tests",
       "dependencies": [
         "0.55",
@@ -3424,8 +3424,8 @@
     {
       "id": "2.00",
       "title": "Taskweaving dependency graph and multi-agent rollback",
-      "scope": "Experimental asynchronous taskweaving DAG scheduler inspired by BabyAGI-2 and LangGraph with explicit dependency edges, bounded concurrency, cancellation, idempotency and rollback for agent workflows",
-      "acceptance": "Fault-injection verifies cycle rejection, cancellation propagation, durable replay and no unauthorized side effects across tenant boundaries",
+      "scope": "Experimental asynchronous taskweaving DAG scheduler inspired by BabyAGI-2 and LangGraph with explicit dependency edges, bounded concurrency, cancellation, idempotency and rollback for agent workflows PDF09 (s.8–9): AutoGPT and BabyAGI task planning, priority/dependency DAG, cancellation, checkpoint, bounded fan-out, idempotent effects.",
+      "acceptance": "Fault-injection verifies cycle rejection, cancellation propagation, durable replay and no unauthorized side effects across tenant boundaries PDF09: loop, crash/recovery, duplicate-effect, tenant isolation and budget exhaustion tests.",
       "negative": "Reject cyclic graph execution, implicit privileges, double side effects after retry or silent partial success",
       "dependencies": [
         "0.42",
@@ -3447,8 +3447,8 @@
     {
       "id": "2.01",
       "title": "AI Scientist reproducible research lifecycle",
-      "scope": "Optional supervised scientific discovery workflow inspired by Sakana AI Scientist: idea generation, cited novelty review, isolated experiment/code execution, LaTeX paper drafting, and independent simulated peer review; human approval for publication",
-      "acceptance": "Reproducible fixture records hypotheses, citations, dataset licenses, experiment seed/code/metrics, LaTeX compilation, review rubric and explicit publication consent",
+      "scope": "Optional supervised scientific discovery workflow inspired by Sakana AI Scientist: idea generation, cited novelty review, isolated experiment/code execution, LaTeX paper drafting, and independent simulated peer review; human approval for publication PDF09 (s.6–8): AI Scientist hypothesis-to-experiment lifecycle, versioned datasets, provenance, reproducible results and supervised publication.",
+      "acceptance": "Reproducible fixture records hypotheses, citations, dataset licenses, experiment seed/code/metrics, LaTeX compilation, review rubric and explicit publication consent PDF09: independently repeatable experiments, citation validation and resource budgets.",
       "negative": "Reject invented citations, unsourced novelty, unbounded experiment spending, fabricated peer-review acceptance or automatic external publication",
       "dependencies": [
         "1.69",
@@ -3471,8 +3471,8 @@
     {
       "id": "2.02",
       "title": "OpenHands agent server and legacy repository adapter",
-      "scope": "Evaluate OpenHands/OpenDevin-style isolated agent server, command/browser tool boundaries, large legacy repository mapping, iterative log inspection and auditable patch proposals without uncontrolled branch creation",
-      "acceptance": "Version-pinned agent server fixture diagnoses a real failing repository test, proposes an atomic patch, reruns tests and records complete action/permission audit",
+      "scope": "Evaluate OpenHands/OpenDevin-style isolated agent server, command/browser tool boundaries, large legacy repository mapping, iterative log inspection and auditable patch proposals without uncontrolled branch creation PDF09 (s.8–9): OpenHands isolated engineering server, command/browser tools, diff review, approved repository changes.",
+      "acceptance": "Version-pinned agent server fixture diagnoses a real failing repository test, proposes an atomic patch, reruns tests and records complete action/permission audit PDF09: sandbox escape, command injection, secret exfiltration and rollback E2E tests.",
       "negative": "Reject direct host shell escape, credential exposure, unrestricted browsing, unapproved write or false CI success",
       "dependencies": [
         "0.39",
@@ -3495,8 +3495,8 @@
     {
       "id": "2.03",
       "title": "Theory-of-Mind evaluation and human approval gates",
-      "scope": "Evaluate ToM-SWE-like intention modeling only as a bounded opt-in planning aid; explicitly separate uncertain user preference inference from facts and maintain human-in-the-loop approval for consequential actions",
-      "acceptance": "Controlled tasks measure calibrated intent uncertainty, abstention, false-positive preference assumptions and correct human escalation with tenant and privacy isolation",
+      "scope": "Evaluate ToM-SWE-like intention modeling only as a bounded opt-in planning aid; explicitly separate uncertain user preference inference from facts and maintain human-in-the-loop approval for consequential actions PDF09 (s.5–6): Generative Agents, Lyfe, MetaMind, ToM-SWE; bounded opt-in social simulation, theory-of-mind and intent hypotheses, affective/sensitive data minimization, per-tenant ACL, retention and deletion. Never assert inferred mental states as facts.",
+      "acceptance": "Controlled tasks measure calibrated intent uncertainty, abstention, false-positive preference assumptions and correct human escalation with tenant and privacy isolation PDF09: consent, tenant isolation, calibration/uncertainty evaluation, deletion tests and red-teaming for manipulation.",
       "negative": "Reject covert psychological profiling, claiming access to mental states, inferred consent or execution of high-risk action without explicit authorization",
       "dependencies": [
         "1.69",
@@ -3541,8 +3541,8 @@
     {
       "id": "2.05",
       "title": "Agent-Zero and Bonfire self-programming research sandbox",
-      "scope": "Study Agent-Zero/Agent0 terminal-driven skill acquisition and Bonfire knowledge engrames using isolated offline reproducible experiments with human-reviewed code changes",
-      "acceptance": "Version-pinned local fixtures capture tool traces, code diffs, provenance, test outcomes and strict runtime limits without exposing host credentials",
+      "scope": "Study Agent-Zero/Agent0 terminal-driven skill acquisition and Bonfire knowledge engrames using isolated offline reproducible experiments with human-reviewed code changes PDF09 (s.6–8): Agent-Zero and Hermes supervised self-programming, isolated skill acquisition, provenance and human-reviewed changes.",
+      "acceptance": "Version-pinned local fixtures capture tool traces, code diffs, provenance, test outcomes and strict runtime limits without exposing host credentials PDF09: fail-closed sandbox, delegation limits, no privilege escalation, injection/exfiltration negative tests.",
       "negative": "Reject unsupervised recursive self-modification, direct host execution, uncontrolled network access or claimed AGI progress without independent evaluation",
       "dependencies": [
         "0.39",
@@ -3563,8 +3563,8 @@
     {
       "id": "2.06",
       "title": "NuNet PRIMUS and GodMode experimental orchestration interfaces",
-      "scope": "Evaluate NuNet decentralized resource scheduling and PRIMUS architecture only as research proposals; evaluate GodMode visual human-in-the-loop task oversight with clear cancellation and authorization controls",
-      "acceptance": "Offline mocked adapters and visual task fixture demonstrate explicit consent, bounded resources, revocation, graph visibility and failure isolation",
+      "scope": "Evaluate NuNet decentralized resource scheduling and PRIMUS architecture only as research proposals; evaluate GodMode visual human-in-the-loop task oversight with clear cancellation and authorization controls PDF09 (s.8–9): GodMode human-in-the-loop visual oversight, operator review, approval, stop/cancel and permission visibility.",
+      "acceptance": "Offline mocked adapters and visual task fixture demonstrate explicit consent, bounded resources, revocation, graph visibility and failure isolation PDF09: real GUI, operator authorization, durable audit trail and cancellation E2E.",
       "negative": "Reject unauthorized blockchain settlement, untrusted decentralized execution, silent background operations or false production readiness",
       "dependencies": [
         "1.95",
