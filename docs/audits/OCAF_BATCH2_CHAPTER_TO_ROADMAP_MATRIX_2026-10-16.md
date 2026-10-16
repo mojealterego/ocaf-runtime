@@ -71,3 +71,19 @@
 Przypisano 29 grup rozdziałów do istniejących etapów; **nie wykryto uzasadnienia do ponownego dodawania samych nazw**. To nie wyklucza brakujących szczegółowych kryteriów. Zestaw 252 stron został zinwentaryzowany strona po stronie, ale **nie ma potwierdzonej kontroli wszystkich atomowych wymagań względem całego kodu i testów repozytorium**. Bez tych dowodów status produkcyjny pozostaje `production_approved=false`.
 
 **Rozbieżność skorygowana:** poprzedni nagłówek Roadmapy deklarował 195 etapów i 259 pozycji, podczas gdy manifest i wiersze zawierały 207 etapów i 281 pozycji. Zaktualizowano nagłówek i końcowy opis obu kopii Roadmapy do 207+64+10=281.
+
+## Przegląd kodu na aktualnym `main` — dowody ograniczone do wskazanych plików
+
+Bezpośrednio odczytano `Cargo.toml`, `src/transport/mod.rs`, `src/registry/mod.rs`, `src/executor/wasi.rs`, `src/metrics/mod.rs` i `src/auth/mod.rs`. Jest to **przegląd punktowy**, a nie przeszukanie wszystkich plików repozytorium.
+
+| Wymaganie PDF | Rzeczywisty plik | Obserwacja | Ocena |
+|---|---|---|---|
+| Zenoh | `Cargo.toml`, `src/transport/mod.rs` | Istnieje zależność i transport Zenoh | Częściowa implementacja; typed SHM niepotwierdzone |
+| Automerge/Yrs | `Cargo.toml` | Brak zależności `automerge`/`yrs` w głównym manifeście | Niepotwierdzona integracja; sprawdzić dodatkowe manifesty |
+| OTLP/OpenTelemetry | `Cargo.toml`, `src/metrics/mod.rs` | Lokalny moduł metryk; brak zależności eksportera OTLP w głównym manifeście | Eksport i propagacja trace niepotwierdzone |
+| Tree-sitter/type-sitter | `Cargo.toml`, `src/registry/mod.rs` | Registry narzędzi, brak parserów AST w głównym manifeście | Pełna fuzja CST niepotwierdzona |
+| Firecracker/Aya | `src/executor/wasi.rs` | Adapter WASI Preview1 sam wyklucza status granicy microVM | Nie utożsamiać WASI z Firecracker; inne moduły wymagają odrębnej kontroli |
+| L402 | `src/auth/mod.rs` | Istnieją struktury autoryzacji; pełne rozliczenie faktury niepotwierdzone | Brak podstaw do PASS |
+| ZKP/PQC | `Cargo.toml`, `src/auth/mod.rs` | Brak dowodu uruchomienia Arkworks lub negocjacji ML-KEM w tych plikach | Brak podstaw do PASS |
+
+**Zakaz nieuprawnionej generalizacji:** brak symbolu w sześciu plikach nie oznacza automatycznie, że funkcja nie istnieje nigdzie indziej w repo. Weryfikacja produkcyjna wymaga pełnego drzewa kodu, zależności, testów i artefaktów CI.
