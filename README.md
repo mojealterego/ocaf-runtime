@@ -1,5 +1,11 @@
 <!-- OCAF_README_ROADMAP_BEGIN -->
 
+[![UWAGA CZYTAĆ — ZAKAZ SAMOWOLKI](https://img.shields.io/badge/UWAGA%20CZYTA%C4%86-ZAKAZ%20SAMOWOLKI-ff0000?style=for-the-badge&labelColor=8b0000)](ROADMAP.md)
+
+# 🔴 UWAGA CZYTAĆ — ZABRONIONA JEST SAMOWOLKA 🔴
+
+> **BEZWZGLĘDNY ZAKAZ SAMOWOLKI:** Nie wolno samodzielnie przenosić, usuwać, skracać, zastępować ani renumerować historycznych pozycji ROADMAPY; nie wolno zmieniać jej położenia na początku `README.md`, ukrywać braków, dopisywać nieuzgodnionych funkcjonalności ani oznaczać nieprzetestowanych etapów jako ukończonych. Odzyskane wymagania historyczne pozostają pod oryginalnymi identyfikatorami; nowe wymagania dopisuje się po ostatnim numerze, zgodnie z poleceniem właściciela projektu. Każda zmiana wymaga zachowania historii, aktualizacji manifestu, obu roadmap, README i dziennika zmian oraz rzeczywistych dowodów testów. **ZAKAZ SAMOWOLKI dotyczy także automatycznych generatorów i agentów AI.**
+
 ![UWAGA CZYTAĆ — ROADMAPA NA GÓRZE REPOZYTORIUM](https://img.shields.io/badge/UWAGA-CZYTA%C4%86%20ROADMAP%C4%98-red?style=for-the-badge&labelColor=8B0000)
 
 <div align="center">
