@@ -87,3 +87,40 @@ Bezpośrednio odczytano `Cargo.toml`, `src/transport/mod.rs`, `src/registry/mod.
 | ZKP/PQC | `Cargo.toml`, `src/auth/mod.rs` | Brak dowodu uruchomienia Arkworks lub negocjacji ML-KEM w tych plikach | Brak podstaw do PASS |
 
 **Zakaz nieuprawnionej generalizacji:** brak symbolu w sześciu plikach nie oznacza automatycznie, że funkcja nie istnieje nigdzie indziej w repo. Weryfikacja produkcyjna wymaga pełnego drzewa kodu, zależności, testów i artefaktów CI.
+
+## Korekta audytorska — numeracja rzeczywistych sekcji w źródłowym PDF (10)
+
+Poprzednia macierz 29 grup była **taksonomią audytora**, nie rzeczywistą numeracją rozdziałów PDF. Poniższa tabela podaje dokładną kolejność sekcji z nagłówków `..(10).PDF` i jest nadrzędna wobec wcześniejszych numerów w tej macierzy.
+
+| Sekcja PDF | Tytuł / komponent | Strona początkowa | Roadmapa |
+|---:|---|---:|---|
+| 1 | Infrastruktura komunikacyjna, Zenoh SHM, CRDT, OpenTelemetry | 1 | 0.46, 0.47, 1.15, 1.18, 1.20 |
+| 2 | Dynamiczna fuzja schematów MCP (Tree-sitter) | 3 | 0.43, 1.33 |
+| 3 | Autoryzacja, zarządzany OAuth i ZKP | 4 | 0.44, 0.45 |
+| 4 | Sandboxy Firecracker i detekcja eBPF | 5 | 0.39, 1.42, 1.80 |
+| 5 | Ekonomia M2M: L402 i buforowanie offline | 5 | 0.49, 1.49, 1.54, 1.85 |
+| 6 | PQC i akceleracja neuromorficzna | 6 | 0.45, 0.91, 1.38, 1.41 |
+| 7 | OmniDev | 6 | 0.56, 1.92 |
+| 8 | OmniUX | 7 | 0.57, 1.92 |
+| 9 | OmniE2E | 8 | 0.58, 1.92 |
+| 10 | OmniForge | 9 | 0.59, 1.92 |
+| 11 | OmniWeb | 9 | 0.60 |
+| 12 | Multimedia i dokumentacja: OmniStudio/OmniDoc | 10 | 0.61, 0.62 |
+| 13 | OmniGov, OmniFin, OmniPhys | 11 | 0.64, 0.65, 0.66 |
+| 14 | OmniSec | 11 | 0.63 |
+| 15 | OmniCog | 12 | 0.67, 1.97 |
+| 16 | OmniEvolve | 12 | 0.72, 0.74 |
+| 17 | OmniSense | 13 | 0.72 |
+| 18 | Meta-architektura decyzyjna | 14 | 0.69 |
+| 19 | Kontrakty, asertywność i ochrona przed błędami | 16 | 0.70 |
+| 20 | Grafowa pamięć błędów i obliczenia spekulatywne | 17 | 0.67, 0.71 |
+| 21 | Neurosymboliczna weryfikacja formalna | 19 | 0.73, 0.74, 0.76 |
+| 22 | Rekursywny protokół samodoskonalenia | 21 | 0.72, 0.74 |
+| 23 | Cyfrowy sen, konsolidacja pamięci i minimalizm | 23 | 0.68 |
+| 24 | Komunikacja latentna i adaptacja | 24 | 0.75 |
+| 25 | Aktywna inferencja i topologiczna analiza wiedzy | 25 | 0.77 |
+| 26 | Przetwarzanie hiperwymiarowe i rzadkie | 28 | 0.78 |
+| 27 | Konsystencja gödlowska, fraktalny rój i logika | 30 | 0.79, 0.80 |
+| 28 | Podsumowanie zintegrowanego ekosystemu | 32 | 1.94 |
+
+**Metoda:** numery i strony ustalono na podstawie rzeczywistych nagłówków z ekstrakcji PyMuPDF dla 33-stronicowego PDF. Nie jest to jeszcze dowód zgodności z implementacją.
