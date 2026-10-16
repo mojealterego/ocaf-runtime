@@ -132,7 +132,7 @@ def validate_readme(readme: str, inventory: dict, builders: dict) -> dict:
         raise ReadmeRoadmapError("Missing original Agents Builder Code/NoCode products")
     if inventory.get("production_approved") is not False:
         raise ReadmeRoadmapError("Unverified production approval")
-    if "UWAGA CZYTAĆ" not in pinned or "ZASADA STAŁEJ ROZBUDOWY ROADMAPY" not in pinned:
+    if "UWAGA CZYTAĆ" not in pinned or "ZASADA STAŁEJ ROZBUDOWY ROADMAPY" not in pinned or "ZABRONIONA JEST SAMOWOLKA" not in pinned:
         raise ReadmeRoadmapError("Pinned warning or preservation rule missing")
     ids = [x["id"] for x in main + technical]
     for stage_id in ids:
