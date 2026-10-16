@@ -377,5 +377,20 @@
     "source": "PDF24 pp.16-18",
     "status": "PLANNED_OR_UNVERIFIED",
     "builder_product_count_unchanged": 10
+  },
+  "pdf25_26_swarm_reconciliation": {
+    "source": [
+      "PDF25",
+      "PDF26"
+    ],
+    "swarms": [
+      "OmniSec",
+      "OmniCog",
+      "OmniEvolve",
+      "OmniSense"
+    ],
+    "classification": "operational swarms, not Agents Builder products",
+    "status": "PLANNED_OR_UNVERIFIED",
+    "audit": "docs/audits/PDF25_26_SEMANTIC_REVIEW_2026-10-16.md"
   }
 }
