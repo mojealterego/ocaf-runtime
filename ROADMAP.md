@@ -844,3 +844,27 @@ Dokumenty: PDF30 `Architektura ... (10)` (33 s.), PDF31 `(11)` (40 s.), PDF32 `(
 - s. 8–10, M5–M6: neuromorficzny SNN/Loihi2 Hardware-in-the-Loop, fallback CPU/GPU, pomiar energy-delay product, sprzężenie PQC. Brak dostępu do sprzętu = R&D, nie INTEGRATED; KPI 90% EDP i <1 µs pełnego routingu/PQC niezweryfikowane.
 - s. 8–9: finansowanie FENG/NCBR/PARP/GAPR i ryzyka dostępności sprzętu są hipotezami biznesowymi, nie dowodami przyznania dotacji.
 Mapowanie: M0 do MCP/tool gateway; M1 do transport/cluster/registry; M2 do auth/ops; M3 do 0.39 i recovery; M4 do narzędzi/AST i security; M5–M6 do późnych etapów R&D. Zachować istniejące numery etapów i bramy 0.38–0.41. Liczby i twierdzenia marketingowe PDF nie są statusami implementacji.
+
+
+## Nowe etapy główne 216–222 — PDF34–PDF36 (2026-10-16)
+
+### Etap 216 — MCP stateless control plane i zgodność rmcp/pmcp
+**Status: PLANNED.** M0; PDF34–36 s.2–3; typowane API, HTTP streaming, fail-closed, testy protokołu i 500 równoległych żądań. Kryterium odbioru: rzeczywisty kod, testy negatywne, dowód CI/SHA i test infrastruktury właściwej dla etapu. Nie zastępuje historycznych etapów ani bram 0.38–0.41.
+
+### Etap 217 — Zenoh SHM zero-copy i replikacja CRDT offline-first
+**Status: PLANNED.** M1; PDF34–36 s.3–5; ACL i lifetime SHM, fallback multi-host, Automerge/Yrs, recovery, testy 10k agentów. Kryterium odbioru: rzeczywisty kod, testy negatywne, dowód CI/SHA i test infrastruktury właściwej dla etapu. Nie zastępuje historycznych etapów ani bram 0.38–0.41.
+
+### Etap 218 — L402 Macaroons i ZKP kontrolowane mikrorozliczenia
+**Status: PLANNED.** M2; PDF34–36 s.5–6; caveats, anti-replay, ledger, idempotencja, tenant isolation, brak płatności bez zgody. Kryterium odbioru: rzeczywisty kod, testy negatywne, dowód CI/SHA i test infrastruktury właściwej dla etapu. Nie zastępuje historycznych etapów ani bram 0.38–0.41.
+
+### Etap 219 — Firecracker/KVM Aya eBPF self-healing mesh
+**Status: PLANNED.** M3; PDF34–36 s.6–7; powiązane z bramą 0.39, rzeczywisty KVM, guest WASI, broker, testy negatywne i recovery. Kryterium odbioru: rzeczywisty kod, testy negatywne, dowód CI/SHA i test infrastruktury właściwej dla etapu. Nie zastępuje historycznych etapów ani bram 0.38–0.41.
+
+### Etap 220 — Tree-sitter routing narzędzi i hybrydowe PQC
+**Status: PLANNED.** M4; PDF34–36 s.4 i 7–10; schema ranking, ACL, ML-KEM/ML-DSA, downgrade tests, KPI jako hipotezy. Kryterium odbioru: rzeczywisty kod, testy negatywne, dowód CI/SHA i test infrastruktury właściwej dla etapu. Nie zastępuje historycznych etapów ani bram 0.38–0.41.
+
+### Etap 221 — Neuromorficzny routing SNN Loihi 2 i fallback
+**Status: PLANNED.** M5; PDF34–36 s.8–10; hardware-in-loop, CPU/GPU fallback, EDP benchmark. Kryterium odbioru: rzeczywisty kod, testy negatywne, dowód CI/SHA i test infrastruktury właściwej dla etapu. Nie zastępuje historycznych etapów ani bram 0.38–0.41.
+
+### Etap 222 — Kwantowo-neuromorficzne HIL z PQC
+**Status: PLANNED.** M6; PDF34–36 s.9–10; integracja i niezależne pomiary pełnego cyklu, <1us tylko hipoteza. Kryterium odbioru: rzeczywisty kod, testy negatywne, dowód CI/SHA i test infrastruktury właściwej dla etapu. Nie zastępuje historycznych etapów ani bram 0.38–0.41.
