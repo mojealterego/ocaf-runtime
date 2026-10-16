@@ -486,3 +486,20 @@ W ramach weryfikacji źródeł uzupełniono manifest `docs/roadmap/canonical_v11
 | 1.97 | Każda integracja frameworka z taksonomii wymaga osobnego ADR, kontroli licencji, threat modelu i testów. |
 
 **Status:** doprecyzowanie wymagań nie oznacza implementacji, zaliczenia testów ani pełnego zakończenia semantycznego audytu 40 PDF. Macierz 902 stron zawiera kandydatów, których interpretacja pozostaje do zweryfikowania.
+
+
+### PDF 02/40 — uzgodnienie wymagań z Roadmapą
+
+Źródło: `Analiza Architektury Systemu OCAF (1).PDF`, 13 stron. Szczegółowy audyt: `docs/audits/PDF40_02_ARCHITEKTURA_SYSTEMU_OCAF_SEMANTIC_REVIEW_2026-10-16.md`.
+
+| Etap | Wymagania dopisane do manifestu v11 |
+|---|---|
+| 0.39 | Egress broker poza MicroVM, kontrola destination i capability, ochrona SSRF, fail closed. |
+| 0.43 | Dynamiczne MCP tools/list, cache schema TTL/revocation, podpisany manifest i rug-pull tests. |
+| 0.44 | OAuth tenant/user/session binding, PKCE/state, step-up, refresh/revoke, confused-deputy tests. |
+| 0.48 | Recursive PDF/log/code ingestion, chunk ACL/provenance, deletion propagation. |
+| 0.49 | Rozdzielne L402/x402, replay protection, budget i settlement verification. |
+| 0.55 | Typowany adapter Python/TypeScript @tool do MCP, sandbox i kontrola docstring injection. |
+| 0.63 | Wersjonowana macierz ASI01–ASI10 i negatywne testy bezpieczeństwa. |
+
+Status: wymagania planowane lub niezweryfikowane; nie oznacza implementacji ani odbioru. Nie utworzono 2.07, ponieważ zakres należy do istniejących etapów.
