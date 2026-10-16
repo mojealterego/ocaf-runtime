@@ -70,7 +70,7 @@ def main() -> None:
         fail("manifest counts mismatch")
     if inventory.get("production_approved") is not False:
         fail("production_approved cannot be true without independent evidence")
-    if ids[-1] != "2.06" or inventory.get("next_new_main_stage") != "2.07":
+    if ids[-1] != "215" or inventory.get("next_new_main_stage") != "216" or len(ids) != 215:
         fail("unexpected last/next main-stage ID")
     for sid, keyword in REQUIRED.items():
         stage = next((s for s in main_stages if s["id"] == sid), None)
@@ -90,7 +90,7 @@ def main() -> None:
     if canonical != mirror:
         fail("roadmap mirror differs from canonical file")
     readme = README.read_text(encoding="utf-8")
-    row_re = re.compile(r"^[|] [*][*]((?:0|1|2)[.][0-9]{2})[*][*] [|]", re.M)
+    row_re = re.compile(r"^[|] [*][*]((?:[0-2][.][0-9]{2}|20[8-9]|21[0-5]))[*][*] [|]", re.M)
     for name, content in (("ROADMAP", canonical), ("README", readme)):
         rows = row_re.findall(content)
         if len(rows) != len(main_stages) or rows != ids:
@@ -98,8 +98,8 @@ def main() -> None:
         for sid in REQUIRED:
             if sid not in rows:
                 fail(f"{name}: missing PDF-recovered stage {sid}")
-    if "281" not in readme or "207" not in readme:
-        fail("README total does not reflect 207+64+10=281")
+    if "289" not in readme or "215" not in readme:
+        fail("README total does not reflect 215+64+10=289")
     audit = AUDIT.read_text(encoding="utf-8")
     if len(SOURCE_PDFS) != 20 or len(set(SOURCE_PDFS)) != 20:
         fail("source PDF inventory must contain 20 distinct filenames")
@@ -111,7 +111,7 @@ def main() -> None:
     for sid in REQUIRED:
         if sid not in audit:
             fail(f"audit missing trace for {sid}")
-    print("PASS: 207 main stages, 64 technical, 10 builder products; 12 PDF-recovered stages traced")
+    print("PASS: 215 main stages, 64 technical, 10 builder products; 12 PDF-recovered stages traced")
     print("NOTE: static roadmap consistency only; not code/CI/production certification")
 
 if __name__ == "__main__":
