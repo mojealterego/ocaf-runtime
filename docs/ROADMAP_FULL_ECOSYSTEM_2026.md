@@ -1098,3 +1098,19 @@ Ponownie przesłane materiały: **48 = Notes_261014_204557.pdf (127 stron)**, **
 | `ocaf-master-node` (PDF s.3–4 i końcowy skrypt) | 0.38–0.41, 0.50–0.55, 333 | Integracja z istniejącymi `src/`, `tests/`, `Cargo.toml`, migracje i kompatybilność, kompilacja, clippy, fmt, testy, CI i health check. Skrypt `git clone; mkdir; cargo build; git push main` jest instrukcją, nie dowodem wykonania. |
 
 **Krytyczne uwagi jakościowe:** PDF zawiera korektę niespójnego pola `has_circular_dependency` dopiero po przykładowym `main.rs`, więc nie można zakładać kompilowalności wersji bez poprawek. Kod zawiera `unwrap()`, ręczne liczniki, syntetyczne dane testowe i komunikaty „Zweryfikowano”, które nie są dowodami. Wymagane porównanie z bieżącym `Cargo.toml`, lockfile, modułami `cluster/coordinator/executor/jobs/rpc/runtime/transport/sink/registry/auth/ops/metrics`, pełne uruchomienie testów i powiązanie wyników z SHA. Żadnych nowych numerów etapów bez sprawdzenia kanonicznej inwentaryzacji.
+
+
+## Audyt Safe-OCS — Rust / Zenoh / MCP / ImandraX (2026-10-17)
+
+**Źródło:** przekazany w rozmowie opis architektury i przykładowy kod Rust Safe-OCS. **Klasyfikacja: SOURCE_REVIEWED / PLANNED / NOT_IMPLEMENTED; nie TESTED ani FORMALLY_VERIFIED.** Jest to przypisanie do istniejących etapów, bez dodawania numeru i bez integracji przykładowego kodu.
+
+| Wymaganie / stwierdzona luka | Przypisanie | Kryterium odbioru |
+|---|---|---|
+| Zenoh jako transport komunikacji i adapter MCP↔Zenoh; brak działającego listenera, `run_zenoh_transport` jest zakomentowane; <1 ms nieudowodnione | 0.39, 0.50–0.55, 329 | Rzeczywisty transport, uwierzytelnianie, izolacja tenantów, backpressure, E2E i benchmark p50/p95/p99 na docelowych hostach |
+| Serwer MCP Rust (`pmcp` / deklarowane `rust-mcp-sdk`); niezweryfikowane API `McpServer::new` i `Tool::new` | 0.50–0.55, 329 | Przypięta wersja zależności, zgodny protokół MCP, wywoływalne narzędzia, walidacja schematów, fail-closed authorization, testy negatywne |
+| Weryfikacja ImandraX / AST / SMT; filtr `contains("unsafe {")` i `contains("ptr::")` nie jest analizą składni ani dowodem; odpowiedzi Zenoh nie są sprawdzane, a funkcja zawsze zwraca MATHEMATICALLY PROVEN | 326, 328, 333 | Parsowanie AST, jawne własności i założenia, autentyczna odpowiedź weryfikatora związana z hashem artefaktu; stany VERIFIED/REJECTED/INCONCLUSIVE, fail-closed przy timeoutach, kontrprzykładach i błędach |
+| Kompilacja w sandbox; kod nie uruchamia kompilatora, Dockera ani Firecracker i zawsze zwraca SECURE DEPLOYMENT | 0.39, 0.55, 329, 333 | Realny izolowany executor, limity CPU/RAM/czasu/sieci, nieuprzywilejowany kontekst, weryfikacja kodu wyjścia i artefaktu, testy negatywne, brak fikcyjnych statusów |
+| Bezpieczeństwo pamięci i bezpieczeństwo operacyjne; Rust ownership nie gwarantuje braku wszystkich błędów, filtr tekstowy `unsafe` można obejść; brak ACL/replay/idempotency | 0.38–0.41, 0.55, 326, 329 | Audyt unsafe/FFI/zależności, mTLS, tenant-bound RBAC/ABAC, replay protection, fencing, idempotency, testy awarii i izolacji |
+| Deklaracje compliance-by-construction i zastosowań medycznych/finansowych bez formalnych artefaktów i audytu | 328, 333 | Określony zakres dowodu, ograniczenia i kontrprzykłady; osobna ocena regulacyjna, niezależny audyt i decyzja operatora; nie deklarować gwarancji globalnego bezpieczeństwa |
+
+**Wniosek:** nie scalać przykładowego `main.rs` z istniejącym runtime. Dopiero działający kod, testy i dowody przypięte do SHA mogą zmienić status z PLANNED na IMPLEMENTED/TESTED. Brak podstaw do uznania bezpieczeństwa produkcyjnego.
