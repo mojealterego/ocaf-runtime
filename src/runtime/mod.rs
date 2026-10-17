@@ -382,3 +382,52 @@ impl OcafRuntime {
         })
     }
 }
+
+#[cfg(test)]
+mod omas_entrypoint_tests {
+    use super::*;
+
+    fn call() -> ToolCallRequest {
+        ToolCallRequest {
+            call_id: "omastest".into(),
+            tool: "missing_tool".into(),
+            args: serde_json::json!({}),
+            auth: None,
+        }
+    }
+
+    #[tokio::test]
+    async fn tenant_bound_public_execute_fails_before_tool_lookup() {
+        let runtime = OcafRuntime::new(0).with_tenant_namespace("tenant_a").unwrap();
+        assert!(matches!(runtime.execute(call()).await, Err(RuntimeError::AuthRequired(_))));
+    }
+
+    #[tokio::test]
+    async fn tenant_bound_authenticated_peer_fails_before_tool_lookup() {
+        let runtime = OcafRuntime::new(0).with_tenant_namespace("tenant_a").unwrap();
+        assert!(matches!(
+            runtime.execute_authenticated_peer(call(), "node_a").await,
+            Err(RuntimeError::AuthRequired(_))
+        ));
+    }
+
+    #[tokio::test]
+    async fn tenant_bound_signed_execution_rejects_mismatched_tenant() {
+        let runtime = OcafRuntime::new(0).with_tenant_namespace("tenant_a").unwrap();
+        let operation = crate::omas_signed::SignedOperation {
+            tenant: "tenant_b".into(),
+            namespace: "tenant_b/tools".into(),
+            target: "tenant_b/tools/missing_tool".into(),
+            opcode: 1,
+            fuel: 100,
+            issued_at: 0,
+            nonce: "abcdefghijklmnop".into(),
+            payload: serde_json::to_vec(&call()).unwrap(),
+            signature: vec![0; 64],
+        };
+        assert!(matches!(
+            runtime.execute_signed_omas(&operation, call()).await,
+            Err(RuntimeError::AuthRequired(_))
+        ));
+    }
+}
