@@ -16,9 +16,19 @@ printf "%s  %s\n" "$WASMTIME_SHA256" "$engine" | sha256sum --check --status || {
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 fixture="$root/tests/fixtures/wasi_infinite_loop.wat"
 test -f "$fixture"
+control="$root/tests/fixtures/wasi_finite_loop.wat"
+test -f "$control"
 "$engine" --version
+# Positive control: the same engine, CLI and fuel flag must run a finite guest.
+# Otherwise a parser/CLI failure could be mistaken for a fuel trap.
+control_output="$(mktemp)"
+trap 'rm -f "$control_output"' EXIT
+if ! timeout --kill-after=2s 15s "$engine" run -W fuel=10000 "$control" >"$control_output" 2>&1; then
+  echo "FAIL: finite WASI control did not complete with fuel enabled" >&2
+  exit 1
+fi
 output="$(mktemp)"
-trap 'rm -f "$output"' EXIT
+trap 'rm -f "$output" "$control_output"' EXIT
 set +e
 timeout --kill-after=2s 15s "$engine" run -W fuel=10000 "$fixture" >"$output" 2>&1
 status=$?
