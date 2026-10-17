@@ -16,6 +16,9 @@ impl ToolExecutor for CountExecutor {
         self.0.fetch_add(1, Ordering::SeqCst);
         Ok(args)
     }
+    async fn execute_signed_fuel(&self, args: Value, ctx: &ExecutionContext, _fuel: u64) -> Result<Value, ToolError> {
+        self.execute(args, ctx).await
+    }
 }
 
 #[tokio::test]
