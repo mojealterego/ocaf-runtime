@@ -692,6 +692,10 @@ impl ToolExecutor for WasmToolExecutor {
     async fn execute(&self, args: Value, ctx: &ExecutionContext) -> Result<Value, ToolError> {
         self.run(args, ctx).await
     }
+
+    async fn execute_signed_fuel(&self, args: Value, ctx: &ExecutionContext, fuel: u64) -> Result<Value, ToolError> {
+        self.run_with_signed_fuel(args, ctx, fuel).await
+    }
 }
 
 async fn read_bounded<R>(mut reader: R, max_bytes: usize) -> Result<Vec<u8>, ToolError>
