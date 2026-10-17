@@ -10,6 +10,8 @@ on:
       - 'src/executor/wasi.rs'
       - 'src/lib.rs'
       - 'tests/omas_dispatch.rs'
+      - 'tests/fixtures/wasi_infinite_loop.wat'
+      - 'tests/scripts/verify_wasmtime_fuel_exhaustion.sh'
       - '.github/workflows/omas-security.yml'
   pull_request:
     paths:
@@ -46,5 +48,10 @@ jobs:
         run: cargo test --no-default-features signed_fuel_never_exceeds_either_ceiling -- --nocapture
       - name: Signed WASI engine regression tests
         run: cargo test --no-default-features pinned_engine_tests -- --nocapture
+      - name: Real Wasmtime fuel exhaustion (operator-approved engine)
+        if: ${{ vars.OCAF_WASMTIME_BIN != '' }}
+        env:
+          WASMTIME_BIN: ${{ vars.OCAF_WASMTIME_BIN }}
+        run: bash tests/scripts/verify_wasmtime_fuel_exhaustion.sh
       - name: Clippy
         run: cargo clippy --no-default-features --all-targets -- -D warnings
