@@ -54,6 +54,7 @@ jobs:
         if: ${{ vars.OCAF_WASMTIME_BIN != '' }}
         env:
           WASMTIME_BIN: ${{ vars.OCAF_WASMTIME_BIN }}
+          WASMTIME_SHA256: ${{ vars.OCAF_WASMTIME_SHA256 }}
         run: bash tests/scripts/verify_wasmtime_fuel_exhaustion.sh
       - name: Clippy
         run: cargo clippy --no-default-features --all-targets -- -D warnings
