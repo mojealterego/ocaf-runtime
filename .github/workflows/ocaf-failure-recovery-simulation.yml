@@ -39,7 +39,7 @@ jobs:
         run: |
           printf '%s\n' 'SIMULATION ONLY: single GitHub-hosted runner; not independent-host failover or Firecracker/KVM evidence.' >> "$GITHUB_STEP_SUMMARY"
           mkdir -p evidence
-          printf 'commit=%s\\nrun=%s\\nrunner=%s\\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$(hostname)" > evidence/runner.txt
+          printf 'commit=%s\nrun=%s\nrunner=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$(hostname)" > evidence/runner.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -72,6 +72,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      - name: Require live PostgreSQL before tests
+        run: |
+          set -euo pipefail
+          pg_isready -h 127.0.0.1 -p 5432 -U ocaf -d ocaf_ci
       - name: Test PostgreSQL fencing and leader recovery paths
         run: |
           set -euo pipefail
@@ -81,7 +85,7 @@ jobs:
         run: |
           printf '%s\n' 'SIMULATION ONLY: PostgreSQL service container shares a runner; not PostgreSQL HA, quorum, independent kernels or production recovery.' >> "$GITHUB_STEP_SUMMARY"
           mkdir -p evidence
-          printf 'commit=%s\\nrun=%s\\nrunner=%s\\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$(hostname)" > evidence/runner.txt
+          printf 'commit=%s\nrun=%s\nrunner=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$(hostname)" > evidence/runner.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
