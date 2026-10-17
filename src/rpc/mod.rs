@@ -1019,7 +1019,15 @@ impl RpcGateway {
                     .execute_authenticated_peer(call, &request.sender)
                     .await
                 {
-                    Ok(result) => (RpcStatus::Ok, result.output),
+                    Ok(result) => {
+                        // The signed RPC reply must fit its own body limit.
+                        // Reject excessive tool output without leaking its content.
+                        if !crate::omas_policy::admit_rpc_execution_payload(&result.output) {
+                            (RpcStatus::Failed, Value::Null)
+                        } else {
+                            (RpcStatus::Ok, result.output)
+                        }
+                    },
                     Err(RuntimeError::InvalidInput(_)) => (RpcStatus::InvalidInput, Value::Null),
                     Err(RuntimeError::Timeout) => (RpcStatus::Timeout, Value::Null),
                     Err(RuntimeError::ToolExecution(error)) => {
