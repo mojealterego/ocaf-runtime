@@ -398,3 +398,42 @@ async fn only_original_submitter_can_read_remote_job_status_and_result() {
     .await;
     assert!(matches!(outsider, Err(RpcError::Unauthorized)));
 }
+
+#[tokio::test]
+async fn tenant_bound_jobs_fail_closed_before_queue_mutation() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("tenant_queue.sqlite");
+    let peers = HashMap::from([
+        (
+            "requester".into(),
+            PeerPolicy::new(SUBMIT_KEY, vec!["echo".into()]).allow_job_submission(),
+        ),
+        (
+            "worker".into(),
+            PeerPolicy::new(WORKER_KEY, vec!["echo".into()]).allow_job_worker(),
+        ),
+    ]);
+    let runtime = OcafRuntime::new(0)
+        .with_tenant_namespace("tenant_a")
+        .unwrap();
+    let gateway = RpcGateway::new("coord", runtime, peers, 16)
+        .unwrap()
+        .with_job_db(&path)
+        .unwrap();
+    let id = uuid::Uuid::new_v4().to_string();
+
+    assert!(matches!(
+        call(&gateway, "requester", &SUBMIT_KEY, submit(&id), NOW).await,
+        Err(RpcError::Unauthorized)
+    ));
+    assert!(matches!(
+        call(&gateway, "worker", &WORKER_KEY, RpcAction::ClaimJob, NOW + 1).await,
+        Err(RpcError::Unauthorized)
+    ));
+    assert!(JobStore::open(&path)
+        .unwrap()
+        .get(&id)
+        .await
+        .unwrap()
+        .is_none());
+}
