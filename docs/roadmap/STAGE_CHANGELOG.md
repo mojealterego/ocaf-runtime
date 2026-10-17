@@ -414,3 +414,10 @@ Notes_261016_234639.pdf: sześć proponowanych crates Cargo Workspace (transport
 | Deklaracje compliance-by-construction i zastosowań medycznych/finansowych bez formalnych artefaktów i audytu | 328, 333 | Określony zakres dowodu, ograniczenia i kontrprzykłady; osobna ocena regulacyjna, niezależny audyt i decyzja operatora; nie deklarować gwarancji globalnego bezpieczeństwa |
 
 **Wniosek:** nie scalać przykładowego `main.rs` z istniejącym runtime. Dopiero działający kod, testy i dowody przypięte do SHA mogą zmienić status z PLANNED na IMPLEMENTED/TESTED. Brak podstaw do uznania bezpieczeństwa produkcyjnego.
+
+## 2026-10-17 — 0.39.3 deterministic regression closure
+
+- Naprawiono test negatywny katalogu rodzica socketu: jawne `chmod(0700/0755)` usuwa zależność od umask hosta.
+- Zestaw `scripts/tests/test_stage039_*.py`: **136/136 PASS**.
+- `test_release_readiness.py`: **12/12 PASS**.
+- Status dowodu: **SIMULATED_ONLY / HOST-INDEPENDENT REGRESSION PASS**. Nie zmienia `stage_039_complete=false`; realny Firecracker/KVM/WASI-in-guest pozostaje wymaganiem P0.
