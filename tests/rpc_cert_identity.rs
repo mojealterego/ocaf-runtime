@@ -213,3 +213,61 @@ fn omas_tenant_policy_accepts_explicit_scoped_identity() {
     )
     .is_ok());
 }
+
+#[tokio::test]
+async fn signed_omas_request_requires_matching_authenticated_peer_tenant() {
+    use ocaf_runtime::omas_signed::SignedOperation;
+    use ocaf_runtime::runtime::ToolCallRequest;
+    use serde_json::json;
+
+    let (pem, key, pin) = credential();
+    let call = ToolCallRequest {
+        call_id: "tenant-bound-call".into(),
+        tool: "demo_echo".into(),
+        args: json!({}),
+        auth: None,
+    };
+    let mut request = RpcRequest::new(
+        "node-a",
+        "node-b",
+        NOW,
+        5_000,
+        RpcAction::Execute {
+            tool: "demo_echo".into(),
+            args: json!({}),
+        },
+    )
+    .unwrap();
+    request.omas_operation = Some(SignedOperation {
+        tenant: "tenant_b".into(),
+        namespace: "tenant_b/tools".into(),
+        target: "tenant_b/tools/demo_echo".into(),
+        opcode: 1,
+        fuel: 100,
+        issued_at: 1_800_000_000,
+        nonce: "tenant_bound_nonce_001".into(),
+        payload: serde_json::to_vec(&call).unwrap(),
+        signature: vec![0; 64],
+    });
+    let signed = request.with_certificate_proof(&key).unwrap();
+
+    for configured_tenant in [None, Some("tenant_a")] {
+        let mut policy = PeerPolicy::new(KEY, vec!["demo_echo".into()])
+            .with_pinned_certificate(&pem, &pin)
+            .unwrap();
+        if let Some(tenant) = configured_tenant {
+            policy = policy.with_omas_tenant(tenant).unwrap();
+        }
+        let gateway = RpcGateway::new(
+            "node-b",
+            OcafRuntime::new(0),
+            HashMap::from([("node-a".into(), policy)]),
+            4,
+        )
+        .unwrap();
+        assert!(
+            matches!(send(&gateway, &signed).await, Err(RpcError::Unauthorized)),
+            "OMAS request must fail closed for peer tenant {configured_tenant:?}"
+        );
+    }
+}
