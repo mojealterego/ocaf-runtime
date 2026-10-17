@@ -185,6 +185,13 @@ impl OcafRuntime {
         request: ToolCallRequest,
         authenticated_sender: &str,
     ) -> Result<ToolCallResult, RuntimeError> {
+        // Tenant-bound execution must enter through verified signed OMAS.
+        // Never let a caller bypass signature/replay checks through this API.
+        if self.requires_signed_omas() {
+            return Err(RuntimeError::AuthRequired(
+                "signed OMAS operation required for tenant-bound execution".into(),
+            ));
+        }
         if !valid_principal_part(authenticated_sender) {
             return Err(RuntimeError::AuthRequired(
                 "invalid authenticated sender".into(),
