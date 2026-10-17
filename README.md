@@ -15,13 +15,13 @@
 <h2><font color="red">PEŁNA ROADMAPA OCAF JEST NA SAMEJ GÓRZE REPOZYTORIUM — NIE USUWAĆ, NIE PRZENOSIĆ, NIE SKRACAĆ!</font></h2>
 </div>
 
-> **UWAGA CZYTAĆ — ZASADA BEZWZGLĘDNA:** Pierwszy blok `README.md` zawiera kompletną, rozwijaną Roadmapę: 215 etapów głównych, 64 techniczne i 10 produktów Agents Builder, łącznie **289 pozycji**. Wszystkie nowe wymagania z dokumentów PDF 1–9 należy uzgadniać z istniejącymi etapami i dopisywać na końcu rejestru etapów bez kasowania historii. Nowe etapy 208–215 są `PLANNED`; 33 repozytoria referencyjne nie oznaczają integracji. Nie przesuwać tej sekcji poniżej innych sekcji README. Każdą zmianę synchronizować z `ROADMAP.md`, lustrem, manifestem i changelogiem.
+> **UWAGA CZYTAĆ — ZASADA BEZWZGLĘDNA:** Aktualny manifest v11 rejestruje **333 etapy główne, 64 podetapy techniczne i 10 produktów Agents Builder (407 pozycji)**. Historyczny stan 215/64/10 pozostaje zachowany w archiwach i changelogu. Nie usuwać ani nie renumerować etapów. Status produkcyjny wymaga niezależnych dowodów.
 
 > **ZASADA STAŁEJ ROZBUDOWY ROADMAPY:** Każdy nowy punkt infrastruktury, architektury, systemu, bezpieczeństwa, integracji lub funkcjonalności OCAF będzie dopisywany do Roadmapy jako kolejna pozycja. Istniejące pozycje i ich historia pozostają zachowane; odzyskane wymagania historyczne wracają pod pierwotne identyfikatory. Po każdym etapie aktualizowane są statusy, dowody testów i dziennik zmian.
 
-# OCAF RUNTIME — ROADMAPA CAŁEGO PROJEKTU (1–289)
+# OCAF RUNTIME — ROADMAPA CAŁEGO PROJEKTU (407 pozycji)
 
-**Pełny rejestr w ramkach poniżej:** wszystkie 215 etapów głównych, 64 podetapy techniczne i 10 produktów Agents Builder — od początku repozytorium do ostatnich zarejestrowanych funkcji. Każdy punkt ma własny numer, opis i status. [Dokument kanoniczny](ROADMAP.md) · [Rejestr zmian](docs/roadmap/STAGE_CHANGELOG.md).
+**Pełny rejestr w ramkach poniżej przedstawia historyczną migawkę 289 pozycji; aktualny manifest v11 zawiera 333 etapy główne, 64 podetapy techniczne i 10 produktów Agents Builder — od początku repozytorium do ostatnich zarejestrowanych funkcji. Każdy punkt ma własny numer, opis i status. [Dokument kanoniczny](ROADMAP.md) · [Rejestr zmian](docs/roadmap/STAGE_CHANGELOG.md).
 
 ## NAWIGACJA — GDZIE SĄ POZOSTAŁE ETAPY?
 
@@ -29,9 +29,9 @@
 
 **[OTWÓRZ PEŁNĄ KANONICZNĄ ROADMAPĘ — wszystkie etapy od początku do końca](ROADMAP.md)** · [Manifest identyfikatorów](docs/roadmap/canonical_v11_inventory.json)
 
-**Licznik:** 215 etapów głównych + 64 techniczne + 10 produktów = **289 pozycji**. Ostatni główny etap: **215**. Następny nowy etap: **216**. **ZAKAZ SAMOWOLKI:** nie usuwać, nie skracać i nie renumerować.
+**Aktualny licznik manifestu v11:** 333 etapy główne + 64 techniczne + 10 produktów = **407 pozycji**. Ostatni główny etap: **333**. Następny nowy etap: **334**. Historyczna migawka poniżej obejmuje 289 pozycji. **ZAKAZ SAMOWOLKI:** nie usuwać, nie skracać i nie renumerować.
 
-## Pełny rejestr historyczny i bieżący (1–289)
+## Historyczny rejestr (migawka 1–289; aktualny zakres: 407)
 
 **To jest pierwsza sekcja README.md i pełna lista statusów, nie tylko odsyłacz.** Każdy numer ma status odzwierciedlający oddzielnie wykonanie, historyczne dowody i odbiór produkcyjny. `ETAP UKOŃCZONY` w punktach 0.00–0.38 oznacza zamknięcie etapów zgodnie z dyspozycją właściciela projektu, a nie niezależnie potwierdzoną gotowość produkcyjną; `ZROBIONE — ZAKRES IMPLEMENTACJI` oznacza kod i testy historyczne obecne w repo (NIE pełny odbiór ani produkcję); `ZROBIONE — TEST W OGRANICZONYM ZAKRESIE` oznacza wyłącznie potwierdzoną próbę laboratoryjną.
 
