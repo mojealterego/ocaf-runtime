@@ -129,6 +129,47 @@ pub fn unix_now() -> Result<i64, SignedOperationError> {
 mod tests {
     use super::*;
     use openssl::sign::Signer;
+    #[test]
+    fn v2_rpc_sender_is_covered_by_ed25519_and_cannot_be_downgraded() {
+        let key = PKey::generate_ed25519().unwrap();
+        let public: [u8; 32] = key.raw_public_key().unwrap().try_into().unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let db = dir.path().join("v2.sqlite");
+        Connection::open(&db).unwrap().close().unwrap();
+        let now = 1_800_000_000;
+        let mut op = SignedOperation {
+            tenant: "tenant_a".into(),
+            namespace: "tenant_a/tools".into(),
+            target: "tenant_a/tools/run".into(),
+            opcode: 1,
+            fuel: 100,
+            issued_at: now,
+            nonce: "v2_sender_nonce_001".into(),
+            payload: b"request".to_vec(),
+            rpc_sender: Some("node-a".into()),
+            signature: Vec::new(),
+        };
+        op.signature = Signer::new_without_digest(&key).unwrap()
+            .sign_oneshot_to_vec(&op.canonical_bytes()).unwrap();
+        let mut impersonated = op.clone();
+        impersonated.rpc_sender = Some("node-b".into());
+        assert!(matches!(
+            verify_and_consume(&impersonated, &public, &db, now),
+            Err(SignedOperationError::Signature)
+        ));
+        let mut downgraded = op.clone();
+        downgraded.rpc_sender = None;
+        assert!(matches!(
+            verify_and_consume(&downgraded, &public, &db, now),
+            Err(SignedOperationError::Signature)
+        ));
+        assert!(verify_and_consume(&op, &public, &db, now).is_ok());
+        assert!(matches!(
+            verify_and_consume(&op, &public, &db, now),
+            Err(SignedOperationError::Replay)
+        ));
+    }
+
     #[cfg(unix)]
     #[test]
     fn replay_store_symlink_is_rejected() {
