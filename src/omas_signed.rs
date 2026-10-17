@@ -116,6 +116,36 @@ pub fn unix_now() -> Result<i64, SignedOperationError> {
 mod tests {
     use super::*;
     use openssl::sign::Signer;
+    #[cfg(unix)]
+    #[test]
+    fn replay_store_symlink_is_rejected() {
+        let key = PKey::generate_ed25519().unwrap();
+        let public: [u8; 32] = key.raw_public_key().unwrap().try_into().unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let actual = dir.path().join("actual.sqlite");
+        let linked = dir.path().join("linked.sqlite");
+        Connection::open(&actual).unwrap().close().unwrap();
+        std::os::unix::fs::symlink(&actual, &linked).unwrap();
+        let now = 1_800_000_000;
+        let mut op = SignedOperation {
+            tenant: "tenant_a".into(),
+            namespace: "tenant_a/tools".into(),
+            target: "tenant_a/tools/run".into(),
+            opcode: 1,
+            fuel: 100,
+            issued_at: now,
+            nonce: "symlink_replay_nonce_001".into(),
+            payload: b"hello".to_vec(),
+            signature: Vec::new(),
+        };
+        op.signature = Signer::new_without_digest(&key).unwrap()
+            .sign_oneshot_to_vec(&op.canonical_bytes()).unwrap();
+        assert!(matches!(
+            verify_and_consume(&op, &public, &linked, now),
+            Err(SignedOperationError::Store)
+        ));
+    }
+
     #[test]
     fn concurrent_replay_allows_exactly_one_admission() {
         let key = PKey::generate_ed25519().unwrap();
