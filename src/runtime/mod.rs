@@ -267,6 +267,13 @@ impl OcafRuntime {
     }
 
     pub async fn execute(&self, request: ToolCallRequest) -> Result<ToolCallResult, RuntimeError> {
+        // Tenant-scoped runtimes must never bypass signed OMAS admission
+        // through the public local execution entry point.
+        if self.requires_signed_omas() {
+            return Err(RuntimeError::AuthRequired(
+                "signed OMAS operation required for tenant-bound execution".into(),
+            ));
+        }
         self.execute_attributed(request, "unattributed", None).await
     }
 
