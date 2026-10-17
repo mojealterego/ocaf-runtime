@@ -19,9 +19,26 @@ pub fn admit(tenant: &str, namespace: &str, target: &str, frame: usize, payload:
         frame <= MAX_FRAME_BYTES && payload <= MAX_PAYLOAD_BYTES &&
         payload <= frame && fuel > 0 && fuel <= MAX_FUEL
 }
+
+/// Enforce OMAS resource bounds on legacy RPC execution payloads without
+/// changing the existing RPC wire protocol, authentication, ACL or fencing.
+/// Reject serialization errors and oversized values before replay admission.
+pub fn admit_rpc_execution_payload(args: &serde_json::Value) -> bool {
+    serde_json::to_vec(args).is_ok_and(|encoded| {
+        encoded.len() <= MAX_PAYLOAD_BYTES
+            && encoded.len() <= crate::rpc::MAX_FRAME_BYTES
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn rpc_execution_payload_is_bounded() {
+        assert!(admit_rpc_execution_payload(&serde_json::json!({"ok": true})));
+        assert!(!admit_rpc_execution_payload(&serde_json::json!({"data": "x".repeat(70_000)})));
+    }
+
     #[test]
     fn reject_cross_tenant_and_prefix_confusion() {
         assert!(admit("tenant_a", "tenant_a/tools", "tenant_a/tools/run", 100, 50, 1000));
