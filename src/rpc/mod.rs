@@ -149,6 +149,10 @@ pub struct RpcRequest {
     pub issued_at_ms: u64,
     pub ttl_ms: u64,
     pub action: RpcAction,
+    /// Optional signed OMAS capability, bound to the exact Execute tool call.
+    /// The existing RPC HMAC, certificate proof, ACL and replay remain mandatory.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub omas_operation: Option<crate::omas_signed::SignedOperation>,
     /// Optional certificate-private-key proof over the exact immutable request
     /// UUID, timestamp, recipient and action. Never trust an unsigned claim.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -208,6 +212,7 @@ impl RpcRequest {
             issued_at_ms,
             ttl_ms,
             action,
+            omas_operation: None,
             certificate_proof_b64: None,
         })
     }
@@ -746,6 +751,14 @@ impl RpcGateway {
         // OMAS admission is additive: keep the existing HMAC, certificate PoP,
         // peer ACL, leader fencing, rate limits and durable replay checks.
         // Apply resource bounds before any execution or job submission.
+        // A signed OMAS operation is meaningful only for Execute. All other
+        // RPC actions retain their existing, independently enforced ACLs.
+        if request.omas_operation.is_some()
+            && !matches!(&request.action, RpcAction::Execute { .. })
+        {
+            return Err(RpcError::Unauthorized);
+        }
+
         match &request.action {
             RpcAction::Execute { args, .. }
             | RpcAction::SubmitJob { args, .. }
@@ -1014,10 +1027,12 @@ impl RpcGateway {
                     args,
                     auth: None,
                 };
-                match self
-                    .runtime
-                    .execute_authenticated_peer(call, &request.sender)
-                    .await
+                let execution = if let Some(operation) = request.omas_operation.as_ref() {
+                    self.runtime.execute_signed_omas(operation, call).await
+                } else {
+                    self.runtime.execute_authenticated_peer(call, &request.sender).await
+                };
+                match execution
                 {
                     Ok(result) => {
                         // The signed RPC reply must fit its own body limit.
