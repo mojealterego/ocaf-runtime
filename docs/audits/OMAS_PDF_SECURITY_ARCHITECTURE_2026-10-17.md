@@ -34,3 +34,8 @@
 Nie zastępować istniejącego runtime OCAF osobnym jądrem OMAS. Rozważyć OMAS jako **wersjonowany natywny protokół wewnętrzny i zestaw kontraktów** nad już istniejącymi `transport`, `auth`, `executor`, `registry` i `metrics`; adapter MCP/OpenAPI może pozostać na granicy integracyjnej. Brak uzasadnienia dla usunięcia HTTP/MCP wszędzie. Nie deklarować wydajności bez benchmarku, formalnej weryfikacji bez dowodu ani produkcyjności na podstawie kodu w PDF.
 
 **Status audytu:** dokument przeanalizowany semantycznie; przypisania do modułów wymagają dalszego sprawdzenia kodu/CI. Żaden wymieniony GAP nie został automatycznie uznany za wdrożony.
+
+
+## Implementacja z 2026-10-17 — stan zweryfikowany w Git
+
+Na `main` zapisano `src/omas_policy.rs` (`7839718`), `src/omas_signed.rs` (`6880eec`), eksport modułów w `src/lib.rs` (`d6cd9be`) i `OcafRuntime::execute_signed_omas` (`463d469`). Ed25519 weryfikuje kanoniczną kopertę zawierającą tenant, namespace, target, opcode, fuel, timestamp, nonce i SHA-256 payload. SQLite używa transakcji IMMEDIATE i klucza `(tenant, nonce)` po pozytywnej weryfikacji podpisu. Runtime wymaga zgodności tenant/target/payload, dopuszcza obecnie tylko opcode 1 i kieruje wywołanie do istniejącego executora. Testy negatywne zapisano w `6fe7942`. **Status: IMPLEMENTED, NOT TESTED**: GitHub API nie zwróciło workflow runs dla ostatniego SHA; status Railway nie dowodzi `cargo test`. Nie ma jeszcze kompletnego protokołu sieciowego OMAS, key rotation, niezależnego audytu ani E2E Firecracker. Pozostałe opcode 2–5 są niedostępne przez ten entrypoint (fail-closed).
