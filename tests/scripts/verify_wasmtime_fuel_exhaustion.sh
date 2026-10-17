@@ -9,12 +9,10 @@ if [[ ! "${WASMTIME_SHA256:-}" =~ ^[[:xdigit:]]{64}$ ]]; then
   echo "FAIL: approved Wasmtime SHA-256 must be exactly 64 hexadecimal characters" >&2
   exit 2
 fi
-if [ -n "${WASMTIME_SHA256:-}" ]; then
-  printf "%s  %s\n" "$WASMTIME_SHA256" "$engine" | sha256sum --check --status || {
-    echo "FAIL: Wasmtime binary SHA-256 does not match approved digest" >&2
-    exit 2
-  }
-fi
+printf "%s  %s\n" "$WASMTIME_SHA256" "$engine" | sha256sum --check --status || {
+  echo "FAIL: Wasmtime binary SHA-256 does not match approved digest" >&2
+  exit 2
+}
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 fixture="$root/tests/fixtures/wasi_infinite_loop.wat"
 test -f "$fixture"
