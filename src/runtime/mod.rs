@@ -189,7 +189,7 @@ impl OcafRuntime {
             .as_ref()
             .map(|tenant| format!("{tenant}:{authenticated_sender}"))
             .unwrap_or_else(|| "unattributed".to_owned());
-        self.execute_attributed(request, &principal).await
+        self.execute_attributed(request, &principal, None).await
     }
 
     /// Verified OMAS dispatch. Never accept the tenant from the message as a
@@ -226,7 +226,7 @@ impl OcafRuntime {
             .map_err(|_| RuntimeError::AuthRequired("invalid system clock".into()))?;
         crate::omas_signed::verify_and_consume(operation, public_key, replay_database, now)
             .map_err(|error| RuntimeError::AuthRequired(error.to_string()))?;
-        self.execute_authenticated_peer(request, "omas_signed").await
+        self.execute_attributed(request, &format!("{}:omas_signed", operation.tenant), Some(operation.fuel)).await
     }
 
     /// Register only the manifest actually verified by the Ed25519 WASI
@@ -245,16 +245,17 @@ impl OcafRuntime {
     }
 
     pub async fn execute(&self, request: ToolCallRequest) -> Result<ToolCallResult, RuntimeError> {
-        self.execute_attributed(request, "unattributed").await
+        self.execute_attributed(request, "unattributed", None).await
     }
 
     async fn execute_attributed(
         &self,
         request: ToolCallRequest,
         principal: &str,
+        signed_fuel: Option<u64>,
     ) -> Result<ToolCallResult, RuntimeError> {
         let start = Instant::now();
-        let result = self.execute_inner(&request, start, principal).await;
+        let result = self.execute_inner(&request, start, principal, signed_fuel).await;
         let elapsed_us = start.elapsed().as_micros().min(u64::MAX as u128) as u64;
         if result.is_ok() {
             self.metrics.record_success(elapsed_us).await;
@@ -269,6 +270,7 @@ impl OcafRuntime {
         request: &ToolCallRequest,
         start: Instant,
         principal: &str,
+        signed_fuel: Option<u64>,
     ) -> Result<ToolCallResult, RuntimeError> {
         let tool = self
             .registry
@@ -312,10 +314,15 @@ impl OcafRuntime {
             correlation_id: request.call_id.clone(),
         };
 
-        let output =
-            tokio::time::timeout(timeout, tool.executor.execute(request.args.clone(), &ctx))
-                .await
-                .map_err(|_| RuntimeError::Timeout)??;
+        let execution = async {
+            match signed_fuel {
+                Some(fuel) => tool.executor.execute_signed_fuel(request.args.clone(), &ctx, fuel).await,
+                None => tool.executor.execute(request.args.clone(), &ctx).await,
+            }
+        };
+        let output = tokio::time::timeout(timeout, execution)
+            .await
+            .map_err(|_| RuntimeError::Timeout)??;
 
         if !tool.output_validator.is_valid(&output) {
             return Err(RuntimeError::InvalidOutput(
