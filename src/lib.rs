@@ -5,6 +5,7 @@ pub mod executor;
 pub mod jobs;
 pub mod metrics;
 pub mod ops;
+pub mod omas_policy;
 pub mod registry;
 pub mod rpc;
 pub mod runtime;
