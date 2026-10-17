@@ -51,6 +51,12 @@ fn effective_signed_fuel(operator_fuel: u64, signed_fuel: u64) -> Result<u64, To
     Ok(operator_fuel.min(signed_fuel))
 }
 
+fn wasmtime_limits_argument(fuel: u64, memory: u64, stack: u64) -> String {
+    format!(
+        "fuel={fuel},max-memory-size={memory},max-wasm-stack={stack},max-instances=1,max-memories=1,max-tables=1,nan-canonicalization=y"
+    )
+}
+
 fn sha256(bytes: &[u8]) -> [u8; 32] {
     Sha256::digest(bytes).into()
 }
@@ -538,11 +544,10 @@ impl WasmToolExecutor {
         command
             .arg("run")
             .arg("-W")
-            .arg(format!(
-                "fuel={},max-memory-size={},max-wasm-stack={},max-instances=1,max-memories=1,max-tables=1,nan-canonicalization=y",
+            .arg(wasmtime_limits_argument(
                 effective_fuel,
                 self.policy.max_linear_memory_bytes,
-                self.policy.max_wasm_stack_bytes
+                self.policy.max_wasm_stack_bytes,
             ))
             .arg(&staged.module_path)
             // Wasmtime CLI may require a home/cache location even for a
@@ -741,6 +746,16 @@ where
 #[cfg(test)]
 mod pinned_engine_tests {
     use super::*;
+
+    #[test]
+    fn signed_fuel_is_forwarded_to_actual_wasmtime_argument_builder() {
+        let effective = effective_signed_fuel(10_000, 17).unwrap();
+        let arg = wasmtime_limits_argument(effective, 67_108_864, 1_048_576);
+        assert!(arg.starts_with("fuel=17,"));
+        assert!(arg.contains(",max-memory-size=67108864,"));
+        assert!(arg.contains(",max-wasm-stack=1048576,"));
+        assert_eq!(arg.matches("fuel=").count(), 1);
+    }
 
     #[test]
     fn signed_fuel_never_exceeds_either_ceiling() {
