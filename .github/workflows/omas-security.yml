@@ -29,8 +29,8 @@ jobs:
       - name: Format
         run: cargo fmt --all -- --check
       - name: OMAS unit and negative tests
-        run: cargo test --no-default-features omas_ -- --nocapture
+        run: cargo test --no-default-features omas -- --nocapture
       - name: OMAS signed operation tests
-        run: cargo test --no-default-features signature_binds_operation_and_replay_persists -- --exact
+        run: cargo test --no-default-features signature_binds_operation_and_replay_persists
       - name: Clippy
         run: cargo clippy --no-default-features --all-targets -- -D warnings
