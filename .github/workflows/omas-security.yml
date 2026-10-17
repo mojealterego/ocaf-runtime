@@ -42,5 +42,7 @@ jobs:
         run: cargo test --no-default-features signature_binds_operation_and_replay_persists
       - name: Signed dispatch integration test
         run: cargo test --no-default-features --test omas_dispatch
+      - name: WASI signed fuel boundary tests
+        run: cargo test --no-default-features signed_fuel_never_exceeds_either_ceiling -- --nocapture
       - name: Clippy
         run: cargo clippy --no-default-features --all-targets -- -D warnings
