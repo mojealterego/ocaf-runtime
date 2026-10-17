@@ -33,7 +33,7 @@ jobs:
       - name: OMAS unit and negative tests
         run: cargo test --no-default-features omas -- --nocapture
       - name: Concurrent nonce replay regression
-        run: cargo test --no-default-features concurrent_replay_allows_exactly_one_admission -- --exact --nocapture
+        run: cargo test --no-default-features concurrent_replay_allows_exactly_one_admission -- --nocapture
       - name: OMAS signed operation tests
         run: cargo test --no-default-features signature_binds_operation_and_replay_persists
       - name: Signed dispatch integration test
