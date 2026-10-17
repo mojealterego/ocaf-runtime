@@ -564,3 +564,11 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - Rozbieżne limity RPC (64 KiB, 32 KiB body, 30 s TTL) i OMAS signed (1 MiB, 768 KiB payload, 300 s window) wymagają wersjonowanego kontraktu, nie bezwarunkowego podniesienia limitów.
 - OMAS zastępuje MCP jako protokół docelowy. Zachować istniejący Zenoh RPC, fencing i ACL, zamiast duplikować runtime; adapter MCP tylko opcjonalny i odseparowany.
 - Audyt statyczny, bez uruchomienia testów i bez potwierdzenia pełnej migracji.
+
+
+### 2026-10-17 — OMAS V2 i drugi host testowy (odbiór P0 otwarty)
+
+- Zaimplementowano domenowo rozdzielony podpis Ed25519 OMAS V2 obejmujący `rpc_sender`. RPC odrzuca operacje V1 oraz rozbieżność podpisanego nadawcy z uwierzytelnionym nadawcą RPC; legacy V1 pozostaje wyłącznie w lokalnym interfejsie. Dowody kodu: `src/omas_signed.rs`, `src/runtime/mod.rs`, `src/rpc/mod.rs`.
+- Testy `cargo test --locked --no-default-features --lib`: 28 PASS; `--test omas_dispatch`: 2 PASS; `--test rpc_cert_identity`: 12 PASS; `--test distributed_jobs_rpc`: 7 PASS; `--test postgres_fenced_effect`: 3 PASS; `cargo clippy --locked --no-default-features --all-targets -- -D warnings`: PASS. Zestawy wykonywano oddzielnie, nie są dowodem pełnego `cargo test`.
+- Drugie środowisko `ocaf-stage038-host-b` pobrało `main` na SHA `69d2a527df7bdd016ed4159721a148c053d31d5c`. Po instalacji Rust 1.99.1: `omas_dispatch` 2 PASS oraz `rpc_cert_identity` 12 PASS. Pierwsze środowisko `ocaf-stage038-linux` miało odmienny `/proc/sys/kernel/random/boot_id`; nie wykonano testu ruchu między hostami ani testów Firecracker/KVM guest.
+- **Otwarte:** trwałe przeniesienie zweryfikowanego principal/tenant do rekordów jobs, lease i fenced-effect receipts; dodatnie testy OMAS V2 jobs/effects; realny guest-side WASI i izolacja tenantów na niezależnych hostach; failover, recovery, niezależny audyt i odbiór operatora. Status: częściowo IMPLEMENTED/TESTED, nie OPERATOR_ACCEPTED ani PRODUCTION_APPROVED.
