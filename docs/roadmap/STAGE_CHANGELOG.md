@@ -502,3 +502,10 @@ Audyt zapisany w `docs/audits/OMAS_PDF_SECURITY_ARCHITECTURE_2026-10-17.md`. Map
 - Kontrola manifestu v11 wykazała 16 istniejących etapów głównych 216–231 z opisami i statusami PLANNED, lecz bez odpowiadających wierszy README. Dodano wszystkie 16 wierszy bez tworzenia nowych identyfikatorów i bez zmiany statusów.
 - Usunięto z ROADMAP.md i lustrzanej roadmapy historyczne, nieaktualne stwierdzenie, że numer 216 jest wolny. Aktualny numer następnego nowego etapu w manifeście: 334.
 - Ponowna kontrola strukturalna: wszystkie 251 rekordów tablicy `main` manifestu mają osobny wiersz README; `technical` liczy 64 rekordy. `main_count=333` jest deklaracją szerszego zbioru historycznych etapów, nie długością tablicy `main`; pełna rekonsyliacja zakresów i walidacja CI pozostają otwarte.
+
+## 2026-10-17 — Inwentaryzacja rozbieżności liczby etapów głównych
+
+- Manifest v11 deklaruje `main_count=333`, lecz `main` zawiera **251 indywidualnych rekordów**; `main_count_basis` brzmi `207 historical + 126 appended stages; detailed main array remains legacy and requires reconciliation`.
+- Potwierdzono brak ciągłości identyfikatorów w tablicy `main` (m.in. 231→301). Nie wolno automatycznie tworzyć brakujących etapów ani traktować deklarowanej liczby jako dowodu istnienia wszystkich kontraktów.
+- Korekta 216–231 jest poprawna jako odtworzenie istniejących rekordów, ale **nie zamyka** audytu 333 etapów. Zachowano oryginalne numery i statusy.
+- Następna brama audytowa: przypisać każdemu brakującemu identyfikatorowi źródło historyczne i kontrakt, odróżnić etap od zakresu/aliasu, dopiero potem uzupełniać manifest i README; wymaga testów walidacyjnych i wyników CI.
