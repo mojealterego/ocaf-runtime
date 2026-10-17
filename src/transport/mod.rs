@@ -1,4 +1,5 @@
 pub mod rpc;
+pub mod shm;
 pub mod sink;
 #[cfg(feature = "tls-bound")]
 pub mod tls_bound;
