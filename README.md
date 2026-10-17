@@ -33,7 +33,7 @@
 
 ## Historyczny rejestr (migawka 1–289; aktualny zakres: 407)
 
-**To jest pierwsza sekcja README.md i pełna lista statusów, nie tylko odsyłacz.** Każdy numer ma status odzwierciedlający oddzielnie wykonanie, historyczne dowody i odbiór produkcyjny. `ETAP UKOŃCZONY` w punktach 0.00–0.38 oznacza zamknięcie etapów zgodnie z dyspozycją właściciela projektu, a nie niezależnie potwierdzoną gotowość produkcyjną; `ZROBIONE — ZAKRES IMPLEMENTACJI` oznacza kod i testy historyczne obecne w repo (NIE pełny odbiór ani produkcję); `ZROBIONE — TEST W OGRANICZONYM ZAKRESIE` oznacza wyłącznie potwierdzoną próbę laboratoryjną.
+**To jest pierwsza sekcja README.md i pełna lista statusów, nie tylko odsyłacz.** Każdy numer ma status odzwierciedlający oddzielnie wykonanie, historyczne dowody i odbiór produkcyjny. `ETAP UKOŃCZONY` w punktach 0.00–0.38 oznacza zamknięcie etapów zgodnie z dyspozycją właściciela projektu (0.38: zakończony administracyjnie, przejście do 0.39), a nie niezależnie potwierdzoną gotowość produkcyjną; `ZROBIONE — ZAKRES IMPLEMENTACJI` oznacza kod i testy historyczne obecne w repo (NIE pełny odbiór ani produkcję); `ZROBIONE — TEST W OGRANICZONYM ZAKRESIE` oznacza wyłącznie potwierdzoną próbę laboratoryjną.
 
 **Zakres inwentaryzacji:** **1–207 = historyczne etapy główne (0.00–2.06)**, **208–215 = osiem nowych etapów głównych PDF 09**, **216–279 = 64 podetapy techniczne**, **280–289 = 10 pierwotnych produktów Agents Builder Code/NoCode**. Suma **289 pozycji w README** = 279 etapów głównych/podetapów + 10 osobnych pozycji produktowych (nie są dodatkowymi numerami etapów). **33 repozytoria referencyjne nie są etapami.**
 
