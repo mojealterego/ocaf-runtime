@@ -770,10 +770,8 @@ impl RpcGateway {
             RpcAction::FinishJob {
                 outcome: RemoteJobOutcome::Succeeded { output },
                 ..
-            } => {
-                if !crate::omas_policy::admit_rpc_execution_payload(output) {
-                    return Err(RpcError::Malformed);
-                }
+            } if !crate::omas_policy::admit_rpc_execution_payload(output) => {
+                return Err(RpcError::Malformed);
             }
             _ => {}
         }
