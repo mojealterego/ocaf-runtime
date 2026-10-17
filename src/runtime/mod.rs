@@ -171,6 +171,12 @@ impl OcafRuntime {
         self
     }
 
+    /// Signed OMAS is mandatory for RPC execution when a tenant is pinned.
+    /// A partially configured signed tenant fails closed in the signed path.
+    pub fn requires_signed_omas(&self) -> bool {
+        self.tenant_namespace.is_some()
+    }
+
     /// The authenticated sender must be supplied ONLY by a trusted RPC
     /// handler after HMAC, certificate PoP, TLS binding and replay gates.
     /// This method does not authenticate a raw caller-provided string.
