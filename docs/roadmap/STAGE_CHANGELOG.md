@@ -477,3 +477,8 @@ Commity: manifest `8efeed817f3cc6089606dd97ba4bf90629b4d501`, roadmapa `21d3bed2
 ## 2026-10-17 — 0.39: niezależna kontrola historycznych dowodów CI
 
 Zweryfikowano przez GitHub Actions API zakończony sukcesem run `38739812121`, job `116438244615`: dwie rzeczywiste maszyny Firecracker/jailer, UDP z gości, izolacja i recovery; artefakt `11975256452`. Log nie zawiera potwierdzenia wykonania podpisanego WASI w gościu ani weryfikacji podpisanego manifestu. Wcześniejsze commity `d9000ef`, `0eb8c7d`, `e388c99`, `2975381` wzmacniają walidator serial, ale nie stanowią dowodu wykonania E2E. Status etapu 0.39 pozostaje `ACTIVE_TECHNICAL_OPEN`, `PRODUCTION_APPROVED=false`. Do zamknięcia konieczne: rzeczywiste podpisane WASI uruchomione w Firecracker z dowodem podpisu, negatywne próby i pełna brama odbioru.
+
+
+## 2026-10-17 — OMAS PDF, 29 stron
+
+Audyt zapisany w `docs/audits/OMAS_PDF_SECURITY_ARCHITECTURE_2026-10-17.md`. Mapowanie istniejących etapów: 0.39 (guest WASI, sandbox), 0.46 (Zenoh/typed wire), auth, registry, swarm, memory, Builder 0.50–0.55. Krytyczne luki kodu przykładowego: podpis nie obejmuje opcode/limitów, nonce przed weryfikacją podpisu, prefix confusion, RAM-only replay cache, brak limitów bajtowych. Status: audyt dokumentu, bez dowodu implementacji/CI. Synchronizacja opisów w ROADMAP.md i docs/ROADMAP_FULL_ECOSYSTEM_2026.md.
