@@ -780,6 +780,11 @@ impl RpcGateway {
 
         match &request.action {
             RpcAction::Execute { tool, .. } => {
+                // Fail closed before job/replay admission or tool lookup: a
+                // tenant-bound runtime must not accept unsigned RPC Execute.
+                if self.runtime.requires_signed_omas() && request.omas_operation.is_none() {
+                    return Err(RpcError::Unauthorized);
+                }
                 // A free, manifest-permissionless tool is not necessarily
                 // side-effect-free. In cluster mode the coordinator must
                 // never start an unleased, unfenced runtime execution.
