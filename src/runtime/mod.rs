@@ -208,6 +208,23 @@ impl OcafRuntime {
     /// Verified OMAS dispatch. Never accept the tenant from the message as a
     /// trusted principal: it must match the operator-configured runtime tenant.
     /// A nonce is consumed before dispatch; failed execution is not replayable.
+    /// RPC-only OMAS dispatch: require a V2 Ed25519 operation whose
+    /// domain-separated signature covers the authenticated RPC sender.
+    /// Reject legacy V1 before replay admission or any tool side effect.
+    pub async fn execute_signed_omas_for_rpc(
+        &self,
+        operation: &crate::omas_signed::SignedOperation,
+        request: ToolCallRequest,
+        authenticated_sender: &str,
+    ) -> Result<ToolCallResult, RuntimeError> {
+        if operation.rpc_sender.as_deref() != Some(authenticated_sender) {
+            return Err(RuntimeError::AuthRequired(
+                "OMAS V2 RPC sender binding missing or mismatched".into(),
+            ));
+        }
+        self.execute_signed_omas(operation, request).await
+    }
+
     pub async fn execute_signed_omas(
         &self,
         operation: &crate::omas_signed::SignedOperation,
