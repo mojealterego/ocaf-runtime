@@ -24,6 +24,11 @@ class GuestWasiBindings(unittest.TestCase):
         with self.assertRaises(g.GuestWasiError):
             g.verify_console(forged)
 
+    def test_reject_ambiguous_linux_boot_markers(self):
+        duplicate=b"Linux version 6.1.0\\n"+GOOD
+        with self.assertRaises(g.GuestWasiError):
+            g.verify_console(duplicate)
+
     def test_broker_two_identity_binding_and_digests(self):
         with tempfile.TemporaryDirectory() as root:
             root=Path(root);jail=root/"jailer";jail.mkdir()
