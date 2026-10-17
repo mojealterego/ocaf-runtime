@@ -509,3 +509,9 @@ Audyt zapisany w `docs/audits/OMAS_PDF_SECURITY_ARCHITECTURE_2026-10-17.md`. Map
 - Potwierdzono brak ciągłości identyfikatorów w tablicy `main` (m.in. 231→301). Nie wolno automatycznie tworzyć brakujących etapów ani traktować deklarowanej liczby jako dowodu istnienia wszystkich kontraktów.
 - Korekta 216–231 jest poprawna jako odtworzenie istniejących rekordów, ale **nie zamyka** audytu 333 etapów. Zachowano oryginalne numery i statusy.
 - Następna brama audytowa: przypisać każdemu brakującemu identyfikatorowi źródło historyczne i kontrakt, odróżnić etap od zakresu/aliasu, dopiero potem uzupełniać manifest i README; wymaga testów walidacyjnych i wyników CI.
+
+## 2026-10-17 — Uzgodnienie przesłanej rekonstrukcji PDF z kanoniczną roadmapą
+
+- Przesłana rekonstrukcja 84-stronicowa sama ostrzega, że nie jest kopią `ROADMAP.md`; wykorzystać ją jako wtórne źródło wymagań, nie jako podstawę nadpisania roadmapy.
+- Zweryfikowano na aktualnym `main`: `ROADMAP.md` zawiera osobne nagłówki etapów **232–300**, **301–320** i **321–333**, podczas gdy tablica `main` w `canonical_v11_inventory.json` pomija **232–300** oraz **321–333** (łącznie **82** istniejące numery). Nie są to 82 nowe etapy; są to 82 **brakujące rekordy manifestu**.
+- Następne zadanie implementacyjne: przenieść kontrakty z istniejących sekcji `ROADMAP.md` do manifestu bez skracania, renumeracji, nadpisywania statusów ani uznawania tekstu PDF za kod produkcyjny; zweryfikować walidatorami i CI.
