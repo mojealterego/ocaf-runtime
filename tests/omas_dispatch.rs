@@ -54,6 +54,19 @@ async fn signed_dispatch_runs_once_and_rejects_replay_and_tampering() {
     signed.signature = Signer::new_without_digest(&key).unwrap()
         .sign_oneshot_to_vec(&signed.canonical_bytes()).unwrap();
 
+    let unconfigured = OcafRuntime::new(100)
+        .with_tenant_namespace("tenant_a").unwrap();
+    assert!(unconfigured.execute_signed_omas(&signed, &database, request.clone()).await.is_err());
+    assert_eq!(counter.load(Ordering::SeqCst), 0);
+
+    let wrong_key = PKey::generate_ed25519().unwrap();
+    let wrong_public: [u8; 32] = wrong_key.raw_public_key().unwrap().try_into().unwrap();
+    let untrusted = OcafRuntime::new(100)
+        .with_tenant_namespace("tenant_a").unwrap()
+        .with_omas_trusted_key(wrong_public);
+    assert!(untrusted.execute_signed_omas(&signed, &database, request.clone()).await.is_err());
+    assert_eq!(counter.load(Ordering::SeqCst), 0);
+
     let mut altered = signed.clone();
     altered.opcode = 2;
     assert!(runtime.execute_signed_omas(&altered, &database, request.clone()).await.is_err());
