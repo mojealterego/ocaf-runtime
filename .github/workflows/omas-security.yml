@@ -22,6 +22,8 @@ on:
       - 'src/executor/wasi.rs'
       - 'src/lib.rs'
       - 'tests/omas_dispatch.rs'
+      - 'tests/fixtures/wasi_infinite_loop.wat'
+      - 'tests/scripts/verify_wasmtime_fuel_exhaustion.sh'
       - '.github/workflows/omas-security.yml'
 permissions:
   contents: read
