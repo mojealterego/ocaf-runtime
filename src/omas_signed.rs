@@ -13,9 +13,6 @@ const WINDOW_SECONDS: i64 = 300;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SignedOperation {
     pub tenant: String,
-    /// Authenticated RPC sender, included in the Ed25519 signature when present.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub rpc_sender: Option<String>,
     pub namespace: String,
     pub target: String,
     pub opcode: u8,
@@ -44,10 +41,6 @@ impl SignedOperation {
     pub fn canonical_bytes(&self) -> Vec<u8> {
         let mut out = b"OCAF-OMAS-SIGNED-OPERATION-v1".to_vec();
         field(&mut out, self.tenant.as_bytes());
-        if let Some(sender) = &self.rpc_sender {
-            field(&mut out, b"RPC-SENDER-v1");
-            field(&mut out, sender.as_bytes());
-        }
         field(&mut out, self.namespace.as_bytes());
         field(&mut out, self.target.as_bytes());
         field(&mut out, &[self.opcode]);
