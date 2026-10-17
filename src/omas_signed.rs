@@ -20,6 +20,9 @@ pub struct SignedOperation {
     pub issued_at: i64,
     pub nonce: String,
     pub payload: Vec<u8>,
+    /// V2 signed RPC sender identity; None denotes legacy local-only V1.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rpc_sender: Option<String>,
     pub signature: Vec<u8>,
 }
 #[derive(Debug, thiserror::Error)]
@@ -39,7 +42,11 @@ fn field(out: &mut Vec<u8>, value: &[u8]) {
 }
 impl SignedOperation {
     pub fn canonical_bytes(&self) -> Vec<u8> {
-        let mut out = b"OCAF-OMAS-SIGNED-OPERATION-v1".to_vec();
+        let mut out = if self.rpc_sender.is_some() {
+            b"OCAF-OMAS-SIGNED-OPERATION-v2".to_vec()
+        } else {
+            b"OCAF-OMAS-SIGNED-OPERATION-v1".to_vec()
+        };
         field(&mut out, self.tenant.as_bytes());
         field(&mut out, self.namespace.as_bytes());
         field(&mut out, self.target.as_bytes());
@@ -48,6 +55,9 @@ impl SignedOperation {
         field(&mut out, &self.issued_at.to_be_bytes());
         field(&mut out, self.nonce.as_bytes());
         field(&mut out, &Sha256::digest(&self.payload));
+        if let Some(sender) = &self.rpc_sender {
+            field(&mut out, sender.as_bytes());
+        }
         out
     }
 }
@@ -66,6 +76,9 @@ pub fn verify_and_consume(
         )
         || operation.nonce.len() < 16 || operation.nonce.len() > 128
         || !operation.nonce.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+        || operation.rpc_sender.as_ref().is_some_and(|sender| {
+            sender.is_empty() || sender.len() > 128 || !sender.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+        })
         || operation.signature.len() != 64
         || operation.issued_at > now.saturating_add(WINDOW_SECONDS)
         || operation.issued_at < now.saturating_sub(WINDOW_SECONDS)
@@ -136,6 +149,7 @@ mod tests {
             issued_at: now,
             nonce: "symlink_replay_nonce_001".into(),
             payload: b"hello".to_vec(),
+            rpc_sender: None,
             signature: Vec::new(),
         };
         op.signature = Signer::new_without_digest(&key).unwrap()
@@ -163,6 +177,7 @@ mod tests {
             issued_at: now,
             nonce: "restart_nonce_0001".into(),
             payload: b"hello".to_vec(),
+            rpc_sender: None,
             signature: Vec::new(),
         };
         operation.signature = Signer::new_without_digest(&key).unwrap()
@@ -201,6 +216,7 @@ mod tests {
             issued_at: now,
             nonce: "concurrent_nonce_0001".into(),
             payload: b"hello".to_vec(),
+            rpc_sender: None,
             signature: Vec::new(),
         };
         op.signature = Signer::new_without_digest(&key)
