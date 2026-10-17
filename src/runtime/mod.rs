@@ -340,6 +340,12 @@ impl OcafRuntime {
             .await
             .map_err(|_| RuntimeError::Timeout)??;
 
+        if !crate::omas_policy::admit_runtime_execution_payload(&output) {
+            return Err(RuntimeError::InvalidOutput(
+                "OMAS runtime output exceeds configured bound".into(),
+            ));
+        }
+
         if !tool.output_validator.is_valid(&output) {
             return Err(RuntimeError::InvalidOutput(
                 "JSON value does not conform to the tool output schema".into(),
