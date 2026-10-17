@@ -833,8 +833,10 @@ async fn signed_tenant_isolation_survives_concurrent_execution() {
             runtime_a.execute_authenticated_peer(request_a.clone(), "agent-1"),
             runtime_b.execute_authenticated_peer(request_b.clone(), "agent-1")
         );
-        assert_eq!(a.expect("tenant a").output, json!({"tenant":"a"}));
-        assert_eq!(b.expect("tenant b").output, json!({"tenant":"b"}));
+        // Tenant-bound execution requires an OMAS-signed operation even
+        // when the RPC peer is authenticated. Legacy direct dispatch fails closed.
+        assert!(a.is_err(), "unsigned tenant-a execution must be rejected");
+        assert!(b.is_err(), "unsigned tenant-b execution must be rejected");
         assert!(runtime_a
             .execute_authenticated_peer(request_b, "agent-2")
             .await
@@ -980,14 +982,12 @@ async fn publisher_signature_binds_module_tool_policy_and_principal() {
         .execute_authenticated_peer(call.clone(), "agent-2")
         .await
         .is_err());
-    assert_eq!(
-        signed_runtime
-            .execute_authenticated_peer(call.clone(), "agent-1")
-            .await
-            .expect("verified scoped RPC caller")
-            .output,
-        json!({"signed":true})
-    );
+    // A publisher-signed WASI manifest is not an OMAS execution
+    // authorization. An authenticated peer alone cannot bypass OMAS.
+    assert!(signed_runtime
+        .execute_authenticated_peer(call.clone(), "agent-1")
+        .await
+        .is_err());
     let other_tenant = OcafRuntime::new(0)
         .with_tenant_namespace("tenant-b")
         .expect("other tenant");
