@@ -1,0 +1,63 @@
+{
+  "stage": "0.40",
+  "stage_040_complete": false,
+  "production_approved": false,
+  "runs": [
+    {
+      "run_id": 38990726271,
+      "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/38990726271",
+      "head_sha": "5214eeedff8ae63797f4d2101258d334b342ee58",
+      "conclusion": "success",
+      "scope": "one-host PostgreSQL A-to-B-to-C crash, witness guard and A rejoin",
+      "jobs": [
+        {
+          "name": "postgres-real-three-processes",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "run_id": 38990726301,
+      "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/38990726301",
+      "head_sha": "5214eeedff8ae63797f4d2101258d334b342ee58",
+      "conclusion": "success",
+      "scope": "three separate kernels, each with an independent LOCAL failover lab",
+      "jobs": [
+        {
+          "name": "Real PostgreSQL A\u2192B\u2192C WAL failover on kernel b",
+          "conclusion": "success"
+        },
+        {
+          "name": "Real PostgreSQL A\u2192B\u2192C WAL failover on kernel c",
+          "conclusion": "success"
+        },
+        {
+          "name": "Real PostgreSQL A\u2192B\u2192C WAL failover on kernel a",
+          "conclusion": "success"
+        },
+        {
+          "name": "Independently compare three real distinct kernel boot ID PG failover receipts",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "run_id": 38990726527,
+      "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/38990726527",
+      "head_sha": "5214eeedff8ae63797f4d2101258d334b342ee58",
+      "conclusion": "success",
+      "scope": "interhost harness contract checks only; actual remote job SKIPPED",
+      "jobs": [
+        {
+          "name": "Reject fake multi-host PG HA claims, localhost identity, missing SQL replay",
+          "conclusion": "success"
+        },
+        {
+          "name": "TRUE three separate reachable Linux hosts, actual SQL WAL nonce (self-hosted only)",
+          "conclusion": "skipped"
+        }
+      ]
+    }
+  ],
+  "note": "Successful separate local labs do not prove live WAL replication between kernels. Raw remote artifact download was blocked in the current environment; local Docker receipt is separately committed."
+}

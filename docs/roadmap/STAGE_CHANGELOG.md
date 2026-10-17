@@ -439,3 +439,12 @@ przez failover ani długiego soak.** `stage_040_complete=false`, `production_app
 Dowód: `docs/evidence/stage040/2026-10-17/postgres16-witness-lab.json`,
 SHA-256: `891df9b55b73f6070086b4a04eb4e7fb6b57ac8b5a5a384f50cb4824b9c1358a`. Testy etapu: 82 PASS; pełny zestaw Python:
 428 testów, 37 niezgodności i 4 błędy istniejących kontroli README/roadmapy.
+
+
+### Potwierdzenie CI 0.40 — commit `5214eee` (2026-10-17)
+
+[Zakończony rzeczywisty test PostgreSQL A→B→C, świadka i odbudowy A — SUCCESS](https://github.com/mojealterego/ocaf-runtime/actions/runs/38990726271).
+[Trzy osobne kernele z lokalnymi failoverami — SUCCESS](https://github.com/mojealterego/ocaf-runtime/actions/runs/38990726301).
+Kontrola kontraktu interhost przeszła, lecz rzeczywisty zdalny job był **SKIPPED**;
+nie stanowi to odbioru replikacji pomiędzy kernelami. Status całego `0.40`
+pozostaje `ACTIVE_TECHNICAL_OPEN`.

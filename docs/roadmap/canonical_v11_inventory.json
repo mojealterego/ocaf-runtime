@@ -480,7 +480,12 @@
           "continuous_synchronous_failover_tested": false,
           "long_soak_tested": false,
           "stage_040_complete": false,
-          "production_approved": false
+          "production_approved": false,
+          "implementation_commit": "5214eeedff8ae63797f4d2101258d334b342ee58",
+          "completed_workflow_url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/38990726271",
+          "completed_workflow_conclusion": "success",
+          "ci_scope": "real local PostgreSQL A-to-B-to-C; no independent-host streaming",
+          "ci_artifact_archive_digest": "sha256:03dadcc4355ceef43d4065fe860185136598d436ab514af7720b5def7c235719"
         }
       ]
     },
