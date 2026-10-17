@@ -58,6 +58,20 @@ async fn signed_dispatch_runs_once_and_rejects_replay_and_tampering() {
     assert!(runtime.execute_signed_omas(&altered, &public, &database, request.clone()).await.is_err());
     assert_eq!(counter.load(Ordering::SeqCst), 0);
 
+    let mut wrong_tenant = signed.clone();
+    wrong_tenant.tenant = "tenant_b".into();
+    wrong_tenant.signature = Signer::new_without_digest(&key).unwrap()
+        .sign_oneshot_to_vec(&wrong_tenant.canonical_bytes()).unwrap();
+    assert!(runtime.execute_signed_omas(&wrong_tenant, &public, &database, request.clone()).await.is_err());
+    assert_eq!(counter.load(Ordering::SeqCst), 0);
+
+    let mut wrong_target = signed.clone();
+    wrong_target.target = "tenant_a/tools/other".into();
+    wrong_target.signature = Signer::new_without_digest(&key).unwrap()
+        .sign_oneshot_to_vec(&wrong_target.canonical_bytes()).unwrap();
+    assert!(runtime.execute_signed_omas(&wrong_target, &public, &database, request.clone()).await.is_err());
+    assert_eq!(counter.load(Ordering::SeqCst), 0);
+
     let result = runtime.execute_signed_omas(&signed, &public, &database, request.clone()).await.unwrap();
     assert_eq!(result.output, json!({"value":42}));
     assert_eq!(counter.load(Ordering::SeqCst), 1);
