@@ -354,6 +354,7 @@ pub struct PeerPolicy {
     job_submitter: bool,
     job_worker: bool,
     effect_writer: bool,
+    omas_tenant: Option<String>,
 }
 
 impl PeerPolicy {
@@ -369,7 +370,24 @@ impl PeerPolicy {
             job_submitter: false,
             job_worker: false,
             effect_writer: false,
+            omas_tenant: None,
         }
+    }
+
+    /// Restrict signed OMAS requests from this authenticated RPC identity to
+    /// one configured tenant. This is an additional peer ACL, not a replacement
+    /// for sender-bound Ed25519 operation signatures.
+    pub fn with_omas_tenant(mut self, tenant: &str) -> Result<Self, RpcError> {
+        if tenant.is_empty()
+            || tenant.len() > 128
+            || !tenant
+                .bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_' || byte == b'-')
+        {
+            return Err(RpcError::Malformed);
+        }
+        self.omas_tenant = Some(tenant.to_owned());
+        Ok(self)
     }
 
     /// Require a signature with a private key corresponding to a pre-pinned
@@ -736,8 +754,12 @@ impl RpcGateway {
         // A pinned certificate is required for OMAS RPC admission, but it
         // does not cryptographically bind the OMAS Ed25519 signature to this
         // RPC sender. Sender-bound OMAS signatures need a versioned contract.
-        if request.omas_operation.is_some() && peer.certificate_identity.is_none() {
-            return Err(RpcError::Unauthorized);
+        if let Some(operation) = request.omas_operation.as_ref() {
+            if peer.certificate_identity.is_none()
+                || peer.omas_tenant.as_deref() != Some(operation.tenant.as_str())
+            {
+                return Err(RpcError::Unauthorized);
+            }
         }
 
         // Count authenticated messages before manifest lookup or discovery,
