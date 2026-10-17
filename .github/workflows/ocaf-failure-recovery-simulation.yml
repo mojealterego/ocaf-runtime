@@ -30,10 +30,11 @@ jobs:
       - name: Verify distributed job state machine and signed RPC
         run: |
           set -euo pipefail
-          cargo test --locked --no-default-features --test distributed_jobs_rpc -- --nocapture
-          cargo test --locked --no-default-features --test rpc_cert_identity -- --nocapture
-          cargo test --locked --no-default-features --test omas_dispatch -- --nocapture
-          cargo test --locked --no-default-features --test persistent_replay -- --nocapture
+          mkdir -p evidence
+          cargo test --locked --no-default-features --test distributed_jobs_rpc -- --nocapture 2>&1 | tee evidence/distributed_jobs_rpc.log
+          cargo test --locked --no-default-features --test rpc_cert_identity -- --nocapture 2>&1 | tee evidence/rpc_cert_identity.log
+          cargo test --locked --no-default-features --test omas_dispatch -- --nocapture 2>&1 | tee evidence/omas_dispatch.log
+          cargo test --locked --no-default-features --test persistent_replay -- --nocapture 2>&1 | tee evidence/persistent_replay.log
       - name: Record simulation boundary
         if: always()
         run: |
@@ -79,7 +80,8 @@ jobs:
       - name: Test PostgreSQL fencing and leader recovery paths
         run: |
           set -euo pipefail
-          cargo test --locked --no-default-features --test postgres_fenced_effect -- --nocapture
+          mkdir -p evidence
+          cargo test --locked --no-default-features --test postgres_fenced_effect -- --nocapture 2>&1 | tee evidence/postgres_fenced_effect.log
       - name: Record simulation boundary
         if: always()
         run: |
