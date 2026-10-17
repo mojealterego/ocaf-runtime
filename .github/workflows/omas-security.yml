@@ -6,6 +6,12 @@ on:
       - 'src/omas_signed.rs'
       - 'src/omas_policy.rs'
       - 'src/runtime/mod.rs'
+      - 'src/rpc/mod.rs'
+      - 'src/jobs/worker.rs'
+      - 'src/jobs/remote.rs'
+      - 'src/rpc/mod.rs'
+      - 'src/jobs/worker.rs'
+      - 'src/jobs/remote.rs'
       - 'src/executor/mod.rs'
       - 'src/executor/wasi.rs'
       - 'src/lib.rs'
@@ -42,6 +48,10 @@ jobs:
         run: cargo fmt --all -- --check
       - name: OMAS unit and negative tests
         run: cargo test --no-default-features omas -- --nocapture
+      - name: Tenant entrypoint, payload and namespace security regressions
+        run: cargo test --locked --no-default-features omas_entrypoint_tests -- --nocapture
+      - name: Durable nonce replay after SQLite reopen
+        run: cargo test --locked --no-default-features replay_remains_rejected_after_database_reopen -- --nocapture
       - name: Concurrent nonce replay regression
         run: cargo test --no-default-features concurrent_replay_allows_exactly_one_admission -- --nocapture
       - name: OMAS signed operation tests
