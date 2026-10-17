@@ -16,7 +16,12 @@ impl ToolExecutor for CountExecutor {
         self.0.fetch_add(1, Ordering::SeqCst);
         Ok(args)
     }
-    async fn execute_signed_fuel(&self, args: Value, ctx: &ExecutionContext, fuel: u64) -> Result<Value, ToolError> {
+    async fn execute_signed_fuel(
+        &self,
+        args: Value,
+        ctx: &ExecutionContext,
+        fuel: u64,
+    ) -> Result<Value, ToolError> {
         if fuel != 100 {
             return Err(ToolError::Execution("unexpected signed fuel".into()));
         }
