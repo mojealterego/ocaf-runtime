@@ -7,7 +7,6 @@ use rusqlite::{params, Connection, TransactionBehavior};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::path::Path;
-use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const WINDOW_SECONDS: i64 = 300;
@@ -81,13 +80,12 @@ pub fn verify_and_consume(
         .map_err(|_| SignedOperationError::Signature)? {
         return Err(SignedOperationError::Signature);
     }
-    // Refuse symlinked or non-regular replay stores; never silently create an
-    // attacker-selected database through a symlink.
-    let metadata = fs::symlink_metadata(database).map_err(|_| SignedOperationError::Store)?;
-    if !metadata.file_type().is_file() { return Err(SignedOperationError::Store); }
-    // SQLite journal sidecars must be protected by the deployment directory ACL.
-    // A writable parent directory is not a safe replay-store trust boundary.
-    let mut conn = Connection::open_with_flags(database, rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE)
+    // SQLITE_OPEN_NOFOLLOW makes the final-component symlink check atomic
+    // with SQLite's open. Protect all ancestor directories and journal sidecars
+    // with operator-controlled filesystem permissions.
+    let flags = rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE
+        | rusqlite::OpenFlags::SQLITE_OPEN_NOFOLLOW;
+    let mut conn = Connection::open_with_flags(database, flags)
         .map_err(|_| SignedOperationError::Store)?;
     conn.busy_timeout(std::time::Duration::from_secs(5))
         .map_err(|_| SignedOperationError::Store)?;
