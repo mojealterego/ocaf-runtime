@@ -52,3 +52,10 @@ class GuestWasiBindings(unittest.TestCase):
             report["tenant_b"]["vm_id"]=report["tenant_a"]["vm_id"]
             with self.assertRaises(g.GuestWasiError):
                 g.verify_brokered_pair(report,jail,sha)
+            report["tenant_b"]["vm_id"]="ocaf-"+"b"*24
+            original=jail/"firecracker"/("ocaf-"+"a"*24)
+            outside=root/"outside"
+            original.rename(outside)
+            original.symlink_to(outside, target_is_directory=True)
+            with self.assertRaisesRegex(g.GuestWasiError,"redirected"):
+                g.verify_brokered_pair(report,jail,sha)
