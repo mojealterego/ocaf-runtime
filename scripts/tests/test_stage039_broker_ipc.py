@@ -170,6 +170,9 @@ class BrokerIPCTests(unittest.IsolatedAsyncioTestCase):
     async def test_untrusted_socket_parent_refused(self):
         directory = self.root / "bad"
         directory.mkdir(mode=0o755)
+        # mkdir honours the process umask; make the insecure permission
+        # explicit so this negative test is deterministic on every host.
+        directory.chmod(0o755)
         with self.assertRaises(ipc.IPCSecurityError):
             await ipc.BrokerIPC(directory / "broker.sock", self.ledger,
                                 self.assets, self.policy).start()
