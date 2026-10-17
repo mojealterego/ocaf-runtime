@@ -5,8 +5,12 @@ set -euo pipefail
 engine="${WASMTIME_BIN:?Set WASMTIME_BIN to the approved Wasmtime executable}"
 test -x "$engine" || { echo "Wasmtime executable is missing" >&2; exit 2; }
 engine="$(realpath "$engine")"
+if [[ ! "${WASMTIME_SHA256:-}" =~ ^[[:xdigit:]]{64}$ ]]; then
+  echo "FAIL: approved Wasmtime SHA-256 must be exactly 64 hexadecimal characters" >&2
+  exit 2
+fi
 if [ -n "${WASMTIME_SHA256:-}" ]; then
-  printf "%s  %s\\n" "$WASMTIME_SHA256" "$engine" | sha256sum --check --status || {
+  printf "%s  %s\n" "$WASMTIME_SHA256" "$engine" | sha256sum --check --status || {
     echo "FAIL: Wasmtime binary SHA-256 does not match approved digest" >&2
     exit 2
   }
