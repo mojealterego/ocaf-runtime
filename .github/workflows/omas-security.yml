@@ -51,7 +51,7 @@ jobs:
       - name: Signed WASI engine regression tests
         run: cargo test --no-default-features pinned_engine_tests -- --nocapture
       - name: Real Wasmtime fuel exhaustion (operator-approved engine)
-        if: ${{ vars.OCAF_WASMTIME_BIN != '' }}
+        if: ${{ vars.OCAF_WASMTIME_BIN != '' && vars.OCAF_WASMTIME_SHA256 != '' }}
         env:
           WASMTIME_BIN: ${{ vars.OCAF_WASMTIME_BIN }}
           WASMTIME_SHA256: ${{ vars.OCAF_WASMTIME_SHA256 }}
