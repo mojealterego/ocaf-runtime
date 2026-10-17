@@ -27,7 +27,7 @@ if [ "$status" -eq 0 ]; then
   echo "FAIL: infinite-loop guest unexpectedly completed" >&2
   exit 1
 fi
-if [ "$status" -eq 124 ] || [ "$status" -eq 137 ] || [ "$status" -eq 125 ] || [ "$status" -eq 126 ] || [ "$status" -eq 127 ]; then
+if [ "$status" -eq 124 ] || [ "$status" -eq 137 ] || [ "$status" -eq 125 ] || [ "$status" -eq 126 ] || [ "$status" -eq 127 ] || [ "$status" -eq 143 ]; then
   echo "FAIL: watchdog stopped guest; fuel was not proven to work" >&2
   exit 1
 fi
