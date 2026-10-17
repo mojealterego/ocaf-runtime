@@ -150,6 +150,14 @@ async fn signed_dispatch_runs_once_and_rejects_replay_and_tampering() {
     assert!(runtime.execute_signed_omas(&tampered_fuel, request.clone()).await.is_err());
     assert_eq!(counter.load(Ordering::SeqCst), 0);
 
+    // A freshly signed zero quota is rejected by admission policy.
+    let mut zero_fuel = signed.clone();
+    zero_fuel.fuel = 0;
+    zero_fuel.signature = Signer::new_without_digest(&key).unwrap()
+        .sign_oneshot_to_vec(&zero_fuel.canonical_bytes()).unwrap();
+    assert!(runtime.execute_signed_omas(&zero_fuel, request.clone()).await.is_err());
+    assert_eq!(counter.load(Ordering::SeqCst), 0);
+
     let mut altered = signed.clone();
     altered.opcode = 2;
     assert!(runtime.execute_signed_omas(&altered, request.clone()).await.is_err());
