@@ -24,6 +24,51 @@ impl ToolExecutor for CountExecutor {
     }
 }
 
+struct UnsupportedExecutor(Arc<AtomicUsize>);
+
+#[async_trait::async_trait]
+impl ToolExecutor for UnsupportedExecutor {
+    async fn execute(&self, args: Value, _ctx: &ExecutionContext) -> Result<Value, ToolError> {
+        self.0.fetch_add(1, Ordering::SeqCst);
+        Ok(args)
+    }
+}
+
+#[tokio::test]
+async fn signed_dispatch_denies_executor_without_fuel_enforcement() {
+    let key = PKey::generate_ed25519().unwrap();
+    let public: [u8; 32] = key.raw_public_key().unwrap().try_into().unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let database = dir.path().join("nonce.sqlite");
+    rusqlite::Connection::open(&database).unwrap().close().unwrap();
+    let runtime = OcafRuntime::new(100)
+        .with_tenant_namespace("tenant_a").unwrap()
+        .with_omas_trusted_key(public)
+        .with_omas_replay_database(database);
+    let calls = Arc::new(AtomicUsize::new(0));
+    runtime.register(ToolManifest {
+        name: "unsupported".into(), description: "negative test".into(),
+        input_schema: json!({"type":"object"}),
+        output_schema: json!({"type":"object"}),
+        cost_sats: 0, permissions: vec![], timeout_ms: 1000, enabled: true,
+    }, UnsupportedExecutor(calls.clone())).await.unwrap();
+    let request = ToolCallRequest {
+        call_id: "unsupported_1".into(), tool: "unsupported".into(),
+        args: json!({}), auth: None,
+    };
+    let mut operation = SignedOperation {
+        tenant: "tenant_a".into(), namespace: "tenant_a/tools".into(),
+        target: "tenant_a/tools/unsupported".into(), opcode: 1, fuel: 100,
+        issued_at: ocaf_runtime::omas_signed::unix_now().unwrap(),
+        nonce: "unsupported_executor_nonce_001".into(),
+        payload: serde_json::to_vec(&request).unwrap(), signature: Vec::new(),
+    };
+    operation.signature = Signer::new_without_digest(&key).unwrap()
+        .sign_oneshot_to_vec(&operation.canonical_bytes()).unwrap();
+    assert!(runtime.execute_signed_omas(&operation, request).await.is_err());
+    assert_eq!(calls.load(Ordering::SeqCst), 0);
+}
+
 #[tokio::test]
 async fn signed_dispatch_runs_once_and_rejects_replay_and_tampering() {
     let key = PKey::generate_ed25519().unwrap();
