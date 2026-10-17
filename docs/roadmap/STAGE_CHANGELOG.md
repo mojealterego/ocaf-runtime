@@ -515,3 +515,12 @@ Audyt zapisany w `docs/audits/OMAS_PDF_SECURITY_ARCHITECTURE_2026-10-17.md`. Map
 - Przesłana rekonstrukcja 84-stronicowa sama ostrzega, że nie jest kopią `ROADMAP.md`; wykorzystać ją jako wtórne źródło wymagań, nie jako podstawę nadpisania roadmapy.
 - Zweryfikowano na aktualnym `main`: `ROADMAP.md` zawiera osobne nagłówki etapów **232–300**, **301–320** i **321–333**, podczas gdy tablica `main` w `canonical_v11_inventory.json` pomija **232–300** oraz **321–333** (łącznie **82** istniejące numery). Nie są to 82 nowe etapy; są to 82 **brakujące rekordy manifestu**.
 - Następne zadanie implementacyjne: przenieść kontrakty z istniejących sekcji `ROADMAP.md` do manifestu bez skracania, renumeracji, nadpisywania statusów ani uznawania tekstu PDF za kod produkcyjny; zweryfikować walidatorami i CI.
+
+## 2026-10-17 — Porównanie modułów historycznych i rekonstrukcji (pierwszy przebieg)
+
+- Źródło dodatkowe: `OCAF_ROADMAP_REKONSTRUKCJA-1.md` / `OCAF_ROADMAP_REKONSTRUKCJA-2.pdf` (rekonstrukcja siedmiu PDF, nie zamiennik kanonicznej roadmapy).
+- Starszy sześciostopniowy model: rdzeń Tokio/Zenoh; dynamic tools/MCP/JSON Schema; sandbox Firecracker; OAuth 2.1/PKCE; L402/x402; RAG/OWASP. Wymaga semantycznego porównania z istniejącymi etapami i rzeczywistym `src/`, a nie kopiowania jako sześciu nowych etapów.
+- Historyczny projekt konsolidacji 606 repozytoriów do ośmiu silników zawiera nazwy `ocaf-mcp-builder`, `ocaf-swarm-coder`, `ocaf-flow-studio`. W bieżącym `ROADMAP.md` i `canonical_v11_inventory.json` nie znaleziono tych trzech dokładnych identyfikatorów tekstowych; nie oznacza to braku odpowiadających funkcji. Wymagane mapowanie po kontraktach, API i testach.
+- W aktualnej roadmapie i manifeście występują `OmniDev`, `OmniUX`, `OmniE2E` i `ocaf-transport-crdt`. Obecność nazw nie potwierdza integracji ani kompletności wymagań ze starszych źródeł.
+- Reguła konsolidacji: jeden wymóg źródłowy -> istniejący etap (jeśli zgodny) -> moduł kodu -> test -> dowód SHA -> luka; brakujący wymóg dopisać do właściwego etapu, a nowy etap dopiero po ostatnim istniejącym ID. Warianty Code/NoCode na pięciu platformach zachować jako 10 odrębnych produktów.
+- Status: `SOURCE_COMPARISON_PARTIAL`; pełna inwentaryzacja wszystkich modułów i semantyczne przypisanie wszystkich źródeł nadal otwarte.
