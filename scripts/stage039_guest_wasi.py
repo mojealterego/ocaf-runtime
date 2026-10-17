@@ -93,9 +93,15 @@ def verify_brokered_pair(broker_report:dict,jailer_base:Path,rootfs_sha256:str)-
         vm_id=vm.get("vm_id")
         if not isinstance(vm_id,str) or VM.fullmatch(vm_id) is None:
             raise GuestWasiError("invalid bounded VM ID")
-        path=jailer_base/"firecracker"/vm_id/"serial-console.log"
-        if path.is_symlink() or not path.is_file():
-            raise GuestWasiError("missing real jailed Firecracker serial file")
+        firecracker_dir=jailer_base/"firecracker"
+        vm_dir=firecracker_dir/vm_id
+        path=vm_dir/"serial-console.log"
+        # O_NOFOLLOW on the final file does not protect ancestor directories.
+        # Reject redirected jailer trees before consuming serial evidence.
+        if (firecracker_dir.is_symlink() or vm_dir.is_symlink()
+            or not firecracker_dir.is_dir() or not vm_dir.is_dir()
+            or path.is_symlink() or not path.is_file()):
+            raise GuestWasiError("missing or redirected jailed Firecracker serial file")
         flags=os.O_RDONLY|getattr(os,"O_NOFOLLOW",0)
         fd=os.open(path,flags)
         try:
