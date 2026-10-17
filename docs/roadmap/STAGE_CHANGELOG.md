@@ -589,3 +589,11 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - Z `ocaf-stage038-linux` do `https://ocaf-stage038-host-b-b3uz2.sprites.app/` uzyskano HTTP 302 kierujące do uwierzytelnienia Sprites. Próba `http://ocaf-stage038-host-b:8765` zakończyła się błędem rozpoznania DNS; bezpośrednia próba publicznego HTTP na porcie 8765 zakończyła się zerwaniem połączenia.
 - **Wynik:** brak potwierdzonego przepływu HTTP między instancjami. Nie przeprowadzono jeszcze zdalnego RPC OCAF, failover, fencing ani recovery pomiędzy instancjami. Nie wolno traktować różnych boot ID ani niezależnych lokalnych testów jako dowodu komunikacji międzyhostowej.
 - **Blokada:** wymagany uwierzytelniony kanał sieciowy lub skonfigurowana wzajemna łączność prywatna, bez publicznego udostępniania wrażliwego RPC. Po jej rozwiązaniu konieczny test awarii lidera, stale lease/fencing i odtworzenia z trwałego store na odrębnych węzłach.
+
+
+### 2026-10-17 — GitHub Actions: symulacja awarii/recovery, nie odbiór wielohostowy
+
+- Dodano `.github/workflows/ocaf-multihost-simulation.yml` na `main` (commit `da1183e10f06b803472a4ab063c11da9972dfb2b`). Uruchamia testy `distributed_jobs_rpc`, `postgres_fenced_effect`, `omas_dispatch`, `rpc_cert_identity`, testy biblioteki, Clippy i rustfmt, a logi wraz z SHA i boot ID publikuje jako artefakt.
+- Wszystkie testy tego workflow uruchamiane są na **jednym** runnerze GitHub Actions. Weryfikują symulowane scenariusze awarii, wygasania lease, fencing, idempotencji i replay, nie sieciowy failover na niezależnych hostach. `postgres_fenced_effect` nie jest dowodem produkcyjnego PostgreSQL HA.
+- Sam zapis workflow **nie dowodzi jego uruchomienia ani PASS**. Dowody PASS można przypisać dopiero do konkretnego run ID, commit SHA i artefaktów GitHub Actions.
+- Rzeczywiste testy międzyhostowe, signed OMAS jobs/effects, Firecracker guest, niezależny audyt i odbiór operatora pozostają otwarte.
