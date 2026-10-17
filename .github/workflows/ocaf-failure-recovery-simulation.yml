@@ -23,6 +23,8 @@ jobs:
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Verify distributed job state machine and signed RPC
@@ -36,6 +38,14 @@ jobs:
         if: always()
         run: |
           printf '%s\n' 'SIMULATION ONLY: single GitHub-hosted runner; not independent-host failover or Firecracker/KVM evidence.' >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p evidence
+          printf 'commit=%s\\nrun=%s\\nrunner=%s\\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$(hostname)" > evidence/runner.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ocaf-sqlite-recovery-${{ github.run_id }}
+          path: evidence/
+          retention-days: 30
 
   postgres-fencing:
     name: Simulated PostgreSQL epoch fencing (single runner)
@@ -70,3 +80,11 @@ jobs:
         if: always()
         run: |
           printf '%s\n' 'SIMULATION ONLY: PostgreSQL service container shares a runner; not PostgreSQL HA, quorum, independent kernels or production recovery.' >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p evidence
+          printf 'commit=%s\\nrun=%s\\nrunner=%s\\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$(hostname)" > evidence/runner.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ocaf-postgres-fencing-${{ github.run_id }}
+          path: evidence/
+          retention-days: 30
