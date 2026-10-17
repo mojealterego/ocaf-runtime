@@ -555,3 +555,12 @@ Audyt zapisany w `docs/audits/OMAS_PDF_SECURITY_ARCHITECTURE_2026-10-17.md`. Map
 Docelowe kontrakty do audytu OMAS: (1) natywne wiadomości i discovery Zenoh, (2) uwierzytelnione tożsamości i izolacja tenantów, (3) podpisana autoryzacja obejmująca opcode/target/payload/limity/nonce, (4) trwała ochrona replay, (5) schematy i bezpieczne uruchamianie narzędzi, (6) bounded execution/fuel, (7) wersjonowanie i obsługa błędów, (8) E2E, negatywne testy i dowody SHA. Adapter MCP może być rozpatrywany wyłącznie jako opcjonalny, odseparowany gateway do systemów zewnętrznych, nigdy jako wymóg kompatybilności rdzenia.
 
 Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecność kodu admission nie dowodzi ukończonego transportu/discovery/remote execution OMAS. Dotychczasowe wpisy macierzy z `MCP` należy czytać jako **historyczne źródło wymagań → OMAS**, nie jako polecenie implementacji MCP. Brak dowodów pełnego E2E i odbioru produkcyjnego.
+
+## 2026-10-17 — OMAS/RPC: kontrakty faktycznie istniejące w kodzie
+
+- `src/transport/rpc.rs`: Zenoh Queryable i bounded ingress; odpowiedź po kontroli lidera nie gwarantuje cofnięcia wcześniej wykonanych efektów.
+- `src/rpc/mod.rs`: `RpcAction` obejmuje Discover, Execute, Heartbeat, Resolve, SubmitJob, GetJob oraz akcje lease/fenced effects. `RpcGateway::handle_at` weryfikuje HMAC przez politykę peera; `with_sqlite_replay` i `with_postgres_replay` oferują trwały dziennik replay, podczas gdy `RpcGateway::new` ma replay volatile.
+- `src/omas_signed.rs`: osobne Ed25519 admission, trwały SQLite nonce; nie ma dowodu wymuszenia tego admission na każdej ścieżce `RpcAction::Execute`.
+- Rozbieżne limity RPC (64 KiB, 32 KiB body, 30 s TTL) i OMAS signed (1 MiB, 768 KiB payload, 300 s window) wymagają wersjonowanego kontraktu, nie bezwarunkowego podniesienia limitów.
+- OMAS zastępuje MCP jako protokół docelowy. Zachować istniejący Zenoh RPC, fencing i ACL, zamiast duplikować runtime; adapter MCP tylko opcjonalny i odseparowany.
+- Audyt statyczny, bez uruchomienia testów i bez potwierdzenia pełnej migracji.
