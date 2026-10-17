@@ -532,3 +532,18 @@ Audyt zapisany w `docs/audits/OMAS_PDF_SECURITY_ARCHITECTURE_2026-10-17.md`. Map
 - Bieżący `Cargo.toml` deklaruje Rust 2021, `tokio`, `zenoh 1.10`, `jsonschema`, `tokio-postgres`, `rusqlite`, `rustls` i `openssl`. Historyczne twierdzenia o Rust 2024+, rzeczywistym SHM, 7–10 µs, pełnym OAuth PKCE, Firecracker guest i rozliczeniach L402 nie wynikają z samych zależności.
 - Zidentyfikowano różnicę między historycznymi nazwami ośmiu silników (`ocaf-mcp-builder`, `ocaf-swarm-coder`, `ocaf-flow-studio`) a bieżącym układem jednego crate `ocaf_runtime`; nie tworzyć duplikatów istniejącego runtime bez audytu API i kodu.
 - Status `PARTIAL_SOURCE_TO_MANIFEST_MAPPING`; pełne porównanie moduł-po-module, kodu, testów i dowodów SHA pozostaje otwarte.
+
+## 2026-10-17 — Macierz źródło → etap → kod → test → luka (weryfikacja kodu, iteracja 1)
+
+| Źródło historyczne | Funkcjonalność | Etap | Zweryfikowany plik Rust | Test / dowód | Luka |
+|---|---|---|---|---|---|
+| `OCAF_ROADMAP_REKONSTRUKCJA-1.md`, źródło „Architektura ekosystemu”, faza 1 | Tokio + Zenoh A2A, dynamiczne Queryable | rdzeń, 0.43 | `src/transport/mod.rs` (Zenoh session) | Nie zweryfikowano wykonania E2E w tej iteracji | Sam kod wskazuje, że discovery, pub/sub i remote execution wymagają osobnej integracji |
+| To samo, faza 2 | MCP tool registry, JSON Schema, dynamic loading | 0.43, 216 | `src/registry/mod.rs` (`ToolManifest`, JSON Schema), `src/executor/mod.rs` (`ToolExecutor`) | Nie zweryfikowano wykonania E2E | Brak dowodu dynamicznego discovery i zdalnego wywołania narzędzia |
+| To samo, faza 3 | Bezpieczne uruchamianie kodu, podpis i limity | 0.39, 0.55 | `src/omas_signed.rs` (`SignedOperation`), `src/omas_policy.rs` (bounds) | Nie zweryfikowano realnego Firecracker/KVM guest | Podpisane admission i limity nie dowodzą guest-side sandboxu i eBPF |
+| To samo, faza 4 | Managed OAuth 2.1/PKCE, tenant-scoped identity | 0.44 | `src/auth/mod.rs` (`AuthContext`), `src/executor/mod.rs` | Nie zweryfikowano OAuth flow E2E | `ExecutionContext.agent_id` jawnie nie jest uwierzytelnioną tożsamością; nie potwierdzono PKCE |
+| To samo, faza 5 | L402/x402, macaroon, settlement, replay | 0.87, 1.49, 1.54, 1.85, 1.86, 218, 319 | `src/auth/mod.rs` (`macaroon`, `preimage`, `invoice`, `nonce`), `src/omas_signed.rs` (SQLite replay admission) | Nie zweryfikowano rozliczeń E2E | Struktury danych i replay admission nie dowodzą weryfikacji caveats ani settlement |
+| To samo, faza 6 | RAG, ingestion, OWASP ASI | odpowiednie istniejące etapy wymagają pełnego mapowania | `src/lib.rs` nie eksportuje dedykowanego `rag` | Nie zweryfikowano | Brak dowodu pełnej ingestii/RAG; nie utożsamiać braku eksportu z brakiem dowolnej implementacji |
+| Rekonstrukcja: OmniDev/OmniUX/OmniE2E | Rojowe kodowanie, UI i multiplatformowe E2E | 0.56–0.58 | `src/lib.rs` nie eksportuje odrębnych modułów o tych nazwach | Nie zweryfikowano E2E | Wymaga mapowania istniejących komponentów, testów i artefaktów produktów |
+| Rekonstrukcja: Agents Builder | 10 produktów Code/NoCode | 0.50–0.55 | `src/lib.rs` nie eksportuje `builder` | Nie zweryfikowano GUI/E2E | Brak dowodu dziesięciu aplikacji i wspólnego kompilatora IR |
+
+**Metoda:** potwierdzone ścieżki odczytano z `main`, w tym `Cargo.toml`, `src/lib.rs`, `src/auth/mod.rs`, `src/registry/mod.rs`, `src/executor/mod.rs`, `src/transport/mod.rs`, `src/omas_signed.rs`, `src/omas_policy.rs`. Sprawdzone pięć przykładowych nazw plików testów `tests/omas_signed.rs`, `tests/registry.rs`, `tests/auth.rs`, `tests/omas_policy.rs`, `tests/transport.rs` nie istnieje pod tymi dokładnymi ścieżkami; nie wynika z tego brak testów w innych plikach. Testów nie uruchomiono. Status: `PARTIAL_CODE_TRACEABILITY`, bez deklaracji PASS.
