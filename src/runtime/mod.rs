@@ -176,6 +176,34 @@ impl OcafRuntime {
         self.execute_attributed(request, &principal).await
     }
 
+    /// Verified OMAS dispatch. Never accept the tenant from the message as a
+    /// trusted principal: it must match the operator-configured runtime tenant.
+    /// A nonce is consumed before dispatch; failed execution is not replayable.
+    pub async fn execute_signed_omas(
+        &self,
+        operation: &crate::omas_signed::SignedOperation,
+        public_key: &[u8; 32],
+        replay_database: &std::path::Path,
+        request: ToolCallRequest,
+    ) -> Result<ToolCallResult, RuntimeError> {
+        if self.tenant_namespace.as_deref() != Some(operation.tenant.as_str())
+            || operation.opcode != 1
+            || operation.target != format!("{}/tools/{}", operation.tenant, request.tool)
+        {
+            return Err(RuntimeError::AuthRequired("OMAS tenant, opcode or target mismatch".into()));
+        }
+        let payload = serde_json::to_vec(&request)
+            .map_err(|_| RuntimeError::InvalidInput("cannot serialize OMAS request".into()))?;
+        if payload != operation.payload {
+            return Err(RuntimeError::AuthRequired("OMAS signed payload mismatch".into()));
+        }
+        let now = crate::omas_signed::unix_now()
+            .map_err(|_| RuntimeError::AuthRequired("invalid system clock".into()))?;
+        crate::omas_signed::verify_and_consume(operation, public_key, replay_database, now)
+            .map_err(|error| RuntimeError::AuthRequired(error.to_string()))?;
+        self.execute_authenticated_peer(request, "omas_signed").await
+    }
+
     /// Register only the manifest actually verified by the Ed25519 WASI
     /// publisher signature. Unsigned local executors are not accepted here.
     #[cfg(target_os = "linux")]
