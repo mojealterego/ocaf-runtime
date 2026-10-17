@@ -457,3 +457,11 @@ pozostaje `ACTIVE_TECHNICAL_OPEN`.
 - `docs/ROADMAP_FULL_ECOSYSTEM_2026.md`: zsynchronizowano opis historycznej tabeli; commit `3d767f6d951c5e3d4249fe52e76d909ced8066a2`.
 - Manifest `canonical_v11_inventory.json` niezmieniony, ponieważ jego liczniki już wynoszą 333 i 64; `production_approved=false`.
 - Weryfikacja: odczyty źródeł i potwierdzenia zapisów GitHub API. Nie uruchomiono cargo, walidatorów ani CI dla tych commitów. Pozostałe starsze deklaracje w dokumentacji wymagają osobnej inwentaryzacji; etap synchronizacji nie jest w pełni zamknięty.
+
+
+### 2026-10-17 — korekta aktywnej polityki następnego etapu
+
+- `README.md`: instrukcję dopisywania po 215 zastąpiono aktualną granicą manifestu v11: ostatni 333, następny 334. Commit `d896c5b15a516377dc94ff40fdd3145ff0ec6a5f`.
+- `ROADMAP.md`: historyczne `1.95` odróżniono od aktualnego nowego ID `334`. Commit `8eecd89114086db9130bbf28615408b4b6f4fc2a`.
+- Lustro `docs/ROADMAP_FULL_ECOSYSTEM_2026.md`: analogiczna korekta. Commit `fb5b150deaf3f50db47b70bb2cb6a53ad0a1f0ce`.
+- Dowód: ponowny odczyt trzech blobów z `main` potwierdził obecność `334` i brak aktywnego zwrotu `obecnie \`1.95\``. Brak uruchomionych testów cargo/CI. Historyczne zestawienia pozostają w dokumentach; dalsza inwentaryzacja jest otwarta.
