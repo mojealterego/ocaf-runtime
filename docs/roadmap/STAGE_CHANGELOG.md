@@ -581,3 +581,11 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - Próba połączenia z pierwszego środowiska do `https://ocaf-stage038-host-b-b3uz2.sprites.app/` zwróciła HTTP 302 do bramy uwierzytelniania Sprites. **Nie potwierdzono komunikacji międzyhostowej aplikacji OCAF.**
 - OCAF `distributed_jobs_rpc` na obu środowiskach przy `main` `5aa85f6df4443cbcc0bdb640f1e75307eb35a97e`: 8 PASS na każdym; są to lokalne zestawy testów, nie rozproszony scenariusz awaryjny.
 - **Nie zaliczać bramy P0:** brak rzeczywistego failover OCAF/PostgreSQL, utraty i odnowienia lease, fencing starego lidera po awarii, recovery z trwałego stanu i niezależnych dowodów Firecracker/KVM dla dwóch tenantów. Status: TESTED tylko dla pomocniczej usługi HTTP; multihost acceptance OPEN.
+
+
+### 2026-10-17 — próba międzyhostowego HTTP i blokada sieciowa
+
+- Na `ocaf-stage038-host-b` uruchomiono serwer `python3 -m http.server 8765 --bind 0.0.0.0` jako usługę `ocaf-interhost-probe`; po próbach usługę zatrzymano.
+- Z `ocaf-stage038-linux` do `https://ocaf-stage038-host-b-b3uz2.sprites.app/` uzyskano HTTP 302 kierujące do uwierzytelnienia Sprites. Próba `http://ocaf-stage038-host-b:8765` zakończyła się błędem rozpoznania DNS; bezpośrednia próba publicznego HTTP na porcie 8765 zakończyła się zerwaniem połączenia.
+- **Wynik:** brak potwierdzonego przepływu HTTP między instancjami. Nie przeprowadzono jeszcze zdalnego RPC OCAF, failover, fencing ani recovery pomiędzy instancjami. Nie wolno traktować różnych boot ID ani niezależnych lokalnych testów jako dowodu komunikacji międzyhostowej.
+- **Blokada:** wymagany uwierzytelniony kanał sieciowy lub skonfigurowana wzajemna łączność prywatna, bez publicznego udostępniania wrażliwego RPC. Po jej rozwiązaniu konieczny test awarii lidera, stale lease/fencing i odtworzenia z trwałego store na odrębnych węzłach.
