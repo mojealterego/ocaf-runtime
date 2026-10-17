@@ -119,6 +119,45 @@ mod tests {
     use super::*;
     use openssl::sign::Signer;
     #[test]
+    fn concurrent_replay_allows_exactly_one_admission() {
+        let key = PKey::generate_ed25519().unwrap();
+        let public: [u8; 32] = key.raw_public_key().unwrap().try_into().unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("nonce.sqlite");
+        Connection::open(&path).unwrap().close().unwrap();
+        let now = 1_800_000_000;
+        let mut op = SignedOperation {
+            tenant: "tenant_a".into(),
+            namespace: "tenant_a/tools".into(),
+            target: "tenant_a/tools/run".into(),
+            opcode: 1,
+            fuel: 100,
+            issued_at: now,
+            nonce: "concurrent_nonce_0001".into(),
+            payload: b"hello".to_vec(),
+            signature: Vec::new(),
+        };
+        op.signature = Signer::new_without_digest(&key)
+            .unwrap()
+            .sign_oneshot_to_vec(&op.canonical_bytes())
+            .unwrap();
+        let mut workers = Vec::new();
+        for _ in 0..8 {
+            let op = op.clone();
+            let path = path.clone();
+            workers.push(std::thread::spawn(move || {
+                verify_and_consume(&op, &public, &path, now)
+            }));
+        }
+        let outcomes: Vec<_> = workers.into_iter().map(|w| w.join().unwrap()).collect();
+        assert_eq!(outcomes.iter().filter(|outcome| outcome.is_ok()).count(), 1);
+        assert_eq!(
+            outcomes.iter().filter(|outcome| matches!(outcome, Err(SignedOperationError::Replay))).count(),
+            7
+        );
+    }
+
+    #[test]
     fn signature_binds_operation_and_replay_persists() {
         let key = PKey::generate_ed25519().unwrap();
         let public: [u8; 32] = key.raw_public_key().unwrap().try_into().unwrap();
