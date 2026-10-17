@@ -66,7 +66,7 @@ async fn signed_dispatch_denies_executor_without_fuel_enforcement() {
         target: "tenant_a/tools/unsupported".into(), opcode: 1, fuel: 100,
         issued_at: ocaf_runtime::omas_signed::unix_now().unwrap(),
         nonce: "unsupported_executor_nonce_001".into(),
-        payload: serde_json::to_vec(&request).unwrap(), signature: Vec::new(),
+        payload: serde_json::to_vec(&request).unwrap(), rpc_sender: None, signature: Vec::new(),
     };
     operation.signature = Signer::new_without_digest(&key).unwrap()
         .sign_oneshot_to_vec(&operation.canonical_bytes()).unwrap();
