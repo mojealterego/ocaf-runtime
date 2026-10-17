@@ -743,19 +743,6 @@ mod pinned_engine_tests {
     use super::*;
 
     #[test]
-    fn wasmtime_fuel_configuration_uses_effective_signed_limit() {
-        let operator = 10_000;
-        let signed = 17;
-        let effective = effective_signed_fuel(operator, signed).unwrap();
-        let option = format!(
-            "fuel={},max-memory-size={},max-wasm-stack={},max-instances=1,max-memories=1,max-tables=1,nan-canonicalization=y",
-            effective, 64 * 1024 * 1024, 1024 * 1024
-        );
-        assert!(option.starts_with("fuel=17,"));
-        assert!(!option.starts_with("fuel=10000,"));
-    }
-
-    #[test]
     fn signed_fuel_never_exceeds_either_ceiling() {
         assert_eq!(effective_signed_fuel(1000, 50).unwrap(), 50);
         assert_eq!(effective_signed_fuel(50, 1000).unwrap(), 50);
