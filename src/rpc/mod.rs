@@ -776,6 +776,22 @@ impl RpcGateway {
             _ => {}
         }
 
+        // Until the job lease and effect receipt carry a verified OMAS
+        // principal, tenant-bound jobs must fail closed. Otherwise a peer
+        // could bypass signed Execute through SubmitJob or fenced effects.
+        if self.runtime.requires_signed_omas()
+            && matches!(
+                &request.action,
+                RpcAction::SubmitJob { .. }
+                    | RpcAction::ClaimJob
+                    | RpcAction::ValidateLease { .. }
+                    | RpcAction::FinishJob { .. }
+                    | RpcAction::ApplyFencedEffect { .. }
+            )
+        {
+            return Err(RpcError::Unauthorized);
+        }
+
         match &request.action {
             RpcAction::Execute { tool, .. } => {
                 // Fail closed before job/replay admission or tool lookup: a
