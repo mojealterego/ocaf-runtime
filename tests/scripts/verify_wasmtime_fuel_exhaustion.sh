@@ -4,6 +4,13 @@ set -euo pipefail
 # Run only against an operator-installed, approved Wasmtime executable.
 engine="${WASMTIME_BIN:?Set WASMTIME_BIN to the approved Wasmtime executable}"
 test -x "$engine" || { echo "Wasmtime executable is missing" >&2; exit 2; }
+engine="$(realpath "$engine")"
+if [ -n "${WASMTIME_SHA256:-}" ]; then
+  printf "%s  %s\\n" "$WASMTIME_SHA256" "$engine" | sha256sum --check --status || {
+    echo "FAIL: Wasmtime binary SHA-256 does not match approved digest" >&2
+    exit 2
+  }
+fi
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 fixture="$root/tests/fixtures/wasi_infinite_loop.wat"
 test -f "$fixture"
