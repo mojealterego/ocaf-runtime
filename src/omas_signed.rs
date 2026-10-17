@@ -85,6 +85,8 @@ pub fn verify_and_consume(
     // attacker-selected database through a symlink.
     let metadata = fs::symlink_metadata(database).map_err(|_| SignedOperationError::Store)?;
     if !metadata.file_type().is_file() { return Err(SignedOperationError::Store); }
+    // SQLite journal sidecars must be protected by the deployment directory ACL.
+    // A writable parent directory is not a safe replay-store trust boundary.
     let mut conn = Connection::open_with_flags(database, rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE)
         .map_err(|_| SignedOperationError::Store)?;
     conn.busy_timeout(std::time::Duration::from_secs(5))
@@ -154,9 +156,18 @@ mod tests {
         changed.target = "tenant_a/tools/other".into();
         assert!(matches!(verify_and_consume(&changed, &public, &path, now), Err(SignedOperationError::Signature)));
         let mut changed = other.clone();
+        changed.namespace = "tenant_a".into();
+        assert!(matches!(verify_and_consume(&changed, &public, &path, now), Err(SignedOperationError::Signature)));
+        let mut changed = other.clone();
+        changed.tenant = "tenant_b".into();
+        assert!(matches!(verify_and_consume(&changed, &public, &path, now), Err(SignedOperationError::Invalid)));
+        let mut changed = other.clone();
         changed.payload.push(42);
         assert!(matches!(verify_and_consume(&changed, &public, &path, now), Err(SignedOperationError::Signature)));
         assert!(matches!(verify_and_consume(&other, &public, &path, now + 301), Err(SignedOperationError::Invalid)));
+        assert!(verify_and_consume(&other, &public, &path, now).is_ok());
+        // A second SQLite connection sees the committed replay record.
+        assert!(matches!(verify_and_consume(&other, &public, &path, now), Err(SignedOperationError::Replay)));
 
     }
 }
