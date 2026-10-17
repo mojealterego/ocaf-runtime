@@ -747,8 +747,18 @@ impl RpcGateway {
         // peer ACL, leader fencing, rate limits and durable replay checks.
         // Apply resource bounds before any execution or job submission.
         match &request.action {
-            RpcAction::Execute { args, .. } | RpcAction::SubmitJob { args, .. } => {
+            RpcAction::Execute { args, .. }
+            | RpcAction::SubmitJob { args, .. }
+            | RpcAction::ApplyFencedEffect { effect: args, .. } => {
                 if !crate::omas_policy::admit_rpc_execution_payload(args) {
+                    return Err(RpcError::Malformed);
+                }
+            }
+            RpcAction::FinishJob {
+                outcome: RemoteJobOutcome::Succeeded { output },
+                ..
+            } => {
+                if !crate::omas_policy::admit_rpc_execution_payload(output) {
                     return Err(RpcError::Malformed);
                 }
             }
