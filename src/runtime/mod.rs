@@ -204,7 +204,9 @@ impl OcafRuntime {
             || operation.opcode != 1
             || operation.target != format!("{}/tools/{}", operation.tenant, request.tool)
         {
-            return Err(RuntimeError::AuthRequired("OMAS tenant, opcode or target mismatch".into()));
+            return Err(RuntimeError::AuthRequired(
+                "OMAS tenant, opcode or target mismatch".into(),
+            ));
         }
         // Only the tool namespace may be used for signed dispatch.
         // This prevents accepting a broader signed namespace as equivalent.
@@ -221,12 +223,19 @@ impl OcafRuntime {
         let replay_database = self.omas_replay_database.as_deref().ok_or_else(|| {
             RuntimeError::AuthRequired("OMAS replay database not configured".into())
         })?;
-        let public_key = self.omas_trusted_key.as_ref().ok_or_else(|| RuntimeError::AuthRequired("OMAS key not configured".into()))?;
+        let public_key = self.omas_trusted_key.as_ref().ok_or_else(|| {
+            RuntimeError::AuthRequired("OMAS key not configured".into())
+        })?;
         let now = crate::omas_signed::unix_now()
             .map_err(|_| RuntimeError::AuthRequired("invalid system clock".into()))?;
         crate::omas_signed::verify_and_consume(operation, public_key, replay_database, now)
             .map_err(|error| RuntimeError::AuthRequired(error.to_string()))?;
-        self.execute_attributed(request, &format!("{}:omas_signed", operation.tenant), Some(operation.fuel)).await
+        self.execute_attributed(
+            request,
+            &format!("{}:omas_signed", operation.tenant),
+            Some(operation.fuel),
+        )
+        .await
     }
 
     /// Register only the manifest actually verified by the Ed25519 WASI
