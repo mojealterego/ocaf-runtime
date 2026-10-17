@@ -281,6 +281,13 @@ impl OcafRuntime {
         principal: &str,
         signed_fuel: Option<u64>,
     ) -> Result<ToolCallResult, RuntimeError> {
+        // Central admission: covers local, authenticated RPC and signed OMAS
+        // dispatch without weakening the narrower RPC ingress limit.
+        if !crate::omas_policy::admit_runtime_execution_payload(&request.args) {
+            return Err(RuntimeError::InvalidInput(
+                "OMAS runtime payload exceeds configured bound".into(),
+            ));
+        }
         let tool = self
             .registry
             .resolve(&request.tool)
