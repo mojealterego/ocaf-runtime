@@ -106,6 +106,7 @@ async fn signed_dispatch_runs_once_and_rejects_replay_and_tampering() {
         issued_at: ocaf_runtime::omas_signed::unix_now().unwrap(),
         nonce: "nonce_for_dispatch_001".into(),
         payload: serde_json::to_vec(&request).unwrap(),
+        rpc_sender: None,
         signature: Vec::new(),
     };
     signed.signature = Signer::new_without_digest(&key).unwrap()
