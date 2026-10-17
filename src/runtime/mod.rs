@@ -109,6 +109,7 @@ pub struct OcafRuntime {
     auth_verifier: Arc<dyn AuthVerifier>,
     tenant_namespace: Option<String>,
     omas_trusted_key: Option<[u8; 32]>,
+    omas_replay_database: Option<std::path::PathBuf>,
 }
 
 impl OcafRuntime {
@@ -120,6 +121,7 @@ impl OcafRuntime {
             auth_verifier: Arc::new(DenyByDefaultVerifier),
             tenant_namespace: None,
             omas_trusted_key: None,
+            omas_replay_database: None,
         }
     }
 
@@ -162,6 +164,13 @@ impl OcafRuntime {
         self
     }
 
+    /// Pin the replay store through trusted operator configuration.
+    /// Callers must not select a fresh store to bypass nonce consumption.
+    pub fn with_omas_replay_database(mut self, path: std::path::PathBuf) -> Self {
+        self.omas_replay_database = Some(path);
+        self
+    }
+
     /// The authenticated sender must be supplied ONLY by a trusted RPC
     /// handler after HMAC, certificate PoP, TLS binding and replay gates.
     /// This method does not authenticate a raw caller-provided string.
@@ -189,7 +198,6 @@ impl OcafRuntime {
     pub async fn execute_signed_omas(
         &self,
         operation: &crate::omas_signed::SignedOperation,
-        replay_database: &std::path::Path,
         request: ToolCallRequest,
     ) -> Result<ToolCallResult, RuntimeError> {
         if self.tenant_namespace.as_deref() != Some(operation.tenant.as_str())
@@ -210,6 +218,9 @@ impl OcafRuntime {
         if payload != operation.payload {
             return Err(RuntimeError::AuthRequired("OMAS signed payload mismatch".into()));
         }
+        let replay_database = self.omas_replay_database.as_deref().ok_or_else(|| {
+            RuntimeError::AuthRequired("OMAS replay database not configured".into())
+        })?;
         let public_key = self.omas_trusted_key.as_ref().ok_or_else(|| RuntimeError::AuthRequired("OMAS key not configured".into()))?;
         let now = crate::omas_signed::unix_now()
             .map_err(|_| RuntimeError::AuthRequired("invalid system clock".into()))?;
