@@ -472,3 +472,8 @@ pozostaje `ACTIVE_TECHNICAL_OPEN`.
 Na jednoznaczną dyspozycję właściciela oznaczono kamień milowy **0.38 ETAP UKOŃCZONY** w manifeście v11, obu roadmapach i README. Jest to zamknięcie projektowe, nie niezależna certyfikacja produkcyjna. Niewykazane pozostają wielohostowe dowody A01–A12, niezależny audyt, testy docelowej infrastruktury i formalne `PRODUCTION_APPROVED`; pozostają w rejestrze luk i nie blokują prac R&D etapu 0.39.
 
 Commity: manifest `8efeed817f3cc6089606dd97ba4bf90629b4d501`, roadmapa `21d3bed231d0d79f56a652004029beb5143e2e84`, lustro `c1807e105ab312d6943163e89a3c1200111fba18`, README `d869697043d80e1cdecd2ecab323558e0d533457`. Nie wykonano w tym przebiegu testów cargo ani CI.
+
+
+## 2026-10-17 — 0.39: niezależna kontrola historycznych dowodów CI
+
+Zweryfikowano przez GitHub Actions API zakończony sukcesem run `38739812121`, job `116438244615`: dwie rzeczywiste maszyny Firecracker/jailer, UDP z gości, izolacja i recovery; artefakt `11975256452`. Log nie zawiera potwierdzenia wykonania podpisanego WASI w gościu ani weryfikacji podpisanego manifestu. Wcześniejsze commity `d9000ef`, `0eb8c7d`, `e388c99`, `2975381` wzmacniają walidator serial, ale nie stanowią dowodu wykonania E2E. Status etapu 0.39 pozostaje `ACTIVE_TECHNICAL_OPEN`, `PRODUCTION_APPROVED=false`. Do zamknięcia konieczne: rzeczywiste podpisane WASI uruchomione w Firecracker z dowodem podpisu, negatywne próby i pełna brama odbioru.
