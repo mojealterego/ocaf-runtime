@@ -27,6 +27,7 @@ pub fn admit_rpc_execution_payload(args: &serde_json::Value) -> bool {
     serde_json::to_vec(args).is_ok_and(|encoded| {
         encoded.len() <= MAX_PAYLOAD_BYTES
             && encoded.len() <= crate::rpc::MAX_FRAME_BYTES
+            && encoded.len() <= crate::rpc::MAX_BODY_BYTES
     })
 }
 
@@ -41,7 +42,7 @@ mod tests {
 
     #[test]
     fn rpc_execution_payload_accepts_boundary_and_rejects_overflow() {
-        let max = crate::rpc::MAX_FRAME_BYTES;
+        let max = crate::rpc::MAX_BODY_BYTES;
         let fitting = serde_json::Value::String("a".repeat(max - 2));
         let exceeding = serde_json::Value::String("a".repeat(max - 1));
         assert!(admit_rpc_execution_payload(&fitting));
