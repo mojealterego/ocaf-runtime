@@ -1297,3 +1297,8 @@ SHA-256: `891df9b55b73f6070086b4a04eb4e7fb6b57ac8b5a5a384f50cb4824b9c1358a`. Tes
 Kontrola kontraktu interhost przeszła, lecz rzeczywisty zdalny job był **SKIPPED**;
 nie stanowi to odbioru replikacji pomiędzy kernelami. Status całego `0.40`
 pozostaje `ACTIVE_TECHNICAL_OPEN`.
+
+
+## 2026-10-17 — AUDYT PDF OMAS (29 stron) — mapowanie do istniejących etapów
+
+Źródło: `Audyt Kodu i Projekt OMAS.PDF`, s. 1–29. Pełna mapa wymagań, luki i ocena błędów kodu: [`docs/audits/OMAS_PDF_SECURITY_ARCHITECTURE_2026-10-17.md`](https://github.com/mojealterego/ocaf-runtime/blob/main/docs/audits/OMAS_PDF_SECURITY_ARCHITECTURE_2026-10-17.md). **Bez renumeracji etapów.** Natywny protokół Zenoh ZBytes/rkyv i walidacja namespace -> **0.46**; wykonanie WASI/Wasmtime, signed module i izolacja -> **0.39**; auth, capability envelope, replay protection, registry, swarm, bounded memory i builder compilation -> odpowiednie **istniejące etapy bezpieczeństwa, narzędzi, pamięci i 0.50–0.55**. Krytyczne luki wzorca z PDF: podpis nie obejmuje opcode ani limitów, nonce rejestrowany przed weryfikacją podpisu, prefix-confusion, replay-cache RAM, nieograniczone payload/replies. **Wszystkie: wymagają weryfikacji w kodzie i negatywnych testów; PDF nie jest dowodem implementacji.** Nie deklarować <10 µs ani produkcyjnego odbioru bez benchmarków i E2E.
