@@ -436,10 +436,12 @@
       "acceptance": "Operator requested project-level closure and transition to 0.39; documented in [directive](STAGE038_OPERATOR_DIRECTIVE_2026-10-15.md). Passing CI is not persistent two-host acceptance, independent signed security audit or verified production release. PDF11: testy E2E, negatywne, dowód wykonania, benchmarki bez symulacji. PDF15: negative security, integration and reproducible evidence tests; demo is not implementation proof.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
-      "status": "CLOSED_BY_OPERATOR_TECHNICAL_OPEN",
-      "historical_status": "**COMPLETE — OPERATOR-RECORDED MILESTONE / technical A01–A12 INCOMPLETE; production NO-GO**",
+      "status": "COMPLETED_BY_OPERATOR_TECHNICAL_ACCEPTANCE_OPEN",
+      "historical_status": "ETAP UKOŃCZONY — decyzja właściciela; niezależny audyt, wielohostowe testy i production approval niepotwierdzone",
       "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
-      "source_class": "MATRIX_ORIGINAL"
+      "source_class": "MATRIX_ORIGINAL",
+      "operator_milestone_closed": true,
+      "production_approved": false
     },
     {
       "id": "0.39",
