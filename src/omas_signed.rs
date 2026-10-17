@@ -251,7 +251,7 @@ mod tests {
             tenant: "tenant_a".into(), namespace: "tenant_a/tools".into(),
             target: "tenant_a/tools/run".into(), opcode: 1, fuel: 100,
             issued_at: now, nonce: "unique_nonce_0001".into(),
-            payload: b"hello".to_vec(), signature: Vec::new(),
+            payload: b"hello".to_vec(), rpc_sender: None, signature: Vec::new(),
         };
         op.signature = Signer::new_without_digest(&key).unwrap()
             .sign_oneshot_to_vec(&op.canonical_bytes()).unwrap();
