@@ -66,6 +66,15 @@ async fn signed_dispatch_runs_once_and_rejects_replay_and_tampering() {
     assert!(no_store.execute_signed_omas(&signed, request.clone()).await.is_err());
     assert_eq!(counter.load(Ordering::SeqCst), 0);
 
+    let missing_path = dir.path().join("missing.sqlite");
+    let missing_store = OcafRuntime::new(100)
+        .with_tenant_namespace("tenant_a").unwrap()
+        .with_omas_trusted_key(public)
+        .with_omas_replay_database(missing_path.clone());
+    assert!(missing_store.execute_signed_omas(&signed, request.clone()).await.is_err());
+    assert!(!missing_path.exists(), "replay store must never be created implicitly");
+    assert_eq!(counter.load(Ordering::SeqCst), 0);
+
     let wrong_key = PKey::generate_ed25519().unwrap();
     let wrong_public: [u8; 32] = wrong_key.raw_public_key().unwrap().try_into().unwrap();
     let untrusted = OcafRuntime::new(100)
