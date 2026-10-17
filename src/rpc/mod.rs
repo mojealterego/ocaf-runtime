@@ -733,6 +733,15 @@ impl RpcGateway {
             return Err(RpcError::Unauthorized);
         }
 
+        // Bind an OMAS capability to the authenticated RPC peer. Until the
+        // versioned OMAS signature includes a peer identity, a peer may only
+        // submit a signed capability when its pinned certificate identity is
+        // verified above. This prevents HMAC-only peers from replaying an
+        // otherwise valid tenant capability across RPC identities.
+        if request.omas_operation.is_some() && peer.certificate_identity.is_none() {
+            return Err(RpcError::Unauthorized);
+        }
+
         // Count authenticated messages before manifest lookup or discovery,
         // so a compromised but authenticated peer cannot enumerate resources
         // without an independent per-peer quota.
