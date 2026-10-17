@@ -465,3 +465,10 @@ pozostaje `ACTIVE_TECHNICAL_OPEN`.
 - `ROADMAP.md`: historyczne `1.95` odróżniono od aktualnego nowego ID `334`. Commit `8eecd89114086db9130bbf28615408b4b6f4fc2a`.
 - Lustro `docs/ROADMAP_FULL_ECOSYSTEM_2026.md`: analogiczna korekta. Commit `fb5b150deaf3f50db47b70bb2cb6a53ad0a1f0ce`.
 - Dowód: ponowny odczyt trzech blobów z `main` potwierdził obecność `334` i brak aktywnego zwrotu `obecnie \`1.95\``. Brak uruchomionych testów cargo/CI. Historyczne zestawienia pozostają w dokumentach; dalsza inwentaryzacja jest otwarta.
+
+
+## 2026-10-17 — 0.38 OPERATOR_COMPLETED / przejście do 0.39
+
+Na jednoznaczną dyspozycję właściciela oznaczono kamień milowy **0.38 ETAP UKOŃCZONY** w manifeście v11, obu roadmapach i README. Jest to zamknięcie projektowe, nie niezależna certyfikacja produkcyjna. Niewykazane pozostają wielohostowe dowody A01–A12, niezależny audyt, testy docelowej infrastruktury i formalne `PRODUCTION_APPROVED`; pozostają w rejestrze luk i nie blokują prac R&D etapu 0.39.
+
+Commity: manifest `8efeed817f3cc6089606dd97ba4bf90629b4d501`, roadmapa `21d3bed231d0d79f56a652004029beb5143e2e84`, lustro `c1807e105ab312d6943163e89a3c1200111fba18`, README `d869697043d80e1cdecd2ecab323558e0d533457`. Nie wykonano w tym przebiegu testów cargo ani CI.
