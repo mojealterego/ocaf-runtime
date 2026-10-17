@@ -59,3 +59,10 @@ class GuestWasiBindings(unittest.TestCase):
             original.symlink_to(outside, target_is_directory=True)
             with self.assertRaisesRegex(g.GuestWasiError,"redirected"):
                 g.verify_brokered_pair(report,jail,sha)
+            original.unlink()
+            original.mkdir()
+            (original/"serial-console.log").write_bytes(GOOD)
+            (jail/"firecracker").rename(jail/"firecracker-old")
+            (jail/"firecracker").symlink_to(jail/"firecracker-old", target_is_directory=True)
+            with self.assertRaisesRegex(g.GuestWasiError,"redirected"):
+                g.verify_brokered_pair(report,jail,sha)
