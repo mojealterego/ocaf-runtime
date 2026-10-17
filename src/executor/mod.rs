@@ -30,8 +30,15 @@ pub trait ToolExecutor: Send + Sync {
 
     /// Signed OMAS dispatch must explicitly enforce the authenticated fuel cap.
     /// Generic executors are denied by default rather than ignoring the cap.
-    async fn execute_signed_fuel(&self, _args: Value, _ctx: &ExecutionContext, _fuel: u64) -> Result<Value, ToolError> {
-        Err(ToolError::Execution("signed fuel is not supported by this executor".into()))
+    async fn execute_signed_fuel(
+        &self,
+        _args: Value,
+        _ctx: &ExecutionContext,
+        _fuel: u64,
+    ) -> Result<Value, ToolError> {
+        Err(ToolError::Execution(
+            "signed fuel is not supported by this executor".into(),
+        ))
     }
 }
 
