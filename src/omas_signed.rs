@@ -81,7 +81,12 @@ pub fn verify_and_consume(
         .map_err(|_| SignedOperationError::Signature)? {
         return Err(SignedOperationError::Signature);
     }
-    // Refuse symlinked or non-regular replay stores; never silently create an\n    // attacker-selected database through a symlink.\n    let metadata = fs::symlink_metadata(database).map_err(|_| SignedOperationError::Store)?;\n    if !metadata.file_type().is_file() { return Err(SignedOperationError::Store); }\n    let mut conn = Connection::open_with_flags(database, rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE)\n        .map_err(|_| SignedOperationError::Store)?;
+    // Refuse symlinked or non-regular replay stores; never silently create an
+    // attacker-selected database through a symlink.
+    let metadata = fs::symlink_metadata(database).map_err(|_| SignedOperationError::Store)?;
+    if !metadata.file_type().is_file() { return Err(SignedOperationError::Store); }
+    let mut conn = Connection::open_with_flags(database, rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE)
+        .map_err(|_| SignedOperationError::Store)?;
     conn.busy_timeout(std::time::Duration::from_secs(5))
         .map_err(|_| SignedOperationError::Store)?;
     let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)
@@ -116,7 +121,8 @@ mod tests {
         let key = PKey::generate_ed25519().unwrap();
         let public: [u8; 32] = key.raw_public_key().unwrap().try_into().unwrap();
         let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("replay.sqlite");\n        Connection::open(&path).unwrap().close().unwrap();
+        let path = dir.path().join("replay.sqlite");
+        Connection::open(&path).unwrap().close().unwrap();
         let now = 1_800_000_000;
         let mut op = SignedOperation {
             tenant: "tenant_a".into(), namespace: "tenant_a/tools".into(),
