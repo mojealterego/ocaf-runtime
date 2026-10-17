@@ -597,3 +597,11 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - Wszystkie testy tego workflow uruchamiane są na **jednym** runnerze GitHub Actions. Weryfikują symulowane scenariusze awarii, wygasania lease, fencing, idempotencji i replay, nie sieciowy failover na niezależnych hostach. `postgres_fenced_effect` nie jest dowodem produkcyjnego PostgreSQL HA.
 - Sam zapis workflow **nie dowodzi jego uruchomienia ani PASS**. Dowody PASS można przypisać dopiero do konkretnego run ID, commit SHA i artefaktów GitHub Actions.
 - Rzeczywiste testy międzyhostowe, signed OMAS jobs/effects, Firecracker guest, niezależny audyt i odbiór operatora pozostają otwarte.
+
+### 2026-10-17 — GitHub Actions: analiza rzeczywistego run ID 39064157001
+
+- Workflow `ocaf-failure-recovery-simulation.yml`, run [39064157001](https://github.com/mojealterego/ocaf-runtime/actions/runs/39064157001), commit `5032533e00eeda81b9620e77e59b40b798f8b362`: wynik całkowity **FAILURE**.
+- Job `117488419747` (SQLite jobs, OMAS, RPC, replay): **SUCCESS**. Job `117488419955` (PostgreSQL): **FAILURE**; 3/3 testy `postgres_fenced_effect` zwróciły `UnsafeTransport` przy tworzeniu `PgLeader`.
+- Przyczyna potwierdzona w kodzie `src/cluster/leadership.rs`: niezabezpieczony transport PostgreSQL dopuszczalny tylko dla jawnego `sslmode=disable`, `allow_insecure_loopback=true` i hosta loopback. CI DSN pomijał `sslmode=disable`.
+- Poprawka wyłącznie CI: DSN `postgres://ocaf:ocaf_ci_only@127.0.0.1:5432/ocaf_ci?sslmode=disable`; **nie osłabiono walidacji TLS dla zdalnych hostów**. Commit `d2fdd68400eaf5b59d50ce6872c5ef04b513b1ed`. Wynik ponownego uruchomienia wymaga osobnego potwierdzenia.
+- Symulacja GitHub Actions nie zastępuje rzeczywistych niezależnych hostów, sieciowego failover, recovery i odbioru operatora.
