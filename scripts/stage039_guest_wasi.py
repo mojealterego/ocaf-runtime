@@ -102,7 +102,7 @@ def verify_brokered_pair(broker_report:dict,jailer_base:Path,rootfs_sha256:str)-
             or not firecracker_dir.is_dir() or not vm_dir.is_dir()
             or path.is_symlink() or not path.is_file()):
             raise GuestWasiError("missing or redirected jailed Firecracker serial file")
-        flags=os.O_RDONLY|getattr(os,"O_NOFOLLOW",0)
+        flags=os.O_RDONLY|getattr(os,"O_NOFOLLOW",0)|getattr(os,"O_NONBLOCK",0)
         fd=os.open(path,flags)
         try:
             before=os.fstat(fd)
@@ -110,7 +110,10 @@ def verify_brokered_pair(broker_report:dict,jailer_base:Path,rootfs_sha256:str)-
                 raise GuestWasiError("tampered or oversized real KVM serial")
             raw=os.read(fd,1024*1024+1)
             after=os.fstat(fd)
-            if before.st_ino!=after.st_ino or before.st_size!=after.st_size or len(raw)!=before.st_size:
+            if (before.st_dev!=after.st_dev or before.st_ino!=after.st_ino
+                or before.st_mtime_ns!=after.st_mtime_ns
+                or before.st_ctime_ns!=after.st_ctime_ns
+                or before.st_size!=after.st_size or len(raw)!=before.st_size):
                 raise GuestWasiError("guest evidence changed during read")
         finally:os.close(fd)
         receipts[key]={**verify_console(raw),"vm_id":vm_id}
