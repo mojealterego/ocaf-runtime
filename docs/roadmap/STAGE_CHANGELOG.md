@@ -524,3 +524,11 @@ Audyt zapisany w `docs/audits/OMAS_PDF_SECURITY_ARCHITECTURE_2026-10-17.md`. Map
 - W aktualnej roadmapie i manifeście występują `OmniDev`, `OmniUX`, `OmniE2E` i `ocaf-transport-crdt`. Obecność nazw nie potwierdza integracji ani kompletności wymagań ze starszych źródeł.
 - Reguła konsolidacji: jeden wymóg źródłowy -> istniejący etap (jeśli zgodny) -> moduł kodu -> test -> dowód SHA -> luka; brakujący wymóg dopisać do właściwego etapu, a nowy etap dopiero po ostatnim istniejącym ID. Warianty Code/NoCode na pięciu platformach zachować jako 10 odrębnych produktów.
 - Status: `SOURCE_COMPARISON_PARTIAL`; pełna inwentaryzacja wszystkich modułów i semantyczne przypisanie wszystkich źródeł nadal otwarte.
+
+## 2026-10-17 — Porównanie historycznych modułów: mapowanie faz do etapów
+
+- Odczytano rekonstrukcję `OCAF_ROADMAP_REKONSTRUKCJA-1.md` (12 877 wierszy) i jej historyczny sześciostopniowy plan: Tokio/Zenoh, dynamic tool loading/MCP, sandbox Firecracker, OAuth 2.1/PKCE, L402/x402, RAG/OWASP. Dokument pozostaje źródłem porównawczym, nie zastępuje kanonicznej roadmapy.
+- Manifest v11 zawiera etapy `0.43` MCP, `0.44` OAuth, `0.56` OmniDev, `0.57` OmniUX, `0.58` OmniE2E, `0.87` OmniMarket-L402+, `1.49` L402 grammar, `1.54` quotas, `1.85` provenance, `1.86` caveats, `216` MCP stateless control plane, `218` L402 Macaroons ZKP, `319` L402 settlement. Są to punkty docelowe semantycznej rekonsyliacji, nie dowody pełnej implementacji.
+- Bieżący `Cargo.toml` deklaruje Rust 2021, `tokio`, `zenoh 1.10`, `jsonschema`, `tokio-postgres`, `rusqlite`, `rustls` i `openssl`. Historyczne twierdzenia o Rust 2024+, rzeczywistym SHM, 7–10 µs, pełnym OAuth PKCE, Firecracker guest i rozliczeniach L402 nie wynikają z samych zależności.
+- Zidentyfikowano różnicę między historycznymi nazwami ośmiu silników (`ocaf-mcp-builder`, `ocaf-swarm-coder`, `ocaf-flow-studio`) a bieżącym układem jednego crate `ocaf_runtime`; nie tworzyć duplikatów istniejącego runtime bez audytu API i kodu.
+- Status `PARTIAL_SOURCE_TO_MANIFEST_MAPPING`; pełne porównanie moduł-po-module, kodu, testów i dowodów SHA pozostaje otwarte.
