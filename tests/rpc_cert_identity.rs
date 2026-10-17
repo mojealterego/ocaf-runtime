@@ -251,6 +251,23 @@ async fn signed_omas_request_requires_matching_authenticated_peer_tenant() {
     });
     let signed = request.with_certificate_proof(&key).unwrap();
 
+    // A matching tenant ACL alone must not authorize an OMAS request
+    // without a pinned certificate and proof of private-key possession.
+    let tenant_only = PeerPolicy::new(KEY, vec!["demo_echo".into()])
+        .with_omas_tenant("tenant_b")
+        .unwrap();
+    let no_certificate_gateway = RpcGateway::new(
+        "node-b",
+        OcafRuntime::new(0),
+        HashMap::from([("node-a".into(), tenant_only)]),
+        4,
+    )
+    .unwrap();
+    assert!(matches!(
+        send(&no_certificate_gateway, &signed).await,
+        Err(RpcError::Unauthorized)
+    ));
+
     for configured_tenant in [None, Some("tenant_a")] {
         let mut policy = PeerPolicy::new(KEY, vec!["demo_echo".into()])
             .with_pinned_certificate(&pem, &pin)
