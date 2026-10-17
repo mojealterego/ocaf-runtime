@@ -448,3 +448,12 @@ SHA-256: `891df9b55b73f6070086b4a04eb4e7fb6b57ac8b5a5a384f50cb4824b9c1358a`. Tes
 Kontrola kontraktu interhost przeszła, lecz rzeczywisty zdalny job był **SKIPPED**;
 nie stanowi to odbioru replikacji pomiędzy kernelami. Status całego `0.40`
 pozostaje `ACTIVE_TECHNICAL_OPEN`.
+
+
+## 2026-10-17 — DOCUMENTATION_CONSISTENCY — rozdzielenie migawek v10/v11
+
+- `README.md`: historyczny rejestr 289 pozycji został jawnie odróżniony od aktualnego manifestu v11 (333 etapy główne, 64 techniczne, 10 produktów; razem 407); commit `6d94170d324905312eb2583bb666beeef960100b`.
+- `ROADMAP.md`: tabelę 195 etapów oznaczono jako historyczną migawkę v10; commit `dd42ad05818aa134f46ec02bd6bf04f8d80ebd97`.
+- `docs/ROADMAP_FULL_ECOSYSTEM_2026.md`: zsynchronizowano opis historycznej tabeli; commit `3d767f6d951c5e3d4249fe52e76d909ced8066a2`.
+- Manifest `canonical_v11_inventory.json` niezmieniony, ponieważ jego liczniki już wynoszą 333 i 64; `production_approved=false`.
+- Weryfikacja: odczyty źródeł i potwierdzenia zapisów GitHub API. Nie uruchomiono cargo, walidatorów ani CI dla tych commitów. Pozostałe starsze deklaracje w dokumentacji wymagają osobnej inwentaryzacji; etap synchronizacji nie jest w pełni zamknięty.
