@@ -1,0 +1,36 @@
+name: OMAS signed admission
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/omas_signed.rs'
+      - 'src/omas_policy.rs'
+      - 'src/runtime/mod.rs'
+      - 'src/lib.rs'
+      - '.github/workflows/omas-security.yml'
+  pull_request:
+    paths:
+      - 'src/omas_signed.rs'
+      - 'src/omas_policy.rs'
+      - 'src/runtime/mod.rs'
+      - 'src/lib.rs'
+      - '.github/workflows/omas-security.yml'
+permissions:
+  contents: read
+jobs:
+  omas-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: OMAS unit and negative tests
+        run: cargo test --no-default-features omas_ -- --nocapture
+      - name: OMAS signed operation tests
+        run: cargo test --no-default-features signature_binds_operation_and_replay_persists -- --exact
+      - name: Clippy
+        run: cargo clippy --no-default-features --all-targets -- -D warnings
