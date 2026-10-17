@@ -130,6 +130,21 @@ mod tests {
         assert!(matches!(verify_and_consume(&tampered, &public, &path, now), Err(SignedOperationError::Signature)));
         assert!(verify_and_consume(&op, &public, &path, now).is_ok());
         assert!(matches!(verify_and_consume(&op, &public, &path, now), Err(SignedOperationError::Replay)));
-        assert!(matches!(verify_and_consume(&op, &public, &dir.path().join("missing/db"), now), Err(SignedOperationError::Store)));
+        let mut other = op.clone();
+        other.nonce = "unique_nonce_0002".into();
+        other.signature = Signer::new_without_digest(&key).unwrap()
+            .sign_oneshot_to_vec(&other.canonical_bytes()).unwrap();
+        assert!(matches!(verify_and_consume(&other, &public, &dir.path().join("missing/db"), now), Err(SignedOperationError::Store)));
+        let mut changed = other.clone();
+        changed.fuel = 101;
+        assert!(matches!(verify_and_consume(&changed, &public, &path, now), Err(SignedOperationError::Signature)));
+        let mut changed = other.clone();
+        changed.target = "tenant_a/tools/other".into();
+        assert!(matches!(verify_and_consume(&changed, &public, &path, now), Err(SignedOperationError::Signature)));
+        let mut changed = other.clone();
+        changed.payload.push(42);
+        assert!(matches!(verify_and_consume(&changed, &public, &path, now), Err(SignedOperationError::Signature)));
+        assert!(matches!(verify_and_consume(&other, &public, &path, now + 301), Err(SignedOperationError::Invalid)));
+
     }
 }
