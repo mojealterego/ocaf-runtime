@@ -31,7 +31,7 @@ Dwa wspólne mechanizmy: **0.50 Agents Builder Core typed graph/IR** oraz **0.51
 
 **Wciąż do odtworzenia:** nieznane pierwotne kontrakty 0.00–0.05 i 0.10. Poprzedni status źródłowy wpisów v10 poniżej jest historyczną migawką — nie może wymazać odkrytego kodu. **0.39/0.40/0.41:** rzeczywiste zintegrowane WASI/Firecracker, niezależne hosty PostgreSQL HA i SLO/DR pozostają otwarte. **Agents Builder** = 10 oryginalnych produktów Cloud/Windows/macOS/Android/iOS × Code/NoCode, nie same agenty. Ich GUI i E2E wciąż nie zostały wykazane.
 
-## Statystyka wykonania i uczciwe oznaczenia
+## Historyczna statystyka wykonania (migawka 195 etapów, nie suma v11)
 
 | Status etapów głównych | Liczba | Znaczenie |
 |---|---:|---|
@@ -42,7 +42,7 @@ Dwa wspólne mechanizmy: **0.50 Agents Builder Core typed graph/IR** oraz **0.51
 | `PLANNED` | **95** | Nie ma kompletu dowodów realizacji |
 | `PLANNED_OR_UNVERIFIED` | **58** | Nie ma kompletu dowodów realizacji |
 | `UNSPECIFIED_IN_CURRENT_REPO` | **11** | Brak zachowanej specyfikacji historycznej |
-| **SUMA** | **195** | **0 etapów z deklaracją pełnej gotowości produkcyjnej w tym rejestrze** |
+| **SUMA (historyczna migawka v10)** | **195** | **Ta tabela obejmuje wyłącznie historyczną migawkę 195 etapów, nie aktualne 333 etapy główne manifestu v11; brak deklaracji pełnej gotowości produkcyjnej** |
 
 P0 **0.39 WASI/Firecracker**, **0.40 PostgreSQL HA na rzeczywiście niezależnych hostach**, **0.41 reliability/DR** są **technicznie otwarte**. Ich udane testy laboratoryjne nie zastępują pełnego ukończenia. `production_approved=false`.
 
