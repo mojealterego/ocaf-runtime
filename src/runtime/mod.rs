@@ -423,6 +423,7 @@ mod omas_entrypoint_tests {
             issued_at: 0,
             nonce: "abcdefghijklmnop".into(),
             payload: serde_json::to_vec(&call()).unwrap(),
+            rpc_sender: None,
             signature: vec![0; 64],
         };
         operation.payload.push(b' ');
@@ -444,6 +445,7 @@ mod omas_entrypoint_tests {
             issued_at: 0,
             nonce: "abcdefghijklmnop".into(),
             payload: serde_json::to_vec(&call()).unwrap(),
+            rpc_sender: None,
             signature: vec![0; 64],
         };
         assert!(matches!(
@@ -464,6 +466,7 @@ mod omas_entrypoint_tests {
             issued_at: 0,
             nonce: "abcdefghijklmnop".into(),
             payload: serde_json::to_vec(&call()).unwrap(),
+            rpc_sender: None,
             signature: vec![0; 64],
         };
         assert!(matches!(
@@ -486,6 +489,7 @@ mod omas_entrypoint_tests {
             issued_at: 0,
             nonce: "abcdefghijklmnop".into(),
             payload: serde_json::to_vec(&call()).unwrap(),
+            rpc_sender: None,
             signature: vec![0; 64],
         };
         assert!(matches!(
@@ -506,6 +510,7 @@ mod omas_entrypoint_tests {
             issued_at: 0,
             nonce: "abcdefghijklmnop".into(),
             payload: serde_json::to_vec(&call()).unwrap(),
+            rpc_sender: None,
             signature: vec![0; 64],
         };
         assert!(matches!(
@@ -532,6 +537,7 @@ mod omas_entrypoint_tests {
             issued_at: 0,
             nonce: "abcdefghijklmnop".into(),
             payload: serde_json::to_vec(&call()).unwrap(),
+            rpc_sender: None,
             signature: vec![0; 64],
         };
         assert!(matches!(
