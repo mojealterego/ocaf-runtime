@@ -496,3 +496,9 @@ Audyt zapisany w `docs/audits/OMAS_PDF_SECURITY_ARCHITECTURE_2026-10-17.md`. Map
 - Kontrola strukturalna manifestu wykazała `main_count=333`, ale tablica `main` ma 251 rekordów, w tym rekordy zakresowe; tablica `technical` ma 64, referencje 33. W README jest 344 wierszy numerycznych, a 16 identyfikatorów 216–231 nie ma osobnych wierszy; nie jest to dowód ich usunięcia z manifestu, wymaga sprawdzenia sposobu reprezentacji zakresów przed zmianą liczników.
 - Dla SHA `d1be1f714bd42bc1700cc1207a27f386d5cba2f3` GitHub combined status zgłasza Railway `ocaf-trial-smoke=success` i `omega-ocaf-apex=pending`; nie stanowi to dowodu zielonego Rust CI ani przejścia testu fuel.
 - Weryfikacja wszystkich 407 pozycji wobec kodu/testów/CI oraz walidatory repo pozostają otwarte. Nie zmieniono żadnego statusu produkcyjnego ani decyzji o odbiorze.
+
+## 2026-10-17 — Przywrócenie etapów 216–231 do przypiętej tabeli
+
+- Kontrola manifestu v11 wykazała 16 istniejących etapów głównych 216–231 z opisami i statusami PLANNED, lecz bez odpowiadających wierszy README. Dodano wszystkie 16 wierszy bez tworzenia nowych identyfikatorów i bez zmiany statusów.
+- Usunięto z ROADMAP.md i lustrzanej roadmapy historyczne, nieaktualne stwierdzenie, że numer 216 jest wolny. Aktualny numer następnego nowego etapu w manifeście: 334.
+- Ponowna kontrola strukturalna: wszystkie 251 rekordów tablicy `main` manifestu mają osobny wiersz README; `technical` liczy 64 rekordy. `main_count=333` jest deklaracją szerszego zbioru historycznych etapów, nie długością tablicy `main`; pełna rekonsyliacja zakresów i walidacja CI pozostają otwarte.
