@@ -19,6 +19,11 @@ class GuestWasiBindings(unittest.TestCase):
             with self.subTest(raw=broken[:75]),self.assertRaises(g.GuestWasiError):
                 g.verify_console(broken)
 
+    def test_reject_forged_linux_marker_after_guest_success(self):
+        forged=g.INIT+b"OCAF039_GUEST_CRNG_READY\\n"+g.OUTPUT+g.PASS+b"Linux version 6.1.0\\n"
+        with self.assertRaises(g.GuestWasiError):
+            g.verify_console(forged)
+
     def test_broker_two_identity_binding_and_digests(self):
         with tempfile.TemporaryDirectory() as root:
             root=Path(root);jail=root/"jailer";jail.mkdir()
