@@ -489,3 +489,10 @@ Audyt zapisany w `docs/audits/OMAS_PDF_SECURITY_ARCHITECTURE_2026-10-17.md`. Map
 - Zastąpiono nieprecyzyjne `HISTORICAL_LAB_SCOPE_LIMITED` zróżnicowanymi statusami: `PARTIALLY_IMPLEMENTED_ACCEPTANCE_OPEN`, `UNVERIFIED_ACCEPTANCE_OPEN`, `IMPLEMENTED_LAB_EVIDENCE_ACCEPTANCE_OPEN`, `IMPLEMENTED_TEST_HARNESS_ACCEPTANCE_OPEN`.
 - Zsynchronizowano manifest v11, ROADMAP.md, lustrzaną roadmapę i przypiętą tabelę README. Zachowano identyfikatory, liczebność i wszystkie historyczne etapy.
 - Administracyjne zamknięcie 0.38 przez operatora pozostaje odrębne od technicznego odbioru i produkcyjnego GO. Test rzeczywistego przekroczenia podpisanego fuel i CI na końcowym SHA nadal niepotwierdzone. Etapy 0.39–0.41 nadal otwarte.
+
+## 2026-10-17 — Kontrola integralności po rekonsyliacji 0.38
+
+- Sprawdzono aktualne README, ROADMAP.md, lustro i manifest v11: cztery odzyskane podetapy 0.38.1/0.38.6/0.38.8/0.38.9 są obecne w każdym źródle. Naprawiono dwa błędne względne odnośniki w głównej ROADMAP.md (implementacja WASI i dyspozycja operatora).
+- Kontrola strukturalna manifestu wykazała `main_count=333`, ale tablica `main` ma 251 rekordów, w tym rekordy zakresowe; tablica `technical` ma 64, referencje 33. W README jest 344 wierszy numerycznych, a 16 identyfikatorów 216–231 nie ma osobnych wierszy; nie jest to dowód ich usunięcia z manifestu, wymaga sprawdzenia sposobu reprezentacji zakresów przed zmianą liczników.
+- Dla SHA `d1be1f714bd42bc1700cc1207a27f386d5cba2f3` GitHub combined status zgłasza Railway `ocaf-trial-smoke=success` i `omega-ocaf-apex=pending`; nie stanowi to dowodu zielonego Rust CI ani przejścia testu fuel.
+- Weryfikacja wszystkich 407 pozycji wobec kodu/testów/CI oraz walidatory repo pozostają otwarte. Nie zmieniono żadnego statusu produkcyjnego ani decyzji o odbiorze.
