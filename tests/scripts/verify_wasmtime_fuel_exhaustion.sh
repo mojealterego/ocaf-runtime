@@ -18,11 +18,11 @@ if [ "$status" -eq 0 ]; then
   echo "FAIL: infinite-loop guest unexpectedly completed" >&2
   exit 1
 fi
-if [ "$status" -eq 124 ] || [ "$status" -eq 137 ]; then
+if [ "$status" -eq 124 ] || [ "$status" -eq 137 ] || [ "$status" -eq 125 ] || [ "$status" -eq 126 ] || [ "$status" -eq 127 ]; then
   echo "FAIL: watchdog stopped guest; fuel was not proven to work" >&2
   exit 1
 fi
-if ! grep -Eiq 'fuel|out of fuel|all fuel consumed' "$output"; then
+if ! grep -Eiq 'all fuel consumed|out of fuel|fuel exhausted|fuel has been consumed' "$output"; then
   echo "FAIL: guest failed without evidence of fuel exhaustion" >&2
   exit 1
 fi
