@@ -32,6 +32,7 @@ def verify_console(raw:bytes)->dict:
     """
     if not isinstance(raw,bytes) or not 0<len(raw)<=1024*1024:
         raise GuestWasiError("guest serial empty or over limit")
+    linux=raw.find(b"Linux version ")
     boot=raw.find(INIT)
     output=raw.find(OUTPUT)
     done=raw.find(PASS)
@@ -42,7 +43,7 @@ def verify_console(raw:bytes)->dict:
         or FAILED in raw or b"OCAF039_GUEST_HW_RNG_SEED_DENIED" in raw
         or b"OCAF039_GUEST_CRNG_STILL_UNAVAILABLE" in raw
         or b"Linux version " not in raw
-        or not 0<=boot<crng[0][1]<output<done):
+        or not 0<=linux<boot<crng[0][1]<output<done):
         raise GuestWasiError("genuine bounded Linux guest PID1 WASIp1 exit/CRNG proof absent")
     return {
         "guest_pid1_started":True,"wasi_preview1_fd_write_observed_inside_guest":True,
