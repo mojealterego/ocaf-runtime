@@ -39,7 +39,7 @@ use replay::ReplayBackend;
 
 pub const PROTOCOL_VERSION: u16 = 1;
 pub const MAX_FRAME_BYTES: usize = 65_536;
-const MAX_BODY_BYTES: usize = 32_768;
+pub(crate) const MAX_BODY_BYTES: usize = 32_768;
 const MAX_REQUEST_TTL_MS: u64 = 30_000;
 const FUTURE_CLOCK_SKEW_MS: u64 = 5_000;
 const RATE_WINDOW_MS: u64 = 1_000;
