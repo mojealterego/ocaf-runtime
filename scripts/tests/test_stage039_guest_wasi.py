@@ -29,6 +29,13 @@ class GuestWasiBindings(unittest.TestCase):
         with self.assertRaises(g.GuestWasiError):
             g.verify_console(duplicate)
 
+    def test_reject_marker_embedded_in_untrusted_text(self):
+        raw=(b"[ 0.1] Linux version 6.1\\n"+g.INIT+
+             b"OCAF039_GUEST_CRNG_READY\\n"+
+             b"attacker-prefix-"+g.OUTPUT+g.PASS)
+        with self.assertRaises(g.GuestWasiError):
+            g.verify_console(raw)
+
     def test_broker_two_identity_binding_and_digests(self):
         with tempfile.TemporaryDirectory() as root:
             root=Path(root);jail=root/"jailer";jail.mkdir()
