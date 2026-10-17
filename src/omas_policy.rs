@@ -20,6 +20,12 @@ pub fn admit(tenant: &str, namespace: &str, target: &str, frame: usize, payload:
         payload <= frame && fuel > 0 && fuel <= MAX_FUEL
 }
 
+/// Reject oversized serialized arguments on every local or remote runtime path.
+/// RPC has an additional, smaller transport-specific limit.
+pub fn admit_runtime_execution_payload(args: &serde_json::Value) -> bool {
+    serde_json::to_vec(args).is_ok_and(|encoded| encoded.len() <= MAX_PAYLOAD_BYTES)
+}
+
 /// Enforce OMAS resource bounds on legacy RPC execution payloads without
 /// changing the existing RPC wire protocol, authentication, ACL or fencing.
 /// Reject serialization errors and oversized values before replay admission.
@@ -34,6 +40,14 @@ pub fn admit_rpc_execution_payload(args: &serde_json::Value) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn runtime_payload_limit_applies_independently_of_rpc_limit() {
+        let allowed = serde_json::Value::String("a".repeat(crate::rpc::MAX_BODY_BYTES));
+        let denied = serde_json::Value::String("a".repeat(MAX_PAYLOAD_BYTES));
+        assert!(admit_runtime_execution_payload(&allowed));
+        assert!(!admit_runtime_execution_payload(&denied));
+    }
+
     #[test]
     fn rpc_execution_payload_is_bounded() {
         assert!(admit_rpc_execution_payload(&serde_json::json!({"ok": true})));
