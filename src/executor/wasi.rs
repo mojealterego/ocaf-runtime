@@ -494,7 +494,12 @@ impl WasmToolExecutor {
         self.run_limited(args, ctx, self.policy.fuel).await
     }
 
-    async fn run_limited(&self, args: Value, ctx: &ExecutionContext, effective_fuel: u64) -> Result<Value, ToolError> {
+    async fn run_limited(
+        &self,
+        args: Value,
+        ctx: &ExecutionContext,
+        effective_fuel: u64,
+    ) -> Result<Value, ToolError> {
         let _permit = self
             .permits
             .try_acquire()
@@ -698,7 +703,12 @@ impl ToolExecutor for WasmToolExecutor {
         self.run(args, ctx).await
     }
 
-    async fn execute_signed_fuel(&self, args: Value, ctx: &ExecutionContext, fuel: u64) -> Result<Value, ToolError> {
+    async fn execute_signed_fuel(
+        &self,
+        args: Value,
+        ctx: &ExecutionContext,
+        fuel: u64,
+    ) -> Result<Value, ToolError> {
         self.run_with_signed_fuel(args, ctx, fuel).await
     }
 }
