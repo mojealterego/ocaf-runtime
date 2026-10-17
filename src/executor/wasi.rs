@@ -471,7 +471,25 @@ impl WasmToolExecutor {
         self.signed_binding.as_ref().map(|m| &m.tool)
     }
 
+    /// Enforce the caller's signed fuel ceiling in addition to the publisher policy.
+    /// This entry point is intended for a verified OMAS dispatch path.
+    pub async fn run_with_signed_fuel(
+        &self,
+        args: Value,
+        ctx: &ExecutionContext,
+        signed_fuel: u64,
+    ) -> Result<Value, ToolError> {
+        if signed_fuel == 0 || signed_fuel > MAX_FUEL {
+            return Err(rejected("invalid signed fuel ceiling"));
+        }
+        self.run_limited(args, ctx, self.policy.fuel.min(signed_fuel)).await
+    }
+
     async fn run(&self, args: Value, ctx: &ExecutionContext) -> Result<Value, ToolError> {
+        self.run_limited(args, ctx, self.policy.fuel).await
+    }
+
+    async fn run_limited(&self, args: Value, ctx: &ExecutionContext, effective_fuel: u64) -> Result<Value, ToolError> {
         let _permit = self
             .permits
             .try_acquire()
@@ -508,7 +526,7 @@ impl WasmToolExecutor {
             .arg("-W")
             .arg(format!(
                 "fuel={},max-memory-size={},max-wasm-stack={},max-instances=1,max-memories=1,max-tables=1,nan-canonicalization=y",
-                self.policy.fuel,
+                effective_fuel,
                 self.policy.max_linear_memory_bytes,
                 self.policy.max_wasm_stack_bytes
             ))
