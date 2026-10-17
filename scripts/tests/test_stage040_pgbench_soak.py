@@ -36,8 +36,10 @@ class PgBenchReliabilityContracts(unittest.TestCase):
                 h.validate_pgbench_load(s,seconds,clients)
 
     def test_hash_must_match_both_standbys(self):
-        r=h.validate_soak_replay("123:456:789","123:456:789","123:456:789")
+        r=h.validate_soak_replay("a"*64,"a"*64,"a"*64)
         self.assertTrue(r["both_streaming_replicas_replayed_pgbench_dataset"])
-        for bad in (("1","2","1"),("a","a","b"),("","","")):
+        self.assertTrue(r["pgbench_full_ordered_dataset_sha256_verified"])
+        for bad in (("a"*64,"b"*64,"a"*64),
+                    ("123:456:789",)*3,("1","2","1"),("a","a","b"),("","","")):
             with self.subTest(bad=bad),self.assertRaises(h.PostgresHAError):
                 h.validate_soak_replay(*bad)

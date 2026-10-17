@@ -1,0 +1,112 @@
+{
+  "all_three_same_kernel": true,
+  "both_standbys_replayed_pre_crash_wal": true,
+  "cleanup": {
+    "all_started_postmasters_observed_stopped": true,
+    "private_lab_state_removed": true
+  },
+  "distinct_postgres_ports": true,
+  "docker_collector": {
+    "collected_at_utc": "2026-10-17T01:22:53.569290+00:00",
+    "container_cleanup_verified": true,
+    "container_name": "ocaf040-lab-3929c6d9d31d4d8e8c9e1858ce227486",
+    "full_report_collected_before_tmpfs_removal": true,
+    "host_uid": 1000,
+    "image_id": "sha256:84612a5dfe226937024eb65ecd82f70a1e0a6bf4ab6dee1a7f16746b9e2fde2b",
+    "independent_hosts_verified": false,
+    "production_approved": false,
+    "requested_soak_seconds": 30,
+    "requested_witness_exercise": true,
+    "runtime_flags": [
+      "--rm",
+      "--network=none",
+      "--cap-drop=ALL",
+      "--security-opt=no-new-privileges",
+      "--memory=2g",
+      "--pids-limit=256",
+      "--read-only",
+      "--user=postgres",
+      "--tmpfs=/tmp:rw,nosuid,nodev,size=1g,mode=1777"
+    ],
+    "schema_version": 1,
+    "scope": "single_host_kernel_three_postgresql_processes",
+    "source_sha256": {
+      "ops/stage040/Dockerfile": "5136501a5f95daccedbbd0405b21dffca656030e1bc1074cba4bf83772cbd3a1",
+      "scripts/stage040_postgres_ha.py": "95e775f61e6408218d847aae5a5c53c5c8dca3663faa92cf6c485cb0d40c306b",
+      "scripts/stage040_quorum.py": "1f9fb96e8133c8f04e6b0b6c6aae48f01abc3412f9ff85c050631e1b7389fc2c"
+    },
+    "stage_040_complete": false
+  },
+  "host_power_loss_tested": false,
+  "kernel_boot_id": "51505918-2d61-41d2-b793-411f0c5b263b",
+  "nodes_count": 3,
+  "observed_at_utc": "2026-10-17T01:22:52.999732+00:00",
+  "old_primary_external_restart_fencing_tested": false,
+  "old_primary_killed_immediate": true,
+  "old_primary_unreachable_after_crash": true,
+  "pgbench_wal_soak": {
+    "actual_pgbench_completed": true,
+    "both_streaming_replicas_replayed_pgbench_dataset": true,
+    "clients": 8,
+    "duration_seconds": 30,
+    "equal_sum_row_corruption_detected_and_rolled_back": true,
+    "load_during_replication": true,
+    "pgbench_dataset_sha256": "0e53e5e819ef67cf1560ef9f8d4d1cfe94c761fe4f4862f3434d1cc269230796",
+    "pgbench_full_ordered_dataset_sha256_verified": true,
+    "primary_immediate_crash_after_soak": true,
+    "production_approved": false,
+    "tps": 2027.731415,
+    "transactions": 60737
+  },
+  "ports": [
+    53385,
+    44017,
+    55821
+  ],
+  "postgres_version": "16.15 (Debian 16.15-1.pgdg12+2)",
+  "pre_crash_source_wal_lsn": "0/7B320A0",
+  "pre_crash_standby_replay_lsns": {
+    "b": "0/7B320A0",
+    "c": "0/7B320A0"
+  },
+  "primary_a_backend_pid_before_crash": 75,
+  "primary_was_writable": true,
+  "production_approved": false,
+  "schema_version": 1,
+  "split_brain_after_old_primary_restart_tested": false,
+  "stage_040_complete": false,
+  "standby_b_backend_pid_before_crash": 77,
+  "standby_b_promoted_writable": true,
+  "standby_c_backend_pid_before_crash": 79,
+  "standby_c_followed_promoted_b": true,
+  "standby_c_replayed_post_promotion_wal": true,
+  "standby_c_wal_receiver_status": "streaming",
+  "status": "POSTGRES_3_PROCESSES_STREAMING_FAILOVER_PASSED",
+  "synchronous_replication": {
+    "observed_quorum_standbys": "ocaf40_b,ocaf40_c",
+    "required_standbys": "ANY 1 (ocaf40_b,ocaf40_c)",
+    "scope": "one_pre_crash_transaction_on_primary_a",
+    "source_write_synchronous_commit": "remote_apply",
+    "synchronous_mode_during_b_c_failover": false
+  },
+  "three_physically_independent_hosts": false,
+  "witness_lab": {
+    "authority": "single_local_sqlite_witness",
+    "database_server_side_fencing_tested": false,
+    "epochs": [
+      1,
+      2,
+      3
+    ],
+    "final_committed_event_ids": "1,2,3,4",
+    "former_a_rejoined_from_fresh_basebackup": true,
+    "former_a_wal_receiver_status": "streaming",
+    "harness_write_guard_only": true,
+    "majority_consensus_tested": false,
+    "old_a_and_b_harness_writes_denied": true,
+    "overlapping_primary_grant_denied": true,
+    "physical_host_fault_tested": false,
+    "postgres_b_immediate_crash_then_c_promoted": true,
+    "witness_connection_reopened_with_live_lease": true
+  }
+}

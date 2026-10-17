@@ -463,7 +463,26 @@
       "status": "ACTIVE_TECHNICAL_OPEN",
       "historical_status": "**3 distinct kernel PG local failover PASS + real 30s pgbench WAL PASS + REAL 3-NS VETH TCP STREAMING/PARTITION/RECOVERY PASS; INTER-KERNEL LIVE PG STILL OPEN**",
       "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
-      "source_class": "MATRIX_ORIGINAL"
+      "source_class": "MATRIX_ORIGINAL",
+      "development_evidence": [
+        {
+          "evidence_id": "stage040-local-postgres-witness-20261017",
+          "status": "REAL_LOCAL_LAB_VERIFIED_INTERHOST_OPEN",
+          "artifact": "docs/evidence/stage040/2026-10-17/postgres16-witness-lab.json",
+          "sha256": "891df9b55b73f6070086b4a04eb4e7fb6b57ac8b5a5a384f50cb4824b9c1358a",
+          "implementation": "scripts/stage040_postgres_ha.py",
+          "collector": "scripts/stage040_docker_lab.py",
+          "scope": "three PostgreSQL postmasters, one kernel; witness guarded harness only",
+          "stage_test_count": 82,
+          "stage_tests_passed": true,
+          "independent_hosts_verified": false,
+          "database_server_side_fencing_tested": false,
+          "continuous_synchronous_failover_tested": false,
+          "long_soak_tested": false,
+          "stage_040_complete": false,
+          "production_approved": false
+        }
+      ]
     },
     {
       "id": "0.41",

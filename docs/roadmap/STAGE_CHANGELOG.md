@@ -421,3 +421,21 @@ Notes_261016_234639.pdf: sześć proponowanych crates Cargo Workspace (transport
 - Zestaw `scripts/tests/test_stage039_*.py`: **136/136 PASS**.
 - `test_release_readiness.py`: **12/12 PASS**.
 - Status dowodu: **SIMULATED_ONLY / HOST-INDEPENDENT REGRESSION PASS**. Nie zmienia `stage_039_complete=false`; realny Firecracker/KVM/WASI-in-guest pozostaje wymaganiem P0.
+
+
+## 2026-10-17 — 0.40: rzeczywisty lokalny PostgreSQL, świadek i dwa failovery
+
+**ACTIVE_TECHNICAL_OPEN — etap 0.40 pozostaje otwarty.** Wykonano rzeczywisty
+PostgreSQL 16.15 w Docker: 3 postmastery, 60 737 transakcji pgbench / 8 klientów /
+30 s; zgodny SHA-256 wszystkich uporządkowanych tabel i historii na replikach,
+negatywny test uszkodzenia rekordów przy tej samej sumie sald, zapis `remote_apply`,
+awarie A→B→C i ponowne dołączenie A po świeżym basebackup. Trwały pojedynczy
+świadek SQLite odrzuca nakładające się dzierżawy i stare epoki w wywołaniach
+harnessu; nie stanowi quorum większościowego ani fencing na serwerze PostgreSQL.
+**Wspólny kernel; bez potwierdzenia niezależnych hostów, ciągłego trybu synchronicznego
+przez failover ani długiego soak.** `stage_040_complete=false`, `production_approved=false`.
+
+[Implementacja, zakres i odtworzenie](../STAGE040_LOCAL_WITNESS_LAB_2026-10-17.md).
+Dowód: `docs/evidence/stage040/2026-10-17/postgres16-witness-lab.json`,
+SHA-256: `891df9b55b73f6070086b4a04eb4e7fb6b57ac8b5a5a384f50cb4824b9c1358a`. Testy etapu: 82 PASS; pełny zestaw Python:
+428 testów, 37 niezgodności i 4 błędy istniejących kontroli README/roadmapy.

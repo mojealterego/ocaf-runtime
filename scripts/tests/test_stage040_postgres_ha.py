@@ -1,7 +1,9 @@
 """0.40 actual PostgreSQL primary + two standby lab evidence, fail closed."""
 import sys
 import unittest
+import subprocess
 from pathlib import Path
+from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import stage040_postgres_ha as ha
 
@@ -24,6 +26,26 @@ def record():
     }
 
 class HAProofContracts(unittest.TestCase):
+    def test_cleanup_attempts_remaining_postmasters_after_a_timeout(self):
+        calls=[]
+        def command(argv,**kwargs):
+            node=Path(argv[2]).name
+            calls.append((node,argv[-1]))
+            if node=="c" and argv[-1]=="stop":
+                raise ha.PostgresHAError("timeout")
+            return subprocess.CompletedProcess(argv,3 if argv[-1]=="status" else 0)
+        with patch.object(ha,"_run",side_effect=command):
+            with self.assertRaises(ha.PostgresHAError):
+                ha.stop_postmasters("/bin/pg_ctl",{n:Path("/tmp")/n for n in "abc"},set("abc"))
+        self.assertIn(("a","stop"),calls)
+        self.assertIn(("b","stop"),calls)
+
+    def test_cleanup_does_not_accept_status_errors_as_a_stopped_server(self):
+        for code in (0,1,4):
+            with self.subTest(code=code),patch.object(ha,"_run",return_value=subprocess.CompletedProcess([],code)):
+                with self.assertRaises(ha.PostgresHAError):
+                    ha.stop_postmasters("/bin/pg_ctl",{"a":Path("/tmp/a")},{"a"})
+
     def test_admits_actual_scope_and_fencing_only(self):
         r=ha.validate_report(record())
         self.assertTrue(r["standby_c_followed_promoted_b"])

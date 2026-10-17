@@ -1114,3 +1114,21 @@ Ponownie przesłane materiały: **48 = Notes_261014_204557.pdf (127 stron)**, **
 | Deklaracje compliance-by-construction i zastosowań medycznych/finansowych bez formalnych artefaktów i audytu | 328, 333 | Określony zakres dowodu, ograniczenia i kontrprzykłady; osobna ocena regulacyjna, niezależny audyt i decyzja operatora; nie deklarować gwarancji globalnego bezpieczeństwa |
 
 **Wniosek:** nie scalać przykładowego `main.rs` z istniejącym runtime. Dopiero działający kod, testy i dowody przypięte do SHA mogą zmienić status z PLANNED na IMPLEMENTED/TESTED. Brak podstaw do uznania bezpieczeństwa produkcyjnego.
+
+
+## 2026-10-17 — 0.40: rzeczywisty lokalny PostgreSQL, świadek i dwa failovery
+
+**ACTIVE_TECHNICAL_OPEN — etap 0.40 pozostaje otwarty.** Wykonano rzeczywisty
+PostgreSQL 16.15 w Docker: 3 postmastery, 60 737 transakcji pgbench / 8 klientów /
+30 s; zgodny SHA-256 wszystkich uporządkowanych tabel i historii na replikach,
+negatywny test uszkodzenia rekordów przy tej samej sumie sald, zapis `remote_apply`,
+awarie A→B→C i ponowne dołączenie A po świeżym basebackup. Trwały pojedynczy
+świadek SQLite odrzuca nakładające się dzierżawy i stare epoki w wywołaniach
+harnessu; nie stanowi quorum większościowego ani fencing na serwerze PostgreSQL.
+**Wspólny kernel; bez potwierdzenia niezależnych hostów, ciągłego trybu synchronicznego
+przez failover ani długiego soak.** `stage_040_complete=false`, `production_approved=false`.
+
+[Implementacja, zakres i odtworzenie](STAGE040_LOCAL_WITNESS_LAB_2026-10-17.md).
+Dowód: `docs/evidence/stage040/2026-10-17/postgres16-witness-lab.json`,
+SHA-256: `891df9b55b73f6070086b4a04eb4e7fb6b57ac8b5a5a384f50cb4824b9c1358a`. Testy etapu: 82 PASS; pełny zestaw Python:
+428 testów, 37 niezgodności i 4 błędy istniejących kontroli README/roadmapy.
