@@ -31,10 +31,11 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p evidence
-          cargo test --locked --no-default-features --test distributed_jobs_rpc -- --nocapture 2>&1 | tee evidence/distributed_jobs_rpc.log
-          cargo test --locked --no-default-features --test rpc_cert_identity -- --nocapture 2>&1 | tee evidence/rpc_cert_identity.log
-          cargo test --locked --no-default-features --test omas_dispatch -- --nocapture 2>&1 | tee evidence/omas_dispatch.log
-          cargo test --locked --no-default-features --test persistent_replay -- --nocapture 2>&1 | tee evidence/persistent_replay.log
+          mkdir -p evidence
+          cargo test --locked --no-default-features --test distributed_jobs_rpc -- --nocapture 2>&1 | tee evidence/distributed_jobs_rpc.log 2>&1 | tee evidence/distributed_jobs_rpc.log
+          cargo test --locked --no-default-features --test rpc_cert_identity -- --nocapture 2>&1 | tee evidence/rpc_cert_identity.log 2>&1 | tee evidence/rpc_cert_identity.log
+          cargo test --locked --no-default-features --test omas_dispatch -- --nocapture 2>&1 | tee evidence/omas_dispatch.log 2>&1 | tee evidence/omas_dispatch.log
+          cargo test --locked --no-default-features --test persistent_replay -- --nocapture 2>&1 | tee evidence/persistent_replay.log 2>&1 | tee evidence/persistent_replay.log
       - name: Record simulation boundary
         if: always()
         run: |
@@ -81,7 +82,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p evidence
-          cargo test --locked --no-default-features --test postgres_fenced_effect -- --nocapture 2>&1 | tee evidence/postgres_fenced_effect.log
+          mkdir -p evidence
+          cargo test --locked --no-default-features --test postgres_fenced_effect -- --nocapture 2>&1 | tee evidence/postgres_fenced_effect.log 2>&1 | tee evidence/postgres_fenced_effect.log
       - name: Record simulation boundary
         if: always()
         run: |
