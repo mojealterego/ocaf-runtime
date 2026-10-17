@@ -67,6 +67,14 @@ async fn signed_dispatch_runs_once_and_rejects_replay_and_tampering() {
     assert!(untrusted.execute_signed_omas(&signed, &database, request.clone()).await.is_err());
     assert_eq!(counter.load(Ordering::SeqCst), 0);
 
+    // An unauthorized key cannot consume the nonce, so the valid signer can still execute.
+    let wrong_signer = PKey::generate_ed25519().unwrap();
+    let mut forged = signed.clone();
+    forged.signature = Signer::new_without_digest(&wrong_signer).unwrap()
+        .sign_oneshot_to_vec(&forged.canonical_bytes()).unwrap();
+    assert!(runtime.execute_signed_omas(&forged, &database, request.clone()).await.is_err());
+    assert_eq!(counter.load(Ordering::SeqCst), 0);
+
     let mut altered = signed.clone();
     altered.opcode = 2;
     assert!(runtime.execute_signed_omas(&altered, &database, request.clone()).await.is_err());
