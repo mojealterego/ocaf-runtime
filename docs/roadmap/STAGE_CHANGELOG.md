@@ -482,3 +482,10 @@ Zweryfikowano przez GitHub Actions API zakończony sukcesem run `38739812121`, j
 ## 2026-10-17 — OMAS PDF, 29 stron
 
 Audyt zapisany w `docs/audits/OMAS_PDF_SECURITY_ARCHITECTURE_2026-10-17.md`. Mapowanie istniejących etapów: 0.39 (guest WASI, sandbox), 0.46 (Zenoh/typed wire), auth, registry, swarm, memory, Builder 0.50–0.55. Krytyczne luki kodu przykładowego: podpis nie obejmuje opcode/limitów, nonce przed weryfikacją podpisu, prefix confusion, RAM-only replay cache, brak limitów bajtowych. Status: audyt dokumentu, bez dowodu implementacji/CI. Synchronizacja opisów w ROADMAP.md i docs/ROADMAP_FULL_ECOSYSTEM_2026.md.
+
+## 2026-10-17 — Rekonsyliacja statusów historycznych 0.38.x
+
+- Przywrócono znaczenie 0.38.1 (ADR, przypięty Wasmtime, licencje/RustSec), 0.38.6 (profil deterministyczny), 0.38.8 (hardening procesu i cleanup) i 0.38.9 (CI, negatywne E2E) z kontraktu `docs/PRIORITY_038_EXECUTION_CONTRACT.md` oraz `docs/STAGE_038_8_9_ACCEPTANCE.md`.
+- Zastąpiono nieprecyzyjne `HISTORICAL_LAB_SCOPE_LIMITED` zróżnicowanymi statusami: `PARTIALLY_IMPLEMENTED_ACCEPTANCE_OPEN`, `UNVERIFIED_ACCEPTANCE_OPEN`, `IMPLEMENTED_LAB_EVIDENCE_ACCEPTANCE_OPEN`, `IMPLEMENTED_TEST_HARNESS_ACCEPTANCE_OPEN`.
+- Zsynchronizowano manifest v11, ROADMAP.md, lustrzaną roadmapę i przypiętą tabelę README. Zachowano identyfikatory, liczebność i wszystkie historyczne etapy.
+- Administracyjne zamknięcie 0.38 przez operatora pozostaje odrębne od technicznego odbioru i produkcyjnego GO. Test rzeczywistego przekroczenia podpisanego fuel i CI na końcowym SHA nadal niepotwierdzone. Etapy 0.39–0.41 nadal otwarte.
