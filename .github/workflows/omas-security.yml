@@ -50,11 +50,15 @@ jobs:
         run: cargo test --no-default-features signed_fuel_never_exceeds_either_ceiling -- --nocapture
       - name: Signed WASI engine regression tests
         run: cargo test --no-default-features pinned_engine_tests -- --nocapture
-      - name: Real Wasmtime fuel exhaustion (operator-approved engine)
-        if: ${{ vars.OCAF_WASMTIME_BIN != '' && vars.OCAF_WASMTIME_SHA256 != '' }}
+      - name: Real Wasmtime fuel exhaustion (required security gate)
         env:
           WASMTIME_BIN: ${{ vars.OCAF_WASMTIME_BIN }}
           WASMTIME_SHA256: ${{ vars.OCAF_WASMTIME_SHA256 }}
-        run: bash tests/scripts/verify_wasmtime_fuel_exhaustion.sh
+        run: |
+          if [[ -z "$WASMTIME_BIN" || -z "$WASMTIME_SHA256" ]]; then
+            echo "::error::Configure OCAF_WASMTIME_BIN and OCAF_WASMTIME_SHA256; fuel exhaustion gate cannot be skipped"
+            exit 1
+          fi
+          bash tests/scripts/verify_wasmtime_fuel_exhaustion.sh
       - name: Clippy
         run: cargo clippy --no-default-features --all-targets -- -D warnings
