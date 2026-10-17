@@ -198,6 +198,13 @@ impl OcafRuntime {
         {
             return Err(RuntimeError::AuthRequired("OMAS tenant, opcode or target mismatch".into()));
         }
+        // Only the tool namespace may be used for signed dispatch.
+        // This prevents accepting a broader signed namespace as equivalent.
+        if operation.namespace != format!("{}/tools", operation.tenant) {
+            return Err(RuntimeError::AuthRequired(
+                "OMAS namespace mismatch".into(),
+            ));
+        }
         let payload = serde_json::to_vec(&request)
             .map_err(|_| RuntimeError::InvalidInput("cannot serialize OMAS request".into()))?;
         if payload != operation.payload {
