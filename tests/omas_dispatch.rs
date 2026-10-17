@@ -143,6 +143,13 @@ async fn signed_dispatch_runs_once_and_rejects_replay_and_tampering() {
     assert!(runtime.execute_signed_omas(&forged, request.clone()).await.is_err());
     assert_eq!(counter.load(Ordering::SeqCst), 0);
 
+    // Changing the signed resource quota without re-signing must not consume
+    // the valid nonce or reach the executor.
+    let mut tampered_fuel = signed.clone();
+    tampered_fuel.fuel = 1;
+    assert!(runtime.execute_signed_omas(&tampered_fuel, request.clone()).await.is_err());
+    assert_eq!(counter.load(Ordering::SeqCst), 0);
+
     let mut altered = signed.clone();
     altered.opcode = 2;
     assert!(runtime.execute_signed_omas(&altered, request.clone()).await.is_err());
