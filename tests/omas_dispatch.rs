@@ -198,14 +198,45 @@ async fn signed_dispatch_runs_once_and_rejects_replay_and_tampering() {
     assert!(runtime.execute_signed_omas(&wrong_target, request.clone()).await.is_err());
     assert_eq!(counter.load(Ordering::SeqCst), 0);
 
-    let result = runtime.execute_signed_omas(&signed, request.clone()).await.unwrap();
-    assert_eq!(result.output, json!({"value":42}));
+    // RPC must reject legacy V1 even when its Ed25519 signature is valid.
+    assert!(runtime
+        .execute_signed_omas_for_rpc(&signed, request.clone(), "node-a")
+        .await
+        .is_err());
+    assert_eq!(counter.load(Ordering::SeqCst), 0);
+
+    // A V2 signature binds the sender; a mismatched authenticated sender
+    // must be rejected without consuming the nonce.
+    let mut rpc_signed = signed.clone();
+    rpc_signed.rpc_sender = Some("node-a".into());
+    rpc_signed.nonce = "rpc_sender_bound_nonce_001".into();
+    rpc_signed.signature = Signer::new_without_digest(&key).unwrap()
+        .sign_oneshot_to_vec(&rpc_signed.canonical_bytes()).unwrap();
+    assert!(runtime
+        .execute_signed_omas_for_rpc(&rpc_signed, request.clone(), "node-b")
+        .await
+        .is_err());
+    assert_eq!(counter.load(Ordering::SeqCst), 0);
+    let rpc_result = runtime
+        .execute_signed_omas_for_rpc(&rpc_signed, request.clone(), "node-a")
+        .await
+        .unwrap();
+    assert_eq!(rpc_result.output, json!({"value": 42}));
+    assert_eq!(counter.load(Ordering::SeqCst), 1);
+    assert!(runtime
+        .execute_signed_omas_for_rpc(&rpc_signed, request.clone(), "node-a")
+        .await
+        .is_err());
     assert_eq!(counter.load(Ordering::SeqCst), 1);
 
+    let result = runtime.execute_signed_omas(&signed, request.clone()).await.unwrap();
+    assert_eq!(result.output, json!({"value":42}));
+    assert_eq!(counter.load(Ordering::SeqCst), 2);
+
     assert!(runtime.execute_signed_omas(&signed, request.clone()).await.is_err());
-    assert_eq!(counter.load(Ordering::SeqCst), 1);
+    assert_eq!(counter.load(Ordering::SeqCst), 2);
 
     let changed_request = ToolCallRequest { call_id: "call_2".into(), ..request };
     assert!(runtime.execute_signed_omas(&signed, changed_request).await.is_err());
-    assert_eq!(counter.load(Ordering::SeqCst), 1);
+    assert_eq!(counter.load(Ordering::SeqCst), 2);
 }
