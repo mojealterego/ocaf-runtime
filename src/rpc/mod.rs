@@ -743,6 +743,18 @@ impl RpcGateway {
             window.1 += 1;
         }
 
+        // OMAS admission is additive: keep the existing HMAC, certificate PoP,
+        // peer ACL, leader fencing, rate limits and durable replay checks.
+        // Apply resource bounds before any execution or job submission.
+        match &request.action {
+            RpcAction::Execute { args, .. } | RpcAction::SubmitJob { args, .. } => {
+                if !crate::omas_policy::admit_rpc_execution_payload(args) {
+                    return Err(RpcError::Malformed);
+                }
+            }
+            _ => {}
+        }
+
         match &request.action {
             RpcAction::Execute { tool, .. } => {
                 // A free, manifest-permissionless tool is not necessarily
