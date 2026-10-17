@@ -1,0 +1,135 @@
+//! Signed OMAS admission. The signature binds the operation, tenant, target,
+ //! resource quota, payload hash and nonce before durable replay admission.
+use crate::omas_policy;
+use openssl::pkey::{Id, PKey};
+use openssl::sign::Verifier;
+use rusqlite::{params, Connection, TransactionBehavior};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::path::Path;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+const WINDOW_SECONDS: i64 = 300;
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SignedOperation {
+    pub tenant: String,
+    pub namespace: String,
+    pub target: String,
+    pub opcode: u8,
+    pub fuel: u64,
+    pub issued_at: i64,
+    pub nonce: String,
+    pub payload: Vec<u8>,
+    pub signature: Vec<u8>,
+}
+#[derive(Debug, thiserror::Error)]
+pub enum SignedOperationError {
+    #[error("invalid operation or security policy")]
+    Invalid,
+    #[error("signature verification failed")]
+    Signature,
+    #[error("replay detected")]
+    Replay,
+    #[error("replay database unavailable")]
+    Store,
+}
+fn field(out: &mut Vec<u8>, value: &[u8]) {
+    out.extend_from_slice(&(value.len() as u64).to_be_bytes());
+    out.extend_from_slice(value);
+}
+impl SignedOperation {
+    pub fn canonical_bytes(&self) -> Vec<u8> {
+        let mut out = b"OCAF-OMAS-SIGNED-OPERATION-v1".to_vec();
+        field(&mut out, self.tenant.as_bytes());
+        field(&mut out, self.namespace.as_bytes());
+        field(&mut out, self.target.as_bytes());
+        field(&mut out, &[self.opcode]);
+        field(&mut out, &self.fuel.to_be_bytes());
+        field(&mut out, &self.issued_at.to_be_bytes());
+        field(&mut out, self.nonce.as_bytes());
+        field(&mut out, &Sha256::digest(&self.payload));
+        out
+    }
+}
+/// Verify first, then atomically consume a nonce in a persistent SQLite store.
+/// On database failure, execution must not proceed.
+pub fn verify_and_consume(
+    operation: &SignedOperation,
+    public_key: &[u8; 32],
+    database: &Path,
+    now: i64,
+) -> Result<(), SignedOperationError> {
+    if !(1..=5).contains(&operation.opcode)
+        || !omas_policy::admit(
+            &operation.tenant, &operation.namespace, &operation.target,
+            operation.payload.len().saturating_add(4096), operation.payload.len(), operation.fuel,
+        )
+        || operation.nonce.len() < 16 || operation.nonce.len() > 128
+        || !operation.nonce.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+        || operation.signature.len() != 64
+        || operation.issued_at > now.saturating_add(WINDOW_SECONDS)
+        || operation.issued_at < now.saturating_sub(WINDOW_SECONDS)
+    {
+        return Err(SignedOperationError::Invalid);
+    }
+    let key = PKey::public_key_from_raw_bytes(public_key, Id::ED25519)
+        .map_err(|_| SignedOperationError::Signature)?;
+    let mut verifier = Verifier::new_without_digest(&key)
+        .map_err(|_| SignedOperationError::Signature)?;
+    if !verifier.verify_oneshot(&operation.signature, &operation.canonical_bytes())
+        .map_err(|_| SignedOperationError::Signature)? {
+        return Err(SignedOperationError::Signature);
+    }
+    let mut conn = Connection::open(database).map_err(|_| SignedOperationError::Store)?;
+    conn.busy_timeout(std::time::Duration::from_secs(5))
+        .map_err(|_| SignedOperationError::Store)?;
+    let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)
+        .map_err(|_| SignedOperationError::Store)?;
+    tx.execute_batch("CREATE TABLE IF NOT EXISTS omas_nonce (
+        tenant TEXT NOT NULL, nonce TEXT NOT NULL, expires_at INTEGER NOT NULL,
+        PRIMARY KEY (tenant, nonce)
+    );").map_err(|_| SignedOperationError::Store)?;
+    // Retain nonces through the entire signature validity interval.
+    tx.execute("DELETE FROM omas_nonce WHERE expires_at < ?1", params![now])
+        .map_err(|_| SignedOperationError::Store)?;
+    let expires_at = operation.issued_at.saturating_add(WINDOW_SECONDS);
+    let inserted = tx.execute(
+        "INSERT OR IGNORE INTO omas_nonce (tenant, nonce, expires_at) VALUES (?1, ?2, ?3)",
+        params![operation.tenant, operation.nonce, expires_at],
+    ).map_err(|_| SignedOperationError::Store)?;
+    if inserted != 1 { return Err(SignedOperationError::Replay); }
+    tx.commit().map_err(|_| SignedOperationError::Store)?;
+    Ok(())
+}
+pub fn unix_now() -> Result<i64, SignedOperationError> {
+    let seconds = SystemTime::now().duration_since(UNIX_EPOCH)
+        .map_err(|_| SignedOperationError::Invalid)?.as_secs();
+    i64::try_from(seconds).map_err(|_| SignedOperationError::Invalid)
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use openssl::sign::Signer;
+    #[test]
+    fn signature_binds_operation_and_replay_persists() {
+        let key = PKey::generate_ed25519().unwrap();
+        let public: [u8; 32] = key.raw_public_key().unwrap().try_into().unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("replay.sqlite");
+        let now = 1_800_000_000;
+        let mut op = SignedOperation {
+            tenant: "tenant_a".into(), namespace: "tenant_a/tools".into(),
+            target: "tenant_a/tools/run".into(), opcode: 1, fuel: 100,
+            issued_at: now, nonce: "unique_nonce_0001".into(),
+            payload: b"hello".to_vec(), signature: Vec::new(),
+        };
+        op.signature = Signer::new_without_digest(&key).unwrap()
+            .sign_oneshot_to_vec(&op.canonical_bytes()).unwrap();
+        let mut tampered = op.clone();
+        tampered.opcode = 2;
+        assert!(matches!(verify_and_consume(&tampered, &public, &path, now), Err(SignedOperationError::Signature)));
+        assert!(verify_and_consume(&op, &public, &path, now).is_ok());
+        assert!(matches!(verify_and_consume(&op, &public, &path, now), Err(SignedOperationError::Replay)));
+        assert!(matches!(verify_and_consume(&op, &public, &dir.path().join("missing/db"), now), Err(SignedOperationError::Store)));
+    }
+}
