@@ -7,6 +7,7 @@ use rusqlite::{params, Connection, TransactionBehavior};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::path::Path;
+use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const WINDOW_SECONDS: i64 = 300;
@@ -80,7 +81,7 @@ pub fn verify_and_consume(
         .map_err(|_| SignedOperationError::Signature)? {
         return Err(SignedOperationError::Signature);
     }
-    let mut conn = Connection::open(database).map_err(|_| SignedOperationError::Store)?;
+    // Refuse symlinked or non-regular replay stores; never silently create an\n    // attacker-selected database through a symlink.\n    let metadata = fs::symlink_metadata(database).map_err(|_| SignedOperationError::Store)?;\n    if !metadata.file_type().is_file() { return Err(SignedOperationError::Store); }\n    let mut conn = Connection::open_with_flags(database, rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE)\n        .map_err(|_| SignedOperationError::Store)?;
     conn.busy_timeout(std::time::Duration::from_secs(5))
         .map_err(|_| SignedOperationError::Store)?;
     let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)
@@ -115,7 +116,7 @@ mod tests {
         let key = PKey::generate_ed25519().unwrap();
         let public: [u8; 32] = key.raw_public_key().unwrap().try_into().unwrap();
         let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("replay.sqlite");
+        let path = dir.path().join("replay.sqlite");\n        Connection::open(&path).unwrap().close().unwrap();
         let now = 1_800_000_000;
         let mut op = SignedOperation {
             tenant: "tenant_a".into(), namespace: "tenant_a/tools".into(),
@@ -135,6 +136,11 @@ mod tests {
         other.signature = Signer::new_without_digest(&key).unwrap()
             .sign_oneshot_to_vec(&other.canonical_bytes()).unwrap();
         assert!(matches!(verify_and_consume(&other, &public, &dir.path().join("missing/db"), now), Err(SignedOperationError::Store)));
+        let link = dir.path().join("linked.sqlite");
+        #[cfg(unix)] {
+            std::os::unix::fs::symlink(&path, &link).unwrap();
+            assert!(matches!(verify_and_consume(&other, &public, &link, now), Err(SignedOperationError::Store)));
+        }
         let mut changed = other.clone();
         changed.fuel = 101;
         assert!(matches!(verify_and_consume(&changed, &public, &path, now), Err(SignedOperationError::Signature)));
