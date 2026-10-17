@@ -673,7 +673,7 @@ Wspólne kryteria: typed I/O, najmniejsze uprawnienia, izolacja tenantów, audyt
 | **214** | OpenHands: izolowany serwer agenta, narzędzia CLI/browser, kontrolowany patch workflow | 2.02 | Testy E2E na repo, sandbox escape, command injection, wyciek sekretów, rollback | PLANNED |
 | **215** | SWE-bench Verified, mini-SWE-agent baseline, N-run i regresje | 1.99 | Przypięte środowisko, wielokrotne pomiary, niezależna walidacja i odtwarzalność | PLANNED |
 
-Nie deklarować IMPLEMENTED/TESTED/INTEGRATED bez kodu, uruchomionych testów i dowodów przypiętych do SHA. Następny wolny numer etapu: **216**.
+Nie deklarować IMPLEMENTED/TESTED/INTEGRATED bez kodu, uruchomionych testów i dowodów przypiętych do SHA. Identyfikatory **216–231** są już zarejestrowane w manifeście v11 i przypiętej tabeli README; nie są wolnymi numerami. Następny nowy etap według manifestu: **334**.
 
 ## PDF15 — uzgodnienie wymagań (2026-10-16)
 
