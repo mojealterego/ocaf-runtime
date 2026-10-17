@@ -87,6 +87,13 @@ async fn signed_dispatch_runs_once_and_rejects_replay_and_tampering() {
     assert!(runtime.execute_signed_omas(&wrong_tenant, &database, request.clone()).await.is_err());
     assert_eq!(counter.load(Ordering::SeqCst), 0);
 
+    let mut broad_namespace = signed.clone();
+    broad_namespace.namespace = "tenant_a".into();
+    broad_namespace.signature = Signer::new_without_digest(&key).unwrap()
+        .sign_oneshot_to_vec(&broad_namespace.canonical_bytes()).unwrap();
+    assert!(runtime.execute_signed_omas(&broad_namespace, &database, request.clone()).await.is_err());
+    assert_eq!(counter.load(Ordering::SeqCst), 0);
+
     let mut wrong_target = signed.clone();
     wrong_target.target = "tenant_a/tools/other".into();
     wrong_target.signature = Signer::new_without_digest(&key).unwrap()
