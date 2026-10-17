@@ -108,6 +108,7 @@ pub struct OcafRuntime {
     pub metrics: MetricsStore,
     auth_verifier: Arc<dyn AuthVerifier>,
     tenant_namespace: Option<String>,
+    omas_trusted_key: Option<[u8; 32]>,
 }
 
 impl OcafRuntime {
@@ -118,6 +119,7 @@ impl OcafRuntime {
             metrics: MetricsStore::new(),
             auth_verifier: Arc::new(DenyByDefaultVerifier),
             tenant_namespace: None,
+            omas_trusted_key: None,
         }
     }
 
@@ -155,6 +157,11 @@ impl OcafRuntime {
         Ok(self)
     }
 
+    pub fn with_omas_trusted_key(mut self, key: [u8; 32]) -> Self {
+        self.omas_trusted_key = Some(key);
+        self
+    }
+
     /// The authenticated sender must be supplied ONLY by a trusted RPC
     /// handler after HMAC, certificate PoP, TLS binding and replay gates.
     /// This method does not authenticate a raw caller-provided string.
@@ -182,7 +189,6 @@ impl OcafRuntime {
     pub async fn execute_signed_omas(
         &self,
         operation: &crate::omas_signed::SignedOperation,
-        public_key: &[u8; 32],
         replay_database: &std::path::Path,
         request: ToolCallRequest,
     ) -> Result<ToolCallResult, RuntimeError> {
@@ -197,6 +203,7 @@ impl OcafRuntime {
         if payload != operation.payload {
             return Err(RuntimeError::AuthRequired("OMAS signed payload mismatch".into()));
         }
+        let public_key = self.omas_trusted_key.as_ref().ok_or_else(|| RuntimeError::AuthRequired("OMAS key not configured".into()))?;
         let now = crate::omas_signed::unix_now()
             .map_err(|_| RuntimeError::AuthRequired("invalid system clock".into()))?;
         crate::omas_signed::verify_and_consume(operation, public_key, replay_database, now)
