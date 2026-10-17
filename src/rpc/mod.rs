@@ -1080,7 +1080,9 @@ impl RpcGateway {
                     return Err(RpcError::Unauthorized);
                 }
                 let execution = if let Some(operation) = request.omas_operation.as_ref() {
-                    self.runtime.execute_signed_omas(operation, call).await
+                    self.runtime
+                        .execute_signed_omas_for_rpc(operation, call, &request.sender)
+                        .await
                 } else {
                     self.runtime.execute_authenticated_peer(call, &request.sender).await
                 };
