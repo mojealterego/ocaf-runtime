@@ -15,6 +15,7 @@ on:
       - 'src/omas_policy.rs'
       - 'src/runtime/mod.rs'
       - 'src/lib.rs'
+      - 'tests/omas_dispatch.rs'
       - '.github/workflows/omas-security.yml'
 permissions:
   contents: read
