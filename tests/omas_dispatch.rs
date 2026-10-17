@@ -60,6 +60,12 @@ async fn signed_dispatch_runs_once_and_rejects_replay_and_tampering() {
     assert!(unconfigured.execute_signed_omas(&signed, request.clone()).await.is_err());
     assert_eq!(counter.load(Ordering::SeqCst), 0);
 
+    let no_store = OcafRuntime::new(100)
+        .with_tenant_namespace("tenant_a").unwrap()
+        .with_omas_trusted_key(public);
+    assert!(no_store.execute_signed_omas(&signed, request.clone()).await.is_err());
+    assert_eq!(counter.load(Ordering::SeqCst), 0);
+
     let wrong_key = PKey::generate_ed25519().unwrap();
     let wrong_public: [u8; 32] = wrong_key.raw_public_key().unwrap().try_into().unwrap();
     let untrusted = OcafRuntime::new(100)
