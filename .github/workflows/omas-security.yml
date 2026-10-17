@@ -11,6 +11,7 @@ on:
       - 'src/lib.rs'
       - 'tests/omas_dispatch.rs'
       - 'tests/fixtures/wasi_infinite_loop.wat'
+      - 'tests/fixtures/wasi_finite_loop.wat'
       - 'tests/scripts/verify_wasmtime_fuel_exhaustion.sh'
       - '.github/workflows/omas-security.yml'
   pull_request:
@@ -23,6 +24,7 @@ on:
       - 'src/lib.rs'
       - 'tests/omas_dispatch.rs'
       - 'tests/fixtures/wasi_infinite_loop.wat'
+      - 'tests/fixtures/wasi_finite_loop.wat'
       - 'tests/scripts/verify_wasmtime_fuel_exhaustion.sh'
       - '.github/workflows/omas-security.yml'
 permissions:
