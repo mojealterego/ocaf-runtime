@@ -1,0 +1,73 @@
+name: OCAF multi-node failure simulation (single runner)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/jobs/**'
+      - 'src/rpc/**'
+      - 'src/omas_signed.rs'
+      - 'src/runtime/**'
+      - 'tests/distributed_jobs_rpc.rs'
+      - 'tests/postgres_fenced_effect.rs'
+      - 'tests/omas_dispatch.rs'
+      - 'tests/rpc_cert_identity.rs'
+      - '.github/workflows/ocaf-multihost-simulation.yml'
+permissions:
+  contents: read
+concurrency:
+  group: ocaf-multinode-simulation-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  single-runner-failure-simulation:
+    name: "SIMULATION ONLY — jobs, fencing, crash/recovery and OMAS"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - name: Record scope and evidence metadata
+        run: |
+          set -eu
+          mkdir -p evidence
+          {
+            echo "EVIDENCE_CLASS=SIMULATED_SINGLE_RUNNER"
+            echo "COMMIT_SHA=${GITHUB_SHA}"
+            echo "RUN_ID=${GITHUB_RUN_ID}"
+            echo "RUN_ATTEMPT=${GITHUB_RUN_ATTEMPT}"
+            echo "HOSTNAME=$(hostname)"
+            echo "BOOT_ID=$(cat /proc/sys/kernel/random/boot_id)"
+            echo "NO_CLAIM_OF_INDEPENDENT_HOSTS=true"
+            echo "NO_CLAIM_OF_FIRECRACKER_OR_POSTGRES_HA=true"
+          } | tee evidence/scope.txt
+          rustc --version | tee evidence/rust-version.txt
+      - name: Rustfmt
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy --locked --no-default-features --all-targets -- -D warnings
+      - name: OMAS signature and RPC certificate tests
+        run: |
+          set -o pipefail
+          cargo test --locked --no-default-features --lib 2>&1 | tee evidence/lib.log
+          cargo test --locked --no-default-features --test omas_dispatch 2>&1 | tee evidence/omas_dispatch.log
+          cargo test --locked --no-default-features --test rpc_cert_identity 2>&1 | tee evidence/rpc_cert_identity.log
+      - name: Job failover and fencing simulations
+        run: |
+          set -o pipefail
+          cargo test --locked --no-default-features --test distributed_jobs_rpc 2>&1 | tee evidence/distributed_jobs_rpc.log
+          cargo test --locked --no-default-features --test postgres_fenced_effect 2>&1 | tee evidence/postgres_fenced_effect.log
+      - name: Publish reproducible test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocaf-simulated-failure-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/
+          retention-days: 30
+          if-no-files-found: warn
