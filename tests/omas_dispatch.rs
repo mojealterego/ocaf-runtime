@@ -158,6 +158,14 @@ async fn signed_dispatch_runs_once_and_rejects_replay_and_tampering() {
     assert!(runtime.execute_signed_omas(&zero_fuel, request.clone()).await.is_err());
     assert_eq!(counter.load(Ordering::SeqCst), 0);
 
+    // Even a valid Ed25519 signature cannot authorize an excessive quota.
+    let mut excessive_fuel = signed.clone();
+    excessive_fuel.fuel = 50_000_001;
+    excessive_fuel.signature = Signer::new_without_digest(&key).unwrap()
+        .sign_oneshot_to_vec(&excessive_fuel.canonical_bytes()).unwrap();
+    assert!(runtime.execute_signed_omas(&excessive_fuel, request.clone()).await.is_err());
+    assert_eq!(counter.load(Ordering::SeqCst), 0);
+
     let mut altered = signed.clone();
     altered.opcode = 2;
     assert!(runtime.execute_signed_omas(&altered, request.clone()).await.is_err());
