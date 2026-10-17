@@ -40,6 +40,13 @@ fn rejected(reason: &str) -> ToolError {
     ToolError::Validation(reason.to_owned())
 }
 
+fn effective_signed_fuel(operator_fuel: u64, signed_fuel: u64) -> Result<u64, ToolError> {
+    if operator_fuel == 0 || operator_fuel > MAX_FUEL || signed_fuel == 0 || signed_fuel > MAX_FUEL {
+        return Err(rejected("invalid signed fuel ceiling"));
+    }
+    Ok(operator_fuel.min(signed_fuel))
+}
+
 fn sha256(bytes: &[u8]) -> [u8; 32] {
     Sha256::digest(bytes).into()
 }
@@ -479,10 +486,8 @@ impl WasmToolExecutor {
         ctx: &ExecutionContext,
         signed_fuel: u64,
     ) -> Result<Value, ToolError> {
-        if signed_fuel == 0 || signed_fuel > MAX_FUEL {
-            return Err(rejected("invalid signed fuel ceiling"));
-        }
-        self.run_limited(args, ctx, self.policy.fuel.min(signed_fuel)).await
+        let effective_fuel = effective_signed_fuel(self.policy.fuel, signed_fuel)?;
+        self.run_limited(args, ctx, effective_fuel).await
     }
 
     async fn run(&self, args: Value, ctx: &ExecutionContext) -> Result<Value, ToolError> {
@@ -722,6 +727,17 @@ where
 #[cfg(test)]
 mod pinned_engine_tests {
     use super::*;
+
+    #[test]
+    fn signed_fuel_never_exceeds_either_ceiling() {
+        assert_eq!(effective_signed_fuel(1000, 50).unwrap(), 50);
+        assert_eq!(effective_signed_fuel(50, 1000).unwrap(), 50);
+        assert_eq!(effective_signed_fuel(50, 50).unwrap(), 50);
+        assert!(effective_signed_fuel(50, 0).is_err());
+        assert!(effective_signed_fuel(0, 50).is_err());
+        assert!(effective_signed_fuel(50, MAX_FUEL + 1).is_err());
+        assert!(effective_signed_fuel(MAX_FUEL + 1, 50).is_err());
+    }
 
     #[test]
     fn guest_failure_diagnostics_do_not_echo_untrusted_stderr() {
