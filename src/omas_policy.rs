@@ -49,6 +49,12 @@ mod tests {
     }
 
     #[test]
+    fn runtime_payload_rejects_oversized_tool_output() {
+        let output = serde_json::json!({"result": "x".repeat(MAX_PAYLOAD_BYTES)});
+        assert!(!admit_runtime_execution_payload(&output));
+    }
+
+    #[test]
     fn rpc_execution_payload_is_bounded() {
         assert!(admit_rpc_execution_payload(&serde_json::json!({"ok": true})));
         assert!(!admit_rpc_execution_payload(&serde_json::json!({"data": "x".repeat(70_000)})));
