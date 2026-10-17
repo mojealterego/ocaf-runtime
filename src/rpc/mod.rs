@@ -1027,6 +1027,10 @@ impl RpcGateway {
                     args,
                     auth: None,
                 };
+                // No unsigned legacy fallback for a tenant-bound runtime.
+                if self.runtime.requires_signed_omas() && request.omas_operation.is_none() {
+                    return Err(RpcError::Unauthorized);
+                }
                 let execution = if let Some(operation) = request.omas_operation.as_ref() {
                     self.runtime.execute_signed_omas(operation, call).await
                 } else {
