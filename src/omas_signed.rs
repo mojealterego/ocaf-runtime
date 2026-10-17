@@ -173,6 +173,13 @@ mod tests {
         };
         op.signature = Signer::new_without_digest(&key).unwrap()
             .sign_oneshot_to_vec(&op.canonical_bytes()).unwrap();
+        let unrelated_key = PKey::generate_ed25519().unwrap();
+        let unrelated_public: [u8; 32] = unrelated_key
+            .raw_public_key().unwrap().try_into().unwrap();
+        assert!(matches!(
+            verify_and_consume(&op, &unrelated_public, &path, now),
+            Err(SignedOperationError::Signature)
+        ));
         let mut tampered = op.clone();
         tampered.opcode = 2;
         assert!(matches!(verify_and_consume(&tampered, &public, &path, now), Err(SignedOperationError::Signature)));
