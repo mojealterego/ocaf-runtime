@@ -147,6 +147,44 @@ mod tests {
     }
 
     #[test]
+    fn replay_remains_rejected_after_database_reopen() {
+        let key = PKey::generate_ed25519().unwrap();
+        let public: [u8; 32] = key.raw_public_key().unwrap().try_into().unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("restarted.sqlite");
+        Connection::open(&path).unwrap().close().unwrap();
+        let now = 1_800_000_000;
+        let mut operation = SignedOperation {
+            tenant: "tenant_a".into(),
+            namespace: "tenant_a/tools".into(),
+            target: "tenant_a/tools/run".into(),
+            opcode: 1,
+            fuel: 100,
+            issued_at: now,
+            nonce: "restart_nonce_0001".into(),
+            payload: b"hello".to_vec(),
+            signature: Vec::new(),
+        };
+        operation.signature = Signer::new_without_digest(&key).unwrap()
+            .sign_oneshot_to_vec(&operation.canonical_bytes()).unwrap();
+        assert!(verify_and_consume(&operation, &public, &path, now).is_ok());
+        // Simulate process restart: no in-memory verifier state is retained.
+        // Reopen the same durable store from a new independent connection.
+        let reopened = Connection::open(&path).unwrap();
+        let count: i64 = reopened.query_row(
+            "SELECT COUNT(*) FROM omas_nonce WHERE tenant = ?1 AND nonce = ?2",
+            params![operation.tenant, operation.nonce],
+            |row| row.get(0),
+        ).unwrap();
+        assert_eq!(count, 1);
+        reopened.close().unwrap();
+        assert!(matches!(
+            verify_and_consume(&operation, &public, &path, now),
+            Err(SignedOperationError::Replay)
+        ));
+    }
+
+    #[test]
     fn concurrent_replay_allows_exactly_one_admission() {
         let key = PKey::generate_ed25519().unwrap();
         let public: [u8; 32] = key.raw_public_key().unwrap().try_into().unwrap();
