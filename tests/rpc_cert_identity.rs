@@ -179,3 +179,37 @@ fn invalid_public_certificate_is_rejected() {
         Err(RpcError::Malformed)
     ));
 }
+
+#[test]
+fn omas_tenant_policy_rejects_invalid_tenant_identifiers() {
+    for invalid in ["", "tenant/a", "tenant a", "tenant.a", "tenant:a"] {
+        assert!(
+            matches!(
+                PeerPolicy::new(KEY, vec![]).with_omas_tenant(invalid),
+                Err(RpcError::Malformed)
+            ),
+            "unexpectedly accepted tenant: {invalid:?}"
+        );
+    }
+    assert!(matches!(
+        PeerPolicy::new(KEY, vec![]).with_omas_tenant(&"a".repeat(129)),
+        Err(RpcError::Malformed)
+    ));
+}
+
+#[test]
+fn omas_tenant_policy_accepts_explicit_scoped_identity() {
+    let (pem, _, pin) = credential();
+    let peer = PeerPolicy::new(KEY, vec![])
+        .with_pinned_certificate(&pem, &pin)
+        .unwrap()
+        .with_omas_tenant("tenant_a-1")
+        .unwrap();
+    assert!(RpcGateway::new(
+        "node-b",
+        OcafRuntime::new(0),
+        HashMap::from([("node-a".into(), peer)]),
+        4,
+    )
+    .is_ok());
+}
