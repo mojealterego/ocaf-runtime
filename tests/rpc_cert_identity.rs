@@ -247,6 +247,7 @@ async fn signed_omas_request_requires_matching_authenticated_peer_tenant() {
         issued_at: 1_800_000_000,
         nonce: "tenant_bound_nonce_001".into(),
         payload: serde_json::to_vec(&call).unwrap(),
+        rpc_sender: None,
         signature: vec![0; 64],
     });
     let signed = request.with_certificate_proof(&key).unwrap();
