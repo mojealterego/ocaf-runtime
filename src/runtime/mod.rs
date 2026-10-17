@@ -412,6 +412,47 @@ mod omas_entrypoint_tests {
     }
 
     #[tokio::test]
+    async fn tenant_bound_signed_execution_rejects_payload_tampering() {
+        let runtime = OcafRuntime::new(0).with_tenant_namespace("tenant_a").unwrap();
+        let mut operation = crate::omas_signed::SignedOperation {
+            tenant: "tenant_a".into(),
+            namespace: "tenant_a/tools".into(),
+            target: "tenant_a/tools/missing_tool".into(),
+            opcode: 1,
+            fuel: 100,
+            issued_at: 0,
+            nonce: "abcdefghijklmnop".into(),
+            payload: serde_json::to_vec(&call()).unwrap(),
+            signature: vec![0; 64],
+        };
+        operation.payload.push(b' ');
+        assert!(matches!(
+            runtime.execute_signed_omas(&operation, call()).await,
+            Err(RuntimeError::AuthRequired(_))
+        ));
+    }
+
+    #[tokio::test]
+    async fn tenant_bound_signed_execution_rejects_broader_namespace() {
+        let runtime = OcafRuntime::new(0).with_tenant_namespace("tenant_a").unwrap();
+        let operation = crate::omas_signed::SignedOperation {
+            tenant: "tenant_a".into(),
+            namespace: "tenant_a".into(),
+            target: "tenant_a/tools/missing_tool".into(),
+            opcode: 1,
+            fuel: 100,
+            issued_at: 0,
+            nonce: "abcdefghijklmnop".into(),
+            payload: serde_json::to_vec(&call()).unwrap(),
+            signature: vec![0; 64],
+        };
+        assert!(matches!(
+            runtime.execute_signed_omas(&operation, call()).await,
+            Err(RuntimeError::AuthRequired(_))
+        ));
+    }
+
+    #[tokio::test]
     async fn tenant_bound_signed_execution_rejects_mismatched_tenant() {
         let runtime = OcafRuntime::new(0).with_tenant_namespace("tenant_a").unwrap();
         let operation = crate::omas_signed::SignedOperation {
