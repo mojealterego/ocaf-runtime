@@ -40,6 +40,24 @@ mod tests {
     }
 
     #[test]
+    fn rpc_execution_payload_accepts_boundary_and_rejects_overflow() {
+        let max = crate::rpc::MAX_FRAME_BYTES;
+        let fitting = serde_json::Value::String("a".repeat(max - 2));
+        let exceeding = serde_json::Value::String("a".repeat(max - 1));
+        assert!(admit_rpc_execution_payload(&fitting));
+        assert!(!admit_rpc_execution_payload(&exceeding));
+    }
+
+    #[test]
+    fn rpc_execution_payload_rejects_large_nested_json() {
+        let args = serde_json::json!({
+            "operation": "effect",
+            "items": (0..4096).map(|i| format!("record_{i:08}_{}", "x".repeat(32))).collect::<Vec<_>>()
+        });
+        assert!(!admit_rpc_execution_payload(&args));
+    }
+
+    #[test]
     fn reject_cross_tenant_and_prefix_confusion() {
         assert!(admit("tenant_a", "tenant_a/tools", "tenant_a/tools/run", 100, 50, 1000));
         assert!(!admit("tenant_a", "tenant_a/tools", "tenant_ab/tools/run", 100, 50, 1000));
