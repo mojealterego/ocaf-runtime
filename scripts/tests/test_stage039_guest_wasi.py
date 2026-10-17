@@ -36,6 +36,12 @@ class GuestWasiBindings(unittest.TestCase):
         with self.assertRaises(g.GuestWasiError):
             g.verify_console(raw)
 
+    def test_reject_embedded_success_marker_with_real_newlines(self):
+        raw=(b"Linux version 6.1"+bytes([10])+g.INIT+
+             g.RNG_READY[0]+b"prefix:"+g.OUTPUT+g.PASS)
+        with self.assertRaises(g.GuestWasiError):
+            g.verify_console(raw)
+
     def test_broker_two_identity_binding_and_digests(self):
         with tempfile.TemporaryDirectory() as root:
             root=Path(root);jail=root/"jailer";jail.mkdir()
