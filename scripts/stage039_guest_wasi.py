@@ -42,7 +42,7 @@ def verify_console(raw:bytes)->dict:
         or sum(raw.count(m) for m in RNG_READY)!=1 or len(crng)!=1
         or FAILED in raw or b"OCAF039_GUEST_HW_RNG_SEED_DENIED" in raw
         or b"OCAF039_GUEST_CRNG_STILL_UNAVAILABLE" in raw
-        or b"Linux version " not in raw
+        or raw.count(b"Linux version ")!=1
         or not 0<=linux<boot<crng[0][1]<output<done):
         raise GuestWasiError("genuine bounded Linux guest PID1 WASIp1 exit/CRNG proof absent")
     return {
