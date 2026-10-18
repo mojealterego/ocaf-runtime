@@ -1,3 +1,5 @@
+pub mod trace_context;
+
 use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
