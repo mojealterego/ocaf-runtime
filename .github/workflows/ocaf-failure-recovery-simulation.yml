@@ -22,11 +22,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4
       - name: Verify distributed job state machine and signed RPC
         run: |
           set -euo pipefail
@@ -42,7 +42,7 @@ jobs:
           printf '%s\n' 'SIMULATION ONLY: single GitHub-hosted runner; not independent-host failover or Firecracker/KVM evidence.' >> "$GITHUB_STEP_SUMMARY"
           mkdir -p evidence
           printf 'commit=%s\nrun=%s\nrunner=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$(hostname)" > evidence/runner.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: ocaf-sqlite-recovery-${{ github.run_id }}
@@ -55,7 +55,7 @@ jobs:
     timeout-minutes: 35
     services:
       postgres:
-        image: postgres:16
+        image: postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
         env:
           POSTGRES_USER: ocaf
           POSTGRES_PASSWORD: ocaf_ci_only
@@ -71,9 +71,11 @@ jobs:
       OCAF_TEST_PG_DSN: postgres://ocaf:ocaf_ci_only@127.0.0.1:5432/ocaf_ci?sslmode=disable
       OCAF_REQUIRE_PG_TESTS: '1'
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4
       - name: Require live PostgreSQL before tests
         run: |
           set -euo pipefail
@@ -90,7 +92,7 @@ jobs:
           printf '%s\n' 'SIMULATION ONLY: PostgreSQL service container shares a runner; not PostgreSQL HA, quorum, independent kernels or production recovery.' >> "$GITHUB_STEP_SUMMARY"
           mkdir -p evidence
           printf 'commit=%s\nrun=%s\nrunner=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$(hostname)" > evidence/runner.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: ocaf-postgres-fencing-${{ github.run_id }}
