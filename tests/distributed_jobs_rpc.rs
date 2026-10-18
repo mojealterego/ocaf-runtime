@@ -427,7 +427,14 @@ async fn tenant_bound_jobs_fail_closed_before_queue_mutation() {
         Err(RpcError::Unauthorized)
     ));
     assert!(matches!(
-        call(&gateway, "worker", &WORKER_KEY, RpcAction::ClaimJob, NOW + 1).await,
+        call(
+            &gateway,
+            "worker",
+            &WORKER_KEY,
+            RpcAction::ClaimJob,
+            NOW + 1
+        )
+        .await,
         Err(RpcError::Unauthorized)
     ));
     assert!(JobStore::open(&path)
