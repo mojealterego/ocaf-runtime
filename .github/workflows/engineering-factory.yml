@@ -1,0 +1,121 @@
+name: Engineering Factory
+run-name: Engineering Factory · ${{ inputs.mission_id }}
+
+# ChatGPT/Make dispatches one validated mission JSON per run. Separate runs may
+# execute at the same time; deterministic branch names make publication retryable.
+on:
+  workflow_dispatch:
+    inputs:
+      mission_id:
+        description: "Stable lowercase mission ID (also present in mission_json)"
+        required: true
+        type: string
+      mission_json:
+        description: "Mission JSON: objective, acceptance, and 2-4 workers with disjoint write_set paths"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Serializes retries for the same mission without blocking different missions.
+concurrency:
+  group: engineering-factory-${{ inputs.mission_id }}
+  cancel-in-progress: false
+
+jobs:
+  engineer:
+    name: Independent workers, integration, review
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout dispatched base
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Validate mission
+        env:
+          FACTORY_MISSION_ID: ${{ inputs.mission_id }}
+          FACTORY_MISSION_JSON: ${{ inputs.mission_json }}
+        run: python3 .github/scripts/validate_factory_mission.py --output "$RUNNER_TEMP/mission.json"
+      - name: Require worker credential
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "::error::Repository secret OPENAI_API_KEY is required for independent Codex workers."
+            exit 1
+          fi
+      - name: Install pinned Codex CLI
+        run: npm install --global @openai/codex@0.163.0
+      - name: Run engineering factory
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python3 scripts/engineering_factory_runner.py --mission-file "$RUNNER_TEMP/mission.json" --output-dir "$RUNNER_TEMP/factory-output"
+      - name: Include mission contract in artifact
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/factory-output"
+          if [ -f "$RUNNER_TEMP/mission.json" ]; then
+            cp "$RUNNER_TEMP/mission.json" "$RUNNER_TEMP/factory-output/mission.json"
+          fi
+      - name: Upload factory receipt and patch
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: factory-result-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/factory-output/mission.json
+            ${{ runner.temp }}/factory-output/receipt.json
+            ${{ runner.temp }}/factory-output/integrated.patch
+          if-no-files-found: warn
+          retention-days: 30
+
+  publish:
+    name: Draft PR and CI feedback
+    needs: engineer
+    if: ${{ needs.engineer.result == 'success' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+      checks: read
+    steps:
+      - name: Checkout same base
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Download reviewed result
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: factory-result-${{ github.run_id }}
+          path: ${{ runner.temp }}/factory-output
+      - name: Publish draft PR
+        id: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 .github/scripts/publish_factory_result.py \
+            --mission "$RUNNER_TEMP/factory-output/mission.json" \
+            --receipt "$RUNNER_TEMP/factory-output/receipt.json" \
+            --patch "$RUNNER_TEMP/factory-output/integrated.patch"
+      - name: Watch pull request checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.publish.outputs.pr_number }}
+          PR_URL: ${{ steps.publish.outputs.pr_url }}
+        run: |
+          echo "Draft PR: $PR_URL" >> "$GITHUB_STEP_SUMMARY"
+          head_sha="$(gh pr view "$PR_NUMBER" --json headRefOid --jq .headRefOid)"
+          for attempt in {1..12}; do
+            count="$(gh api "repos/$GITHUB_REPOSITORY/commits/$head_sha/check-runs" --jq .total_count 2>/dev/null || true)"
+            if [[ "$count" =~ ^[1-9][0-9]*$ ]]; then
+              break
+            fi
+            sleep 10
+          done
+          gh pr checks "$PR_NUMBER" --watch --interval 30 | tee -a "$GITHUB_STEP_SUMMARY"
