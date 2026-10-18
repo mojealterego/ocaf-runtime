@@ -185,7 +185,7 @@ def _copy_pinned(src: Path, dest: Path, digest: str) -> None:
                 not 0 < st.st_size <= 8 * 1024 * 1024 * 1024):
             raise LiveFirecrackerError("untrusted pinned guest input")
         dfd = os.open(dest, os.O_WRONLY | os.O_CREAT | os.O_EXCL |
-                      getattr(os, "O_NOFOLLOW", 0), 0o444)
+                      getattr(os, "O_NOFOLLOW", 0), 0o600)
         h = hashlib.sha256()
         while data := os.read(sfd, 1 << 20):
             h.update(data)
