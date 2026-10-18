@@ -1,0 +1,56 @@
+name: Engineering factory checks
+on:
+  pull_request:
+    paths:
+      - 'src/engineering_factory.rs'
+      - 'src/lib.rs'
+      - 'scripts/engineering_factory_runner.py'
+      - 'scripts/tests/test_engineering_factory_runner.py'
+      - '.github/scripts/validate_factory_mission.py'
+      - '.github/scripts/publish_factory_result.py'
+      - '.github/workflows/engineering-factory.yml'
+      - '.github/workflows/engineering-factory-checks.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  factory-checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          components: rustfmt
+      - name: Factory module formatting
+        run: rustfmt --check src/engineering_factory.rs
+      - name: Factory durable queue tests
+        run: cargo test --locked --no-default-features --lib engineering_factory
+      - name: Independent worker runner tests
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p test_engineering_factory_runner.py -v
+      - name: Mission contract agreement
+        run: |
+          python3 - <<'PY'
+          import json
+          import subprocess
+          import sys
+          sys.path[:0] = ['.github/scripts', 'scripts']
+          from validate_factory_mission import validate
+          from engineering_factory_runner import validate_mission
+          sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          mission = {
+              'mission_id': 'factory-contract-001',
+              'objective': 'Verify factory contract',
+              'acceptance': ['Both workers produce disjoint patches'],
+              'workers': [
+                  {'id': 'engineer-a', 'role': 'rust', 'instructions': 'Edit A', 'write_set': ['src/a.rs']},
+                  {'id': 'engineer-b', 'role': 'test', 'instructions': 'Edit B', 'write_set': ['src/b.rs']},
+              ],
+              'verify_commands': [['cargo', 'test', '--locked', '--no-default-features', '--lib', 'engineering_factory']],
+          }
+          workers, commands = validate_mission(validate(json.dumps(mission), sha, 'mojealterego/ocaf-runtime'))
+          assert len(workers) == 2 and len(commands) == 1
+          PY
