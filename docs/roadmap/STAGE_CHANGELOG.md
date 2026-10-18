@@ -605,3 +605,10 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - Przyczyna potwierdzona w kodzie `src/cluster/leadership.rs`: niezabezpieczony transport PostgreSQL dopuszczalny tylko dla jawnego `sslmode=disable`, `allow_insecure_loopback=true` i hosta loopback. CI DSN pomijał `sslmode=disable`.
 - Poprawka wyłącznie CI: DSN `postgres://ocaf:ocaf_ci_only@127.0.0.1:5432/ocaf_ci?sslmode=disable`; **nie osłabiono walidacji TLS dla zdalnych hostów**. Commit `d2fdd68400eaf5b59d50ce6872c5ef04b513b1ed`. Wynik ponownego uruchomienia wymaga osobnego potwierdzenia.
 - Symulacja GitHub Actions nie zastępuje rzeczywistych niezależnych hostów, sieciowego failover, recovery i odbioru operatora.
+
+### 2026-10-18 — Potwierdzony PASS symulacji awarii/recovery w GitHub Actions
+
+- Workflow `ocaf-failure-recovery-simulation.yml`, [run 39064484911](https://github.com/mojealterego/ocaf-runtime/actions/runs/39064484911), commit `4aa08dc0`: **SUCCESS** według GitHub Actions API.
+- Job `117489284195` (`Simulated PostgreSQL epoch fencing (single runner)`): **SUCCESS**.
+- Job `117489284427` (`Simulated lease, replay and recovery (single runner)`): **SUCCESS**.
+- Zamknięta wyłącznie bramka **SIMULATED_SINGLE_RUNNER_CI**; dowód obejmuje wynik jobów, a nie niezależne hosty. Statusy P0 0.38–0.41 pozostają otwarte dla rzeczywistego wielohostowego failover/recovery, HA, audytu i odbioru operatora. Nie przenosić statusu symulacji na `OPERATOR_ACCEPTED` ani `PRODUCTION_APPROVED`.
