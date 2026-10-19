@@ -1,4 +1,7 @@
 import importlib.util
+import contextlib
+import io
+import os
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -54,6 +57,11 @@ class MakeEvidenceGateTest(unittest.TestCase):
             'ci_run_id': '123',
             'ci_conclusion': 'failure',
         }))
+
+    def test_command_exits_nonzero_if_make_succeeds_without_code_evidence(self):
+        report = {'groups': {'G1': {'state': 'EXECUTED_NOT_DELIVERED'}}, 'delivered': 0}
+        with patch.object(gate, 'audit', return_value=report), patch.dict(os.environ, {'OCAF_MAKE_API_TOKEN': 'test'}), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(gate.main([]), 1)
 
     def test_network_fail_closed(self):
         with patch.object(gate, 'request_json', side_effect=gate.GateError('denied')):
