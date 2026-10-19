@@ -1,0 +1,25 @@
+name: OCAF Rust Agent and OMAt/OMAs Contract
+on:
+  push:
+    branches: [main]
+    paths: ['agents/**','swarms/**','systems/**','omat/**','omas/**','docs/agents/**','.github/workflows/ocaf-agent-implementation-contract.yml']
+  pull_request:
+    paths: ['agents/**','swarms/**','systems/**','omat/**','omas/**','docs/agents/**','.github/workflows/ocaf-agent-implementation-contract.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rust-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          toolchain: stable
+      - name: Compile contract guard and execute Rust negative tests
+        run: cargo test --manifest-path omat/contract_guard/Cargo.toml --all-targets --offline
+      - name: Fail closed on Markdown-only components
+        run: cargo run --manifest-path omat/contract_guard/Cargo.toml --offline -- --repo-root . --registry docs/agents/component_registry.tsv

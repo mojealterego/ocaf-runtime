@@ -1,0 +1,14 @@
+[package]
+name = "ocaf-agent-contract-guard"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+description = "Offline Rust structural evidence guard for OCAF agents, swarms, OMAt and OMAs"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "ocaf-agent-contract-guard"
+path = "src/main.rs"
