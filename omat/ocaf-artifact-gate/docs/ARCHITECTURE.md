@@ -1,0 +1,3 @@
+# Architecture of OCAF Artifact Gate
+
+A local Rust validator checks every direct child of agents/, agent_systems/, swarms/, omat/ and omas/. Each unit must have its own folder, Cargo package, actual Rust source, real Rust tests and documentation. The contract identifies its kind and transport. Zenoh declaration requires a Zenoh dependency and a transport source file. Local-only tools must explain the absence of Zenoh. Source contents and Markdown alone are not execution proof. This is structural validation only; build, runtime, multihost tests and independent certification remain separate requirements.

@@ -1,0 +1,4 @@
+format = "ocaf-artifact-v1"
+name = "ocaf-artifact-gate"
+kind = "omat"
+transport = "none"

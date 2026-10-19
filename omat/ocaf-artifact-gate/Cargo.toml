@@ -1,0 +1,13 @@
+[package]
+name = "ocaf-artifact-gate"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "MIT"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "ocaf-artifact-gate"
+path = "src/main.rs"
