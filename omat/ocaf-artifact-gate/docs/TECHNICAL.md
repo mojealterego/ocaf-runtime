@@ -1,0 +1,3 @@
+# OMAt Artifact Gate — dokumentacja techniczna
+
+Ten istniejący pakiet Rust dostarcza niezależny walidator strukturalny rzeczywistych artefaktów agentowych. Kod w src/lib.rs skanuje katalogi agentów, rojów, systemów i narzędzi OMAt/OMAs, wymaga Cargo.toml, źródeł Rust, uruchamialnych testów oraz kompletnej dokumentacji. Każdy komponent musi mieć osobny katalog i maszynowy plik ocaf-artifact.contract. Bramka odrzuca tylko dokumentacyjne foldery, symlinki i brak obowiązkowego transportu Zenoh. Odbiór na docelowej infrastrukturze, kryptograficzna weryfikacja dowodów i niezależne testy pozostają osobnym wymogiem; sama walidacja folderu nigdy nie jest certyfikatem produkcyjnym.

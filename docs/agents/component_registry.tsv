@@ -167,3 +167,4 @@ AGENT-G33-REVIEWER	agent	agents/g33/reviewer	zenoh	PLANNED
 OMAT-CONTRACT-GUARD	omat	omat/contract_guard	none	IMPLEMENTED_UNVERIFIED
 OMAT-GATEWAY	omat	omat/gateway	zenoh	PLANNED
 OMAS-NATIVE-SERVER	omas	omas/native_server	zenoh	PLANNED
+OMAT-ARTIFACT-GATE	omat	omat/ocaf-artifact-gate	none	IMPLEMENTED_UNVERIFIED

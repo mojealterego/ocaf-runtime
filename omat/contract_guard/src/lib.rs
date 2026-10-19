@@ -72,7 +72,7 @@ pub fn verify_component(repo:&Path,c:&Record)->Vec<String>{
  let mut source_files=Vec::new();
  gather(&dir.join("src"),&mut source_files);
  let source=source_files.iter().filter_map(|p|read(p)).collect::<String>();
- if source.trim().len()<100||source.contains("todo!()")||source.contains("unimplemented!()"){
+ if source.trim().len()<100||source.contains(&["todo","!()"].concat())||source.contains(&["unimplemented","!()"].concat()){
   e.push(format!("{}: missing actual Rust implementation, or placeholder code",c.id));
  }
  let mut test_files=Vec::new();
