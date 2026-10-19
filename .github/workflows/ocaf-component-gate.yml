@@ -1,0 +1,36 @@
+name: OCAF Component Rust Gate
+on:
+  push:
+    paths:
+      - "components/**"
+      - "ops/OCAF_REQUIRED_COMPONENTS.tsv"
+      - ".github/workflows/ocaf-component-gate.yml"
+  pull_request:
+    paths:
+      - "components/**"
+      - "ops/OCAF_REQUIRED_COMPONENTS.tsv"
+      - ".github/workflows/ocaf-component-gate.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  artifact-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install pinned Rust toolchain action
+        uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          toolchain: stable
+      - name: Run actual Rust unit and negative tests
+        run: cargo test --manifest-path components/omat/ocaf-component-gate/Cargo.toml --offline
+      - name: Reject doc-only or incomplete existing components
+        run: cargo run --manifest-path components/omat/ocaf-component-gate/Cargo.toml --offline -- --repo .
+      - name: Explain formal release criterion
+        run: |
+          echo "Formal strict gate: cargo run --manifest-path components/omat/ocaf-component-gate/Cargo.toml -- --repo . --strict-targets"
+          echo "Do NOT claim full swarm implementation until strict mode and external evidence pass."

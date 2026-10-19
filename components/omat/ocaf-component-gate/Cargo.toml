@@ -1,0 +1,9 @@
+[package]
+name = "ocaf-component-gate"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "MIT"
+description = "Standalone structural acceptance gate for OCAF agents, swarms, OMAt tools and OMAs servers"
+
+[dependencies]

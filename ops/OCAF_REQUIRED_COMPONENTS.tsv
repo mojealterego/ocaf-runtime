@@ -1,0 +1,36 @@
+# OCAF required component targets. Missing = PENDING; strict release gate = FAIL.
+# Format: family folder-name
+omat ocaf-component-gate
+swarms g01
+swarms g02
+swarms g03
+swarms g04
+swarms g05
+swarms g06
+swarms g07
+swarms g08
+swarms g09
+swarms g10
+swarms g11
+swarms g12
+swarms g13
+swarms g14
+swarms g15
+swarms g16
+swarms g17
+swarms g18
+swarms g19
+swarms g20
+swarms g21
+swarms g22
+swarms g23
+swarms g24
+swarms g25
+swarms g26
+swarms g27
+swarms g28
+swarms g29
+swarms g30
+swarms g31
+swarms g32
+swarms g33
