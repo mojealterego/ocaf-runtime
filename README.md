@@ -9,7 +9,7 @@
 > 🔴 **KANONICZNE DEFINICJE SYSTEMU — OBOWIĄZUJĄ WSZYSTKICH AGENTÓW AI I AUTORÓW DOKUMENTACJI:**
 > - **OCAF Runtime — OmniContext AgentFramework** (OmniContext Agent Framework): framework agentowy i środowisko uruchomieniowe systemu.
 > - **OMAs — OmniAgent Server:** projektowany następca serwerów MCP w ekosystemie OCAF; nie utożsamiać OMAs z MCP ani wyłącznie z podpisywaniem operacji.
-> - **OSTc — OmniSystemTopologicalCryptogtaphic:** kanoniczna nazwa projektowanego mechanizmu ochrony topologiczno-kryptograficznej, **zastępuje wcześniejsze OTs**. Pisownia rozwinięcia zachowana dokładnie według nazwy nadanej przez właściciela.
+> - **OSTc — OmniSystemTopologicalCryptogtaphic:** nowa oficjalna nazwa systemu szyfrowania wcześniej działającego pod nazwą **OTs**. Właściciel zgłosił pozytywny test OTs w innej aplikacji przed dostarczeniem dokumentacji; zakres i odporność kryptograficzna wymagają niezależnej weryfikacji. Pisownia rozwinięcia zachowana dokładnie według nazwy nadanej przez właściciela.
 > - **ZAKAZ BŁĘDNEGO ROZWIJANIA SKRÓTÓW:** nie zmieniać znaczenia OCAF/OMAs/OSTc, nie przywracać starej nazwy OTs w nowych materiałach. Nazwy i planowane przeznaczenie nie stanowią same w sobie dowodu ukończenia implementacji ani audytu bezpieczeństwa.
 
 
