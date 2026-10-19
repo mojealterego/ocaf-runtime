@@ -136,8 +136,11 @@ def validate_readme(readme: str, inventory: dict, builders: dict) -> dict:
         raise ReadmeRoadmapError("Pinned warning or preservation rule missing")
     ids = [x["id"] for x in main + technical]
     for stage_id in ids:
-        if not re.search(r"^\\| \\*\\*" + re.escape(stage_id) + r"\\*\\* \\|", pinned, re.MULTILINE):
-            raise ReadmeRoadmapError(f"Missing historical stage: {stage_id}")
+        # Require one complete Markdown table row for every canonical stage.
+        # The old double-escaped regex matched empty text and bypassed the gate.
+        pattern = r"^\| \*\*" + re.escape(stage_id) + r"\*\* \|"
+        if len(re.findall(pattern, pinned, re.MULTILINE)) != 1:
+            raise ReadmeRoadmapError(f"Historical stage missing or duplicated: {stage_id}")
     for product in products:
         platform, mode = product["platform"], product["mode"]
         if platform.lower() not in pinned.lower() or mode not in pinned:
