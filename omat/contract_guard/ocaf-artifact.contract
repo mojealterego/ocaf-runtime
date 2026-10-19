@@ -1,0 +1,4 @@
+format = "ocaf-artifact-v1"
+name = "contract_guard"
+kind = "omat"
+transport = "none"

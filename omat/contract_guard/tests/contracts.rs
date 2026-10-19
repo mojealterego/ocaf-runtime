@@ -19,7 +19,7 @@ impl Fixture{
  }
  fn valid(&self){
   self.write("swarms/g01/Cargo.toml","[package]\nname=\"g01\"\nversion=\"0.1.0\"\nedition=\"2021\"\n");
-  self.write("swarms/g01/src/lib.rs","pub fn checked_add(a:u64,b:u64)->Result<u64,&'static str>{a.checked_add(b).ok_or(\"overflow\")}\n");
+  self.write("swarms/g01/src/lib.rs","pub fn checked_add(a:u64,b:u64)->Result<u64,&'static str>{a.checked_add(b).ok_or(\"overflow\")}\npub fn checked_sub(a:u64,b:u64)->Result<u64,&'static str>{a.checked_sub(b).ok_or(\"underflow\")}\n");
   self.write("swarms/g01/tests/contract.rs","#[test]\nfn overflow_rejected(){ assert!(g01::checked_add(u64::MAX,1).is_err()); }\n");
   for file in ["TECHNICAL.md","USER_GUIDE.md","CERTIFICATION.md"]{
    self.write(&format!("swarms/g01/docs/{file}"),
@@ -37,7 +37,8 @@ impl Drop for Fixture{fn drop(&mut self){let _=fs::remove_dir_all(&self.0);}}
 }
 #[test]fn implemented_rust_structure_passes(){
  let f=Fixture::new();f.valid();
- assert!(verify_component(&f.0,&f.record("IMPLEMENTED_UNVERIFIED","none")).is_empty());
+ let problems=verify_component(&f.0,&f.record("IMPLEMENTED_UNVERIFIED","none"));
+ assert!(problems.is_empty(), "{problems:?}");
 }
 #[test]fn required_zenoh_cannot_be_documentation_only(){
  let f=Fixture::new();f.valid();
