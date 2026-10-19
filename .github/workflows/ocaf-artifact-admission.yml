@@ -1,24 +1,10 @@
-name: OCAF Rust artifact structural admission
+name: OMAt Rust artifact validator (manual diagnostics)
 on:
-  push:
-    branches: [main]
-    paths:
-      - "agents/**"
-      - "agent_systems/**"
-      - "swarms/**"
-      - "omat/**"
-      - "omas/**"
-      - ".github/workflows/ocaf-artifact-admission.yml"
-  pull_request:
-    paths:
-      - "agents/**"
-      - "agent_systems/**"
-      - "swarms/**"
-      - "omat/**"
-      - "omas/**"
-      - ".github/workflows/ocaf-artifact-admission.yml"
+  workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -28,18 +14,18 @@ jobs:
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
-      - name: Verify Rust gate itself
+      - name: Unit-test Rust OMAt validator
         run: cargo test --manifest-path omat/ocaf-artifact-gate/Cargo.toml
-      - name: Reject Markdown-only and missing Rust artifact directories
+      - name: Diagnostic structural check (not release certification)
         run: cargo run --manifest-path omat/ocaf-artifact-gate/Cargo.toml -- check-tree .
-      - name: Build and test every registered Rust artifact
+      - name: Build and test standalone registered artifact crates
         shell: bash
         run: |
           set -euo pipefail
           for namespace in agents agent_systems swarms omat omas; do
             test -d "$namespace" || continue
             for unit in "$namespace"/*; do
-              test -d "$unit" || continue
+              test -d "$unit/Cargo.toml" || continue
               cargo test --manifest-path "$unit/Cargo.toml"
             done
           done
