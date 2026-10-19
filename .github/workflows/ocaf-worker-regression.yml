@@ -1,0 +1,33 @@
+name: OCAF job worker regression (focused Rust)
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "src/jobs/worker.rs"
+      - "src/jobs/mod.rs"
+      - ".github/workflows/ocaf-worker-regression.yml"
+  pull_request:
+    paths:
+      - "src/jobs/worker.rs"
+      - "src/jobs/mod.rs"
+      - ".github/workflows/ocaf-worker-regression.yml"
+permissions:
+  contents: read
+concurrency:
+  group: worker-regression-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  local-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          components: rustfmt
+      - name: Rustfmt targeted worker
+        run: rustfmt --edition 2021 --check src/jobs/worker.rs
+      - name: Execute worker ACL and poller regressions
+        run: cargo test --locked --no-default-features --lib jobs::worker::worker_regression_tests -- --nocapture
