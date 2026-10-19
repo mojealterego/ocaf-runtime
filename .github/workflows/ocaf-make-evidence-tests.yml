@@ -1,0 +1,33 @@
+name: OCAF Make evidence gate tests
+
+on:
+  push:
+    paths:
+      - "scripts/ocaf_make_execution_gate.py"
+      - "tests/test_ocaf_make_execution_gate.py"
+      - ".github/workflows/ocaf-make-evidence-tests.yml"
+  pull_request:
+    paths:
+      - "scripts/ocaf_make_execution_gate.py"
+      - "tests/test_ocaf_make_execution_gate.py"
+      - ".github/workflows/ocaf-make-evidence-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ocaf-make-evidence-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check Make evidence gate without contacting paid APIs
+        run: python3 -m unittest discover -s tests -p "test_ocaf_make_execution_gate.py" -v
