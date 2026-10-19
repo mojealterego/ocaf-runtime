@@ -176,7 +176,7 @@ def main(argv: list[str] | None = None) -> int:
             fh.write(output + '\n')
     # Treat stale, failed, pending, and unverified as unready: intentionally
     # never returns code-delivery success without external SHA + CI proof.
-    return 1 if any(g['state'] in ('FAILED', 'API_ERROR', 'UNKNOWN') for g in result['groups'].values()) else 0
+    return 0 if result['groups'] and result['delivered'] == len(result['groups']) else 1
 
 
 if __name__ == '__main__':
