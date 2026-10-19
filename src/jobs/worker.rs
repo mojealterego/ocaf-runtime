@@ -187,8 +187,8 @@ impl JobWorker {
 
 #[cfg(test)]
 mod worker_regression_tests {
-    use super::*;
     use super::super::JobSpec;
+    use super::*;
     use serde_json::json;
     use uuid::Uuid;
 
@@ -199,18 +199,22 @@ mod worker_regression_tests {
             "worker_a",
             5_000,
             HashSet::from([allow.to_owned()]),
-        ).unwrap()
+        )
+        .unwrap()
     }
 
     async fn submit(store: &JobStore, tool: &str) -> String {
         let id = Uuid::new_v4().to_string();
-        store.submit(JobSpec {
-            id: id.clone(),
-            tool: tool.into(),
-            args: json!({}),
-            retry_safe: false,
-            max_attempts: 1,
-        }).await.unwrap();
+        store
+            .submit(JobSpec {
+                id: id.clone(),
+                tool: tool.into(),
+                args: json!({}),
+                retry_safe: false,
+                max_attempts: 1,
+            })
+            .await
+            .unwrap();
         id
     }
 
@@ -222,11 +226,17 @@ mod worker_regression_tests {
         let mine = submit(&store, "my_tool").await;
         // No executor registered: the permitted job is rejected, but the
         // unrelated earlier job must remain pending and unclaimed.
-        assert_eq!(worker(&store, "my_tool").run_once().await.unwrap(), Some(JobStatus::Failed));
+        assert_eq!(
+            worker(&store, "my_tool").run_once().await.unwrap(),
+            Some(JobStatus::Failed)
+        );
         let unrelated = store.get(&other).await.unwrap().unwrap();
         assert_eq!(unrelated.status, JobStatus::Pending);
         assert_eq!(unrelated.attempts, 0);
-        assert_eq!(store.get(&mine).await.unwrap().unwrap().status, JobStatus::Failed);
+        assert_eq!(
+            store.get(&mine).await.unwrap().unwrap().status,
+            JobStatus::Failed
+        );
     }
 
     #[tokio::test]
@@ -235,7 +245,10 @@ mod worker_regression_tests {
         let store = JobStore::open(&dir.path().join("jobs.sqlite")).unwrap();
         let other = submit(&store, "other_tool").await;
         assert_eq!(worker(&store, "my_tool").run_once().await.unwrap(), None);
-        assert_eq!(store.get(&other).await.unwrap().unwrap().status, JobStatus::Pending);
+        assert_eq!(
+            store.get(&other).await.unwrap().unwrap().status,
+            JobStatus::Pending
+        );
     }
 
     #[tokio::test]
@@ -245,14 +258,21 @@ mod worker_regression_tests {
         let runner = worker(&store, "my_tool");
         let (_sender, receiver) = watch::channel(true);
         assert!(matches!(
-            runner.run_until_shutdown(Duration::ZERO, receiver.clone()).await,
+            runner
+                .run_until_shutdown(Duration::ZERO, receiver.clone())
+                .await,
             Err(JobError::Invalid)
         ));
         assert!(matches!(
-            runner.run_until_shutdown(Duration::from_secs(61), receiver.clone()).await,
+            runner
+                .run_until_shutdown(Duration::from_secs(61), receiver.clone())
+                .await,
             Err(JobError::Invalid)
         ));
-        assert!(runner.run_until_shutdown(Duration::from_millis(25), receiver).await.is_ok());
+        assert!(runner
+            .run_until_shutdown(Duration::from_millis(25), receiver)
+            .await
+            .is_ok());
     }
 
     #[test]
@@ -268,9 +288,8 @@ mod worker_regression_tests {
         );
         assert!(matches!(invalid, Err(JobError::Invalid)));
         let oversized: HashSet<String> = (0..65).map(|i| format!("tool_{i}")).collect();
-        let oversized_worker = JobWorker::new(
-            store, OcafRuntime::new(0), "worker_a", 5_000, oversized
-        );
+        let oversized_worker =
+            JobWorker::new(store, OcafRuntime::new(0), "worker_a", 5_000, oversized);
         assert!(matches!(oversized_worker, Err(JobError::Invalid)));
     }
 }
