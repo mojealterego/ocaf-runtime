@@ -6,6 +6,13 @@
 
 # 🔴 UWAGA CZYTAĆ — ZABRONIONA JEST SAMOWOLKA 🔴
 
+> 🔴 **KANONICZNE DEFINICJE SYSTEMU — OBOWIĄZUJĄ WSZYSTKICH AGENTÓW AI I AUTORÓW DOKUMENTACJI:**
+> - **OCAF Runtime — OmniContext AgentFramework** (OmniContext Agent Framework): framework agentowy i środowisko uruchomieniowe systemu.
+> - **OMAs — OmniAgent Server:** projektowany następca serwerów MCP w ekosystemie OCAF; nie utożsamiać OMAs z MCP ani wyłącznie z podpisywaniem operacji.
+> - **OSTc — OmniSystemTopologicalCryptogtaphic:** kanoniczna nazwa projektowanego mechanizmu ochrony topologiczno-kryptograficznej, **zastępuje wcześniejsze OTs**. Pisownia rozwinięcia zachowana dokładnie według nazwy nadanej przez właściciela.
+> - **ZAKAZ BŁĘDNEGO ROZWIJANIA SKRÓTÓW:** nie zmieniać znaczenia OCAF/OMAs/OSTc, nie przywracać starej nazwy OTs w nowych materiałach. Nazwy i planowane przeznaczenie nie stanowią same w sobie dowodu ukończenia implementacji ani audytu bezpieczeństwa.
+
+
 > **BEZWZGLĘDNY ZAKAZ SAMOWOLKI:** Nie wolno samodzielnie przenosić, usuwać, skracać, zastępować ani renumerować historycznych pozycji ROADMAPY; nie wolno zmieniać jej położenia na początku `README.md`, ukrywać braków, dopisywać nieuzgodnionych funkcjonalności ani oznaczać nieprzetestowanych etapów jako ukończonych. Odzyskane wymagania historyczne pozostają pod oryginalnymi identyfikatorami; nowe wymagania dopisuje się po ostatnim numerze, zgodnie z poleceniem właściciela projektu. Każda zmiana wymaga zachowania historii, aktualizacji manifestu, obu roadmap, README i dziennika zmian oraz rzeczywistych dowodów testów. **ZAKAZ SAMOWOLKI dotyczy także automatycznych generatorów i agentów AI.**
 
 ![UWAGA CZYTAĆ — ROADMAPA NA GÓRZE REPOZYTORIUM](https://img.shields.io/badge/UWAGA-CZYTA%C4%86%20ROADMAP%C4%98-red?style=for-the-badge&labelColor=8B0000)
