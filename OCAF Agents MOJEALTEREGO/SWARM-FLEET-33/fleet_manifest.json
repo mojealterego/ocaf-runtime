@@ -1,0 +1,1842 @@
+{
+  "schema_version": 1,
+  "swarm_fleet_id": "OCAF-SWARM-FLEET-33",
+  "declared_swarm_count": 33,
+  "active_runtime_swarm_count": 0,
+  "status": "STRUCTURED_NOT_DEPLOYED",
+  "architecture": {
+    "omas": "separate agent server",
+    "omat": "separate tool server",
+    "transport": "zenoh",
+    "ostc": "future source encryption disabled"
+  },
+  "swarms": [
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-01",
+      "group_id": "G01",
+      "specialization": "orchestration-runtime",
+      "scope": "leases, dependencies and stage handoff",
+      "members": [
+        "OCAF-AGENT-001",
+        "OCAF-AGENT-002",
+        "OCAF-AGENT-003",
+        "OCAF-AGENT-004"
+      ],
+      "member_count": 4,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-01",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-02",
+      "group_id": "G02",
+      "specialization": "rust-toolchain",
+      "scope": "cargo, rustc, rustfmt and clippy verification",
+      "members": [
+        "OCAF-AGENT-005",
+        "OCAF-AGENT-006",
+        "OCAF-AGENT-007",
+        "OCAF-AGENT-008"
+      ],
+      "member_count": 4,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-02",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-03",
+      "group_id": "G03",
+      "specialization": "core-runtime",
+      "scope": "Rust runtime, async execution and lifecycle",
+      "members": [
+        "OCAF-AGENT-009",
+        "OCAF-AGENT-010",
+        "OCAF-AGENT-011",
+        "OCAF-AGENT-012"
+      ],
+      "member_count": 4,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-03",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-04",
+      "group_id": "G04",
+      "specialization": "rpc-transport",
+      "scope": "RPC identity, TLS and transport boundaries",
+      "members": [
+        "OCAF-AGENT-013",
+        "OCAF-AGENT-014",
+        "OCAF-AGENT-015",
+        "OCAF-AGENT-016"
+      ],
+      "member_count": 4,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-04",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-05",
+      "group_id": "G05",
+      "specialization": "postgres-ha",
+      "scope": "PostgreSQL leases, failover and persistence",
+      "members": [
+        "OCAF-AGENT-017",
+        "OCAF-AGENT-018",
+        "OCAF-AGENT-019",
+        "OCAF-AGENT-020"
+      ],
+      "member_count": 4,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-05",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-06",
+      "group_id": "G06",
+      "specialization": "zenoh-messaging",
+      "scope": "Zenoh transport, SHM and topic isolation",
+      "members": [
+        "OCAF-AGENT-021",
+        "OCAF-AGENT-022",
+        "OCAF-AGENT-023",
+        "OCAF-AGENT-024"
+      ],
+      "member_count": 4,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-06",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-07",
+      "group_id": "G07",
+      "specialization": "security-policy",
+      "scope": "authorization, privilege edges and fail-closed policy",
+      "members": [
+        "OCAF-AGENT-025",
+        "OCAF-AGENT-026",
+        "OCAF-AGENT-027",
+        "OCAF-AGENT-028"
+      ],
+      "member_count": 4,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-07",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-08",
+      "group_id": "G08",
+      "specialization": "supply-chain",
+      "scope": "dependency pinning, SBOM and provenance",
+      "members": [
+        "OCAF-AGENT-029",
+        "OCAF-AGENT-030",
+        "OCAF-AGENT-031",
+        "OCAF-AGENT-032"
+      ],
+      "member_count": 4,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-08",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-09",
+      "group_id": "G09",
+      "specialization": "sandbox-execution",
+      "scope": "WASI, Firecracker and isolated execution",
+      "members": [
+        "OCAF-AGENT-033",
+        "OCAF-AGENT-034",
+        "OCAF-AGENT-035",
+        "OCAF-AGENT-036"
+      ],
+      "member_count": 4,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-09",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-10",
+      "group_id": "G10",
+      "specialization": "agent-ir",
+      "scope": "typed graph IR and schema evolution",
+      "members": [
+        "OCAF-AGENT-037",
+        "OCAF-AGENT-038",
+        "OCAF-AGENT-039",
+        "OCAF-AGENT-040"
+      ],
+      "member_count": 4,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-10",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-11",
+      "group_id": "G11",
+      "specialization": "builder-code",
+      "scope": "supported Code DSL parsing and diagnostics",
+      "members": [
+        "OCAF-AGENT-041",
+        "OCAF-AGENT-042",
+        "OCAF-AGENT-043",
+        "OCAF-AGENT-044"
+      ],
+      "member_count": 4,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-11",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-12",
+      "group_id": "G12",
+      "specialization": "builder-nocode",
+      "scope": "visual graph model and NoCode persistence",
+      "members": [
+        "OCAF-AGENT-045",
+        "OCAF-AGENT-046",
+        "OCAF-AGENT-047",
+        "OCAF-AGENT-048"
+      ],
+      "member_count": 4,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-12",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-13",
+      "group_id": "G13",
+      "specialization": "builder-conversion",
+      "scope": "Code to NoCode round-trip and lossiness checks",
+      "members": [
+        "OCAF-AGENT-049",
+        "OCAF-AGENT-050",
+        "OCAF-AGENT-051"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-13",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-14",
+      "group_id": "G14",
+      "specialization": "cloud-workspace",
+      "scope": "tenant workspaces, RBAC and audit",
+      "members": [
+        "OCAF-AGENT-052",
+        "OCAF-AGENT-053",
+        "OCAF-AGENT-054"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-14",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-15",
+      "group_id": "G15",
+      "specialization": "desktop-windows",
+      "scope": "Windows desktop packaging and offline state",
+      "members": [
+        "OCAF-AGENT-055",
+        "OCAF-AGENT-056",
+        "OCAF-AGENT-057"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-15",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-16",
+      "group_id": "G16",
+      "specialization": "desktop-macos",
+      "scope": "macOS packaging, signing and entitlements",
+      "members": [
+        "OCAF-AGENT-058",
+        "OCAF-AGENT-059",
+        "OCAF-AGENT-060"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-16",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-17",
+      "group_id": "G17",
+      "specialization": "mobile-android",
+      "scope": "Android build, lifecycle and offline persistence",
+      "members": [
+        "OCAF-AGENT-061",
+        "OCAF-AGENT-062",
+        "OCAF-AGENT-063"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-17",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-18",
+      "group_id": "G18",
+      "specialization": "mobile-ios",
+      "scope": "iOS build, lifecycle and sandbox constraints",
+      "members": [
+        "OCAF-AGENT-064",
+        "OCAF-AGENT-065",
+        "OCAF-AGENT-066"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-18",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-19",
+      "group_id": "G19",
+      "specialization": "publish-verification",
+      "scope": "artifact signing, publish approval and receipts",
+      "members": [
+        "OCAF-AGENT-067",
+        "OCAF-AGENT-068",
+        "OCAF-AGENT-069"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-19",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-20",
+      "group_id": "G20",
+      "specialization": "e2e-platform",
+      "scope": "cross-platform E2E fixtures and run evidence",
+      "members": [
+        "OCAF-AGENT-070",
+        "OCAF-AGENT-071",
+        "OCAF-AGENT-072"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-20",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-21",
+      "group_id": "G21",
+      "specialization": "ui-accessibility",
+      "scope": "design tokens, accessibility and visual contracts",
+      "members": [
+        "OCAF-AGENT-073",
+        "OCAF-AGENT-074",
+        "OCAF-AGENT-075"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-21",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-22",
+      "group_id": "G22",
+      "specialization": "shader-gpu",
+      "scope": "shader validation, limits and deterministic builds",
+      "members": [
+        "OCAF-AGENT-076",
+        "OCAF-AGENT-077",
+        "OCAF-AGENT-078"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-22",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-23",
+      "group_id": "G23",
+      "specialization": "ast-cst",
+      "scope": "AST/CST repository analysis and patch structure",
+      "members": [
+        "OCAF-AGENT-079",
+        "OCAF-AGENT-080",
+        "OCAF-AGENT-081"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-23",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-24",
+      "group_id": "G24",
+      "specialization": "patch-admission",
+      "scope": "CAS patches, path policy and protected files",
+      "members": [
+        "OCAF-AGENT-082",
+        "OCAF-AGENT-083",
+        "OCAF-AGENT-084"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-24",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-25",
+      "group_id": "G25",
+      "specialization": "test-harness",
+      "scope": "negative tests, fixtures and reproducible harnesses",
+      "members": [
+        "OCAF-AGENT-085",
+        "OCAF-AGENT-086",
+        "OCAF-AGENT-087"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-25",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-26",
+      "group_id": "G26",
+      "specialization": "observability",
+      "scope": "traces, metrics, logs and operator evidence",
+      "members": [
+        "OCAF-AGENT-088",
+        "OCAF-AGENT-089",
+        "OCAF-AGENT-090"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-26",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-27",
+      "group_id": "G27",
+      "specialization": "data-provenance",
+      "scope": "document lineage, tenant scope and deletion",
+      "members": [
+        "OCAF-AGENT-091",
+        "OCAF-AGENT-092",
+        "OCAF-AGENT-093"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-27",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-28",
+      "group_id": "G28",
+      "specialization": "mcp-integrations",
+      "scope": "MCP schemas, tool grants and injection resistance",
+      "members": [
+        "OCAF-AGENT-094",
+        "OCAF-AGENT-095",
+        "OCAF-AGENT-096"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-28",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-29",
+      "group_id": "G29",
+      "specialization": "cost-governance",
+      "scope": "quotas, token budgets and cost exhaustion",
+      "members": [
+        "OCAF-AGENT-097",
+        "OCAF-AGENT-098",
+        "OCAF-AGENT-099"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-29",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-30",
+      "group_id": "G30",
+      "specialization": "recovery-chaos",
+      "scope": "crash recovery, retries and fault injection",
+      "members": [
+        "OCAF-AGENT-100",
+        "OCAF-AGENT-101",
+        "OCAF-AGENT-102"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-30",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-31",
+      "group_id": "G31",
+      "specialization": "release-engineering",
+      "scope": "release bundles, CI gates and rollback",
+      "members": [
+        "OCAF-AGENT-103",
+        "OCAF-AGENT-104",
+        "OCAF-AGENT-105"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-31",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-32",
+      "group_id": "G32",
+      "specialization": "independent-review",
+      "scope": "adversarial review and acceptance evidence",
+      "members": [
+        "OCAF-AGENT-106",
+        "OCAF-AGENT-107",
+        "OCAF-AGENT-108"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-32",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    },
+    {
+      "schema_version": 1,
+      "swarm_id": "OCAF-SWARM-33",
+      "group_id": "G33",
+      "specialization": "integration-qa",
+      "scope": "cross-stage integration and regression triage",
+      "members": [
+        "OCAF-AGENT-109",
+        "OCAF-AGENT-110",
+        "OCAF-AGENT-111"
+      ],
+      "member_count": 3,
+      "status": "STRUCTURED_NOT_DEPLOYED",
+      "lifecycle": "DRAFT",
+      "stage_claim_policy": {
+        "ordering": "dependency-ordered",
+        "claim_next_only_after": "verified completion receipt for current stage",
+        "required_receipt": [
+          "stage_id",
+          "source_commit",
+          "test_command",
+          "test_result",
+          "artifact_digest",
+          "known_limits"
+        ],
+        "parallel_claims": "deny unless dependency graph explicitly permits"
+      },
+      "handoff": {
+        "rule": "claim the next eligible stage after verified completion",
+        "from_swarm": "OCAF-SWARM-33",
+        "to_next_eligible_swarm": "scheduler-assigned",
+        "required_fields": [
+          "swarm_id",
+          "stage_id",
+          "commit",
+          "artifact_digest",
+          "tests",
+          "receipt_id",
+          "blockers"
+        ]
+      },
+      "health": {
+        "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+        "liveness": "heartbeat and lease epoch within bounds",
+        "active_admission": "DENY",
+        "ostc_enabled": false,
+        "source_access": "disabled"
+      },
+      "architecture": {
+        "omas": "separate agent server",
+        "omat": "separate tool server",
+        "transport": "zenoh",
+        "ostc": "future source encryption disabled"
+      }
+    }
+  ]
+}

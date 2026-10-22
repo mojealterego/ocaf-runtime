@@ -109,3 +109,16 @@ jednym runnerze. Testy awarii zasilania, split-brain PostgreSQL,
 rotacji mTLS, ochrony efektów zewnętrznych, sandboxingu i odtwarzania
 z kopii nie zostały przez to zastąpione.
 Zob. [MULTIHOST_ACCEPTANCE_033.md](MULTIHOST_ACCEPTANCE_033.md).
+
+## Agent services verification matrix
+
+| Boundary | Required evidence | Current disposition |
+|---|---|---|
+| OCAF Runtime | manifest, lifecycle receipt, artifact digest, rollback | reference package reaches `STAGED` |
+| OMAs | signed identity, tenant isolation, replay and fencing tests | separate production service not yet evidenced |
+| OMAt | tool manifest, schema, capability allowlist, isolated executor | catalog/executor E2E not yet evidenced |
+| Zenoh | authenticated transport, namespace, loss/duplicate/timeout tests | transport contracts exist; production E2E remains open |
+| OSTc | reviewed protocol, key lifecycle, vectors, audit and source-access test | `DISABLED`; `ACTIVE` denied |
+
+The 33 swarms and 111 separate agent packages are structured for execution. They do
+not replace these infrastructure gates and do not count as active deployments.

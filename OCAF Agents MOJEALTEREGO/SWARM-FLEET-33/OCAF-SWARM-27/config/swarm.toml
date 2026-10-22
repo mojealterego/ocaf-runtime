@@ -1,0 +1,12 @@
+swarm_id = "OCAF-SWARM-27"
+group_id = "G27"
+specialization = "data-provenance"
+status = "STRUCTURED_NOT_DEPLOYED"
+lifecycle = "DRAFT"
+omas_endpoint = "UNASSIGNED"
+omat_endpoint = "UNASSIGNED"
+transport = "zenoh"
+ostc_enabled = false
+source_access = "disabled"
+active_admission = "DENY"
+claim_policy = "dependency-ordered"

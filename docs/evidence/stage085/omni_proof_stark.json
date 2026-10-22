@@ -1,0 +1,27 @@
+{
+  "stage": "0.85",
+  "group": "G32",
+  "component": "OmniProof-STARK",
+  "commit": "cfc082f",
+  "scope": "bounded hash-chain proof relation with explicit public statement/private witness separation",
+  "soundness_assumptions": [
+    "hash_collision_resistance",
+    "transcript_binding",
+    "bounded_trace",
+    "independent_verifier"
+  ],
+  "test_command": "./scripts/rust_ci_docker.sh cargo test --locked --no-default-features --test omni_proof_stark",
+  "test_result": "PASS",
+  "tests_passed": 5,
+  "clippy_command": "./scripts/rust_ci_docker.sh cargo clippy --locked --no-default-features --test omni_proof_stark -- -D warnings",
+  "clippy_result": "PASS",
+  "negative_coverage": [
+    "wrong witness commitment",
+    "corrupted transcript",
+    "corrupted relation step",
+    "changed public statement",
+    "false soundness assumption",
+    "step bound and extra step"
+  ],
+  "limitation": "bounded relation verifier only; this does not claim a production STARK, zero knowledge, arbitrary program soundness, or arbitrary termination theorem"
+}

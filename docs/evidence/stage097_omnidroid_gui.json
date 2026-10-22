@@ -1,0 +1,24 @@
+{
+  "stage": "0.97",
+  "group": "G21",
+  "component": "OmniDroid-GUI",
+  "implementation_commit": "1e68345",
+  "scope": "bounded accessibility action authorization with tenant/session binding, capabilities, replay protection and deterministic receipt",
+  "test_command": "./scripts/rust_ci_docker.sh cargo test --locked --no-default-features --test omnidroid_gui",
+  "test_result": "PASS",
+  "tests_passed": 4,
+  "clippy_command": "./scripts/rust_ci_docker.sh cargo clippy --locked --no-default-features --test omnidroid_gui -- -D warnings",
+  "clippy_result": "BLOCKED_BY_PREEXISTING_COMPILE_ERROR",
+  "clippy_blocker": "src/flow_pieces.rs:190-191 compares u64 request.sequence with i64 SQLite expected and constructs a u64 error field from i64",
+  "negative_coverage": [
+    "invalid HMAC signature",
+    "expired authorization",
+    "cross-session evidence",
+    "nonce replay",
+    "disallowed action kind",
+    "hidden or disabled target",
+    "control-character/prompt injection payload",
+    "fixture evidence without explicit opt-in"
+  ],
+  "limitation": "the contract authorizes bounded actions against supplied accessibility evidence; it does not claim platform execution or real device access"
+}

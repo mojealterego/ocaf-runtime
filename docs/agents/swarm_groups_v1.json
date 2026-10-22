@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "groups": [
+    {
+      "id": "G1",
+      "specialization": "orchestration-runtime",
+      "scope": "leases, dependencies and stage handoff",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G2",
+      "specialization": "rust-toolchain",
+      "scope": "cargo, rustc, rustfmt and clippy verification",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G3",
+      "specialization": "core-runtime",
+      "scope": "Rust runtime, async execution and lifecycle",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G4",
+      "specialization": "rpc-transport",
+      "scope": "RPC identity, TLS and transport boundaries",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G5",
+      "specialization": "postgres-ha",
+      "scope": "PostgreSQL leases, failover and persistence",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G6",
+      "specialization": "zenoh-messaging",
+      "scope": "Zenoh transport, SHM and topic isolation",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G7",
+      "specialization": "security-policy",
+      "scope": "authorization, privilege edges and fail-closed policy",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G8",
+      "specialization": "supply-chain",
+      "scope": "dependency pinning, SBOM and provenance",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G9",
+      "specialization": "sandbox-execution",
+      "scope": "WASI, Firecracker and isolated execution",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G10",
+      "specialization": "agent-ir",
+      "scope": "typed graph IR and schema evolution",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G11",
+      "specialization": "builder-code",
+      "scope": "supported Code DSL parsing and diagnostics",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G12",
+      "specialization": "builder-nocode",
+      "scope": "visual graph model and NoCode persistence",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G13",
+      "specialization": "builder-conversion",
+      "scope": "Code to NoCode round-trip and lossiness checks",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G14",
+      "specialization": "cloud-workspace",
+      "scope": "tenant workspaces, RBAC and audit",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G15",
+      "specialization": "desktop-windows",
+      "scope": "Windows desktop packaging and offline state",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G16",
+      "specialization": "desktop-macos",
+      "scope": "macOS packaging, signing and entitlements",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G17",
+      "specialization": "mobile-android",
+      "scope": "Android build, lifecycle and offline persistence",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G18",
+      "specialization": "mobile-ios",
+      "scope": "iOS build, lifecycle and sandbox constraints",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G19",
+      "specialization": "publish-verification",
+      "scope": "artifact signing, publish approval and receipts",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G20",
+      "specialization": "e2e-platform",
+      "scope": "cross-platform E2E fixtures and run evidence",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G21",
+      "specialization": "ui-accessibility",
+      "scope": "design tokens, accessibility and visual contracts",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G22",
+      "specialization": "shader-gpu",
+      "scope": "shader validation, limits and deterministic builds",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G23",
+      "specialization": "ast-cst",
+      "scope": "AST/CST repository analysis and patch structure",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G24",
+      "specialization": "patch-admission",
+      "scope": "CAS patches, path policy and protected files",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G25",
+      "specialization": "test-harness",
+      "scope": "negative tests, fixtures and reproducible harnesses",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G26",
+      "specialization": "observability",
+      "scope": "traces, metrics, logs and operator evidence",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G27",
+      "specialization": "data-provenance",
+      "scope": "document lineage, tenant scope and deletion",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G28",
+      "specialization": "mcp-integrations",
+      "scope": "MCP schemas, tool grants and injection resistance",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G29",
+      "specialization": "cost-governance",
+      "scope": "quotas, token budgets and cost exhaustion",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G30",
+      "specialization": "recovery-chaos",
+      "scope": "crash recovery, retries and fault injection",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G31",
+      "specialization": "release-engineering",
+      "scope": "release bundles, CI gates and rollback",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G32",
+      "specialization": "independent-review",
+      "scope": "adversarial review and acceptance evidence",
+      "handoff": "claim the next eligible stage after verified completion"
+    },
+    {
+      "id": "G33",
+      "specialization": "integration-qa",
+      "scope": "cross-stage integration and regression triage",
+      "handoff": "claim the next eligible stage after verified completion"
+    }
+  ]
+}

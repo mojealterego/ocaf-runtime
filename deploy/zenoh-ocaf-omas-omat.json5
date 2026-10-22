@@ -1,0 +1,21 @@
+{
+  mode: "router",
+  scouting: { multicast: { enabled: false }, gossip: { enabled: false } },
+  transport: {
+    link: {
+      protocols: ["tls"],
+      tls: {
+        enable_mtls: true,
+        verify_name_on_connect: true,
+        close_link_on_expiration: true,
+        root_ca_certificate: "/etc/ocaf/pki/ca.pem",
+        listen_certificate: "/etc/ocaf/pki/zenoh-router.pem",
+        listen_private_key: "/etc/ocaf/pki/zenoh-router.key"
+      }
+    },
+    unicast: { compression: { enabled: false } },
+    multicast: { compression: { enabled: false } }
+  },
+  listen: { endpoints: ["tls/0.0.0.0:7447"] },
+  connect: { endpoints: [] }
+}

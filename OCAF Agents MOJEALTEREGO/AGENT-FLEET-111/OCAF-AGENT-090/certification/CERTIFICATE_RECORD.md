@@ -1,0 +1,3 @@
+# OCAF-AGENT-090 — CERTIFICATE RECORD
+
+Status: `NOT ISSUED`. OSTc disabled; ACTIVE denied.

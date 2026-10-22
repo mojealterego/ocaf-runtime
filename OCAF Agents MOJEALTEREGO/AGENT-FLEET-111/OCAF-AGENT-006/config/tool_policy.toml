@@ -1,0 +1,4 @@
+agent_id = "OCAF-AGENT-006"
+allowlist = []
+network = "deny-by-default"
+max_steps = 0

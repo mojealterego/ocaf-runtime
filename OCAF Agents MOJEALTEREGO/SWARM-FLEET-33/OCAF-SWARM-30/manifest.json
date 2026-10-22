@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "swarm_id": "OCAF-SWARM-30",
+  "group_id": "G30",
+  "specialization": "recovery-chaos",
+  "scope": "crash recovery, retries and fault injection",
+  "members": [
+    "OCAF-AGENT-100",
+    "OCAF-AGENT-101",
+    "OCAF-AGENT-102"
+  ],
+  "member_count": 3,
+  "status": "STRUCTURED_NOT_DEPLOYED",
+  "lifecycle": "DRAFT",
+  "stage_claim_policy": {
+    "ordering": "dependency-ordered",
+    "claim_next_only_after": "verified completion receipt for current stage",
+    "required_receipt": [
+      "stage_id",
+      "source_commit",
+      "test_command",
+      "test_result",
+      "artifact_digest",
+      "known_limits"
+    ],
+    "parallel_claims": "deny unless dependency graph explicitly permits"
+  },
+  "handoff": {
+    "rule": "claim the next eligible stage after verified completion",
+    "from_swarm": "OCAF-SWARM-30",
+    "to_next_eligible_swarm": "scheduler-assigned",
+    "required_fields": [
+      "swarm_id",
+      "stage_id",
+      "commit",
+      "artifact_digest",
+      "tests",
+      "receipt_id",
+      "blockers"
+    ]
+  },
+  "health": {
+    "readiness": "manifest-valid + all members registered + OMAs/OMAt endpoints configured",
+    "liveness": "heartbeat and lease epoch within bounds",
+    "active_admission": "DENY",
+    "ostc_enabled": false,
+    "source_access": "disabled"
+  },
+  "architecture": {
+    "omas": "separate agent server",
+    "omat": "separate tool server",
+    "transport": "zenoh",
+    "ostc": "future source encryption disabled"
+  }
+}

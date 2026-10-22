@@ -30,6 +30,14 @@ name = "ocaf-ha-probe"
 path = "src/bin/ocaf-ha-probe.rs"
 required-features = ["ha-probe"]
 
+[[bin]]
+name = "ocaf-omas-server"
+path = "src/bin/ocaf-omas-server.rs"
+
+[[bin]]
+name = "ocaf-omat-server"
+path = "src/bin/ocaf-omat-server.rs"
+
 [features]
 ha-probe = []
 tls-bound = ["zenoh", "dep:tokio-rustls", "dep:rustls"]

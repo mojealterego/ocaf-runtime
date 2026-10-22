@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "stage": "0.83",
+  "component": "OmniAlign",
+  "implementation_commit": "bc5a147fe7f4e04cc981ef32ed7bc86e748bd8a8",
+  "implementation": [
+    "src/alignment.rs",
+    "tests/alignment.rs"
+  ],
+  "integration_requirement": "Add pub mod alignment; to src/lib.rs (present in shared working tree; kept out of implementation commit to avoid another agent's concurrent lib.rs changes).",
+  "contract": {
+    "bounded": true,
+    "audited_policy": true,
+    "conformal_uncertainty": true,
+    "adversarial_refusal": true,
+    "human_approval_for_high_critical": true,
+    "tenant_actor_binding": true,
+    "signed_receipt": "HMAC-SHA256"
+  },
+  "verification": {
+    "command": "bash scripts/rust_ci_docker.sh cargo test --locked --no-default-features",
+    "status": "PASS",
+    "exit_code": 0,
+    "alignment_tests": "4 passed; 0 failed",
+    "full_suite": "PASS"
+  },
+  "clippy": {
+    "command": "bash scripts/rust_ci_docker.sh cargo clippy --locked --all-targets --no-default-features -- -D warnings",
+    "status": "PASS",
+    "exit_code": 0
+  },
+  "format_check": {
+    "command": "git diff --check",
+    "status": "PASS",
+    "exit_code": 0
+  },
+  "toolchain": "Docker rust:1.90",
+  "limitations": [
+    "Policy gate is bounded and does not claim general model alignment.",
+    "No browser automation or external model inference is performed."
+  ]
+}

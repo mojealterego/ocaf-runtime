@@ -1310,7 +1310,12 @@
       "acceptance": "Verified current public eligibility dates/amounts, precise computation; JSON AST roundtrip, no untrusted code injection or imaginary grant award; reproducible UI diff",
       "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
       "dependencies": [
-        "0.50–0.55",
+        "0.50",
+        "0.51",
+        "0.52",
+        "0.53",
+        "0.54",
+        "0.55",
         "0.62"
       ],
       "status": "PLANNED",
@@ -2943,7 +2948,7 @@
       "negative": "Reject host only TC classifier as guest result",
       "dependencies": [
         "1.42",
-        "0.39.22"
+        "0.39"
       ],
       "status": "PLANNED",
       "priority": "P0",

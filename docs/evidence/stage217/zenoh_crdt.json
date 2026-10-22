@@ -1,0 +1,24 @@
+{
+  "stage_id": "217",
+  "title": "Zenoh SHM and CRDT",
+  "implementation_commit": "2eda229",
+  "artifacts": [
+    "src/zenoh_crdt.rs",
+    "src/lib.rs"
+  ],
+  "contracts": {
+    "typed_shm": "Versioned tenant-bound immutable frame views retain an Arc allocation and validate range, size and SHA-256 before consumption.",
+    "crdt": "Deterministic tenant-scoped LWW map with actor dots, Lamport ordering, explicit tombstones, replay rejection and bounded delta/version-vector exchange.",
+    "authority_boundary": "CRDT is explicitly non-authoritative and cannot replace lease, fencing, authorization or payment state."
+  },
+  "tests": [
+    "shm_frame_is_bounded_and_cloned_without_payload_copy",
+    "partition_merge_converges_and_preserves_tombstone",
+    "replay_is_idempotent_and_tenant_isolation_is_fail_closed",
+    "concurrent_writes_have_a_deterministic_tie_break_and_delta_is_bounded"
+  ],
+  "limitations": [
+    "This artifact verifies the local typed frame contract; a real Zenoh SHM provider and cross-host benchmark still require their own environment.",
+    "No CRDT operation is an authorization, fencing, lease or payment decision."
+  ]
+}

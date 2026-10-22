@@ -1,0 +1,28 @@
+{
+  "stage": "0.91",
+  "group": "G20",
+  "component": "Neuromorphic HIL / Loihi2",
+  "implementation_commit": "4f3fafb",
+  "scope": "bounded same-workload device evidence contract with signed Loihi2 and CPU fallback measurements",
+  "test_command": "./scripts/rust_ci_docker.sh cargo test --locked --no-default-features --test neuromorphic_hil",
+  "test_result": "PASS",
+  "tests_passed": 4,
+  "clippy_command": "./scripts/rust_ci_docker.sh cargo clippy --locked --no-default-features --test neuromorphic_hil -- -D warnings",
+  "clippy_result": "PASS",
+  "gates": [
+    "tenant/workload/input binding",
+    "signed evidence",
+    "integer EDP bound",
+    "quality threshold and delta",
+    "safe CPU fallback",
+    "fixture evidence opt-in"
+  ],
+  "negative_coverage": [
+    "invalid signature",
+    "cross-workload evidence",
+    "quality or EDP rejection with CPU fallback",
+    "unsafe fallback",
+    "fixture evidence disallowed"
+  ],
+  "limitation": "fixture evidence does not establish physical Loihi2 access or production performance; Hardware source requires an external HIL attestation and key"
+}

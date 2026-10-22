@@ -1,0 +1,3 @@
+# OCAF-AGENT-070 — CERTIFICATE RECORD
+
+Status: `NOT ISSUED`. OSTc disabled; ACTIVE denied.

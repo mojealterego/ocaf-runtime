@@ -1,0 +1,5 @@
+agent_id = "OCAF-AGENT-074"
+planner = "UNASSIGNED"
+model = "UNASSIGNED"
+state_store = "ocaf-agent-074-state"
+human_approval_for_side_effects = true

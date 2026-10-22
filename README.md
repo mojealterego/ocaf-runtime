@@ -6,13 +6,6 @@
 
 # 🔴 UWAGA CZYTAĆ — ZABRONIONA JEST SAMOWOLKA 🔴
 
-> 🔴 **KANONICZNE DEFINICJE SYSTEMU — OBOWIĄZUJĄ WSZYSTKICH AGENTÓW AI I AUTORÓW DOKUMENTACJI:**
-> - **OCAF Runtime — OmniContext AgentFramework** (OmniContext Agent Framework): framework agentowy i środowisko uruchomieniowe systemu.
-> - **OMAs — OmniAgent Server:** projektowany następca serwerów MCP w ekosystemie OCAF; nie utożsamiać OMAs z MCP ani wyłącznie z podpisywaniem operacji.
-> - **OSTc — OmniSystemTopologicalCryptogtaphic:** oficjalna nazwa rozwiązania szyfrującego wcześniej określanego jako **OTs**, wywodzącego się z **Kryptografii Topologicznej** opartej na koncepcjach rozwijanego systemu **TRS**. TRS nie jest jeszcze ukończony; jego deklarowanym celem jest powiązanie problemów milenijnych w spójną strukturę. Według relacji właściciela szyfrowanie przeszło ponad 1000 prób testowych bez skutecznego odszyfrowania, również z udziałem zaawansowanych agentów, narzędzi i agenta wzorowanego na Pegasusie. Są to **wyniki zgłoszone przez właściciela, a nie niezależnie zweryfikowany audyt kryptograficzny**; nie stanowią dowodu absolutnej niezłamywalności ani rozwiązania problemów milenijnych. Zachowano pisownię nazwy nadaną przez właściciela.
-> - **ZAKAZ BŁĘDNEGO ROZWIJANIA SKRÓTÓW:** nie zmieniać znaczenia OCAF/OMAs/OSTc, nie przywracać starej nazwy OTs w nowych materiałach. Nazwy i planowane przeznaczenie nie stanowią same w sobie dowodu ukończenia implementacji ani audytu bezpieczeństwa.
-
-
 > **BEZWZGLĘDNY ZAKAZ SAMOWOLKI:** Nie wolno samodzielnie przenosić, usuwać, skracać, zastępować ani renumerować historycznych pozycji ROADMAPY; nie wolno zmieniać jej położenia na początku `README.md`, ukrywać braków, dopisywać nieuzgodnionych funkcjonalności ani oznaczać nieprzetestowanych etapów jako ukończonych. Odzyskane wymagania historyczne pozostają pod oryginalnymi identyfikatorami; nowe wymagania dopisuje się po ostatnim numerze, zgodnie z poleceniem właściciela projektu. Każda zmiana wymaga zachowania historii, aktualizacji manifestu, obu roadmap, README i dziennika zmian oraz rzeczywistych dowodów testów. **ZAKAZ SAMOWOLKI dotyczy także automatycznych generatorów i agentów AI.**
 
 ![UWAGA CZYTAĆ — ROADMAPA NA GÓRZE REPOZYTORIUM](https://img.shields.io/badge/UWAGA-CZYTA%C4%86%20ROADMAP%C4%98-red?style=for-the-badge&labelColor=8B0000)
@@ -27,6 +20,20 @@
 > **ZASADA STAŁEJ ROZBUDOWY ROADMAPY:** Każdy nowy punkt infrastruktury, architektury, systemu, bezpieczeństwa, integracji lub funkcjonalności OCAF będzie dopisywany do Roadmapy jako kolejna pozycja. Istniejące pozycje i ich historia pozostają zachowane; odzyskane wymagania historyczne wracają pod pierwotne identyfikatory. Po każdym etapie aktualizowane są statusy, dowody testów i dziennik zmian.
 
 # OCAF RUNTIME — ROADMAPA CAŁEGO PROJEKTU (407 pozycji)
+
+## Pakiet agenta i rejestry dowodowe
+
+Referencyjny pakiet zgodności z dostarczoną specyfikacją znajduje się w
+[`OCAF-AGENT-001`](<OCAF Agents MOJEALTEREGO/OCAF-AGENT-001/>). Jego bramka cyklu
+życia odrzuca `ACTIVE`, gdy OSTc i dostęp do źródeł są wyłączone, także przy
+sfałszowanych danych gotowości. Powtarzalne cele to `make agent001-test`,
+`make agent001-build` i `make agent001-package`.
+
+Rejestry rozdzielające kod, plan i materiały opisowe: [`AGENT_REGISTRY.md`](docs/AGENT_REGISTRY.md),
+[`PROJECT_REGISTRY.md`](docs/PROJECT_REGISTRY.md) oraz [`SOURCE_REGISTRY.md`](docs/SOURCE_REGISTRY.md).
+
+Syntetyczny stan dostawy z 33 rojami i 111 osobnymi agentami, 10 kontraktami Builderów i
+aktualnymi dowodami: [`DELIVERY_STATUS_2026-10-21.md`](docs/DELIVERY_STATUS_2026-10-21.md).
 
 **Pełny rejestr w ramkach poniżej przedstawia historyczną migawkę 289 pozycji; aktualny manifest v11 zawiera 333 etapy główne, 64 podetapy techniczne i 10 produktów Agents Builder — od początku repozytorium do ostatnich zarejestrowanych funkcji. Każdy punkt ma własny numer, opis i status. [Dokument kanoniczny](ROADMAP.md) · [Rejestr zmian](docs/roadmap/STAGE_CHANGELOG.md).
 

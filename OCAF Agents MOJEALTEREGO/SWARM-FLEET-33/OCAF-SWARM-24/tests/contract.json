@@ -1,0 +1,22 @@
+{
+  "swarm_id": "OCAF-SWARM-24",
+  "tests": [
+    {
+      "id": "manifest_membership",
+      "expected": "PASS",
+      "command": "health/healthcheck.sh"
+    },
+    {
+      "id": "dependency_order",
+      "expected": "DENY_UNVERIFIED_HANDOFF"
+    },
+    {
+      "id": "fake_readiness",
+      "expected": "DENY_ACTIVE"
+    },
+    {
+      "id": "ostc_disabled",
+      "expected": "DENY_ACTIVE"
+    }
+  ]
+}

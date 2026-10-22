@@ -169,3 +169,29 @@ client endpoint failover; independently configured PostgreSQL
 replication/failover; recovery orchestration for ambiguous worker
 completions; signed workload attestation, certificate rotation and
 operationally reviewed privileged service isolation.
+
+## OCAF / OMAs / OMAt / OSTc service boundary
+
+The reference deployment has four logical boundaries. OCAF Runtime owns
+lifecycle and evidence; OMAs is the agent server; OMAt is the separate tool
+server; Zenoh is transport. OSTc is a future source-access layer and is disabled
+in the current configuration. A deployment must not collapse OMAs and OMAt into
+one unrestricted process.
+
+### Controlled rollout
+
+1. Build from a pinned commit with `--locked` and record the binary digest.
+2. Start transport and policy checks in deny-by-default mode.
+3. Register OMAs identity and tenant namespace, then verify signed admission,
+   nonce replay rejection and cross-tenant rejection.
+4. Register only the OMAt tools whose manifests, schemas, limits and executor
+   isolation have been reviewed.
+5. Keep the agent `STAGED`; verify receipts, rollback and recovery before any
+   operator decision about activation.
+6. Do not activate while OSTc is disabled. Readiness fields supplied by the
+   caller cannot override the manifest gate.
+
+The package under `OCAF Agents MOJEALTEREGO/OCAF-AGENT-001` is a reference
+installation artifact, not evidence that OMAs, OMAt or OSTc are production
+services. Production approval requires independent platform and infrastructure
+evidence.

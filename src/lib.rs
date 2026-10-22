@@ -16,3 +16,23 @@ pub mod sink;
 pub mod transport;
 
 pub mod transport_policy;
+
+pub mod agent_fleet;
+
+pub mod omas_server;
+
+pub mod omat_server;
+
+pub mod microvm_lifecycle;
+
+pub mod firecracker_ebpf_contract;
+
+pub mod stage_ledger;
+
+pub mod postgres_ha_contract;
+
+pub mod stage040_interhost_contract;
+
+pub mod reliability_recovery;
+
+pub mod stage041_recovery_contract;

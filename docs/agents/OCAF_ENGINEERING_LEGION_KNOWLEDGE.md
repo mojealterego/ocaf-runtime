@@ -19,6 +19,11 @@ This is a **partial verified knowledge baseline**, not a complete codebase inges
 - Production approval is false. Historical administrative closure is not technical or production acceptance.
 
 ## Roles and routing
+
+The current organizational directive expands the operating catalog to 33 swarms
+and 111 separate agent packages. The packages have individual identity and structure; they are not yet deployed runtime processes, production agents, or completed stages. See
+`docs/agents/AGENT_REGISTRY_111.md` and `agent_registry_111.json`.
+
 | Agent | Repository expertise |
 |---|---|
 | architect-prime | typed contracts, Rust crate structure, architecture boundaries |
@@ -44,7 +49,7 @@ This is a **partial verified knowledge baseline**, not a complete codebase inges
 3. Preserve the pinned README roadmap, historical IDs, manifest, mirror and changelog; append truly new stages only after the latest verified ID.
 4. Require reproducible tests and evidence. No invented latency, security-audit signatures, hardware, deployment or acceptance.
 5. No uncontrolled model-generated code execution; use isolated sandboxes, least privilege and explicit approval for production effects.
-6. Distinguish role descriptions and deterministic builder scaffold from real LLM-connected, autonomous agents.
+6. Distinguish structured individual agent packages from real LLM-connected runtime activation; each package needs its own model, endpoint, artifact and evidence.
 7. Keep original historical documentation intact; conflicting counters must be reported, not silently overwritten.
 
 ## Ingestion coverage and outstanding work

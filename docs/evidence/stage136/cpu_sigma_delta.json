@@ -1,0 +1,21 @@
+{
+  "stage_id": "1.36",
+  "title": "CPU Sigma-Delta baseline",
+  "module": "src/cpu_sigma_delta.rs",
+  "scope": "Deterministic channel-major signed 16-bit CPU Sigma-Delta router with accumulator carry, ternary spikes, histogram and sparsity receipt.",
+  "acceptance": {
+    "sixteen_bit_fixture": true,
+    "reproducible_histogram_sparsity": true,
+    "negative_empty_channels": true,
+    "negative_buffer_length_mismatch": true
+  },
+  "verification": {
+    "command": "scripts/rust_ci_docker.sh cargo test --locked --no-default-features",
+    "status": "pending_shared_ci",
+    "notes": "The first shared invocation exhausted the workspace disk while other workers compiled concurrently; the code path was not reported as a Rust failure."
+  },
+  "limitations": [
+    "This is a deterministic CPU reference baseline; no hardware SDNN or performance claim is made.",
+    "Input is channel-major and bounded by explicit channel and sample limits."
+  ]
+}

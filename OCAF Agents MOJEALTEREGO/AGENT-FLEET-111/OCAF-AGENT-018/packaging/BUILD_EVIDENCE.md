@@ -1,0 +1,3 @@
+# OCAF-AGENT-018 — BUILD EVIDENCE
+
+Status: `NOT_BUILT`; własny commit, digest, testy i podpis wymagane.

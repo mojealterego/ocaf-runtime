@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "plane_id": "OCAF-OMAS-OMAT-ZENOH-V1",
+  "transport": "zenoh",
+  "services": {
+    "ocaf": {"namespace": "ocaf/{tenant}/agent/{agent}/**", "health_key": "ocaf/{tenant}/health"},
+    "omas": {"namespace": "omas/{tenant}/agent/{agent}/**", "health_key": "omas/{tenant}/health"},
+    "omat": {"namespace": "omat/{tenant}/tool/{tool}/**", "health_key": "omat/{tenant}/health"}
+  },
+  "allowed_links": [
+    {"from": "ocaf", "to": "omas", "purpose": "agent-admission-and-session"},
+    {"from": "omas", "to": "omat", "purpose": "scoped-tool-dispatch"},
+    {"from": "omat", "to": "omas", "purpose": "tool-receipt"}
+  ],
+  "forbidden_links": [
+    {"from": "ocaf", "to": "omat", "reason": "agent-must-not-bypass-OMAs"},
+    {"from": "external", "to": "*", "reason": "unregistered-peer"}
+  ],
+  "health": {
+    "liveness_timeout_ms": 1000,
+    "readiness_timeout_ms": 3000,
+    "required": ["zenoh-session", "omas", "omat", "tenant-policy", "replay-store"],
+    "ostc_enabled": false,
+    "active_admission": "DENY"
+  },
+  "negative_acceptance": [
+    "cross-tenant-key-must-be-denied",
+    "wildcard-and-parent-traversal-key-must-be-denied",
+    "direct-ocaf-to-omat-route-must-be-denied",
+    "unknown-peer-and-replayed-nonce-must-be-denied",
+    "forged-readiness-must-not-enable-active",
+    "ostc-disabled-must-deny-source-access"
+  ]
+}
