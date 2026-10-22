@@ -12,7 +12,7 @@ def test_current_counts_and_order():
     result = subprocess.run([sys.executable, str(SCRIPT), "--repo", str(ROOT)], check=True, capture_output=True, text=True)
     data = json.loads(result.stdout)
     assert data["declared_main"] == 333
-    assert data["detailed_main"] == 251
+    assert data["detailed_main"] == 333
     assert data["append_only"] is True
 
 

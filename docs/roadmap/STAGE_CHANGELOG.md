@@ -612,3 +612,9 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - Job `117489284195` (`Simulated PostgreSQL epoch fencing (single runner)`): **SUCCESS**.
 - Job `117489284427` (`Simulated lease, replay and recovery (single runner)`): **SUCCESS**.
 - Zamknięta wyłącznie bramka **SIMULATED_SINGLE_RUNNER_CI**; dowód obejmuje wynik jobów, a nie niezależne hosty. Statusy P0 0.38–0.41 pozostają otwarte dla rzeczywistego wielohostowego failover/recovery, HA, audytu i odbioru operatora. Nie przenosić statusu symulacji na `OPERATOR_ACCEPTED` ani `PRODUCTION_APPROVED`.
+
+### 2026-10-22 — Rekonsyliacja 333 etapów głównych
+
+- Zmaterializowano w `docs/roadmap/canonical_v11_inventory.json` brakujące rekordy etapów `232–300` oraz `321–333`, korzystając wyłącznie z istniejących definicji w `ROADMAP.md`.
+- Tablica `main` ma teraz **333 rekordy**, `main_count=333`, a `next_new_main_stage=334`; nie zmieniono numeracji ani nie oznaczono etapu jako ukończonego.
+- `scripts/roadmap_integrity_gate.py` i jego test regresyjny wymagają zgodności `333/333`; status produkcyjny pozostaje `false`.

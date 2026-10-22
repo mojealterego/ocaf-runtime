@@ -35,3 +35,9 @@ Ten raport zastępuje wcześniejsze niepotwierdzone deklaracje ukończenia.
 - Stage 0.40: niezależne hosty HA mają kontrakt fail-closed w
   `src/stage040_interhost_contract.rs`; realne hosty, witness i power-loss
   recovery nadal wymagają środowiska docelowego.
+
+## Rekonsyliacja Roadmapy — 2026-10-22
+
+Uzupełniono rejestr maszynowy z 251 do 333 rekordów głównych, korzystając
+wyłącznie z istniejących definicji etapów w `ROADMAP.md` (w szczególności
+232–300 oraz 321–333). Nie zmieniono statusu żadnego etapu na ukończony.
