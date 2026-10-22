@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-063
+# Instrukcja Material · OCAF-AGENT-063
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

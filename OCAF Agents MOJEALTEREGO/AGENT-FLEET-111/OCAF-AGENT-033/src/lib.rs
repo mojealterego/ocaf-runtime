@@ -1,4 +1,5 @@
 pub const AGENT_ID: &str = "OCAF-AGENT-033";
+pub const DISPLAY_NAME: &str = "Sandbox";
 pub const GROUP_ID: &str = "G09";
 pub const SPECIALIZATION: &str = "sandbox-execution";
 pub const OSTC_ENABLED: bool = false;

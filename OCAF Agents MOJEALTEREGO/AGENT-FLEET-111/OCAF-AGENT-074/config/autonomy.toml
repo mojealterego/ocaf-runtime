@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-074"
+display_name = "Lumen"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-074-state"
+state_store = "ocaf-lumen-state"
 human_approval_for_side_effects = true

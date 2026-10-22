@@ -1,4 +1,5 @@
 pub const AGENT_ID: &str = "OCAF-AGENT-014";
+pub const DISPLAY_NAME: &str = "Packet";
 pub const GROUP_ID: &str = "G04";
 pub const SPECIALIZATION: &str = "rpc-transport";
 pub const OSTC_ENABLED: bool = false;

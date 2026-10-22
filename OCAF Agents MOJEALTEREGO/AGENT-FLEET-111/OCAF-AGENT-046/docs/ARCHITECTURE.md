@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-046
+# Architektura Canvas · OCAF-AGENT-046
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.

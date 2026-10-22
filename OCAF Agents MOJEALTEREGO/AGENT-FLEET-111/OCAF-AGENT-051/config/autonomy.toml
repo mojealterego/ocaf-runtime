@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-051"
+display_name = "Alchemy"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-051-state"
+state_store = "ocaf-alchemy-state"
 human_approval_for_side_effects = true

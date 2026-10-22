@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-007"
+display_name = "Boron"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

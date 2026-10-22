@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-013"
+display_name = "Relay"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

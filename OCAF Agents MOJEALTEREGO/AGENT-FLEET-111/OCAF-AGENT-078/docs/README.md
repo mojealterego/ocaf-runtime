@@ -1,3 +1,5 @@
-# OCAF-AGENT-078
+# Raster · OCAF-AGENT-078
+
+Nazwa oryginalna: **Raster**. Id techniczny: `OCAF-AGENT-078`.
 
 Osobny autonomiczny pakiet AI: `shader-gpu`. Własna tożsamość, pamięć, polityka narzędzi i lifecycle. Status `NOT_DEPLOYED`; OSTc `DISABLED`; ACTIVE `DENY`.

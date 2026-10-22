@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-052"
+display_name = "Cloudsmith"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-052-state"
+state_store = "ocaf-cloudsmith-state"
 human_approval_for_side_effects = true

@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-026
+# Architektura Aegis · OCAF-AGENT-026
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.

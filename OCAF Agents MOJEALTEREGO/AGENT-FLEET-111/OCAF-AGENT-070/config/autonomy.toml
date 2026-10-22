@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-070"
+display_name = "Odyssey"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-070-state"
+state_store = "ocaf-odyssey-state"
 human_approval_for_side_effects = true

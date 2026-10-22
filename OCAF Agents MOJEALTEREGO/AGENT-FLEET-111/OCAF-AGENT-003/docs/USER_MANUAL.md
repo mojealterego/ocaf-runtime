@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-003
+# Instrukcja Helios · OCAF-AGENT-003
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

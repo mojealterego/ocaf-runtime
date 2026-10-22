@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-104"
+display_name = "Signer"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-104-state"
+state_store = "ocaf-signer-state"
 human_approval_for_side_effects = true

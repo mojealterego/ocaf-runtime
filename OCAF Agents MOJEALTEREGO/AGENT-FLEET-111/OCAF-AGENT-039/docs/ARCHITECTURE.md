@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-039
+# Architektura Semira · OCAF-AGENT-039
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.

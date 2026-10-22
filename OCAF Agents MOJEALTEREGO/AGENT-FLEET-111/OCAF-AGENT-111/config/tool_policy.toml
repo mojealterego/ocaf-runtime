@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-111"
+display_name = "Integrator"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-007
+# Instrukcja Boron · OCAF-AGENT-007
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

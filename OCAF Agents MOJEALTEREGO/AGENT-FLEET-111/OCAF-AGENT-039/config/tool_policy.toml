@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-039"
+display_name = "Semira"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

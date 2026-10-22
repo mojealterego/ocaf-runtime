@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-064"
+display_name = "Swiftlet"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

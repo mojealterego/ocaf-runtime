@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-042
+# Instrukcja Compiler · OCAF-AGENT-042
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

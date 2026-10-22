@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-050"
+display_name = "Bridge"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-050-state"
+state_store = "ocaf-bridge-state"
 human_approval_for_side_effects = true

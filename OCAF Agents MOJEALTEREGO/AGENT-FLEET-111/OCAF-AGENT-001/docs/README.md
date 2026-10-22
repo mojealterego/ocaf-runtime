@@ -1,3 +1,5 @@
-# OCAF-AGENT-001
+# Asterion · OCAF-AGENT-001
+
+Nazwa oryginalna: **Asterion**. Id techniczny: `OCAF-AGENT-001`.
 
 Osobny autonomiczny pakiet AI: `orchestration-runtime`. Własna tożsamość, pamięć, polityka narzędzi i lifecycle. Status `NOT_DEPLOYED`; OSTc `DISABLED`; ACTIVE `DENY`.

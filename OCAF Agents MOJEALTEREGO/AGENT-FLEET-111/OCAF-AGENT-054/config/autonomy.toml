@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-054"
+display_name = "Workspace"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-054-state"
+state_store = "ocaf-workspace-state"
 human_approval_for_side_effects = true

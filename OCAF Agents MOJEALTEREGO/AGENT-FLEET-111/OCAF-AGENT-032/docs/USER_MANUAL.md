@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-032
+# Instrukcja Chainwatch · OCAF-AGENT-032
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

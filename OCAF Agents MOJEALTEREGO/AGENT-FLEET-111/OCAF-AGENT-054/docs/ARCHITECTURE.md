@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-054
+# Architektura Workspace · OCAF-AGENT-054
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.

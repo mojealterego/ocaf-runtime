@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-016"
+display_name = "Lattice"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-016-state"
+state_store = "ocaf-lattice-state"
 human_approval_for_side_effects = true

@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-085
+# Instrukcja Specimen · OCAF-AGENT-085
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

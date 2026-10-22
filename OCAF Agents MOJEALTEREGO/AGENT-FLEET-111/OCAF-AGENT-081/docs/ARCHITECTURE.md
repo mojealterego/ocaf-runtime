@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-081
+# Architektura Treefold · OCAF-AGENT-081
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.

@@ -1,4 +1,4 @@
 [package]
-name = "ocaf-agent-087"
+name = "ocaf-agent-087-regressor"
 version = "0.1.0"
 edition = "2021"

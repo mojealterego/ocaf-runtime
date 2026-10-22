@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-051
+# Instrukcja Alchemy · OCAF-AGENT-051
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

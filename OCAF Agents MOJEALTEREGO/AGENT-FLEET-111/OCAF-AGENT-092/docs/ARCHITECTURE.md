@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-092
+# Architektura Attestor · OCAF-AGENT-092
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.

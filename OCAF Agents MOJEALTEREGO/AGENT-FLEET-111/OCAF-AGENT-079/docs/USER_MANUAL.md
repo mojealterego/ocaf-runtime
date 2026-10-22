@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-079
+# Instrukcja Syntaxa · OCAF-AGENT-079
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

@@ -1,3 +1,3 @@
-# Instalator OCAF-AGENT-029
+# Instalator Sable · OCAF-AGENT-029
 
 Wymaga własnego builda, testów, SHA-256, podpisu i rollback receipt.

@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-071"
+display_name = "Endline"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

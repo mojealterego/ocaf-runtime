@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-073
+# Architektura Inclusive · OCAF-AGENT-073
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.

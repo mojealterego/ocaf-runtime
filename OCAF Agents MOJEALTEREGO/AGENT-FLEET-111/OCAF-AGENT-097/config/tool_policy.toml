@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-097"
+display_name = "Finops"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

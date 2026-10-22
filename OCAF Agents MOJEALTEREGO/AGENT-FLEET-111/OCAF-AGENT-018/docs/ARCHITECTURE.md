@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-018
+# Architektura Patron · OCAF-AGENT-018
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.

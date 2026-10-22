@@ -47,6 +47,9 @@ impl AgentLifecycle {
 #[serde(deny_unknown_fields)]
 pub struct AgentIdentity {
     pub agent_id: String,
+    /// Human-facing original name. The technical agent_id remains immutable
+    /// for routing and evidence references.
+    pub display_name: String,
     pub swarm_id: String,
     pub specialization: String,
     pub version: String,
@@ -129,7 +132,8 @@ impl AgentManifest {
         {
             return Err(AgentAdmissionError::InvalidIdentity("swarm_id"));
         }
-        if self.identity.specialization.trim().is_empty()
+        if self.identity.display_name.trim().is_empty()
+            || self.identity.specialization.trim().is_empty()
             || self.identity.version.trim().is_empty()
         {
             return Err(AgentAdmissionError::InvalidIdentity("specialization/version"));
@@ -261,6 +265,7 @@ mod tests {
         AgentManifest {
             identity: AgentIdentity {
                 agent_id: "OCAF-AGENT-001".into(),
+                display_name: "Asterion".into(),
                 swarm_id: "G01".into(),
                 specialization: "runtime".into(),
                 version: "0.1.0".into(),

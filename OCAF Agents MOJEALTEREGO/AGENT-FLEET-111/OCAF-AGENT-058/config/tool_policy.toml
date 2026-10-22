@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-058"
+display_name = "Quartz"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

@@ -1,3 +1,5 @@
-# OCAF-AGENT-035
+# Isolator · OCAF-AGENT-035
+
+Nazwa oryginalna: **Isolator**. Id techniczny: `OCAF-AGENT-035`.
 
 Osobny autonomiczny pakiet AI: `sandbox-execution`. Własna tożsamość, pamięć, polityka narzędzi i lifecycle. Status `NOT_DEPLOYED`; OSTc `DISABLED`; ACTIVE `DENY`.

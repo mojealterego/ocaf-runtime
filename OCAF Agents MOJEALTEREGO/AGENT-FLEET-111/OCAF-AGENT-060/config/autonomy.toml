@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-060"
+display_name = "Parallax"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-060-state"
+state_store = "ocaf-parallax-state"
 human_approval_for_side_effects = true

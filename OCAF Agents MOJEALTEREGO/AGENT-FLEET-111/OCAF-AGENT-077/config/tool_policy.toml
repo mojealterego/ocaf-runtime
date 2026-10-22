@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-077"
+display_name = "Flux"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

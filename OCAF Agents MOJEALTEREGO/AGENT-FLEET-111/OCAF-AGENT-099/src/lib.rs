@@ -1,4 +1,5 @@
 pub const AGENT_ID: &str = "OCAF-AGENT-099";
+pub const DISPLAY_NAME: &str = "Thrift";
 pub const GROUP_ID: &str = "G29";
 pub const SPECIALIZATION: &str = "cost-governance";
 pub const OSTC_ENABLED: bool = false;

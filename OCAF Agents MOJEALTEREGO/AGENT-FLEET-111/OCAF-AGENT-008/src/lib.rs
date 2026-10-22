@@ -1,4 +1,5 @@
 pub const AGENT_ID: &str = "OCAF-AGENT-008";
+pub const DISPLAY_NAME: &str = "Forge";
 pub const GROUP_ID: &str = "G02";
 pub const SPECIALIZATION: &str = "rust-toolchain";
 pub const OSTC_ENABLED: bool = false;

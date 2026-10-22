@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-060"
+display_name = "Parallax"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

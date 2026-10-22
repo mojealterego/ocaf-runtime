@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-051
+# Architektura Alchemy · OCAF-AGENT-051
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.

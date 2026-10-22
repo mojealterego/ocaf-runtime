@@ -1,4 +1,5 @@
 pub const AGENT_ID: &str = "OCAF-AGENT-050";
+pub const DISPLAY_NAME: &str = "Bridge";
 pub const GROUP_ID: &str = "G13";
 pub const SPECIALIZATION: &str = "builder-conversion";
 pub const OSTC_ENABLED: bool = false;

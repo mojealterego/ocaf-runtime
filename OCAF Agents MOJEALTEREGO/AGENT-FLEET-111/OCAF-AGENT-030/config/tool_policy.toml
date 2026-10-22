@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-030"
+display_name = "Provenance"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

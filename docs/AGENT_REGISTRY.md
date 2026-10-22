@@ -24,7 +24,9 @@ Dowody dla statusów agentów i rojów przechodzą przez [`EVIDENCE_PIPELINE.md`
 ### Flota 111 osobnych agentów AI
 
 Flota jest zapisana jako 111 niezależnych pakietów w
-[`AGENT-FLEET-111`](<../OCAF Agents MOJEALTEREGO/AGENT-FLEET-111/>). Każdy
+[`AGENT-FLEET-111`](<../OCAF Agents MOJEALTEREGO/AGENT-FLEET-111/>). Każdy pakiet ma własną unikalną nazwę oryginalną (`display_name`) oraz stabilny identyfikator techniczny `OCAF-AGENT-NNN`. Nazwa jest częścią manifestu, konfiguracji, punktu wejścia, dokumentacji i nazwy pakietu Cargo.
+
+Każdy
 pakiet ma własną tożsamość, kod, manifest, kontrakt modelu, namespace pamięci,
 politykę narzędzi, test bezpieczeństwa, instrukcję, kontrakt instalatora i
 rekord certyfikacyjny. `model_backend`, OMAs i OMAt są jeszcze

@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-045
+# Architektura Nocturne · OCAF-AGENT-045
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.

@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-096"
+display_name = "Contextor"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

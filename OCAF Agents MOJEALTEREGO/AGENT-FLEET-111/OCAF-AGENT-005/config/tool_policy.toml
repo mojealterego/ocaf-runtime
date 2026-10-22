@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-005"
+display_name = "Ferrum"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

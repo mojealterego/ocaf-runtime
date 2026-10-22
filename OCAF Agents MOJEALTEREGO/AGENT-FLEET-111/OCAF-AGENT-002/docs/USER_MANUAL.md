@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-002
+# Instrukcja Mnemosyne · OCAF-AGENT-002
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

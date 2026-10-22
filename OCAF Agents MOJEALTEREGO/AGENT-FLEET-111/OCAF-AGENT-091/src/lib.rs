@@ -1,4 +1,5 @@
 pub const AGENT_ID: &str = "OCAF-AGENT-091";
+pub const DISPLAY_NAME: &str = "Origin";
 pub const GROUP_ID: &str = "G27";
 pub const SPECIALIZATION: &str = "data-provenance";
 pub const OSTC_ENABLED: bool = false;

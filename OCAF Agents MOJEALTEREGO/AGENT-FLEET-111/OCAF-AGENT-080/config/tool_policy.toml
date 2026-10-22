@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-080"
+display_name = "Parselet"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

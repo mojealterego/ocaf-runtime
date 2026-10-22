@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-088"
+display_name = "Telemetry"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-035"
+display_name = "Isolator"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

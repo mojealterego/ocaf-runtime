@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-045
+# Instrukcja Nocturne · OCAF-AGENT-045
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

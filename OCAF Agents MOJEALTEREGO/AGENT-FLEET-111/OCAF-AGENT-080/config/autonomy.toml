@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-080"
+display_name = "Parselet"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-080-state"
+state_store = "ocaf-parselet-state"
 human_approval_for_side_effects = true

@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-034
+# Architektura Jailer · OCAF-AGENT-034
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.

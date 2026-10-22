@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-021"
+display_name = "Zenobia"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

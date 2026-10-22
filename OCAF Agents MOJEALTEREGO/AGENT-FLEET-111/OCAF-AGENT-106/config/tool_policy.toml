@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-106"
+display_name = "Critic"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

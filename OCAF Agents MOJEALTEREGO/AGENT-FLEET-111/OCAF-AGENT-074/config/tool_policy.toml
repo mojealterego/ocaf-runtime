@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-074"
+display_name = "Lumen"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

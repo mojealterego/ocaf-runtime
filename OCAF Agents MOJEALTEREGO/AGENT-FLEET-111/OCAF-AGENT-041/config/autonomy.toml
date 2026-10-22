@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-041"
+display_name = "Coderis"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-041-state"
+state_store = "ocaf-coderis-state"
 human_approval_for_side_effects = true

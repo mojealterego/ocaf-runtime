@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-002
+# Architektura Mnemosyne · OCAF-AGENT-002
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.

@@ -1,3 +1,3 @@
-# Instalator OCAF-AGENT-049
+# Instalator Transmute · OCAF-AGENT-049
 
 Wymaga własnego builda, testów, SHA-256, podpisu i rollback receipt.

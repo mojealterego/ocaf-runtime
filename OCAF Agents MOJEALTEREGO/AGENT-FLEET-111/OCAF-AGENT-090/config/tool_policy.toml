@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-090"
+display_name = "Watchtower"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

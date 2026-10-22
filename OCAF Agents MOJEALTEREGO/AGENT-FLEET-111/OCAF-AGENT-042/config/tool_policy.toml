@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-042"
+display_name = "Compiler"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

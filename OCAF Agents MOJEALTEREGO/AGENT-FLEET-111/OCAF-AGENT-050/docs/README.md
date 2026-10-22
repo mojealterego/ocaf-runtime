@@ -1,3 +1,5 @@
-# OCAF-AGENT-050
+# Bridge · OCAF-AGENT-050
+
+Nazwa oryginalna: **Bridge**. Id techniczny: `OCAF-AGENT-050`.
 
 Osobny autonomiczny pakiet AI: `builder-conversion`. Własna tożsamość, pamięć, polityka narzędzi i lifecycle. Status `NOT_DEPLOYED`; OSTc `DISABLED`; ACTIVE `DENY`.

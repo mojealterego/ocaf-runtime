@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-053"
+display_name = "Nimbus"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

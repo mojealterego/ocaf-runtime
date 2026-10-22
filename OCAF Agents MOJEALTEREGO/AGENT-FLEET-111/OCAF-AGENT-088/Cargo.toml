@@ -1,4 +1,4 @@
 [package]
-name = "ocaf-agent-088"
+name = "ocaf-agent-088-telemetry"
 version = "0.1.0"
 edition = "2021"

@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-018
+# Instrukcja Patron · OCAF-AGENT-018
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

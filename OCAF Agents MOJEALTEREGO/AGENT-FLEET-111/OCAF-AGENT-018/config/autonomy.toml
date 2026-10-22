@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-018"
+display_name = "Patron"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-018-state"
+state_store = "ocaf-patron-state"
 human_approval_for_side_effects = true

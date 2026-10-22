@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-004"
+display_name = "Kestrel"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-004-state"
+state_store = "ocaf-kestrel-state"
 human_approval_for_side_effects = true

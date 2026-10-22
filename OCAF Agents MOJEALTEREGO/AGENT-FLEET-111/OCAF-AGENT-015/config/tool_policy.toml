@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-015"
+display_name = "Cipher"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

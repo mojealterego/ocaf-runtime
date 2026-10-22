@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-062
+# Architektura Orbit · OCAF-AGENT-062
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.

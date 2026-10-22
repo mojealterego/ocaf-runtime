@@ -1,3 +1,5 @@
-# OCAF-AGENT-090
+# Watchtower · OCAF-AGENT-090
+
+Nazwa oryginalna: **Watchtower**. Id techniczny: `OCAF-AGENT-090`.
 
 Osobny autonomiczny pakiet AI: `observability`. Własna tożsamość, pamięć, polityka narzędzi i lifecycle. Status `NOT_DEPLOYED`; OSTc `DISABLED`; ACTIVE `DENY`.

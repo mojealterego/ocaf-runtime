@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-048"
+display_name = "Pixel"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-048-state"
+state_store = "ocaf-pixel-state"
 human_approval_for_side_effects = true

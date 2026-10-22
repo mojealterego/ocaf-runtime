@@ -1,4 +1,4 @@
 [package]
-name = "ocaf-agent-035"
+name = "ocaf-agent-035-isolator"
 version = "0.1.0"
 edition = "2021"

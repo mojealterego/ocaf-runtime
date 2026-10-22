@@ -1,3 +1,3 @@
-# OCAF-AGENT-068 — BUILD EVIDENCE
+# Veritas · OCAF-AGENT-068 — BUILD EVIDENCE
 
 Status: `NOT_BUILT`; własny commit, digest, testy i podpis wymagane.

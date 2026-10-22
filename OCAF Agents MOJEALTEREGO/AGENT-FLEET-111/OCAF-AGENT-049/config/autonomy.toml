@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-049"
+display_name = "Transmute"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-049-state"
+state_store = "ocaf-transmute-state"
 human_approval_for_side_effects = true

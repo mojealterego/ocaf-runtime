@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-012
+# Instrukcja Nucleus · OCAF-AGENT-012
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

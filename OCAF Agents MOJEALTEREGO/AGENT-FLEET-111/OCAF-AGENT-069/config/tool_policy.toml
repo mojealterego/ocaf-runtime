@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-069"
+display_name = "Stamp"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

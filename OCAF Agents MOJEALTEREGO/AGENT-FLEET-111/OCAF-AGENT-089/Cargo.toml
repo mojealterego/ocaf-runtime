@@ -1,4 +1,4 @@
 [package]
-name = "ocaf-agent-089"
+name = "ocaf-agent-089-tracer"
 version = "0.1.0"
 edition = "2021"

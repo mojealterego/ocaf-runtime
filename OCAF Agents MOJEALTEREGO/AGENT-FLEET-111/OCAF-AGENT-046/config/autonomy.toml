@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-046"
+display_name = "Canvas"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-046-state"
+state_store = "ocaf-canvas-state"
 human_approval_for_side_effects = true

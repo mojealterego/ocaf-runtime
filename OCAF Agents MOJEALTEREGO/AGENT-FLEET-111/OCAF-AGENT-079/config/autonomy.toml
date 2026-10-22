@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-079"
+display_name = "Syntaxa"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-079-state"
+state_store = "ocaf-syntaxa-state"
 human_approval_for_side_effects = true

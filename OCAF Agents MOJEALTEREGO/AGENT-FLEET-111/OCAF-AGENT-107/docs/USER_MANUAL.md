@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-107
+# Instrukcja Adjudicator · OCAF-AGENT-107
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

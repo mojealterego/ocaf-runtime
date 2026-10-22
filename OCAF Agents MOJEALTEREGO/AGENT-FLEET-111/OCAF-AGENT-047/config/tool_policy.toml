@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-047"
+display_name = "Flowcraft"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

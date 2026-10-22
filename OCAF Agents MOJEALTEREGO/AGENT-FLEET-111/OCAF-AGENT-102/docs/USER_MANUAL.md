@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-102
+# Instrukcja Resilience · OCAF-AGENT-102
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

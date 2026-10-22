@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-029"
+display_name = "Sable"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

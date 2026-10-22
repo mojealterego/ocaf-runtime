@@ -1,4 +1,4 @@
 [package]
-name = "ocaf-agent-102"
+name = "ocaf-agent-102-resilience"
 version = "0.1.0"
 edition = "2021"

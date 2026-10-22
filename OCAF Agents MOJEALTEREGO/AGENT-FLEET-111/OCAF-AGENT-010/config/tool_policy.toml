@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-010"
+display_name = "Quanta"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

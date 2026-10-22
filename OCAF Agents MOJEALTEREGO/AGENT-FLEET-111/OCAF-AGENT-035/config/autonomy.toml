@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-035"
+display_name = "Isolator"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-035-state"
+state_store = "ocaf-isolator-state"
 human_approval_for_side_effects = true

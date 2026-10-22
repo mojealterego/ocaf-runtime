@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-037
+# Instrukcja Intermediate · OCAF-AGENT-037
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

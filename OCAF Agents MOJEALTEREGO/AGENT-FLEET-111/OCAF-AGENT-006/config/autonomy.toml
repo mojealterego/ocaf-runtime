@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-006"
+display_name = "Rustica"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-006-state"
+state_store = "ocaf-rustica-state"
 human_approval_for_side_effects = true

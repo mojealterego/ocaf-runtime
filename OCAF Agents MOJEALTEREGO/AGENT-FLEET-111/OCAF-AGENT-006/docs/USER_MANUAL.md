@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-006
+# Instrukcja Rustica · OCAF-AGENT-006
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

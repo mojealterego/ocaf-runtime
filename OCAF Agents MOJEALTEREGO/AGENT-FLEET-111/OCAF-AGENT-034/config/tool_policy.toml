@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-034"
+display_name = "Jailer"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

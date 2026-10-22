@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-065"
+display_name = "Touchline"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-065-state"
+state_store = "ocaf-touchline-state"
 human_approval_for_side_effects = true

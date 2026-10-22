@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-105
+# Architektura Shipwright · OCAF-AGENT-105
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.

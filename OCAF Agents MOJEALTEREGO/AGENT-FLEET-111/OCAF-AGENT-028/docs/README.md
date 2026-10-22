@@ -1,3 +1,5 @@
-# OCAF-AGENT-028
+# Lockstep · OCAF-AGENT-028
+
+Nazwa oryginalna: **Lockstep**. Id techniczny: `OCAF-AGENT-028`.
 
 Osobny autonomiczny pakiet AI: `security-policy`. Własna tożsamość, pamięć, polityka narzędzi i lifecycle. Status `NOT_DEPLOYED`; OSTc `DISABLED`; ACTIVE `DENY`.

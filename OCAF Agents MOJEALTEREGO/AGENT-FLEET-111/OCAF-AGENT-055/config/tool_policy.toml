@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-055"
+display_name = "Redmond"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

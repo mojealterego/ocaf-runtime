@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-047
+# Instrukcja Flowcraft · OCAF-AGENT-047
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

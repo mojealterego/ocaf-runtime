@@ -1,3 +1,3 @@
-# Instalator OCAF-AGENT-092
+# Instalator Attestor · OCAF-AGENT-092
 
 Wymaga własnego builda, testów, SHA-256, podpisu i rollback receipt.

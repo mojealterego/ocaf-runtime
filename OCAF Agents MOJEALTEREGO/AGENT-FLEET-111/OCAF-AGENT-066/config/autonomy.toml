@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-066"
+display_name = "Cupertino"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-066-state"
+state_store = "ocaf-cupertino-state"
 human_approval_for_side_effects = true

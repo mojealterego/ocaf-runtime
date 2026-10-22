@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-067"
+display_name = "Herald"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-067-state"
+state_store = "ocaf-herald-state"
 human_approval_for_side_effects = true

@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-096"
+display_name = "Contextor"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-096-state"
+state_store = "ocaf-contextor-state"
 human_approval_for_side_effects = true

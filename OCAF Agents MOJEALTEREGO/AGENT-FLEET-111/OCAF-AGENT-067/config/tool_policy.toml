@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-067"
+display_name = "Herald"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

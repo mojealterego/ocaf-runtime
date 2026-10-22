@@ -1,3 +1,3 @@
-# Instalator OCAF-AGENT-077
+# Instalator Flux · OCAF-AGENT-077
 
 Wymaga własnego builda, testów, SHA-256, podpisu i rollback receipt.

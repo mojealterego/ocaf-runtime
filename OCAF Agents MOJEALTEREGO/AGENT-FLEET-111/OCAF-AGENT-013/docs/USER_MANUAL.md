@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-013
+# Instrukcja Relay · OCAF-AGENT-013
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

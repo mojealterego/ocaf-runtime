@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-084"
+display_name = "Mergeguard"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

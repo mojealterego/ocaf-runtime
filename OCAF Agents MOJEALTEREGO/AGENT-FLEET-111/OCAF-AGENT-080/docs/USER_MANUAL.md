@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-080
+# Instrukcja Parselet · OCAF-AGENT-080
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

@@ -26,6 +26,14 @@ def main() -> int:
     assert registry.get("operational_swarm_count") == 33
     assert len(agents) == 111
     assert len({a["agent_id"] for a in agents}) == 111
+    assert len({a["display_name"] for a in agents}) == 111
+    assert all(a["display_name"].strip() for a in agents)
+    assert len({a["package_name"] for a in agents}) == 111
+    naming = registry.get("naming_contract", {})
+    assert naming.get("display_name_field") == "display_name"
+    assert naming.get("technical_id_field") == "agent_id"
+    assert naming.get("package_name_field") == "package_name"
+    assert naming.get("names_unique") is True
     assert registry.get("active_runtime_agent_count") == 0
     for entry in agents:
         agent = FLEET / entry["agent_id"]
@@ -34,6 +42,11 @@ def main() -> int:
             assert (agent / relative).is_file(), (agent, relative)
         config = (agent / "config/agent.toml").read_text()
         assert f'agent_id = "{entry["agent_id"]}"' in config
+        assert f'display_name = "{entry["display_name"]}"' in config
+        cargo = (agent / "Cargo.toml").read_text()
+        assert f'name = "{entry["package_name"]}"' in cargo
+        source = (agent / "src/lib.rs").read_text()
+        assert f'pub const DISPLAY_NAME: &str = "{entry["display_name"]}";' in source
         assert 'ostc_enabled = false' in config
         assert 'source_access = "disabled"' in config
         assert 'active_admission = "DENY"' in config

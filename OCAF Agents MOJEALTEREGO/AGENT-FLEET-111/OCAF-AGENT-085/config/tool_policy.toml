@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-085"
+display_name = "Specimen"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-044
+# Architektura Polyglot · OCAF-AGENT-044
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.

@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-007"
+display_name = "Boron"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-007-state"
+state_store = "ocaf-boron-state"
 human_approval_for_side_effects = true

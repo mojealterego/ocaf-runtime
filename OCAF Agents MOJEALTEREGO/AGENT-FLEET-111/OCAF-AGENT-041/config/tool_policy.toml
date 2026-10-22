@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-041"
+display_name = "Coderis"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

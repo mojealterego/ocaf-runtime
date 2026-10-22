@@ -1,4 +1,5 @@
 pub const AGENT_ID: &str = "OCAF-AGENT-020";
+pub const DISPLAY_NAME: &str = "Bastion";
 pub const GROUP_ID: &str = "G05";
 pub const SPECIALIZATION: &str = "postgres-ha";
 pub const OSTC_ENABLED: bool = false;

@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-063"
+display_name = "Material"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

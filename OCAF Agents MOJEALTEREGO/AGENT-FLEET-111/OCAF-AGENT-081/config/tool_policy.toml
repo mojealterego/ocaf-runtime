@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-081"
+display_name = "Treefold"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

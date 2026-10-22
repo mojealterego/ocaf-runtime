@@ -1,3 +1,5 @@
-# OCAF-AGENT-061
+# Droida · OCAF-AGENT-061
+
+Nazwa oryginalna: **Droida**. Id techniczny: `OCAF-AGENT-061`.
 
 Osobny autonomiczny pakiet AI: `mobile-android`. Własna tożsamość, pamięć, polityka narzędzi i lifecycle. Status `NOT_DEPLOYED`; OSTc `DISABLED`; ACTIVE `DENY`.

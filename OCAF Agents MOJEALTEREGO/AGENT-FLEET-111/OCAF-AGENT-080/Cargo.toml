@@ -1,4 +1,4 @@
 [package]
-name = "ocaf-agent-080"
+name = "ocaf-agent-080-parselet"
 version = "0.1.0"
 edition = "2021"

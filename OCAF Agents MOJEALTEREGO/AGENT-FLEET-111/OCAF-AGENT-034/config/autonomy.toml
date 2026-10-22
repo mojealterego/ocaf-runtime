@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-034"
+display_name = "Jailer"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-034-state"
+state_store = "ocaf-jailer-state"
 human_approval_for_side_effects = true

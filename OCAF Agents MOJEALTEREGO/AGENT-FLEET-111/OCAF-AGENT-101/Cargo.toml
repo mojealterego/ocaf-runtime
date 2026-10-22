@@ -1,4 +1,4 @@
 [package]
-name = "ocaf-agent-101"
+name = "ocaf-agent-101-chaos"
 version = "0.1.0"
 edition = "2021"

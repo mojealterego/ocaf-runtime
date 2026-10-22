@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-020"
+display_name = "Bastion"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

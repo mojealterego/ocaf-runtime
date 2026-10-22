@@ -1,4 +1,5 @@
 pub const AGENT_ID: &str = "OCAF-AGENT-058";
+pub const DISPLAY_NAME: &str = "Quartz";
 pub const GROUP_ID: &str = "G16";
 pub const SPECIALIZATION: &str = "desktop-macos";
 pub const OSTC_ENABLED: bool = false;

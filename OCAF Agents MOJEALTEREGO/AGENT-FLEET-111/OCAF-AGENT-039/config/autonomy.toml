@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-039"
+display_name = "Semira"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-039-state"
+state_store = "ocaf-semira-state"
 human_approval_for_side_effects = true

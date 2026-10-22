@@ -1,3 +1,3 @@
-# Instalator OCAF-AGENT-052
+# Instalator Cloudsmith · OCAF-AGENT-052
 
 Wymaga własnego builda, testów, SHA-256, podpisu i rollback receipt.

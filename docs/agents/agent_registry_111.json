@@ -27,7 +27,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Asterion",
+      "package_name": "ocaf-agent-001-asterion"
     },
     {
       "agent_id": "OCAF-AGENT-002",
@@ -44,7 +46,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Mnemosyne",
+      "package_name": "ocaf-agent-002-mnemosyne"
     },
     {
       "agent_id": "OCAF-AGENT-003",
@@ -61,7 +65,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Helios",
+      "package_name": "ocaf-agent-003-helios"
     },
     {
       "agent_id": "OCAF-AGENT-004",
@@ -78,7 +84,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Kestrel",
+      "package_name": "ocaf-agent-004-kestrel"
     },
     {
       "agent_id": "OCAF-AGENT-005",
@@ -95,7 +103,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Ferrum",
+      "package_name": "ocaf-agent-005-ferrum"
     },
     {
       "agent_id": "OCAF-AGENT-006",
@@ -112,7 +122,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Rustica",
+      "package_name": "ocaf-agent-006-rustica"
     },
     {
       "agent_id": "OCAF-AGENT-007",
@@ -129,7 +141,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Boron",
+      "package_name": "ocaf-agent-007-boron"
     },
     {
       "agent_id": "OCAF-AGENT-008",
@@ -146,7 +160,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Forge",
+      "package_name": "ocaf-agent-008-forge"
     },
     {
       "agent_id": "OCAF-AGENT-009",
@@ -163,7 +179,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Kernelis",
+      "package_name": "ocaf-agent-009-kernelis"
     },
     {
       "agent_id": "OCAF-AGENT-010",
@@ -180,7 +198,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Quanta",
+      "package_name": "ocaf-agent-010-quanta"
     },
     {
       "agent_id": "OCAF-AGENT-011",
@@ -197,7 +217,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Vectra",
+      "package_name": "ocaf-agent-011-vectra"
     },
     {
       "agent_id": "OCAF-AGENT-012",
@@ -214,7 +236,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Nucleus",
+      "package_name": "ocaf-agent-012-nucleus"
     },
     {
       "agent_id": "OCAF-AGENT-013",
@@ -231,7 +255,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Relay",
+      "package_name": "ocaf-agent-013-relay"
     },
     {
       "agent_id": "OCAF-AGENT-014",
@@ -248,7 +274,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Packet",
+      "package_name": "ocaf-agent-014-packet"
     },
     {
       "agent_id": "OCAF-AGENT-015",
@@ -265,7 +293,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Cipher",
+      "package_name": "ocaf-agent-015-cipher"
     },
     {
       "agent_id": "OCAF-AGENT-016",
@@ -282,7 +312,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Lattice",
+      "package_name": "ocaf-agent-016-lattice"
     },
     {
       "agent_id": "OCAF-AGENT-017",
@@ -299,7 +331,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Walden",
+      "package_name": "ocaf-agent-017-walden"
     },
     {
       "agent_id": "OCAF-AGENT-018",
@@ -316,7 +350,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Patron",
+      "package_name": "ocaf-agent-018-patron"
     },
     {
       "agent_id": "OCAF-AGENT-019",
@@ -333,7 +369,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Quorum",
+      "package_name": "ocaf-agent-019-quorum"
     },
     {
       "agent_id": "OCAF-AGENT-020",
@@ -350,7 +388,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Bastion",
+      "package_name": "ocaf-agent-020-bastion"
     },
     {
       "agent_id": "OCAF-AGENT-021",
@@ -367,7 +407,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Zenobia",
+      "package_name": "ocaf-agent-021-zenobia"
     },
     {
       "agent_id": "OCAF-AGENT-022",
@@ -384,7 +426,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Shard",
+      "package_name": "ocaf-agent-022-shard"
     },
     {
       "agent_id": "OCAF-AGENT-023",
@@ -401,7 +445,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Tidemark",
+      "package_name": "ocaf-agent-023-tidemark"
     },
     {
       "agent_id": "OCAF-AGENT-024",
@@ -418,7 +464,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Chorus",
+      "package_name": "ocaf-agent-024-chorus"
     },
     {
       "agent_id": "OCAF-AGENT-025",
@@ -435,7 +483,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Sentinel",
+      "package_name": "ocaf-agent-025-sentinel"
     },
     {
       "agent_id": "OCAF-AGENT-026",
@@ -452,7 +502,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Aegis",
+      "package_name": "ocaf-agent-026-aegis"
     },
     {
       "agent_id": "OCAF-AGENT-027",
@@ -469,7 +521,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Vigil",
+      "package_name": "ocaf-agent-027-vigil"
     },
     {
       "agent_id": "OCAF-AGENT-028",
@@ -486,7 +540,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Lockstep",
+      "package_name": "ocaf-agent-028-lockstep"
     },
     {
       "agent_id": "OCAF-AGENT-029",
@@ -503,7 +559,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Sable",
+      "package_name": "ocaf-agent-029-sable"
     },
     {
       "agent_id": "OCAF-AGENT-030",
@@ -520,7 +578,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Provenance",
+      "package_name": "ocaf-agent-030-provenance"
     },
     {
       "agent_id": "OCAF-AGENT-031",
@@ -537,7 +597,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Ledger",
+      "package_name": "ocaf-agent-031-ledger"
     },
     {
       "agent_id": "OCAF-AGENT-032",
@@ -554,7 +616,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Chainwatch",
+      "package_name": "ocaf-agent-032-chainwatch"
     },
     {
       "agent_id": "OCAF-AGENT-033",
@@ -571,7 +635,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Sandbox",
+      "package_name": "ocaf-agent-033-sandbox"
     },
     {
       "agent_id": "OCAF-AGENT-034",
@@ -588,7 +654,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Jailer",
+      "package_name": "ocaf-agent-034-jailer"
     },
     {
       "agent_id": "OCAF-AGENT-035",
@@ -605,7 +673,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Isolator",
+      "package_name": "ocaf-agent-035-isolator"
     },
     {
       "agent_id": "OCAF-AGENT-036",
@@ -622,7 +692,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Firebreak",
+      "package_name": "ocaf-agent-036-firebreak"
     },
     {
       "agent_id": "OCAF-AGENT-037",
@@ -639,7 +711,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Intermediate",
+      "package_name": "ocaf-agent-037-intermediate"
     },
     {
       "agent_id": "OCAF-AGENT-038",
@@ -656,7 +730,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Syntax",
+      "package_name": "ocaf-agent-038-syntax"
     },
     {
       "agent_id": "OCAF-AGENT-039",
@@ -673,7 +749,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Semira",
+      "package_name": "ocaf-agent-039-semira"
     },
     {
       "agent_id": "OCAF-AGENT-040",
@@ -690,7 +768,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Graphite",
+      "package_name": "ocaf-agent-040-graphite"
     },
     {
       "agent_id": "OCAF-AGENT-041",
@@ -707,7 +787,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Coderis",
+      "package_name": "ocaf-agent-041-coderis"
     },
     {
       "agent_id": "OCAF-AGENT-042",
@@ -724,7 +806,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Compiler",
+      "package_name": "ocaf-agent-042-compiler"
     },
     {
       "agent_id": "OCAF-AGENT-043",
@@ -741,7 +825,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Byteforge",
+      "package_name": "ocaf-agent-043-byteforge"
     },
     {
       "agent_id": "OCAF-AGENT-044",
@@ -758,7 +844,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Polyglot",
+      "package_name": "ocaf-agent-044-polyglot"
     },
     {
       "agent_id": "OCAF-AGENT-045",
@@ -775,7 +863,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Nocturne",
+      "package_name": "ocaf-agent-045-nocturne"
     },
     {
       "agent_id": "OCAF-AGENT-046",
@@ -792,7 +882,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Canvas",
+      "package_name": "ocaf-agent-046-canvas"
     },
     {
       "agent_id": "OCAF-AGENT-047",
@@ -809,7 +901,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Flowcraft",
+      "package_name": "ocaf-agent-047-flowcraft"
     },
     {
       "agent_id": "OCAF-AGENT-048",
@@ -826,7 +920,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Pixel",
+      "package_name": "ocaf-agent-048-pixel"
     },
     {
       "agent_id": "OCAF-AGENT-049",
@@ -843,7 +939,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Transmute",
+      "package_name": "ocaf-agent-049-transmute"
     },
     {
       "agent_id": "OCAF-AGENT-050",
@@ -860,7 +958,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Bridge",
+      "package_name": "ocaf-agent-050-bridge"
     },
     {
       "agent_id": "OCAF-AGENT-051",
@@ -877,7 +977,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Alchemy",
+      "package_name": "ocaf-agent-051-alchemy"
     },
     {
       "agent_id": "OCAF-AGENT-052",
@@ -894,7 +996,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Cloudsmith",
+      "package_name": "ocaf-agent-052-cloudsmith"
     },
     {
       "agent_id": "OCAF-AGENT-053",
@@ -911,7 +1015,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Nimbus",
+      "package_name": "ocaf-agent-053-nimbus"
     },
     {
       "agent_id": "OCAF-AGENT-054",
@@ -928,7 +1034,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Workspace",
+      "package_name": "ocaf-agent-054-workspace"
     },
     {
       "agent_id": "OCAF-AGENT-055",
@@ -945,7 +1053,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Redmond",
+      "package_name": "ocaf-agent-055-redmond"
     },
     {
       "agent_id": "OCAF-AGENT-056",
@@ -962,7 +1072,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Glasswing",
+      "package_name": "ocaf-agent-056-glasswing"
     },
     {
       "agent_id": "OCAF-AGENT-057",
@@ -979,7 +1091,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Desktopa",
+      "package_name": "ocaf-agent-057-desktopa"
     },
     {
       "agent_id": "OCAF-AGENT-058",
@@ -996,7 +1110,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Quartz",
+      "package_name": "ocaf-agent-058-quartz"
     },
     {
       "agent_id": "OCAF-AGENT-059",
@@ -1013,7 +1129,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Sequoia",
+      "package_name": "ocaf-agent-059-sequoia"
     },
     {
       "agent_id": "OCAF-AGENT-060",
@@ -1030,7 +1148,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Parallax",
+      "package_name": "ocaf-agent-060-parallax"
     },
     {
       "agent_id": "OCAF-AGENT-061",
@@ -1047,7 +1167,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Droida",
+      "package_name": "ocaf-agent-061-droida"
     },
     {
       "agent_id": "OCAF-AGENT-062",
@@ -1064,7 +1186,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Orbit",
+      "package_name": "ocaf-agent-062-orbit"
     },
     {
       "agent_id": "OCAF-AGENT-063",
@@ -1081,7 +1205,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Material",
+      "package_name": "ocaf-agent-063-material"
     },
     {
       "agent_id": "OCAF-AGENT-064",
@@ -1098,7 +1224,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Swiftlet",
+      "package_name": "ocaf-agent-064-swiftlet"
     },
     {
       "agent_id": "OCAF-AGENT-065",
@@ -1115,7 +1243,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Touchline",
+      "package_name": "ocaf-agent-065-touchline"
     },
     {
       "agent_id": "OCAF-AGENT-066",
@@ -1132,7 +1262,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Cupertino",
+      "package_name": "ocaf-agent-066-cupertino"
     },
     {
       "agent_id": "OCAF-AGENT-067",
@@ -1149,7 +1281,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Herald",
+      "package_name": "ocaf-agent-067-herald"
     },
     {
       "agent_id": "OCAF-AGENT-068",
@@ -1166,7 +1300,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Veritas",
+      "package_name": "ocaf-agent-068-veritas"
     },
     {
       "agent_id": "OCAF-AGENT-069",
@@ -1183,7 +1319,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Stamp",
+      "package_name": "ocaf-agent-069-stamp"
     },
     {
       "agent_id": "OCAF-AGENT-070",
@@ -1200,7 +1338,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Odyssey",
+      "package_name": "ocaf-agent-070-odyssey"
     },
     {
       "agent_id": "OCAF-AGENT-071",
@@ -1217,7 +1357,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Endline",
+      "package_name": "ocaf-agent-071-endline"
     },
     {
       "agent_id": "OCAF-AGENT-072",
@@ -1234,7 +1376,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Pathfinder",
+      "package_name": "ocaf-agent-072-pathfinder"
     },
     {
       "agent_id": "OCAF-AGENT-073",
@@ -1251,7 +1395,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Inclusive",
+      "package_name": "ocaf-agent-073-inclusive"
     },
     {
       "agent_id": "OCAF-AGENT-074",
@@ -1268,7 +1414,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Lumen",
+      "package_name": "ocaf-agent-074-lumen"
     },
     {
       "agent_id": "OCAF-AGENT-075",
@@ -1285,7 +1433,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Aria",
+      "package_name": "ocaf-agent-075-aria"
     },
     {
       "agent_id": "OCAF-AGENT-076",
@@ -1302,7 +1452,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Shader",
+      "package_name": "ocaf-agent-076-shader"
     },
     {
       "agent_id": "OCAF-AGENT-077",
@@ -1319,7 +1471,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Flux",
+      "package_name": "ocaf-agent-077-flux"
     },
     {
       "agent_id": "OCAF-AGENT-078",
@@ -1336,7 +1490,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Raster",
+      "package_name": "ocaf-agent-078-raster"
     },
     {
       "agent_id": "OCAF-AGENT-079",
@@ -1353,7 +1509,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Syntaxa",
+      "package_name": "ocaf-agent-079-syntaxa"
     },
     {
       "agent_id": "OCAF-AGENT-080",
@@ -1370,7 +1528,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Parselet",
+      "package_name": "ocaf-agent-080-parselet"
     },
     {
       "agent_id": "OCAF-AGENT-081",
@@ -1387,7 +1547,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Treefold",
+      "package_name": "ocaf-agent-081-treefold"
     },
     {
       "agent_id": "OCAF-AGENT-082",
@@ -1404,7 +1566,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Gatekeeper",
+      "package_name": "ocaf-agent-082-gatekeeper"
     },
     {
       "agent_id": "OCAF-AGENT-083",
@@ -1421,7 +1585,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Diffra",
+      "package_name": "ocaf-agent-083-diffra"
     },
     {
       "agent_id": "OCAF-AGENT-084",
@@ -1438,7 +1604,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Mergeguard",
+      "package_name": "ocaf-agent-084-mergeguard"
     },
     {
       "agent_id": "OCAF-AGENT-085",
@@ -1455,7 +1623,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Specimen",
+      "package_name": "ocaf-agent-085-specimen"
     },
     {
       "agent_id": "OCAF-AGENT-086",
@@ -1472,7 +1642,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Oracle",
+      "package_name": "ocaf-agent-086-oracle"
     },
     {
       "agent_id": "OCAF-AGENT-087",
@@ -1489,7 +1661,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Regressor",
+      "package_name": "ocaf-agent-087-regressor"
     },
     {
       "agent_id": "OCAF-AGENT-088",
@@ -1506,7 +1680,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Telemetry",
+      "package_name": "ocaf-agent-088-telemetry"
     },
     {
       "agent_id": "OCAF-AGENT-089",
@@ -1523,7 +1699,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Tracer",
+      "package_name": "ocaf-agent-089-tracer"
     },
     {
       "agent_id": "OCAF-AGENT-090",
@@ -1540,7 +1718,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Watchtower",
+      "package_name": "ocaf-agent-090-watchtower"
     },
     {
       "agent_id": "OCAF-AGENT-091",
@@ -1557,7 +1737,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Origin",
+      "package_name": "ocaf-agent-091-origin"
     },
     {
       "agent_id": "OCAF-AGENT-092",
@@ -1574,7 +1756,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Attestor",
+      "package_name": "ocaf-agent-092-attestor"
     },
     {
       "agent_id": "OCAF-AGENT-093",
@@ -1591,7 +1775,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Lineage",
+      "package_name": "ocaf-agent-093-lineage"
     },
     {
       "agent_id": "OCAF-AGENT-094",
@@ -1608,7 +1794,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Toolsmith",
+      "package_name": "ocaf-agent-094-toolsmith"
     },
     {
       "agent_id": "OCAF-AGENT-095",
@@ -1625,7 +1813,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Connector",
+      "package_name": "ocaf-agent-095-connector"
     },
     {
       "agent_id": "OCAF-AGENT-096",
@@ -1642,7 +1832,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Contextor",
+      "package_name": "ocaf-agent-096-contextor"
     },
     {
       "agent_id": "OCAF-AGENT-097",
@@ -1659,7 +1851,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Finops",
+      "package_name": "ocaf-agent-097-finops"
     },
     {
       "agent_id": "OCAF-AGENT-098",
@@ -1676,7 +1870,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Meter",
+      "package_name": "ocaf-agent-098-meter"
     },
     {
       "agent_id": "OCAF-AGENT-099",
@@ -1693,7 +1889,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Thrift",
+      "package_name": "ocaf-agent-099-thrift"
     },
     {
       "agent_id": "OCAF-AGENT-100",
@@ -1710,7 +1908,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Phoenix",
+      "package_name": "ocaf-agent-100-phoenix"
     },
     {
       "agent_id": "OCAF-AGENT-101",
@@ -1727,7 +1927,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Chaos",
+      "package_name": "ocaf-agent-101-chaos"
     },
     {
       "agent_id": "OCAF-AGENT-102",
@@ -1744,7 +1946,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Resilience",
+      "package_name": "ocaf-agent-102-resilience"
     },
     {
       "agent_id": "OCAF-AGENT-103",
@@ -1761,7 +1965,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Semver",
+      "package_name": "ocaf-agent-103-semver"
     },
     {
       "agent_id": "OCAF-AGENT-104",
@@ -1778,7 +1984,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Signer",
+      "package_name": "ocaf-agent-104-signer"
     },
     {
       "agent_id": "OCAF-AGENT-105",
@@ -1795,7 +2003,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Shipwright",
+      "package_name": "ocaf-agent-105-shipwright"
     },
     {
       "agent_id": "OCAF-AGENT-106",
@@ -1812,7 +2022,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Critic",
+      "package_name": "ocaf-agent-106-critic"
     },
     {
       "agent_id": "OCAF-AGENT-107",
@@ -1829,7 +2041,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Adjudicator",
+      "package_name": "ocaf-agent-107-adjudicator"
     },
     {
       "agent_id": "OCAF-AGENT-108",
@@ -1846,7 +2060,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Redteam",
+      "package_name": "ocaf-agent-108-redteam"
     },
     {
       "agent_id": "OCAF-AGENT-109",
@@ -1863,7 +2079,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Verifier",
+      "package_name": "ocaf-agent-109-verifier"
     },
     {
       "agent_id": "OCAF-AGENT-110",
@@ -1880,7 +2098,9 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Acceptance",
+      "package_name": "ocaf-agent-110-acceptance"
     },
     {
       "agent_id": "OCAF-AGENT-111",
@@ -1897,10 +2117,18 @@
       "ostc_enabled": false,
       "source_access": "disabled",
       "active_admission": "DENY",
-      "artifact_status": "NOT_BUILT"
+      "artifact_status": "NOT_BUILT",
+      "display_name": "Integrator",
+      "package_name": "ocaf-agent-111-integrator"
     }
   ],
   "source_package_root": "OCAF Agents MOJEALTEREGO/AGENT-FLEET-111",
   "note": "111 separate agent packages. Each has an independent identity, source tree, manifest, model contract, memory namespace, tool policy, tests, documentation, certification record and installer contract. These are structured packages; no runtime process is active until model/provider, OMAs/OMAt endpoints, artifact digest and evidence are supplied.",
-  "operational_swarm_count": 33
+  "operational_swarm_count": 33,
+  "naming_contract": {
+    "display_name_field": "display_name",
+    "technical_id_field": "agent_id",
+    "package_name_field": "package_name",
+    "names_unique": true
+  }
 }

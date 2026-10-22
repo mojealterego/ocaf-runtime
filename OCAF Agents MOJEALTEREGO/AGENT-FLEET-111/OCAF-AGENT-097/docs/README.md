@@ -1,3 +1,5 @@
-# OCAF-AGENT-097
+# Finops · OCAF-AGENT-097
+
+Nazwa oryginalna: **Finops**. Id techniczny: `OCAF-AGENT-097`.
 
 Osobny autonomiczny pakiet AI: `cost-governance`. Własna tożsamość, pamięć, polityka narzędzi i lifecycle. Status `NOT_DEPLOYED`; OSTc `DISABLED`; ACTIVE `DENY`.

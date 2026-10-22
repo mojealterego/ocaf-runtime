@@ -1,3 +1,5 @@
-# OCAF-AGENT-058
+# Quartz · OCAF-AGENT-058
+
+Nazwa oryginalna: **Quartz**. Id techniczny: `OCAF-AGENT-058`.
 
 Osobny autonomiczny pakiet AI: `desktop-macos`. Własna tożsamość, pamięć, polityka narzędzi i lifecycle. Status `NOT_DEPLOYED`; OSTc `DISABLED`; ACTIVE `DENY`.

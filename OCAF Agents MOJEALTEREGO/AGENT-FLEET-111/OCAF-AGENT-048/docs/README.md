@@ -1,3 +1,5 @@
-# OCAF-AGENT-048
+# Pixel · OCAF-AGENT-048
+
+Nazwa oryginalna: **Pixel**. Id techniczny: `OCAF-AGENT-048`.
 
 Osobny autonomiczny pakiet AI: `builder-nocode`. Własna tożsamość, pamięć, polityka narzędzi i lifecycle. Status `NOT_DEPLOYED`; OSTc `DISABLED`; ACTIVE `DENY`.

@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-027"
+display_name = "Vigil"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

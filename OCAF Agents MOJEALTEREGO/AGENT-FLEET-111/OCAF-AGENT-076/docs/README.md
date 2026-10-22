@@ -1,3 +1,5 @@
-# OCAF-AGENT-076
+# Shader · OCAF-AGENT-076
+
+Nazwa oryginalna: **Shader**. Id techniczny: `OCAF-AGENT-076`.
 
 Osobny autonomiczny pakiet AI: `shader-gpu`. Własna tożsamość, pamięć, polityka narzędzi i lifecycle. Status `NOT_DEPLOYED`; OSTc `DISABLED`; ACTIVE `DENY`.

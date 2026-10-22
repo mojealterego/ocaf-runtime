@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-078"
+display_name = "Raster"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-078-state"
+state_store = "ocaf-raster-state"
 human_approval_for_side_effects = true

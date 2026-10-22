@@ -1,3 +1,3 @@
-# OCAF-AGENT-057 — BUILD EVIDENCE
+# Desktopa · OCAF-AGENT-057 — BUILD EVIDENCE
 
 Status: `NOT_BUILT`; własny commit, digest, testy i podpis wymagane.

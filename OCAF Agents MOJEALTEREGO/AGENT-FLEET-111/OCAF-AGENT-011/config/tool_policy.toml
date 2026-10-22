@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-011"
+display_name = "Vectra"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-105"
+display_name = "Shipwright"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-105-state"
+state_store = "ocaf-shipwright-state"
 human_approval_for_side_effects = true

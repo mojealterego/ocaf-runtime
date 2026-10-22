@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-023"
+display_name = "Tidemark"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

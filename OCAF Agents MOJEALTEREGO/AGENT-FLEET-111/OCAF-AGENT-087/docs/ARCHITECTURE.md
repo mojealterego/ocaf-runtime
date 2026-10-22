@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-087
+# Architektura Regressor · OCAF-AGENT-087
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.

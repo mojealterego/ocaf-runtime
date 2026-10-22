@@ -1,3 +1,3 @@
-# Instrukcja OCAF-AGENT-010
+# Instrukcja Quanta · OCAF-AGENT-010
 
 Zweryfikuj manifest, przypisz model i endpointy, wykonaj build/test/digest. Nie wymuszaj ACTIVE przy OSTc=DISABLED.

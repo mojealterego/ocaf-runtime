@@ -1,4 +1,5 @@
 pub const AGENT_ID: &str = "OCAF-AGENT-073";
+pub const DISPLAY_NAME: &str = "Inclusive";
 pub const GROUP_ID: &str = "G21";
 pub const SPECIALIZATION: &str = "ui-accessibility";
 pub const OSTC_ENABLED: bool = false;

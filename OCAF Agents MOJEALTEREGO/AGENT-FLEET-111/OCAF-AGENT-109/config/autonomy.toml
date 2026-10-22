@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-109"
+display_name = "Verifier"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-109-state"
+state_store = "ocaf-verifier-state"
 human_approval_for_side_effects = true

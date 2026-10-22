@@ -1,4 +1,5 @@
 pub const AGENT_ID: &str = "OCAF-AGENT-106";
+pub const DISPLAY_NAME: &str = "Critic";
 pub const GROUP_ID: &str = "G32";
 pub const SPECIALIZATION: &str = "independent-review";
 pub const OSTC_ENABLED: bool = false;

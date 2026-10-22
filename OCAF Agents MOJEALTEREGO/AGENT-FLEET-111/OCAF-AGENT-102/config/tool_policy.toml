@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-102"
+display_name = "Resilience"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

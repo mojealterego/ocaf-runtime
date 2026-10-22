@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-069"
+display_name = "Stamp"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-069-state"
+state_store = "ocaf-stamp-state"
 human_approval_for_side_effects = true

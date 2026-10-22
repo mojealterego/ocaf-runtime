@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-003
+# Architektura Helios · OCAF-AGENT-003
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.

@@ -1,5 +1,6 @@
 agent_id = "OCAF-AGENT-071"
+display_name = "Endline"
 planner = "UNASSIGNED"
 model = "UNASSIGNED"
-state_store = "ocaf-agent-071-state"
+state_store = "ocaf-endline-state"
 human_approval_for_side_effects = true

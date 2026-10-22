@@ -1,4 +1,5 @@
 agent_id = "OCAF-AGENT-078"
+display_name = "Raster"
 allowlist = []
 network = "deny-by-default"
 max_steps = 0

@@ -1,3 +1,3 @@
-# Architektura OCAF-AGENT-109
+# Architektura Verifier · OCAF-AGENT-109
 
 Własny manifest, kod, kontrakt modelu, namespace pamięci, allowlista OMAt i tożsamość OMAs. Zenoh transport. OSTc off.
