@@ -311,7 +311,7 @@ mod tests {
     fn dependencies_require_verified_receipt() {
         let mut ledger = StageLedger::new([record("1", &[]), record("2", &["1"])]).unwrap();
         assert_eq!(ledger.claim_next("OCAF-SWARM-01").unwrap(), "1");
-        assert_eq!(ledger.next_eligible().unwrap().stage_id, "1");
+        assert!(ledger.next_eligible().is_none());
         ledger.complete(receipt("1")).unwrap();
         assert_eq!(ledger.claim_next("OCAF-SWARM-01").unwrap(), "2");
     }
@@ -372,7 +372,7 @@ mod tests {
     #[test]
     fn invalid_dependency_graphs_are_rejected() {
         assert!(matches!(
-            StageLedger::new([record("1", &["missing"])]),
+            StageLedger::new([record("1", &["9"])]),
             Err(StageLedgerError::InvalidGraph)
         ));
         assert!(matches!(
