@@ -36,7 +36,10 @@ def main() -> int:
     assert naming.get("names_unique") is True
     assert registry.get("active_runtime_agent_count") == 0
     for entry in agents:
-        agent = FLEET / entry["agent_id"]
+        package_dir = entry["package_path"].split("/")[-1]
+        assert package_dir.startswith(f'{entry["agent_id"]}-'), package_dir
+        assert entry["display_name"].lower().replace(" ", "-") in package_dir, package_dir
+        agent = FLEET / package_dir
         assert agent.is_dir(), agent
         for relative in REQUIRED:
             assert (agent / relative).is_file(), (agent, relative)
