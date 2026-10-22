@@ -41,10 +41,7 @@ fn rejected(reason: &str) -> ToolError {
 }
 
 fn effective_signed_fuel(operator_fuel: u64, signed_fuel: u64) -> Result<u64, ToolError> {
-    if operator_fuel == 0
-        || operator_fuel > MAX_FUEL
-        || signed_fuel == 0
-        || signed_fuel > MAX_FUEL
+    if operator_fuel == 0 || operator_fuel > MAX_FUEL || signed_fuel == 0 || signed_fuel > MAX_FUEL
     {
         return Err(rejected("invalid signed fuel ceiling"));
     }

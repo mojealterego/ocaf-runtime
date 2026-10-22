@@ -1,5 +1,5 @@
 //! Signed OMAS admission. The signature binds the operation, tenant, target,
- //! resource quota, payload hash and nonce before durable replay admission.
+//! resource quota, payload hash and nonce before durable replay admission.
 use crate::omas_policy;
 use openssl::pkey::{Id, PKey};
 use openssl::sign::Verifier;
@@ -71,13 +71,25 @@ pub fn verify_and_consume(
 ) -> Result<(), SignedOperationError> {
     if !(1..=5).contains(&operation.opcode)
         || !omas_policy::admit(
-            &operation.tenant, &operation.namespace, &operation.target,
-            operation.payload.len().saturating_add(4096), operation.payload.len(), operation.fuel,
+            &operation.tenant,
+            &operation.namespace,
+            &operation.target,
+            operation.payload.len().saturating_add(4096),
+            operation.payload.len(),
+            operation.fuel,
         )
-        || operation.nonce.len() < 16 || operation.nonce.len() > 128
-        || !operation.nonce.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+        || operation.nonce.len() < 16
+        || operation.nonce.len() > 128
+        || !operation
+            .nonce
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
         || operation.rpc_sender.as_ref().is_some_and(|sender| {
-            sender.is_empty() || sender.len() > 128 || !sender.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+            sender.is_empty()
+                || sender.len() > 128
+                || !sender
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
         })
         || operation.signature.len() != 64
         || operation.issued_at > now.saturating_add(WINDOW_SECONDS)
@@ -87,42 +99,54 @@ pub fn verify_and_consume(
     }
     let key = PKey::public_key_from_raw_bytes(public_key, Id::ED25519)
         .map_err(|_| SignedOperationError::Signature)?;
-    let mut verifier = Verifier::new_without_digest(&key)
-        .map_err(|_| SignedOperationError::Signature)?;
-    if !verifier.verify_oneshot(&operation.signature, &operation.canonical_bytes())
-        .map_err(|_| SignedOperationError::Signature)? {
+    let mut verifier =
+        Verifier::new_without_digest(&key).map_err(|_| SignedOperationError::Signature)?;
+    if !verifier
+        .verify_oneshot(&operation.signature, &operation.canonical_bytes())
+        .map_err(|_| SignedOperationError::Signature)?
+    {
         return Err(SignedOperationError::Signature);
     }
     // SQLITE_OPEN_NOFOLLOW makes the final-component symlink check atomic
     // with SQLite's open. Protect all ancestor directories and journal sidecars
     // with operator-controlled filesystem permissions.
-    let flags = rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE
-        | rusqlite::OpenFlags::SQLITE_OPEN_NOFOLLOW;
-    let mut conn = Connection::open_with_flags(database, flags)
-        .map_err(|_| SignedOperationError::Store)?;
+    let flags =
+        rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE | rusqlite::OpenFlags::SQLITE_OPEN_NOFOLLOW;
+    let mut conn =
+        Connection::open_with_flags(database, flags).map_err(|_| SignedOperationError::Store)?;
     conn.busy_timeout(std::time::Duration::from_secs(5))
         .map_err(|_| SignedOperationError::Store)?;
-    let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)
+    let tx = conn
+        .transaction_with_behavior(TransactionBehavior::Immediate)
         .map_err(|_| SignedOperationError::Store)?;
-    tx.execute_batch("CREATE TABLE IF NOT EXISTS omas_nonce (
+    tx.execute_batch(
+        "CREATE TABLE IF NOT EXISTS omas_nonce (
         tenant TEXT NOT NULL, nonce TEXT NOT NULL, expires_at INTEGER NOT NULL,
         PRIMARY KEY (tenant, nonce)
-    );").map_err(|_| SignedOperationError::Store)?;
+    );",
+    )
+    .map_err(|_| SignedOperationError::Store)?;
     // Retain nonces through the entire signature validity interval.
     tx.execute("DELETE FROM omas_nonce WHERE expires_at < ?1", params![now])
         .map_err(|_| SignedOperationError::Store)?;
     let expires_at = operation.issued_at.saturating_add(WINDOW_SECONDS);
-    let inserted = tx.execute(
-        "INSERT OR IGNORE INTO omas_nonce (tenant, nonce, expires_at) VALUES (?1, ?2, ?3)",
-        params![operation.tenant, operation.nonce, expires_at],
-    ).map_err(|_| SignedOperationError::Store)?;
-    if inserted != 1 { return Err(SignedOperationError::Replay); }
+    let inserted = tx
+        .execute(
+            "INSERT OR IGNORE INTO omas_nonce (tenant, nonce, expires_at) VALUES (?1, ?2, ?3)",
+            params![operation.tenant, operation.nonce, expires_at],
+        )
+        .map_err(|_| SignedOperationError::Store)?;
+    if inserted != 1 {
+        return Err(SignedOperationError::Replay);
+    }
     tx.commit().map_err(|_| SignedOperationError::Store)?;
     Ok(())
 }
 pub fn unix_now() -> Result<i64, SignedOperationError> {
-    let seconds = SystemTime::now().duration_since(UNIX_EPOCH)
-        .map_err(|_| SignedOperationError::Invalid)?.as_secs();
+    let seconds = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|_| SignedOperationError::Invalid)?
+        .as_secs();
     i64::try_from(seconds).map_err(|_| SignedOperationError::Invalid)
 }
 #[cfg(test)]
@@ -149,8 +173,10 @@ mod tests {
             rpc_sender: Some("node-a".into()),
             signature: Vec::new(),
         };
-        op.signature = Signer::new_without_digest(&key).unwrap()
-            .sign_oneshot_to_vec(&op.canonical_bytes()).unwrap();
+        op.signature = Signer::new_without_digest(&key)
+            .unwrap()
+            .sign_oneshot_to_vec(&op.canonical_bytes())
+            .unwrap();
         let mut impersonated = op.clone();
         impersonated.rpc_sender = Some("node-b".into());
         assert!(matches!(
@@ -193,8 +219,10 @@ mod tests {
             rpc_sender: None,
             signature: Vec::new(),
         };
-        op.signature = Signer::new_without_digest(&key).unwrap()
-            .sign_oneshot_to_vec(&op.canonical_bytes()).unwrap();
+        op.signature = Signer::new_without_digest(&key)
+            .unwrap()
+            .sign_oneshot_to_vec(&op.canonical_bytes())
+            .unwrap();
         assert!(matches!(
             verify_and_consume(&op, &public, &linked, now),
             Err(SignedOperationError::Store)
@@ -221,17 +249,21 @@ mod tests {
             rpc_sender: None,
             signature: Vec::new(),
         };
-        operation.signature = Signer::new_without_digest(&key).unwrap()
-            .sign_oneshot_to_vec(&operation.canonical_bytes()).unwrap();
+        operation.signature = Signer::new_without_digest(&key)
+            .unwrap()
+            .sign_oneshot_to_vec(&operation.canonical_bytes())
+            .unwrap();
         assert!(verify_and_consume(&operation, &public, &path, now).is_ok());
         // Simulate process restart: no in-memory verifier state is retained.
         // Reopen the same durable store from a new independent connection.
         let reopened = Connection::open(&path).unwrap();
-        let count: i64 = reopened.query_row(
-            "SELECT COUNT(*) FROM omas_nonce WHERE tenant = ?1 AND nonce = ?2",
-            params![operation.tenant, operation.nonce],
-            |row| row.get(0),
-        ).unwrap();
+        let count: i64 = reopened
+            .query_row(
+                "SELECT COUNT(*) FROM omas_nonce WHERE tenant = ?1 AND nonce = ?2",
+                params![operation.tenant, operation.nonce],
+                |row| row.get(0),
+            )
+            .unwrap();
         assert_eq!(count, 1);
         reopened.close().unwrap();
         assert!(matches!(
@@ -275,7 +307,10 @@ mod tests {
         let outcomes: Vec<_> = workers.into_iter().map(|w| w.join().unwrap()).collect();
         assert_eq!(outcomes.iter().filter(|outcome| outcome.is_ok()).count(), 1);
         assert_eq!(
-            outcomes.iter().filter(|outcome| matches!(outcome, Err(SignedOperationError::Replay))).count(),
+            outcomes
+                .iter()
+                .filter(|outcome| matches!(outcome, Err(SignedOperationError::Replay)))
+                .count(),
             7
         );
     }
@@ -289,54 +324,97 @@ mod tests {
         Connection::open(&path).unwrap().close().unwrap();
         let now = 1_800_000_000;
         let mut op = SignedOperation {
-            tenant: "tenant_a".into(), namespace: "tenant_a/tools".into(),
-            target: "tenant_a/tools/run".into(), opcode: 1, fuel: 100,
-            issued_at: now, nonce: "unique_nonce_0001".into(),
-            payload: b"hello".to_vec(), rpc_sender: None, signature: Vec::new(),
+            tenant: "tenant_a".into(),
+            namespace: "tenant_a/tools".into(),
+            target: "tenant_a/tools/run".into(),
+            opcode: 1,
+            fuel: 100,
+            issued_at: now,
+            nonce: "unique_nonce_0001".into(),
+            payload: b"hello".to_vec(),
+            rpc_sender: None,
+            signature: Vec::new(),
         };
-        op.signature = Signer::new_without_digest(&key).unwrap()
-            .sign_oneshot_to_vec(&op.canonical_bytes()).unwrap();
+        op.signature = Signer::new_without_digest(&key)
+            .unwrap()
+            .sign_oneshot_to_vec(&op.canonical_bytes())
+            .unwrap();
         let unrelated_key = PKey::generate_ed25519().unwrap();
-        let unrelated_public: [u8; 32] = unrelated_key
-            .raw_public_key().unwrap().try_into().unwrap();
+        let unrelated_public: [u8; 32] =
+            unrelated_key.raw_public_key().unwrap().try_into().unwrap();
         assert!(matches!(
             verify_and_consume(&op, &unrelated_public, &path, now),
             Err(SignedOperationError::Signature)
         ));
         let mut tampered = op.clone();
         tampered.opcode = 2;
-        assert!(matches!(verify_and_consume(&tampered, &public, &path, now), Err(SignedOperationError::Signature)));
+        assert!(matches!(
+            verify_and_consume(&tampered, &public, &path, now),
+            Err(SignedOperationError::Signature)
+        ));
         assert!(verify_and_consume(&op, &public, &path, now).is_ok());
-        assert!(matches!(verify_and_consume(&op, &public, &path, now), Err(SignedOperationError::Replay)));
+        assert!(matches!(
+            verify_and_consume(&op, &public, &path, now),
+            Err(SignedOperationError::Replay)
+        ));
         let mut other = op.clone();
         other.nonce = "unique_nonce_0002".into();
-        other.signature = Signer::new_without_digest(&key).unwrap()
-            .sign_oneshot_to_vec(&other.canonical_bytes()).unwrap();
-        assert!(matches!(verify_and_consume(&other, &public, &dir.path().join("missing/db"), now), Err(SignedOperationError::Store)));
+        other.signature = Signer::new_without_digest(&key)
+            .unwrap()
+            .sign_oneshot_to_vec(&other.canonical_bytes())
+            .unwrap();
+        assert!(matches!(
+            verify_and_consume(&other, &public, &dir.path().join("missing/db"), now),
+            Err(SignedOperationError::Store)
+        ));
         let link = dir.path().join("linked.sqlite");
-        #[cfg(unix)] {
+        #[cfg(unix)]
+        {
             std::os::unix::fs::symlink(&path, &link).unwrap();
-            assert!(matches!(verify_and_consume(&other, &public, &link, now), Err(SignedOperationError::Store)));
+            assert!(matches!(
+                verify_and_consume(&other, &public, &link, now),
+                Err(SignedOperationError::Store)
+            ));
         }
         let mut changed = other.clone();
         changed.fuel = 101;
-        assert!(matches!(verify_and_consume(&changed, &public, &path, now), Err(SignedOperationError::Signature)));
+        assert!(matches!(
+            verify_and_consume(&changed, &public, &path, now),
+            Err(SignedOperationError::Signature)
+        ));
         let mut changed = other.clone();
         changed.target = "tenant_a/tools/other".into();
-        assert!(matches!(verify_and_consume(&changed, &public, &path, now), Err(SignedOperationError::Signature)));
+        assert!(matches!(
+            verify_and_consume(&changed, &public, &path, now),
+            Err(SignedOperationError::Signature)
+        ));
         let mut changed = other.clone();
         changed.namespace = "tenant_a".into();
-        assert!(matches!(verify_and_consume(&changed, &public, &path, now), Err(SignedOperationError::Signature)));
+        assert!(matches!(
+            verify_and_consume(&changed, &public, &path, now),
+            Err(SignedOperationError::Signature)
+        ));
         let mut changed = other.clone();
         changed.tenant = "tenant_b".into();
-        assert!(matches!(verify_and_consume(&changed, &public, &path, now), Err(SignedOperationError::Invalid)));
+        assert!(matches!(
+            verify_and_consume(&changed, &public, &path, now),
+            Err(SignedOperationError::Invalid)
+        ));
         let mut changed = other.clone();
         changed.payload.push(42);
-        assert!(matches!(verify_and_consume(&changed, &public, &path, now), Err(SignedOperationError::Signature)));
-        assert!(matches!(verify_and_consume(&other, &public, &path, now + 301), Err(SignedOperationError::Invalid)));
+        assert!(matches!(
+            verify_and_consume(&changed, &public, &path, now),
+            Err(SignedOperationError::Signature)
+        ));
+        assert!(matches!(
+            verify_and_consume(&other, &public, &path, now + 301),
+            Err(SignedOperationError::Invalid)
+        ));
         assert!(verify_and_consume(&other, &public, &path, now).is_ok());
         // A second SQLite connection sees the committed replay record.
-        assert!(matches!(verify_and_consume(&other, &public, &path, now), Err(SignedOperationError::Replay)));
-
+        assert!(matches!(
+            verify_and_consume(&other, &public, &path, now),
+            Err(SignedOperationError::Replay)
+        ));
     }
 }
