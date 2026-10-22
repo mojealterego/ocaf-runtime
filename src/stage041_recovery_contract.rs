@@ -83,6 +83,9 @@ pub fn accept_recovery(
     required(&evidence.test_command, "test_command")?;
     required(&evidence.artifact_digest, "artifact_digest")?;
     required(&evidence.receipt_id, "receipt_id")?;
+    if !valid_commit(&evidence.source_commit) {
+        return Err(RecoveryError::MissingEvidence("source_commit"));
+    }
     if !valid_digest(&evidence.artifact_digest) {
         return Err(RecoveryError::MissingEvidence("artifact_digest"));
     }
@@ -149,13 +152,17 @@ fn valid_digest(value: &str) -> bool {
     hex.len() == 64 && hex.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
+fn valid_commit(value: &str) -> bool {
+    matches!(value.len(), 40 | 64) && value.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     fn evidence() -> RecoveryEvidence {
         RecoveryEvidence {
-            source_commit: "abc123".into(),
+            source_commit: "a".repeat(40),
             test_command: "recovery-chaos --power-loss".into(),
             artifact_digest: format!("sha256:{}", "c".repeat(64)),
             receipt_id: "receipt-041".into(),
