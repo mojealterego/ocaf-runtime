@@ -80,6 +80,8 @@ jobs:
           test -s bom.json
           python3 -c 'import json; b=json.load(open("bom.json", encoding="utf-8")); assert b.get("bomFormat") == "CycloneDX" and b.get("specVersion") == "1.5" and b.get("components"), "invalid or empty CycloneDX 1.5 SBOM"'
           mv bom.json dist/ocaf_runtime.cdx.json
+          python3 scripts/create_release_manifest.py --dir dist \
+            --git-sha "$GITHUB_SHA" --repository "$GITHUB_REPOSITORY"
           (cd dist && sha256sum *.tar.gz *.json > SHA256SUMS)
       - name: Upload binary, SBOM and SHA-256 checksums
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -120,7 +122,9 @@ jobs:
         run: |
           set -euo pipefail
           python3 -m unittest discover -s scripts/tests -p test_release_bundle.py -v
-          python3 scripts/verify_release_bundle.py --dir evidence
+          python3 scripts/verify_release_bundle.py --dir evidence \
+            --expected-sha "$GITHUB_SHA" \
+            --expected-repository "$GITHUB_REPOSITORY"
       - name: Verify signed SLSA provenance against the exact main commit
         env:
           GH_TOKEN: ${{ github.token }}

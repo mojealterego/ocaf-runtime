@@ -19,7 +19,8 @@ from typing import Any
 ARCHIVE = "ocaf_runtime-linux-x86_64.tar.gz"
 SBOM = "ocaf_runtime.cdx.json"
 CHECKSUMS = "SHA256SUMS"
-FILES = frozenset((ARCHIVE, SBOM))
+RELEASE_MANIFEST = "RELEASE-MANIFEST.json"
+FILES = frozenset((ARCHIVE, SBOM, RELEASE_MANIFEST))
 BINARIES = frozenset((
     "ocaf-coordinator", "ocaf-cluster-health", "ocaf-rpc-node", "ocaf-effect-sink"
 ))
@@ -27,6 +28,9 @@ CHECKSUM_LINE = re.compile(r"([0-9a-f]{64})  ([a-zA-Z0-9_.-]+)")
 MAX_ARCHIVE = 256 * 1024 * 1024
 MAX_SBOM = 16 * 1024 * 1024
 MAX_BINARY = 128 * 1024 * 1024
+MAX_RELEASE_MANIFEST = 16 * 1024
+GIT_SHA = re.compile(r"[0-9a-f]{40}\Z")
+REPOSITORY = re.compile(r"[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}\Z")
 
 
 class BundleError(ValueError):
@@ -53,7 +57,51 @@ def _checksum(path: Path) -> str:
     return digest.hexdigest()
 
 
-def verify_bundle(directory: Path) -> dict[str, Any]:
+def _unique_fields(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise BundleError("duplicate JSON field in release metadata")
+        result[key] = value
+    return result
+
+
+def _source_binding(root: Path, expected_sha: str, expected_repository: str,
+                    checksums: dict[str, str]) -> dict[str, Any]:
+    if GIT_SHA.fullmatch(expected_sha) is None:
+        raise BundleError("expected source SHA is invalid")
+    if REPOSITORY.fullmatch(expected_repository) is None:
+        raise BundleError("expected repository identity is invalid")
+    path = root / RELEASE_MANIFEST
+    _regular_file(path, MAX_RELEASE_MANIFEST)
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_unique_fields)
+    except (OSError, ValueError, UnicodeError) as error:
+        raise BundleError("invalid release source manifest") from error
+    if not isinstance(manifest, dict) or set(manifest) != {"schema_version", "source", "subjects"}:
+        raise BundleError("invalid release source manifest schema")
+    if type(manifest["schema_version"]) is not int or manifest["schema_version"] != 1:
+        raise BundleError("unsupported release source manifest version")
+    source = manifest["source"]
+    required_source = {
+        "git_sha": expected_sha,
+        "ref": "refs/heads/main",
+        "repository": expected_repository,
+        "workflow": ".github/workflows/supply-chain.yml",
+    }
+    if not isinstance(source, dict) or source != required_source:
+        raise BundleError("release source identity mismatch")
+    subjects = manifest["subjects"]
+    expected_subjects = {
+        name: {"sha256": checksums[name]} for name in (ARCHIVE, SBOM)
+    }
+    if not isinstance(subjects, dict) or subjects != expected_subjects:
+        raise BundleError("release subject binding mismatch")
+    return source
+
+
+def verify_bundle(directory: Path, *, expected_sha: str,
+                  expected_repository: str) -> dict[str, Any]:
     """Check archive, SBOM, and checksum manifest; never extract files."""
     root = directory.absolute()
     if not root.is_dir():
@@ -61,6 +109,7 @@ def verify_bundle(directory: Path) -> dict[str, Any]:
     _regular_file(root / CHECKSUMS, 2048)
     _regular_file(root / ARCHIVE, MAX_ARCHIVE)
     _regular_file(root / SBOM, MAX_SBOM)
+    _regular_file(root / RELEASE_MANIFEST, MAX_RELEASE_MANIFEST)
 
     try:
         records = (root / CHECKSUMS).read_text(encoding="ascii").splitlines()
@@ -77,6 +126,8 @@ def verify_bundle(directory: Path) -> dict[str, Any]:
     for filename in sorted(FILES):
         if _checksum(root / filename) != expected[filename]:
             raise BundleError(f"checksum mismatch: {filename}")
+
+    source = _source_binding(root, expected_sha, expected_repository, expected)
 
     try:
         with (root / SBOM).open("r", encoding="utf-8") as content:
@@ -120,6 +171,7 @@ def verify_bundle(directory: Path) -> dict[str, Any]:
         "sha256": dict(sorted(expected.items())),
         "binaries": sorted(BINARIES),
         "sbom_components": len(components),
+        "source": source,
         "scope": "checksums-and-structure-only; signature-and-provenance-verification-required",
     }
 
@@ -127,9 +179,15 @@ def verify_bundle(directory: Path) -> dict[str, Any]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dir", type=Path, required=True)
+    parser.add_argument("--expected-sha", required=True)
+    parser.add_argument("--expected-repository", required=True)
     args = parser.parse_args(argv)
     try:
-        result = verify_bundle(args.dir)
+        result = verify_bundle(
+            args.dir,
+            expected_sha=args.expected_sha,
+            expected_repository=args.expected_repository,
+        )
         status = 0
     except BundleError as error:
         result = {"status": "FAIL", "reason": str(error)}

@@ -26,6 +26,8 @@ exact SHA-qualified artifact name.
 The local release validator rejects:
 - wrong or extra checksum entries, mismatched SHA-256 digests, truncated files,
   symlinks for evidence inputs and unbounded input sizes;
+- missing, duplicated or altered release-source metadata, a commit/repository
+  mismatch, and archive or SBOM digests that are not bound to that source;
 - SBOM files that are not CycloneDX 1.5 JSON, lack root `ocaf_runtime`
   metadata or contain no valid components;
 - unsafe or unexpected TAR members, archive symlinks, missing executables,
@@ -45,7 +47,9 @@ into a trusted directory:
 
 ```bash
 python3 -m unittest discover -s scripts/tests -p test_release_bundle.py -v
-python3 scripts/verify_release_bundle.py --dir dist
+python3 scripts/verify_release_bundle.py --dir dist \
+  --expected-sha "$(git rev-parse HEAD)" \
+  --expected-repository mojealterego/ocaf-runtime
 (cd dist && sha256sum -c SHA256SUMS)
 gh attestation verify dist/ocaf_runtime-linux-x86_64.tar.gz \
   --repo mojealterego/ocaf-runtime \
