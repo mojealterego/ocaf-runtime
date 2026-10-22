@@ -52,6 +52,8 @@ pub struct RecoveryReceipt {
     pub receipt_id: String,
     pub accepted: bool,
     pub decision: String,
+    pub source_commit: String,
+    pub artifact_digest: String,
     pub backup_id: String,
     pub snapshot_sha256: String,
 }
@@ -126,6 +128,8 @@ pub fn accept_recovery(
         receipt_id: evidence.receipt_id.clone(),
         accepted: true,
         decision: "COMPLETE_VERIFIED".into(),
+        source_commit: evidence.source_commit.clone(),
+        artifact_digest: evidence.artifact_digest.clone(),
         backup_id: evidence.backup.backup_id.clone(),
         snapshot_sha256: evidence.backup.snapshot_sha256.clone(),
     })
