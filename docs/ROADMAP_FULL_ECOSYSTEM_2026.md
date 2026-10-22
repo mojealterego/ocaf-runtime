@@ -4,22 +4,7 @@
 
 ## Najważniejsze: pierwotny AGENTS BUILDER — Code i NoCode na pięciu platformach
 
-Dawna Roadmapa **zgubiła rozróżnienie dziesięciu produktów**. Pierwotny Agents Builder jest platformą do budowania agentów, nie samym agentem. Odzyskano ją w jej **oryginalnych etapach 0.50–0.55** (wspólny IR, dwa silniki edycji, Cloud, osobne Windows/macOS, osobne Android/iOS, wspólne security). **Wszystkie produkty są na dziś `NOT_IMPLEMENTED`** — kod aplikacji i E2E dla platform w repozytorium nie istnieją. To przywrócenie **nie** zwiększa liczby etapów, bo funkcje były w pierwotnym zakresie.
-
-| Etap oryginalny | Produkt (tworzenie projektów agentów) | Tryb | Stan aktualnie sprawdzony |
-|---|---|---|---|
-| 0.52 | **Agents Builder Chmurowy Code** | **Code** | ❌ **NOT_IMPLEMENTED** |
-| 0.52 | **Agents Builder Chmurowy NoCode** | **NoCode** | ❌ **NOT_IMPLEMENTED** |
-| 0.53 | **Agents Builder Desktopowy Windows Code** | **Code** | ❌ **NOT_IMPLEMENTED** |
-| 0.53 | **Agents Builder Desktopowy Windows NoCode** | **NoCode** | ❌ **NOT_IMPLEMENTED** |
-| 0.53 | **Agents Builder Desktopowy macOS Code** | **Code** | ❌ **NOT_IMPLEMENTED** |
-| 0.53 | **Agents Builder Desktopowy macOS NoCode** | **NoCode** | ❌ **NOT_IMPLEMENTED** |
-| 0.54 | **Agents Builder Android Code** | **Code** | ❌ **NOT_IMPLEMENTED** |
-| 0.54 | **Agents Builder Android NoCode** | **NoCode** | ❌ **NOT_IMPLEMENTED** |
-| 0.54 | **Agents Builder iOS Code** | **Code** | ❌ **NOT_IMPLEMENTED** |
-| 0.54 | **Agents Builder iOS NoCode** | **NoCode** | ❌ **NOT_IMPLEMENTED** |
-
-Dwa wspólne mechanizmy: **0.50 Agents Builder Core typed graph/IR** oraz **0.51 dwie działające aplikacje edycji Code i NoCode**, plus **0.55 autoryzacja/sandbox/testy pakietów**. Szczegóły i osobne kryteria 10 produktów: [AGENTS_BUILDER_CODE_NOCODE_5_PLATFORMS.md](AGENTS_BUILDER_CODE_NOCODE_5_PLATFORMS.md) oraz [manifest JSON](roadmap/agents_builder_products_v11.json).
+Dawna Roadmapa **zgubiła rozróżnienie dziesięciu produktów**. Pierwotny Agents Builder jest platformą do budowania agentów, nie samym agentem. Jego jedyne definicje etapowe znajdują się niżej, w tabeli **0.50–0.55**. Sekcja 0.50–0.55 nie może być powtarzana w innych miejscach dokumentu. Wszystkie 10 produktów są obecnie `NOT_IMPLEMENTED`; szczegółowa macierz i manifest są referencjami do tej jednej definicji: [AGENTS_BUILDER_CODE_NOCODE_5_PLATFORMS.md](AGENTS_BUILDER_CODE_NOCODE_5_PLATFORMS.md) oraz [manifest JSON](roadmap/agents_builder_products_v11.json).
 
 **Inwentaryzacja utraconego zakresu:** [24 rozpoznane luki i obszary do weryfikacji](INVENTORY_LOST_REQUIREMENTS_2026-10-15.md) ([JSON](roadmap/missing_capabilities_v11.json)). Statusy: `MISSING`, `PLANNED_UNVERIFIED`, `ACTIVE_TECHNICAL_OPEN`, `UNKNOWN_SOURCE` odróżnione od realnego PASS.
 
