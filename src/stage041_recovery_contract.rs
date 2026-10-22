@@ -198,9 +198,12 @@ mod tests {
 
     #[test]
     fn valid_recovery_receipt_is_accepted() {
-        let receipt = accept_recovery(&target(), &evidence()).unwrap();
+        let item = evidence();
+        let receipt = accept_recovery(&target(), &item).unwrap();
         assert_eq!(receipt.stage_id, STAGE_ID);
         assert!(receipt.accepted);
+        assert_eq!(receipt.source_commit, item.source_commit);
+        assert_eq!(receipt.artifact_digest, item.artifact_digest);
     }
 
     #[test]
