@@ -135,7 +135,7 @@ impl OmasServer {
         if !requests.insert(req.request_id.clone()) { return denied("replay_request_id"); }
         drop(requests);
         let mut registered = match self.registered.lock() { Ok(lock) => lock, Err(_) => return denied("server_state_unavailable") };
-        if registered.len() >= self.config.max_agents && !registered.contains(&req.agent_id) { return denied("agent_capacity_exhausted"); }
+        if registered.len() >= self.config.max_agents as usize && !registered.contains(&req.agent_id) { return denied("agent_capacity_exhausted"); }
         registered.insert(req.agent_id.clone());
         AdmissionDecision { request_id: req.request_id, agent_id: req.agent_id, admitted: true, lifecycle: "STAGED".into(), reason: "staged_registration_admitted".into() }
     }
@@ -150,4 +150,5 @@ mod tests {
     #[test] fn fake_ready_active_is_denied() { let s=OmasServer::new(OmasServerConfig::default()).unwrap(); let mut r=req("r2"); r.readiness=true; r.declared_state="ACTIVE".into(); assert!(!s.admit_registration(r).admitted); }
     #[test] fn replay_is_denied() { let s=OmasServer::new(OmasServerConfig::default()).unwrap(); assert!(s.admit_registration(req("r3")).admitted); assert_eq!(s.admit_registration(req("r3")).reason,"replay_request_id"); }
     #[test] fn source_access_is_denied() { let s=OmasServer::new(OmasServerConfig::default()).unwrap(); let mut r=req("r4"); r.source_access="granted".into(); assert!(!s.admit_registration(r).admitted); }
+    #[test] fn capacity_denies_a_new_agent() { let mut c=OmasServerConfig::default(); c.max_agents=1; let s=OmasServer::new(c).unwrap(); assert!(s.admit_registration(req("cap-1")).admitted); let mut second=req("cap-2"); second.agent_id="OCAF-AGENT-002".into(); let decision=s.admit_registration(second); assert!(!decision.admitted); assert_eq!(decision.reason,"agent_capacity_exhausted"); assert_eq!(s.health().registered_agents,1); }
 }
