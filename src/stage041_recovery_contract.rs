@@ -83,8 +83,24 @@ pub fn accept_recovery(
     required(&evidence.test_command, "test_command")?;
     required(&evidence.artifact_digest, "artifact_digest")?;
     required(&evidence.receipt_id, "receipt_id")?;
-    if !evidence.artifact_digest.starts_with("sha256:") {
+    if !valid_digest(&evidence.artifact_digest) {
         return Err(RecoveryError::MissingEvidence("artifact_digest"));
+    }
+    required(&evidence.backup.backup_id, "backup_id")?;
+    required(&evidence.backup.restore_test_id, "restore_test_id")?;
+    required(
+        &evidence.backup.source_failure_domain,
+        "source_failure_domain",
+    )?;
+    required(
+        &evidence.backup.backup_failure_domain,
+        "backup_failure_domain",
+    )?;
+    if evidence.backup.source_lsn == 0 {
+        return Err(RecoveryError::MissingEvidence("source_lsn"));
+    }
+    if !valid_digest(&evidence.backup.snapshot_sha256) {
+        return Err(RecoveryError::MissingEvidence("snapshot_sha256"));
     }
     if evidence.backup.source_failure_domain == evidence.backup.backup_failure_domain {
         return Err(RecoveryError::SameFailureDomain);
@@ -95,7 +111,8 @@ pub fn accept_recovery(
     if !evidence.backup.restore_verified {
         return Err(RecoveryError::RestoreNotVerified);
     }
-    if !evidence.wal_replay_verified || !evidence.fencing_verified || !evidence.power_loss_recovered {
+    if !evidence.wal_replay_verified || !evidence.fencing_verified || !evidence.power_loss_recovered
+    {
         return Err(RecoveryError::RecoveryNotVerified);
     }
     if evidence.observed_rto_ms > target.rto_ms || evidence.observed_rpo_bytes > target.rpo_bytes {
@@ -125,6 +142,13 @@ fn required(value: &str, field: &'static str) -> Result<(), RecoveryError> {
     Ok(())
 }
 
+fn valid_digest(value: &str) -> bool {
+    let Some(hex) = value.strip_prefix("sha256:") else {
+        return false;
+    };
+    hex.len() == 64 && hex.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -133,12 +157,12 @@ mod tests {
         RecoveryEvidence {
             source_commit: "abc123".into(),
             test_command: "recovery-chaos --power-loss".into(),
-            artifact_digest: "sha256:artifact".into(),
+            artifact_digest: format!("sha256:{}", "c".repeat(64)),
             receipt_id: "receipt-041".into(),
             backup: BackupReceipt {
                 backup_id: "backup-041".into(),
                 source_lsn: 42,
-                snapshot_sha256: "sha256:snapshot".into(),
+                snapshot_sha256: format!("sha256:{}", "a".repeat(64)),
                 source_failure_domain: "host-a".into(),
                 backup_failure_domain: "host-b".into(),
                 restore_test_id: "restore-041".into(),
@@ -154,7 +178,11 @@ mod tests {
     }
 
     fn target() -> RecoveryTarget {
-        RecoveryTarget { rto_ms: 1_000, rpo_bytes: 1_024, required_failure_domains: 2 }
+        RecoveryTarget {
+            rto_ms: 1_000,
+            rpo_bytes: 1_024,
+            required_failure_domains: 2,
+        }
     }
 
     #[test]
@@ -168,23 +196,51 @@ mod tests {
     fn local_copy_cannot_claim_independent_backup() {
         let mut item = evidence();
         item.backup.backup_failure_domain = "host-a".into();
-        assert_eq!(accept_recovery(&target(), &item), Err(RecoveryError::SameFailureDomain));
+        assert_eq!(
+            accept_recovery(&target(), &item),
+            Err(RecoveryError::SameFailureDomain)
+        );
     }
 
     #[test]
     fn restore_and_power_loss_are_required() {
         let mut item = evidence();
         item.backup.restore_verified = false;
-        assert_eq!(accept_recovery(&target(), &item), Err(RecoveryError::RestoreNotVerified));
+        assert_eq!(
+            accept_recovery(&target(), &item),
+            Err(RecoveryError::RestoreNotVerified)
+        );
         let mut item = evidence();
         item.power_loss_recovered = false;
-        assert_eq!(accept_recovery(&target(), &item), Err(RecoveryError::RecoveryNotVerified));
+        assert_eq!(
+            accept_recovery(&target(), &item),
+            Err(RecoveryError::RecoveryNotVerified)
+        );
     }
 
     #[test]
     fn target_breach_is_rejected() {
         let mut item = evidence();
         item.observed_rto_ms = 1_001;
-        assert_eq!(accept_recovery(&target(), &item), Err(RecoveryError::TargetExceeded));
+        assert_eq!(
+            accept_recovery(&target(), &item),
+            Err(RecoveryError::TargetExceeded)
+        );
+    }
+
+    #[test]
+    fn malformed_backup_identity_or_digest_is_rejected() {
+        let mut item = evidence();
+        item.backup.snapshot_sha256 = "sha256:stub".into();
+        assert_eq!(
+            accept_recovery(&target(), &item),
+            Err(RecoveryError::MissingEvidence("snapshot_sha256"))
+        );
+        let mut item = evidence();
+        item.backup.source_lsn = 0;
+        assert_eq!(
+            accept_recovery(&target(), &item),
+            Err(RecoveryError::MissingEvidence("source_lsn"))
+        );
     }
 }
