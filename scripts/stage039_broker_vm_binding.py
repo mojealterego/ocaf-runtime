@@ -233,7 +233,9 @@ async def _admit(ledger:broker.AdmissionLedger, approved_root:Path,
 def run_with_live_broker(*,manifest_a:Path,manifest_b:Path,
                          approved_root:Path, ledger_dir:Path,
                          dual_arguments:dict,
-                         require_guest_wasi:bool=False)->dict:
+                         require_guest_wasi:bool=False,
+                         signed_manifest_a:Path|None=None,
+                         signed_manifest_b:Path|None=None)->dict:
     if (os.geteuid()!=0 or not ledger_dir.is_absolute()
         or ".." in ledger_dir.parts or ledger_dir.is_symlink()
         or ledger_dir.exists()):
@@ -241,6 +243,14 @@ def run_with_live_broker(*,manifest_a:Path,manifest_b:Path,
     ledger_dir.mkdir(mode=0o700,parents=False)
     ledger_dir.chmod(0o700)
     manifests={"a":manifest_a.read_bytes(),"b":manifest_b.read_bytes()}
+    signed_manifests = None
+    if signed_manifest_a is not None or signed_manifest_b is not None:
+        if signed_manifest_a is None or signed_manifest_b is None:
+            raise BindingError("both signed guest manifests are required")
+        signed_manifests = {"a": signed_manifest_a.read_bytes(),
+                            "b": signed_manifest_b.read_bytes()}
+    if require_guest_wasi and signed_manifests is None:
+        raise BindingError("guest WASI acceptance requires signed manifests")
     for raw in manifests.values():
         m=gate.parse_manifest(raw)
         if m["isolation"]["network"]!="none" or m["isolation"]["guest_egress"] is not False:
@@ -261,7 +271,8 @@ def run_with_live_broker(*,manifest_a:Path,manifest_b:Path,
                                 approved_root=approved_root,
                                 require_guest_wasi=require_guest_wasi,**dual_arguments)
             verification=verify_binding(
-                receipts,manifests,actual,require_wasi=require_guest_wasi)
+                receipts,manifests,actual,require_wasi=require_guest_wasi,
+                signed_manifests=signed_manifests)
         finally:
             for rec in receipts.values():
                 if not ledger.release(workload_id=rec["workload_id"],
@@ -287,6 +298,8 @@ def main()->int:
     p.add_argument("--timeout",type=int,default=90)
     p.add_argument("--require-guest-wasi",action="store_true",
                    help="wait for actual guest Wasmtime exit and WASIp1 fd_write before SIGKILL")
+    p.add_argument("--signed-manifest-a", type=Path)
+    p.add_argument("--signed-manifest-b", type=Path)
     p.add_argument("--ack-broker-two-jailed-vm-real-kvm",action="store_true")
     a=p.parse_args()
     if not a.ack_broker_two_jailed_vm_real_kvm:
@@ -296,6 +309,8 @@ def main()->int:
             manifest_a=a.manifest_a,manifest_b=a.manifest_b,
             approved_root=a.approved_root,ledger_dir=a.ledger_dir,
             require_guest_wasi=a.require_guest_wasi,
+            signed_manifest_a=a.signed_manifest_a,
+            signed_manifest_b=a.signed_manifest_b,
             dual_arguments=dict(firecracker=a.firecracker,
                  firecracker_sha=a.firecracker_sha256,
                  jailer=a.jailer,jailer_sha=a.jailer_sha256,
