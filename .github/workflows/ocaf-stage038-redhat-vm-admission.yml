@@ -74,17 +74,23 @@ jobs:
         run: |
           set -uo pipefail
           umask 077
-          result="SERVER_DRY_RUN_REJECTED"
+          # A failed prerequisite is not evidence of a server-side admission rejection.
+          result="PREFLIGHT_BLOCKED"
           vm_allowed="$(kubectl auth can-i create virtualmachines.kubevirt.io -n mojealterego-dev 2>/dev/null || true)"
           ds_access="no"
           kubectl -n openshift-virtualization-os-images get datasources.cdi.kubevirt.io fedora -o name >/dev/null 2>&1 && ds_access="yes"
           if [[ "${vm_allowed}" == "yes" && "${ds_access}" == "yes" ]]; then
+            result="SERVER_DRY_RUN_REJECTED"
             if kubectl -n mojealterego-dev create --dry-run=server -f "${RUNNER_TEMP}/ocaf038-candidate.json" -o name >/dev/null 2>"${RUNNER_TEMP}/ocaf038-admission-stderr"; then
               result="SERVER_DRY_RUN_ACCEPTED"
             fi
           fi
           failure_category="NONE"
-          if [[ "${result}" != "SERVER_DRY_RUN_ACCEPTED" ]]; then
+          if [[ "${vm_allowed}" != "yes" ]]; then
+            failure_category="PREFLIGHT_VM_CREATE_UNCONFIRMED"
+          elif [[ "${ds_access}" != "yes" ]]; then
+            failure_category="PREFLIGHT_DATASOURCE_INACCESSIBLE"
+          elif [[ "${result}" != "SERVER_DRY_RUN_ACCEPTED" ]]; then
             failure_category="$(python3 - <<'PY'
           import os
           from pathlib import Path
@@ -125,6 +131,7 @@ jobs:
               "vm_create_allowed": os.environ["OCAF_VM_CREATE_ALLOWED"] == "yes",
               "fedora_datasource_accessible": os.environ["OCAF_OS_IMAGE_ACCESSIBLE"] == "yes",
               "status": os.environ["OCAF_ADMISSION_RESULT"],
+              "server_dry_run_attempted": os.environ["OCAF_ADMISSION_RESULT"] != "PREFLIGHT_BLOCKED",
               "failure_category": os.environ["OCAF_ADMISSION_FAILURE_CATEGORY"],
               "dry_run_only": True,
               "vm_created": False,
@@ -136,7 +143,7 @@ jobs:
           PY
           # Preserve the diagnostic artifact but never treat rejected admission as a passing gate.
           if [[ "${result}" != "SERVER_DRY_RUN_ACCEPTED" ]]; then
-            printf '::error::OCAF038_VM_ADMISSION_REJECTED=%s\n' "${failure_category}"
+            printf '::error::OCAF038_VM_ADMISSION_GATE_FAILED=%s\n' "${failure_category}"
             exit 1
           fi
       - name: Upload sanitized admission report
