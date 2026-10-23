@@ -117,11 +117,27 @@ fn authenticated_transport_sender_must_match_signed_sender() {
     let signed = sign(&req, &key);
     assert!(matches!(
         admit_signed_registration_for_sender(
-            &server, req.clone(), &signed, "attacker-node", &public, &db, NOW
+            &server,
+            req.clone(),
+            &signed,
+            "attacker-node",
+            &public,
+            &db,
+            NOW
         ),
         Err(SignedAgentError::Binding)
     ));
-    assert!(admit_signed_registration_for_sender(
-        &server, req, &signed, "authenticated-agent-node", &public, &db, NOW
-    ).unwrap().admitted);
+    assert!(
+        admit_signed_registration_for_sender(
+            &server,
+            req,
+            &signed,
+            "authenticated-agent-node",
+            &public,
+            &db,
+            NOW
+        )
+        .unwrap()
+        .admitted
+    );
 }
