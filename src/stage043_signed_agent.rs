@@ -47,11 +47,13 @@ pub fn admit_signed_registration(
     }
     // Identity, opcode, target, signed fuel, nonce and entire request payload
     // must verify before consuming a persistent replay nonce or mutating OMAs.
-    verify_and_consume(operation, trusted_public_key, replay_db, now).map_err(|error| match error {
-        SignedOperationError::Invalid => SignedAgentError::Invalid,
-        SignedOperationError::Signature => SignedAgentError::Signature,
-        SignedOperationError::Replay => SignedAgentError::Replay,
-        SignedOperationError::Store => SignedAgentError::Store,
-    })?;
+    verify_and_consume(operation, trusted_public_key, replay_db, now).map_err(
+        |error| match error {
+            SignedOperationError::Invalid => SignedAgentError::Invalid,
+            SignedOperationError::Signature => SignedAgentError::Signature,
+            SignedOperationError::Replay => SignedAgentError::Replay,
+            SignedOperationError::Store => SignedAgentError::Store,
+        },
+    )?;
     Ok(server.admit_registration(request))
 }
