@@ -417,15 +417,101 @@ jobs:
               path.write_text(json.dumps(envelope,sort_keys=True)+"\n");path.chmod(0o400)
           print("STAGE039_EPHEMERAL_LAB_SIGNER_PREPARED")
           PY
-          sudo -n sha256sum "$PREFIX/approved/guest_rootfs_wasi"
+          sudo -n sha256sum "$PREFIX/approved/guest_rootfs_wasi_a" "$PREFIX/approved/guest_rootfs_wasi_b"
           echo "STAGE039_LINUX_GUEST_ROOTFS_HAS_ACTUAL_WASMTIME_WASI_AND_STATIC_PID1"
+      - name: Reject signed workload and rootfs tampering before VM admission
+        shell: bash
+        run: |
+          set -euo pipefail
+          PREFIX="/opt/ocaf039-real-$GITHUB_RUN_ID"
+          sudo -n python3 - "$PREFIX" "$GITHUB_WORKSPACE" <<'PY'
+          import json,os,sys,tempfile
+          from pathlib import Path
+          from unittest.mock import patch
+          prefix=Path(sys.argv[1]);workspace=Path(sys.argv[2]);approved=prefix/"approved"
+          sys.path.insert(0,str(workspace/"scripts"))
+          import stage039_broker_vm_binding as binding
+          import stage039_microvm_gate as gate
+          manifest_a=approved/"request-wasi-a.json"
+          manifest_b=approved/"request-wasi-b.json"
+          signed_a=approved/"signed-wasi-a.json"
+          signed_b=approved/"signed-wasi-b.json"
+          key=approved/"stage039-ci-public.key"
+          checks={}
+          with tempfile.TemporaryDirectory(prefix="ocaf039-deny-",dir=prefix) as directory:
+              tmp=Path(directory)
+              def admission(*,signed_a_path=signed_a,trusted_key_path=key,ledger_name):
+                  return binding.run_with_live_broker(
+                      manifest_a=manifest_a,manifest_b=manifest_b,
+                      approved_root=approved,ledger_dir=tmp/ledger_name,
+                      dual_arguments={},require_guest_wasi=True,
+                      signed_manifest_a=signed_a_path,signed_manifest_b=signed_b,
+                      trusted_public_key=trusted_key_path)
+              changed=json.loads(signed_a.read_text())
+              changed["payload"]["tenant_id"]="tenant-b"
+              tampered=tmp/"signed-tampered.json"
+              tampered.write_text(json.dumps(changed,sort_keys=True)+"\n")
+              changed_module=json.loads(signed_a.read_text())
+              assert "wasi" in changed_module["payload"]
+              changed_module["payload"]["wasi"]["module_sha256"]="0"*64
+              tampered_module=tmp/"signed-module-tampered.json"
+              tampered_module.write_text(json.dumps(changed_module,sort_keys=True)+"\n")
+              wrong_key=tmp/"untrusted-public.key"
+              wrong_key.write_bytes(bytes(32))
+              with patch.object(binding.dual,"execute",side_effect=AssertionError("VM launch must not happen")):
+                  for label,kwargs in (
+                      ("signed_payload_tamper",dict(signed_a_path=tampered,ledger_name="tampered-ledger")),
+                      ("signed_module_digest_tamper",dict(signed_a_path=tampered_module,ledger_name="module-ledger")),
+                      ("untrusted_signer",dict(trusted_key_path=wrong_key,ledger_name="untrusted-ledger")),
+                  ):
+                      try:
+                          admission(**kwargs)
+                      except binding.BindingError as exc:
+                          checks[label]={"denied":True,"reason":str(exc),
+                                         "before_ledger":not (tmp/kwargs["ledger_name"]).exists()}
+                      else:
+                          raise AssertionError(label+" was admitted")
+              assert all(item["before_ledger"] for item in checks.values())
+          # The original signed manifest pins the actual guest image. Flip a
+          # byte, require the gate to reject it, then restore and reverify.
+          manifest=manifest_a.read_bytes()
+          image=Path(gate.parse_manifest(manifest)["assets"]["guest_rootfs"]["path"])
+          expected=gate.parse_manifest(manifest)["assets"]["guest_rootfs"]["sha256"]
+          assert image.parent==approved
+          assert gate.inspect_manifest(manifest,approved)["artifact_sha256"]["guest_rootfs"]==expected
+          fd=os.open(image,os.O_RDWR|os.O_CLOEXEC)
+          original=os.pread(fd,1,4096)
+          assert len(original)==1
+          try:
+              assert os.pwrite(fd,bytes([original[0]^1]),4096)==1
+              os.fsync(fd)
+              try:
+                  gate.inspect_manifest(manifest,approved)
+              except ValueError as exc:
+                  assert "digest mismatch" in str(exc)
+                  checks["guest_image_byte_tamper"]={"denied":True,"reason":str(exc)}
+              else:
+                  raise AssertionError("mutated signed guest image passed admission gate")
+          finally:
+              os.pwrite(fd,original,4096)
+              os.fsync(fd)
+              os.close(fd)
+          assert gate.inspect_manifest(manifest,approved)["artifact_sha256"]["guest_rootfs"]==expected
+          report=workspace/"stage039-real-guest-evidence"/"pre-admission-deny.json"
+          report.write_text(json.dumps({"status":"PRE_ADMISSION_NEGATIVE_TESTS_PASSED",
+                                        "checks":checks,"vm_launched_during_negative_tests":False,
+                                        "production_approved":False,"stage_039_complete":False},
+                                       sort_keys=True,indent=2)+"\n")
+          print("STAGE039_SIGNED_MANIFEST_AND_IMAGE_TAMPER_PRE_ADMISSION_DENIED")
+          PY
       - name: ACTUAL two concurrent KVM jailed tenants broker-reserved THEN execute WASIp1 fd_write INSIDE guest kernels
         shell: bash
         run: |
           set -euo pipefail
           PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
           JBASE="$PREFIX/jailer"
-          IMAGE="$PREFIX/approved/guest_rootfs_wasi"
+          IMAGE_A="$PREFIX/approved/guest_rootfs_wasi_a"
+          IMAGE_B="$PREFIX/approved/guest_rootfs_wasi_b"
           sudo -n python3 scripts/stage039_broker_vm_binding.py \
             --manifest-a "$PREFIX/approved/request-wasi-a.json" \
             --manifest-b "$PREFIX/approved/request-wasi-b.json" \
@@ -451,7 +537,8 @@ jobs:
           sudo -n python3 scripts/stage039_guest_wasi.py \
             --broker-report "$GITHUB_WORKSPACE/stage039-real-guest-evidence/broker-wasi-vm.json" \
             --jailer-base "$JBASE" \
-            --rootfs-sha256 "$(sudo -n sha256sum "$IMAGE" | cut -d ' ' -f 1)" \
+            --rootfs-sha256-a "$(sudo -n sha256sum "$IMAGE_A" | cut -d ' ' -f 1)" \
+            --rootfs-sha256-b "$(sudo -n sha256sum "$IMAGE_B" | cut -d ' ' -f 1)" \
             --report "$GITHUB_WORKSPACE/stage039-real-guest-evidence/real-guest-wasi-execution.json"
           sudo -n chown "$(id -u):$(id -g)" \
             stage039-real-guest-evidence/broker-wasi-vm.json \
@@ -470,15 +557,20 @@ jobs:
           assert v["both_tenants_own_vm_and_broker_reservations"] is True
           assert set(v["tenant_receipts"])=={"a","b"}
           assert v["tenant_receipts"]["a"]["vm_id"]!=v["tenant_receipts"]["b"]["vm_id"]
+          assert v["tenant_receipts"]["a"]["task_nonce"]!=v["tenant_receipts"]["b"]["task_nonce"]
+          assert v["tenant_receipts"]["a"]["module_sha256"]!=v["tenant_receipts"]["b"]["module_sha256"]
+          assert v["tenant_receipts"]["a"]["guest_module_digest_checked"] is True
+          assert v["tenant_receipts"]["b"]["guest_module_digest_checked"] is True
           for tenant in ("a","b"):
               r=v["tenant_receipts"][tenant]
+              assert r["tenant_id"]=="tenant-"+tenant
               assert r["guest_pid1_started"] is True
               assert r["wasi_preview1_fd_write_observed_inside_guest"] is True
               assert r["guest_wasmtime_child_exited_zero"] is True
               assert r["guest_bpf_socket_filter_attached"] is True
               assert r["guest_kernel_bpf_program_id"]>0
           assert v["signed_wasi_manifest_verified"] is True
-          assert v["different_wasm_task_per_tenant_tested"] is False
+          assert v["different_wasm_task_per_tenant_tested"] is True
           assert v["production_approved"] is False
           print("STAGE039_ACTUAL_BROKER_TO_TWO_JAILED_FIRECRACKER_WASIP1_GUEST_EXECUTION_PROVED")
           PY
@@ -502,15 +594,23 @@ jobs:
           set -euo pipefail
           test -s stage039-real-guest-evidence/jailed-guest-network.json
           test -s stage039-real-guest-evidence/real-guest-wasi-execution.json
+          test -s stage039-real-guest-evidence/pre-admission-deny.json
           python3 - <<'PY'
           import json
           from pathlib import Path
           root=Path("stage039-real-guest-evidence")
           network=json.loads((root/"jailed-guest-network.json").read_text())
           wasi=json.loads((root/"real-guest-wasi-execution.json").read_text())
+          denied=json.loads((root/"pre-admission-deny.json").read_text())
           assert network["tc_kernel_ebpf_guest_network_tested"] is True
           assert wasi["real_guest_wasi_execution_verified"] is True
           assert wasi["signed_wasi_manifest_verified"] is True
+          assert denied["status"]=="PRE_ADMISSION_NEGATIVE_TESTS_PASSED"
+          assert set(denied["checks"])=={
+              "signed_payload_tamper","signed_module_digest_tamper",
+              "untrusted_signer","guest_image_byte_tamper"}
+          assert all(item["denied"] is True for item in denied["checks"].values())
+          assert denied["vm_launched_during_negative_tests"] is False
           PY
       - name: Preserve actual KVM boot and negative/error evidence
         if: always()
