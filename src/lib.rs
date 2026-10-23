@@ -23,6 +23,8 @@ pub mod omas_server;
 
 pub mod omat_server;
 
+pub mod stage043_signed_manifest;
+
 pub mod microvm_lifecycle;
 
 pub mod firecracker_ebpf_contract;
