@@ -618,3 +618,11 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - Zmaterializowano w `docs/roadmap/canonical_v11_inventory.json` brakujące rekordy etapów `232–300` oraz `321–333`, korzystając wyłącznie z istniejących definicji w `ROADMAP.md`.
 - Tablica `main` ma teraz **333 rekordy**, `main_count=333`, a `next_new_main_stage=334`; nie zmieniono numeracji ani nie oznaczono etapu jako ukończonego.
 - `scripts/roadmap_integrity_gate.py` i jego test regresyjny wymagają zgodności `333/333`; status produkcyjny pozostaje `false`.
+
+### 2026-10-23 — Stage 0.43 native OMAs / OMAt supersedes internal MCP
+
+- Właściciel zlecił etap 0.43; etapy do 0.42 pozostają w zakresie Codex. Zachowano identyfikator 0.43 oraz historyczne źródła/wymagania MCP jako provenance. Wewnętrzny protokół MCP NIE jest warunkiem ani transportem OMAs/OMAt.
+- OMAs = OmniAgent Server; OMAt = OmniAgent Tools. Specyfikacja: `docs/STAGE_043_OMAS_OMAT_ARCHITECTURE.md`.
+- Implementacje/testy: `src/omas_server.rs`, `src/omat_server.rs`, `src/stage043_signed_manifest.rs`, `tests/stage043_security.rs`, `tests/stage043_signed_manifest.rs`; dedykowana bramka: `.github/workflows/stage043-omas-omat.yml`.
+- Zweryfikowany negatywny test: run 40023230307 wykazał akceptację sfałszowanej deklaracji `ostc_enabled` klienta; poprawka wprowadziła domyślnie zamkniętą autorytatywną bramkę serwera. Brak poświadczonego OSTc i wykonawcy blokuje wykonanie.
+- Stan `ACTIVE_TECHNICAL_OPEN`: nie przypisano produkcyjnego GO, nie zadeklarowano sieciowego E2E, sandbox execute, trwałości rejestrów ani odbioru operatora. Istniejące globalne błędy CI (README generator, RustSec, agent-fleet) nie są ukrywane.
