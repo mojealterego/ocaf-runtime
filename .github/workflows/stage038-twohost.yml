@@ -397,7 +397,7 @@ jobs:
           import sys
           from pathlib import Path
           raw = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")[:65536]
-          match = re.search(r"remote tool call failed: (InvalidInput|Timeout|Failed)\\b", raw)
+          match = re.search(r"remote tool call failed: (InvalidInput|Timeout|Failed)\b", raw)
           if match:
               category = "RPC_REPLY_" + match.group(1).upper()
           elif "RPC request could not be authenticated" in raw:
