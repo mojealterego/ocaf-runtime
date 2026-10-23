@@ -134,6 +134,11 @@ jobs:
           Path("ocaf038-vm-admission.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n",encoding="utf-8")
           print(json.dumps(report))
           PY
+          # Preserve the diagnostic artifact but never treat rejected admission as a passing gate.
+          if [[ "${result}" != "SERVER_DRY_RUN_ACCEPTED" ]]; then
+            printf '::error::OCAF038_VM_ADMISSION_REJECTED=%s\n' "${failure_category}"
+            exit 1
+          fi
       - name: Upload sanitized admission report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
