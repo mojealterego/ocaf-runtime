@@ -4,10 +4,10 @@ Status: **ACTIVE_TECHNICAL_OPEN**. This is the target architecture and acceptanc
 
 ## Architecture decision
 
-The historical stage 0.43 title **MCP** is superseded **for the native OCAF control plane** by two distinct services:
+Canonical names are taken from `02_SPECYFIKACJA_BUDOWY_AGENTOW_OCAF_RUNTIME_OMAs_OSTc_OMAt_2026-10-19.md` (19 Oct 2026). OSTc is a separate, not-yet-validated security integration; do not equate it with OMAt or bypass conventional cryptographic controls.\n\nThe historical stage 0.43 title **MCP** is superseded **for the native OCAF control plane** by two distinct services:
 
-- **OMAs — agent server**: agent identities, registration, tenant-scoped discovery, signed agent manifests, lifecycle, authorization, agent-to-agent delegation and auditable decisions.
-- **OMAt — tool server**: tenant-scoped tool registry, signed/versioned tool manifests, JSON input/output schema verification, capability/risk authorization, bounded invocation, sandbox executor binding and verifiable receipts.
+- **OMAs — OmniAgent Server (agent server)**: agent identities, registration, tenant-scoped discovery, signed agent manifests, lifecycle, authorization, agent-to-agent delegation and auditable decisions.
+- **OMAt — OmniAgent Tools (tool server)**: tenant-scoped tool registry, signed/versioned tool manifests, JSON input/output schema verification, capability/risk authorization, bounded invocation, sandbox executor binding and verifiable receipts.
 
 The primary internal transport is native OCAF/Zenoh. MCP may exist **only as an optional, explicitly authorized edge compatibility adapter**, not a required internal dependency or trusted authority. Never silently trust imported tool metadata or schemas. Preserve the original MCP requirements in the historical ROADMAP record and map their outcomes to OMAt; do not renumber or delete stage 0.43.
 
