@@ -1,9 +1,7 @@
 //! Stage 0.43 — cryptographic agent admission, sender binding and persistent replay.
 use ocaf_runtime::omas_server::{AgentRegistrationRequest, OmasServer, OmasServerConfig};
 use ocaf_runtime::omas_signed::SignedOperation;
-use ocaf_runtime::stage043_signed_agent::{
-    admit_signed_registration, SignedAgentError,
-};
+use ocaf_runtime::stage043_signed_agent::{admit_signed_registration, SignedAgentError};
 use openssl::pkey::PKey;
 use openssl::sign::Signer;
 use rusqlite::Connection;
@@ -53,8 +51,8 @@ fn signed_registration_stages_agent_once_with_durable_replay_protection() {
     let server = OmasServer::new(OmasServerConfig::default()).unwrap();
     let req = request();
     let signed = sign(&req, &key);
-    let admitted = admit_signed_registration(&server, req.clone(), &signed, &public, &db, NOW)
-        .unwrap();
+    let admitted =
+        admit_signed_registration(&server, req.clone(), &signed, &public, &db, NOW).unwrap();
     assert!(admitted.admitted);
     let duplicate = admit_signed_registration(&server, req, &signed, &public, &db, NOW);
     assert!(matches!(duplicate, Err(SignedAgentError::Replay)));
