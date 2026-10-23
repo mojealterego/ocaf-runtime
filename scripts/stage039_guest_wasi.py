@@ -34,10 +34,12 @@ def verify_console(raw:bytes)->dict:
     if not isinstance(raw,bytes) or not 0<len(raw)<=1024*1024:
         raise GuestWasiError("guest serial empty or over limit")
     linux=raw.find(b"Linux version ")
-    for marker in (INIT, OUTPUT, PASS):
+    for name, marker in (("pid1", INIT), ("fd_write", OUTPUT), ("exit", PASS)):
         position=raw.find(marker)
         if position<0 or (position>0 and raw[position-1:position]!=bytes([10])):
-            raise GuestWasiError("serial marker must begin at line boundary")
+            previous=raw[max(0,position-24):position] if position>=0 else b""
+            raise GuestWasiError(
+                f"serial {name} marker must begin at line boundary; previous={previous!r}")
     boot=raw.find(INIT)
     output=raw.find(OUTPUT)
     done=raw.find(PASS)
