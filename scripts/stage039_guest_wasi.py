@@ -16,6 +16,7 @@ INIT=b"OCAF039_GUEST_PID1_BOOTED\n"
 FAILED=b"OCAF039_GUEST_WASI_EXECUTION_FAILED"
 HEX=re.compile(r"[0-9a-f]{64}\Z")
 VM=re.compile(r"ocaf-[0-9a-f]{24}\Z")
+BPF_ID=re.compile(rb"(?m)^OCAF039_GUEST_BPF_SOCKET_FILTER_ID=([1-9][0-9]{0,9})$")
 
 class GuestWasiError(ValueError):pass
 
@@ -42,18 +43,23 @@ def verify_console(raw:bytes)->dict:
     done=raw.find(PASS)
     crng=[(marker,raw.find(marker)) for marker in RNG_READY
           if raw.count(marker)==1]
+    bpf_ids=list(BPF_ID.finditer(raw))
     if (raw.count(INIT)!=1 or raw.count(OUTPUT)!=1 or raw.count(PASS)!=1
         or sum(raw.count(m) for m in RNG_READY)!=1 or len(crng)!=1
+        or len(bpf_ids)!=1 or raw.count(b"OCAF039_GUEST_BPF_SOCKET_FILTER_ID=")!=1
+        or b"OCAF039_GUEST_BPF_LOAD_DENIED" in raw
         or FAILED in raw or b"OCAF039_GUEST_HW_RNG_SEED_DENIED" in raw
         or b"OCAF039_GUEST_CRNG_STILL_UNAVAILABLE" in raw
         or raw.count(b"Linux version ")!=1
-        or not 0<=linux<boot<crng[0][1]<output<done):
+        or not 0<=linux<boot<crng[0][1]<bpf_ids[0].start()<output<done):
         raise GuestWasiError("genuine bounded Linux guest PID1 WASIp1 exit/CRNG proof absent")
     return {
         "guest_pid1_started":True,"wasi_preview1_fd_write_observed_inside_guest":True,
         "guest_wasmtime_child_exited_zero":True,
         "guest_crng_ready_before_execution":True,
         "guest_crng_seeded_by_cpu_rng":crng[0][0]==RNG_READY[1],
+        "guest_kernel_bpf_program_id":int(bpf_ids[0].group(1)),
+        "guest_bpf_socket_filter_attached":True,
         "serial_sha256":hashlib.sha256(raw).hexdigest(),
     }
 

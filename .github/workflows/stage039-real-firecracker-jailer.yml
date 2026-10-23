@@ -475,6 +475,8 @@ jobs:
               assert r["guest_pid1_started"] is True
               assert r["wasi_preview1_fd_write_observed_inside_guest"] is True
               assert r["guest_wasmtime_child_exited_zero"] is True
+              assert r["guest_bpf_socket_filter_attached"] is True
+              assert r["guest_kernel_bpf_program_id"]>0
           assert v["signed_wasi_manifest_verified"] is True
           assert v["different_wasm_task_per_tenant_tested"] is False
           assert v["production_approved"] is False

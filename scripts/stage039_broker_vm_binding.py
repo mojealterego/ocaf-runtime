@@ -149,6 +149,9 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
                 or guest.get("guest_pid1_started") is not True
                 or guest.get("wasi_preview1_fd_write_observed_inside_guest") is not True
                 or guest.get("guest_wasmtime_child_exited_zero") is not True
+                or guest.get("guest_bpf_socket_filter_attached") is not True
+                or type(guest.get("guest_kernel_bpf_program_id")) is not int
+                or guest["guest_kernel_bpf_program_id"] <= 0
                 or guest.get("observed_before_vm_sigkill",True) is not True
                 or not isinstance(guest.get("serial_sha256"),str)
                 or re.fullmatch("[a-f0-9]{64}",guest["serial_sha256"]) is None):

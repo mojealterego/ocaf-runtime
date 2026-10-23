@@ -89,6 +89,8 @@ class BrokerVmAcceptanceTests(unittest.TestCase):
                 "guest_pid1_started":True,
                 "wasi_preview1_fd_write_observed_inside_guest":True,
                 "guest_wasmtime_child_exited_zero":True,
+                "guest_bpf_socket_filter_attached":True,
+                "guest_kernel_bpf_program_id":17 if t=="a" else 18,
                 "serial_sha256": ("a" if t=="a" else "b")*64,
             }
         result=binding.verify_binding(self.reports,self.raw,actual,require_wasi=True)

@@ -5,16 +5,19 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import stage039_guest_wasi as g
 
 GOOD=(b"[  0.100] Linux version 6.1.0\n"+
-      g.INIT+b"OCAF039_GUEST_CRNG_READY_AFTER_CPU_RNG\n"+g.OUTPUT+g.PASS)
+      g.INIT+b"OCAF039_GUEST_CRNG_READY_AFTER_CPU_RNG\n"+
+      b"OCAF039_GUEST_BPF_SOCKET_FILTER_ID=17\n"+g.OUTPUT+g.PASS)
 
 class GuestWasiBindings(unittest.TestCase):
     def test_real_import_and_child_exit_required(self):
         r=g.verify_console(GOOD)
         self.assertTrue(r["wasi_preview1_fd_write_observed_inside_guest"])
         self.assertEqual(r["serial_sha256"],hashlib.sha256(GOOD).hexdigest())
+        self.assertEqual(r["guest_kernel_bpf_program_id"],17)
         for broken in (GOOD.replace(b"OCAF039_GUEST_CRNG_READY_AFTER_CPU_RNG\n",b""), GOOD.replace(g.PASS,b""), GOOD.replace(g.OUTPUT,b""),
                 GOOD.replace(g.INIT,b""), GOOD.replace(b"Linux version",b"User version"),
                 GOOD+g.FAILED, GOOD+g.PASS,
+                GOOD.replace(b"OCAF039_GUEST_BPF_SOCKET_FILTER_ID=17\n",b""),
                 g.PASS+g.INIT+g.OUTPUT, b"",GOOD*40000):
             with self.subTest(raw=broken[:75]),self.assertRaises(g.GuestWasiError):
                 g.verify_console(broken)

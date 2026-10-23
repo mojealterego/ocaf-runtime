@@ -23,6 +23,46 @@
 #include <linux/random.h>
 #include <stdint.h>
 #include <cpuid.h>
+#include <linux/bpf.h>
+#include <sys/socket.h>
+#include <sys/syscall.h>
+
+/* Load and attach a real eBPF socket filter in the guest kernel. The host
+ * TAP/TC classifier is a separate program and cannot satisfy this check. */
+static int guest_bpf_socket_filter(void) {
+    struct bpf_insn program[] = {
+        {.code=BPF_ALU64|BPF_MOV|BPF_K, .dst_reg=BPF_REG_0, .imm=-1},
+        {.code=BPF_JMP|BPF_EXIT},
+    };
+    const char license[]="GPL";
+    union bpf_attr load={0};
+    load.prog_type=BPF_PROG_TYPE_SOCKET_FILTER;
+    load.insn_cnt=sizeof(program)/sizeof(program[0]);
+    load.insns=(uint64_t)(uintptr_t)program;
+    load.license=(uint64_t)(uintptr_t)license;
+    int program_fd=(int)syscall(SYS_bpf,BPF_PROG_LOAD,&load,sizeof(load));
+    if(program_fd<0)return -1;
+    int sock=socket(AF_INET,SOCK_DGRAM|SOCK_CLOEXEC,0);
+    if(sock<0 || setsockopt(sock,SOL_SOCKET,SO_ATTACH_BPF,&program_fd,sizeof(program_fd))!=0){
+        if(sock>=0)close(sock);
+        close(program_fd);
+        return -1;
+    }
+    struct bpf_prog_info info={0};
+    union bpf_attr query={0};
+    query.info.bpf_fd=(uint32_t)program_fd;
+    query.info.info_len=sizeof(info);
+    query.info.info=(uint64_t)(uintptr_t)&info;
+    int ok=(int)syscall(SYS_bpf,BPF_OBJ_GET_INFO_BY_FD,&query,sizeof(query));
+    if(ok==0 && info.id>0){
+        char marker[96];
+        int length=snprintf(marker,sizeof(marker),"OCAF039_GUEST_BPF_SOCKET_FILTER_ID=%u\n",info.id);
+        if(length>0 && (size_t)length<sizeof(marker))write(1,marker,(size_t)length);
+    }
+    close(sock);
+    close(program_fd);
+    return ok==0 && info.id>0 ? 0 : -1;
+}
 
 static const char expected[]="OCAF039_WASI_INSIDE_FC_VM_IMPORT_FD_WRITE\n";
 static void output(const char *s) { size_t n=strlen(s); while(n){ssize_t r=write(1,s,n); if(r<=0)break; s+=r;n-=(size_t)r;} }
@@ -91,6 +131,10 @@ int main(void) {
         output("OCAF039_GUEST_CRNG_READY_AFTER_CPU_RNG\n");
     }
     memset(entropy_probe,0,sizeof(entropy_probe));
+    if(guest_bpf_socket_filter()!=0){
+        output("OCAF039_GUEST_BPF_LOAD_DENIED\n");
+        fail();
+    }
     int channel[2]; if(pipe(channel)!=0)fail();
     pid_t child=fork();
     if(child<0)fail();
