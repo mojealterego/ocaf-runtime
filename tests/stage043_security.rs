@@ -2,7 +2,7 @@
 //! No network, database, paid service, or OSTc activation is needed.
 use ocaf_runtime::omas_server::{AgentRegistrationRequest, OmasServer, OmasServerConfig};
 use ocaf_runtime::omat_server::{
-    health, ExecutorKind, OmatPolicy, OmatRegistry, ToolManifest, ToolRisk,
+    health, ExecutorKind, OmatError, OmatPolicy, OmatRegistry, ToolCall, ToolManifest, ToolRisk,
 };
 use serde_json::json;
 use std::collections::BTreeSet;
@@ -142,4 +142,28 @@ fn omat_duplicate_manifest_remains_denied_within_a_tenant() {
     assert!(registry
         .register(tool("tenant_a", ToolRisk::ReadOnly))
         .is_err());
+}
+
+#[test]
+fn omat_rejects_client_spoofing_of_server_side_ostc_readiness() {
+    let mut registry = OmatRegistry::default();
+    registry.register(tool("tenant_a", ToolRisk::ReadOnly)).unwrap();
+    let call = ToolCall {
+        request_id: "spoof-1".into(),
+        tenant_id: "tenant_a".into(),
+        agent_id: "agent-1".into(),
+        tool_id: "echo".into(),
+        arguments: json!({}),
+        idempotency_key: "spoof-idem".into(),
+        ostc_enabled: true, // This is untrusted caller data, not a server attestation.
+        source_access: "disabled".into(),
+    };
+    assert_eq!(
+        registry.admit(&call, &policy("tenant_a")),
+        Err(OmatError::SourceAccessDenied)
+    );
+    assert_eq!(
+        registry.execute(&call, &policy("tenant_a")),
+        Err(OmatError::SourceAccessDenied)
+    );
 }
