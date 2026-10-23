@@ -307,19 +307,35 @@ jobs:
           client="$RUNNER_TEMP/ocaf038-client"
           py="$RUNNER_TEMP/ocaf038-python/bin/python"
           tunnel_pid=""
-          success=false
+          # Track independently verified gates; never infer one PASS from another.
+          phase=downstream_start
+          discovery_passed=false
+          signed_wasi_passed=false
+          recovery_passed=false
+          denial_passed=false
           finish() {
             code=$?
-            export OCAF038_FINAL_SUCCESS="$success"
+            export OCAF038_DISCOVERY_PASSED="$discovery_passed"
+            export OCAF038_SIGNED_WASI_PASSED="$signed_wasi_passed"
+            export OCAF038_RECOVERY_PASSED="$recovery_passed"
+            export OCAF038_DENIAL_PASSED="$denial_passed"
+            export OCAF038_FAILURE_PHASE="$phase"
+            export OCAF038_EXIT_CODE="$code"
+            if [ "$code" -ne 0 ]; then
+              printf '::error::OCAF038_TWOHOST_FAILURE_PHASE=%s\n' "$phase"
+            fi
             "$py" - "$RUNNER_TEMP/remote-result.json" <<'PY'
           import hashlib,json,os,sys
           from pathlib import Path
           obj={'schema_version':1,'git_commit':os.environ['GITHUB_SHA'],
                'vm_machine_id_sha256':hashlib.sha256(Path('/etc/machine-id').read_bytes().strip()).hexdigest(),
                'vm_boot_id_sha256':hashlib.sha256(Path('/proc/sys/kernel/random/boot_id').read_bytes().strip()).hexdigest(),
-               'signed_wasi_rpc_over_distinct_vm':os.getenv('OCAF038_FINAL_SUCCESS')=='true',
-               'agent_b_denied':os.getenv('OCAF038_FINAL_SUCCESS')=='true',
-               'relay_path_disruption_recovery':os.getenv('OCAF038_FINAL_SUCCESS')=='true',
+               'authenticated_tool_discovery':os.getenv('OCAF038_DISCOVERY_PASSED')=='true',
+               'signed_wasi_rpc_over_distinct_vm':os.getenv('OCAF038_SIGNED_WASI_PASSED')=='true',
+               'agent_b_denied':os.getenv('OCAF038_DENIAL_PASSED')=='true',
+               'relay_path_disruption_recovery':os.getenv('OCAF038_RECOVERY_PASSED')=='true',
+               'failed_phase':os.getenv('OCAF038_FAILURE_PHASE') if os.getenv('OCAF038_EXIT_CODE')!='0' else None,
+               'exit_code':int(os.getenv('OCAF038_EXIT_CODE','1')),
                'fault_scope':'vm-b ephemeral downstream proxy stopped and restored, not staging network partition',
                'production_approved':False}
           Path(sys.argv[1]).write_text(json.dumps(obj,sort_keys=True))
@@ -351,6 +367,7 @@ jobs:
           export OCAF_TLS_CLIENT_CERT_FILE="$client/agent-a.pem"
           export OCAF_TLS_CLIENT_KEY_FILE="$client/agent-a.key"
           export OCAF_SHARED_KEY_B64="$("$py" -c 'import json,sys;print(json.load(open(sys.argv[1]))["agent-a"])' "$client/private-hmac.json")"
+          phase=authenticated_discovery
           passed=false
           for i in $(seq 1 35); do
             if target/debug/ocaf-rpc-node >"$RUNNER_TEMP/private-discover.json" 2>/dev/null; then
@@ -369,6 +386,8 @@ jobs:
             sleep 3
           done
           test "$passed" = true || { echo "::error::No authenticated cross-VM signed-tool discovery"; exit 1; }
+          discovery_passed=true
+          phase=signed_wasi_rpc
           export OCAF_ACTION=call OCAF_TOOL=ocaf_ci_noop OCAF_MESSAGE=remote_twohost_wasi
           target/debug/ocaf-rpc-node >"$RUNNER_TEMP/private-result.json" 2>/dev/null
           "$py" - "$RUNNER_TEMP/private-result.json" <<'PY'
@@ -377,7 +396,9 @@ jobs:
           if result.get('output',{}).get('ok') is not True:
               raise SystemExit("real WASI remote result missing")
           PY
+          signed_wasi_passed=true
           echo "REAL_TWO_VM_SIGNED_WASI_OVER_TLS_BOUND_RPC_PASSED"
+          phase=tunnel_disruption
           # Fault a real cross-VM link without changing the authenticated workload:
           # terminate VM B's downstream proxy. VM A still runs systemd OCAF.
           # This is a transport-path fault, NOT a physical network partition
@@ -400,6 +421,7 @@ jobs:
             echo "::error::RPC unexpectedly succeeded while the cross-VM tunnel was down"
             exit 1
           fi
+          phase=tunnel_recovery
           "$py" scripts/stage038_tunnel_client.py --mode downstream --port "$port" >"$RUNNER_TEMP/downstream-recovered-events.log" 2>&1 &
           tunnel_pid=$!
           recovered=false
@@ -419,7 +441,9 @@ jobs:
             sleep 2
           done
           test "$recovered" = true || { echo "::error::Signed WASI RPC did not recover after VM B tunnel restart"; exit 1; }
+          recovery_passed=true
           echo "REAL_TWO_VM_DOWNSTREAM_TUNNEL_FAILURE_AND_RECOVERY_PASSED"
+          phase=cross_principal_negative
           export OCAF_NODE_ID=agent-b OCAF_RPC_CERT_KEY_FILE="$client/agent-b.key"
           export OCAF_TLS_CLIENT_CERT_FILE="$client/agent-b.pem"
           export OCAF_TLS_CLIENT_KEY_FILE="$client/agent-b.key"
@@ -442,8 +466,9 @@ jobs:
             --exit-code "$denial_exit" \
             --stdout-file "$RUNNER_TEMP/cross-principal.stdout" \
             --stderr-file "$RUNNER_TEMP/cross-principal.stderr"
+          denial_passed=true
           echo "REAL_TWO_VM_CROSS_PRINCIPAL_WASI_EXECUTION_DENIED"
-          success=true
+          phase=complete
       - name: Upload sanitized VM B report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
