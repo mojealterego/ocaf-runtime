@@ -10,6 +10,8 @@ on:
       - "src/bin/ocaf-omat-server.rs"
       - "tests/stage043_security.rs"
       - "tests/stage043_signed_manifest.rs"
+      - "tests/stage043_persistence.rs"
+      - "src/stage043_store.rs"
       - "src/stage043_signed_manifest.rs"
       - ".github/workflows/stage043-omas-omat.yml"
   pull_request:
@@ -20,6 +22,8 @@ on:
       - "src/bin/ocaf-omat-server.rs"
       - "tests/stage043_security.rs"
       - "tests/stage043_signed_manifest.rs"
+      - "tests/stage043_persistence.rs"
+      - "src/stage043_store.rs"
       - "src/stage043_signed_manifest.rs"
       - ".github/workflows/stage043-omas-omat.yml"
 
@@ -41,11 +45,13 @@ jobs:
         run: cargo test --locked --no-default-features --test stage043_security
       - name: Signed manifest authenticity and tenant acceptance
         run: cargo test --locked --no-default-features --test stage043_signed_manifest
+      - name: Signed manifest persistence and revocation
+        run: cargo test --locked --no-default-features --test stage043_persistence
       - name: OMAs and OMAt existing unit tests
         run: |
           cargo test --locked --no-default-features omas_server::tests
           cargo test --locked --no-default-features omat_server::tests
       - name: Stage 0.43 formatting (other stages have their own global gate)
-        run: rustfmt --check --edition 2021 tests/stage043_security.rs src/omas_server.rs src/omat_server.rs src/bin/ocaf-omas-server.rs src/bin/ocaf-omat-server.rs src/stage043_signed_manifest.rs tests/stage043_signed_manifest.rs
+        run: rustfmt --check --edition 2021 tests/stage043_security.rs src/omas_server.rs src/omat_server.rs src/bin/ocaf-omas-server.rs src/bin/ocaf-omat-server.rs src/stage043_signed_manifest.rs tests/stage043_signed_manifest.rs src/stage043_store.rs tests/stage043_persistence.rs
       - name: Stage 0.43 Clippy
         run: cargo clippy --locked --no-default-features --test stage043_security -- -D warnings
