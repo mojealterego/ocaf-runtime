@@ -92,7 +92,7 @@ pub struct OmasHealth {
 #[derive(Clone)]
 pub struct OmasServer {
     config: OmasServerConfig,
-    registered: Arc<Mutex<HashSet<String>>>,
+    registered: Arc<Mutex<HashSet<(String, String)>>>,
     requests: Arc<Mutex<HashSet<String>>>,
 }
 
@@ -128,15 +128,23 @@ impl OmasServer {
         if req.request_id.is_empty() || req.request_id.len() > 128 { return denied("invalid_request_id"); }
         if req.agent_id.is_empty() || req.agent_id.len() > 128 || !req.agent_id.is_ascii() { return denied("invalid_agent_id"); }
         if !crate::omas_policy::safe_key(&req.tenant) || req.tenant.contains('/') { return denied("invalid_tenant"); }
-        if req.manifest_digest.is_empty() || !req.manifest_digest.starts_with("sha256:") { return denied("missing_manifest_digest"); }
+        if req.manifest_digest.strip_prefix("sha256:").is_none_or(|digest|
+            digest.len() != 64 || !digest.bytes().all(|b| b.is_ascii_hexdigit())
+        ) { return denied("invalid_manifest_digest"); }
+        if req.declared_state != "STAGED" && req.declared_state != "DRAFT" && req.declared_state != "ACTIVE" {
+            return denied("invalid_declared_state");
+        }
         if req.ostc_enabled || req.source_access != "disabled" { return denied("ostc_disabled_source_access_denied"); }
         if req.declared_state == "ACTIVE" || req.readiness { return denied("active_denied_ostc_disabled"); }
         let mut requests = match self.requests.lock() { Ok(lock) => lock, Err(_) => return denied("server_state_unavailable") };
         if !requests.insert(req.request_id.clone()) { return denied("replay_request_id"); }
         drop(requests);
         let mut registered = match self.registered.lock() { Ok(lock) => lock, Err(_) => return denied("server_state_unavailable") };
-        if registered.len() >= self.config.max_agents as usize && !registered.contains(&req.agent_id) { return denied("agent_capacity_exhausted"); }
-        registered.insert(req.agent_id.clone());
+        let identity = (req.tenant.clone(), req.agent_id.clone());
+        if registered.len() >= self.config.max_agents as usize && !registered.contains(&identity) {
+            return denied("agent_capacity_exhausted");
+        }
+        registered.insert(identity);
         AdmissionDecision { request_id: req.request_id, agent_id: req.agent_id, admitted: true, lifecycle: "STAGED".into(), reason: "staged_registration_admitted".into() }
     }
 }
@@ -144,7 +152,7 @@ impl OmasServer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    fn req(id: &str) -> AgentRegistrationRequest { AgentRegistrationRequest { request_id: id.into(), agent_id: "OCAF-AGENT-001".into(), tenant: "tenant_a".into(), manifest_digest: "sha256:abc".into(), declared_state: "STAGED".into(), readiness: false, ostc_enabled: false, source_access: "disabled".into() } }
+    fn req(id: &str) -> AgentRegistrationRequest { AgentRegistrationRequest { request_id: id.into(), agent_id: "OCAF-AGENT-001".into(), tenant: "tenant_a".into(), manifest_digest: format!("sha256:{}", "a".repeat(64)), declared_state: "STAGED".into(), readiness: false, ostc_enabled: false, source_access: "disabled".into() } }
     #[test] fn config_keeps_ostc_and_active_closed() { assert!(OmasServerConfig::default().validate().is_ok()); }
     #[test] fn staged_registration_is_admitted() { let s=OmasServer::new(OmasServerConfig::default()).unwrap(); assert!(s.admit_registration(req("r1")).admitted); }
     #[test] fn fake_ready_active_is_denied() { let s=OmasServer::new(OmasServerConfig::default()).unwrap(); let mut r=req("r2"); r.readiness=true; r.declared_state="ACTIVE".into(); assert!(!s.admit_registration(r).admitted); }
