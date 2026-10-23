@@ -75,5 +75,12 @@ pub fn admit_signed_registration_for_sender(
     {
         return Err(SignedAgentError::Binding);
     }
-    admit_signed_registration(server, request, operation, trusted_public_key, replay_db, now)
+    admit_signed_registration(
+        server,
+        request,
+        operation,
+        trusted_public_key,
+        replay_db,
+        now,
+    )
 }
