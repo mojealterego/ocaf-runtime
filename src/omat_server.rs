@@ -134,6 +134,10 @@ pub enum OmatError {
 #[derive(Debug, Clone, Default)]
 pub struct OmatRegistry {
     tools: BTreeMap<(String, String), ToolManifest>,
+    // This is a server-owned trust gate. A ToolCall's ostc_enabled flag is
+    // untrusted client input and must never activate execution authority.
+    // Only a future verified OSTc authority may set this (not implemented).
+    trusted_ostc_attested: bool,
 }
 
 impl OmatRegistry {
@@ -213,6 +217,9 @@ impl OmatRegistry {
             compile_schema(&tool.input_schema).map_err(|_| OmatError::InvalidArguments)?;
         if !validator.is_valid(&call.arguments) {
             return Err(OmatError::InvalidArguments);
+        }
+        if !self.trusted_ostc_attested {
+            return Err(OmatError::SourceAccessDenied);
         }
         Ok(ToolReceipt {
             protocol_version: OMAT_PROTOCOL_VERSION.into(),
@@ -359,7 +366,7 @@ mod tests {
     }
 
     #[test]
-    fn registers_lists_and_admits_tenant_scoped_tool() {
+    fn registers_lists_and_rejects_spoofed_ostc_tenant_scoped_tool() {
         let mut registry = OmatRegistry::default();
         assert!(registry
             .register(manifest(ToolRisk::ReadOnly))
@@ -367,8 +374,8 @@ mod tests {
             .starts_with("sha256:"));
         assert_eq!(registry.list_for("tenant-a", &policy()), vec!["echo"]);
         assert_eq!(
-            registry.admit(&call(), &policy()).unwrap().decision,
-            "ALLOW_BOUNDED"
+            registry.admit(&call(), &policy()),
+            Err(OmatError::SourceAccessDenied)
         );
     }
 
@@ -414,7 +421,7 @@ mod tests {
         registry.register(manifest(ToolRisk::ReadOnly)).unwrap();
         assert_eq!(
             registry.execute(&call(), &policy()),
-            Err(OmatError::ExecutorUnavailable)
+            Err(OmatError::SourceAccessDenied)
         );
     }
 
