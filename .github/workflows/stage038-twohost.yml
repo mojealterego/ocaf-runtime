@@ -402,6 +402,8 @@ jobs:
               category = "RPC_REPLY_" + match.group(1).upper()
           elif "RPC request could not be authenticated" in raw:
               category = "RPC_AUTH_OR_POLICY_REJECTED"
+          elif "remote RPC rejected" in raw:
+              category = "RPC_GATEWAY_REJECTED"
           elif "RPC configuration or runtime unavailable" in raw:
               category = "RPC_UNAVAILABLE"
           else:
