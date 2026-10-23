@@ -57,7 +57,8 @@ static int guest_bpf_socket_filter(void) {
     if(ok==0 && info.id>0){
         char marker[96];
         int length=snprintf(marker,sizeof(marker),"OCAF039_GUEST_BPF_SOCKET_FILTER_ID=%u\n",info.id);
-        if(length>0 && (size_t)length<sizeof(marker))write(1,marker,(size_t)length);
+        if(length<=0 || (size_t)length>=sizeof(marker) ||
+           write(1,marker,(size_t)length)!=(ssize_t)length)ok=-1;
     }
     close(sock);
     close(program_fd);

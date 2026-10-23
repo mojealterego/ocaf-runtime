@@ -161,10 +161,10 @@ def execute(*, firecracker:Path, firecracker_sha:str, jailer:Path, jailer_sha:st
             fc._copy_pinned(image,root/"guest"/"rootfs.ext4",digest)
             config=jailed_network_config(tenant,taps[tenant])
             config_file=root/"vmconfig.json"
-            fd=os.open(config_file,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+            fd=os.open(config_file,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o444)
             with os.fdopen(fd,"w",encoding="utf-8") as sink:
                 json.dump(config,sink,separators=(",",":"))
-                sink.flush();os.fsync(sink.fileno());os.fchmod(sink.fileno(),0o600)
+                sink.flush();os.fsync(sink.fileno());os.fchmod(sink.fileno(),0o444)
             # TAP ownership is intentionally restricted to the VMM's dropped
             # UID; it is not an internet bridge or all-host routing.
             gn._run(tap_setup_command(taps[tenant],gn.TARGET[tenant]["host"],uid))

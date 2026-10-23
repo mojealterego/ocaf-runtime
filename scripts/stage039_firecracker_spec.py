@@ -17,6 +17,7 @@ import stage039_microvm_gate as gate
 
 GUEST_KERNEL = "/guest/vmlinux.bin"
 GUEST_ROOTFS = "/guest/rootfs.ext4"
+BASE_BOOT_ARGS = "console=ttyS0 reboot=k panic=1 pci=off root=/dev/vda ro"
 
 
 def enable_guest_entropy_for_wasi(config:dict)->dict:
@@ -31,9 +32,12 @@ def enable_guest_entropy_for_wasi(config:dict)->dict:
         or not isinstance(config.get("machine-config"),dict)
         or type(config["machine-config"].get("vcpu_count")) is not int
         or config["machine-config"]["vcpu_count"]<1
-        or config.get("entropy") is not None):
+        or config.get("entropy") is not None
+        or not isinstance(config.get("boot-source"),dict)
+        or config["boot-source"].get("boot_args") != BASE_BOOT_ARGS):
         raise ValueError("cannot attach virtio-rng to unreviewed networked guest configuration")
-    return {**config,"entropy":{}}
+    return {**config,"entropy":{},"boot-source":{
+        **config["boot-source"],"boot_args":BASE_BOOT_ARGS+" init=/ocaf-wasi-init"}}
 
 
 def build(manifest_raw: bytes, approved_root: Path, jailer_root: Path) -> dict:
@@ -63,7 +67,7 @@ def build(manifest_raw: bytes, approved_root: Path, jailer_root: Path) -> dict:
     config = {
         "boot-source": {
             "kernel_image_path": GUEST_KERNEL,
-            "boot_args": "console=ttyS0 reboot=k panic=1 pci=off root=/dev/vda ro",
+            "boot_args": BASE_BOOT_ARGS,
         },
         "drives": [{
             "drive_id": "rootfs",

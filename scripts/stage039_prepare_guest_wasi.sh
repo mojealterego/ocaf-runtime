@@ -62,9 +62,12 @@ done < <(ldd "$WASMTIME")
 # Replace only inside this disposable, digest-bound private copy.
 rm -f "$WORK/mount/sbin/init"
 install -m 0555 "$WORK/ocaf-wasi-init" "$WORK/mount/sbin/init"
+install -m 0555 "$WORK/ocaf-wasi-init" "$WORK/mount/ocaf-wasi-init"
 install -m 0444 "$WORK/hello.wasm" "$WORK/mount/opt/ocaf/hello.wasm"
 sync
 umount "$WORK/mount"
+debugfs -R "dump /ocaf-wasi-init $WORK/verified-guest-init" "$WORK/guest-rootfs-wasi.ext4" >/dev/null 2>&1
+cmp "$WORK/ocaf-wasi-init" "$WORK/verified-guest-init"
 install -o root -g root -m 0444 "$WORK/guest-rootfs-wasi.ext4" "$APPROVED/guest_rootfs_wasi"
 sha256sum "$APPROVED/guest_rootfs_wasi" > "$WORK/rootfs.sha256"
 sha256sum "$WORK/hello.wasm" > "$WORK/wasm.sha256"

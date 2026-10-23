@@ -61,6 +61,7 @@ class FirecrackerSpecTests(unittest.TestCase):
         self.assertNotIn("entropy",original)
         spec=cfg.enable_guest_entropy_for_wasi(original)
         self.assertIn("entropy",spec)
+        self.assertTrue(spec["boot-source"]["boot_args"].endswith(" init=/ocaf-wasi-init"))
         self.assertEqual(spec["entropy"],{})
         self.assertEqual(spec["network-interfaces"],[])
         self.assertNotIn("entropy",original)
