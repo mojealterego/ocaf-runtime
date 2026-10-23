@@ -250,7 +250,10 @@ mod tests {
         for i in 0..200 {
             let mut blocked = req(&format!("blocked-{i}"));
             blocked.agent_id = "OCAF-AGENT-002".into();
-            assert_eq!(server.admit_registration(blocked).reason, "agent_capacity_exhausted");
+            assert_eq!(
+                server.admit_registration(blocked).reason,
+                "agent_capacity_exhausted"
+            );
         }
         assert_eq!(server.requests.lock().unwrap().len(), 1);
     }
