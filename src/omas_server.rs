@@ -162,14 +162,16 @@ impl OmasServer {
         if req.declared_state == "ACTIVE" || req.readiness {
             return denied("active_denied_ostc_disabled");
         }
+        // Both locks are held until the admission transaction completes.
+        // Rejected capacity requests must never consume replay IDs or create
+        // an unbounded in-memory replay cache.
         let mut requests = match self.requests.lock() {
             Ok(lock) => lock,
             Err(_) => return denied("server_state_unavailable"),
         };
-        if !requests.insert(req.request_id.clone()) {
+        if requests.contains(&req.request_id) {
             return denied("replay_request_id");
         }
-        drop(requests);
         let mut registered = match self.registered.lock() {
             Ok(lock) => lock,
             Err(_) => return denied("server_state_unavailable"),
@@ -178,6 +180,11 @@ impl OmasServer {
         if registered.len() >= self.config.max_agents as usize && !registered.contains(&identity) {
             return denied("agent_capacity_exhausted");
         }
+        let max_requests = (self.config.max_agents as usize).saturating_mul(16);
+        if requests.len() >= max_requests {
+            return denied("replay_capacity_exhausted");
+        }
+        requests.insert(req.request_id.clone());
         registered.insert(identity);
         AdmissionDecision {
             request_id: req.request_id,
@@ -234,6 +241,20 @@ mod tests {
         r.source_access = "granted".into();
         assert!(!s.admit_registration(r).admitted);
     }
+    #[test]
+    fn rejected_capacity_requests_do_not_grow_replay_set() {
+        let mut config = OmasServerConfig::default();
+        config.max_agents = 1;
+        let server = OmasServer::new(config).unwrap();
+        assert!(server.admit_registration(req("first")).admitted);
+        for i in 0..200 {
+            let mut blocked = req(&format!("blocked-{i}"));
+            blocked.agent_id = "OCAF-AGENT-002".into();
+            assert_eq!(server.admit_registration(blocked).reason, "agent_capacity_exhausted");
+        }
+        assert_eq!(server.requests.lock().unwrap().len(), 1);
+    }
+
     #[test]
     fn capacity_denies_a_new_agent() {
         let mut c = OmasServerConfig::default();
