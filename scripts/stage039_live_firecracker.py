@@ -310,7 +310,7 @@ def await_real_guest_wasi_execution(proc,serial_path:Path,*,seconds:int)->dict:
             try:
                 return guest_wasi.verify_console(tail.encode("utf-8"))
             except guest_wasi.GuestWasiError as exc:
-                raise LiveFirecrackerError("invalid real guest WASI zero-exit proof") from exc
+                raise LiveFirecrackerError("invalid real guest WASI zero-exit proof: " + str(exc)) from exc
         time.sleep(.25)
     raise LiveFirecrackerError("real guest WASI fd_write deadline expired; console tail: "+repr(tail[-800:]))
 
@@ -453,10 +453,12 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
                 time.sleep(0.25)
         if require_guest_wasi:
             try:
-                serial_tail = _bounded_console_evidence(log)[-8192:]
+                serial = _bounded_console_evidence(log)
+                markers = [line[-240:] for line in serial.splitlines()
+                           if "OCAF039_" in line or "Linux version " in line][:40]
             except (OSError, LiveFirecrackerError):
-                serial_tail = "serial unavailable"
-            print("OCAF039_WASI_FAILURE_SERIAL_TAIL=" + json.dumps(serial_tail), file=sys.stderr)
+                markers = ["serial unavailable"]
+            print("OCAF039_WASI_FAILURE_MARKERS=" + json.dumps(markers), file=sys.stderr)
         raise LiveFirecrackerError(
             "no matching real jailed Firecracker API+guest kernel+cgroup proof "
             f"within timeout; last check: {last_rejection}")

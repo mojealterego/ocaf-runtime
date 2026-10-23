@@ -56,7 +56,7 @@ static int guest_bpf_socket_filter(void) {
     int ok=(int)syscall(SYS_bpf,BPF_OBJ_GET_INFO_BY_FD,&query,sizeof(query));
     if(ok==0 && info.id>0){
         char marker[96];
-        int length=snprintf(marker,sizeof(marker),"OCAF039_GUEST_BPF_SOCKET_FILTER_ID=%u\n",info.id);
+        int length=snprintf(marker,sizeof(marker),"\nOCAF039_GUEST_BPF_SOCKET_FILTER_ID=%u\n",info.id);
         if(length<=0 || (size_t)length>=sizeof(marker) ||
            write(1,marker,(size_t)length)!=(ssize_t)length)ok=-1;
     }
@@ -109,13 +109,13 @@ static int seed_guest_crng(void) {
 int main(void) {
     int fd=open("/dev/console",O_WRONLY|O_CLOEXEC);
     if(fd>=0){dup2(fd,1); dup2(fd,2);if(fd>2)close(fd);}
-    output("OCAF039_GUEST_PID1_BOOTED\n");
+    output("\nOCAF039_GUEST_PID1_BOOTED\n");
     /* Nonblocking probe distinguishes an unseeded 4.14 guest kernel from
        normal Wasmtime startup. No RNG bytes are printed or persisted. */
     unsigned char entropy_probe[16];
     ssize_t gr=getrandom(entropy_probe,sizeof(entropy_probe),GRND_NONBLOCK);
     if(gr==(ssize_t)sizeof(entropy_probe)){
-        output("OCAF039_GUEST_CRNG_READY\n");
+        output("\nOCAF039_GUEST_CRNG_READY\n");
     }else{
         output("OCAF039_GUEST_CRNG_NOT_INITIALIZED\n");
         if(seed_guest_crng()!=0){
@@ -129,7 +129,7 @@ int main(void) {
             output("OCAF039_GUEST_CRNG_STILL_UNAVAILABLE\n");
             fail();
         }
-        output("OCAF039_GUEST_CRNG_READY_AFTER_CPU_RNG\n");
+        output("\nOCAF039_GUEST_CRNG_READY_AFTER_CPU_RNG\n");
     }
     memset(entropy_probe,0,sizeof(entropy_probe));
     if(guest_bpf_socket_filter()!=0){
@@ -166,7 +166,8 @@ int main(void) {
         if(count)output(response);
         fail();
     }
+    output("\n");
     output(response);
-    output("OCAF039_GUEST_WASI_EXECUTION_PASS_EXIT_0\n");
+    output("\nOCAF039_GUEST_WASI_EXECUTION_PASS_EXIT_0\n");
     for(;;)pause();
 }

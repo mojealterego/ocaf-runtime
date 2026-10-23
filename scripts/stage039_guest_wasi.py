@@ -52,7 +52,11 @@ def verify_console(raw:bytes)->dict:
         or b"OCAF039_GUEST_CRNG_STILL_UNAVAILABLE" in raw
         or raw.count(b"Linux version ")!=1
         or not 0<=linux<boot<crng[0][1]<bpf_ids[0].start()<output<done):
-        raise GuestWasiError("genuine bounded Linux guest PID1 WASIp1 exit/CRNG proof absent")
+        raise GuestWasiError(
+            "genuine bounded Linux guest PID1 WASIp1 exit/CRNG proof absent; "
+            f"counts linux={raw.count(b'Linux version ')} pid1={raw.count(INIT)} "
+            f"crng={sum(raw.count(m) for m in RNG_READY)} bpf={len(bpf_ids)} "
+            f"output={raw.count(OUTPUT)} pass={raw.count(PASS)}")
     return {
         "guest_pid1_started":True,"wasi_preview1_fd_write_observed_inside_guest":True,
         "guest_wasmtime_child_exited_zero":True,
