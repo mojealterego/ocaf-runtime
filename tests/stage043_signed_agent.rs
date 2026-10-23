@@ -102,3 +102,24 @@ fn unsigned_or_downgraded_rpc_sender_is_rejected() {
         Err(SignedAgentError::Signature)
     ));
 }
+
+#[test]
+fn authenticated_transport_sender_must_match_signed_sender() {
+    let key = PKey::generate_ed25519().unwrap();
+    let public: [u8; 32] = key.raw_public_key().unwrap().try_into().unwrap();
+    let tmp = tempfile::tempdir().unwrap();
+    let db = tmp.path().join("replay.sqlite");
+    Connection::open(&db).unwrap().close().unwrap();
+    let server = OmasServer::new(OmasServerConfig::default()).unwrap();
+    let req = request();
+    let signed = sign(&req, &key);
+    assert!(matches!(
+        admit_signed_registration_for_sender(
+            &server, req.clone(), &signed, "attacker-node", &public, &db, NOW
+        ),
+        Err(SignedAgentError::Binding)
+    ));
+    assert!(admit_signed_registration_for_sender(
+        &server, req, &signed, "authenticated-agent-node", &public, &db, NOW
+    ).unwrap().admitted);
+}
