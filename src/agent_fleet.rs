@@ -27,6 +27,23 @@ pub enum AgentLifecycle {
     Quarantined,
 }
 
+#[cfg(test)]
+impl AgentLifecycle {
+    fn rank(self) -> u8 {
+        match self {
+            Self::Draft => 0,
+            Self::Validated => 1,
+            Self::Built => 2,
+            Self::Tested => 3,
+            Self::Signed => 4,
+            Self::Registered => 5,
+            Self::Staged => 6,
+            Self::Active => 7,
+            Self::Quarantined => 255,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AgentIdentity {
