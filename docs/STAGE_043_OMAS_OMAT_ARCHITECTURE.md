@@ -9,7 +9,7 @@ Canonical names are taken from `02_SPECYFIKACJA_BUDOWY_AGENTOW_OCAF_RUNTIME_OMAs
 - **OMAs — OmniAgent Server (agent server)**: agent identities, registration, tenant-scoped discovery, signed agent manifests, lifecycle, authorization, agent-to-agent delegation and auditable decisions.
 - **OMAt — OmniAgent Tools (tool server)**: tenant-scoped tool registry, signed/versioned tool manifests, JSON input/output schema verification, capability/risk authorization, bounded invocation, sandbox executor binding and verifiable receipts.
 
-The primary internal transport is native OCAF/Zenoh. MCP may exist **only as an optional, explicitly authorized edge compatibility adapter**, not a required internal dependency or trusted authority. Never silently trust imported tool metadata or schemas. Preserve the original MCP requirements in the historical ROADMAP record and map their outcomes to OMAt; do not renumber or delete stage 0.43.
+The primary internal transport is native OCAF/Zenoh. There is **no native MCP protocol dependency or presumed MCP wire compatibility**. An optional external protocol adapter would require a separate, explicitly authorized decision and its own security boundary; it is not part of stage 0.43 acceptance. Never silently trust imported tool metadata or schemas. Preserve the original MCP requirements in the historical ROADMAP record and map their outcomes to OMAt; do not renumber or delete stage 0.43.
 
 ## Current code evidence (2026-10-23; inspected on main)
 
