@@ -57,3 +57,23 @@ pub fn admit_signed_registration(
     )?;
     Ok(server.admit_registration(request))
 }
+
+/// Admission boundary for a transport that has independently authenticated
+/// the peer identity. The sender string MUST come from the transport session,
+/// not from client JSON or the signed envelope.
+pub fn admit_signed_registration_for_sender(
+    server: &OmasServer,
+    request: AgentRegistrationRequest,
+    operation: &SignedOperation,
+    authenticated_rpc_sender: &str,
+    trusted_public_key: &[u8; 32],
+    replay_db: &Path,
+    now: i64,
+) -> Result<AdmissionDecision, SignedAgentError> {
+    if authenticated_rpc_sender.is_empty()
+        || operation.rpc_sender.as_deref() != Some(authenticated_rpc_sender)
+    {
+        return Err(SignedAgentError::Binding);
+    }
+    admit_signed_registration(server, request, operation, trusted_public_key, replay_db, now)
+}
