@@ -51,9 +51,21 @@ fn policy(tenant: &str) -> OmatPolicy {
 #[test]
 fn omas_tracks_the_same_agent_id_in_two_tenants_independently() {
     let server = OmasServer::new(OmasServerConfig::default()).unwrap();
-    assert!(server.admit_registration(agent("tenant_a", "request-a")).admitted);
-    assert!(server.admit_registration(agent("tenant_b", "request-b")).admitted);
-    assert_eq!(server.health().registered_agents, 2, "tenant identities must not alias");
+    assert!(
+        server
+            .admit_registration(agent("tenant_a", "request-a"))
+            .admitted
+    );
+    assert!(
+        server
+            .admit_registration(agent("tenant_b", "request-b"))
+            .admitted
+    );
+    assert_eq!(
+        server.health().registered_agents,
+        2,
+        "tenant identities must not alias"
+    );
 }
 
 #[test]
@@ -83,10 +95,19 @@ fn omat_supports_same_tool_id_for_distinct_tenants() {
     let a = registry.register(tool("tenant_a", ToolRisk::ReadOnly));
     let b = registry.register(tool("tenant_b", ToolRisk::ReadOnly));
     assert!(a.is_ok());
-    assert!(b.is_ok(), "a tenant must not be blocked by another tenant's name");
+    assert!(
+        b.is_ok(),
+        "a tenant must not be blocked by another tenant's name"
+    );
     assert_eq!(registry.len(), 2);
-    assert_eq!(registry.list_for("tenant_a", &policy("tenant_a")), vec!["echo"]);
-    assert_eq!(registry.list_for("tenant_b", &policy("tenant_b")), vec!["echo"]);
+    assert_eq!(
+        registry.list_for("tenant_a", &policy("tenant_a")),
+        vec!["echo"]
+    );
+    assert_eq!(
+        registry.list_for("tenant_b", &policy("tenant_b")),
+        vec!["echo"]
+    );
     assert!(registry.get_for("tenant_a", "echo").is_some());
     assert!(registry.get_for("tenant_b", "echo").is_some());
     assert!(registry.get_for("tenant_c", "echo").is_none());
@@ -95,20 +116,30 @@ fn omat_supports_same_tool_id_for_distinct_tenants() {
 #[test]
 fn omat_hides_disallowed_side_effect_tools_from_discovery() {
     let mut registry = OmatRegistry::default();
-    registry.register(tool("tenant_a", ToolRisk::ExternalSideEffect)).unwrap();
-    assert!(registry.list_for("tenant_a", &policy("tenant_a")).is_empty());
+    registry
+        .register(tool("tenant_a", ToolRisk::ExternalSideEffect))
+        .unwrap();
+    assert!(registry
+        .list_for("tenant_a", &policy("tenant_a"))
+        .is_empty());
 }
 
 #[test]
 fn omat_does_not_claim_ready_without_an_executor() {
     let mut registry = OmatRegistry::default();
-    registry.register(tool("tenant_a", ToolRisk::ReadOnly)).unwrap();
+    registry
+        .register(tool("tenant_a", ToolRisk::ReadOnly))
+        .unwrap();
     assert!(!health("omat-local", &registry).ready);
 }
 
 #[test]
 fn omat_duplicate_manifest_remains_denied_within_a_tenant() {
     let mut registry = OmatRegistry::default();
-    registry.register(tool("tenant_a", ToolRisk::ReadOnly)).unwrap();
-    assert!(registry.register(tool("tenant_a", ToolRisk::ReadOnly)).is_err());
+    registry
+        .register(tool("tenant_a", ToolRisk::ReadOnly))
+        .unwrap();
+    assert!(registry
+        .register(tool("tenant_a", ToolRisk::ReadOnly))
+        .is_err());
 }

@@ -176,7 +176,8 @@ impl OmatRegistry {
                     && tool.timeout_ms <= policy.max_timeout_ms
                     && tool.max_output_bytes > 0
                     && tool.max_output_bytes <= policy.max_output_bytes
-                    && (tool.risk != ToolRisk::ExternalSideEffect || policy.allow_external_side_effects)
+                    && (tool.risk != ToolRisk::ExternalSideEffect
+                        || policy.allow_external_side_effects)
                     && tool
                         .capabilities
                         .iter()
@@ -199,13 +200,17 @@ impl OmatRegistry {
         if policy.tenant_id != call.tenant_id {
             return Err(OmatError::TenantMismatch);
         }
-        let tool = self.get_for(&call.tenant_id, &call.tool_id).ok_or(OmatError::ToolNotFound)?;
+        let tool = self
+            .get_for(&call.tenant_id, &call.tool_id)
+            .ok_or(OmatError::ToolNotFound)?;
         authorize(tool, call, policy)?;
-        let encoded = serde_json::to_vec(&call.arguments).map_err(|_| OmatError::InvalidArguments)?;
+        let encoded =
+            serde_json::to_vec(&call.arguments).map_err(|_| OmatError::InvalidArguments)?;
         if encoded.len() > MAX_ARGUMENT_BYTES {
             return Err(OmatError::ArgumentsTooLarge);
         }
-        let validator = compile_schema(&tool.input_schema).map_err(|_| OmatError::InvalidArguments)?;
+        let validator =
+            compile_schema(&tool.input_schema).map_err(|_| OmatError::InvalidArguments)?;
         if !validator.is_valid(&call.arguments) {
             return Err(OmatError::InvalidArguments);
         }
@@ -245,7 +250,10 @@ pub fn health(server_id: &str, registry: &OmatRegistry) -> OmatHealth {
 }
 
 fn authorize(tool: &ToolManifest, call: &ToolCall, policy: &OmatPolicy) -> Result<(), OmatError> {
-    if !tool.enabled || tool.tenant_id != call.tenant_id || !policy.allowed_tools.contains(&tool.tool_id) {
+    if !tool.enabled
+        || tool.tenant_id != call.tenant_id
+        || !policy.allowed_tools.contains(&tool.tool_id)
+    {
         return Err(OmatError::ToolDenied);
     }
     if !tool
@@ -288,7 +296,9 @@ fn validate_manifest(tool: &ToolManifest) -> Result<(), OmatError> {
 fn validate_id(value: &str) -> Result<(), OmatError> {
     if value.is_empty()
         || value.len() > MAX_ID_BYTES
-        || !value.bytes().all(|byte| byte.is_ascii_alphanumeric() || b"._:-".contains(&byte))
+        || !value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || b"._:-".contains(&byte))
     {
         return Err(OmatError::InvalidIdentifier);
     }
@@ -351,9 +361,15 @@ mod tests {
     #[test]
     fn registers_lists_and_admits_tenant_scoped_tool() {
         let mut registry = OmatRegistry::default();
-        assert!(registry.register(manifest(ToolRisk::ReadOnly)).unwrap().starts_with("sha256:"));
+        assert!(registry
+            .register(manifest(ToolRisk::ReadOnly))
+            .unwrap()
+            .starts_with("sha256:"));
         assert_eq!(registry.list_for("tenant-a", &policy()), vec!["echo"]);
-        assert_eq!(registry.admit(&call(), &policy()).unwrap().decision, "ALLOW_BOUNDED");
+        assert_eq!(
+            registry.admit(&call(), &policy()).unwrap().decision,
+            "ALLOW_BOUNDED"
+        );
     }
 
     #[test]
@@ -362,7 +378,10 @@ mod tests {
         registry.register(manifest(ToolRisk::ReadOnly)).unwrap();
         let mut request = call();
         request.tenant_id = "tenant-b".into();
-        assert_eq!(registry.admit(&request, &policy()), Err(OmatError::TenantMismatch));
+        assert_eq!(
+            registry.admit(&request, &policy()),
+            Err(OmatError::TenantMismatch)
+        );
     }
 
     #[test]
@@ -371,21 +390,32 @@ mod tests {
         registry.register(manifest(ToolRisk::ReadOnly)).unwrap();
         let mut request = call();
         request.ostc_enabled = false;
-        assert_eq!(registry.admit(&request, &policy()), Err(OmatError::SourceAccessDenied));
+        assert_eq!(
+            registry.admit(&request, &policy()),
+            Err(OmatError::SourceAccessDenied)
+        );
     }
 
     #[test]
     fn side_effects_need_explicit_policy() {
         let mut registry = OmatRegistry::default();
-        registry.register(manifest(ToolRisk::ExternalSideEffect)).unwrap();
-        assert_eq!(registry.admit(&call(), &policy()), Err(OmatError::SideEffectDenied));
+        registry
+            .register(manifest(ToolRisk::ExternalSideEffect))
+            .unwrap();
+        assert_eq!(
+            registry.admit(&call(), &policy()),
+            Err(OmatError::SideEffectDenied)
+        );
     }
 
     #[test]
     fn executor_fails_closed_after_admission() {
         let mut registry = OmatRegistry::default();
         registry.register(manifest(ToolRisk::ReadOnly)).unwrap();
-        assert_eq!(registry.execute(&call(), &policy()), Err(OmatError::ExecutorUnavailable));
+        assert_eq!(
+            registry.execute(&call(), &policy()),
+            Err(OmatError::ExecutorUnavailable)
+        );
     }
 
     #[test]

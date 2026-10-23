@@ -39,7 +39,7 @@ jobs:
         run: |
           cargo test --locked --no-default-features omas_server::tests
           cargo test --locked --no-default-features omat_server::tests
-      - name: Rust formatting
-        run: cargo fmt --all -- --check
+      - name: Stage 0.43 formatting (other stages have their own global gate)
+        run: rustfmt --check --edition 2021 tests/stage043_security.rs src/omas_server.rs src/omat_server.rs src/bin/ocaf-omas-server.rs src/bin/ocaf-omat-server.rs
       - name: Stage 0.43 Clippy
         run: cargo clippy --locked --no-default-features --test stage043_security -- -D warnings

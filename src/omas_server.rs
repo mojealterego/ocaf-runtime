@@ -45,7 +45,9 @@ impl OmasServerConfig {
             return Err("max_agents outside safe bounds".into());
         }
         if self.ostc_enabled {
-            return Err("OMAs cannot enable OSTc; source protection is a future separate service".into());
+            return Err(
+                "OMAs cannot enable OSTc; source protection is a future separate service".into(),
+            );
         }
         if self.source_access != "disabled" {
             return Err("OMAs source_access must be disabled".into());
@@ -106,7 +108,9 @@ impl OmasServer {
         })
     }
 
-    pub fn config(&self) -> &OmasServerConfig { &self.config }
+    pub fn config(&self) -> &OmasServerConfig {
+        &self.config
+    }
 
     pub fn health(&self) -> OmasHealth {
         let registered_agents = self.registered.lock().map(|g| g.len()).unwrap_or(0);
@@ -122,41 +126,125 @@ impl OmasServer {
 
     pub fn admit_registration(&self, req: AgentRegistrationRequest) -> AdmissionDecision {
         let denied = |reason: &str| AdmissionDecision {
-            request_id: req.request_id.clone(), agent_id: req.agent_id.clone(),
-            admitted: false, lifecycle: "DRAFT".into(), reason: reason.into(),
+            request_id: req.request_id.clone(),
+            agent_id: req.agent_id.clone(),
+            admitted: false,
+            lifecycle: "DRAFT".into(),
+            reason: reason.into(),
         };
-        if req.request_id.is_empty() || req.request_id.len() > 128 { return denied("invalid_request_id"); }
-        if req.agent_id.is_empty() || req.agent_id.len() > 128 || !req.agent_id.is_ascii() { return denied("invalid_agent_id"); }
-        if !crate::omas_policy::safe_key(&req.tenant) || req.tenant.contains('/') { return denied("invalid_tenant"); }
-        if req.manifest_digest.strip_prefix("sha256:").is_none_or(|digest|
-            digest.len() != 64 || !digest.bytes().all(|b| b.is_ascii_hexdigit())
-        ) { return denied("invalid_manifest_digest"); }
-        if req.declared_state != "STAGED" && req.declared_state != "DRAFT" && req.declared_state != "ACTIVE" {
+        if req.request_id.is_empty() || req.request_id.len() > 128 {
+            return denied("invalid_request_id");
+        }
+        if req.agent_id.is_empty() || req.agent_id.len() > 128 || !req.agent_id.is_ascii() {
+            return denied("invalid_agent_id");
+        }
+        if !crate::omas_policy::safe_key(&req.tenant) || req.tenant.contains('/') {
+            return denied("invalid_tenant");
+        }
+        if req
+            .manifest_digest
+            .strip_prefix("sha256:")
+            .is_none_or(|digest| {
+                digest.len() != 64 || !digest.bytes().all(|b| b.is_ascii_hexdigit())
+            })
+        {
+            return denied("invalid_manifest_digest");
+        }
+        if req.declared_state != "STAGED"
+            && req.declared_state != "DRAFT"
+            && req.declared_state != "ACTIVE"
+        {
             return denied("invalid_declared_state");
         }
-        if req.ostc_enabled || req.source_access != "disabled" { return denied("ostc_disabled_source_access_denied"); }
-        if req.declared_state == "ACTIVE" || req.readiness { return denied("active_denied_ostc_disabled"); }
-        let mut requests = match self.requests.lock() { Ok(lock) => lock, Err(_) => return denied("server_state_unavailable") };
-        if !requests.insert(req.request_id.clone()) { return denied("replay_request_id"); }
+        if req.ostc_enabled || req.source_access != "disabled" {
+            return denied("ostc_disabled_source_access_denied");
+        }
+        if req.declared_state == "ACTIVE" || req.readiness {
+            return denied("active_denied_ostc_disabled");
+        }
+        let mut requests = match self.requests.lock() {
+            Ok(lock) => lock,
+            Err(_) => return denied("server_state_unavailable"),
+        };
+        if !requests.insert(req.request_id.clone()) {
+            return denied("replay_request_id");
+        }
         drop(requests);
-        let mut registered = match self.registered.lock() { Ok(lock) => lock, Err(_) => return denied("server_state_unavailable") };
+        let mut registered = match self.registered.lock() {
+            Ok(lock) => lock,
+            Err(_) => return denied("server_state_unavailable"),
+        };
         let identity = (req.tenant.clone(), req.agent_id.clone());
         if registered.len() >= self.config.max_agents as usize && !registered.contains(&identity) {
             return denied("agent_capacity_exhausted");
         }
         registered.insert(identity);
-        AdmissionDecision { request_id: req.request_id, agent_id: req.agent_id, admitted: true, lifecycle: "STAGED".into(), reason: "staged_registration_admitted".into() }
+        AdmissionDecision {
+            request_id: req.request_id,
+            agent_id: req.agent_id,
+            admitted: true,
+            lifecycle: "STAGED".into(),
+            reason: "staged_registration_admitted".into(),
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    fn req(id: &str) -> AgentRegistrationRequest { AgentRegistrationRequest { request_id: id.into(), agent_id: "OCAF-AGENT-001".into(), tenant: "tenant_a".into(), manifest_digest: format!("sha256:{}", "a".repeat(64)), declared_state: "STAGED".into(), readiness: false, ostc_enabled: false, source_access: "disabled".into() } }
-    #[test] fn config_keeps_ostc_and_active_closed() { assert!(OmasServerConfig::default().validate().is_ok()); }
-    #[test] fn staged_registration_is_admitted() { let s=OmasServer::new(OmasServerConfig::default()).unwrap(); assert!(s.admit_registration(req("r1")).admitted); }
-    #[test] fn fake_ready_active_is_denied() { let s=OmasServer::new(OmasServerConfig::default()).unwrap(); let mut r=req("r2"); r.readiness=true; r.declared_state="ACTIVE".into(); assert!(!s.admit_registration(r).admitted); }
-    #[test] fn replay_is_denied() { let s=OmasServer::new(OmasServerConfig::default()).unwrap(); assert!(s.admit_registration(req("r3")).admitted); assert_eq!(s.admit_registration(req("r3")).reason,"replay_request_id"); }
-    #[test] fn source_access_is_denied() { let s=OmasServer::new(OmasServerConfig::default()).unwrap(); let mut r=req("r4"); r.source_access="granted".into(); assert!(!s.admit_registration(r).admitted); }
-    #[test] fn capacity_denies_a_new_agent() { let mut c=OmasServerConfig::default(); c.max_agents=1; let s=OmasServer::new(c).unwrap(); assert!(s.admit_registration(req("cap-1")).admitted); let mut second=req("cap-2"); second.agent_id="OCAF-AGENT-002".into(); let decision=s.admit_registration(second); assert!(!decision.admitted); assert_eq!(decision.reason,"agent_capacity_exhausted"); assert_eq!(s.health().registered_agents,1); }
+    fn req(id: &str) -> AgentRegistrationRequest {
+        AgentRegistrationRequest {
+            request_id: id.into(),
+            agent_id: "OCAF-AGENT-001".into(),
+            tenant: "tenant_a".into(),
+            manifest_digest: format!("sha256:{}", "a".repeat(64)),
+            declared_state: "STAGED".into(),
+            readiness: false,
+            ostc_enabled: false,
+            source_access: "disabled".into(),
+        }
+    }
+    #[test]
+    fn config_keeps_ostc_and_active_closed() {
+        assert!(OmasServerConfig::default().validate().is_ok());
+    }
+    #[test]
+    fn staged_registration_is_admitted() {
+        let s = OmasServer::new(OmasServerConfig::default()).unwrap();
+        assert!(s.admit_registration(req("r1")).admitted);
+    }
+    #[test]
+    fn fake_ready_active_is_denied() {
+        let s = OmasServer::new(OmasServerConfig::default()).unwrap();
+        let mut r = req("r2");
+        r.readiness = true;
+        r.declared_state = "ACTIVE".into();
+        assert!(!s.admit_registration(r).admitted);
+    }
+    #[test]
+    fn replay_is_denied() {
+        let s = OmasServer::new(OmasServerConfig::default()).unwrap();
+        assert!(s.admit_registration(req("r3")).admitted);
+        assert_eq!(s.admit_registration(req("r3")).reason, "replay_request_id");
+    }
+    #[test]
+    fn source_access_is_denied() {
+        let s = OmasServer::new(OmasServerConfig::default()).unwrap();
+        let mut r = req("r4");
+        r.source_access = "granted".into();
+        assert!(!s.admit_registration(r).admitted);
+    }
+    #[test]
+    fn capacity_denies_a_new_agent() {
+        let mut c = OmasServerConfig::default();
+        c.max_agents = 1;
+        let s = OmasServer::new(c).unwrap();
+        assert!(s.admit_registration(req("cap-1")).admitted);
+        let mut second = req("cap-2");
+        second.agent_id = "OCAF-AGENT-002".into();
+        let decision = s.admit_registration(second);
+        assert!(!decision.admitted);
+        assert_eq!(decision.reason, "agent_capacity_exhausted");
+        assert_eq!(s.health().registered_agents, 1);
+    }
 }
