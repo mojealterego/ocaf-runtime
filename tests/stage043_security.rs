@@ -147,7 +147,9 @@ fn omat_duplicate_manifest_remains_denied_within_a_tenant() {
 #[test]
 fn omat_rejects_client_spoofing_of_server_side_ostc_readiness() {
     let mut registry = OmatRegistry::default();
-    registry.register(tool("tenant_a", ToolRisk::ReadOnly)).unwrap();
+    registry
+        .register(tool("tenant_a", ToolRisk::ReadOnly))
+        .unwrap();
     let call = ToolCall {
         request_id: "spoof-1".into(),
         tenant_id: "tenant_a".into(),

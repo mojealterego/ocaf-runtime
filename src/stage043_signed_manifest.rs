@@ -43,8 +43,8 @@ impl SignedToolManifest {
     /// Versioned canonical signature input, independent of JSON field order
     /// in the envelope; all policy-relevant manifest fields are signed.
     pub fn canonical_bytes(&self) -> Result<Vec<u8>, SignedManifestError> {
-        let manifest = serde_json::to_vec(&self.manifest)
-            .map_err(|_| SignedManifestError::Serialization)?;
+        let manifest =
+            serde_json::to_vec(&self.manifest).map_err(|_| SignedManifestError::Serialization)?;
         if manifest.len() > MAX_SIGNED_MANIFEST_BYTES
             || self.signer_id.is_empty()
             || self.signer_id.len() > 128
@@ -100,8 +100,8 @@ pub fn register_signed_manifest(
     let canonical = envelope.canonical_bytes()?;
     let key = PKey::public_key_from_raw_bytes(trusted_key, Id::ED25519)
         .map_err(|_| SignedManifestError::Signature)?;
-    let mut verifier = Verifier::new_without_digest(&key)
-        .map_err(|_| SignedManifestError::Signature)?;
+    let mut verifier =
+        Verifier::new_without_digest(&key).map_err(|_| SignedManifestError::Signature)?;
     if !verifier
         .verify_oneshot(&envelope.signature, &canonical)
         .map_err(|_| SignedManifestError::Signature)?
