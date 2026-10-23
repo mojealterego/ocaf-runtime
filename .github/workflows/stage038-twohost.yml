@@ -389,7 +389,27 @@ jobs:
           discovery_passed=true
           phase=signed_wasi_rpc
           export OCAF_ACTION=call OCAF_TOOL=ocaf_ci_noop OCAF_MESSAGE=remote_twohost_wasi
-          target/debug/ocaf-rpc-node >"$RUNNER_TEMP/private-result.json" 2>/dev/null
+          if ! target/debug/ocaf-rpc-node >"$RUNNER_TEMP/private-result.json" 2>"$RUNNER_TEMP/private-result.stderr"; then
+            # Only a fixed status category may enter public CI logs.
+            # Never expose private RPC stderr, request data or credentials.
+            "$py" - "$RUNNER_TEMP/private-result.stderr" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+          raw = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")[:65536]
+          match = re.search(r"remote tool call failed: (InvalidInput|Timeout|Failed)\\b", raw)
+          if match:
+              category = "RPC_REPLY_" + match.group(1).upper()
+          elif "RPC request could not be authenticated" in raw:
+              category = "RPC_AUTH_OR_POLICY_REJECTED"
+          elif "RPC configuration or runtime unavailable" in raw:
+              category = "RPC_UNAVAILABLE"
+          else:
+              category = "RPC_TRANSPORT_OR_UNCLASSIFIED"
+          print(f"::error::OCAF038_SIGNED_WASI_RPC_CLASS={category}")
+          PY
+            exit 1
+          fi
           "$py" - "$RUNNER_TEMP/private-result.json" <<'PY'
           import json,sys
           result=json.load(open(sys.argv[1]))
