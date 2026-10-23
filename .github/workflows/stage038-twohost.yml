@@ -24,6 +24,10 @@ on:
 permissions:
   contents: read
 
+env:
+  # Avoid rust-toolchain.toml optional components during two-VM smoke builds.
+  RUSTUP_TOOLCHAIN: "1.99.0"
+
 concurrency:
   group: ocaf038-twohost-${{ github.run_id }}
   cancel-in-progress: false
@@ -47,11 +51,10 @@ jobs:
         run: |
           python3 -m venv "$RUNNER_TEMP/ocaf038-python"
           "$RUNNER_TEMP/ocaf038-python/bin/pip" install --disable-pip-version-check 'aiohttp==3.13.3'
-      - name: Use preinstalled Ubuntu Rust toolchain without flaky external bootstrap
+      - name: Install pinned minimal Rust toolchain without optional Clippy
         run: |
           set -euo pipefail
-          command -v rustc
-          command -v cargo
+          rustup toolchain install 1.99.0 --profile minimal
           rustc --version
           cargo --version
       - name: Compile actual coordinator and pin real Wasmtime engine
@@ -271,11 +274,10 @@ jobs:
             "$RUNNER_TEMP/ocaf038-python/bin/python" "$GITHUB_WORKSPACE/scripts/stage038_tunnel_client.py" \
               --mode put --item "$item" --file "$RUNNER_TEMP/ocaf038-client/$item"
           done
-      - name: Use preinstalled Ubuntu Rust toolchain without flaky external bootstrap
+      - name: Install pinned minimal Rust toolchain without optional Clippy
         run: |
           set -euo pipefail
-          command -v rustc
-          command -v cargo
+          rustup toolchain install 1.99.0 --profile minimal
           rustc --version
           cargo --version
       - name: Build actual TLS-bound OCAF RPC client from locked main
