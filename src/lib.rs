@@ -27,6 +27,8 @@ pub mod stage043_signed_manifest;
 
 pub mod stage043_store;
 
+pub mod stage043_signed_agent;
+
 pub mod microvm_lifecycle;
 
 pub mod firecracker_ebpf_contract;
