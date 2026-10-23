@@ -169,3 +169,24 @@ fn omat_rejects_client_spoofing_of_server_side_ostc_readiness() {
         Err(OmatError::SourceAccessDenied)
     );
 }
+
+#[test]
+fn omas_denied_capacity_does_not_poison_a_replay_id() {
+    let mut config = OmasServerConfig::default();
+    config.max_agents = 1;
+    let server = OmasServer::new(config).unwrap();
+    assert!(server
+        .admit_registration(agent("tenant_a", "accepted-first"))
+        .admitted);
+    let mut blocked = agent("tenant_a", "retryable-request");
+    blocked.agent_id = "OCAF-AGENT-002".into();
+    assert_eq!(
+        server.admit_registration(blocked).reason,
+        "agent_capacity_exhausted"
+    );
+    // A denied request did not consume the replay id; this retry refers to
+    // an existing principal and therefore does not exceed capacity.
+    assert!(server
+        .admit_registration(agent("tenant_a", "retryable-request"))
+        .admitted);
+}
