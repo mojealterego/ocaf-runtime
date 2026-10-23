@@ -70,7 +70,11 @@ async def exchange(request):
         data = await request.read()
         if not 0 < len(data) <= 16384:
             raise web.HTTPBadRequest(text="invalid exchange payload")
-        if key in MAILBOX:
+        existing = MAILBOX.get(key)
+        if existing is not None:
+            # Retry after a lost HTTP response: preserve the original timestamp.
+            if existing[0] == data:
+                return web.Response(status=200, text="already present")
             raise web.HTTPConflict(text="exchange item already exists")
         if len(MAILBOX) >= 64:
             raise web.HTTPServiceUnavailable(text="mailbox limit")
