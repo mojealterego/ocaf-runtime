@@ -33,6 +33,7 @@ import stage039_broker_ipc as ipc
 import stage039_broker_ledger as broker
 import stage039_dual_tenant as dual
 import stage039_microvm_gate as gate
+import stage039_signed_manifest as signed_manifest
 
 
 class BindingError(ValueError):
@@ -71,7 +72,8 @@ def verify_ledger_rows(rows:dict,reports:dict)->None:
             raise BindingError("broker reservation no longer matches durable active lease")
 
 
-def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=False)->dict:
+def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=False,
+                   signed_manifests:dict|None=None)->dict:
     if (not isinstance(reports,dict) or not isinstance(manifests,dict)
         or set(reports)!=set(manifests)!=set(("a","b"))
         or not isinstance(actual,dict)
@@ -90,11 +92,20 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
     bootids=[]
     requestids=[]
     manifest_hashes=[]
+    if signed_manifests is not None and set(signed_manifests) != {"a", "b"}:
+        raise BindingError("signed manifest set must cover both tenants")
     for tenant in ("a","b"):
         raw=manifests[tenant]
         if not isinstance(raw,bytes) or not 0<len(raw)<=gate.MAX_MANIFEST_BYTES:
             raise BindingError("missing bounded pinned manifest")
         m=_manifest(raw)
+        if signed_manifests is not None:
+            try:
+                signed = signed_manifest.verify(signed_manifests[tenant])
+            except (KeyError, signed_manifest.SignedManifestError) as exc:
+                raise BindingError("signed guest manifest verification failed") from exc
+            if signed["payload"] != m:
+                raise BindingError("signed guest manifest payload differs from admitted manifest")
         rec=reports[tenant]
         actual_vm=actual.get("tenant_"+tenant)
         if (not isinstance(rec,dict) or not isinstance(actual_vm,dict)
@@ -171,7 +182,7 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
         "both_vm_cgroups_drained_after_sigkill":True,
         "tenant_b_survived_tenant_a_crash":True,
         "wasi_executed_inside_guest":bool(require_wasi),
-        "signed_wasi_manifest_verified":False,
+        "signed_wasi_manifest_verified":signed_manifests is not None,
         "production_approved":False,
         "stage_039_complete":False,
     }
