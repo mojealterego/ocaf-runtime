@@ -133,7 +133,7 @@ pub enum OmatError {
 
 #[derive(Debug, Clone, Default)]
 pub struct OmatRegistry {
-    tools: BTreeMap<String, ToolManifest>,
+    tools: BTreeMap<(String, String), ToolManifest>,
 }
 
 impl OmatRegistry {
@@ -142,16 +142,18 @@ impl OmatRegistry {
         if self.tools.len() >= MAX_TOOLS {
             return Err(OmatError::RegistryFull);
         }
-        if self.tools.contains_key(&manifest.tool_id) {
+        let identity = (manifest.tenant_id.clone(), manifest.tool_id.clone());
+        if self.tools.contains_key(&identity) {
             return Err(OmatError::DuplicateTool);
         }
         let digest = manifest_digest(&manifest)?;
-        self.tools.insert(manifest.tool_id.clone(), manifest);
+        self.tools.insert(identity, manifest);
         Ok(digest)
     }
 
-    pub fn get(&self, tool_id: &str) -> Option<&ToolManifest> {
-        self.tools.get(tool_id)
+    /// A tool name is not a global identity: the tenant is always required.
+    pub fn get_for(&self, tenant_id: &str, tool_id: &str) -> Option<&ToolManifest> {
+        self.tools.get(&(tenant_id.to_owned(), tool_id.to_owned()))
     }
 
     pub fn len(&self) -> usize {
@@ -170,6 +172,11 @@ impl OmatRegistry {
                     && tool.tenant_id == tenant_id
                     && policy.tenant_id == tenant_id
                     && policy.allowed_tools.contains(&tool.tool_id)
+                    && tool.timeout_ms > 0
+                    && tool.timeout_ms <= policy.max_timeout_ms
+                    && tool.max_output_bytes > 0
+                    && tool.max_output_bytes <= policy.max_output_bytes
+                    && (tool.risk != ToolRisk::ExternalSideEffect || policy.allow_external_side_effects)
                     && tool
                         .capabilities
                         .iter()
@@ -192,7 +199,7 @@ impl OmatRegistry {
         if policy.tenant_id != call.tenant_id {
             return Err(OmatError::TenantMismatch);
         }
-        let tool = self.tools.get(&call.tool_id).ok_or(OmatError::ToolNotFound)?;
+        let tool = self.get_for(&call.tenant_id, &call.tool_id).ok_or(OmatError::ToolNotFound)?;
         authorize(tool, call, policy)?;
         let encoded = serde_json::to_vec(&call.arguments).map_err(|_| OmatError::InvalidArguments)?;
         if encoded.len() > MAX_ARGUMENT_BYTES {
@@ -229,7 +236,9 @@ pub fn health(server_id: &str, registry: &OmatRegistry) -> OmatHealth {
         server_id: server_id.to_owned(),
         protocol_version: OMAT_PROTOCOL_VERSION.into(),
         tool_count: registry.len(),
-        ready: !registry.is_empty(),
+        // The registry can admit tools, but there is no configured executor yet.
+        // Readiness must never imply that a tool can actually execute.
+        ready: false,
         ostc_enabled: false,
         source_access: "disabled".into(),
     }
