@@ -172,8 +172,10 @@ fn omat_rejects_client_spoofing_of_server_side_ostc_readiness() {
 
 #[test]
 fn omas_denied_capacity_does_not_poison_a_replay_id() {
-    let mut config = OmasServerConfig::default();
-    config.max_agents = 1;
+    let config = OmasServerConfig {
+        max_agents: 1,
+        ..OmasServerConfig::default()
+    };
     let server = OmasServer::new(config).unwrap();
     assert!(
         server
