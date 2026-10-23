@@ -55,7 +55,7 @@ class GuestWasiBindings(unittest.TestCase):
                         "admission_before_vm_launch":True,
                         "durable_broker_leases_released_after_vm_crashes":True,
                         "wasi_executed_inside_guest":True,
-                        "signed_wasi_manifest_verified":False,
+                        "signed_wasi_manifest_verified":True,
                         "production_approved":False}}
             for tenant,c in (("a","a"),("b","b")):
                 vm="ocaf-"+c*24
@@ -69,7 +69,7 @@ class GuestWasiBindings(unittest.TestCase):
             x=g.verify_brokered_pair(report,jail,sha)
             self.assertEqual(x["status"],
                  "TWO_REAL_BROKERED_JAILED_FIRECRACKER_GUESTS_WASIP1_FD_WRITE_EXECUTED")
-            self.assertFalse(x["signed_wasi_manifest_verified"])
+            self.assertTrue(x["signed_wasi_manifest_verified"])
             with self.assertRaises(g.GuestWasiError):
                 g.verify_brokered_pair(report,jail,"b"*64)
             report["tenant_b"]["vm_id"]=report["tenant_a"]["vm_id"]

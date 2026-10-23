@@ -6,7 +6,7 @@ import base64
 import binascii
 import json
 import re
-from typing import Any
+from typing import Any, Mapping
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
@@ -35,11 +35,21 @@ def canonical_payload(payload: dict[str, Any]) -> bytes:
     return (json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n").encode()
 
 
-def verify(raw: bytes) -> dict[str, Any]:
+def _unique_fields(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise SignedManifestError("duplicate signed manifest field")
+        result[key] = value
+    return result
+
+
+def verify(raw: bytes, trusted_keys: Mapping[str, bytes]) -> dict[str, Any]:
     if not isinstance(raw, bytes) or not 0 < len(raw) <= 256 * 1024:
         raise SignedManifestError("manifest size is outside bounds")
     try:
-        envelope = json.loads(raw.decode("utf-8"))
+        envelope = json.loads(raw.decode("utf-8"), object_pairs_hook=_unique_fields,
+                              parse_constant=lambda _: (_ for _ in ()).throw(SignedManifestError("nonfinite value")))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise SignedManifestError("invalid signed manifest JSON") from exc
     if not isinstance(envelope, dict) or set(envelope) != {"key_id", "public_key", "signature", "payload"}:
@@ -47,6 +57,8 @@ def verify(raw: bytes) -> dict[str, Any]:
     if not isinstance(envelope["key_id"], str) or KEY_ID.fullmatch(envelope["key_id"]) is None:
         raise SignedManifestError("invalid key_id")
     public_key = _b64(envelope["public_key"], "public_key")
+    if not isinstance(trusted_keys, Mapping) or trusted_keys.get(envelope["key_id"]) != public_key:
+        raise SignedManifestError("signing key is not trusted")
     signature = _b64(envelope["signature"], "signature")
     payload = envelope["payload"]
     message = canonical_payload(payload)

@@ -1,11 +1,14 @@
 """OCAF 0.39: admission from real SO_PEERCRED broker must match actual jailed VM evidence."""
 import hashlib
+import base64
 import json
 from pathlib import Path
 import sys
 import unittest
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import stage039_broker_vm_binding as binding
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+import stage039_signed_manifest as signed_manifest
 
 
 def manifest(tenant):
@@ -59,6 +62,25 @@ class BrokerVmAcceptanceTests(unittest.TestCase):
         self.raw={x:json.dumps(manifest(x),sort_keys=True).encode() for x in ("a","b")}
         self.reports={x:admission(x,self.raw[x]) for x in ("a","b")}
         self.actual=evidence()
+
+    def test_signed_binding_requires_trusted_key_and_rejects_cross_tenant_payload(self):
+        key = Ed25519PrivateKey.generate()
+        public = key.public_key().public_bytes_raw()
+        envelopes = {}
+        for tenant in ("a", "b"):
+            payload = json.loads(self.raw[tenant])
+            envelopes[tenant] = json.dumps({
+                "key_id": "stage039-ci", "public_key": base64.b64encode(public).decode(),
+                "signature": base64.b64encode(key.sign(signed_manifest.canonical_payload(payload))).decode(),
+                "payload": payload,
+            }).encode()
+        self.assertTrue(binding.verify_binding(self.reports, self.raw, self.actual,
+            signed_manifests=envelopes, trusted_keys={"stage039-ci": public})["signed_wasi_manifest_verified"])
+        with self.assertRaises(binding.BindingError):
+            binding.verify_binding(self.reports, self.raw, self.actual, signed_manifests=envelopes)
+        with self.assertRaises(binding.BindingError):
+            binding.verify_binding(self.reports, self.raw, self.actual,
+                signed_manifests={**envelopes, "b": envelopes["a"]}, trusted_keys={"stage039-ci": public})
 
     def test_guest_wasi_broker_claim_requires_two_independent_real_guest_receipts(self):
         actual=json.loads(json.dumps(self.actual))

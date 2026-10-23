@@ -43,6 +43,12 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+      - name: Install signature verifier for broker admission
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo -n apt-get update -qq
+          sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-cryptography
       - name: Real kernel KVM_CREATE_VM as privileged root
         shell: bash
         run: |
@@ -329,6 +335,7 @@ jobs:
           print("STAGE039_REAL_GUEST_ORIGINATED_NETWORK_TENANT_DENY_RECOVERY_PROVED")
           PY
       - name: ACTUAL simultaneous jailed guests originate UDP with per-tenant TAP drop recovery and kernel SIGKILL
+        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
@@ -387,9 +394,29 @@ jobs:
           set -euo pipefail
           python3 -m unittest discover -s scripts/tests -p test_stage039_guest_wasi.py -v
           sudo -n apt-get update -qq
-          sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wabt e2fsprogs gcc libc6-dev
+          sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wabt e2fsprogs gcc libc6-dev python3-cryptography
           PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
           sudo -n bash scripts/stage039_prepare_guest_wasi.sh "$PREFIX" "$GITHUB_WORKSPACE"
+          sudo -n python3 - "$PREFIX/approved" <<'PY'
+          import base64,json,sys
+          from pathlib import Path
+          from cryptography.hazmat.primitives import serialization
+          from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+          sys.path.insert(0,"scripts")
+          from stage039_signed_manifest import canonical_payload
+          root=Path(sys.argv[1]);key=Ed25519PrivateKey.generate()
+          public=key.public_key().public_bytes(serialization.Encoding.Raw,serialization.PublicFormat.Raw)
+          trusted=root/"stage039-ci-public.key"
+          trusted.write_bytes(public);trusted.chmod(0o400)
+          for tenant in ("a","b"):
+              payload=json.loads((root/f"request-wasi-{tenant}.json").read_text())
+              signature=key.sign(canonical_payload(payload))
+              envelope={"key_id":"stage039-ci","public_key":base64.b64encode(public).decode(),
+                        "signature":base64.b64encode(signature).decode(),"payload":payload}
+              path=root/f"signed-wasi-{tenant}.json"
+              path.write_text(json.dumps(envelope,sort_keys=True)+"\n");path.chmod(0o400)
+          print("STAGE039_EPHEMERAL_LAB_SIGNER_PREPARED")
+          PY
           sudo -n sha256sum "$PREFIX/approved/guest_rootfs_wasi"
           echo "STAGE039_LINUX_GUEST_ROOTFS_HAS_ACTUAL_WASMTIME_WASI_AND_STATIC_PID1"
       - name: ACTUAL two concurrent KVM jailed tenants broker-reserved THEN execute WASIp1 fd_write INSIDE guest kernels
@@ -415,6 +442,9 @@ jobs:
             --aya-program-sha256 992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95 \
             --aya-seconds 12 --timeout 110 \
             --require-guest-wasi \
+            --signed-manifest-a "$PREFIX/approved/signed-wasi-a.json" \
+            --signed-manifest-b "$PREFIX/approved/signed-wasi-b.json" \
+            --trusted-public-key "$PREFIX/approved/stage039-ci-public.key" \
             --report "$GITHUB_WORKSPACE/stage039-real-guest-evidence/broker-wasi-vm.json" \
             --ack-broker-two-jailed-vm-real-kvm
           sudo -n chown "$(id -u):$(id -g)" stage039-real-guest-evidence/broker-wasi-vm.json
@@ -433,7 +463,7 @@ jobs:
           assert v["status"]=="TWO_REAL_BROKERED_JAILED_FIRECRACKER_GUESTS_WASIP1_FD_WRITE_EXECUTED"
           raw=json.loads(Path("stage039-real-guest-evidence/broker-wasi-vm.json").read_text())
           assert raw["broker_vm_binding"]["wasi_executed_inside_guest"] is True
-          assert raw["broker_vm_binding"]["signed_wasi_manifest_verified"] is False
+          assert raw["broker_vm_binding"]["signed_wasi_manifest_verified"] is True
           for tenant in ("a","b"):
               assert raw["tenant_"+tenant]["guest_wasi_execution"]["observed_before_vm_sigkill"] is True
           assert v["real_guest_wasi_execution_verified"] is True
@@ -445,7 +475,7 @@ jobs:
               assert r["guest_pid1_started"] is True
               assert r["wasi_preview1_fd_write_observed_inside_guest"] is True
               assert r["guest_wasmtime_child_exited_zero"] is True
-          assert v["signed_wasi_manifest_verified"] is False
+          assert v["signed_wasi_manifest_verified"] is True
           assert v["different_wasm_task_per_tenant_tested"] is False
           assert v["production_approved"] is False
           print("STAGE039_ACTUAL_BROKER_TO_TWO_JAILED_FIRECRACKER_WASIP1_GUEST_EXECUTION_PROVED")
@@ -463,6 +493,23 @@ jobs:
             -exec tail -n 100 '{}' ';' || true
           sudo -n find "$PREFIX/jailer" -maxdepth 5 -type f -name 'firecracker*' -print || true
           echo "OCAF039_JAILER_FAILURE_DIAGNOSTIC_END"
+      - name: Require complete 0.39 runner evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s stage039-real-guest-evidence/jailed-guest-network.json
+          test -s stage039-real-guest-evidence/real-guest-wasi-execution.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path("stage039-real-guest-evidence")
+          network=json.loads((root/"jailed-guest-network.json").read_text())
+          wasi=json.loads((root/"real-guest-wasi-execution.json").read_text())
+          assert network["tc_kernel_ebpf_guest_network_tested"] is True
+          assert wasi["real_guest_wasi_execution_verified"] is True
+          assert wasi["signed_wasi_manifest_verified"] is True
+          PY
       - name: Preserve actual KVM boot and negative/error evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

@@ -22,6 +22,7 @@ import shutil
 import socket
 import subprocess
 import tempfile
+import sys
 
 import stage039_guest_network as gn
 import stage039_guest_tc as guest_tc
@@ -293,6 +294,22 @@ def execute(*, firecracker:Path, firecracker_sha:str, jailer:Path, jailer_sha:st
         })
         gate.save_report(report_path,result)
         return result
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        # Keep a bounded diagnostic from the actual guests before cleanup.
+        # A missing UDP receipt remains a failed acceptance run.
+        diagnostic = {"status": "NO_GO", "error": str(exc), "guests": {}}
+        for tenant, (proc, vm_id, log, _) in processes.items():
+            try:
+                serial = log.read_bytes()[-32768:].decode("utf-8", "replace")
+            except OSError:
+                serial = "serial log unavailable"
+            diagnostic["guests"][tenant] = {"vm_id": vm_id,
+                "process_exit_code": proc.poll(), "serial_tail": serial}
+        try:
+            gate.save_report(report_path.with_name(report_path.stem + "-failure.json"), diagnostic)
+        except OSError:
+            print("stage039 diagnostic could not be persisted", file=sys.stderr)
+        raise
     finally:
         for proc,vm_id,log,root in processes.values():
             if proc.poll() is None:

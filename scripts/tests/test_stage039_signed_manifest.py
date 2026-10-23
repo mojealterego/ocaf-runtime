@@ -24,7 +24,7 @@ class SignedManifestTests(unittest.TestCase):
                            "signature": base64.b64encode(signature).decode(), "payload": payload}).encode()
 
     def test_valid_signature_is_verified(self):
-        result = signed.verify(self.raw())
+        result = signed.verify(self.raw(), {"stage039-prod": self.key.public_key().public_bytes_raw()})
         self.assertTrue(result["signed"])
         self.assertEqual(result["payload"], self.payload)
 
@@ -32,13 +32,20 @@ class SignedManifestTests(unittest.TestCase):
         data = json.loads(self.raw())
         data["payload"]["tenant_id"] = "tenant-b"
         with self.assertRaises(signed.SignedManifestError):
-            signed.verify(json.dumps(data).encode())
+            signed.verify(json.dumps(data).encode(), {"stage039-prod": self.key.public_key().public_bytes_raw()})
 
     def test_signature_and_key_are_required(self):
         data = json.loads(self.raw())
         data["signature"] = base64.b64encode(b"bad").decode()
         with self.assertRaises(signed.SignedManifestError):
-            signed.verify(json.dumps(data).encode())
+            signed.verify(json.dumps(data).encode(), {"stage039-prod": self.key.public_key().public_bytes_raw()})
+
+    def test_untrusted_signer_and_duplicate_json_are_rejected(self):
+        with self.assertRaisesRegex(signed.SignedManifestError, "not trusted"):
+            signed.verify(self.raw(), {"stage039-prod": Ed25519PrivateKey.generate().public_key().public_bytes_raw()})
+        with self.assertRaisesRegex(signed.SignedManifestError, "duplicate"):
+            signed.verify(self.raw()[:-1] + b',"payload":{}}',
+                          {"stage039-prod": self.key.public_key().public_bytes_raw()})
 
 
 if __name__ == "__main__":

@@ -75,7 +75,7 @@ def verify_brokered_pair(broker_report:dict,jailer_base:Path,rootfs_sha256:str)-
         or binding.get("admission_before_vm_launch") is not True
         or binding.get("durable_broker_leases_released_after_vm_crashes") is not True
         or binding.get("wasi_executed_inside_guest") is not True
-        or binding.get("signed_wasi_manifest_verified") is not False
+        or binding.get("signed_wasi_manifest_verified") is not True
         or binding.get("production_approved") is not False):
         allowed_keys=("status","real_kernel_so_peercred_authenticated_broker",
                      "durable_sqlite_leases_matched","admission_before_vm_launch",
@@ -133,7 +133,7 @@ def verify_brokered_pair(broker_report:dict,jailer_base:Path,rootfs_sha256:str)-
         "tenant_receipts":receipts,
         "two_independent_hosts":False,
         "different_wasm_task_per_tenant_tested":False,
-        "signed_wasi_manifest_verified":False,
+        "signed_wasi_manifest_verified":True,
         "production_approved":False,
         "stage_039_complete":False,
     }
