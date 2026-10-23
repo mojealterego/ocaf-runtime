@@ -49,7 +49,9 @@ fn verified_manifest_survives_restart_without_cross_tenant_disclosure() {
     let (signed, key) = signed("tenant-a");
     {
         let store = Stage043ToolStore::open_existing(&path).unwrap();
-        store.register_signed(&signed, "tenant-a", &key, NOW).unwrap();
+        store
+            .register_signed(&signed, "tenant-a", &key, NOW)
+            .unwrap();
     }
     let reopened = Stage043ToolStore::open_existing(&path).unwrap();
     assert!(reopened.get_active("tenant-a", "echo").unwrap().is_some());
@@ -63,7 +65,9 @@ fn revoked_manifest_cannot_be_replayed_after_restart() {
     Connection::open(&path).unwrap().close().unwrap();
     let (signed, key) = signed("tenant-a");
     let store = Stage043ToolStore::open_existing(&path).unwrap();
-    store.register_signed(&signed, "tenant-a", &key, NOW).unwrap();
+    store
+        .register_signed(&signed, "tenant-a", &key, NOW)
+        .unwrap();
     store.revoke("tenant-a", "echo").unwrap();
     drop(store);
     let reopened = Stage043ToolStore::open_existing(&path).unwrap();
@@ -81,7 +85,9 @@ fn modified_sqlite_manifest_digest_fails_closed() {
     Connection::open(&path).unwrap().close().unwrap();
     let (signed, key) = signed("tenant-a");
     let store = Stage043ToolStore::open_existing(&path).unwrap();
-    store.register_signed(&signed, "tenant-a", &key, NOW).unwrap();
+    store
+        .register_signed(&signed, "tenant-a", &key, NOW)
+        .unwrap();
     let connection = Connection::open(&path).unwrap();
     connection
         .execute(
