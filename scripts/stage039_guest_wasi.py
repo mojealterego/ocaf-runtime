@@ -33,6 +33,10 @@ def verify_console(raw:bytes)->dict:
     """
     if not isinstance(raw,bytes) or not 0<len(raw)<=1024*1024:
         raise GuestWasiError("guest serial empty or over limit")
+    serial_sha256=hashlib.sha256(raw).hexdigest()
+    # Linux ttyS0 may translate guest LF writes to CRLF. Normalize only that
+    # line ending for marker parsing, while hashing the original serial bytes.
+    raw=raw.replace(b"\r\n",b"\n")
     linux=raw.find(b"Linux version ")
     for name, marker in (("pid1", INIT), ("fd_write", OUTPUT), ("exit", PASS)):
         position=raw.find(marker)
@@ -66,7 +70,7 @@ def verify_console(raw:bytes)->dict:
         "guest_crng_seeded_by_cpu_rng":crng[0][0]==RNG_READY[1],
         "guest_kernel_bpf_program_id":int(bpf_ids[0].group(1)),
         "guest_bpf_socket_filter_attached":True,
-        "serial_sha256":hashlib.sha256(raw).hexdigest(),
+        "serial_sha256":serial_sha256,
     }
 
 

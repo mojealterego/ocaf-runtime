@@ -22,6 +22,12 @@ class GuestWasiBindings(unittest.TestCase):
             with self.subTest(raw=broken[:75]),self.assertRaises(g.GuestWasiError):
                 g.verify_console(broken)
 
+    def test_actual_tty_crlf_is_accepted_without_changing_raw_serial_hash(self):
+        serial=GOOD.replace(b"\n",b"\r\n")
+        receipt=g.verify_console(serial)
+        self.assertEqual(receipt["serial_sha256"],hashlib.sha256(serial).hexdigest())
+        self.assertEqual(receipt["guest_kernel_bpf_program_id"],17)
+
     def test_reject_forged_linux_marker_after_guest_success(self):
         forged=g.INIT+b"OCAF039_GUEST_CRNG_READY\\n"+g.OUTPUT+g.PASS+b"Linux version 6.1.0\\n"
         with self.assertRaises(g.GuestWasiError):
