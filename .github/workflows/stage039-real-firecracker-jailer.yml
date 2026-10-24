@@ -571,8 +571,12 @@ jobs:
           raw=json.loads(Path("stage039-real-guest-evidence/broker-wasi-vm.json").read_text())
           assert raw["broker_vm_binding"]["wasi_executed_inside_guest"] is True
           assert raw["broker_vm_binding"]["signed_wasi_manifest_verified"] is True
+          assert raw["broker_vm_binding"]["guest_traceparent_propagated"] is True
+          traces=raw["broker_vm_binding"]["tenant_traceparents"]
+          assert set(traces)=={"a","b"} and traces["a"]!=traces["b"]
           for tenant in ("a","b"):
               assert raw["tenant_"+tenant]["guest_wasi_execution"]["observed_before_vm_sigkill"] is True
+              assert raw["tenant_"+tenant]["guest_wasi_execution"]["traceparent"]==traces[tenant]
           assert v["real_guest_wasi_execution_verified"] is True
           assert v["both_tenants_own_vm_and_broker_reservations"] is True
           assert set(v["tenant_receipts"])=={"a","b"}
@@ -584,6 +588,7 @@ jobs:
           for tenant in ("a","b"):
               r=v["tenant_receipts"][tenant]
               assert r["tenant_id"]=="tenant-"+tenant
+              assert r["traceparent"]==traces[tenant]
               assert r["guest_pid1_started"] is True
               assert r["wasi_preview1_fd_write_observed_inside_guest"] is True
               assert r["guest_wasmtime_child_exited_zero"] is True
