@@ -9,7 +9,7 @@ use ocaf_runtime::omas_server::OmasServerConfig;
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod, SslVerifyMode};
 use serde_json::json;
 use std::collections::HashMap;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::net::TcpListener;
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -40,8 +40,6 @@ fn serve() -> Result<(), String> {
     let fingerprint = decode_hex::<32>(&required("OCAF_OMAS_PEER_CERT_SHA256")?)?;
     let signing_key = decode_hex::<32>(&required("OCAF_OMAS_PEER_ED25519_PUBKEY")?)?;
     let sender = required("OCAF_OMAS_PEER_SENDER")?;
-    let mut entries = HashMap::new();
-    entries.insert(sender.clone(), signing_key);
     let mut pinned = HashMap::new();
     pinned.insert(fingerprint, TrustedPeer { sender, signing_key });
     let peers = PeerRegistry::new(pinned)?;
