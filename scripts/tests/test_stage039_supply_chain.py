@@ -81,7 +81,10 @@ class SupplyChainTests(unittest.TestCase):
         again, proof_again = supply.inventory(self.approved, self.repository)
         self.assertEqual(bom, again)
         self.assertEqual(proof, proof_again)
-        self.assertEqual(proof["component_count"], 2 * 7 + 7)
+        self.assertEqual(proof["component_count"], len(bom["components"]))
+        names = {item["name"] for item in bom["components"]}
+        self.assertIn("source/stage039/guest-wasi-negative/guest_negative_probe.c", names)
+        self.assertIn("source/stage039/guest-egress-broker/guest_vsock_egress.c", names)
         self.assertFalse(proof["running_inode_verified"])
         self.assertFalse(proof["independent_signer_verified"])
         self.assertEqual(len(proof["signed_envelope_sha256"]), 2)

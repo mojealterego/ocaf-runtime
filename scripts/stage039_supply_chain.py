@@ -23,9 +23,18 @@ SOURCE_LOCKS = (
 )
 SOURCE_BUILDS = (
     "scripts/stage039_prepare_guest_wasi.sh",
+    "scripts/stage039_egress_broker.py",
+    "scripts/stage039_guest_egress_transport.py",
+    "scripts/stage039_real_guest_vsock_egress.py",
     "stage039/guest-aya/build.sh",
     "stage039/guest-aya/ebpf/src/main.rs",
     "stage039/guest-aya/loader/src/main.rs",
+    "stage039/guest-wasi/guest_wasi_init.c",
+    "stage039/guest-wasi-negative/guest_negative_probe.c",
+    "stage039/guest-wasi-negative/fuel_spin.wat",
+    "stage039/guest-wasi-negative/memory_grow.wat",
+    "stage039/guest-egress-broker/guest_vsock_egress.c",
+    "stage039/guest-egress-broker/guest_egress_init.c",
 )
 MAX_SOURCE_BYTES = 16 * 1024 * 1024
 
