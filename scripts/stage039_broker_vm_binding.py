@@ -28,6 +28,7 @@ import socket
 import stat
 import struct
 import time
+import hmac
 
 import stage039_broker_ipc as ipc
 import stage039_broker_ledger as broker
@@ -39,6 +40,92 @@ import stage039_traceparent as traceparent
 
 class BindingError(ValueError):
     pass
+
+
+def _operator_file(path:Path, maximum:int)->bytes:
+    """Read a root-owned operator input once through an O_NOFOLLOW fd."""
+    if (not isinstance(path,Path) or not path.is_absolute() or ".." in path.parts
+        or path.is_symlink()):
+        raise BindingError("operator signer path must be absolute and non-symlinked")
+    parent=path.parent
+    while parent != parent.parent:
+        info=parent.stat()
+        sticky_root_tmp=(info.st_uid==0 and info.st_mode & stat.S_ISVTX
+                         and info.st_mode & 0o777==0o777)
+        if (parent.is_symlink() or not stat.S_ISDIR(info.st_mode)
+            or info.st_uid not in (0,os.geteuid()) and not sticky_root_tmp
+            or info.st_mode & 0o022 and not sticky_root_tmp):
+            raise BindingError("operator signer parent path is mutable")
+        parent=parent.parent
+    try:
+        fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_CLOEXEC)
+    except OSError as exc:
+        raise BindingError("operator signer input cannot be opened") from exc
+    try:
+        info=os.fstat(fd)
+        if (not stat.S_ISREG(info.st_mode) or info.st_nlink!=1
+            or info.st_uid!=os.geteuid() or info.st_mode & 0o022
+            or not 0<info.st_size<=maximum):
+            raise BindingError("operator signer input owner, mode or size denied")
+        data=b""
+        while len(data)<=maximum:
+            chunk=os.read(fd,min(65536,maximum+1-len(data)))
+            if not chunk:
+                break
+            data+=chunk
+        if len(data)!=info.st_size:
+            raise BindingError("operator signer input changed during read")
+        return data
+    finally:
+        os.close(fd)
+
+
+def load_signer_inputs(*,signed_manifest_a:Path|None,
+                       signed_manifest_b:Path|None,
+                       trusted_public_key:Path|None,
+                       trusted_key_id:str,
+                       signer_mode:str="lab",
+                       trusted_public_key_sha256:str|None=None)->tuple[dict|None,dict|None]:
+    """Load signed inputs before a broker lease or VM is created."""
+    if signer_mode not in ("lab","operator"):
+        raise BindingError("unknown signer mode")
+    if all(item is None for item in (signed_manifest_a,signed_manifest_b,trusted_public_key)):
+        if signer_mode=="operator" or trusted_public_key_sha256 is not None:
+            raise BindingError("operator signer requires two envelopes and trust anchor")
+        return None,None
+    if any(item is None for item in (signed_manifest_a,signed_manifest_b,trusted_public_key)):
+        raise BindingError("both signed guest manifests and trusted key are required")
+    if signed_manifest.KEY_ID.fullmatch(trusted_key_id) is None:
+        raise BindingError("trusted key ID is invalid")
+    if signer_mode=="operator":
+        if (trusted_key_id=="stage039-ci" or
+            not isinstance(trusted_public_key_sha256,str) or
+            gate.HEX_SHA256.fullmatch(trusted_public_key_sha256) is None):
+            raise BindingError("operator signer needs a distinct ID and pinned public key digest")
+        public=_operator_file(trusted_public_key,32)
+        signed_a=_operator_file(signed_manifest_a,256*1024)
+        signed_b=_operator_file(signed_manifest_b,256*1024)
+        if not hmac.compare_digest(hashlib.sha256(public).hexdigest(),trusted_public_key_sha256):
+            raise BindingError("operator trust anchor digest mismatch")
+    else:
+        if trusted_public_key_sha256 is not None:
+            raise BindingError("public key pin belongs to operator signer mode")
+        if (trusted_public_key.is_symlink() or not trusted_public_key.is_file()
+            or trusted_public_key.stat().st_size!=32):
+            raise BindingError("trusted public key is invalid")
+        public=trusted_public_key.read_bytes()
+        signed_a=signed_manifest_a.read_bytes()
+        signed_b=signed_manifest_b.read_bytes()
+    if len(public)!=32:
+        raise BindingError("trusted public key length invalid")
+    keys={trusted_key_id:public}
+    envelopes={"a":signed_a,"b":signed_b}
+    try:
+        for value in envelopes.values():
+            signed_manifest.verify(value,keys)
+    except signed_manifest.SignedManifestError as exc:
+        raise BindingError("signed guest manifest rejected before admission") from exc
+    return envelopes,keys
 
 
 def _manifest(raw:bytes)->dict:
@@ -278,24 +365,19 @@ def run_with_live_broker(*,manifest_a:Path,manifest_b:Path,
                          signed_manifest_a:Path|None=None,
                          signed_manifest_b:Path|None=None,
                          trusted_public_key:Path|None=None,
-                         trusted_key_id:str="stage039-ci")->dict:
+                         trusted_key_id:str="stage039-ci",
+                         signer_mode:str="lab",
+                         trusted_public_key_sha256:str|None=None)->dict:
     if (os.geteuid()!=0 or not ledger_dir.is_absolute()
         or ".." in ledger_dir.parts or ledger_dir.is_symlink()
         or ledger_dir.exists()):
         raise BindingError("ephemeral real KVM runner requires fresh root-private broker directory")
     manifests={"a":manifest_a.read_bytes(),"b":manifest_b.read_bytes()}
-    signed_manifests = None
-    trusted_keys = None
-    if signed_manifest_a is not None or signed_manifest_b is not None:
-        if signed_manifest_a is None or signed_manifest_b is None or trusted_public_key is None:
-            raise BindingError("both signed guest manifests and trusted key are required")
-        if (trusted_public_key.is_symlink() or not trusted_public_key.is_file()
-            or trusted_public_key.stat().st_size != 32
-            or signed_manifest.KEY_ID.fullmatch(trusted_key_id) is None):
-            raise BindingError("trusted public key is invalid")
-        trusted_keys = {trusted_key_id: trusted_public_key.read_bytes()}
-        signed_manifests = {"a": signed_manifest_a.read_bytes(),
-                            "b": signed_manifest_b.read_bytes()}
+    signed_manifests,trusted_keys=load_signer_inputs(
+        signed_manifest_a=signed_manifest_a,signed_manifest_b=signed_manifest_b,
+        trusted_public_key=trusted_public_key,trusted_key_id=trusted_key_id,
+        signer_mode=signer_mode,
+        trusted_public_key_sha256=trusted_public_key_sha256)
     if require_guest_wasi and signed_manifests is None:
         raise BindingError("guest WASI acceptance requires signed manifests")
     if signed_manifests is not None:
@@ -345,6 +427,13 @@ def run_with_live_broker(*,manifest_a:Path,manifest_b:Path,
                                       epoch=rec["leader_epoch"]):
                     raise BindingError("lease cleanup failed after VM test")
         verification["durable_broker_leases_released_after_vm_crashes"]=True
+        verification["signer_mode"]=signer_mode
+        verification["operator_trust_anchor_pinned"]=signer_mode=="operator"
+        if signer_mode=="operator":
+            verification["operator_public_key_sha256"]=trusted_public_key_sha256
+            verification["signed_manifest_sha256"]={
+                tenant:hashlib.sha256(raw).hexdigest()
+                for tenant,raw in signed_manifests.items()}
         verification["observed_at_utc"]=datetime.now(timezone.utc).isoformat()
         actual["broker_vm_binding"]=verification
         return actual
@@ -367,6 +456,8 @@ def main()->int:
     p.add_argument("--signed-manifest-b", type=Path)
     p.add_argument("--trusted-public-key", type=Path)
     p.add_argument("--trusted-key-id", default="stage039-ci")
+    p.add_argument("--signer-mode",choices=("lab","operator"),default="lab")
+    p.add_argument("--trusted-public-key-sha256")
     p.add_argument("--ack-broker-two-jailed-vm-real-kvm",action="store_true")
     a=p.parse_args()
     if not a.ack_broker_two_jailed_vm_real_kvm:
@@ -380,6 +471,8 @@ def main()->int:
             signed_manifest_b=a.signed_manifest_b,
             trusted_public_key=a.trusted_public_key,
             trusted_key_id=a.trusted_key_id,
+            signer_mode=a.signer_mode,
+            trusted_public_key_sha256=a.trusted_public_key_sha256,
             dual_arguments=dict(firecracker=a.firecracker,
                  firecracker_sha=a.firecracker_sha256,
                  jailer=a.jailer,jailer_sha=a.jailer_sha256,
