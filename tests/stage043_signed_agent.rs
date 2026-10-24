@@ -141,3 +141,39 @@ fn authenticated_transport_sender_must_match_signed_sender() {
         .admitted
     );
 }
+
+#[test]
+fn signed_transport_registration_persists_and_rejects_replay_after_restart() {
+    use ocaf_runtime::stage043_agent_store::Stage043AgentStore;
+    use ocaf_runtime::stage043_signed_agent::admit_signed_registration_persistent_for_sender;
+
+    let key = PKey::generate_ed25519().unwrap();
+    let public: [u8; 32] = key.raw_public_key().unwrap().try_into().unwrap();
+    let tmp = tempfile::tempdir().unwrap();
+    let replay_db = tmp.path().join("replay.sqlite");
+    let agent_db = tmp.path().join("agents.sqlite");
+    Connection::open(&replay_db).unwrap().close().unwrap();
+    Connection::open(&agent_db).unwrap().close().unwrap();
+    let req = request();
+    let op = sign(&req, &key);
+    let store = Stage043AgentStore::open(&agent_db, OmasServerConfig::default()).unwrap();
+    assert!(matches!(
+        admit_signed_registration_persistent_for_sender(
+            &store, req.clone(), &op, "impersonator", &public, &replay_db, NOW
+        ),
+        Err(SignedAgentError::Binding)
+    ));
+    assert_eq!(store.registered_count().unwrap(), 0);
+    assert!(admit_signed_registration_persistent_for_sender(
+        &store, req.clone(), &op, "authenticated-agent-node", &public, &replay_db, NOW
+    ).unwrap().admitted);
+    drop(store);
+    let restarted = Stage043AgentStore::open(&agent_db, OmasServerConfig::default()).unwrap();
+    assert_eq!(restarted.registered_count().unwrap(), 1);
+    assert!(matches!(
+        admit_signed_registration_persistent_for_sender(
+            &restarted, req, &op, "authenticated-agent-node", &public, &replay_db, NOW
+        ),
+        Err(SignedAgentError::Replay)
+    ));
+}
