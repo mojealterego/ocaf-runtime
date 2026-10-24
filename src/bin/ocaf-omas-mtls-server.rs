@@ -84,6 +84,7 @@ fn serve() -> Result<(), String> {
                 continue;
             }
         };
+        eprintln!("authenticated TLS session established");
         let mut line = Vec::new();
         let read = BufReader::new(&mut tls)
             .take(65537)
@@ -108,6 +109,7 @@ fn serve() -> Result<(), String> {
             }
             _ => json!({"ok": false, "error": "invalid or oversized request"}),
         };
+        eprintln!("TLS application request processed");
         if let Err(error) = writeln!(tls, "{response}") {
             eprintln!("TLS application response write failed: {error}");
         }
