@@ -13,7 +13,7 @@ fn require(name: &str) -> anyhow::Result<String> {
     Ok(value)
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread", worker_threads = 2)]
 async fn main() -> anyhow::Result<()> {
     let path = require("OCAF_ZENOH_CONFIG")?;
     anyhow::ensure!(Path::new(&path).is_absolute(), "config path must be absolute");
