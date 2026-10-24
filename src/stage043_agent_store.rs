@@ -53,6 +53,10 @@ impl Stage043AgentStore {
         Ok(conn)
     }
 
+    pub fn config(&self) -> &OmasServerConfig {
+        &self.config
+    }
+
     pub fn registered_count(&self) -> Result<usize, String> {
         let count: i64 = self
             .connection()?
