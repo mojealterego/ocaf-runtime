@@ -21,7 +21,11 @@ fn mtls_rejects_anonymous_client_and_accepts_pinned_certificate() {
         .arg(&cert)
         .output()
         .expect("openssl executable");
-    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     let certificate = X509::from_pem(&std::fs::read(&cert).unwrap()).unwrap();
     let fingerprint = sha256(&certificate.to_der().unwrap());
     let hex = |bytes: &[u8]| bytes.iter().map(|b| format!("{b:02x}")).collect::<String>();
@@ -32,7 +36,7 @@ fn mtls_rejects_anonymous_client_and_accepts_pinned_certificate() {
     let reserved = TcpListener::bind("127.0.0.1:0").unwrap();
     let address = reserved.local_addr().unwrap();
     drop(reserved);
-    let mut child = Command::new(env!("CARGO_BIN_EXE_ocaf-omas-mtls-server"))
+    let child = Command::new(env!("CARGO_BIN_EXE_ocaf-omas-mtls-server"))
         .env("OCAF_OMAS_MTLS_BIND", address.to_string())
         .env("OCAF_OMAS_MTLS_CA", &cert)
         .env("OCAF_OMAS_MTLS_CERT", &cert)
@@ -48,7 +52,10 @@ fn mtls_rejects_anonymous_client_and_accepts_pinned_certificate() {
         .unwrap();
     struct Kill(std::process::Child);
     impl Drop for Kill {
-        fn drop(&mut self) { let _ = self.0.kill(); let _ = self.0.wait(); }
+        fn drop(&mut self) {
+            let _ = self.0.kill();
+            let _ = self.0.wait();
+        }
     }
     let _guard = Kill(child);
     let mut ready = false;
