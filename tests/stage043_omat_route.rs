@@ -1,5 +1,7 @@
-use ocaf_runtime::stage043_omat_route::{dispatch_tool_call, AuthenticatedPeer, DispatchError, OmatRouteGuard, RouteError};
 use ocaf_runtime::omat_server::{OmatPolicy, OmatRegistry, ToolCall};
+use ocaf_runtime::stage043_omat_route::{
+    dispatch_tool_call, AuthenticatedPeer, DispatchError, OmatRouteGuard, RouteError,
+};
 use std::collections::BTreeSet;
 use std::collections::HashMap;
 
@@ -71,7 +73,14 @@ fn tool_dispatch_binds_authenticated_peer_to_request_id_and_tenant() {
     );
     guard.set_transport_connected(true);
     assert_eq!(
-        dispatch_tool_call(&guard, &peer, "ocaf/omat/tenant_a/requests/req_2", &call, &policy, &registry),
+        dispatch_tool_call(
+            &guard,
+            &peer,
+            "ocaf/omat/tenant_a/requests/req_2",
+            &call,
+            &policy,
+            &registry
+        ),
         Err(DispatchError::Route(RouteError::InvalidTopic))
     );
     let mut forged = call.clone();
