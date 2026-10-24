@@ -47,3 +47,6 @@ pub mod stage043_agent_store;
 pub mod stage043_mtls_admission;
 
 pub mod stage043_omat_route;
+
+#[cfg(feature = "zenoh")]
+pub mod stage043_omat_zenoh;
