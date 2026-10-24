@@ -39,15 +39,15 @@ fn signed_admission_rejects_forgery_cross_tenant_and_replay() {
     let topic = "ocaf/omat/tenant_a/requests/req_1";
     let signed = sign_omas_request("omas_a", topic, "0123456789abcdef", call("tenant_a"), &[7u8; 32]).unwrap();
     // Validly authenticated requests reach the fail-closed tool policy.
-    assert!(server.handle(&signed).is_err());
+    assert_eq!(server.handle(&signed).unwrap_err().to_string(), "OMAt request denied");
     assert!(server.handle(&signed).unwrap_err().to_string().contains("replay"));
     let forged = sign_omas_request("omas_a", topic, "0123456789abcdee", call("tenant_a"), &[8u8; 32]).unwrap();
     assert!(server.handle(&forged).unwrap_err().to_string().contains("signature"));
     let foreign = sign_omas_request("omas_a", topic, "0123456789abcded", call("tenant_b"), &[7u8; 32]).unwrap();
-    assert!(server.handle(&foreign).is_err());
+    assert_eq!(server.handle(&foreign).unwrap_err().to_string(), "OMAt request denied");
     server.connected(false);
     let disconnected = sign_omas_request("omas_a", topic, "0123456789abcdec", call("tenant_a"), &[7u8; 32]).unwrap();
-    assert!(server.handle(&disconnected).is_err());
+    assert_eq!(server.handle(&disconnected).unwrap_err().to_string(), "OMAt request denied");
 }
 
 #[tokio::test]
@@ -64,11 +64,13 @@ async fn real_zenoh_loopback_rejects_and_fails_closed_after_server_shutdown() {
     });
     tokio::time::sleep(Duration::from_millis(200)).await;
     let signed = sign_omas_request("omas_a", key, "0123456789abcdef", call("tenant_a"), &[7u8; 32]).unwrap();
-    assert!(request_omat_zenoh(&session, key, signed).await.is_err());
+    let response = request_omat_zenoh(&session, key, signed).await.unwrap_err().to_string();
+    assert!(response.contains("rejected"), "unexpected Zenoh result: {response}");
     task.abort();
     let _ = task.await;
     let signed = sign_omas_request("omas_a", key, "0123456789abcdee", call("tenant_a"), &[7u8; 32]).unwrap();
-    assert!(request_omat_zenoh(&session, key, signed).await.is_err());
+    let response = request_omat_zenoh(&session, key, signed).await.unwrap_err().to_string();
+    assert!(response.contains("unavailable") || response.contains("timeout"), "unexpected disconnect result: {response}");
 }
 
 #[test]
@@ -87,7 +89,7 @@ fn replay_survives_server_restart() {
     {
         let mut first = admission().with_replay_database(&path).unwrap();
         first.connected(true);
-        assert!(first.handle(&signed).is_err());
+        assert_eq!(first.handle(&signed).unwrap_err().to_string(), "OMAt request denied");
     }
     let mut restarted = admission().with_replay_database(&path).unwrap();
     restarted.connected(true);
