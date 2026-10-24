@@ -13,6 +13,16 @@ openssl x509 -req -in server.csr -CA ca.pem -CAkey ca.key -CAcreateserial -out s
 openssl req -newkey rsa:2048 -nodes -keyout client.key -out client.csr -subj /CN=omas-test >/dev/null 2>&1
 printf 'extendedKeyUsage=clientAuth\n' >client.ext
 openssl x509 -req -in client.csr -CA ca.pem -CAkey ca.key -CAcreateserial -out client.pem -days 1 -extfile client.ext >/dev/null 2>&1
+# Certificate trust, validity and identity gates before the live transport probe.
+openssl verify -CAfile "$root/ca.pem" -purpose sslserver "$root/server.pem"
+openssl verify -CAfile "$root/ca.pem" -purpose sslclient "$root/client.pem"
+if openssl verify -CAfile "$root/client.pem" "$root/server.pem" >/dev/null 2>&1; then
+  echo "unauthorized certificate unexpectedly trusted"; exit 1
+fi
+future="$(($(date +%s) + 3 * 86400))"
+if openssl verify -attime "$future" -CAfile "$root/ca.pem" "$root/server.pem" >/dev/null 2>&1; then
+  echo "expired certificate unexpectedly accepted"; exit 1
+fi
 cat >server.json5 <<EOF
 {mode:"peer",scouting:{multicast:{enabled:false},gossip:{enabled:false}},listen:{endpoints:["tls/127.0.0.1:17443"]},transport:{link:{protocols:["tls"],tls:{enable_mtls:true,verify_name_on_connect:true,close_link_on_expiration:true,root_ca_certificate:"$root/ca.pem",listen_private_key:"$root/server.key",listen_certificate:"$root/server.pem"}}}}
 EOF
