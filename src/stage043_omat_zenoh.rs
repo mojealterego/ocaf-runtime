@@ -60,6 +60,7 @@ impl OmatZenohAdmission {
         mac.update(&canonical);
         let signature = decode_hex(&request.mac_hex)?;
         mac.verify_slice(&signature).map_err(|_| anyhow::anyhow!("bad signature"))?;
+        anyhow::ensure!(self.guard.tenant_for(&request.principal).is_some(), "unknown tenant");
         let identity = (request.principal.clone(), request.nonce);
         anyhow::ensure!(!self.used.contains(&identity), "replay denied");
         anyhow::ensure!(self.used.len() < MAX_REPLAY, "replay store full");
