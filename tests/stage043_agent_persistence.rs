@@ -51,8 +51,10 @@ fn capacity_denial_does_not_consume_request_id() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("agents.sqlite");
     rusqlite::Connection::open(&path).unwrap().close().unwrap();
-    let mut config = OmasServerConfig::default();
-    config.max_agents = 1;
+    let config = OmasServerConfig {
+        max_agents: 1,
+        ..Default::default()
+    };
     let store = Stage043AgentStore::open(&path, config).unwrap();
     assert!(
         store
