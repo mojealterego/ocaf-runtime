@@ -70,3 +70,30 @@ async fn real_zenoh_loopback_rejects_and_fails_closed_after_server_shutdown() {
     let signed = sign_omas_request("omas_a", key, "0123456789abcdee", call("tenant_a"), &[7u8; 32]).unwrap();
     assert!(request_omat_zenoh(&session, key, signed).await.is_err());
 }
+
+#[test]
+fn replay_survives_server_restart() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("replay.sqlite");
+    let topic = "ocaf/omat/tenant_a/requests/req_1";
+    let signed = sign_omas_request(
+        "omas_a",
+        topic,
+        "0123456789abcdef",
+        call("tenant_a"),
+        &[7u8; 32],
+    )
+    .unwrap();
+    {
+        let mut first = admission().with_replay_database(&path).unwrap();
+        first.connected(true);
+        assert!(first.handle(&signed).is_err());
+    }
+    let mut restarted = admission().with_replay_database(&path).unwrap();
+    restarted.connected(true);
+    assert!(restarted
+        .handle(&signed)
+        .unwrap_err()
+        .to_string()
+        .contains("replay"));
+}
