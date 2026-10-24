@@ -99,4 +99,3 @@ pub enum DispatchError {
     Route(RouteError),
     Tool(crate::omat_server::OmatError),
 }
-
