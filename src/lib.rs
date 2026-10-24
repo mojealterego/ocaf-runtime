@@ -45,3 +45,5 @@ pub mod stage041_recovery_contract;
 
 pub mod stage043_agent_store;
 pub mod stage043_mtls_admission;
+
+pub mod stage043_omat_route;
