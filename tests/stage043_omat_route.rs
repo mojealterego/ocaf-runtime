@@ -1,9 +1,10 @@
 use ocaf_runtime::omat_server::{OmatPolicy, OmatRegistry, ToolCall};
 use ocaf_runtime::stage043_omat_route::{
-    dispatch_tool_call, AuthenticatedPeer, DispatchError, OmatRouteGuard, RouteError,
+    dispatch_tool_call, AuthenticatedPeer, DispatchError, OmatRouteGuard, OmatSessionLease, RouteError,
 };
 use std::collections::BTreeSet;
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 #[test]
 fn omat_transport_denies_disconnected_and_cross_tenant_requests() {
@@ -94,5 +95,28 @@ fn tool_dispatch_binds_authenticated_peer_to_request_id_and_tenant() {
         Err(DispatchError::Tool(
             ocaf_runtime::omat_server::OmatError::SourceAccessDenied
         ))
+    );
+}
+
+#[test]
+fn dropping_transport_lease_revokes_authorization() {
+    let mut peers = HashMap::new();
+    peers.insert("node_a".into(), "tenant_a".into());
+    let guard = Arc::new(Mutex::new(OmatRouteGuard::new(peers).unwrap()));
+    let peer = AuthenticatedPeer {
+        principal: "node_a".into(),
+        tenant: "tenant_a".into(),
+    };
+    {
+        let lease = OmatSessionLease::new(Arc::clone(&guard));
+        lease.connect().unwrap();
+        assert_eq!(
+            guard.lock().unwrap().authorize(&peer, "ocaf/omat/tenant_a/requests/req_1"),
+            Ok(())
+        );
+    }
+    assert_eq!(
+        guard.lock().unwrap().authorize(&peer, "ocaf/omat/tenant_a/requests/req_1"),
+        Err(RouteError::Disconnected)
     );
 }
