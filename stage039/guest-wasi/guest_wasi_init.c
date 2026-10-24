@@ -281,6 +281,10 @@ int main(void) {
     got=read_probe_line(probe_pipe[0],line,sizeof(line),30000);
     if(got<=0 || sscanf(line,"OCAF039_GUEST_OPENAT_PROBE_READY_ID=%u%n",&ready_id,&used)!=1 ||
        used!=got || ready_id==0){
+        if(got>0){
+            output("OCAF039_GUEST_OPENAT_HELPER_FIRST_LINE=");
+            output(line);output("\n");
+        }
         output("OCAF039_GUEST_OPENAT_PROBE_READY_DENIED\n");
         fail_children(wasi,probe);
     }

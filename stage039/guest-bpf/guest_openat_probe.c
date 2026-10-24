@@ -26,6 +26,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <time.h>
@@ -111,7 +112,11 @@ static int load_program(int map_fd) {
     attr.log_size=sizeof(log);
     attr.log_level=1;
     int fd=bpf_call(BPF_PROG_LOAD,&attr);
-    if(fd<0)fprintf(stderr,"OCAF039_GUEST_OPENAT_BPF_VERIFIER_DENIED errno=%d log=%.2048s\n",errno,log);
+    if(fd<0){
+        int saved_errno=errno;
+        fprintf(stderr,"OCAF039_GUEST_OPENAT_BPF_VERIFIER_DENIED_ERRNO=%d\n",saved_errno);
+        fprintf(stderr,"OCAF039_GUEST_OPENAT_BPF_VERIFIER_LOG=%.2048s\n",log);
+    }
     return fd;
 }
 
@@ -199,6 +204,11 @@ int main(int argc,char **argv) {
     if(seconds<0){fputs("invalid bounded timeout\n",stderr);return 2;}
     int trace_id=make_tracepoint_id();
     if(trace_id<=0){fputs("OCAF039_GUEST_OPENAT_TRACEPOINT_UNAVAILABLE\n",stderr);return 3;}
+    /* Linux 4.14 charges BPF maps/programs to RLIMIT_MEMLOCK. A privileged
+     * guest PID1 may raise it; a denied raise still leads to a real BPF load
+     * attempt whose errno is reported below. */
+    struct rlimit lock_limit={.rlim_cur=RLIM_INFINITY,.rlim_max=RLIM_INFINITY};
+    (void)setrlimit(RLIMIT_MEMLOCK,&lock_limit);
     int map_fd=create_map();
     if(map_fd<0){perror("guest BPF map");return 3;}
     if(set_target(map_fd,(uint32_t)tgid)!=0){perror("guest BPF target map");close(map_fd);return 3;}
