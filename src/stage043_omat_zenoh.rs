@@ -86,7 +86,7 @@ pub async fn serve_omat_zenoh(
     key: &str,
 ) -> anyhow::Result<()> {
     let state = tokio::sync::Mutex::new(admission);
-    let queryable = session.declare_queryable(key).await?;
+    let queryable = session.declare_queryable(key).await.map_err(|e| anyhow::anyhow!("declare OMAt queryable: {e}"))?;
     state.lock().await.connected(true);
     while let Ok(query) = queryable.recv_async().await {
         let result = match query.payload() {
