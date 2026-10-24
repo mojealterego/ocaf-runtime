@@ -40,12 +40,33 @@ przekazał je przez parametry boot Firecracker, a PID1 odczytał je z `/proc/cmd
 Raporty obu gości i broker potwierdziły zgodność; każdy guest ponownie zgłosił
 7 zdarzeń `openat`. Kolektor OTLP nie uczestniczył w tym przebiegu.
 
+[Run 40126628090](https://github.com/mojealterego/ocaf-runtime/actions/runs/40126628090)
+na commicie `b8646955b6bc3bdf9a63fae02253c31855510cc7` zakończył się
+sukcesem na hoście KVM. Obraz każdego gościa zawierał statyczny loader Aya
+0.14.0 z osadzonym ELF Aya eBPF 0.2.1, którego SHA-256 loader sprawdza przed
+załadowaniem. CI zbudowało oba z przypiętych lockfile, uruchomiło dwa VM i
+wymagało w każdym dodatniego identyfikatora programu w jądrze gościa oraz
+dodatniej liczby zdarzeń `openat` z procesu Wasmtime. Negatywne testy
+zmienionych bajtów obrazu, loadera, runtime i modułu także przeszły.
+Artefakt `stage039-real-firecracker-jailer-linux-evidence` ma ID `12573387836`
+i SHA-256 archiwum `f91ef711944098fcd23b570eda94ebd24697a3128ff0ffe6cd6e97056b48bdab`.
+Serwer artefaktów zwrócił 403 przy próbie pobrania archiwum do tego
+środowiska; szczegółowe liczniki pozostają dostępne w artefakcie CI, a log
+potwierdza przejście sprawdzającej je bramki. Dowód obejmuje jedno uruchomienie
+na hoście GitHub Actions, bez odbioru produkcyjnego.
+
+[Run 40126806363](https://github.com/mojealterego/ocaf-runtime/actions/runs/40126806363)
+przeszedł pięć negatywnych przypadków na przypiętym Wasmtime v49.0.3 oraz
+rzeczywistą odmowę socket przez seccomp na hoście. Artefakt ID `12573143234`
+ma SHA-256 `f0c86251e5494282f372979bd2b0383914f3b118669889fc838b77ebed0a2be8`.
+To testy hosta; odpowiednie limity procesu WASI wewnątrz VM pozostają otwarte.
+
 ## Stan odbioru
 
 To dowód laboratoryjny na jednym hoście KVM. Raporty zachowują
 `stage_039_complete=false` i `production_approved=false`.
-Sonda guest używa bezpośrednich syscalli BPF, a wymaganie 0.39.27 wymienia
-Aya. Klucz podpisujący manifesty powstaje w tym samym przebiegu CI.
+Wymaganie 0.39.27 ma udany test laboratoryjny Aya w gościu. Klucz
+podpisujący manifesty nadal powstaje w tym samym przebiegu CI.
 Zintegrowane egress broker, autoryzowana kwarantanna, wspólny test awarii,
 niezależny klucz podpisujący, dwa trwałe niezależne hosty KVM oraz odbiór
 operatora nadal wymagają osobnych dowodów. Osobne hashe artefaktów i ich
