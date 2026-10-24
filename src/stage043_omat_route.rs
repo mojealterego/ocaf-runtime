@@ -103,7 +103,6 @@ pub enum DispatchError {
 
 /// A transport session owns the connection lease. Dropping it fences all
 /// subsequent dispatches, even when an application keeps the guard alive.
-#[derive(Clone)]
 pub struct OmatSessionLease {
     guard: Arc<Mutex<OmatRouteGuard>>,
 }
@@ -140,9 +139,6 @@ impl OmatSessionLease {
 
 impl Drop for OmatSessionLease {
     fn drop(&mut self) {
-        if Arc::strong_count(&self.guard) == 1 {
-            return;
-        }
         if let Ok(mut guard) = self.guard.lock() {
             guard.set_transport_connected(false);
         }
