@@ -100,21 +100,3 @@ pub enum DispatchError {
     Tool(crate::omat_server::OmatError),
 }
 
-/// Only a transport adapter that has independently verified its remote peer
-/// may use this API. No principal or tenant may be taken from the payload.
-/// The transport must close its connection and reset the guard on loss.
-#[cfg(feature = "zenoh")]
-pub async fn serve_zenoh_omat(
-    session: &zenoh::Session,
-    guard: &OmatRouteGuard,
-    peer: &AuthenticatedPeer,
-    policy: &OmatPolicy,
-    registry: &OmatRegistry,
-) -> anyhow::Result<()> {
-    use std::time::Duration;
-    // A Zenoh session alone does not prove the sender identity of individual
-    // queries. Until the transport supplies a verified query-level identity,
-    // exposing this queryable would permit identity substitution.
-    let _ = (session, guard, peer, policy, registry, Duration::from_secs(5));
-    anyhow::bail!("Zenoh query-level peer authentication is required before OMAt ingress can be enabled")
-}
