@@ -75,7 +75,7 @@ impl OmatZenohAdmission {
         anyhow::ensure!(self.guard.tenant_for(&request.principal).is_some(), "unknown tenant");
         let identity = (request.principal.clone(), request.nonce);
         anyhow::ensure!(!self.used.contains(&identity), "replay denied");
-        anyhow::ensure!(self.used.len() < MAX_REPLAY, "replay store full");
+        anyhow::ensure!(self.used.len() < MAX_REPLAY || self.replay_db.is_some(), "replay store full");
         if let Some(db) = &self.replay_db {
             let inserted = db.execute(
                 "INSERT OR IGNORE INTO omat_replay (principal, nonce) VALUES (?1, ?2)",
@@ -83,7 +83,9 @@ impl OmatZenohAdmission {
             )?;
             anyhow::ensure!(inserted == 1, "replay denied");
         }
-        self.used.insert(identity);
+        if self.used.len() < MAX_REPLAY {
+            self.used.insert(identity);
+        }
         let tenant = self.guard.tenant_for(&request.principal).ok_or_else(|| anyhow::anyhow!("unknown tenant"))?.to_owned();
         let peer = AuthenticatedPeer { principal: request.principal, tenant: tenant.clone() };
         let policy = self.policies.get(&tenant).ok_or_else(|| anyhow::anyhow!("no tenant policy"))?;
