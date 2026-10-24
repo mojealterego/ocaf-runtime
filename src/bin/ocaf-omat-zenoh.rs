@@ -15,7 +15,7 @@ fn require(name: &str) -> anyhow::Result<String> {
     Ok(value)
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread", worker_threads = 2)]
 async fn main() -> anyhow::Result<()> {
     let config_path = require("OCAF_ZENOH_CONFIG")?;
     let config_path = Path::new(&config_path);
