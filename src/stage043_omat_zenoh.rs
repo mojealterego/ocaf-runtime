@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+use rusqlite::{params, Connection};
+use std::path::Path;
 
 type HmacSha256 = Hmac<Sha256>;
 const MAX_FRAME: usize = 256 * 1024;
@@ -26,6 +28,7 @@ pub struct OmatZenohAdmission {
     keys: HashMap<String, [u8; 32]>,
     guard: OmatRouteGuard,
     used: HashSet<(String, String)>,
+    replay_db: Option<Connection>,
     registry: OmatRegistry,
     policies: HashMap<String, OmatPolicy>,
 }
@@ -41,7 +44,16 @@ impl OmatZenohAdmission {
         anyhow::ensure!(keys.keys().all(|k| tenants.contains_key(k)), "missing tenant binding");
         anyhow::ensure!(keys.values().all(|k| *k != [0; 32]), "zero HMAC key");
         let guard = OmatRouteGuard::new(tenants).map_err(|_| anyhow::anyhow!("invalid tenant mapping"))?;
-        Ok(Self { keys, guard, used: HashSet::new(), registry, policies })
+        Ok(Self { keys, guard, used: HashSet::new(), replay_db: None, registry, policies })
+    }
+
+    /// Persist replay identities across process restarts. SQLite uniqueness
+    /// is the authority; an in-memory set is only a fast path.
+    pub fn with_replay_database(mut self, path: &Path) -> anyhow::Result<Self> {
+        let db = Connection::open(path)?;
+        db.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; CREATE TABLE IF NOT EXISTS omat_replay (principal TEXT NOT NULL, nonce TEXT NOT NULL, PRIMARY KEY(principal, nonce));")?;
+        self.replay_db = Some(db);
+        Ok(self)
     }
 
     /// A session must be established before accepting requests. Never use a
@@ -64,6 +76,13 @@ impl OmatZenohAdmission {
         let identity = (request.principal.clone(), request.nonce);
         anyhow::ensure!(!self.used.contains(&identity), "replay denied");
         anyhow::ensure!(self.used.len() < MAX_REPLAY, "replay store full");
+        if let Some(db) = &self.replay_db {
+            let inserted = db.execute(
+                "INSERT OR IGNORE INTO omat_replay (principal, nonce) VALUES (?1, ?2)",
+                params![&identity.0, &identity.1],
+            )?;
+            anyhow::ensure!(inserted == 1, "replay denied");
+        }
         self.used.insert(identity);
         let tenant = self.guard.tenant_for(&request.principal).ok_or_else(|| anyhow::anyhow!("unknown tenant"))?.to_owned();
         let peer = AuthenticatedPeer { principal: request.principal, tenant: tenant.clone() };
