@@ -47,7 +47,7 @@ fn mtls_rejects_anonymous_client_and_accepts_pinned_certificate() {
         .env("OCAF_OMAS_PEER_ED25519_PUBKEY", hex(&[7u8; 32]))
         .env("OCAF_OMAS_PEER_SENDER", "test-node")
         .stdout(Stdio::null())
-        .stderr(Stdio::null())
+        .stderr(Stdio::inherit())
         .spawn()
         .unwrap();
     struct Kill(std::process::Child);
