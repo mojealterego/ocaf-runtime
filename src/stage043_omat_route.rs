@@ -132,7 +132,10 @@ impl OmatSessionLease {
         policy: &OmatPolicy,
         registry: &OmatRegistry,
     ) -> Result<ToolReceipt, DispatchError> {
-        let guard = self.guard.lock().map_err(|_| DispatchError::Route(RouteError::Disconnected))?;
+        let guard = self
+            .guard
+            .lock()
+            .map_err(|_| DispatchError::Route(RouteError::Disconnected))?;
         dispatch_tool_call(&guard, peer, topic, call, policy, registry)
     }
 }
