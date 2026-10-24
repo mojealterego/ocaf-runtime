@@ -22,6 +22,9 @@ on:
       - stage039/guest-wasi/**
       - stage039/guest-bpf/**
       - stage039/guest-aya/**
+      - stage039/guest-egress-broker/**
+      - scripts/stage039_guest_egress_transport.py
+      - scripts/stage039_real_guest_vsock_egress.py
       - scripts/stage039_prepare_guest_wasi.sh
       - scripts/stage039_guest_wasi.py
       - scripts/tests/test_stage039_guest_wasi.py
@@ -603,6 +606,27 @@ jobs:
           assert v["production_approved"] is False
           print("STAGE039_ACTUAL_BROKER_TO_TWO_JAILED_FIRECRACKER_WASIP1_GUEST_EXECUTION_PROVED")
           PY
+      - name: ACTUAL jailed guest AF_VSOCK signed local TLS grant and replay denial
+        shell: bash
+        run: |
+          set -euo pipefail
+          PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
+          sudo -n python3 scripts/stage039_real_guest_vsock_egress.py \
+            --prefix "$PREFIX" \
+            --report "$GITHUB_WORKSPACE/stage039-real-guest-evidence/guest-vsock-egress.json" \
+            --ack-real-kvm-egress
+          sudo -n chown "$(id -u):$(id -g)" stage039-real-guest-evidence/guest-vsock-egress.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path("stage039-real-guest-evidence/guest-vsock-egress.json").read_text())
+          v=p["guest_vsock_egress"]
+          assert v["status"]=="REAL_GUEST_VSOCK_SIGNED_TLS_GRANT_REPLAY_DENY"
+          assert [d["status"] for d in v["decisions"]]==["GRANTED","DENIED"]
+          assert v["guest_kvm_tested"] is True
+          assert v["stage_039_complete"] is False
+          assert v["production_approved"] is False
+          PY
       - name: Diagnose sandbox failure using only official public guest image boot logs
         if: failure()
         shell: bash
@@ -623,6 +647,7 @@ jobs:
           set -euo pipefail
           test -s stage039-real-guest-evidence/jailed-guest-network.json
           test -s stage039-real-guest-evidence/real-guest-wasi-execution.json
+          test -s stage039-real-guest-evidence/guest-vsock-egress.json
           test -s stage039-real-guest-evidence/pre-admission-deny.json
           python3 - <<'PY'
           import json

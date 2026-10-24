@@ -21,7 +21,7 @@ from cryptography.hazmat.primitives import serialization
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from stage039_egress_broker import EgressBroker
-from stage039_guest_egress_transport import VmPeer, handle_one, listen_once, MAX_PERMIT
+from stage039_guest_egress_transport import VmPeer, handle_one, listen_once, listen_many, MAX_PERMIT
 from stage039_signed_manifest import canonical_payload
 
 
@@ -177,6 +177,36 @@ class GuestEgressTransportTests(unittest.TestCase):
         self.assertFalse(thread.is_alive())
         self.assertFalse(path.exists())
         self.assertEqual(results[0]["status"],"GRANTED")
+
+    def test_two_real_kernel_peer_connections_grant_then_replay_denial(self):
+        path=Path(self.temp.name)/"vm-replay_5000"
+        results=[]
+        thread=threading.Thread(target=lambda: results.extend(
+            listen_many(path,peer=self.peer,broker=self.broker,requests=2)),daemon=True)
+        thread.start()
+        permit=self.permit(nonce="3"*32)
+        for expected in (1,0):
+            with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as conn:
+                for _ in range(100):
+                    try:
+                        conn.connect(str(path))
+                        break
+                    except (FileNotFoundError,ConnectionRefusedError):
+                        time.sleep(.01)
+                else:
+                    self.fail("real private UDS listener did not start")
+                conn.sendall(struct.pack("!I",len(permit))+permit)
+                status,length=struct.unpack("!BI",conn.recv(5))
+                self.assertEqual(status,expected)
+                if expected:
+                    self.assertEqual(conn.recv(length),b"egress-over-kernel-bound-bridge")
+                else:
+                    self.assertEqual(length,0)
+        thread.join(timeout=2)
+        self.assertFalse(thread.is_alive())
+        self.assertFalse(path.exists())
+        self.assertEqual([r["status"] for r in results],["GRANTED","DENIED"])
+        self.assertEqual(results[0]["guest_response_bytes"],len(b"egress-over-kernel-bound-bridge"))
 
 
 if __name__=="__main__":

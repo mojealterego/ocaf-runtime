@@ -14,6 +14,7 @@ requires provisioning a per-VM Firecracker vsock device and host listener.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 import os
 from pathlib import Path
 import socket
@@ -122,7 +123,8 @@ def handle_one(conn: socket.socket, *, peer: VmPeer, broker: SignedFetch) -> dic
             raise TransportDenied("upstream response outside bound")
         conn.settimeout(3)
         conn.sendall(struct.pack("!BI", 1, len(body)) + body)
-        decision.update(status="GRANTED", guest_response_bytes=len(body))
+        decision.update(status="GRANTED", guest_response_bytes=len(body),
+                        response_sha256=hashlib.sha256(body).hexdigest())
     except Exception:
         # Any failed broker, DNS, TLS, or policy dependency fails closed.
         try:
@@ -132,8 +134,11 @@ def handle_one(conn: socket.socket, *, peer: VmPeer, broker: SignedFetch) -> dic
     return decision
 
 
-def listen_once(path: Path, *, peer: VmPeer, broker: SignedFetch) -> dict:
-    """Create the per-VM Firecracker vsock UDS endpoint and serve one request."""
+def listen_many(path: Path, *, peer: VmPeer, broker: SignedFetch,
+                requests: int) -> list[dict]:
+    """Create one per-VM Firecracker vsock endpoint for bounded requests."""
+    if type(requests) is not int or not 1 <= requests <= 4:
+        raise TransportDenied("bounded guest request count required")
     if (not isinstance(path, Path) or not path.is_absolute() or path.is_symlink()
             or path.resolve(strict=False) != path or path.parent.is_symlink()):
         raise TransportDenied("absolute non-symlinked vsock UDS path required")
@@ -149,13 +154,21 @@ def listen_once(path: Path, *, peer: VmPeer, broker: SignedFetch) -> dict:
         os.chown(path, peer.uid, -1)
         os.chmod(path, 0o600)
         listener.listen(1)
-        listener.settimeout(15)
-        conn, _address = listener.accept()
-        with conn:
-            return handle_one(conn, peer=peer, broker=broker)
+        listener.settimeout(45)
+        decisions=[]
+        for _ in range(requests):
+            conn, _address = listener.accept()
+            with conn:
+                decisions.append(handle_one(conn, peer=peer, broker=broker))
+        return decisions
     finally:
         listener.close()
         try:
             path.unlink()
         except FileNotFoundError:
             pass
+
+
+def listen_once(path: Path, *, peer: VmPeer, broker: SignedFetch) -> dict:
+    """Serve one guest request and remove the per-VM UDS endpoint."""
+    return listen_many(path, peer=peer, broker=broker, requests=1)[0]

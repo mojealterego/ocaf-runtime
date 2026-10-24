@@ -327,7 +327,7 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
         aya_program: Path | None = None, aya_program_sha: str | None = None,
         aya_seconds: int = 15, crash_after_proof: bool = False,
         boot_hook=None, require_guest_wasi: bool = False,
-        traceparent: str | None = None) -> dict:
+        traceparent: str | None = None, vsock_bridge=None) -> dict:
     import secrets
     inputs = (aya_loader, aya_loader_sha, aya_program, aya_program_sha)
     if any(value is not None for value in inputs) and any(value is None for value in inputs):
@@ -380,6 +380,12 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
                          root / "guest" / file,
                          parsed["assets"][asset]["sha256"])
         staging = spec.build(raw, approved_root, root)
+        if vsock_bridge is not None:
+            staging["firecracker_config"]["vsock"] = vsock_bridge.config(root)
+            boot_source = staging["firecracker_config"]["boot-source"]
+            if boot_source["boot_args"] != spec.BASE_BOOT_ARGS:
+                raise LiveFirecrackerError("vsock lab requires reviewed netless guest boot args")
+            boot_source["boot_args"] += " init=/ocaf-egress-init"
         if require_guest_wasi:
             # Old minimal 4.14 guest has no early entropy and Wasmtime
             # may block indefinitely in getrandom(); attach real virtio-rng.
@@ -401,6 +407,8 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
                                     close_fds=True)
         finally:
             os.close(outfd)
+        if vsock_bridge is not None:
+            vsock_bridge.start(proc, root)
         deadline = time.monotonic() + timeout
         api = {}
         seen = ""
@@ -478,6 +486,8 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
             "no matching real jailed Firecracker API+guest kernel+cgroup proof "
             f"within timeout; last check: {last_rejection}")
     finally:
+        if vsock_bridge is not None:
+            vsock_bridge.close()
         if proc is not None and proc.poll() is None:
             proc.terminate()
             try:

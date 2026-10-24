@@ -30,24 +30,36 @@ the approved byte count. The current guest client reads
 fixed host CID/port. The host bridge chooses the authenticated tenant from
 kernel process identity before reading this frame.
 
-## Required KVM integration and limits
+## Real KVM lab integration
 
-1. Reserve each broker lease, verify its signed permit, then configure a
-   distinct Firecracker `vsock` guest CID and private `uds_path` per VM.
-   Keep direct guest TAP egress disabled for this test.
-2. Create each `uds_path_5000` listener in the jailer's private directory,
-   map it to the exact live Firecracker PID/UID/start tick/cgroup and start
-   listening before PID1 invokes the guest client. Tear it down with the VM.
-3. Install the statically built guest client and permit into each separately
-   SHA-pinned rootfs. Run it from guest PID1 under a bounded deadline. Check
-   both guest serial and host broker receipts against the lease and VM ID.
-4. On real KVM, prove an authorized local TLS destination succeeds while
-   metadata IP, mixed DNS/rebinding, mismatched tenant/signature, TLS failure,
-   oversized response and stopped broker all fail without direct guest TCP.
-   SIGKILL tenant A must leave B's bridge and lease independent.
+`scripts/stage039_real_guest_vsock_egress.py` extends the existing privileged
+KVM workflow with one extra, separately SHA-pinned read-only guest image.
+The image boots a minimal PID1 that runs the guest client twice. A private
+per-VM Firecracker `vsock` device uses `/e` inside the jail and the host
+listener binds the corresponding `<jailer-root>/e_5000`. The listener accepts
+only the exact jailed VMM PID/UID/start time/cgroup/host boot ID. A temporary
+Ed25519-signed tenant permit authorizes a local TLS response; the second
+request reuses the permit and must return DENY. The workflow requires matching
+guest serial and host listener receipts and stores the KVM report as
+`guest-vsock-egress.json`. The guest has zero virtio-net interfaces.
 
-Current tests exercise real Linux `SO_PEERCRED`, process identity checks, a
-local TLS server, Ed25519 permit verification, metadata and mixed-DNS denial,
-replay and broker-outage denial. The guest binary is compiled but the host
-listener and guest client have **not yet run together inside Firecracker**.
-This is an implementation increment; 0.39 egress acceptance stays open.
+The lab permit, TLS certificate and trust key are generated for each run and
+are not production credentials. This test covers the real KVM/vsock boundary
+and replay denial only. `stage_039_complete` and `production_approved` stay
+false in its report.
+
+## Remaining acceptance limits
+
+1. Bind the guest egress permit to the durable reservation lease and a
+   long-lived operator-controlled signing authority instead of the lab key.
+2. Run two simultaneous, independent egress VMs and prove tenant B survives
+   tenant A's SIGKILL while both leases and listeners are independently
+   revoked. Test metadata, mixed DNS, TLS, oversized response and stopped
+   broker from the actual guest channel, including negative receipts.
+3. Prove host crash recovery and a second durable host with independent
+   signing and operator acceptance.
+
+Local tests exercise real Linux `SO_PEERCRED`, process identity checks, local
+TLS, Ed25519 verification, metadata and mixed-DNS denial, replay and broker
+outage. The KVM workflow must pass before the guest/host channel is called
+verified. Stage 0.39 egress acceptance remains open.
