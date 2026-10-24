@@ -21,6 +21,7 @@ on:
       - "src/stage043_omat_zenoh.rs"
       - "tests/stage043_omat_zenoh.rs"
       - "src/bin/ocaf-omat-zenoh.rs"
+      - "src/bin/ocaf-omas-zenoh-client.rs"
       - "Cargo.toml"
       - "tests/stage043_omat_route.rs"
       - "tests/stage043_mtls.rs"
@@ -50,6 +51,7 @@ on:
       - "src/stage043_omat_zenoh.rs"
       - "tests/stage043_omat_zenoh.rs"
       - "src/bin/ocaf-omat-zenoh.rs"
+      - "src/bin/ocaf-omas-zenoh-client.rs"
       - "Cargo.toml"
       - "tests/stage043_omat_route.rs"
       - "tests/stage043_mtls.rs"
@@ -100,11 +102,11 @@ jobs:
           cargo test --locked --no-default-features omas_server::tests
           cargo test --locked --no-default-features omat_server::tests
       - name: OMAt Zenoh ingress compile gate
-        run: cargo check --locked --features zenoh --lib --bin ocaf-omat-zenoh
+        run: cargo check --locked --features zenoh --lib --bin ocaf-omat-zenoh --bin ocaf-omas-zenoh-client
       - name: Signed OMAs to OMAt Zenoh integration tests
         run: cargo test --locked --features zenoh --test stage043_omat_zenoh
       - name: Stage 0.43 formatting (other stages have their own global gate)
-        run: rustfmt --check --edition 2021 tests/stage043_security.rs src/omas_server.rs src/omat_server.rs src/bin/ocaf-omas-server.rs src/bin/ocaf-omas-mtls-server.rs src/bin/ocaf-omat-server.rs src/stage043_signed_manifest.rs tests/stage043_signed_manifest.rs src/stage043_store.rs tests/stage043_persistence.rs tests/stage043_cli.rs src/stage043_signed_agent.rs tests/stage043_signed_agent.rs src/stage043_agent_store.rs tests/stage043_agent_persistence.rs src/stage043_mtls_admission.rs tests/stage043_mtls.rs tests/stage043_mtls_cli.rs tests/stage043_mtls_network.rs src/stage043_omat_route.rs src/stage043_omat_zenoh.rs src/bin/ocaf-omat-zenoh.rs tests/stage043_omat_zenoh.rs tests/stage043_omat_route.rs
+        run: rustfmt --check --edition 2021 tests/stage043_security.rs src/omas_server.rs src/omat_server.rs src/bin/ocaf-omas-server.rs src/bin/ocaf-omas-mtls-server.rs src/bin/ocaf-omat-server.rs src/stage043_signed_manifest.rs tests/stage043_signed_manifest.rs src/stage043_store.rs tests/stage043_persistence.rs tests/stage043_cli.rs src/stage043_signed_agent.rs tests/stage043_signed_agent.rs src/stage043_agent_store.rs tests/stage043_agent_persistence.rs src/stage043_mtls_admission.rs tests/stage043_mtls.rs tests/stage043_mtls_cli.rs tests/stage043_mtls_network.rs src/stage043_omat_route.rs src/stage043_omat_zenoh.rs src/bin/ocaf-omat-zenoh.rs src/bin/ocaf-omas-zenoh-client.rs tests/stage043_omat_zenoh.rs tests/stage043_omat_route.rs
       - name: Stage 0.43 Clippy (all stage-owned tests and binaries)
         run: |
           cargo clippy --locked --no-default-features \
