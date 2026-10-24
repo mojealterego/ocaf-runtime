@@ -53,9 +53,9 @@ fn signed_admission_rejects_forgery_cross_tenant_and_replay() {
 #[tokio::test]
 async fn real_zenoh_loopback_rejects_and_fails_closed_after_server_shutdown() {
     let mut config = zenoh::Config::default();
-    config.set_mode(Some(zenoh::WhatAmI::Peer)).unwrap();
-    config.scouting.multicast.set_enabled(Some(false)).unwrap();
-    config.scouting.gossip.set_enabled(Some(false)).unwrap();
+    config.insert_json5("mode", "\"peer\"").unwrap();
+    config.insert_json5("scouting/multicast/enabled", "false").unwrap();
+    config.insert_json5("scouting/gossip/enabled", "false").unwrap();
     let session = Arc::new(zenoh::open(config).await.unwrap());
     let key = "ocaf/omat/tenant_a/requests/req_1";
     let server_session = Arc::clone(&session);
