@@ -103,3 +103,49 @@ pub async fn serve_omat_zenoh(
     state.lock().await.connected(false);
     Ok(())
 }
+
+/// Build an authenticated OMAs request. The key is provisioned out of band;
+/// neither the tenant nor the principal in the frame grants authority.
+pub fn sign_omas_request(
+    principal: &str,
+    topic: &str,
+    nonce: &str,
+    call: ToolCall,
+    key: &[u8; 32],
+) -> anyhow::Result<Vec<u8>> {
+    anyhow::ensure!(*key != [0; 32], "zero HMAC key");
+    let canonical = serde_json::to_vec(&(principal, topic, nonce, &call))?;
+    let mut mac = HmacSha256::new_from_slice(key).map_err(|_| anyhow::anyhow!("invalid key"))?;
+    mac.update(&canonical);
+    let digest = mac.finalize().into_bytes();
+    let mac_hex: String = digest.iter().map(|b| format!("{b:02x}")).collect();
+    Ok(serde_json::to_vec(&SignedOmatRequest {
+        principal: principal.to_owned(),
+        topic: topic.to_owned(),
+        nonce: nonce.to_owned(),
+        call,
+        mac_hex,
+    })?)
+}
+
+/// OMAs sends a signed request to the configured OMAt queryable.
+/// A rejected tool call is returned as an error, never as successful execution.
+pub async fn request_omat_zenoh(
+    session: &zenoh::Session,
+    query_key: &str,
+    payload: Vec<u8>,
+) -> anyhow::Result<()> {
+    let replies = session
+        .get(query_key)
+        .payload(payload)
+        .timeout(std::time::Duration::from_secs(5))
+        .await
+        .map_err(|e| anyhow::anyhow!("OMAt Zenoh get: {e}"))?;
+    let reply = tokio::time::timeout(std::time::Duration::from_secs(6), replies.recv_async())
+        .await
+        .map_err(|_| anyhow::anyhow!("OMAt response timeout"))?
+        .map_err(|e| anyhow::anyhow!("OMAt response unavailable: {e}"))?;
+    let sample = reply.result().map_err(|_| anyhow::anyhow!("OMAt rejected request"))?;
+    anyhow::ensure!(sample.payload().to_bytes().as_ref() == b"accepted", "unexpected OMAt response");
+    Ok(())
+}
