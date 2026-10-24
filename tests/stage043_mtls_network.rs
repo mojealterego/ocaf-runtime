@@ -1,5 +1,10 @@
 //! Real localhost TLS handshake regression for the standalone OMAs admission server.
 use openssl::sha::sha256;
+use openssl::pkey::PKey;
+use openssl::sign::Signer;
+use ocaf_runtime::omas_server::AgentRegistrationRequest;
+use ocaf_runtime::omas_signed::SignedOperation;
+use std::time::{SystemTime, UNIX_EPOCH};
 use openssl::ssl::{SslConnector, SslFiletype, SslMethod, SslVerifyMode};
 use openssl::x509::X509;
 use rusqlite::Connection;
@@ -29,6 +34,8 @@ fn mtls_rejects_anonymous_client_and_accepts_pinned_certificate() {
     let certificate = X509::from_pem(&std::fs::read(&cert).unwrap()).unwrap();
     let fingerprint = sha256(&certificate.to_der().unwrap());
     let hex = |bytes: &[u8]| bytes.iter().map(|b| format!("{b:02x}")).collect::<String>();
+    let signing = PKey::generate_ed25519().unwrap();
+    let public = signing.raw_public_key().unwrap();
     let agents = temp.path().join("agents.sqlite");
     let nonces = temp.path().join("nonces.sqlite");
     Connection::open(&agents).unwrap();
@@ -44,7 +51,7 @@ fn mtls_rejects_anonymous_client_and_accepts_pinned_certificate() {
         .env("OCAF_OMAS_AGENT_DB", &agents)
         .env("OCAF_OMAS_NONCE_DB", &nonces)
         .env("OCAF_OMAS_PEER_CERT_SHA256", hex(&fingerprint))
-        .env("OCAF_OMAS_PEER_ED25519_PUBKEY", hex(&[7u8; 32]))
+        .env("OCAF_OMAS_PEER_ED25519_PUBKEY", hex(&public))
         .env("OCAF_OMAS_PEER_SENDER", "test-node")
         .stdout(Stdio::null())
         .stderr(Stdio::inherit())
@@ -86,4 +93,55 @@ fn mtls_rejects_anonymous_client_and_accepts_pinned_certificate() {
     let result: serde_json::Value = serde_json::from_slice(&response[..len]).unwrap();
     assert_eq!(result["ok"], false);
     assert_eq!(result["error"], "invalid envelope");
+
+    let request = AgentRegistrationRequest {
+        request_id: "mtls-e2e-001".into(),
+        agent_id: "OCAF-AGENT-001".into(),
+        tenant: "tenant_a".into(),
+        manifest_digest: format!("sha256:{}", "a".repeat(64)),
+        declared_state: "STAGED".into(),
+        readiness: false,
+        ostc_enabled: false,
+        source_access: "disabled".into(),
+    };
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
+    let mut operation = SignedOperation {
+        tenant: request.tenant.clone(),
+        namespace: format!("{}/agents", request.tenant),
+        target: format!("{}/agents/{}", request.tenant, request.agent_id),
+        opcode: 5,
+        fuel: 1,
+        issued_at: now,
+        nonce: "mtls-e2e-unique-nonce".into(),
+        payload: serde_json::to_vec(&request).unwrap(),
+        rpc_sender: Some("test-node".into()),
+        signature: Vec::new(),
+    };
+    operation.signature = Signer::new_without_digest(&signing).unwrap()
+        .sign_oneshot_to_vec(&operation.canonical_bytes()).unwrap();
+    let envelope = serde_json::json!({"request": request, "operation": operation});
+    let mut client = SslConnector::builder(SslMethod::tls()).unwrap();
+    client.set_verify(SslVerifyMode::NONE);
+    client.set_certificate_file(&cert, SslFiletype::PEM).unwrap();
+    client.set_private_key_file(&key, SslFiletype::PEM).unwrap();
+    let connector = client.build();
+    for expected in [true, false] {
+        let socket = TcpStream::connect(address).unwrap();
+        socket.set_read_timeout(Some(Duration::from_secs(3))).unwrap();
+        let mut tls = connector.connect("localhost", socket).unwrap();
+        writeln!(tls, "{envelope}").unwrap();
+        let mut answer = String::new();
+        use std::io::BufRead;
+        std::io::BufReader::new(&mut tls).read_line(&mut answer).unwrap();
+        let result: serde_json::Value = serde_json::from_str(&answer).unwrap();
+        if expected {
+            assert_eq!(result["ok"], true, "{result}");
+            assert_eq!(result["decision"]["admitted"], true, "{result}");
+        } else {
+            assert_eq!(result["ok"], false, "{result}");
+        }
+    }
+    let connection = Connection::open(&agents).unwrap();
+    let count: i64 = connection.query_row("SELECT COUNT(*) FROM stage043_agents", [], |r| r.get(0)).unwrap();
+    assert_eq!(count, 1);
 }
