@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse, hashlib, json, os, re, stat
 from pathlib import Path
 from typing import Any
+import stage039_traceparent as traceparent
 
 OUTPUT=b"OCAF039_WASI_INSIDE_FC_VM_IMPORT_FD_WRITE\n"
 PASS=b"OCAF039_GUEST_WASI_EXECUTION_PASS_EXIT_0\n"
@@ -20,6 +21,7 @@ BPF_ID=re.compile(rb"(?m)^OCAF039_GUEST_BPF_SOCKET_FILTER_ID=([1-9][0-9]{0,9})$"
 OPENAT_READY=re.compile(rb"(?m)^OCAF039_GUEST_OPENAT_PROBE_READY_ID=([1-9][0-9]{0,9})$")
 OPENAT_EVENT=re.compile(rb"(?m)^OCAF039_GUEST_OPENAT_EVENT_ID=([1-9][0-9]{0,9}) COUNT=([1-9][0-9]{0,9}) TGID=([1-9][0-9]{0,9}) PID=([1-9][0-9]{0,9})$")
 NONCE=re.compile(r"[0-9a-f]{32}\Z")
+TRACEPARENT=traceparent.TRACEPARENT
 
 class GuestWasiError(ValueError):pass
 
@@ -28,7 +30,8 @@ RNG_READY=(b"OCAF039_GUEST_CRNG_READY\n",
 
 
 def verify_console(raw:bytes,*,expected_wasi:dict|None=None,
-                   tenant_id:str|None=None)->dict:
+                   tenant_id:str|None=None,
+                   expected_traceparent:str|None=None)->dict:
     """Require actual guest CRNG initialization before Wasmtime child output.
 
     An old Linux 4.14 guest without entropy may block getrandom() forever.
@@ -52,7 +55,8 @@ def verify_console(raw:bytes,*,expected_wasi:dict|None=None,
             or not isinstance(expected_wasi["module_sha256"],str)
             or HEX.fullmatch(expected_wasi["module_sha256"]) is None
             or not isinstance(tenant_id,str)
-            or tenant_id not in ("tenant-a","tenant-b")):
+            or tenant_id not in ("tenant-a","tenant-b")
+            or not traceparent.is_valid(expected_traceparent)):
             raise GuestWasiError("invalid expected signed tenant WASI task")
         expected_output=(b"OCAF039_WASI_INSIDE_FC_VM_IMPORT_FD_WRITE:"+
                          tenant_id.encode()+b":"+expected_wasi["task_nonce"].encode()+b"\n")
@@ -84,17 +88,22 @@ def verify_console(raw:bytes,*,expected_wasi:dict|None=None,
     if expected_wasi is not None:
         module_marker=(b"OCAF039_GUEST_WASI_MODULE_SHA256="+
                        expected_wasi["module_sha256"].encode()+b"\n")
+        trace_marker=(b"OCAF039_GUEST_TRACEPARENT="+
+                      expected_traceparent.encode()+b"\n")
         tenant_marker=b"OCAF039_GUEST_WASI_TENANT="+tenant_id.encode()+b"\n"
         nonce_marker=(b"OCAF039_GUEST_WASI_NONCE="+
                       expected_wasi["task_nonce"].encode()+b"\n")
         module_at=raw.find(module_marker)
+        trace_at=raw.find(trace_marker)
         tenant_at=raw.find(tenant_marker)
         nonce_at=raw.find(nonce_marker)
         ready=list(OPENAT_READY.finditer(raw))
         events=list(OPENAT_EVENT.finditer(raw))
-        if (raw.count(module_marker)!=1 or raw.count(tenant_marker)!=1
+        if (raw.count(module_marker)!=1 or raw.count(trace_marker)!=1
+            or raw.count(tenant_marker)!=1
             or raw.count(nonce_marker)!=1
             or raw.count(b"OCAF039_GUEST_WASI_MODULE_SHA256=")!=1
+            or raw.count(b"OCAF039_GUEST_TRACEPARENT=")!=1
             or raw.count(b"OCAF039_GUEST_WASI_TENANT=")!=1
             or raw.count(b"OCAF039_GUEST_WASI_NONCE=")!=1
             or len(ready)!=1 or len(events)!=1
@@ -104,7 +113,7 @@ def verify_console(raw:bytes,*,expected_wasi:dict|None=None,
             or b"OCAF039_GUEST_OPENAT_WASMTIME_EVENT_TIMEOUT" in raw
             or b"OCAF039_GUEST_OPENAT_BPF_VERIFIER_DENIED" in raw
             or b"OCAF039_GUEST_WASI_MODULE_DIGEST_DENIED" in raw
-            or not bpf_ids[0].start()<module_at<ready[0].start()<events[0].start()<output<tenant_at<nonce_at<done):
+            or not bpf_ids[0].start()<trace_at<module_at<ready[0].start()<events[0].start()<output<tenant_at<nonce_at<done):
             raise GuestWasiError("guest module digest, tenant, nonce or openat tracepoint mismatch")
     result={
         "guest_pid1_started":True,"wasi_preview1_fd_write_observed_inside_guest":True,
@@ -124,6 +133,7 @@ def verify_console(raw:bytes,*,expected_wasi:dict|None=None,
                        "guest_openat_event_count":int(events[0].group(2)),
                        "guest_wasmtime_tgid":int(events[0].group(3)),
                        "guest_openat_event_pid":int(events[0].group(4))})
+        result["traceparent"]=expected_traceparent
     return result
 
 
@@ -197,7 +207,8 @@ def verify_brokered_pair(broker_report:dict,jailer_base:Path,
         finally:os.close(fd)
         expected_wasi=vm.get("wasi")
         receipts[key]={**verify_console(raw,expected_wasi=expected_wasi,
-                                        tenant_id=vm.get("tenant_id") if expected_wasi else None),
+                                        tenant_id=vm.get("tenant_id") if expected_wasi else None,
+                                        expected_traceparent=vm.get("traceparent") if expected_wasi else None),
                        "vm_id":vm_id}
         names.append(vm_id)
     if len(set(names))!=2:
@@ -208,6 +219,14 @@ def verify_brokered_pair(broker_report:dict,jailer_base:Path,
                     and receipts["a"].get("module_sha256")!=receipts["b"].get("module_sha256"))
     if any("wasi" in broker_report["tenant_"+k] for k in ("a","b")) and not distinct_tasks:
         raise GuestWasiError("distinct signed WASI tenant tasks required")
+    if distinct_tasks:
+        expected_traces=binding.get("tenant_traceparents")
+        if (binding.get("guest_traceparent_propagated") is not True
+            or not isinstance(expected_traces,dict) or set(expected_traces)!={"a","b"}
+            or len(set(expected_traces.values()))!=2
+            or any(receipts[k].get("traceparent")!=expected_traces[k]
+                   for k in ("a","b"))):
+            raise GuestWasiError("cross-tenant guest trace propagation mismatch")
     return {
         "status":"TWO_REAL_BROKERED_JAILED_FIRECRACKER_GUESTS_WASIP1_FD_WRITE_EXECUTED",
         "real_guest_wasi_execution_verified":True,

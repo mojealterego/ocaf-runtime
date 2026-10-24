@@ -23,6 +23,7 @@ import threading
 import stage039_live_firecracker as fc
 import stage039_microvm_gate as gate
 import stage039_vm_egress as egress
+import stage039_traceparent as traceparent
 
 IDENTITY = re.compile(r"[a-z0-9][a-z0-9_-]{0,63}\Z")
 
@@ -94,7 +95,8 @@ def execute(*, manifest_a:Path, manifest_b:Path, approved_root:Path,
             aya_loader:Path|None=None, aya_loader_sha:str|None=None,
             aya_program:Path|None=None, aya_program_sha:str|None=None,
             aya_seconds:int=15, timeout:int=90,
-            require_guest_wasi:bool=False) -> dict:
+            require_guest_wasi:bool=False,
+            traceparents:dict[str,str]|None=None) -> dict:
     ma = gate.parse_manifest(manifest_a.read_bytes())
     mb = gate.parse_manifest(manifest_b.read_bytes())
     validate_distinct_tenants(ma, mb)
@@ -104,6 +106,10 @@ def execute(*, manifest_a:Path, manifest_b:Path, approved_root:Path,
         if ma["assets"][k]["sha256"] != mb["assets"][k]["sha256"]:
             raise DualTenantError("different unreviewed pinned artifacts")
     if require_guest_wasi:
+        if (not isinstance(traceparents,dict) or set(traceparents)!={"a","b"}
+            or any(not traceparent.is_valid(x) for x in traceparents.values())
+            or len(set(traceparents.values()))!=2):
+            raise DualTenantError("two distinct broker-provided VM traceparents required")
         if ("wasi" not in ma or "wasi" not in mb
                 or ma["wasi"]["task_nonce"] == mb["wasi"]["task_nonce"]
                 or ma["wasi"]["module_sha256"] == mb["wasi"]["module_sha256"]
@@ -152,7 +158,7 @@ def execute(*, manifest_a:Path, manifest_b:Path, approved_root:Path,
         with guard:
             overlap["peer_b_survived"]=True
 
-    def launch(manifest,uid,hook):
+    def launch(manifest,uid,hook,trace):
         return fc.run(
             manifest=manifest, approved_root=approved_root, jailer=jailer,
             jailer_sha=jailer_sha, firecracker=firecracker,
@@ -161,11 +167,14 @@ def execute(*, manifest_a:Path, manifest_b:Path, approved_root:Path,
             aya_loader=aya_loader, aya_loader_sha=aya_loader_sha,
             aya_program=aya_program, aya_program_sha=aya_program_sha,
             aya_seconds=aya_seconds, crash_after_proof=True,
-            boot_hook=hook,require_guest_wasi=require_guest_wasi)
+            boot_hook=hook,require_guest_wasi=require_guest_wasi,
+            traceparent=trace)
 
     with ThreadPoolExecutor(max_workers=2,thread_name_prefix="ocaf39-tenant") as pool:
-        fa = pool.submit(launch,manifest_a,1002,hook_a)
-        fb = pool.submit(launch,manifest_b,1003,hook_b)
+        fa = pool.submit(launch,manifest_a,1002,hook_a,
+                         traceparents["a"] if traceparents else None)
+        fb = pool.submit(launch,manifest_b,1003,hook_b,
+                         traceparents["b"] if traceparents else None)
         try:
             a = fa.result(timeout=140)
         finally:

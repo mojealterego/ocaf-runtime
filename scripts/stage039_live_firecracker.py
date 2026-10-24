@@ -284,7 +284,8 @@ def _api_state(sockpath: Path) -> dict:
 
 
 def await_real_guest_wasi_execution(proc,serial_path:Path,*,seconds:int,
-                                    expected_wasi:dict|None=None,tenant_id:str|None=None)->dict:
+                                    expected_wasi:dict|None=None,tenant_id:str|None=None,
+                                    expected_traceparent:str|None=None)->dict:
     """Wait for a REAL Linux guest PID1->Wasmtime process result BEFORE VM SIGKILL.
 
     Successful VM boot is not evidence of guest WASI execution. Guest output
@@ -311,7 +312,8 @@ def await_real_guest_wasi_execution(proc,serial_path:Path,*,seconds:int,
             try:
                 return guest_wasi.verify_console(tail.encode("utf-8"),
                                                  expected_wasi=expected_wasi,
-                                                 tenant_id=tenant_id)
+                                                 tenant_id=tenant_id,
+                                                 expected_traceparent=expected_traceparent)
             except guest_wasi.GuestWasiError as exc:
                 raise LiveFirecrackerError("invalid real guest WASI zero-exit proof: " + str(exc)) from exc
         time.sleep(.25)
@@ -324,7 +326,8 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
         aya_loader: Path | None = None, aya_loader_sha: str | None = None,
         aya_program: Path | None = None, aya_program_sha: str | None = None,
         aya_seconds: int = 15, crash_after_proof: bool = False,
-        boot_hook=None, require_guest_wasi: bool = False) -> dict:
+        boot_hook=None, require_guest_wasi: bool = False,
+        traceparent: str | None = None) -> dict:
     import secrets
     inputs = (aya_loader, aya_loader_sha, aya_program, aya_program_sha)
     if any(value is not None for value in inputs) and any(value is None for value in inputs):
@@ -349,6 +352,9 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
         raise LiveFirecrackerError("unverified signed/pinned assets")
     if require_guest_wasi and "wasi" not in parsed:
         raise LiveFirecrackerError("signed tenant WASI workload binding required")
+    if require_guest_wasi and (
+        not guest_wasi.traceparent.is_valid(traceparent)):
+        raise LiveFirecrackerError("broker-derived VM traceparent required")
     if _verified_binary(firecracker, parsed["assets"]["firecracker"]["sha256"]) != firecracker_sha:
         raise LiveFirecrackerError("Firecracker version is not the manifest's pinned binary")
     vm_id = "ocaf-" + secrets.token_hex(12)
@@ -378,7 +384,7 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
             # Old minimal 4.14 guest has no early entropy and Wasmtime
             # may block indefinitely in getrandom(); attach real virtio-rng.
             staging["firecracker_config"] = spec.enable_guest_entropy_for_wasi(
-                staging["firecracker_config"])
+                staging["firecracker_config"],traceparent)
         config = root / "vmconfig.json"
         with os.fdopen(os.open(config, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o444),
                        "w", encoding="utf-8") as f:
@@ -429,9 +435,11 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
                     remaining=max(1,min(95,int(deadline-time.monotonic())))
                     result["guest_wasi_execution"]=await_real_guest_wasi_execution(
                         proc,log,seconds=remaining,
-                        expected_wasi=parsed["wasi"],tenant_id=parsed["tenant_id"])
+                        expected_wasi=parsed["wasi"],tenant_id=parsed["tenant_id"],
+                        expected_traceparent=traceparent)
                     result["guest_wasi_execution"]["observed_before_vm_sigkill"]=True
                     result["wasi"]=parsed["wasi"]
+                    result["traceparent"]=traceparent
                 if boot_hook is not None:
                     # Test-only synchronization callback. The still-running
                     # process and cgroup inode are independently checked by

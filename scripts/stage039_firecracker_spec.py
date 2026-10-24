@@ -14,13 +14,14 @@ from pathlib import Path
 import stat
 
 import stage039_microvm_gate as gate
+import stage039_traceparent as traceparent
 
 GUEST_KERNEL = "/guest/vmlinux.bin"
 GUEST_ROOTFS = "/guest/rootfs.ext4"
 BASE_BOOT_ARGS = "console=ttyS0 reboot=k panic=1 pci=off root=/dev/vda ro"
 
 
-def enable_guest_entropy_for_wasi(config:dict)->dict:
+def enable_guest_entropy_for_wasi(config:dict, vm_traceparent:str|None=None)->dict:
     """Explicit Firecracker virtio-rng for guest getrandom() initialization.
 
     The pinned Firecracker v1.17 API supports an 'entropy' device with an
@@ -36,8 +37,13 @@ def enable_guest_entropy_for_wasi(config:dict)->dict:
         or not isinstance(config.get("boot-source"),dict)
         or config["boot-source"].get("boot_args") != BASE_BOOT_ARGS):
         raise ValueError("cannot attach virtio-rng to unreviewed networked guest configuration")
+    if vm_traceparent is not None and not traceparent.is_valid(vm_traceparent):
+        raise ValueError("invalid broker VM traceparent")
+    boot_args=BASE_BOOT_ARGS+" init=/ocaf-wasi-init"
+    if vm_traceparent is not None:
+        boot_args+=" ocaf_traceparent="+vm_traceparent
     return {**config,"entropy":{},"boot-source":{
-        **config["boot-source"],"boot_args":BASE_BOOT_ARGS+" init=/ocaf-wasi-init"}}
+        **config["boot-source"],"boot_args":boot_args}}
 
 
 def build(manifest_raw: bytes, approved_root: Path, jailer_root: Path) -> dict:

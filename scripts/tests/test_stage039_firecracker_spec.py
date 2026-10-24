@@ -65,6 +65,11 @@ class FirecrackerSpecTests(unittest.TestCase):
         self.assertEqual(spec["entropy"],{})
         self.assertEqual(spec["network-interfaces"],[])
         self.assertNotIn("entropy",original)
+        trace="00-"+"1"*32+"-"+"2"*16+"-01"
+        traced=cfg.enable_guest_entropy_for_wasi(original,trace)
+        self.assertTrue(traced["boot-source"]["boot_args"].endswith(" ocaf_traceparent="+trace))
+        with self.assertRaises(ValueError):
+            cfg.enable_guest_entropy_for_wasi(original,"00-"+"0"*32+"-"+"2"*16+"-01-extra")
         with self.assertRaises(ValueError):
             cfg.enable_guest_entropy_for_wasi({"network-interfaces":[{"iface_id":"eth0"}]})
         with self.assertRaises(ValueError):

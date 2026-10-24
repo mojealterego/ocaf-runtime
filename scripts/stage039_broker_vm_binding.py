@@ -34,6 +34,7 @@ import stage039_broker_ledger as broker
 import stage039_dual_tenant as dual
 import stage039_microvm_gate as gate
 import stage039_signed_manifest as signed_manifest
+import stage039_traceparent as traceparent
 
 
 class BindingError(ValueError):
@@ -93,6 +94,7 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
     bootids=[]
     requestids=[]
     manifest_hashes=[]
+    traceparents={}
     if signed_manifests is not None and set(signed_manifests) != {"a", "b"}:
         raise BindingError("signed manifest set must cover both tenants")
     if signed_manifests is not None and not trusted_keys:
@@ -146,6 +148,10 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
         if require_wasi:
             guest=actual_vm.get("guest_wasi_execution")
             wasi=m.get("wasi")
+            try:
+                expected_trace=traceparent.derive(rec["request_id"], rec["manifest_sha256"],m["tenant_id"])
+            except (KeyError,ValueError) as exc:
+                raise BindingError("invalid broker-derived VM trace identity") from exc
             if (not isinstance(wasi,dict)
                 or set(wasi)!={"task_nonce","module_sha256"}
                 or actual_vm.get("wasi")!=wasi
@@ -158,6 +164,8 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
                 or guest.get("tenant_id")!=m.get("tenant_id")
                 or guest.get("task_nonce")!=wasi["task_nonce"]
                 or guest.get("module_sha256")!=wasi["module_sha256"]
+                or actual_vm.get("traceparent")!=expected_trace
+                or guest.get("traceparent")!=expected_trace
                 or type(guest.get("guest_openat_bpf_program_id")) is not int
                 or guest["guest_openat_bpf_program_id"]<=0
                 or type(guest.get("guest_openat_event_count")) is not int
@@ -172,6 +180,7 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
                 or not isinstance(guest.get("serial_sha256"),str)
                 or re.fullmatch("[a-f0-9]{64}",guest["serial_sha256"]) is None):
                 raise BindingError("real guest WASIp1 success receipt missing before VM termination")
+            traceparents[tenant]=expected_trace
         crash=actual_vm.get("vm_sigkill_fault")
         if (not isinstance(crash,dict)
             or crash.get("status")!="VM_SIGKILL_CGROUP_SUBTREE_DRAINED"
@@ -196,6 +205,8 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
             raise BindingError("WASI guest tasks must have separate nonces, modules and rootfs images")
     if actual.get("host_boot_id")!=bootids[0]:
         raise BindingError("VM host kernel identity changed")
+    if require_wasi and len(set(traceparents.values()))!=2:
+        raise BindingError("tenant VM traces collided")
     return {
         "status":"BROKER_SO_PEERCRED_TWO_REAL_JAILED_VM_BOOT_BOUND",
         "schema_version":1,
@@ -210,6 +221,8 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
         "both_vm_cgroups_drained_after_sigkill":True,
         "tenant_b_survived_tenant_a_crash":True,
         "wasi_executed_inside_guest":bool(require_wasi),
+        "guest_traceparent_propagated":bool(require_wasi),
+        "tenant_traceparents":traceparents,
         "signed_wasi_manifest_verified":signed_manifests is not None,
         "production_approved":False,
         "stage_039_complete":False,
@@ -310,10 +323,18 @@ def run_with_live_broker(*,manifest_a:Path,manifest_b:Path,
                 "FROM workload_state WHERE workload_id=?",(rec["workload_id"],)).fetchone()
             rows[tenant]=row
         verify_ledger_rows(rows,receipts)
+        traceparents=None
+        if require_guest_wasi:
+            traceparents={tenant:traceparent.derive(rec["request_id"],
+                         rec["manifest_sha256"],rec["tenant_id"])
+                          for tenant,rec in receipts.items()}
+            if set(traceparents)!={"a","b"} or len(set(traceparents.values()))!=2:
+                raise BindingError("broker trace identity collision")
         try:
             actual=dual.execute(manifest_a=manifest_a,manifest_b=manifest_b,
                                 approved_root=approved_root,
-                                require_guest_wasi=require_guest_wasi,**dual_arguments)
+                                require_guest_wasi=require_guest_wasi,
+                                traceparents=traceparents,**dual_arguments)
             verification=verify_binding(
                 receipts,manifests,actual,require_wasi=require_guest_wasi,
                 signed_manifests=signed_manifests,trusted_keys=trusted_keys)

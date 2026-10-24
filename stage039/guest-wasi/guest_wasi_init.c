@@ -28,6 +28,7 @@
 #include <sys/socket.h>
 #include <sys/syscall.h>
 #include <poll.h>
+#include <sys/mount.h>
 
 #ifndef OCAF_WASI_TENANT
 #define OCAF_WASI_TENANT "legacy-test"
@@ -86,6 +87,45 @@ static int guest_bpf_socket_filter(void) {
 
 static void output(const char *s) { size_t n=strlen(s); while(n){ssize_t r=write(1,s,n); if(r<=0)break; s+=r;n-=(size_t)r;} }
 static void fail(void) {output("OCAF039_GUEST_WASI_EXECUTION_FAILED\n");for(;;)pause();}
+
+/* The broker supplies this W3C traceparent as a Firecracker boot argument.
+ * PID1 reads the guest kernel's actual command line, never an environment
+ * variable or Wasmtime output. Host admission independently checks the lease. */
+static int read_guest_traceparent(char out[56]) {
+    if(mount("proc","/proc","proc",MS_NOSUID|MS_NODEV|MS_NOEXEC,NULL)!=0 && errno!=EBUSY)return -1;
+    int fd=open("/proc/cmdline",O_RDONLY|O_CLOEXEC|O_NOFOLLOW);
+    if(fd<0)return -1;
+    char cmdline[2048];ssize_t length=read(fd,cmdline,sizeof(cmdline)-1);
+    close(fd);
+    if(length<=0 || length>=(ssize_t)sizeof(cmdline)-1)return -1;
+    cmdline[length]=0;
+    const char prefix[]="ocaf_traceparent=";
+    const size_t prefix_len=sizeof(prefix)-1;
+    int found=0;
+    for(char *p=cmdline;*p;) {
+        while(*p==' ')p++;
+        if(!*p)break;
+        char *end=p;
+        while(*end && *end!=' ' && *end!='\n')end++;
+        if((size_t)(end-p)>=prefix_len && !memcmp(p,prefix,prefix_len)) {
+            if(found++ || end-(p+prefix_len)!=55)return -1;
+            memcpy(out,p+prefix_len,55);out[55]=0;
+        }
+        p=end;
+        if(*p=='\n')break;
+    }
+    if(found!=1 || strncmp(out,"00-",3)!=0 || out[35]!='-' ||
+       out[52]!='-' || strcmp(out+53,"01")!=0)return -1;
+    int nonzero_trace=0,nonzero_span=0;
+    for(int i=3;i<52;i++) {
+        if(i==35)continue;
+        char c=out[i];
+        if(!((c>='0'&&c<='9')||(c>='a'&&c<='f')))return -1;
+        if(i<35 && c!='0')nonzero_trace=1;
+        if(i>35 && c!='0')nonzero_span=1;
+    }
+    return nonzero_trace&&nonzero_span ? 0 : -1;
+}
 
 static int run_capture(char *const args[],char *response,size_t capacity) {
     int channel[2];if(pipe(channel)!=0)return -1;
@@ -233,6 +273,11 @@ int main(void) {
         output("OCAF039_GUEST_BPF_LOAD_DENIED\n");
         fail();
     }
+    char traceparent[56];
+    if(read_guest_traceparent(traceparent)!=0){
+        output("OCAF039_GUEST_TRACEPARENT_DENIED\n");fail();
+    }
+    output("OCAF039_GUEST_TRACEPARENT=");output(traceparent);output("\n");
     char response[8192];
     char digest_expected[128];
     int digest_len=snprintf(digest_expected,sizeof(digest_expected),"%s  /opt/ocaf/hello.wasm\n",OCAF_WASI_MODULE_SHA256);

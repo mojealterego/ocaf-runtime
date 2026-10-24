@@ -9,6 +9,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import stage039_broker_vm_binding as binding
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 import stage039_signed_manifest as signed_manifest
+import stage039_traceparent as traceparent
 
 
 def manifest(tenant):
@@ -90,8 +91,11 @@ class BrokerVmAcceptanceTests(unittest.TestCase):
             m["assets"]["guest_rootfs"]["sha256"]=t*64
             self.raw[t]=json.dumps(m,sort_keys=True).encode()
             self.reports[t]=admission(t,self.raw[t])
+            trace=traceparent.derive(self.reports[t]["request_id"],
+                                     self.reports[t]["manifest_sha256"],"tenant-"+t)
             actual["tenant_"+t]["guest_rootfs_sha256"]=t*64
             actual["tenant_"+t]["wasi"]=m["wasi"]
+            actual["tenant_"+t]["traceparent"]=trace
             actual["tenant_"+t]["guest_wasi_execution"]={
                 "guest_pid1_started":True,
                 "wasi_preview1_fd_write_observed_inside_guest":True,
@@ -101,6 +105,7 @@ class BrokerVmAcceptanceTests(unittest.TestCase):
                 "tenant_id":"tenant-"+t,
                 "task_nonce":t*32,
                 "module_sha256":t*64,
+                "traceparent":trace,
                 "guest_openat_bpf_program_id":31 if t=="a" else 32,
                 "guest_openat_event_count":3,
                 "guest_wasmtime_tgid":42,
@@ -111,6 +116,8 @@ class BrokerVmAcceptanceTests(unittest.TestCase):
         result=binding.verify_binding(self.reports,self.raw,actual,require_wasi=True)
         self.assertTrue(result["wasi_executed_inside_guest"])
         self.assertFalse(result["signed_wasi_manifest_verified"])
+        self.assertTrue(result["guest_traceparent_propagated"])
+        self.assertNotEqual(result["tenant_traceparents"]["a"],result["tenant_traceparents"]["b"])
         self.assertNotEqual(actual["tenant_a"]["guest_wasi_execution"]["task_nonce"],
                             actual["tenant_b"]["guest_wasi_execution"]["task_nonce"])
         for tamper in (
@@ -119,6 +126,8 @@ class BrokerVmAcceptanceTests(unittest.TestCase):
                                      "guest_wasmtime_child_exited_zero":False}},
             {"guest_wasi_execution":{**actual["tenant_b"]["guest_wasi_execution"],
                                      "task_nonce":"a"*32}},
+            {"guest_wasi_execution":{**actual["tenant_b"]["guest_wasi_execution"],
+                                     "traceparent":actual["tenant_a"]["traceparent"]}},
         ):
             with self.subTest(tamper=tamper),self.assertRaises(binding.BindingError):
                 bad=json.loads(json.dumps(actual))
