@@ -1,0 +1,18 @@
+[package]
+name = "ocaf-stage039-guest-aya-ebpf"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "ocaf-stage039-guest-aya-ebpf"
+path = "src/main.rs"
+
+[dependencies]
+aya-ebpf = "=0.2.1"
+
+[profile.release]
+panic = "abort"
+opt-level = 3
+lto = true
+codegen-units = 1

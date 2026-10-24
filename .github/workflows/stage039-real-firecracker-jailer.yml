@@ -21,6 +21,7 @@ on:
       - stage039/guest-egress/**
       - stage039/guest-wasi/**
       - stage039/guest-bpf/**
+      - stage039/guest-aya/**
       - scripts/stage039_prepare_guest_wasi.sh
       - scripts/stage039_guest_wasi.py
       - scripts/tests/test_stage039_guest_wasi.py

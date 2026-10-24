@@ -27,8 +27,10 @@ tar -xJf "$ARCHIVE" -C "$WORK"
 WASMTIME="$WORK/wasmtime-v49.0.3-x86_64-linux/wasmtime"
 [[ -x "$WASMTIME" && -x /usr/bin/sha256sum ]] || { echo "trusted guest tooling missing" >&2; exit 3; }
 "$WASMTIME" --version
-gcc -std=c11 -O2 -static -Wall -Wextra -Werror \
-  "$SRC/stage039/guest-bpf/guest_openat_probe.c" -o "$WORK/ocaf-guest-openat-probe"
+bash "$SRC/stage039/guest-aya/build.sh" "$WORK/aya-build"
+install -m 0555 "$WORK/aya-build/ocaf-guest-openat-aya" \
+  "$WORK/ocaf-guest-openat-probe"
+cmp "$WORK/aya-build/ocaf-guest-openat-aya" "$WORK/ocaf-guest-openat-probe"
 install -o root -g root -m 0555 "$WASMTIME" "$APPROVED/wasmtime_runtime"
 install -o root -g root -m 0555 "$WORK/ocaf-guest-openat-probe" "$APPROVED/guest_openat_probe"
 cmp "$WASMTIME" "$APPROVED/wasmtime_runtime"
