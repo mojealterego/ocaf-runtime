@@ -3,6 +3,7 @@
 //! the peer using mutual TLS before creating an AuthenticatedPeer.
 use crate::omat_server::{OmatPolicy, OmatRegistry, ToolCall, ToolReceipt};
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AuthenticatedPeer {
@@ -98,4 +99,52 @@ pub fn dispatch_tool_call(
 pub enum DispatchError {
     Route(RouteError),
     Tool(crate::omat_server::OmatError),
+}
+
+/// A transport session owns the connection lease. Dropping it fences all
+/// subsequent dispatches, even when an application keeps the guard alive.
+#[derive(Clone)]
+pub struct OmatSessionLease {
+    guard: Arc<Mutex<OmatRouteGuard>>,
+}
+
+impl OmatSessionLease {
+    pub fn new(guard: Arc<Mutex<OmatRouteGuard>>) -> Self {
+        Self { guard }
+    }
+
+    pub fn connect(&self) -> Result<(), RouteError> {
+        let mut guard = self.guard.lock().map_err(|_| RouteError::Disconnected)?;
+        guard.set_transport_connected(true);
+        Ok(())
+    }
+
+    pub fn disconnect(&self) -> Result<(), RouteError> {
+        let mut guard = self.guard.lock().map_err(|_| RouteError::Disconnected)?;
+        guard.set_transport_connected(false);
+        Ok(())
+    }
+
+    pub fn dispatch(
+        &self,
+        peer: &AuthenticatedPeer,
+        topic: &str,
+        call: &ToolCall,
+        policy: &OmatPolicy,
+        registry: &OmatRegistry,
+    ) -> Result<ToolReceipt, DispatchError> {
+        let guard = self.guard.lock().map_err(|_| DispatchError::Route(RouteError::Disconnected))?;
+        dispatch_tool_call(&guard, peer, topic, call, policy, registry)
+    }
+}
+
+impl Drop for OmatSessionLease {
+    fn drop(&mut self) {
+        if Arc::strong_count(&self.guard) == 1 {
+            return;
+        }
+        if let Ok(mut guard) = self.guard.lock() {
+            guard.set_transport_connected(false);
+        }
+    }
 }
