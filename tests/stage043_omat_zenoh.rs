@@ -50,7 +50,7 @@ fn signed_admission_rejects_forgery_cross_tenant_and_replay() {
     assert_eq!(server.handle(&disconnected).unwrap_err().to_string(), "OMAt request denied");
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn real_zenoh_loopback_rejects_and_fails_closed_after_server_shutdown() {
     let mut config = zenoh::Config::default();
     config.insert_json5("mode", "\"peer\"").unwrap();
