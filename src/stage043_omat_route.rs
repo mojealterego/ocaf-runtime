@@ -1,8 +1,8 @@
 //! Stage 0.43 point 2: fail-closed OMAs -> OMAt route authorization.
 //! Routing authorization is independent of transport: the caller MUST verify
 //! the peer using mutual TLS before creating an AuthenticatedPeer.
-use std::collections::HashMap;
 use crate::omat_server::{OmatPolicy, OmatRegistry, ToolCall, ToolReceipt};
+use std::collections::HashMap;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AuthenticatedPeer {
