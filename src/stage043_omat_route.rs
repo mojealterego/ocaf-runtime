@@ -24,13 +24,16 @@ pub struct OmatRouteGuard {
 impl OmatRouteGuard {
     pub fn new(peers: HashMap<String, String>) -> Result<Self, RouteError> {
         if peers.is_empty()
-            || peers.iter().any(|(principal, tenant)| {
-                !valid_segment(principal) || !valid_segment(tenant)
-            })
+            || peers
+                .iter()
+                .any(|(principal, tenant)| !valid_segment(principal) || !valid_segment(tenant))
         {
             return Err(RouteError::Unauthorized);
         }
-        Ok(Self { peers, connected: false })
+        Ok(Self {
+            peers,
+            connected: false,
+        })
     }
 
     pub fn set_transport_connected(&mut self, connected: bool) {
