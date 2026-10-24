@@ -42,6 +42,11 @@ path = "src/bin/ocaf-omas-mtls-server.rs"
 name = "ocaf-omat-server"
 path = "src/bin/ocaf-omat-server.rs"
 
+[[bin]]
+name = "ocaf-omat-zenoh"
+path = "src/bin/ocaf-omat-zenoh.rs"
+required-features = ["zenoh"]
+
 [features]
 ha-probe = []
 tls-bound = ["zenoh", "dep:tokio-rustls", "dep:rustls"]
