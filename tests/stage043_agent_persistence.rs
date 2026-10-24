@@ -21,12 +21,28 @@ fn durable_agents_survive_restart_and_replay_is_rejected() {
     let path = dir.path().join("agents.sqlite");
     rusqlite::Connection::open(&path).unwrap().close().unwrap();
     let store = Stage043AgentStore::open(&path, OmasServerConfig::default()).unwrap();
-    assert!(store.admit(request("tenant_a", "agent1", "nonce1")).unwrap().admitted);
+    assert!(
+        store
+            .admit(request("tenant_a", "agent1", "nonce1"))
+            .unwrap()
+            .admitted
+    );
     drop(store);
     let reopened = Stage043AgentStore::open(&path, OmasServerConfig::default()).unwrap();
     assert_eq!(reopened.registered_count().unwrap(), 1);
-    assert_eq!(reopened.admit(request("tenant_a", "agent1", "nonce1")).unwrap().reason, "replay_request_id");
-    assert!(reopened.admit(request("tenant_b", "agent1", "nonce2")).unwrap().admitted);
+    assert_eq!(
+        reopened
+            .admit(request("tenant_a", "agent1", "nonce1"))
+            .unwrap()
+            .reason,
+        "replay_request_id"
+    );
+    assert!(
+        reopened
+            .admit(request("tenant_b", "agent1", "nonce2"))
+            .unwrap()
+            .admitted
+    );
     assert_eq!(reopened.registered_count().unwrap(), 2);
 }
 
@@ -38,8 +54,19 @@ fn capacity_denial_does_not_consume_request_id() {
     let mut config = OmasServerConfig::default();
     config.max_agents = 1;
     let store = Stage043AgentStore::open(&path, config).unwrap();
-    assert!(store.admit(request("tenant_a", "agent1", "first")).unwrap().admitted);
-    assert_eq!(store.admit(request("tenant_b", "agent2", "second")).unwrap().reason, "agent_capacity_exhausted");
+    assert!(
+        store
+            .admit(request("tenant_a", "agent1", "first"))
+            .unwrap()
+            .admitted
+    );
+    assert_eq!(
+        store
+            .admit(request("tenant_b", "agent2", "second"))
+            .unwrap()
+            .reason,
+        "agent_capacity_exhausted"
+    );
     assert_eq!(store.registered_count().unwrap(), 1);
 }
 
