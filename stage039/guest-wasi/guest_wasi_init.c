@@ -198,6 +198,38 @@ static int read_child_output(int fd,char *response,size_t capacity,int timeout_m
     return -1;
 }
 
+static int run_guest_negative_suite(void) {
+    static const char expected[]=
+        "OCAF039_GUEST_SECCOMP_SOCKET_DENIED\n"
+        "OCAF039_GUEST_WASI_FUEL_TRAP\n"
+        "OCAF039_GUEST_WASI_TIMEOUT_TRAP\n"
+        "OCAF039_GUEST_WASI_MEMORY_TRAP\n"
+        "OCAF039_GUEST_WASI_CPU_SIGNAL\n"
+        "OCAF039_GUEST_WASI_CHILD_SIGKILL\n";
+    int channel[2];if(pipe(channel)!=0)return -1;
+    pid_t child=fork();
+    if(child<0){close(channel[0]);close(channel[1]);return -1;}
+    if(child==0){
+        close(channel[0]);
+        if(dup2(channel[1],1)<0 || dup2(channel[1],2)<0)_exit(127);
+        close(channel[1]);
+        char *const args[]={"/usr/bin/ocaf-guest-negative-probe",NULL};
+        char *const env[]={"PATH=/usr/bin:/bin","HOME=/","LANG=C",NULL};
+        execve(args[0],args,env);
+        _exit(127);
+    }
+    close(channel[1]);char response[1024];
+    int count=read_child_output(channel[0],response,sizeof(response),60000);
+    close(channel[0]);
+    if(count<0)kill(child,SIGKILL);
+    int status=0;pid_t waited;
+    do{waited=waitpid(child,&status,0);}while(waited<0 && errno==EINTR);
+    if(waited!=child || !WIFEXITED(status) || WEXITSTATUS(status)!=0 ||
+       count!=(int)(sizeof(expected)-1) || strcmp(response,expected)!=0)return -1;
+    output(expected);
+    return 0;
+}
+
 static void fail_children(pid_t wasi,pid_t probe) {
     if(wasi>0)kill(wasi,SIGKILL);
     if(probe>0)kill(probe,SIGKILL);
@@ -376,6 +408,9 @@ int main(void) {
     output(response);
     output("OCAF039_GUEST_WASI_TENANT=");output(OCAF_WASI_TENANT);output("\n");
     output("OCAF039_GUEST_WASI_NONCE=");output(OCAF_WASI_NONCE);output("\n");
+    if(run_guest_negative_suite()!=0){
+        output("OCAF039_GUEST_NEGATIVE_BUDGET_DENIED\n");fail();
+    }
     output("\nOCAF039_GUEST_WASI_EXECUTION_PASS_EXIT_0\n");
     for(;;)pause();
 }

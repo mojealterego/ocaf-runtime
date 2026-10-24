@@ -22,6 +22,14 @@ OPENAT_READY=re.compile(rb"(?m)^OCAF039_GUEST_OPENAT_PROBE_READY_ID=([1-9][0-9]{
 OPENAT_EVENT=re.compile(rb"(?m)^OCAF039_GUEST_OPENAT_EVENT_ID=([1-9][0-9]{0,9}) COUNT=([1-9][0-9]{0,9}) TGID=([1-9][0-9]{0,9}) PID=([1-9][0-9]{0,9})$")
 NONCE=re.compile(r"[0-9a-f]{32}\Z")
 TRACEPARENT=traceparent.TRACEPARENT
+NEGATIVE_MARKERS=(
+    b"OCAF039_GUEST_SECCOMP_SOCKET_DENIED\n",
+    b"OCAF039_GUEST_WASI_FUEL_TRAP\n",
+    b"OCAF039_GUEST_WASI_TIMEOUT_TRAP\n",
+    b"OCAF039_GUEST_WASI_MEMORY_TRAP\n",
+    b"OCAF039_GUEST_WASI_CPU_SIGNAL\n",
+    b"OCAF039_GUEST_WASI_CHILD_SIGKILL\n",
+)
 
 class GuestWasiError(ValueError):pass
 
@@ -99,6 +107,7 @@ def verify_console(raw:bytes,*,expected_wasi:dict|None=None,
         nonce_at=raw.find(nonce_marker)
         ready=list(OPENAT_READY.finditer(raw))
         events=list(OPENAT_EVENT.finditer(raw))
+        negative_positions=[raw.find(marker) for marker in NEGATIVE_MARKERS]
         if (raw.count(module_marker)!=1 or raw.count(trace_marker)!=1
             or raw.count(tenant_marker)!=1
             or raw.count(nonce_marker)!=1
@@ -113,8 +122,14 @@ def verify_console(raw:bytes,*,expected_wasi:dict|None=None,
             or b"OCAF039_GUEST_OPENAT_WASMTIME_EVENT_TIMEOUT" in raw
             or b"OCAF039_GUEST_OPENAT_BPF_VERIFIER_DENIED" in raw
             or b"OCAF039_GUEST_WASI_MODULE_DIGEST_DENIED" in raw
-            or not bpf_ids[0].start()<trace_at<module_at<ready[0].start()<events[0].start()<output<tenant_at<nonce_at<done):
-            raise GuestWasiError("guest module digest, tenant, nonce or openat tracepoint mismatch")
+            or b"OCAF039_GUEST_NEGATIVE_BUDGET_DENIED" in raw
+            or any(raw.count(marker)!=1 for marker in NEGATIVE_MARKERS)
+            or any(position<=0 or raw[position-1:position]!=b"\n"
+                   for position in negative_positions)
+            or not bpf_ids[0].start()<trace_at<module_at<ready[0].start()<events[0].start()<output<tenant_at<nonce_at<negative_positions[0]
+            or not all(a<b for a,b in zip(negative_positions,negative_positions[1:]))
+            or not negative_positions[-1]<done):
+            raise GuestWasiError("guest module, identity, openat or negative budget receipt mismatch")
     result={
         "guest_pid1_started":True,"wasi_preview1_fd_write_observed_inside_guest":True,
         "guest_wasmtime_child_exited_zero":True,
@@ -132,7 +147,9 @@ def verify_console(raw:bytes,*,expected_wasi:dict|None=None,
                        "guest_openat_bpf_program_id":int(ready[0].group(1)),
                        "guest_openat_event_count":int(events[0].group(2)),
                        "guest_wasmtime_tgid":int(events[0].group(3)),
-                       "guest_openat_event_pid":int(events[0].group(4))})
+                       "guest_openat_event_pid":int(events[0].group(4)),
+                       "guest_negative_wasi_budgets_verified":True,
+                       "guest_seccomp_socket_denied":True})
         result["traceparent"]=expected_traceparent
     return result
 

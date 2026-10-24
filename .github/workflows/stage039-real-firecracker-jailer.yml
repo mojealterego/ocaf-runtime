@@ -20,6 +20,7 @@ on:
       - scripts/tests/test_stage039_guest_network.py
       - stage039/guest-egress/**
       - stage039/guest-wasi/**
+      - stage039/guest-wasi-negative/**
       - stage039/guest-bpf/**
       - stage039/guest-aya/**
       - stage039/guest-egress-broker/**

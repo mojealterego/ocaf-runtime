@@ -15,6 +15,7 @@ import stage039_wasi_budget_lab as budget
 PINNED_WASMTIME_SHA = "b213b0678c0afc807c53130e5b7ca357f0307c1f8deb18cac35fcc65480b9c85"
 WASMTIME = Path(os.environ["OCAF039_WASMTIME"]) if "OCAF039_WASMTIME" in os.environ else None
 SOURCE = Path(__file__).resolve().parents[2] / "stage039/guest-wasi-negative/seccomp_socket_probe.c"
+GUEST_SOURCE = SOURCE.with_name("guest_negative_probe.c")
 
 
 class WasiNegativeBudgets(unittest.TestCase):
@@ -45,6 +46,26 @@ class WasiNegativeBudgets(unittest.TestCase):
                                      text=True,timeout=3)
             self.assertEqual(completed.returncode,0,completed.stderr)
             self.assertEqual(completed.stdout,"OCAF039_SECCOMP_SOCKET_DENIED\n")
+
+    @unittest.skipUnless(WASMTIME is not None, "set OCAF039_WASMTIME to pinned v49.0.3 CLI")
+    def test_guest_supervisor_contract_runs_real_negative_cases(self):
+        with tempfile.TemporaryDirectory(prefix="ocaf039-guest-negative-",dir="/dev/shm") as directory:
+            binary=Path(directory)/"guest-negative"
+            override=(f'-DOCAF_NEG_WASMTIME="{WASMTIME}"',
+                      f'-DOCAF_NEG_SPIN="{budget.FIXTURES / "fuel_spin.wat"}"',
+                      f'-DOCAF_NEG_MEMORY="{budget.FIXTURES / "memory_grow.wat"}"')
+            subprocess.run(["gcc","-std=c11","-O2","-static","-Wall","-Wextra","-Werror",
+                            *override,str(GUEST_SOURCE),"-o",str(binary)],
+                           check=True,capture_output=True)
+            result=subprocess.run([str(binary)],capture_output=True,text=True,timeout=30)
+            self.assertEqual(result.returncode,0,result.stderr)
+            self.assertEqual(result.stdout,
+                "OCAF039_GUEST_SECCOMP_SOCKET_DENIED\n"
+                "OCAF039_GUEST_WASI_FUEL_TRAP\n"
+                "OCAF039_GUEST_WASI_TIMEOUT_TRAP\n"
+                "OCAF039_GUEST_WASI_MEMORY_TRAP\n"
+                "OCAF039_GUEST_WASI_CPU_SIGNAL\n"
+                "OCAF039_GUEST_WASI_CHILD_SIGKILL\n")
 
 
 if __name__ == "__main__":

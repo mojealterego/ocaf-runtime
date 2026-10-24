@@ -28,22 +28,25 @@ python3 scripts/stage039_wasi_budget_lab.py \
   --report /absolute/path/to/unused-report.json
 ```
 
-## KVM integration contract
+## Guest KVM integration candidate
 
-1. Copy and SHA-pin both WAT fixtures plus the static seccomp probe inside each
-   tenant's read-only Firecracker guest image. Verify exact copied bytes before
-   signing the rootfs manifest.
-2. Guest PID1 must run the negative Wasmtime modules with the same `-W` flags,
-   a bounded host process supervisor, no-new-privileges, and CPU/memory/time
-   limits. Require the exact fuel, timeout, and memory trap from the guest's
-   Wasmtime child, and a real `SIGKILL` status for the independent spin child.
-3. Run the seccomp probe in the guest and require the kernel `EPERM` marker.
-   Bind all negative receipts to the VM ID, tenant nonce, broker lease, signed
-   module SHA and guest kernel identity. Tenant B must remain alive when A is
-   killed or denied.
-4. Reuse the existing live jailed TAP/TC kernel eBPF packet deny/recovery
-   evidence and test broker revocation, outage and replay. Sign the combined
-   audit receipt with an operator-provisioned host execution authority.
+The image builder verifies exact WAT source hashes, compiles both modules to
+WASM, builds a static guest negative supervisor, copies all three into each
+tenant rootfs and compares the copied bytes through `debugfs` before the
+rootfs digest is signed. The supervisor executes real Wasmtime fuel, timeout
+and bounded memory traps, receives a kernel CPU signal, kills a separate
+Wasmtime process group with `SIGKILL`, and installs a kernel seccomp filter
+that denies `socket()` with `EPERM`. Every child is bounded by CPU, address
+space, output and elapsed time. Guest PID1 emits the six receipts only after
+the supervisor's complete exact output and exit zero; the host serial verifier
+requires each marker once, in order, after the tenant nonce and before PASS.
+The supervisor has been executed on a Linux host against pinned Wasmtime, but
+its Firecracker guest behavior still requires a green real KVM workflow run.
+
+Remaining 0.39.21 gates include broker revocation/outage/replay, combining
+these negative receipts with guest TC deny/recovery, and signing the audit
+receipt with an operator-provisioned execution authority. A full milestone
+closure also requires the other open 0.39 gates.
 
 The current JSON report deliberately says `guest_kvm_tested=false` and
 `stage_039_complete=false`. Local host traps, cgroup configuration and static

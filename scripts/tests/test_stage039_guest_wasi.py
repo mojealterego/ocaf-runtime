@@ -20,13 +20,15 @@ class GuestWasiBindings(unittest.TestCase):
              b"OCAF039_GUEST_OPENAT_EVENT_ID=31 COUNT=3 TGID=42 PID=42\n"+
              b"OCAF039_WASI_INSIDE_FC_VM_IMPORT_FD_WRITE:tenant-a:"+b"a"*32+b"\n"+
              b"OCAF039_GUEST_WASI_TENANT=tenant-a\n"+
-             b"OCAF039_GUEST_WASI_NONCE="+b"a"*32+b"\n"+g.PASS)
+             b"OCAF039_GUEST_WASI_NONCE="+b"a"*32+b"\n"+
+             b"".join(g.NEGATIVE_MARKERS)+g.PASS)
         receipt=g.verify_console(raw,expected_wasi=wasi,tenant_id="tenant-a",
                                  expected_traceparent=trace)
         self.assertTrue(receipt["guest_module_digest_checked"])
         self.assertEqual(receipt["task_nonce"],wasi["task_nonce"])
         self.assertEqual(receipt["guest_openat_bpf_program_id"],31)
         self.assertEqual(receipt["traceparent"],trace)
+        self.assertTrue(receipt["guest_negative_wasi_budgets_verified"])
         for broken in (raw.replace(b"b"*64,b"c"*64),
                        raw.replace(b"tenant-a",b"tenant-b"),
                        raw.replace(b"a"*32,b"d"*32),
@@ -34,7 +36,11 @@ class GuestWasiBindings(unittest.TestCase):
                        raw.replace(b"COUNT=3",b"COUNT=0"),
                        raw.replace(b"TGID=42",b"TGID=0"),
                        raw.replace(trace.encode(),b"00-"+b"3"*32+b"-"+b"2"*16+b"-01"),
-                       raw.replace(b"OCAF039_GUEST_WASI_MODULE_SHA256=",b"")):
+                       raw.replace(b"OCAF039_GUEST_WASI_MODULE_SHA256=",b""),
+                       raw.replace(g.NEGATIVE_MARKERS[2],b""),
+                       raw.replace(g.NEGATIVE_MARKERS[3],g.NEGATIVE_MARKERS[3]*2),
+                       raw.replace(g.NEGATIVE_MARKERS[4],b"prefix:"+g.NEGATIVE_MARKERS[4]),
+                       raw.replace(g.NEGATIVE_MARKERS[0],b"OCAF039_GUEST_NEGATIVE_BUDGET_DENIED\n")):
             with self.subTest(raw=broken[-170:]),self.assertRaises(g.GuestWasiError):
                 g.verify_console(broken,expected_wasi=wasi,tenant_id="tenant-a",
                                  expected_traceparent=trace)

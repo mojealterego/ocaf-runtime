@@ -36,6 +36,18 @@ install -o root -g root -m 0555 "$WORK/ocaf-guest-openat-probe" "$APPROVED/guest
 cmp "$WASMTIME" "$APPROVED/wasmtime_runtime"
 cmp "$WORK/ocaf-guest-openat-probe" "$APPROVED/guest_openat_probe"
 
+# Build real negative WASIp1 modules and the static, bounded guest supervisor.
+# The resulting bytes become part of each signed, read-only tenant rootfs.
+echo 'c2cde9d58faa091dd504e732a216677535fb662f5b4345f3c363924900d73494  '"$SRC/stage039/guest-wasi-negative/fuel_spin.wat" | sha256sum --check -
+echo '932cf0d95f147d552b8580a0a0b7726abea7904e7ed7f7a68eaf04af3357b3a1  '"$SRC/stage039/guest-wasi-negative/memory_grow.wat" | sha256sum --check -
+wat2wasm "$SRC/stage039/guest-wasi-negative/fuel_spin.wat" -o "$WORK/negative-spin.wasm"
+wat2wasm "$SRC/stage039/guest-wasi-negative/memory_grow.wat" -o "$WORK/negative-memory.wasm"
+wasm-objdump -x "$WORK/negative-spin.wasm" | grep -F 'wasi_snapshot_preview1'
+wasm-objdump -x "$WORK/negative-memory.wasm" | grep -F 'wasi_snapshot_preview1'
+gcc -std=c11 -O2 -static -Wall -Wextra -Werror \
+  "$SRC/stage039/guest-wasi-negative/guest_negative_probe.c" \
+  -o "$WORK/ocaf-guest-negative-probe"
+
 # Install the binaries and their actual ELF loader/dependencies into an
 # official-rootfs COPY. Each tenant receives its own later copy.
 install_guest_binary() {
@@ -66,6 +78,9 @@ mkdir -p "$WORK/mount/usr/bin" "$WORK/mount/sbin" "$WORK/mount/opt/ocaf" \
 install_guest_binary "$WASMTIME" /usr/bin/wasmtime
 install_guest_binary /usr/bin/sha256sum /usr/bin/sha256sum
 install -m 0555 "$WORK/ocaf-guest-openat-probe" "$WORK/mount/usr/bin/ocaf-guest-openat-probe"
+install -m 0555 "$WORK/ocaf-guest-negative-probe" "$WORK/mount/usr/bin/ocaf-guest-negative-probe"
+install -m 0444 "$WORK/negative-spin.wasm" "$WORK/mount/opt/ocaf/negative-spin.wasm"
+install -m 0444 "$WORK/negative-memory.wasm" "$WORK/mount/opt/ocaf/negative-memory.wasm"
 sync
 umount "$WORK/mount"
 
@@ -106,6 +121,12 @@ for key in a b; do
   cmp "$WORK/hello-$key.wasm" "$WORK/verified-guest-wasm-$key"
   debugfs -R "dump /usr/bin/ocaf-guest-openat-probe $WORK/verified-guest-openat-$key" "$image" >/dev/null 2>&1
   cmp "$WORK/ocaf-guest-openat-probe" "$WORK/verified-guest-openat-$key"
+  for negative in negative-spin.wasm negative-memory.wasm; do
+    debugfs -R "dump /opt/ocaf/$negative $WORK/verified-$key-$negative" "$image" >/dev/null 2>&1
+    cmp "$WORK/$negative" "$WORK/verified-$key-$negative"
+  done
+  debugfs -R "dump /usr/bin/ocaf-guest-negative-probe $WORK/verified-guest-negative-$key" "$image" >/dev/null 2>&1
+  cmp "$WORK/ocaf-guest-negative-probe" "$WORK/verified-guest-negative-$key"
   install -o root -g root -m 0444 "$WORK/hello-$key.wasm" "$APPROVED/wasi_module_$key"
   cmp "$WORK/hello-$key.wasm" "$APPROVED/wasi_module_$key"
   install -o root -g root -m 0444 "$image" "$APPROVED/guest_rootfs_wasi_$key"
