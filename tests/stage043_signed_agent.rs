@@ -159,20 +159,42 @@ fn signed_transport_registration_persists_and_rejects_replay_after_restart() {
     let store = Stage043AgentStore::open(&agent_db, OmasServerConfig::default()).unwrap();
     assert!(matches!(
         admit_signed_registration_persistent_for_sender(
-            &store, req.clone(), &op, "impersonator", &public, &replay_db, NOW
+            &store,
+            req.clone(),
+            &op,
+            "impersonator",
+            &public,
+            &replay_db,
+            NOW
         ),
         Err(SignedAgentError::Binding)
     ));
     assert_eq!(store.registered_count().unwrap(), 0);
-    assert!(admit_signed_registration_persistent_for_sender(
-        &store, req.clone(), &op, "authenticated-agent-node", &public, &replay_db, NOW
-    ).unwrap().admitted);
+    assert!(
+        admit_signed_registration_persistent_for_sender(
+            &store,
+            req.clone(),
+            &op,
+            "authenticated-agent-node",
+            &public,
+            &replay_db,
+            NOW
+        )
+        .unwrap()
+        .admitted
+    );
     drop(store);
     let restarted = Stage043AgentStore::open(&agent_db, OmasServerConfig::default()).unwrap();
     assert_eq!(restarted.registered_count().unwrap(), 1);
     assert!(matches!(
         admit_signed_registration_persistent_for_sender(
-            &restarted, req, &op, "authenticated-agent-node", &public, &replay_db, NOW
+            &restarted,
+            req,
+            &op,
+            "authenticated-agent-node",
+            &public,
+            &replay_db,
+            NOW
         ),
         Err(SignedAgentError::Replay)
     ));
