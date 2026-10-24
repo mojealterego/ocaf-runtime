@@ -38,6 +38,10 @@ impl OmatRouteGuard {
         })
     }
 
+    pub fn tenant_for(&self, principal: &str) -> Option<&str> {
+        self.peers.get(principal).map(String::as_str)
+    }
+
     pub fn set_transport_connected(&mut self, connected: bool) {
         self.connected = connected;
     }
