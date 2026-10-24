@@ -27,6 +27,8 @@ on:
       - scripts/stage039_real_guest_vsock_egress.py
       - scripts/stage039_prepare_guest_wasi.sh
       - scripts/stage039_guest_wasi.py
+      - scripts/stage039_otlp_evidence.py
+      - scripts/tests/test_stage039_otlp_evidence.py
       - scripts/tests/test_stage039_guest_wasi.py
       - scripts/tests/test_stage039_dual_tenant.py
       - scripts/stage039_live_egress.py
@@ -627,6 +629,27 @@ jobs:
           assert v["stage_039_complete"] is False
           assert v["production_approved"] is False
           PY
+      - name: Export verified broker and guest receipts to loopback OTLP HTTP collector
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts.tests.test_stage039_otlp_evidence -v
+          python3 scripts/stage039_otlp_evidence.py \
+            --broker-report stage039-real-guest-evidence/broker-wasi-vm.json \
+            --guest-report stage039-real-guest-evidence/real-guest-wasi-execution.json \
+            --report stage039-real-guest-evidence/loopback-otlp-receipt.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          proof=json.loads(Path("stage039-real-guest-evidence/loopback-otlp-receipt.json").read_text())
+          assert proof["otlp_http_json_posted"] is True
+          assert proof["loopback_collector_received"] is True
+          assert set(proof["tenant_traces"])=={"a","b"}
+          assert proof["tenant_traces"]["a"]["traceparent"]!=proof["tenant_traces"]["b"]["traceparent"]
+          assert proof["guest_application_instrumented"] is False
+          assert proof["collector_independent_host"] is False
+          assert proof["stage_039_complete"] is False
+          PY
       - name: Diagnose sandbox failure using only official public guest image boot logs
         if: failure()
         shell: bash
@@ -649,6 +672,7 @@ jobs:
           test -s stage039-real-guest-evidence/real-guest-wasi-execution.json
           test -s stage039-real-guest-evidence/guest-vsock-egress.json
           test -s stage039-real-guest-evidence/pre-admission-deny.json
+          test -s stage039-real-guest-evidence/loopback-otlp-receipt.json
           python3 - <<'PY'
           import json
           from pathlib import Path
