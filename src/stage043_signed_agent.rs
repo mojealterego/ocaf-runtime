@@ -84,3 +84,35 @@ pub fn admit_signed_registration_for_sender(
         now,
     )
 }
+
+/// Signed, transport-principal-bound admission into the durable OMAs registry.
+/// The caller MUST derive `authenticated_rpc_sender` from an authenticated
+/// transport session, never from the untrusted request body.
+///
+/// The replay nonce is committed before the durable agent registration. A
+/// subsequent store failure therefore fails closed and requires a fresh signed
+/// request with a new nonce. This is deliberately not a distributed transaction.
+pub fn admit_signed_registration_persistent_for_sender(
+    store: &crate::stage043_agent_store::Stage043AgentStore,
+    request: AgentRegistrationRequest,
+    operation: &SignedOperation,
+    authenticated_rpc_sender: &str,
+    trusted_public_key: &[u8; 32],
+    replay_db: &Path,
+    now: i64,
+) -> Result<AdmissionDecision, SignedAgentError> {
+    let validator = OmasServer::new(store.config().clone()).map_err(|_| SignedAgentError::Invalid)?;
+    let preliminary = admit_signed_registration_for_sender(
+        &validator,
+        request.clone(),
+        operation,
+        authenticated_rpc_sender,
+        trusted_public_key,
+        replay_db,
+        now,
+    )?;
+    if !preliminary.admitted {
+        return Ok(preliminary);
+    }
+    store.admit(request).map_err(|_| SignedAgentError::Store)
+}
