@@ -108,7 +108,15 @@ fn serve() -> Result<(), String> {
             }
             _ => json!({"ok": false, "error": "invalid or oversized request"}),
         };
-        let _ = writeln!(tls, "{response}");
+        if let Err(error) = writeln!(tls, "{response}") {
+            eprintln!("TLS application response write failed: {error}");
+        }
+        if let Err(error) = tls.flush() {
+            eprintln!("TLS application response flush failed: {error}");
+        }
+        if let Err(error) = tls.shutdown() {
+            eprintln!("TLS close_notify failed: {error}");
+        }
     }
     Ok(())
 }
