@@ -1,6 +1,7 @@
 use ocaf_runtime::omat_server::{OmatPolicy, OmatRegistry, ToolCall};
 use ocaf_runtime::stage043_omat_route::{
-    dispatch_tool_call, AuthenticatedPeer, DispatchError, OmatRouteGuard, OmatSessionLease, RouteError,
+    dispatch_tool_call, AuthenticatedPeer, DispatchError, OmatRouteGuard, OmatSessionLease,
+    RouteError,
 };
 use std::collections::BTreeSet;
 use std::collections::HashMap;
@@ -111,12 +112,18 @@ fn dropping_transport_lease_revokes_authorization() {
         let lease = OmatSessionLease::new(Arc::clone(&guard));
         lease.connect().unwrap();
         assert_eq!(
-            guard.lock().unwrap().authorize(&peer, "ocaf/omat/tenant_a/requests/req_1"),
+            guard
+                .lock()
+                .unwrap()
+                .authorize(&peer, "ocaf/omat/tenant_a/requests/req_1"),
             Ok(())
         );
     }
     assert_eq!(
-        guard.lock().unwrap().authorize(&peer, "ocaf/omat/tenant_a/requests/req_1"),
+        guard
+            .lock()
+            .unwrap()
+            .authorize(&peer, "ocaf/omat/tenant_a/requests/req_1"),
         Err(RouteError::Disconnected)
     );
 }
