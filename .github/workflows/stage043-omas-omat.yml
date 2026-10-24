@@ -8,6 +8,7 @@ on:
       - "src/agent_fleet.rs"
       - "src/omat_server.rs"
       - "src/bin/ocaf-omas-server.rs"
+      - "src/bin/ocaf-omas-mtls-server.rs"
       - "src/bin/ocaf-omat-server.rs"
       - "tests/stage043_security.rs"
       - "tests/stage043_signed_manifest.rs"
@@ -28,6 +29,7 @@ on:
       - "src/agent_fleet.rs"
       - "src/omat_server.rs"
       - "src/bin/ocaf-omas-server.rs"
+      - "src/bin/ocaf-omas-mtls-server.rs"
       - "src/bin/ocaf-omat-server.rs"
       - "tests/stage043_security.rs"
       - "tests/stage043_signed_manifest.rs"
@@ -76,7 +78,7 @@ jobs:
           cargo test --locked --no-default-features omas_server::tests
           cargo test --locked --no-default-features omat_server::tests
       - name: Stage 0.43 formatting (other stages have their own global gate)
-        run: rustfmt --check --edition 2021 tests/stage043_security.rs src/omas_server.rs src/omat_server.rs src/bin/ocaf-omas-server.rs src/bin/ocaf-omat-server.rs src/stage043_signed_manifest.rs tests/stage043_signed_manifest.rs src/stage043_store.rs tests/stage043_persistence.rs tests/stage043_cli.rs src/stage043_signed_agent.rs tests/stage043_signed_agent.rs src/stage043_agent_store.rs tests/stage043_agent_persistence.rs src/stage043_mtls_admission.rs tests/stage043_mtls.rs
+        run: rustfmt --check --edition 2021 tests/stage043_security.rs src/omas_server.rs src/omat_server.rs src/bin/ocaf-omas-server.rs src/bin/ocaf-omas-mtls-server.rs src/bin/ocaf-omat-server.rs src/stage043_signed_manifest.rs tests/stage043_signed_manifest.rs src/stage043_store.rs tests/stage043_persistence.rs tests/stage043_cli.rs src/stage043_signed_agent.rs tests/stage043_signed_agent.rs src/stage043_agent_store.rs tests/stage043_agent_persistence.rs src/stage043_mtls_admission.rs tests/stage043_mtls.rs
       - name: Stage 0.43 Clippy (all stage-owned tests and binaries)
         run: |
           cargo clippy --locked --no-default-features \
@@ -88,5 +90,6 @@ jobs:
             --test stage043_mtls \
             --test stage043_cli \
             --bin ocaf-omas-server \
+            --bin ocaf-omas-mtls-server \
             --bin ocaf-omat-server \
             -- -D warnings
