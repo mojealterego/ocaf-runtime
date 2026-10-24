@@ -1,11 +1,11 @@
 //! Standalone, fail-closed OMAs mTLS registration listener.
 //! Operator must provision CA, server certificate/key, SQLite files and a pinned
 //! client certificate fingerprint mapped to an Ed25519 registration signing key.
+use ocaf_runtime::omas_server::OmasServerConfig;
 use ocaf_runtime::stage043_agent_store::Stage043AgentStore;
 use ocaf_runtime::stage043_mtls_admission::{
     admit_from_mtls_session, PeerRegistry, SignedAgentRegistrationEnvelope, TrustedPeer,
 };
-use ocaf_runtime::omas_server::OmasServerConfig;
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod, SslVerifyMode};
 use serde_json::json;
 use std::collections::HashMap;
@@ -24,8 +24,8 @@ fn decode_hex<const N: usize>(value: &str) -> Result<[u8; N], String> {
     }
     let mut bytes = [0u8; N];
     for (index, byte) in bytes.iter_mut().enumerate() {
-        *byte = u8::from_str_radix(&value[index * 2..index * 2 + 2], 16)
-            .map_err(|_| "invalid hex")?;
+        *byte =
+            u8::from_str_radix(&value[index * 2..index * 2 + 2], 16).map_err(|_| "invalid hex")?;
     }
     Ok(bytes)
 }
@@ -41,16 +41,26 @@ fn serve() -> Result<(), String> {
     let signing_key = decode_hex::<32>(&required("OCAF_OMAS_PEER_ED25519_PUBKEY")?)?;
     let sender = required("OCAF_OMAS_PEER_SENDER")?;
     let mut pinned = HashMap::new();
-    pinned.insert(fingerprint, TrustedPeer { sender, signing_key });
+    pinned.insert(
+        fingerprint,
+        TrustedPeer {
+            sender,
+            signing_key,
+        },
+    );
     let peers = PeerRegistry::new(pinned)?;
     let store = Stage043AgentStore::open(&db, OmasServerConfig::default())?;
     if !nonce_db.is_file() {
         return Err("operator-provisioned nonce SQLite file required".into());
     }
-    let mut builder = SslAcceptor::mozilla_intermediate_v5(SslMethod::tls())
+    let mut builder =
+        SslAcceptor::mozilla_intermediate_v5(SslMethod::tls()).map_err(|e| e.to_string())?;
+    builder
+        .set_certificate_chain_file(cert)
         .map_err(|e| e.to_string())?;
-    builder.set_certificate_chain_file(cert).map_err(|e| e.to_string())?;
-    builder.set_private_key_file(key, SslFiletype::PEM).map_err(|e| e.to_string())?;
+    builder
+        .set_private_key_file(key, SslFiletype::PEM)
+        .map_err(|e| e.to_string())?;
     builder.check_private_key().map_err(|e| e.to_string())?;
     builder.set_ca_file(ca).map_err(|e| e.to_string())?;
     builder.set_verify(SslVerifyMode::PEER | SslVerifyMode::FAIL_IF_NO_PEER_CERT);
@@ -75,7 +85,9 @@ fn serve() -> Result<(), String> {
             }
         };
         let mut line = Vec::new();
-        let read = BufReader::new(&mut tls).take(65537).read_until(b'\n', &mut line);
+        let read = BufReader::new(&mut tls)
+            .take(65537)
+            .read_until(b'\n', &mut line);
         let response = match read {
             Ok(_) if line.len() <= 65536 && line.ends_with(b"\n") => {
                 match serde_json::from_slice::<SignedAgentRegistrationEnvelope>(&line) {
