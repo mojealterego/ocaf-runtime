@@ -101,7 +101,8 @@ pub fn admit_signed_registration_persistent_for_sender(
     replay_db: &Path,
     now: i64,
 ) -> Result<AdmissionDecision, SignedAgentError> {
-    let validator = OmasServer::new(store.config().clone()).map_err(|_| SignedAgentError::Invalid)?;
+    let validator =
+        OmasServer::new(store.config().clone()).map_err(|_| SignedAgentError::Invalid)?;
     let preliminary = admit_signed_registration_for_sender(
         &validator,
         request.clone(),
