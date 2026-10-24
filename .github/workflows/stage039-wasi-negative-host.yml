@@ -1,0 +1,54 @@
+name: OCAF 0.39 pinned Wasmtime negative host budgets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage039-wasi-negative-host.yml
+      - scripts/stage039_wasi_budget_lab.py
+      - scripts/tests/test_stage039_wasi_budget_lab.py
+      - stage039/guest-wasi-negative/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  negative-host-budgets:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Download and pin real Wasmtime v49.0.3
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --retry 2 --max-time 120 \
+            --proto '=https' --tlsv1.2 \
+            https://github.com/bytecodealliance/wasmtime/releases/download/v49.0.3/wasmtime-v49.0.3-x86_64-linux.tar.xz \
+            -o "$RUNNER_TEMP/wasmtime-v49.0.3-x86_64-linux.tar.xz"
+          echo "4001225413f208345b980525f31c4080e1873808b38d0ddc7918497340667fbb  $RUNNER_TEMP/wasmtime-v49.0.3-x86_64-linux.tar.xz" | sha256sum --check -
+          tar -xJf "$RUNNER_TEMP/wasmtime-v49.0.3-x86_64-linux.tar.xz" -C "$RUNNER_TEMP"
+          echo "b213b0678c0afc807c53130e5b7ca357f0307c1f8deb18cac35fcc65480b9c85  $RUNNER_TEMP/wasmtime-v49.0.3-x86_64-linux/wasmtime" | sha256sum --check -
+      - name: Execute Wasmtime traps and kernel seccomp negative cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          export OCAF039_WASMTIME="$RUNNER_TEMP/wasmtime-v49.0.3-x86_64-linux/wasmtime"
+          python3 -m unittest scripts.tests.test_stage039_wasi_budget_lab -v
+          python3 scripts/stage039_wasi_budget_lab.py \
+            --wasmtime "$OCAF039_WASMTIME" \
+            --sha256 b213b0678c0afc807c53130e5b7ca357f0307c1f8deb18cac35fcc65480b9c85 \
+            --report "$RUNNER_TEMP/ocaf039-host-negative-budget-report.json"
+          sha256sum "$RUNNER_TEMP/ocaf039-host-negative-budget-report.json" | tee "$RUNNER_TEMP/ocaf039-host-negative-budget-report.sha256"
+      - name: Preserve scoped negative evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ocaf039-wasi-negative-host-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/ocaf039-host-negative-budget-report.json
+            ${{ runner.temp }}/ocaf039-host-negative-budget-report.sha256
+          if-no-files-found: warn
