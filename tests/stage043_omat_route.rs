@@ -91,6 +91,8 @@ fn tool_dispatch_binds_authenticated_peer_to_request_id_and_tenant() {
     );
     assert_eq!(
         dispatch_tool_call(&guard, &peer, topic, &call, &policy, &registry),
-        Err(DispatchError::Tool(ocaf_runtime::omat_server::OmatError::SourceAccessDenied))
+        Err(DispatchError::Tool(
+            ocaf_runtime::omat_server::OmatError::SourceAccessDenied
+        ))
     );
 }
