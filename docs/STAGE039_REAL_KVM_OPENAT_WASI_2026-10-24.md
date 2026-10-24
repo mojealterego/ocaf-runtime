@@ -31,6 +31,15 @@ sondę guest eBPF i moduł WASI. W `pre-admission-deny.json` jest siedem
 udanych testów odmowy, w tym zmiana pojedynczego bajtu każdej z ostatnich
 czterech pozycji. Dwa goście ponownie zgłosiły po 7 zdarzeń `openat`.
 
+[Run 40090227467](https://github.com/mojealterego/ocaf-runtime/actions/runs/40090227467)
+na commicie `9e1518e90063599ac16e8c5da36d5ba6f78d6594` także przeszedł.
+Artefakt ID `12558024315` ma SHA-256
+`3d5048de3200335cb40cfb671efef89e37e5e8de97731b129582c0d8b300a9c6`.
+Broker wyprowadził dwa różne W3C `traceparent` z uwierzytelnionych rezerwacji,
+przekazał je przez parametry boot Firecracker, a PID1 odczytał je z `/proc/cmdline`.
+Raporty obu gości i broker potwierdziły zgodność; każdy guest ponownie zgłosił
+7 zdarzeń `openat`. Kolektor OTLP nie uczestniczył w tym przebiegu.
+
 ## Stan odbioru
 
 To dowód laboratoryjny na jednym hoście KVM. Raporty zachowują
@@ -41,3 +50,4 @@ Zintegrowane egress broker, autoryzowana kwarantanna, wspólny test awarii,
 niezależny klucz podpisujący, dwa trwałe niezależne hosty KVM oraz odbiór
 operatora nadal wymagają osobnych dowodów. Osobne hashe artefaktów i ich
 negatywne testy są dowodem laboratoryjnym, nie poświadczeniem dostawcy.
+Również korelacja śladów w zewnętrznym kolektorze pozostaje otwarta.
