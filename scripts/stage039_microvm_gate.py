@@ -44,10 +44,18 @@ def parse_manifest(raw: bytes) -> dict:
         obj = json.loads(raw, object_pairs_hook=_unique_object, parse_constant=_reject_nonfinite)
     except (UnicodeError, ValueError, TypeError) as exc:
         raise ValueError("invalid manifest JSON") from exc
-    if (not isinstance(obj, dict) or set(obj) !=
-            {"schema_version", "workload_id", "tenant_id", "agent_id", "isolation", "assets"}
+    base_fields = {"schema_version", "workload_id", "tenant_id", "agent_id", "isolation", "assets"}
+    if (not isinstance(obj, dict) or set(obj) not in (base_fields, base_fields | {"wasi"})
             or type(obj["schema_version"]) is not int or obj["schema_version"] != 1):
         raise ValueError("unsupported manifest schema")
+    if "wasi" in obj:
+        wasi = obj["wasi"]
+        if (not isinstance(wasi, dict) or set(wasi) != {"task_nonce", "module_sha256"}
+                or not isinstance(wasi["task_nonce"], str)
+                or re.fullmatch(r"[0-9a-f]{32}", wasi["task_nonce"]) is None
+                or not isinstance(wasi["module_sha256"], str)
+                or HEX_SHA256.fullmatch(wasi["module_sha256"]) is None):
+            raise ValueError("invalid tenant WASI workload binding")
     for key in ("workload_id", "tenant_id", "agent_id"):
         if not isinstance(obj[key], str) or IDENTITY.fullmatch(obj[key]) is None:
             raise ValueError("invalid principal identity")

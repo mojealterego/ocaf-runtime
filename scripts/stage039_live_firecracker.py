@@ -283,7 +283,8 @@ def _api_state(sockpath: Path) -> dict:
         return {}
 
 
-def await_real_guest_wasi_execution(proc,serial_path:Path,*,seconds:int)->dict:
+def await_real_guest_wasi_execution(proc,serial_path:Path,*,seconds:int,
+                                    expected_wasi:dict|None=None,tenant_id:str|None=None)->dict:
     """Wait for a REAL Linux guest PID1->Wasmtime process result BEFORE VM SIGKILL.
 
     Successful VM boot is not evidence of guest WASI execution. Guest output
@@ -308,7 +309,9 @@ def await_real_guest_wasi_execution(proc,serial_path:Path,*,seconds:int)->dict:
             raise LiveFirecrackerError("real guest Wasmtime child failed: "+repr(tail[-1200:]))
         if "OCAF039_GUEST_WASI_EXECUTION_PASS_EXIT_0" in tail:
             try:
-                return guest_wasi.verify_console(tail.encode("utf-8"))
+                return guest_wasi.verify_console(tail.encode("utf-8"),
+                                                 expected_wasi=expected_wasi,
+                                                 tenant_id=tenant_id)
             except guest_wasi.GuestWasiError as exc:
                 raise LiveFirecrackerError("invalid real guest WASI zero-exit proof: " + str(exc)) from exc
         time.sleep(.25)
@@ -344,6 +347,8 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
     parsed = gate.parse_manifest(raw)
     if checked["status"] != "STATIC_ARTIFACTS_VERIFIED_ONLY":
         raise LiveFirecrackerError("unverified signed/pinned assets")
+    if require_guest_wasi and "wasi" not in parsed:
+        raise LiveFirecrackerError("signed tenant WASI workload binding required")
     if _verified_binary(firecracker, parsed["assets"]["firecracker"]["sha256"]) != firecracker_sha:
         raise LiveFirecrackerError("Firecracker version is not the manifest's pinned binary")
     vm_id = "ocaf-" + secrets.token_hex(12)
@@ -423,8 +428,10 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
                 if require_guest_wasi:
                     remaining=max(1,min(95,int(deadline-time.monotonic())))
                     result["guest_wasi_execution"]=await_real_guest_wasi_execution(
-                        proc,log,seconds=remaining)
+                        proc,log,seconds=remaining,
+                        expected_wasi=parsed["wasi"],tenant_id=parsed["tenant_id"])
                     result["guest_wasi_execution"]["observed_before_vm_sigkill"]=True
+                    result["wasi"]=parsed["wasi"]
                 if boot_hook is not None:
                     # Test-only synchronization callback. The still-running
                     # process and cgroup inode are independently checked by

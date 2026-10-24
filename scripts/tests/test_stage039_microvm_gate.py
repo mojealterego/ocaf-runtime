@@ -48,6 +48,18 @@ class Stage039MicrovmTests(unittest.TestCase):
         for field in ("microvm_launched", "ebpf_attached", "production_approved", "stage_039_complete"):
             self.assertIs(out[field], False)
 
+    def test_signed_wasi_nonce_and_module_digest_schema_is_strict(self):
+        good=json.loads(json.dumps(self.manifest))
+        good["wasi"]={"task_nonce":"a"*32,"module_sha256":"b"*64}
+        self.assertEqual(self.check(good)["status"],"STATIC_ARTIFACTS_VERIFIED_ONLY")
+        for wasi in ({"task_nonce":"a"*31,"module_sha256":"b"*64},
+                     {"task_nonce":"a"*32,"module_sha256":"B"*64},
+                     {"task_nonce":"a"*32,"module_sha256":"b"*64,"extra":True},
+                     {"task_nonce":True,"module_sha256":"b"*64}):
+            bad={**good,"wasi":wasi}
+            with self.subTest(wasi=wasi),self.assertRaises(ValueError):
+                self.check(bad)
+
     def test_rejects_unsafe_network_mmds_seccomp_jailer_and_rw_filesystem(self):
         for key, value in (("network", "tap"), ("guest_egress", True),
                            ("mmds_enabled", True), ("rootfs_readonly", False),

@@ -17,6 +17,7 @@ FAILED=b"OCAF039_GUEST_WASI_EXECUTION_FAILED"
 HEX=re.compile(r"[0-9a-f]{64}\Z")
 VM=re.compile(r"ocaf-[0-9a-f]{24}\Z")
 BPF_ID=re.compile(rb"(?m)^OCAF039_GUEST_BPF_SOCKET_FILTER_ID=([1-9][0-9]{0,9})$")
+NONCE=re.compile(r"[0-9a-f]{32}\Z")
 
 class GuestWasiError(ValueError):pass
 
@@ -24,7 +25,8 @@ RNG_READY=(b"OCAF039_GUEST_CRNG_READY\n",
            b"OCAF039_GUEST_CRNG_READY_AFTER_CPU_RNG\n")
 
 
-def verify_console(raw:bytes)->dict:
+def verify_console(raw:bytes,*,expected_wasi:dict|None=None,
+                   tenant_id:str|None=None)->dict:
     """Require actual guest CRNG initialization before Wasmtime child output.
 
     An old Linux 4.14 guest without entropy may block getrandom() forever.
@@ -38,19 +40,33 @@ def verify_console(raw:bytes)->dict:
     # line ending for marker parsing, while hashing the original serial bytes.
     raw=raw.replace(b"\r\n",b"\n")
     linux=raw.find(b"Linux version ")
-    for name, marker in (("pid1", INIT), ("fd_write", OUTPUT), ("exit", PASS)):
+    if expected_wasi is None:
+        expected_output=OUTPUT
+    else:
+        if (not isinstance(expected_wasi,dict)
+            or set(expected_wasi)!={"task_nonce","module_sha256"}
+            or not isinstance(expected_wasi["task_nonce"],str)
+            or NONCE.fullmatch(expected_wasi["task_nonce"]) is None
+            or not isinstance(expected_wasi["module_sha256"],str)
+            or HEX.fullmatch(expected_wasi["module_sha256"]) is None
+            or not isinstance(tenant_id,str)
+            or tenant_id not in ("tenant-a","tenant-b")):
+            raise GuestWasiError("invalid expected signed tenant WASI task")
+        expected_output=(b"OCAF039_WASI_INSIDE_FC_VM_IMPORT_FD_WRITE:"+
+                         tenant_id.encode()+b":"+expected_wasi["task_nonce"].encode()+b"\n")
+    for name, marker in (("pid1", INIT), ("fd_write", expected_output), ("exit", PASS)):
         position=raw.find(marker)
         if position<0 or (position>0 and raw[position-1:position]!=bytes([10])):
             previous=raw[max(0,position-24):position] if position>=0 else b""
             raise GuestWasiError(
                 f"serial {name} marker must begin at line boundary; previous={previous!r}")
     boot=raw.find(INIT)
-    output=raw.find(OUTPUT)
+    output=raw.find(expected_output)
     done=raw.find(PASS)
     crng=[(marker,raw.find(marker)) for marker in RNG_READY
           if raw.count(marker)==1]
     bpf_ids=list(BPF_ID.finditer(raw))
-    if (raw.count(INIT)!=1 or raw.count(OUTPUT)!=1 or raw.count(PASS)!=1
+    if (raw.count(INIT)!=1 or raw.count(expected_output)!=1 or raw.count(PASS)!=1
         or sum(raw.count(m) for m in RNG_READY)!=1 or len(crng)!=1
         or len(bpf_ids)!=1 or raw.count(b"OCAF039_GUEST_BPF_SOCKET_FILTER_ID=")!=1
         or b"OCAF039_GUEST_BPF_LOAD_DENIED" in raw
@@ -62,8 +78,25 @@ def verify_console(raw:bytes)->dict:
             "genuine bounded Linux guest PID1 WASIp1 exit/CRNG proof absent; "
             f"counts linux={raw.count(b'Linux version ')} pid1={raw.count(INIT)} "
             f"crng={sum(raw.count(m) for m in RNG_READY)} bpf={len(bpf_ids)} "
-            f"output={raw.count(OUTPUT)} pass={raw.count(PASS)}")
-    return {
+            f"output={raw.count(expected_output)} pass={raw.count(PASS)}")
+    if expected_wasi is not None:
+        module_marker=(b"OCAF039_GUEST_WASI_MODULE_SHA256="+
+                       expected_wasi["module_sha256"].encode()+b"\n")
+        tenant_marker=b"OCAF039_GUEST_WASI_TENANT="+tenant_id.encode()+b"\n"
+        nonce_marker=(b"OCAF039_GUEST_WASI_NONCE="+
+                      expected_wasi["task_nonce"].encode()+b"\n")
+        module_at=raw.find(module_marker)
+        tenant_at=raw.find(tenant_marker)
+        nonce_at=raw.find(nonce_marker)
+        if (raw.count(module_marker)!=1 or raw.count(tenant_marker)!=1
+            or raw.count(nonce_marker)!=1
+            or raw.count(b"OCAF039_GUEST_WASI_MODULE_SHA256=")!=1
+            or raw.count(b"OCAF039_GUEST_WASI_TENANT=")!=1
+            or raw.count(b"OCAF039_GUEST_WASI_NONCE=")!=1
+            or b"OCAF039_GUEST_WASI_MODULE_DIGEST_DENIED" in raw
+            or not bpf_ids[0].start()<module_at<output<tenant_at<nonce_at<done):
+            raise GuestWasiError("guest module digest, tenant or workload nonce mismatch")
+    result={
         "guest_pid1_started":True,"wasi_preview1_fd_write_observed_inside_guest":True,
         "guest_wasmtime_child_exited_zero":True,
         "guest_crng_ready_before_execution":True,
@@ -72,13 +105,24 @@ def verify_console(raw:bytes)->dict:
         "guest_bpf_socket_filter_attached":True,
         "serial_sha256":serial_sha256,
     }
+    if expected_wasi is not None:
+        result.update({"tenant_id":tenant_id,
+                       "task_nonce":expected_wasi["task_nonce"],
+                       "module_sha256":expected_wasi["module_sha256"],
+                       "guest_module_digest_checked":True})
+    return result
 
 
-def verify_brokered_pair(broker_report:dict,jailer_base:Path,rootfs_sha256:str)->dict:
+def verify_brokered_pair(broker_report:dict,jailer_base:Path,
+                         rootfs_sha256:str|dict[str,str])->dict:
+    rootfs_by_tenant=(rootfs_sha256 if isinstance(rootfs_sha256,dict)
+                      else {"a":rootfs_sha256,"b":rootfs_sha256})
     if (not isinstance(broker_report,dict)
         or not isinstance(jailer_base,Path) or not jailer_base.is_absolute()
         or jailer_base.is_symlink() or not jailer_base.is_dir()
-        or not isinstance(rootfs_sha256,str) or HEX.fullmatch(rootfs_sha256) is None
+        or not isinstance(rootfs_by_tenant,dict) or set(rootfs_by_tenant)!={"a","b"}
+        or any(not isinstance(x,str) or HEX.fullmatch(x) is None
+               for x in rootfs_by_tenant.values())
         or broker_report.get("status")!="TWO_CONCURRENT_TENANTS_VM_BOOT_AND_FAULT_ISOLATION_PASSED"
         or broker_report.get("production_approved") is not False
         or broker_report.get("stage_039_complete") is not False):
@@ -105,7 +149,7 @@ def verify_brokered_pair(broker_report:dict,jailer_base:Path,rootfs_sha256:str)-
         vm=broker_report.get("tenant_"+key)
         if (not isinstance(vm,dict)
             or vm.get("tenant_id")!="tenant-"+key
-            or vm.get("guest_rootfs_sha256")!=rootfs_sha256
+            or vm.get("guest_rootfs_sha256")!=rootfs_by_tenant[key]
             or vm.get("firecracker_api_running") is not True
             or vm.get("guest_kernel_console_seen") is not True
             or vm.get("process_in_expected_cgroup") is not True
@@ -137,18 +181,27 @@ def verify_brokered_pair(broker_report:dict,jailer_base:Path,rootfs_sha256:str)-
                 or before.st_size!=after.st_size or len(raw)!=before.st_size):
                 raise GuestWasiError("guest evidence changed during read")
         finally:os.close(fd)
-        receipts[key]={**verify_console(raw),"vm_id":vm_id}
+        expected_wasi=vm.get("wasi")
+        receipts[key]={**verify_console(raw,expected_wasi=expected_wasi,
+                                        tenant_id=vm.get("tenant_id") if expected_wasi else None),
+                       "vm_id":vm_id}
         names.append(vm_id)
     if len(set(names))!=2:
         raise GuestWasiError("two different KVM guests required")
+    distinct_tasks=(rootfs_by_tenant["a"]!=rootfs_by_tenant["b"]
+                    and all("wasi" in broker_report["tenant_"+k] for k in ("a","b"))
+                    and receipts["a"].get("task_nonce")!=receipts["b"].get("task_nonce")
+                    and receipts["a"].get("module_sha256")!=receipts["b"].get("module_sha256"))
+    if any("wasi" in broker_report["tenant_"+k] for k in ("a","b")) and not distinct_tasks:
+        raise GuestWasiError("distinct signed WASI tenant tasks required")
     return {
         "status":"TWO_REAL_BROKERED_JAILED_FIRECRACKER_GUESTS_WASIP1_FD_WRITE_EXECUTED",
         "real_guest_wasi_execution_verified":True,
         "both_tenants_own_vm_and_broker_reservations":True,
-        "guest_rootfs_sha256":rootfs_sha256,
+        "guest_rootfs_sha256":rootfs_by_tenant,
         "tenant_receipts":receipts,
         "two_independent_hosts":False,
-        "different_wasm_task_per_tenant_tested":False,
+        "different_wasm_task_per_tenant_tested":distinct_tasks,
         "signed_wasi_manifest_verified":True,
         "production_approved":False,
         "stage_039_complete":False,
@@ -158,12 +211,20 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--broker-report",type=Path,required=True)
     p.add_argument("--jailer-base",type=Path,required=True)
-    p.add_argument("--rootfs-sha256",required=True)
+    p.add_argument("--rootfs-sha256")
+    p.add_argument("--rootfs-sha256-a")
+    p.add_argument("--rootfs-sha256-b")
     p.add_argument("--report",type=Path,required=True)
     opt=p.parse_args()
     try:
         broker_report=json.loads(opt.broker_report.read_bytes())
-        proof=verify_brokered_pair(broker_report,opt.jailer_base,opt.rootfs_sha256)
+        if opt.rootfs_sha256:
+            rootfs=opt.rootfs_sha256
+        elif opt.rootfs_sha256_a and opt.rootfs_sha256_b:
+            rootfs={"a":opt.rootfs_sha256_a,"b":opt.rootfs_sha256_b}
+        else:
+            raise GuestWasiError("both per-tenant rootfs digests required")
+        proof=verify_brokered_pair(broker_report,opt.jailer_base,rootfs)
         with opt.report.open("x") as fp:
             json.dump(proof,fp,sort_keys=True,indent=2)
             fp.write("\n")

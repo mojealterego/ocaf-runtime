@@ -100,9 +100,17 @@ def execute(*, manifest_a:Path, manifest_b:Path, approved_root:Path,
     validate_distinct_tenants(ma, mb)
     if ma["isolation"] != mb["isolation"]:
         raise DualTenantError("lab tenant isolation contracts diverge")
-    for k in ("firecracker","guest_kernel","guest_rootfs","aya_cgroup_device"):
+    for k in ("firecracker","guest_kernel","aya_cgroup_device"):
         if ma["assets"][k]["sha256"] != mb["assets"][k]["sha256"]:
             raise DualTenantError("different unreviewed pinned artifacts")
+    if require_guest_wasi:
+        if ("wasi" not in ma or "wasi" not in mb
+                or ma["wasi"]["task_nonce"] == mb["wasi"]["task_nonce"]
+                or ma["wasi"]["module_sha256"] == mb["wasi"]["module_sha256"]
+                or ma["assets"]["guest_rootfs"]["sha256"] == mb["assets"]["guest_rootfs"]["sha256"]):
+            raise DualTenantError("WASI tenants require different nonces, modules and rootfs images")
+    elif ma["assets"]["guest_rootfs"]["sha256"] != mb["assets"]["guest_rootfs"]["sha256"]:
+        raise DualTenantError("different unreviewed pinned artifacts")
     for p in (manifest_a, manifest_b):
         if gate.inspect_manifest(p.read_bytes(), approved_root)["status"] != "STATIC_ARTIFACTS_VERIFIED_ONLY":
             raise DualTenantError("tenant artifacts failed preflight")

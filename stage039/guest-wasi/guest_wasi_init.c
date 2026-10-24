@@ -27,6 +27,21 @@
 #include <sys/socket.h>
 #include <sys/syscall.h>
 
+#ifndef OCAF_WASI_TENANT
+#define OCAF_WASI_TENANT "legacy-test"
+#endif
+#ifndef OCAF_WASI_NONCE
+#define OCAF_WASI_NONCE "00000000000000000000000000000000"
+#endif
+#ifndef OCAF_WASI_MODULE_SHA256
+#define OCAF_WASI_MODULE_SHA256 "0000000000000000000000000000000000000000000000000000000000000000"
+#endif
+
+/* PID1 retains the attachment until its workload exits. This is a kernel
+ * readiness proof, not a syscall probe or network egress policy. */
+static int guest_bpf_program_fd=-1;
+static int guest_bpf_socket_fd=-1;
+
 /* Load and attach a real eBPF socket filter in the guest kernel. The host
  * TAP/TC classifier is a separate program and cannot satisfy this check. */
 static int guest_bpf_socket_filter(void) {
@@ -42,6 +57,7 @@ static int guest_bpf_socket_filter(void) {
     load.license=(uint64_t)(uintptr_t)license;
     int program_fd=(int)syscall(SYS_bpf,BPF_PROG_LOAD,&load,sizeof(load));
     if(program_fd<0)return -1;
+    if(fcntl(program_fd,F_SETFD,FD_CLOEXEC)!=0){close(program_fd);return -1;}
     int sock=socket(AF_INET,SOCK_DGRAM|SOCK_CLOEXEC,0);
     if(sock<0 || setsockopt(sock,SOL_SOCKET,SO_ATTACH_BPF,&program_fd,sizeof(program_fd))!=0){
         if(sock>=0)close(sock);
@@ -60,14 +76,39 @@ static int guest_bpf_socket_filter(void) {
         if(length<=0 || (size_t)length>=sizeof(marker) ||
            write(1,marker,(size_t)length)!=(ssize_t)length)ok=-1;
     }
-    close(sock);
-    close(program_fd);
-    return ok==0 && info.id>0 ? 0 : -1;
+    if(ok!=0 || info.id==0){close(sock);close(program_fd);return -1;}
+    guest_bpf_socket_fd=sock;
+    guest_bpf_program_fd=program_fd;
+    return 0;
 }
 
-static const char expected[]="OCAF039_WASI_INSIDE_FC_VM_IMPORT_FD_WRITE\n";
 static void output(const char *s) { size_t n=strlen(s); while(n){ssize_t r=write(1,s,n); if(r<=0)break; s+=r;n-=(size_t)r;} }
 static void fail(void) {output("OCAF039_GUEST_WASI_EXECUTION_FAILED\n");for(;;)pause();}
+
+static int run_capture(char *const args[],char *response,size_t capacity) {
+    int channel[2];if(pipe(channel)!=0)return -1;
+    pid_t child=fork();
+    if(child<0){close(channel[0]);close(channel[1]);return -1;}
+    if(child==0){
+        close(channel[0]);
+        if(dup2(channel[1],1)<0 || dup2(channel[1],2)<0)_exit(127);
+        close(channel[1]);
+        char *const env[]={"PATH=/usr/bin:/bin","HOME=/","LANG=C",NULL};
+        execve(args[0],args,env);
+        _exit(127);
+    }
+    close(channel[1]);size_t count=0;
+    while(count<capacity-1){
+        ssize_t n=read(channel[0],response+count,capacity-1-count);
+        if(n<0 && errno==EINTR)continue;
+        if(n<=0)break;
+        count+=(size_t)n;
+    }
+    close(channel[0]);response[count]=0;
+    int status=0;pid_t waited;
+    do{waited=waitpid(child,&status,0);}while(waited<0 && errno==EINTR);
+    return waited==child && WIFEXITED(status) && WEXITSTATUS(status)==0 ? (int)count : -1;
+}
 
 /* Old upstream Linux 4.14 guests can block getrandom() indefinitely.
  * Never bypass CSPRNG with /dev/urandom; instead seed guest kernel with
@@ -136,38 +177,31 @@ int main(void) {
         output("OCAF039_GUEST_BPF_LOAD_DENIED\n");
         fail();
     }
-    int channel[2]; if(pipe(channel)!=0)fail();
-    pid_t child=fork();
-    if(child<0)fail();
-    if(child==0){
-        close(channel[0]);
-        if(dup2(channel[1],1)<0 || dup2(channel[1],2)<0)_exit(127);
-        close(channel[1]);
-        char * const args[]={"/usr/bin/wasmtime","run","-C","cache=no","/opt/ocaf/hello.wasm",NULL};
-        char * const env[]={"PATH=/usr/bin:/bin","HOME=/","LANG=C",NULL};
-        execve(args[0],args,env);
-        _exit(127);
+    char response[8192];
+    char digest_expected[128];
+    int digest_len=snprintf(digest_expected,sizeof(digest_expected),"%s  /opt/ocaf/hello.wasm\n",OCAF_WASI_MODULE_SHA256);
+    char *const sha_args[]={"/usr/bin/sha256sum","/opt/ocaf/hello.wasm",NULL};
+    int got=run_capture(sha_args,response,sizeof(response));
+    if(digest_len<=0 || (size_t)digest_len>=sizeof(digest_expected) ||
+       got!=digest_len || strcmp(response,digest_expected)!=0){
+        output("OCAF039_GUEST_WASI_MODULE_DIGEST_DENIED\n");fail();
     }
-    close(channel[1]);
-    char response[8192];size_t count=0;
-    while(count<sizeof(response)-1){
-        ssize_t n=read(channel[0],response+count,sizeof(response)-1-count);
-        if(n<0 && errno==EINTR)continue;
-        if(n<=0)break;
-        count+=(size_t)n;
-    }
-    close(channel[0]);
-    response[count]=0;
-    int status=0;pid_t waited;
-    do{waited=waitpid(child,&status,0);}while(waited<0 && errno==EINTR);
-    if(waited!=child||!WIFEXITED(status)||WEXITSTATUS(status)!=0||
-       strcmp(response,expected)!=0) {
+    output("OCAF039_GUEST_WASI_MODULE_SHA256=");output(OCAF_WASI_MODULE_SHA256);output("\n");
+    char *const wasi_args[]={"/usr/bin/wasmtime","run","-C","cache=no","/opt/ocaf/hello.wasm",NULL};
+    got=run_capture(wasi_args,response,sizeof(response));
+    char expected[160];
+    int expected_len=snprintf(expected,sizeof(expected),
+        "OCAF039_WASI_INSIDE_FC_VM_IMPORT_FD_WRITE:%s:%s\n",OCAF_WASI_TENANT,OCAF_WASI_NONCE);
+    if(got<0 || expected_len<=0 || (size_t)expected_len>=sizeof(expected) ||
+       got!=expected_len || strcmp(response,expected)!=0) {
         output("OCAF039_GUEST_WASI_CHILD_ERROR_BEGIN\n");
-        if(count)output(response);
+        if(got>0)output(response);
         fail();
     }
     output("\n");
     output(response);
+    output("OCAF039_GUEST_WASI_TENANT=");output(OCAF_WASI_TENANT);output("\n");
+    output("OCAF039_GUEST_WASI_NONCE=");output(OCAF_WASI_NONCE);output("\n");
     output("\nOCAF039_GUEST_WASI_EXECUTION_PASS_EXIT_0\n");
     for(;;)pause();
 }

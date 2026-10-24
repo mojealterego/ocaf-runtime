@@ -145,11 +145,19 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
             raise BindingError("running guest/Firecracker digest diverged from admitted inputs")
         if require_wasi:
             guest=actual_vm.get("guest_wasi_execution")
-            if (not isinstance(guest,dict)
+            wasi=m.get("wasi")
+            if (not isinstance(wasi,dict)
+                or set(wasi)!={"task_nonce","module_sha256"}
+                or actual_vm.get("wasi")!=wasi
+                or not isinstance(guest,dict)
                 or guest.get("guest_pid1_started") is not True
                 or guest.get("wasi_preview1_fd_write_observed_inside_guest") is not True
                 or guest.get("guest_wasmtime_child_exited_zero") is not True
                 or guest.get("guest_bpf_socket_filter_attached") is not True
+                or guest.get("guest_module_digest_checked") is not True
+                or guest.get("tenant_id")!=m.get("tenant_id")
+                or guest.get("task_nonce")!=wasi["task_nonce"]
+                or guest.get("module_sha256")!=wasi["module_sha256"]
                 or type(guest.get("guest_kernel_bpf_program_id")) is not int
                 or guest["guest_kernel_bpf_program_id"] <= 0
                 or guest.get("observed_before_vm_sigkill",True) is not True
@@ -172,6 +180,12 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
         manifest_hashes.append(rec["manifest_sha256"])
     if len(set(vmids))!=2 or len(set(inodes))!=2 or len(set(requestids))!=2 or bootids[0]!=bootids[1]:
         raise BindingError("reused VM, cgroup, replay ID or different kernel in one-host test")
+    if require_wasi:
+        a,b=(_manifest(manifests[t]) for t in ("a","b"))
+        if (a["wasi"]["task_nonce"]==b["wasi"]["task_nonce"]
+            or a["wasi"]["module_sha256"]==b["wasi"]["module_sha256"]
+            or a["assets"]["guest_rootfs"]["sha256"]==b["assets"]["guest_rootfs"]["sha256"]):
+            raise BindingError("WASI guest tasks must have separate nonces, modules and rootfs images")
     if actual.get("host_boot_id")!=bootids[0]:
         raise BindingError("VM host kernel identity changed")
     return {

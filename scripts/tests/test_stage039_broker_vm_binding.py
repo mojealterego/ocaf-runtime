@@ -85,21 +85,36 @@ class BrokerVmAcceptanceTests(unittest.TestCase):
     def test_guest_wasi_broker_claim_requires_two_independent_real_guest_receipts(self):
         actual=json.loads(json.dumps(self.actual))
         for t in ("a","b"):
+            m=json.loads(self.raw[t])
+            m["wasi"]={"task_nonce":t*32,"module_sha256":t*64}
+            m["assets"]["guest_rootfs"]["sha256"]=t*64
+            self.raw[t]=json.dumps(m,sort_keys=True).encode()
+            self.reports[t]=admission(t,self.raw[t])
+            actual["tenant_"+t]["guest_rootfs_sha256"]=t*64
+            actual["tenant_"+t]["wasi"]=m["wasi"]
             actual["tenant_"+t]["guest_wasi_execution"]={
                 "guest_pid1_started":True,
                 "wasi_preview1_fd_write_observed_inside_guest":True,
                 "guest_wasmtime_child_exited_zero":True,
                 "guest_bpf_socket_filter_attached":True,
+                "guest_module_digest_checked":True,
+                "tenant_id":"tenant-"+t,
+                "task_nonce":t*32,
+                "module_sha256":t*64,
                 "guest_kernel_bpf_program_id":17 if t=="a" else 18,
                 "serial_sha256": ("a" if t=="a" else "b")*64,
             }
         result=binding.verify_binding(self.reports,self.raw,actual,require_wasi=True)
         self.assertTrue(result["wasi_executed_inside_guest"])
         self.assertFalse(result["signed_wasi_manifest_verified"])
+        self.assertNotEqual(actual["tenant_a"]["guest_wasi_execution"]["task_nonce"],
+                            actual["tenant_b"]["guest_wasi_execution"]["task_nonce"])
         for tamper in (
             {"guest_wasi_execution":None},
             {"guest_wasi_execution":{**actual["tenant_b"]["guest_wasi_execution"],
                                      "guest_wasmtime_child_exited_zero":False}},
+            {"guest_wasi_execution":{**actual["tenant_b"]["guest_wasi_execution"],
+                                     "task_nonce":"a"*32}},
         ):
             with self.subTest(tamper=tamper),self.assertRaises(binding.BindingError):
                 bad=json.loads(json.dumps(actual))
