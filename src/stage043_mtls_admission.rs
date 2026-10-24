@@ -33,7 +33,10 @@ impl PeerRegistry {
             || peers.values().any(|p| {
                 p.sender.is_empty()
                     || p.sender.len() > 128
-                    || !p.sender.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+                    || !p
+                        .sender
+                        .bytes()
+                        .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
             })
         {
             return Err("invalid or empty operator-provisioned peer registry".into());
@@ -45,13 +48,19 @@ impl PeerRegistry {
         let ssl = stream.ssl();
         if ssl.verify_result() != openssl::x509::X509VerifyResult::OK
             || !ssl.verify_mode().contains(SslVerifyMode::PEER)
-            || !ssl.verify_mode().contains(SslVerifyMode::FAIL_IF_NO_PEER_CERT)
+            || !ssl
+                .verify_mode()
+                .contains(SslVerifyMode::FAIL_IF_NO_PEER_CERT)
         {
             return Err(SignedAgentError::Binding);
         }
         let certificate = ssl.peer_certificate().ok_or(SignedAgentError::Binding)?;
-        let der = certificate.to_der().map_err(|_| SignedAgentError::Binding)?;
-        self.peers.get(&sha256(&der)).ok_or(SignedAgentError::Binding)
+        let der = certificate
+            .to_der()
+            .map_err(|_| SignedAgentError::Binding)?;
+        self.peers
+            .get(&sha256(&der))
+            .ok_or(SignedAgentError::Binding)
     }
 }
 
