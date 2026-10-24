@@ -17,7 +17,7 @@ cat >server.json5 <<EOF
 {mode:"peer",scouting:{multicast:{enabled:false},gossip:{enabled:false}},listen:{endpoints:["tls/127.0.0.1:17443"]},transport:{link:{protocols:["tls"],tls:{enable_mtls:true,verify_name_on_connect:true,close_link_on_expiration:true,root_ca_certificate:"$root/ca.pem",listen_private_key:"$root/server.key",listen_certificate:"$root/server.pem"}}}}
 EOF
 cat >client.json5 <<EOF
-{mode:"client",scouting:{multicast:{enabled:false},gossip:{enabled:false}},connect:{endpoints:["tls/localhost:17443"]},transport:{link:{protocols:["tls"],tls:{enable_mtls:true,verify_name_on_connect:true,close_link_on_expiration:true,root_ca_certificate:"$root/ca.pem",connect_private_key:"$root/client.key",connect_certificate:"$root/client.pem"}}}}
+{mode:"client",scouting:{multicast:{enabled:false},gossip:{enabled:false}},connect:{endpoints:["tls/127.0.0.1:17443"]},transport:{link:{protocols:["tls"],tls:{enable_mtls:true,verify_name_on_connect:true,close_link_on_expiration:true,root_ca_certificate:"$root/ca.pem",connect_private_key:"$root/client.key",connect_certificate:"$root/client.pem"}}}}
 EOF
 export OCAF_OMAT_PEER=omas_a OCAF_OMAT_TENANT=tenant_a OCAF_OMAT_SHARED_KEY_B64
 OCAF_OMAT_SHARED_KEY_B64="$(python3 -c 'import base64; print(base64.b64encode(bytes([7])*32).decode())')"
