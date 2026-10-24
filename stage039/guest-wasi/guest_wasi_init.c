@@ -5,7 +5,8 @@
  * only when child exited zero AND returned the exact bytes produced by
  * wasi_snapshot_preview1.fd_write from the separately pinned WASM file.
  * PID1 remains alive for original dual-tenant KVM/cgroup/crash checks.
- * No networking, shell, mounts or access to the host broker.
+ * No networking, shell, or access to the host broker. The separate guest
+ * probe helper mounts guest tracefs/debugfs when its kernel requires it.
  */
 #define _GNU_SOURCE
 #include <unistd.h>
@@ -26,6 +27,7 @@
 #include <linux/bpf.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
+#include <poll.h>
 
 #ifndef OCAF_WASI_TENANT
 #define OCAF_WASI_TENANT "legacy-test"
@@ -110,6 +112,60 @@ static int run_capture(char *const args[],char *response,size_t capacity) {
     return waited==child && WIFEXITED(status) && WEXITSTATUS(status)==0 ? (int)count : -1;
 }
 
+static int read_probe_line(int fd,char *line,size_t capacity,int timeout_ms) {
+    struct timespec start,now;
+    if(clock_gettime(CLOCK_MONOTONIC,&start)!=0)return -1;
+    size_t count=0;
+    while(count+1<capacity){
+        if(clock_gettime(CLOCK_MONOTONIC,&now)!=0)return -1;
+        long elapsed=(now.tv_sec-start.tv_sec)*1000L+
+                     (now.tv_nsec-start.tv_nsec)/1000000L;
+        if(elapsed>=timeout_ms)return -1;
+        struct pollfd waitfd={.fd=fd,.events=POLLIN|POLLHUP};
+        int ready=poll(&waitfd,1,timeout_ms-(int)elapsed);
+        if(ready<0 && errno==EINTR)continue;
+        if(ready<=0)return -1;
+        char c=0;
+        ssize_t n=read(fd,&c,1);
+        if(n<0 && errno==EINTR)continue;
+        if(n!=1)return -1;
+        if(c=='\n'){line[count]=0;return (int)count;}
+        if(c<' ' || c>126)return -1;
+        line[count++]=c;
+    }
+    return -1;
+}
+
+static int read_child_output(int fd,char *response,size_t capacity,int timeout_ms) {
+    struct timespec start,now;
+    if(clock_gettime(CLOCK_MONOTONIC,&start)!=0)return -1;
+    size_t count=0;
+    while(count+1<capacity){
+        if(clock_gettime(CLOCK_MONOTONIC,&now)!=0)return -1;
+        long elapsed=(now.tv_sec-start.tv_sec)*1000L+
+                     (now.tv_nsec-start.tv_nsec)/1000000L;
+        if(elapsed>=timeout_ms)return -1;
+        struct pollfd waitfd={.fd=fd,.events=POLLIN|POLLHUP};
+        int ready=poll(&waitfd,1,timeout_ms-(int)elapsed);
+        if(ready<0 && errno==EINTR)continue;
+        if(ready<=0)return -1;
+        ssize_t n=read(fd,response+count,capacity-1-count);
+        if(n<0 && errno==EINTR)continue;
+        if(n<0)return -1;
+        if(n==0){response[count]=0;return (int)count;}
+        count+=(size_t)n;
+    }
+    return -1;
+}
+
+static void fail_children(pid_t wasi,pid_t probe) {
+    if(wasi>0)kill(wasi,SIGKILL);
+    if(probe>0)kill(probe,SIGKILL);
+    if(wasi>0)waitpid(wasi,NULL,0);
+    if(probe>0)waitpid(probe,NULL,0);
+    fail();
+}
+
 /* Old upstream Linux 4.14 guests can block getrandom() indefinitely.
  * Never bypass CSPRNG with /dev/urandom; instead seed guest kernel with
  * actual RDSEED/RDRAND CPU entropy via privileged RNDADDENTROPY ioctl.
@@ -187,8 +243,59 @@ int main(void) {
         output("OCAF039_GUEST_WASI_MODULE_DIGEST_DENIED\n");fail();
     }
     output("OCAF039_GUEST_WASI_MODULE_SHA256=");output(OCAF_WASI_MODULE_SHA256);output("\n");
-    char *const wasi_args[]={"/usr/bin/wasmtime","run","-C","cache=no","/opt/ocaf/hello.wasm",NULL};
-    got=run_capture(wasi_args,response,sizeof(response));
+    int start_pipe[2],wasi_pipe[2],probe_pipe[2];
+    if(pipe(start_pipe)!=0 || pipe(wasi_pipe)!=0 || pipe(probe_pipe)!=0)fail();
+    pid_t wasi=fork();
+    if(wasi<0)fail();
+    if(wasi==0){
+        close(start_pipe[1]);close(wasi_pipe[0]);
+        close(probe_pipe[0]);close(probe_pipe[1]);
+        unsigned char release=0;
+        ssize_t n;
+        do{n=read(start_pipe[0],&release,1);}while(n<0 && errno==EINTR);
+        close(start_pipe[0]);
+        if(n!=1 || release!='G')_exit(127);
+        if(dup2(wasi_pipe[1],1)<0 || dup2(wasi_pipe[1],2)<0)_exit(127);
+        close(wasi_pipe[1]);
+        char *const args[]={"/usr/bin/wasmtime","run","-C","cache=no","/opt/ocaf/hello.wasm",NULL};
+        char *const env[]={"PATH=/usr/bin:/bin","HOME=/","LANG=C",NULL};
+        execve(args[0],args,env);
+        _exit(127);
+    }
+    close(start_pipe[0]);close(wasi_pipe[1]);
+    char target[24];
+    if(snprintf(target,sizeof(target),"%ld",(long)wasi)<=0)fail_children(wasi,-1);
+    pid_t probe=fork();
+    if(probe<0)fail_children(wasi,-1);
+    if(probe==0){
+        close(start_pipe[1]);close(wasi_pipe[0]);close(probe_pipe[0]);
+        if(dup2(probe_pipe[1],1)<0 || dup2(probe_pipe[1],2)<0)_exit(127);
+        close(probe_pipe[1]);
+        char *const args[]={"/usr/bin/ocaf-guest-openat-probe",target,"30",NULL};
+        char *const env[]={"PATH=/usr/bin:/bin","HOME=/","LANG=C",NULL};
+        execve(args[0],args,env);
+        _exit(127);
+    }
+    close(probe_pipe[1]);
+    char line[256];unsigned int ready_id=0;int used=0;
+    got=read_probe_line(probe_pipe[0],line,sizeof(line),30000);
+    if(got<=0 || sscanf(line,"OCAF039_GUEST_OPENAT_PROBE_READY_ID=%u%n",&ready_id,&used)!=1 ||
+       used!=got || ready_id==0){
+        output("OCAF039_GUEST_OPENAT_PROBE_READY_DENIED\n");
+        fail_children(wasi,probe);
+    }
+    output("\n");output(line);output("\n");
+    if(write(start_pipe[1],"G",1)!=1)fail_children(wasi,probe);
+    close(start_pipe[1]);
+    got=read_child_output(wasi_pipe[0],response,sizeof(response),45000);
+    close(wasi_pipe[0]);
+    if(got<0)kill(wasi,SIGKILL);
+    int wasi_status=0;pid_t waited;
+    do{waited=waitpid(wasi,&wasi_status,0);}while(waited<0 && errno==EINTR);
+    if(got<0 || waited!=wasi || !WIFEXITED(wasi_status) || WEXITSTATUS(wasi_status)!=0){
+        output("OCAF039_GUEST_WASI_CHILD_ERROR_BEGIN\n");
+        fail_children(-1,probe);
+    }
     char expected[160];
     int expected_len=snprintf(expected,sizeof(expected),
         "OCAF039_WASI_INSIDE_FC_VM_IMPORT_FD_WRITE:%s:%s\n",OCAF_WASI_TENANT,OCAF_WASI_NONCE);
@@ -196,8 +303,26 @@ int main(void) {
        got!=expected_len || strcmp(response,expected)!=0) {
         output("OCAF039_GUEST_WASI_CHILD_ERROR_BEGIN\n");
         if(got>0)output(response);
-        fail();
+        fail_children(-1,probe);
     }
+    unsigned int event_id=0,tgid=0,pid=0;unsigned long long count=0;
+    used=0;
+    int line_length=read_probe_line(probe_pipe[0],line,sizeof(line),35000);
+    close(probe_pipe[0]);
+    if(line_length<=0 ||
+       sscanf(line,"OCAF039_GUEST_OPENAT_EVENT_ID=%u COUNT=%llu TGID=%u PID=%u%n",
+              &event_id,&count,&tgid,&pid,&used)!=4 ||
+       used!=line_length || event_id!=ready_id || count==0 ||
+       tgid!=(unsigned)wasi || pid==0){
+        output("OCAF039_GUEST_OPENAT_EVENT_DENIED\n");
+        fail_children(-1,probe);
+    }
+    int probe_status=0;
+    do{waited=waitpid(probe,&probe_status,0);}while(waited<0 && errno==EINTR);
+    if(waited!=probe || !WIFEXITED(probe_status) || WEXITSTATUS(probe_status)!=0){
+        output("OCAF039_GUEST_OPENAT_PROBE_EXIT_DENIED\n");fail();
+    }
+    output("\n");output(line);output("\n");
     output("\n");
     output(response);
     output("OCAF039_GUEST_WASI_TENANT=");output(OCAF_WASI_TENANT);output("\n");

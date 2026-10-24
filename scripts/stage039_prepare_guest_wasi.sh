@@ -27,6 +27,8 @@ tar -xJf "$ARCHIVE" -C "$WORK"
 WASMTIME="$WORK/wasmtime-v49.0.3-x86_64-linux/wasmtime"
 [[ -x "$WASMTIME" && -x /usr/bin/sha256sum ]] || { echo "trusted guest tooling missing" >&2; exit 3; }
 "$WASMTIME" --version
+gcc -std=c11 -O2 -static -Wall -Wextra -Werror \
+  "$SRC/stage039/guest-bpf/guest_openat_probe.c" -o "$WORK/ocaf-guest-openat-probe"
 
 # Install the binaries and their actual ELF loader/dependencies into an
 # official-rootfs COPY. Each tenant receives its own later copy.
@@ -53,9 +55,11 @@ truncate -s +384M "$BASE"
 e2fsck -f -y "$BASE" || [[ "$?" -eq 1 ]]
 resize2fs "$BASE"
 mount -o loop,rw "$BASE" "$WORK/mount"
-mkdir -p "$WORK/mount/usr/bin" "$WORK/mount/sbin" "$WORK/mount/opt/ocaf"
+mkdir -p "$WORK/mount/usr/bin" "$WORK/mount/sbin" "$WORK/mount/opt/ocaf" \
+  "$WORK/mount/sys/kernel/tracing" "$WORK/mount/sys/kernel/debug"
 install_guest_binary "$WASMTIME" /usr/bin/wasmtime
 install_guest_binary /usr/bin/sha256sum /usr/bin/sha256sum
+install -m 0555 "$WORK/ocaf-guest-openat-probe" "$WORK/mount/usr/bin/ocaf-guest-openat-probe"
 sync
 umount "$WORK/mount"
 
@@ -94,6 +98,8 @@ for key in a b; do
   cmp "$WORK/ocaf-wasi-init-$key" "$WORK/verified-guest-init-$key"
   debugfs -R "dump /opt/ocaf/hello.wasm $WORK/verified-guest-wasm-$key" "$image" >/dev/null 2>&1
   cmp "$WORK/hello-$key.wasm" "$WORK/verified-guest-wasm-$key"
+  debugfs -R "dump /usr/bin/ocaf-guest-openat-probe $WORK/verified-guest-openat-$key" "$image" >/dev/null 2>&1
+  cmp "$WORK/ocaf-guest-openat-probe" "$WORK/verified-guest-openat-$key"
   install -o root -g root -m 0444 "$image" "$APPROVED/guest_rootfs_wasi_$key"
   python3 - "$APPROVED" "$key" "$nonce" "$wasm_sha" <<'PY'
 import hashlib, json, sys
