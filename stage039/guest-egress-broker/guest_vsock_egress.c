@@ -60,10 +60,16 @@ static int read_permit(unsigned char *data,size_t *length) {
         close(fd);return -1;
     }
     size_t needed=(size_t)st.st_size,count=0;
+    if(needed>MAX_PERMIT){close(fd);return -1;}
     while(count<needed){
-        ssize_t n=read(fd,data+count,needed-count);
+        unsigned char block[4096];
+        size_t request=needed-count;
+        if(request>sizeof(block))request=sizeof(block);
+        ssize_t n=read(fd,block,request);
         if(n<0 && errno==EINTR)continue;
         if(n<=0){close(fd);return -1;}
+        if((size_t)n>MAX_PERMIT-count){close(fd);return -1;}
+        memcpy(data+count,block,(size_t)n);
         count+=(size_t)n;
     }
     unsigned char extra;
