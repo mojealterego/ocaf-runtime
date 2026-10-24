@@ -72,7 +72,7 @@ class EgressBroker:
             raise EgressDenied("permit scope, expiry or response bound invalid")
         try:
             url = urlsplit(payload["url"])
-            port = url.port or 443
+            port = 443 if url.port is None else url.port
             host = url.hostname
         except ValueError as exc:
             raise EgressDenied("malformed destination URL") from exc

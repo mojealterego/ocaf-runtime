@@ -14,15 +14,21 @@ class GuestWasiBindings(unittest.TestCase):
         raw=(b"Linux version 6.1.0\n"+g.INIT+g.RNG_READY[0]+
              b"OCAF039_GUEST_BPF_SOCKET_FILTER_ID=17\n"+
              b"OCAF039_GUEST_WASI_MODULE_SHA256="+b"b"*64+b"\n"+
+             b"OCAF039_GUEST_OPENAT_PROBE_READY_ID=31\n"+
+             b"OCAF039_GUEST_OPENAT_EVENT_ID=31 COUNT=3 TGID=42 PID=42\n"+
              b"OCAF039_WASI_INSIDE_FC_VM_IMPORT_FD_WRITE:tenant-a:"+b"a"*32+b"\n"+
              b"OCAF039_GUEST_WASI_TENANT=tenant-a\n"+
              b"OCAF039_GUEST_WASI_NONCE="+b"a"*32+b"\n"+g.PASS)
         receipt=g.verify_console(raw,expected_wasi=wasi,tenant_id="tenant-a")
         self.assertTrue(receipt["guest_module_digest_checked"])
         self.assertEqual(receipt["task_nonce"],wasi["task_nonce"])
+        self.assertEqual(receipt["guest_openat_bpf_program_id"],31)
         for broken in (raw.replace(b"b"*64,b"c"*64),
                        raw.replace(b"tenant-a",b"tenant-b"),
                        raw.replace(b"a"*32,b"d"*32),
+                       raw.replace(b"EVENT_ID=31",b"EVENT_ID=30"),
+                       raw.replace(b"COUNT=3",b"COUNT=0"),
+                       raw.replace(b"TGID=42",b"TGID=0"),
                        raw.replace(b"OCAF039_GUEST_WASI_MODULE_SHA256=",b"")):
             with self.subTest(raw=broken[-170:]),self.assertRaises(g.GuestWasiError):
                 g.verify_console(broken,expected_wasi=wasi,tenant_id="tenant-a")

@@ -101,6 +101,10 @@ class BrokerVmAcceptanceTests(unittest.TestCase):
                 "tenant_id":"tenant-"+t,
                 "task_nonce":t*32,
                 "module_sha256":t*64,
+                "guest_openat_bpf_program_id":31 if t=="a" else 32,
+                "guest_openat_event_count":3,
+                "guest_wasmtime_tgid":42,
+                "guest_openat_event_pid":42,
                 "guest_kernel_bpf_program_id":17 if t=="a" else 18,
                 "serial_sha256": ("a" if t=="a" else "b")*64,
             }

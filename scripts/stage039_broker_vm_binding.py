@@ -158,6 +158,14 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
                 or guest.get("tenant_id")!=m.get("tenant_id")
                 or guest.get("task_nonce")!=wasi["task_nonce"]
                 or guest.get("module_sha256")!=wasi["module_sha256"]
+                or type(guest.get("guest_openat_bpf_program_id")) is not int
+                or guest["guest_openat_bpf_program_id"]<=0
+                or type(guest.get("guest_openat_event_count")) is not int
+                or guest["guest_openat_event_count"]<=0
+                or type(guest.get("guest_wasmtime_tgid")) is not int
+                or guest["guest_wasmtime_tgid"]<=1
+                or type(guest.get("guest_openat_event_pid")) is not int
+                or guest["guest_openat_event_pid"]<=0
                 or type(guest.get("guest_kernel_bpf_program_id")) is not int
                 or guest["guest_kernel_bpf_program_id"] <= 0
                 or guest.get("observed_before_vm_sigkill",True) is not True

@@ -20,6 +20,7 @@ on:
       - scripts/tests/test_stage039_guest_network.py
       - stage039/guest-egress/**
       - stage039/guest-wasi/**
+      - stage039/guest-bpf/**
       - scripts/stage039_prepare_guest_wasi.sh
       - scripts/stage039_guest_wasi.py
       - scripts/tests/test_stage039_guest_wasi.py
@@ -569,6 +570,9 @@ jobs:
               assert r["guest_wasmtime_child_exited_zero"] is True
               assert r["guest_bpf_socket_filter_attached"] is True
               assert r["guest_kernel_bpf_program_id"]>0
+              assert r["guest_openat_bpf_program_id"]>0
+              assert r["guest_openat_event_count"]>0
+              assert r["guest_wasmtime_tgid"]>1
           assert v["signed_wasi_manifest_verified"] is True
           assert v["different_wasm_task_per_tenant_tested"] is True
           assert v["production_approved"] is False

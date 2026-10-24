@@ -17,6 +17,8 @@ FAILED=b"OCAF039_GUEST_WASI_EXECUTION_FAILED"
 HEX=re.compile(r"[0-9a-f]{64}\Z")
 VM=re.compile(r"ocaf-[0-9a-f]{24}\Z")
 BPF_ID=re.compile(rb"(?m)^OCAF039_GUEST_BPF_SOCKET_FILTER_ID=([1-9][0-9]{0,9})$")
+OPENAT_READY=re.compile(rb"(?m)^OCAF039_GUEST_OPENAT_PROBE_READY_ID=([1-9][0-9]{0,9})$")
+OPENAT_EVENT=re.compile(rb"(?m)^OCAF039_GUEST_OPENAT_EVENT_ID=([1-9][0-9]{0,9}) COUNT=([1-9][0-9]{0,9}) TGID=([1-9][0-9]{0,9}) PID=([1-9][0-9]{0,9})$")
 NONCE=re.compile(r"[0-9a-f]{32}\Z")
 
 class GuestWasiError(ValueError):pass
@@ -88,14 +90,22 @@ def verify_console(raw:bytes,*,expected_wasi:dict|None=None,
         module_at=raw.find(module_marker)
         tenant_at=raw.find(tenant_marker)
         nonce_at=raw.find(nonce_marker)
+        ready=list(OPENAT_READY.finditer(raw))
+        events=list(OPENAT_EVENT.finditer(raw))
         if (raw.count(module_marker)!=1 or raw.count(tenant_marker)!=1
             or raw.count(nonce_marker)!=1
             or raw.count(b"OCAF039_GUEST_WASI_MODULE_SHA256=")!=1
             or raw.count(b"OCAF039_GUEST_WASI_TENANT=")!=1
             or raw.count(b"OCAF039_GUEST_WASI_NONCE=")!=1
+            or len(ready)!=1 or len(events)!=1
+            or raw.count(b"OCAF039_GUEST_OPENAT_PROBE_READY_ID=")!=1
+            or raw.count(b"OCAF039_GUEST_OPENAT_EVENT_ID=")!=1
+            or ready[0].group(1)!=events[0].group(1)
+            or b"OCAF039_GUEST_OPENAT_WASMTIME_EVENT_TIMEOUT" in raw
+            or b"OCAF039_GUEST_OPENAT_BPF_VERIFIER_DENIED" in raw
             or b"OCAF039_GUEST_WASI_MODULE_DIGEST_DENIED" in raw
-            or not bpf_ids[0].start()<module_at<output<tenant_at<nonce_at<done):
-            raise GuestWasiError("guest module digest, tenant or workload nonce mismatch")
+            or not bpf_ids[0].start()<module_at<ready[0].start()<events[0].start()<output<tenant_at<nonce_at<done):
+            raise GuestWasiError("guest module digest, tenant, nonce or openat tracepoint mismatch")
     result={
         "guest_pid1_started":True,"wasi_preview1_fd_write_observed_inside_guest":True,
         "guest_wasmtime_child_exited_zero":True,
@@ -109,7 +119,11 @@ def verify_console(raw:bytes,*,expected_wasi:dict|None=None,
         result.update({"tenant_id":tenant_id,
                        "task_nonce":expected_wasi["task_nonce"],
                        "module_sha256":expected_wasi["module_sha256"],
-                       "guest_module_digest_checked":True})
+                       "guest_module_digest_checked":True,
+                       "guest_openat_bpf_program_id":int(ready[0].group(1)),
+                       "guest_openat_event_count":int(events[0].group(2)),
+                       "guest_wasmtime_tgid":int(events[0].group(3)),
+                       "guest_openat_event_pid":int(events[0].group(4))})
     return result
 
 
