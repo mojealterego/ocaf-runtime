@@ -50,8 +50,14 @@ class Stage039MicrovmTests(unittest.TestCase):
 
     def test_signed_wasi_nonce_and_module_digest_schema_is_strict(self):
         good=json.loads(json.dumps(self.manifest))
-        good["wasi"]={"task_nonce":"a"*32,"module_sha256":"b"*64}
-        self.assertEqual(self.check(good)["status"],"STATIC_ARTIFACTS_VERIFIED_ONLY")
+        for name in stage.WASI_ASSETS:
+            path=self.root/(name+".bin")
+            path.write_bytes(("pinned-"+name).encode())
+            path.chmod(0o700 if name!="wasi_module" else 0o600)
+            good["assets"][name]={"path":str(path),"sha256":hashlib.sha256(path.read_bytes()).hexdigest()}
+        good["wasi"]={"task_nonce":"a"*32,
+                      "module_sha256":good["assets"]["wasi_module"]["sha256"]}
+        self.assertEqual(self.check(good)["verified_assets"],7)
         for wasi in ({"task_nonce":"a"*31,"module_sha256":"b"*64},
                      {"task_nonce":"a"*32,"module_sha256":"B"*64},
                      {"task_nonce":"a"*32,"module_sha256":"b"*64,"extra":True},
@@ -59,6 +65,17 @@ class Stage039MicrovmTests(unittest.TestCase):
             bad={**good,"wasi":wasi}
             with self.subTest(wasi=wasi),self.assertRaises(ValueError):
                 self.check(bad)
+        for name in stage.WASI_ASSETS:
+            path=Path(good["assets"][name]["path"])
+            original=path.read_bytes()
+            path.write_bytes(original+b"!")
+            with self.subTest(asset=name),self.assertRaises(ValueError):
+                self.check(good)
+            path.write_bytes(original)
+        bad=json.loads(json.dumps(good))
+        del bad["assets"]["guest_openat_probe"]
+        with self.assertRaises(ValueError):
+            self.check(bad)
 
     def test_rejects_unsafe_network_mmds_seccomp_jailer_and_rw_filesystem(self):
         for key, value in (("network", "tap"), ("guest_egress", True),

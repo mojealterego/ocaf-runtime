@@ -486,31 +486,37 @@ jobs:
                       else:
                           raise AssertionError(label+" was admitted")
               assert all(item["before_ledger"] for item in checks.values())
-          # The original signed manifest pins the actual guest image. Flip a
-          # byte, require the gate to reject it, then restore and reverify.
+          # Each signed guest asset has its own digest. Change one byte at a
+          # time and require denial before restoring the original bytes.
           manifest=manifest_a.read_bytes()
-          image=Path(gate.parse_manifest(manifest)["assets"]["guest_rootfs"]["path"])
-          expected=gate.parse_manifest(manifest)["assets"]["guest_rootfs"]["sha256"]
-          assert image.parent==approved
-          assert gate.inspect_manifest(manifest,approved)["artifact_sha256"]["guest_rootfs"]==expected
-          fd=os.open(image,os.O_RDWR|os.O_CLOEXEC)
-          original=os.pread(fd,1,4096)
-          assert len(original)==1
-          try:
-              assert os.pwrite(fd,bytes([original[0]^1]),4096)==1
-              os.fsync(fd)
+          assets=gate.parse_manifest(manifest)["assets"]
+          for asset,label in (("guest_rootfs","guest_image_byte_tamper"),
+                              ("wasmtime_runtime","wasmtime_runtime_byte_tamper"),
+                              ("guest_openat_probe","guest_openat_probe_byte_tamper"),
+                              ("wasi_module","wasi_module_byte_tamper")):
+              image=Path(assets[asset]["path"])
+              expected=assets[asset]["sha256"]
+              assert image.parent==approved
+              assert gate.inspect_manifest(manifest,approved)["artifact_sha256"][asset]==expected
+              fd=os.open(image,os.O_RDWR|os.O_CLOEXEC)
+              offset=4096 if asset=="guest_rootfs" else 0
+              original=os.pread(fd,1,offset)
+              assert len(original)==1
               try:
-                  gate.inspect_manifest(manifest,approved)
-              except ValueError as exc:
-                  assert "digest mismatch" in str(exc)
-                  checks["guest_image_byte_tamper"]={"denied":True,"reason":str(exc)}
-              else:
-                  raise AssertionError("mutated signed guest image passed admission gate")
-          finally:
-              os.pwrite(fd,original,4096)
-              os.fsync(fd)
-              os.close(fd)
-          assert gate.inspect_manifest(manifest,approved)["artifact_sha256"]["guest_rootfs"]==expected
+                  assert os.pwrite(fd,bytes([original[0]^1]),offset)==1
+                  os.fsync(fd)
+                  try:
+                      gate.inspect_manifest(manifest,approved)
+                  except ValueError as exc:
+                      assert "digest mismatch" in str(exc)
+                      checks[label]={"denied":True,"reason":str(exc)}
+                  else:
+                      raise AssertionError("mutated signed guest asset passed admission gate: "+asset)
+              finally:
+                  os.pwrite(fd,original,offset)
+                  os.fsync(fd)
+                  os.close(fd)
+              assert gate.inspect_manifest(manifest,approved)["artifact_sha256"][asset]==expected
           report=workspace/"stage039-real-guest-evidence"/"pre-admission-deny.json"
           report.write_text(json.dumps({"status":"PRE_ADMISSION_NEGATIVE_TESTS_PASSED",
                                         "checks":checks,"vm_launched_during_negative_tests":False,
@@ -625,7 +631,9 @@ jobs:
           assert denied["status"]=="PRE_ADMISSION_NEGATIVE_TESTS_PASSED"
           assert set(denied["checks"])=={
               "signed_payload_tamper","signed_module_digest_tamper",
-              "untrusted_signer","guest_image_byte_tamper"}
+              "untrusted_signer","guest_image_byte_tamper",
+              "wasmtime_runtime_byte_tamper","guest_openat_probe_byte_tamper",
+              "wasi_module_byte_tamper"}
           assert all(item["denied"] is True for item in denied["checks"].values())
           assert denied["vm_launched_during_negative_tests"] is False
           PY

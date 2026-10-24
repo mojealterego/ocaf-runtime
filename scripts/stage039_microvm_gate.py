@@ -17,8 +17,12 @@ MAX_MANIFEST_BYTES = 64 * 1024
 IDENTITY = re.compile(r"[a-z][a-z0-9_-]{0,62}\Z")
 HEX_SHA256 = re.compile(r"[a-f0-9]{64}\Z")
 REQUIRED_ASSETS = frozenset({"firecracker", "guest_kernel", "guest_rootfs", "aya_cgroup_device"})
+WASI_ASSETS = frozenset({"wasmtime_runtime", "guest_openat_probe", "wasi_module"})
 ASSET_MAXIMUM_BYTES = {"firecracker": 256*1024*1024, "guest_kernel": 128*1024*1024,
-                       "guest_rootfs": 8*1024*1024*1024, "aya_cgroup_device": 16*1024*1024}
+                       "guest_rootfs": 8*1024*1024*1024, "aya_cgroup_device": 16*1024*1024,
+                       "wasmtime_runtime": 256*1024*1024,
+                       "guest_openat_probe": 16*1024*1024,
+                       "wasi_module": 16*1024*1024}
 HOST_CHECKS = frozenset({"linux_x86_64", "systemd_pid1", "cgroup_v2_limits_available",
                         "kvm_device_character", "kvm_device_accessible",
                         "btf_core_available", "bpffs_mounted"})
@@ -73,7 +77,8 @@ def parse_manifest(raw: bytes) -> dict:
         if type(policy[k]) is not int or not low <= policy[k] <= high:
             raise ValueError("resource cap denied")
     assets = obj["assets"]
-    if not isinstance(assets, dict) or set(assets) != REQUIRED_ASSETS:
+    required_assets = REQUIRED_ASSETS | (WASI_ASSETS if "wasi" in obj else frozenset())
+    if not isinstance(assets, dict) or set(assets) != required_assets:
         raise ValueError("missing pinned assets")
     seen = set()
     for item in assets.values():
@@ -86,6 +91,9 @@ def parse_manifest(raw: bytes) -> dict:
         seen.add(p)
         if not isinstance(digest, str) or HEX_SHA256.fullmatch(digest) is None:
             raise ValueError("invalid pinned SHA256")
+    if ("wasi" in obj and
+        obj["wasi"]["module_sha256"] != assets["wasi_module"]["sha256"]):
+        raise ValueError("WASI module digest differs from separately pinned asset")
     return obj
 
 
@@ -132,10 +140,11 @@ def _artifact_digest(value: str, root: Path, limit: int, executable: bool) -> st
 def inspect_manifest(raw: bytes, approved_root: Path) -> dict:
     manifest = parse_manifest(raw)
     checks = {}
-    for name in sorted(REQUIRED_ASSETS):
+    for name in sorted(manifest["assets"]):
         asset = manifest["assets"][name]
         digest = _artifact_digest(asset["path"], Path(approved_root),
-                                  ASSET_MAXIMUM_BYTES[name], name == "firecracker")
+                                  ASSET_MAXIMUM_BYTES[name],
+                                  name in {"firecracker", "wasmtime_runtime", "guest_openat_probe"})
         if asset["sha256"] != digest:
             raise ValueError("pinned asset digest mismatch: " + name)
         checks[name] = digest

@@ -29,6 +29,10 @@ WASMTIME="$WORK/wasmtime-v49.0.3-x86_64-linux/wasmtime"
 "$WASMTIME" --version
 gcc -std=c11 -O2 -static -Wall -Wextra -Werror \
   "$SRC/stage039/guest-bpf/guest_openat_probe.c" -o "$WORK/ocaf-guest-openat-probe"
+install -o root -g root -m 0555 "$WASMTIME" "$APPROVED/wasmtime_runtime"
+install -o root -g root -m 0555 "$WORK/ocaf-guest-openat-probe" "$APPROVED/guest_openat_probe"
+cmp "$WASMTIME" "$APPROVED/wasmtime_runtime"
+cmp "$WORK/ocaf-guest-openat-probe" "$APPROVED/guest_openat_probe"
 
 # Install the binaries and their actual ELF loader/dependencies into an
 # official-rootfs COPY. Each tenant receives its own later copy.
@@ -56,7 +60,7 @@ e2fsck -f -y "$BASE" || [[ "$?" -eq 1 ]]
 resize2fs "$BASE"
 mount -o loop,rw "$BASE" "$WORK/mount"
 mkdir -p "$WORK/mount/usr/bin" "$WORK/mount/sbin" "$WORK/mount/opt/ocaf" \
-  "$WORK/mount/sys/kernel/tracing" "$WORK/mount/sys/kernel/debug"
+  "$WORK/mount/sys/kernel/tracing" "$WORK/mount/sys/kernel/debug" "$WORK/mount/proc"
 install_guest_binary "$WASMTIME" /usr/bin/wasmtime
 install_guest_binary /usr/bin/sha256sum /usr/bin/sha256sum
 install -m 0555 "$WORK/ocaf-guest-openat-probe" "$WORK/mount/usr/bin/ocaf-guest-openat-probe"
@@ -100,6 +104,8 @@ for key in a b; do
   cmp "$WORK/hello-$key.wasm" "$WORK/verified-guest-wasm-$key"
   debugfs -R "dump /usr/bin/ocaf-guest-openat-probe $WORK/verified-guest-openat-$key" "$image" >/dev/null 2>&1
   cmp "$WORK/ocaf-guest-openat-probe" "$WORK/verified-guest-openat-$key"
+  install -o root -g root -m 0444 "$WORK/hello-$key.wasm" "$APPROVED/wasi_module_$key"
+  cmp "$WORK/hello-$key.wasm" "$APPROVED/wasi_module_$key"
   install -o root -g root -m 0444 "$image" "$APPROVED/guest_rootfs_wasi_$key"
   python3 - "$APPROVED" "$key" "$nonce" "$wasm_sha" <<'PY'
 import hashlib, json, sys
@@ -116,6 +122,14 @@ manifest["workload_id"] = f"ocaf-fc-wasi-{key}"
 manifest["isolation"]["mem_mib"] = 1024
 manifest["assets"]["guest_rootfs"] = {"path": str(image), "sha256": image_sha}
 manifest["wasi"] = {"task_nonce": nonce, "module_sha256": wasm_sha}
+for asset, filename in (("wasmtime_runtime", "wasmtime_runtime"),
+                        ("guest_openat_probe", "guest_openat_probe"),
+                        ("wasi_module", f"wasi_module_{key}")):
+    file = root / filename
+    with file.open("rb") as stream:
+        digest = hashlib.file_digest(stream, "sha256").hexdigest()
+    manifest["assets"][asset] = {"path": str(file), "sha256": digest}
+assert manifest["assets"]["wasi_module"]["sha256"] == wasm_sha
 path = root / f"request-wasi-{key}.json"
 path.write_text(json.dumps(manifest, sort_keys=True) + "\n")
 path.chmod(0o600)
