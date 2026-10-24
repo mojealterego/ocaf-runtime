@@ -2,6 +2,7 @@
 //! Routing authorization is independent of transport: the caller MUST verify
 //! the peer using mutual TLS before creating an AuthenticatedPeer.
 use std::collections::HashMap;
+use crate::omat_server::{OmatPolicy, OmatRegistry, ToolCall, ToolReceipt};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AuthenticatedPeer {
@@ -69,4 +70,32 @@ fn valid_segment(segment: &str) -> bool {
         && segment
             .bytes()
             .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+}
+
+/// Server-side entry point: transport-authenticated identity and request topic
+/// must pass the route guard before OMAt evaluates its own tool policy.
+/// Tool execution remains disabled by the OMAt executor boundary.
+pub fn dispatch_tool_call(
+    guard: &OmatRouteGuard,
+    peer: &AuthenticatedPeer,
+    topic: &str,
+    call: &ToolCall,
+    policy: &OmatPolicy,
+    registry: &OmatRegistry,
+) -> Result<ToolReceipt, DispatchError> {
+    guard.authorize(peer, topic).map_err(DispatchError::Route)?;
+    if call.tenant_id != peer.tenant || policy.tenant_id != peer.tenant {
+        return Err(DispatchError::Route(RouteError::Unauthorized));
+    }
+    let expected_topic = format!("ocaf/omat/{}/requests/{}", peer.tenant, call.request_id);
+    if topic != expected_topic {
+        return Err(DispatchError::Route(RouteError::InvalidTopic));
+    }
+    registry.execute(call, policy).map_err(DispatchError::Tool)
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DispatchError {
+    Route(RouteError),
+    Tool(crate::omat_server::OmatError),
 }
