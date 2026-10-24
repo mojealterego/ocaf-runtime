@@ -8,7 +8,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use openssl::ssl::{SslConnector, SslFiletype, SslMethod, SslVerifyMode};
 use openssl::x509::X509;
 use rusqlite::Connection;
-use std::io::{Read, Write};
+use std::io::{BufRead, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::process::{Command, Stdio};
 use std::thread;
@@ -88,9 +88,10 @@ fn mtls_rejects_anonymous_client_and_accepts_pinned_certificate() {
     stream.set_read_timeout(Some(Duration::from_secs(3))).unwrap();
     let mut tls = authorized.build().connect("localhost", stream).unwrap();
     tls.write_all(b"{}\n").unwrap();
-    let mut response = [0u8; 512];
-    let len = tls.read(&mut response).unwrap();
-    let result: serde_json::Value = serde_json::from_slice(&response[..len]).unwrap();
+    let mut response = String::new();
+    std::io::BufReader::new(&mut tls).read_line(&mut response).unwrap();
+    assert!(!response.is_empty(), "authenticated TLS connection yielded no JSON response");
+    let result: serde_json::Value = serde_json::from_str(&response).unwrap();
     assert_eq!(result["ok"], false);
     assert_eq!(result["error"], "invalid envelope");
 
@@ -131,7 +132,6 @@ fn mtls_rejects_anonymous_client_and_accepts_pinned_certificate() {
         let mut tls = connector.connect("localhost", socket).unwrap();
         writeln!(tls, "{envelope}").unwrap();
         let mut answer = String::new();
-        use std::io::BufRead;
         std::io::BufReader::new(&mut tls).read_line(&mut answer).unwrap();
         let result: serde_json::Value = serde_json::from_str(&answer).unwrap();
         if expected {
