@@ -47,6 +47,11 @@ name = "ocaf-omat-zenoh"
 path = "src/bin/ocaf-omat-zenoh.rs"
 required-features = ["zenoh"]
 
+[[bin]]
+name = "ocaf-omas-zenoh-client"
+path = "src/bin/ocaf-omas-zenoh-client.rs"
+required-features = ["zenoh"]
+
 [features]
 ha-probe = []
 tls-bound = ["zenoh", "dep:tokio-rustls", "dep:rustls"]
