@@ -27,6 +27,8 @@ on:
       - scripts/stage039_guest_egress_transport.py
       - scripts/stage039_real_guest_vsock_egress.py
       - scripts/stage039_prepare_guest_wasi.sh
+      - scripts/stage039_supply_chain.py
+      - scripts/tests/test_stage039_supply_chain.py
       - scripts/stage039_guest_wasi.py
       - scripts/stage039_otlp_evidence.py
       - scripts/tests/test_stage039_otlp_evidence.py
@@ -440,6 +442,34 @@ jobs:
           PY
           sudo -n sha256sum "$PREFIX/approved/guest_rootfs_wasi_a" "$PREFIX/approved/guest_rootfs_wasi_b"
           echo "STAGE039_LINUX_GUEST_ROOTFS_HAS_ACTUAL_WASMTIME_WASI_AND_STATIC_PID1"
+      - name: Inventory signed guest inputs and Aya sources as CycloneDX SBOM
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts.tests.test_stage039_supply_chain -v
+          PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
+          sudo -n python3 scripts/stage039_supply_chain.py \
+            --approved "$PREFIX/approved" --repository "$GITHUB_WORKSPACE" \
+            --sbom "$GITHUB_WORKSPACE/stage039-real-guest-evidence/stage039-inputs.cdx.json" \
+            --report "$GITHUB_WORKSPACE/stage039-real-guest-evidence/stage039-supply-chain.json"
+          sudo -n chown "$(id -u):$(id -g)" \
+            stage039-real-guest-evidence/stage039-inputs.cdx.json \
+            stage039-real-guest-evidence/stage039-supply-chain.json
+          python3 - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          root=Path("stage039-real-guest-evidence")
+          raw=(root/"stage039-inputs.cdx.json").read_bytes()
+          bom=json.loads(raw)
+          proof=json.loads((root/"stage039-supply-chain.json").read_text())
+          assert bom["bomFormat"]=="CycloneDX" and bom["specVersion"]=="1.5"
+          assert proof["status"]=="STAGE039_PRELAUNCH_INPUT_SBOM_VERIFIED"
+          assert proof["component_count"]==len(bom["components"])
+          assert proof["sbom_sha256"]==hashlib.sha256(raw).hexdigest()
+          assert proof["running_inode_verified"] is False
+          assert proof["independent_signer_verified"] is False
+          assert proof["stage_039_complete"] is False
+          PY
       - name: Reject signed workload and rootfs tampering before VM admission
         shell: bash
         run: |
@@ -673,6 +703,8 @@ jobs:
           test -s stage039-real-guest-evidence/real-guest-wasi-execution.json
           test -s stage039-real-guest-evidence/guest-vsock-egress.json
           test -s stage039-real-guest-evidence/pre-admission-deny.json
+          test -s stage039-real-guest-evidence/stage039-inputs.cdx.json
+          test -s stage039-real-guest-evidence/stage039-supply-chain.json
           test -s stage039-real-guest-evidence/loopback-otlp-receipt.json
           python3 - <<'PY'
           import json
