@@ -215,3 +215,34 @@ pub async fn request_omat_zenoh(
     anyhow::ensure!(sample.payload().to_bytes().as_ref() == b"accepted", "unexpected OMAt response");
     Ok(())
 }
+
+
+/// Retry only transport-unavailable responses. The same signed frame and nonce
+/// are reused: if the server committed the nonce before a lost reply, the
+/// retry is denied rather than executing a second time.
+pub async fn request_omat_with_retry(
+    session: &zenoh::Session,
+    query_key: &str,
+    payload: Vec<u8>,
+    max_attempts: u8,
+) -> anyhow::Result<()> {
+    anyhow::ensure!((1..=5).contains(&max_attempts), "retry attempts must be 1..=5");
+    for attempt in 0..max_attempts {
+        match request_omat_zenoh(session, query_key, payload.clone()).await {
+            Ok(()) => return Ok(()),
+            Err(error) => {
+                let message = error.to_string();
+                let transient = message.contains("timeout")
+                    || message.contains("unavailable")
+                    || message.contains("OMAt Zenoh get");
+                if !transient || attempt + 1 == max_attempts {
+                    return Err(error);
+                }
+                let delay_ms = 100_u64 * (1_u64 << attempt);
+                tracing::warn!(attempt = attempt + 1, delay_ms, "omat_transport_retry");
+                tokio::time::sleep(std::time::Duration::from_millis(delay_ms)).await;
+            }
+        }
+    }
+    unreachable!("max_attempts validated nonzero")
+}
