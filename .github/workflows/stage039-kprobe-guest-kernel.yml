@@ -58,7 +58,9 @@ jobs:
           umask 077
           cd "$RUNNER_TEMP/kprobe-source/linux-6.1.188"
           cp ../firecracker-debug.config .config
-          scripts/config --enable KPROBES --enable KPROBE_EVENTS \
+          # Upstream 6.1 KPROBES depends on MODULES. The Firecracker base
+          # disables MODULES, so olddefconfig otherwise silently drops both.
+          scripts/config --enable MODULES --enable KPROBES --enable KPROBE_EVENTS \
             --enable DEBUG_INFO_BTF --enable BPF_EVENTS --enable PERF_EVENTS \
             --enable BPF_SYSCALL
           make olddefconfig
@@ -66,7 +68,7 @@ jobs:
           from pathlib import Path
           options=set(Path('.config').read_text().splitlines())
           required={f'CONFIG_{name}=y' for name in
-                    ('KPROBES','KPROBE_EVENTS','DEBUG_INFO_BTF','BPF_EVENTS',
+                    ('MODULES','KPROBES','KPROBE_EVENTS','DEBUG_INFO_BTF','BPF_EVENTS',
                      'PERF_EVENTS','BPF_SYSCALL','VIRTIO_BLK','EXT4_FS')}
           assert required <= options, f'kernel did not retain requested features: {sorted(required-options)}'
           PY

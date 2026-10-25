@@ -26,11 +26,16 @@ jądrze 6.1.188.
 
 Następnym technicznym krokiem jest osobny, powtarzalny build jądra z
 przypiętego źródła i konfiguracji Firecracker, uzupełnionej o
-`CONFIG_KPROBES=y` i `CONFIG_KPROBE_EVENTS=y` przy zachowaniu BTF,
+`CONFIG_MODULES=y`, `CONFIG_KPROBES=y` i `CONFIG_KPROBE_EVENTS=y` przy zachowaniu BTF,
 `CONFIG_BPF_EVENTS=y`, `CONFIG_PERF_EVENTS=y` i `CONFIG_BPF_SYSCALL=y`.
 Źródło, łatki, konfigurację wynikową i binarny `vmlinux` trzeba przypiąć
 SHA-256; wynik `make olddefconfig` należy sprawdzić, bo może odrzucić
-żądane opcje. Następnie obraz musi uruchomić istniejący guest Aya/WASI
+żądane opcje. Pierwszy przebieg [40230951701](https://github.com/mojealterego/ocaf-runtime/actions/runs/40230951701)
+zakończył się właśnie taką odmową przed kompilacją: `KPROBES` i
+`KPROBE_EVENTS` zostały usunięte, ponieważ konfiguracja bazowa Firecracker
+wyłącza `MODULES`, a upstream Linux 6.1 wymaga `MODULES` dla `KPROBES`.
+Workflow został poprawiony, lecz nie stanowi to jeszcze dowodu udanego
+build ani attach. Następnie obraz musi uruchomić istniejący guest Aya/WASI
 na realnym jailed Firecracker. Pełna bramka 0.39.22 wymaga **udanego
 załadowania i attach programu kprobe wewnątrz gościa** z dodatnim kernel
 program ID i zdarzeniem `openat`; sama obecność pliku `kprobe_events`
