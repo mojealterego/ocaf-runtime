@@ -40,6 +40,8 @@ jobs:
         run: cargo check --locked --no-default-features --lib --tests
       - name: OAuth positive and negative tests
         run: cargo test --locked --no-default-features stage044_oauth::tests -- --nocapture
+      - name: Pinned OIDC issuer and ID-token negative tests
+        run: cargo test --locked --no-default-features stage044_oidc::tests -- --nocapture
       - name: Secret broker security tests
         run: cargo test --locked --no-default-features stage044_secret_broker::tests -- --nocapture
       - name: Tenant/user/OMAt boundary integration
