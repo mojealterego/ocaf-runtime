@@ -25,3 +25,5 @@ This probes TLS 1.3, issuer metadata, protected resource metadata, positive auth
 No production GO until all these tests run and are recorded on the actual infrastructure.
 
 ManagedProviderRefresh in src/stage044_provider_refresh.rs uses a Vault-encrypted, per-tenant/user/provider refresh token, SQLite IMMEDIATE one-use state, fixed HTTPS Basic-auth token endpoint, and conservative reauthorization on ambiguous failures. It is NOT wired to a deployed provider and has not passed real refresh/restart E2E. On any interrupted refresh, require user re-consent rather than replaying the old token.
+
+To test a real Vault Transit key and derived-context isolation on the target host, configure OCAF_VAULT_ADDR, OCAF_VAULT_KEY, OCAF_VAULT_TOKEN_FILE (0600), OCAF_E2E_TENANT, OCAF_E2E_USER, OCAF_E2E_PROVIDER; run python3 scripts/stage044_vault_acceptance.py. This proves remote Vault cryptography only, not PKCS#11 HSM attestation or full OMAt E2E.
