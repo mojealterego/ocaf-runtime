@@ -11,7 +11,9 @@ import base64
 import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import os
 from pathlib import Path
+import sys
 import threading
 import time
 from urllib.request import Request, urlopen
@@ -187,8 +189,15 @@ def main() -> None:
     parser.add_argument("--guest-report", type=Path, required=True)
     parser.add_argument("--report", type=Path, required=True)
     args = parser.parse_args()
-    payload, proof = build_export(_read(args.broker_report), _read(args.guest_report), time.time_ns())
-    transport = export_to_loopback(payload)
+    try:
+        payload, proof = build_export(_read(args.broker_report), _read(args.guest_report), time.time_ns())
+        transport = export_to_loopback(payload)
+    except Exception as exc:
+        if os.environ.get("GITHUB_ACTIONS") == "true":
+            detail = f"{type(exc).__name__}: {exc}"[:900]
+            detail = detail.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+            print(f"::error title=Stage039 OTLP::{detail}", file=sys.stderr)
+        raise
     result = {"status": "TWO_VERIFIED_KVM_GUEST_RECEIPTS_EXPORTED_TO_LOOPBACK_OTLP",
               "tenant_traces": proof, **transport, "otlp_protocol": "OTLP/HTTP JSON /v1/traces",
               "guest_application_instrumented": False, "collector_independent_host": False,

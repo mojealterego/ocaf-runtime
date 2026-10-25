@@ -118,7 +118,10 @@ class VsockBridge:
                 break
             time.sleep(.1)
         else:
-            raise ValueError("real guest vsock grant/replay deadline expired")
+            markers = [line[-120:] for line in serial.splitlines()
+                       if "OCAF039_" in line][-10:]
+            raise ValueError("real guest vsock grant/replay deadline expired; "
+                             f"guest_markers={markers!r}")
         if self.thread is None:
             raise ValueError("no vsock listener thread")
         self.thread.join(timeout=2)
@@ -261,6 +264,13 @@ def main() -> int:
     try:
         proof = run(args.prefix, args.report)
     except (OSError, ValueError, subprocess.CalledProcessError) as exc:
+        # GitHub's check-run annotations remain queryable through its REST API
+        # when the external artifact/log storage is unavailable. Bound and
+        # escape the diagnostic so guest serial cannot inject workflow syntax.
+        if os.environ.get("GITHUB_ACTIONS") == "true":
+            detail = f"{type(exc).__name__}: {exc}"[:900]
+            detail = detail.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+            print(f"::error title=Stage039 guest vsock::{detail}", file=sys.stderr)
         parser.error(str(exc))
     print(proof["guest_vsock_egress"]["status"])
     return 0
