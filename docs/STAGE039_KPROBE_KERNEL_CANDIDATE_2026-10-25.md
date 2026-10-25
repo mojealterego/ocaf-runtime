@@ -36,3 +36,21 @@ załadowania i attach programu kprobe wewnątrz gościa** z dodatnim kernel
 program ID i zdarzeniem `openat`; sama obecność pliku `kprobe_events`
 lub flaga `.config` nie jest wystarczającym dowodem. Do takiego testu
 status 0.39.22 pozostaje `PARTIAL`.
+
+Eksperymentalny workflow
+`.github/workflows/stage039-kprobe-guest-kernel.yml` przygotowuje taką
+próbę jako **wyłącznie ręczne** `workflow_dispatch`, aby kosztowny build
+jądra nie uruchamiał się przy każdym push. Źródło upstream
+`linux-6.1.188.tar.xz` jest przypięte SHA-256
+`ed4d0acb1307c235230c89efc094e210e6290593f94a7e617f28b1001101a33a`
+z `sha256sums.asc` kernel.org, a wejściowa konfiguracja Firecracker ma
+SHA podany w tabeli. Workflow wymaga zachowania opcji przez
+`make olddefconfig`, buduje ELF `vmlinux`, uruchamia go za jailer na
+rzeczywistym KVM, a guest PID1 wykonuje `BPF_PROG_LOAD`, tworzy zdarzenie
+kprobe, przyłącza program przez `PERF_EVENT_IOC_SET_BPF` i wymaga
+dodatniego program ID oraz faktycznej liczby zdarzeń po `getpid`.
+Osobno sprawdza brak dostępu gościa do hostowego canary i opróżnienie
+cgroup po zatrzymaniu VM. Dopóki ten workflow nie przejdzie na konkretnym
+SHA, jest to **kod próby**, a nie dowód udanego attach. Nawet zielony
+wynik jednej laboratoryjnej VM nie zastąpi pełnego odbioru dwóch tenantów
+i trwałych hostów.

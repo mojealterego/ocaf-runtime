@@ -1,0 +1,138 @@
+name: OCAF 0.39 experimental pinned-source guest kprobe KVM proof
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-boot-kprobe-guest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Require actual KVM and build tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo -n python3 scripts/stage039_kvm_ioctl.py --report "$RUNNER_TEMP/kvm.json"
+          sudo -n apt-get update -qq
+          sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+            bc bison flex libelf-dev libssl-dev dwarves build-essential
+      - name: Fetch pinned upstream Linux source, Firecracker and guest ext4
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "$RUNNER_TEMP/kprobe-source"
+          cd "$RUNNER_TEMP/kprobe-source"
+          curl --fail --silent --show-error --location --retry 2 --max-time 180 \
+            --proto '=https' --tlsv1.2 \
+            https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.1.188.tar.xz \
+            -o linux-6.1.188.tar.xz
+          echo 'ed4d0acb1307c235230c89efc094e210e6290593f94a7e617f28b1001101a33a  linux-6.1.188.tar.xz' | sha256sum --check -
+          tar -xJf linux-6.1.188.tar.xz
+          curl --fail --silent --show-error --location --retry 2 --max-time 120 \
+            --proto '=https' --tlsv1.2 \
+            https://s3.amazonaws.com/spec.ccfc.min/firecracker-ci/20261023-dd7c24b0d165-0/x86_64/debug/vmlinux-6.1.188.config \
+            -o firecracker-debug.config
+          echo '05238c0baa2e1266abadaf5c2d90f70a04f2f2a644381f5c03452e9b98a624a4  firecracker-debug.config' | sha256sum --check -
+          curl --fail --silent --show-error --location --retry 2 --max-time 120 \
+            --proto '=https' --tlsv1.2 \
+            https://github.com/firecracker-microvm/firecracker/releases/download/v1.17.0/firecracker-v1.17.0-x86_64.tgz \
+            -o firecracker-v1.17.0-x86_64.tgz
+          echo '06094a1108ae9e82aa4c23a775aa92758f53f1175d422270d9d6162cb9ade558  firecracker-v1.17.0-x86_64.tgz' | sha256sum --check -
+          tar -xzf firecracker-v1.17.0-x86_64.tgz
+          curl --fail --silent --show-error --location --retry 2 --max-time 120 \
+            --proto '=https' --tlsv1.2 \
+            https://s3.amazonaws.com/spec.ccfc.min/img/hello/fsfiles/hello-rootfs.ext4 \
+            -o hello-rootfs.ext4
+          echo '786f0612582cadcee4c8ad46e30e4cc93dff9a3c0b4ede3f3c597b4c241dd547  hello-rootfs.ext4' | sha256sum --check -
+      - name: Build upstream kernel with explicitly enabled kprobe and BTF
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          cd "$RUNNER_TEMP/kprobe-source/linux-6.1.188"
+          cp ../firecracker-debug.config .config
+          scripts/config --enable KPROBES --enable KPROBE_EVENTS \
+            --enable DEBUG_INFO_BTF --enable BPF_EVENTS --enable PERF_EVENTS \
+            --enable BPF_SYSCALL
+          make olddefconfig
+          python3 - <<'PY'
+          from pathlib import Path
+          options=set(Path('.config').read_text().splitlines())
+          required={f'CONFIG_{name}=y' for name in
+                    ('KPROBES','KPROBE_EVENTS','DEBUG_INFO_BTF','BPF_EVENTS',
+                     'PERF_EVENTS','BPF_SYSCALL','VIRTIO_BLK','EXT4_FS')}
+          assert required <= options, f'kernel did not retain requested features: {sorted(required-options)}'
+          PY
+          make -j 2 vmlinux
+          file vmlinux
+          sha256sum .config vmlinux > "$RUNNER_TEMP/kprobe-source/built-sha256.txt"
+      - name: Boot custom kernel under real Firecracker jailer and attach guest kprobe
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          SOURCE="$RUNNER_TEMP/kprobe-source"
+          PREFIX="/opt/ocaf039-kprobe-${GITHUB_RUN_ID}"
+          mkdir -p "$GITHUB_WORKSPACE/stage039-kprobe-evidence"
+          sudo -n install -d -o root -g root -m 0700 "$PREFIX" "$PREFIX/approved" "$PREFIX/jailer"
+          sudo -n install -o root -g root -m 0555 \
+            "$SOURCE/release-v1.17.0-x86_64/firecracker-v1.17.0-x86_64" "$PREFIX/approved/firecracker"
+          sudo -n install -o root -g root -m 0555 \
+            "$SOURCE/release-v1.17.0-x86_64/jailer-v1.17.0-x86_64" "$PREFIX/approved/jailer"
+          sudo -n install -o root -g root -m 0444 \
+            "$SOURCE/linux-6.1.188/vmlinux" "$PREFIX/approved/guest_kernel"
+          sudo -n install -o root -g root -m 0444 \
+            "$SOURCE/hello-rootfs.ext4" "$PREFIX/approved/guest_rootfs"
+          sudo -n python3 scripts/stage039_guest_host_canary.py \
+            --firecracker "$PREFIX/approved/firecracker" \
+            --firecracker-sha256 "$(sudo -n sha256sum "$PREFIX/approved/firecracker" | cut -d ' ' -f 1)" \
+            --jailer "$PREFIX/approved/jailer" \
+            --jailer-sha256 "$(sudo -n sha256sum "$PREFIX/approved/jailer" | cut -d ' ' -f 1)" \
+            --jailer-base "$PREFIX/jailer" \
+            --kernel "$PREFIX/approved/guest_kernel" \
+            --kernel-sha256 "$(sudo -n sha256sum "$PREFIX/approved/guest_kernel" | cut -d ' ' -f 1)" \
+            --rootfs "$PREFIX/approved/guest_rootfs" \
+            --rootfs-sha256 786f0612582cadcee4c8ad46e30e4cc93dff9a3c0b4ede3f3c597b4c241dd547 \
+            --probe-source "$GITHUB_WORKSPACE/stage039/guest-kprobe/kprobe_canary_init.c" \
+            --report "$GITHUB_WORKSPACE/stage039-kprobe-evidence/guest.json" \
+            --ack-real-jailed-guest-canary-probe
+          sudo -n chown "$(id -u):$(id -g)" stage039-kprobe-evidence/guest.json
+          python3 - "$PREFIX" <<'PY'
+          import json,os,re,sys
+          from pathlib import Path
+          report=json.loads(Path('stage039-kprobe-evidence/guest.json').read_text())
+          pins=(Path(os.environ['RUNNER_TEMP'])/'kprobe-source'/'built-sha256.txt').read_text()
+          kernel_pins=re.findall(r'(?m)^([0-9a-f]{64})  vmlinux$',pins)
+          assert len(kernel_pins)==1
+          serial=Path(sys.argv[1])/'jailer'/'firecracker'/report['vm_id']/'serial-console.log'
+          raw=serial.read_text(errors='replace')
+          hits=re.findall(r'(?m)^OCAF039_GUEST_KPROBE_PASS program_id=([1-9][0-9]*) event_count=([1-9][0-9]*)$',raw)
+          assert len(hits)==1 and 'OCAF039_GUEST_KPROBE_FAIL' not in raw
+          assert report['live_vm']['firecracker_api_running'] is True
+          assert report['live_vm']['running_rootfs_fd']['rootfs_sha256']==report['rootfs_sha256']
+          assert report['vm_sigkill']['cgroup_subtree_empty'] is True
+          assert report['stage_039_complete'] is False
+          out={'status':'ONE_CUSTOM_PINNED_SOURCE_GUEST_KPROBE_ATTACHED_LAB_ONLY',
+               'guest_kprobe_program_id':int(hits[0][0]),'guest_kprobe_event_count':int(hits[0][1]),
+               'guest_vm_id':report['vm_id'],'guest_kernel_sha256':kernel_pins[0],
+               'stage_039_22_complete':False,'stage_039_complete':False,'production_approved':False}
+          Path('stage039-kprobe-evidence/kprobe-summary.json').write_text(json.dumps(out,sort_keys=True,indent=2)+'\n')
+          PY
+          cp "$SOURCE/linux-6.1.188/.config" stage039-kprobe-evidence/kernel.config
+          cp "$SOURCE/linux-6.1.188/vmlinux" stage039-kprobe-evidence/vmlinux
+          cp "$SOURCE/built-sha256.txt" stage039-kprobe-evidence/built-sha256.txt
+      - name: Preserve custom-kernel lab evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage039-experimental-guest-kprobe-evidence
+          path: stage039-kprobe-evidence/
+          retention-days: 30
+          if-no-files-found: warn
