@@ -52,6 +52,78 @@ impl OidcTrust {
         Ok(Self { issuer, client_id, tenant, key_id, key, mfa_acr })
     }
 
+
+    /// Validate an OAuth access token, never an OIDC ID token, for a fixed
+    /// resource audience and operator-selected scopes. Used by the HTTP
+    /// protected-resource gateway before OMAt's independent policy checks.
+    pub fn verify_access_token(
+        &self, jwt: &str, resource_audience: &str,
+        required_scopes: &std::collections::BTreeSet<String>, now: i64,
+    ) -> Result<AuthenticatedSubject, OidcError> {
+        if jwt.len() > 16_384 || !resource_audience.starts_with("https://")
+            || required_scopes.is_empty() || required_scopes.len() > 64
+        { return Err(OidcError::InvalidToken); }
+        let mut parts = jwt.split('.');
+        let h = parts.next().ok_or(OidcError::InvalidToken)?;
+        let p = parts.next().ok_or(OidcError::InvalidToken)?;
+        let s = parts.next().ok_or(OidcError::InvalidToken)?;
+        if parts.next().is_some() || h.is_empty() || p.is_empty() || s.is_empty()
+            || h.len() > 4096 || p.len() > 8192 || s.len() > 2048
+        { return Err(OidcError::InvalidToken); }
+        let decode = |v: &str| URL_SAFE_NO_PAD.decode(v).map_err(|_| OidcError::InvalidToken);
+        let header: Value = serde_json::from_slice(&decode(h)?).map_err(|_| OidcError::InvalidToken)?;
+        if header.get("alg").and_then(Value::as_str) != Some("RS256")
+            || header.get("kid").and_then(Value::as_str) != Some(self.key_id.as_str())
+            || header.get("crit").is_some() || header.get("jku").is_some()
+            || header.get("x5u").is_some() || header.get("jwk").is_some()
+            || header.get("zip").is_some()
+            || header.get("typ").is_some_and(|v| v.as_str() != Some("JWT"))
+        { return Err(OidcError::InvalidToken); }
+        let mut verifier = Verifier::new(MessageDigest::sha256(), &self.key)
+            .map_err(|_| OidcError::Signature)?;
+        verifier.update(format!("{h}.{p}").as_bytes()).map_err(|_| OidcError::Signature)?;
+        if !verifier.verify(&decode(s)?).map_err(|_| OidcError::Signature)? {
+            return Err(OidcError::Signature);
+        }
+        let claims: Value = serde_json::from_slice(&decode(p)?).map_err(|_| OidcError::InvalidToken)?;
+        let string = |key: &str| claims.get(key).and_then(Value::as_str);
+        if string("iss") != Some(self.issuer.as_str())
+            || string("typ") != Some("Bearer")
+            || string("azp") != Some(self.client_id.as_str())
+        { return Err(OidcError::InvalidToken); }
+        let aud = claims.get("aud").ok_or(OidcError::InvalidToken)?;
+        let matches_resource = match aud {
+            Value::String(v) => v == resource_audience,
+            Value::Array(v) if v.len() <= 16 => v.iter().any(|x| x.as_str() == Some(resource_audience)),
+            _ => false,
+        };
+        if !matches_resource { return Err(OidcError::InvalidToken); }
+        let exp = claims.get("exp").and_then(Value::as_i64).ok_or(OidcError::InvalidToken)?;
+        let iat = claims.get("iat").and_then(Value::as_i64).ok_or(OidcError::InvalidToken)?;
+        if exp <= now || exp > now.saturating_add(3600)
+            || iat > now.saturating_add(60) || iat < now.saturating_sub(3600)
+            || claims.get("nbf").and_then(Value::as_i64)
+                .is_some_and(|nbf| nbf > now.saturating_add(60))
+        { return Err(OidcError::InvalidToken); }
+        let sub = string("sub").ok_or(OidcError::InvalidToken)?;
+        if !safe_id(sub) { return Err(OidcError::InvalidToken); }
+        let scopes: std::collections::BTreeSet<&str> = string("scope")
+            .ok_or(OidcError::InvalidToken)?.split_ascii_whitespace().collect();
+        if !required_scopes.iter().all(|scope| scopes.contains(scope.as_str())) {
+            return Err(OidcError::InvalidToken);
+        }
+        let auth_time = claims.get("auth_time").and_then(Value::as_i64).unwrap_or(iat);
+        let fresh_mfa = claims.get("auth_time").is_some()
+            && string("acr") == Some(self.mfa_acr.as_str())
+            && auth_time <= now.saturating_add(60)
+            && now.saturating_sub(auth_time) <= 300;
+        Ok(AuthenticatedSubject {
+            tenant: self.tenant.clone(), user: sub.to_owned(),
+            authenticated_at: auth_time,
+            assurance_level: if fresh_mfa { 2 } else { 1 },
+        })
+    }
+
     /// Verified identity, never user-supplied tenant or unverified claims.
     /// now is supplied by a trusted wall clock; test callers may inject it.
     pub fn verify_id_token(
@@ -189,4 +261,20 @@ mod tests {
         c["azp"] = json!("ocaf-client");
         assert!(trust.verify_id_token(&signed_token(&key,c,"kid-1","RS256"),NONCE,1010).is_ok());
     }
+    #[test]
+    fn access_token_requires_bearer_type_resource_and_scope() {
+        let (trust,key) = setup();
+        let claims = json!({"iss":"https://idp.example/realms/ocaf",
+            "aud":["https://omat.example","account"],"azp":"ocaf-client",
+            "typ":"Bearer","sub":"alice","scope":"tool:read tool:write",
+            "iat":1000,"auth_time":1000,"exp":1300,"acr":"urn:ocaf:mfa"});
+        let token = signed_token(&key,claims.clone(),"kid-1","RS256");
+        let read: std::collections::BTreeSet<String> = ["tool:read".to_owned()].into_iter().collect();
+        assert_eq!(trust.verify_access_token(&token,"https://omat.example",&read,1010).unwrap().assurance_level,2);
+        assert!(trust.verify_access_token(&token,"https://evil.example",&read,1010).is_err());
+        assert!(trust.verify_access_token(&token,"https://omat.example",&["admin".to_owned()].into_iter().collect(),1010).is_err());
+        let mut wrong=claims; wrong["typ"]=json!("ID");
+        assert!(trust.verify_access_token(&signed_token(&key,wrong,"kid-1","RS256"),"https://omat.example",&read,1010).is_err());
+    }
+
 }
