@@ -41,3 +41,21 @@ z tą zmianą.
 - API alertów Dependabot dla tego tokenu zwróciło HTTP 403
   (`Resource not accessible by integration`), więc widoczne osiem alertów
   z GitHub nie zostało przypisanych do pakietów ani zakresu 0.39.
+
+## Dodatkowa próba granicy guest→host (oczekuje na CI KVM)
+
+`scripts/stage039_guest_host_canary.py` buduje statyczny PID1, wstrzykuje go
+do prywatnej kopii ext4 i uruchamia przez jailer. Losowy plik `host-canary`
+zostaje umieszczony w hostowym katalogu chroot VMM, lecz poza blokowym
+obrazem rootfs gościa. PID1 montuje proc i próbuje otworzyć ten plik przez
+ścieżkę bezpośrednią oraz `/proc/1/root/...`. Raport może powstać wyłącznie
+po dokładnym markerze z konsoli gościa, potwierdzeniu realnego boot przez API
+i cgroup, sprawdzeniu FD VMM, dwukrotnym hash check pliku hostowego oraz
+SIGKILL i opróżnieniu cgroup. Brak markera lub powodzenie `open` kończy
+próbę błędem. Workflow `stage039-real-firecracker-jailer` wymaga tej próby.
+
+Lokalnie przeszły trzy testy parsera markera i kompilacja statycznego C z
+`-Werror`. Bieżące środowisko nie ma `/dev/kvm`, więc wykonanie wewnątrz
+gościa pozostaje **niepotwierdzone** do zielonego uruchomienia workflow.
+Nawet wtedy próba dowodzi wyłącznie odmowy odczytu konkretnego pliku
+hostowego dwiema ścieżkami; nie dowodzi niemożliwości ucieczki z VM.
