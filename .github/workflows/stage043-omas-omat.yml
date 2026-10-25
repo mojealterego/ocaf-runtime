@@ -105,6 +105,8 @@ jobs:
           cargo test --locked --no-default-features omat_server::tests
       - name: OMAt Zenoh ingress compile gate
         run: cargo check --locked --features zenoh --lib --bin ocaf-omat-zenoh --bin ocaf-omas-zenoh-client
+      - name: Zenoh production binary Clippy gate
+        run: cargo clippy --locked --features zenoh --bin ocaf-omat-zenoh --bin ocaf-omas-zenoh-client -- -D warnings
       - name: Signed OMAs to OMAt Zenoh integration tests
         run: cargo test --locked --features zenoh --test stage043_omat_zenoh
       - name: Real two-process Zenoh TLS/mTLS restart and forced disconnect E2E
