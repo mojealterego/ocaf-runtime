@@ -21,7 +21,7 @@ from cryptography.hazmat.primitives import serialization
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from stage039_egress_broker import EgressBroker
-from stage039_guest_egress_transport import VmPeer, handle_one, listen_once, listen_many, MAX_PERMIT
+from stage039_guest_egress_transport import VmPeer, handle_one, listen_once, listen_many, MAX_PERMIT, _trusted_parent_owner
 from stage039_signed_manifest import canonical_payload
 
 
@@ -103,6 +103,13 @@ class GuestEgressTransportTests(unittest.TestCase):
             while len(response)<length:
                 response+=right.recv(length-len(response))
             return decision,status,response
+
+    def test_jailer_chowned_parent_is_trusted_only_for_bound_vm_uid(self):
+        jailed = VmPeer(self.peer.tenant_id, os.geteuid() + 2,
+                        self.peer.pid, self.peer.proc_start_ticks,
+                        self.peer.cgroup, self.peer.host_boot_id)
+        self.assertTrue(_trusted_parent_owner(jailed.uid, jailed))
+        self.assertFalse(_trusted_parent_owner(jailed.uid + 1, jailed))
 
     def test_signed_tenant_uses_kernel_peer_to_fetch_real_local_tls(self):
         decision,status,response=self.exchange(self.permit())

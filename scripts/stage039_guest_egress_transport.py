@@ -37,6 +37,13 @@ class SignedFetch(Protocol):
     def fetch(self, *, signed_permit: bytes, authenticated_tenant: str) -> bytes: ...
 
 
+def _trusted_parent_owner(owner_uid: int, peer: "VmPeer") -> bool:
+    # Jailer chowns the private chroot to the VMM UID before this listener
+    # binds. The peer comes from the live jailed PID and is rechecked for
+    # every accepted connection.
+    return owner_uid in (0, os.geteuid(), peer.uid)
+
+
 def _proc_start_ticks(pid: int) -> int:
     raw = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
     end = raw.rfind(")")
@@ -145,7 +152,7 @@ def listen_many(path: Path, *, peer: VmPeer, broker: SignedFetch,
     parent = path.parent
     pstat = parent.stat()
     if (not stat.S_ISDIR(pstat.st_mode) or pstat.st_mode & 0o022
-            or pstat.st_uid not in (0, os.geteuid())
+            or not _trusted_parent_owner(pstat.st_uid, peer)
             or len(os.fsencode(path)) > 100 or path.exists()):
         raise TransportDenied("private fresh per-VM socket parent required")
     listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
