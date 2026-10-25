@@ -99,3 +99,20 @@ fn replay_survives_server_restart() {
         .to_string()
         .contains("replay"));
 }
+
+#[test]
+fn security_metrics_track_denials_and_replays() {
+    use std::sync::atomic::Ordering;
+    let mut server = admission();
+    let metrics = server.metrics();
+    server.connected(true);
+    let topic = "ocaf/omat/tenant_a/requests/req_1";
+    let signed = sign_omas_request("omas_a", topic, "0123456789abcdef", call("tenant_a"), &[7u8; 32]).unwrap();
+    assert!(server.handle(&signed).is_err());
+    assert!(server.handle(&signed).is_err());
+    assert_eq!(metrics.requests.load(Ordering::Relaxed), 2);
+    assert_eq!(metrics.rejections.load(Ordering::Relaxed), 2);
+    assert_eq!(metrics.replays.load(Ordering::Relaxed), 1);
+    assert_eq!(metrics.connection_events.load(Ordering::Relaxed), 1);
+    assert!(metrics.prometheus().contains("ocaf_omat_replays_total 1"));
+}
