@@ -1,6 +1,7 @@
 name: Stage 0.43 OMAs/OMAt Security
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
