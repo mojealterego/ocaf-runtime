@@ -24,7 +24,7 @@ pub struct OmatSecurityMetrics {
 impl OmatSecurityMetrics {
     pub fn prometheus(&self) -> String {
         format!(
-            "ocaf_omat_requests_total {}\\nocaf_omat_rejections_total {}\\nocaf_omat_replays_total {}\\nocaf_omat_connection_events_total {}\\n",
+            "ocaf_omat_requests_total {}\nocaf_omat_rejections_total {}\nocaf_omat_replays_total {}\nocaf_omat_connection_events_total {}\n",
             self.requests.load(Ordering::Relaxed),
             self.rejections.load(Ordering::Relaxed),
             self.replays.load(Ordering::Relaxed),
