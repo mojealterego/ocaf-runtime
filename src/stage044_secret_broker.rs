@@ -284,7 +284,7 @@ fn binding(tenant: &str, user: &str, route: &str) -> Vec<u8> {
 
 pub(crate) enum BrokerAuthHeader { Bearer, VaultToken }
 
-fn https_post(route: &BrokerRoute, secret: &[u8], json_body: &[u8]) -> Result<BrokerResponse, BrokerError> {
+pub(crate) fn https_post(route: &BrokerRoute, secret: &[u8], json_body: &[u8]) -> Result<BrokerResponse, BrokerError> {
     https_post_with_auth(route, secret, json_body, BrokerAuthHeader::Bearer)
 }
 
