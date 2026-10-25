@@ -1,0 +1,58 @@
+{
+  "realm": "ocaf-stage044",
+  "enabled": true,
+  "sslRequired": "external",
+  "accessTokenLifespan": 300,
+  "clients": [
+    {
+      "clientId": "ocaf-client",
+      "name": "OCAF OAuth browser client",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "consentRequired": true,
+      "fullScopeAllowed": false,
+      "redirectUris": [
+        "https://replace-with-real-host.invalid/oidc/callback"
+      ],
+      "webOrigins": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": [
+        "profile",
+        "email",
+        "roles",
+        "acr",
+        "tool:read"
+      ],
+      "protocolMappers": [
+        {
+          "name": "ocaf-omat-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "https://replace-with-real-resource.invalid",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "tool:read",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true"
+      },
+      "protocolMappers": []
+    }
+  ]
+}
