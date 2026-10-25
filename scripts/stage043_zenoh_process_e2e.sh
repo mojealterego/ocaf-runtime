@@ -69,7 +69,6 @@ if ! grep -q 'OMAt rejected request' "$root/recovery.log"; then
   echo "reconnect never reached authenticated OMAt policy"; cat "$root/recovery.log"; exit 1
 fi
 unset OCAF_OMAT_RECONNECT_ATTEMPTS
-kill "$server_pid"; wait "$server_pid" 2>/dev/null || true; server_pid=""
 
 # Overlapping certificate rotation: bring up a second TLS listener with a
 # newly issued server identity before retiring the original listener.
