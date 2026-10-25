@@ -41,7 +41,7 @@ jobs:
           toolchain: "1.99.0"
           components: rustfmt, clippy
       - name: Normalize Rust formatting in CI workspace (not persisted)
-        run: rustfmt --edition 2021 src/stage044_oauth.rs src/stage044_secret_broker.rs src/stage044_omat_authz.rs src/stage044_oidc.rs src/stage044_vault.rs src/bin/ocaf-oauth-gateway.rs tests/stage044_integration.rs
+        run: rustfmt --edition 2021 src/stage044_oauth.rs src/stage044_secret_broker.rs src/stage044_omat_authz.rs src/stage044_oidc.rs src/stage044_vault.rs src/stage044_vault_broker.rs src/bin/ocaf-oauth-gateway.rs tests/stage044_integration.rs
       - name: Compile all stage 0.44 code
         run: cargo check --locked --no-default-features --lib --tests
       - name: Compile loopback OAuth gateway
