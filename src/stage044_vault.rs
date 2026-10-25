@@ -36,8 +36,11 @@ impl VaultTransit {
             || route.path != format!("/v1/transit/encrypt/{key_name}")
             || route.validate().is_err()
         { return Err(KmsError::Configuration); }
-        crate::ops::secrets::read_private_text(token_file, 4096)
+        let token = crate::ops::secrets::read_private_text(token_file, 4096)
             .map_err(|_| KmsError::Configuration)?;
+        if !valid_operator_token(token.trim_end_matches(['\r','\n'])) {
+            return Err(KmsError::Configuration);
+        }
         Ok(Self { route, key_name, token_file: token_file.to_owned() })
     }
 
@@ -93,8 +96,11 @@ impl VaultTransit {
             _ => return Err(KmsError::Configuration),
         };
         route.validate().map_err(|_| KmsError::Configuration)?;
-        let mut token = crate::ops::secrets::read_private_text(&self.token_file, 4096)
-            .map_err(|_| KmsError::Unavailable)?.into_bytes();
+        let loaded = crate::ops::secrets::read_private_text(&self.token_file, 4096)
+            .map_err(|_| KmsError::Unavailable)?;
+        let clean = loaded.trim_end_matches(['\r','\n']);
+        if !valid_operator_token(clean) { return Err(KmsError::Unavailable); }
+        let mut token = clean.as_bytes().to_vec();
         let data = serde_json::to_vec(body).map_err(|_| KmsError::Configuration)?;
         let response = https_post_with_auth(&route, &token, &data, BrokerAuthHeader::VaultToken);
         token.fill(0);
@@ -105,6 +111,11 @@ impl VaultTransit {
         json.get("data").filter(|v| v.is_object())
             .cloned().ok_or(KmsError::InvalidResponse)
     }
+}
+
+fn valid_operator_token(value: &str) -> bool {
+    !value.is_empty() && value.len() <= 4096
+        && value.bytes().all(|b| (33..=126).contains(&b))
 }
 
 fn safe_id(value: &str) -> bool {
