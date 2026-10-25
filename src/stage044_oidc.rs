@@ -400,9 +400,12 @@ mod tests {
             (id.tenant.as_str(), id.user.as_str(), id.assurance_level),
             ("tenant-a", "alice", 2)
         );
+        let mut long_lived = claims();
+        long_lived["exp"] = json!(1400);
+        let late_jwt = signed_token(&key, long_lived, "kid-1", "RS256");
         assert_eq!(
             trust
-                .verify_id_token(&jwt, NONCE, 1299)
+                .verify_id_token(&late_jwt, NONCE, 1301)
                 .unwrap()
                 .assurance_level,
             1
