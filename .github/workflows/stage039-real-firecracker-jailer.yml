@@ -669,6 +669,7 @@ jobs:
           v=p["guest_vsock_egress"]
           assert v["status"]=="REAL_GUEST_VSOCK_SIGNED_TLS_GRANT_REPLAY_DENY"
           assert [d["status"] for d in v["decisions"]]==["GRANTED","DENIED"]
+          assert v["durable_replay_denied_after_broker_restart"] is True
           assert v["guest_kvm_tested"] is True
           assert v["stage_039_complete"] is False
           assert v["production_approved"] is False

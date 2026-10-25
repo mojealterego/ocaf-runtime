@@ -52,8 +52,37 @@ class LabHandler(http.server.BaseHTTPRequestHandler):
         pass
 
 
+class RestartingEgressBroker:
+    """Replace the broker after its first guest grant; retain durable replay."""
+
+    def __init__(self, broker: eg.EgressBroker, store_path: Path):
+        self.broker = broker
+        self.store_path = store_path
+        self.restart_count = 0
+
+    def fetch(self, *, signed_permit: bytes, authenticated_tenant: str) -> bytes:
+        body = self.broker.fetch(signed_permit=signed_permit,
+                                 authenticated_tenant=authenticated_tenant)
+        if self.restart_count == 0:
+            old = self.broker
+            assert old.replay_store is not None
+            old.replay_store.close()
+            reopened = eg.DurablePermitReplay.reopen(self.store_path)
+            self.broker = eg.EgressBroker(
+                trusted_keys=old.trusted_keys, ssl_context=old.ssl_context,
+                allowed_ports=old.allowed_ports,
+                allowed_networks=old.allowed_networks,
+                resolver=old.resolver, clock=old.clock, replay_store=reopened)
+            self.restart_count = 1
+        return body
+
+    def close(self) -> None:
+        if self.broker.replay_store is not None:
+            self.broker.replay_store.close()
+
+
 class VsockBridge:
-    def __init__(self, broker: eg.EgressBroker, tenant: str, uid: int):
+    def __init__(self, broker: RestartingEgressBroker, tenant: str, uid: int):
         self.broker, self.tenant, self.uid = broker, tenant, uid
         self.thread: threading.Thread | None = None
         self.decisions: list[dict] | None = None
@@ -136,13 +165,16 @@ class VsockBridge:
                 or f"OCAF039_GUEST_EGRESS_BROKERED_BYTES={len(BODY)}" not in serial
                 or serial.count("OCAF039_GUEST_EGRESS_DENIED") != 1
                 or [d["status"] for d in self.decisions] != ["GRANTED", "DENIED"]
+                or "replayed destination permit" not in self.decisions[1].get("deny_reason", "")
+                or self.broker.restart_count != 1
                 or self.decisions[0].get("response_sha256") != hashlib.sha256(BODY).hexdigest()
                 or any(d["tenant_id"] != self.tenant or d["vm_pid"] != proc.pid
                        for d in self.decisions)):
             raise ValueError("real guest serial and kernel-bound egress decisions disagree")
         return {"status": "REAL_GUEST_VSOCK_SIGNED_TLS_GRANT_REPLAY_DENY",
                 "guest_cid": self.cid, "guest_serial_sha256": hashlib.sha256(serial.encode()).hexdigest(),
-                "decisions": self.decisions, "guest_direct_network": False,
+                "decisions": self.decisions, "durable_replay_denied_after_broker_restart": True,
+                "guest_direct_network": False,
                 "guest_kvm_tested": True, "stage_039_complete": False,
                 "production_approved": False}
 
@@ -230,13 +262,17 @@ def run(prefix: Path, report: Path) -> dict:
             manifest_path.write_text(json.dumps(manifest, sort_keys=True) + "\n")
             manifest_path.chmod(0o600)
             context = ssl.create_default_context(cafile=str(cert))
+            replay_path = approved / "vsock_replay.sqlite"
+            replay_store = eg.DurablePermitReplay(replay_path)
             broker = eg.EgressBroker(
                 trusted_keys={"stage039-vsock-lab": public}, ssl_context=context,
                 allowed_ports=frozenset({port}),
                 allowed_networks=(ipaddress.ip_network("127.0.0.1/32"),),
                 resolver=lambda _host, checked_port, **kwargs:
-                    __import__("socket").getaddrinfo("127.0.0.1", checked_port, **kwargs))
-            bridge = VsockBridge(broker, "tenant-a", 1002)
+                    __import__("socket").getaddrinfo("127.0.0.1", checked_port, **kwargs),
+                replay_store=replay_store)
+            restarting_broker = RestartingEgressBroker(broker, replay_path)
+            bridge = VsockBridge(restarting_broker, "tenant-a", 1002)
             def hooked(result, proc, vm_id, _cgroup):
                 log = prefix / "jailer" / "firecracker" / vm_id / "serial-console.log"
                 result["guest_vsock_egress"] = bridge.prove(log, proc)
@@ -253,6 +289,8 @@ def run(prefix: Path, report: Path) -> dict:
             report.write_text(json.dumps(proof, sort_keys=True, indent=2) + "\n")
             return proof
         finally:
+            if "restarting_broker" in locals():
+                restarting_broker.close()
             server.shutdown()
             server.server_close()
             thread.join(timeout=3)

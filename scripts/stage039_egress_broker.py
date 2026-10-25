@@ -9,9 +9,13 @@ required. The default destination policy admits only globally routable IPs.
 from __future__ import annotations
 
 import ipaddress
+import os
+from pathlib import Path
 import re
 import socket
+import sqlite3
 import ssl
+import stat
 import threading
 import time
 from typing import Callable, Mapping
@@ -29,13 +33,97 @@ class EgressDenied(ValueError):
     pass
 
 
+class DurablePermitReplay:
+    """Private SQLite replay ledger shared across broker process restarts."""
+
+    def __init__(self, path: Path):
+        if (not isinstance(path, Path) or not path.is_absolute()
+                or ".." in path.parts or path.is_symlink() or path.exists()
+                or path.parent.is_symlink()):
+            raise EgressDenied("fresh absolute replay ledger path required")
+        parent = path.parent.stat()
+        if (not stat.S_ISDIR(parent.st_mode) or parent.st_uid != os.geteuid()
+                or parent.st_mode & 0o077):
+            raise EgressDenied("replay ledger parent must be private and owned")
+        fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+        os.close(fd)
+        self.path = path
+        self._lock = threading.Lock()
+        try:
+            self.conn = sqlite3.connect(str(path), isolation_level=None,
+                                        timeout=5, check_same_thread=False)
+            self.conn.execute("PRAGMA journal_mode=WAL")
+            self.conn.execute("PRAGMA synchronous=FULL")
+            self.conn.execute("PRAGMA busy_timeout=5000")
+            self.conn.execute("PRAGMA trusted_schema=OFF")
+            self.conn.execute("CREATE TABLE IF NOT EXISTS used_permit ("
+                              "tenant_id TEXT NOT NULL, nonce TEXT NOT NULL, "
+                              "expires_unix INTEGER NOT NULL, "
+                              "PRIMARY KEY(tenant_id,nonce)) WITHOUT ROWID")
+        except sqlite3.Error as exc:
+            raise EgressDenied("replay ledger initialization failed closed") from exc
+
+    @classmethod
+    def reopen(cls, path: Path) -> "DurablePermitReplay":
+        if (not isinstance(path, Path) or not path.is_absolute()
+                or ".." in path.parts or path.is_symlink() or path.parent.is_symlink()):
+            raise EgressDenied("unsafe replay ledger path")
+        parent, file = path.parent.stat(), path.stat()
+        if (parent.st_uid != os.geteuid() or parent.st_mode & 0o077
+                or not stat.S_ISREG(file.st_mode) or file.st_uid != os.geteuid()
+                or file.st_mode & 0o077 or file.st_nlink != 1):
+            raise EgressDenied("replay ledger permissions denied")
+        self = cls.__new__(cls)
+        self.path = path
+        self._lock = threading.Lock()
+        try:
+            self.conn = sqlite3.connect(str(path), isolation_level=None,
+                                        timeout=5, check_same_thread=False)
+            self.conn.execute("PRAGMA synchronous=FULL")
+            self.conn.execute("PRAGMA busy_timeout=5000")
+            self.conn.execute("PRAGMA trusted_schema=OFF")
+            if self.conn.execute("PRAGMA journal_mode").fetchone()[0].lower() != "wal":
+                raise EgressDenied("replay ledger durability mode changed")
+            if self.conn.execute("PRAGMA quick_check").fetchone()[0] != "ok":
+                raise EgressDenied("replay ledger integrity failed")
+        except sqlite3.Error as exc:
+            raise EgressDenied("replay ledger reopen failed closed") from exc
+        return self
+
+    def claim(self, tenant_id: str, nonce: str, expiry: int, now: int) -> None:
+        if (TENANT.fullmatch(tenant_id) is None or NONCE.fullmatch(nonce) is None
+                or not now < expiry <= now + 300):
+            raise EgressDenied("replay claim outside signed bound")
+        with self._lock:
+            try:
+                self.conn.execute("BEGIN IMMEDIATE")
+                self.conn.execute("DELETE FROM used_permit WHERE expires_unix<=?", (now,))
+                if self.conn.execute("SELECT COUNT(*) FROM used_permit").fetchone()[0] >= 100_000:
+                    raise EgressDenied("replay ledger capacity exhausted")
+                self.conn.execute("INSERT INTO used_permit VALUES (?,?,?)",
+                                  (tenant_id, nonce, expiry))
+                self.conn.execute("COMMIT")
+            except (sqlite3.Error, EgressDenied) as exc:
+                if self.conn.in_transaction:
+                    self.conn.execute("ROLLBACK")
+                if isinstance(exc, sqlite3.IntegrityError):
+                    raise EgressDenied("replayed destination permit") from exc
+                if isinstance(exc, EgressDenied):
+                    raise
+                raise EgressDenied("replay ledger unavailable") from exc
+
+    def close(self) -> None:
+        self.conn.close()
+
+
 class EgressBroker:
     def __init__(self, *, trusted_keys: Mapping[str, bytes],
                  ssl_context: ssl.SSLContext | None = None,
                  allowed_ports: frozenset[int] = frozenset({443}),
                  allowed_networks: tuple[ipaddress._BaseNetwork, ...] = (),
                  resolver: Callable = socket.getaddrinfo,
-                 clock: Callable[[], float] = time.time):
+                 clock: Callable[[], float] = time.time,
+                 replay_store: DurablePermitReplay | None = None):
         if not trusted_keys or not isinstance(allowed_ports, frozenset) or not allowed_ports:
             raise EgressDenied("trusted signer and bounded ports required")
         if any(type(port) is not int or not 1 <= port <= 65535 for port in allowed_ports):
@@ -48,6 +136,7 @@ class EgressBroker:
         self.allowed_networks = tuple(allowed_networks)
         self.resolver = resolver
         self.clock = clock
+        self.replay_store = replay_store
         self._used: set[tuple[str, str]] = set()
         self._lock = threading.Lock()
 
@@ -93,11 +182,15 @@ class EgressBroker:
             path += "?" + url.query
         if "#" in path or "\r" in path or "\n" in path:
             raise EgressDenied("unsafe request target")
-        with self._lock:
-            key = (tenant_id, payload["nonce"])
-            if key in self._used:
-                raise EgressDenied("replayed destination permit")
-            self._used.add(key)
+        if self.replay_store is not None:
+            self.replay_store.claim(tenant_id, payload["nonce"],
+                                    payload["expires_unix"], int(now))
+        else:
+            with self._lock:
+                key = (tenant_id, payload["nonce"])
+                if key in self._used:
+                    raise EgressDenied("replayed destination permit")
+                self._used.add(key)
         return host, path, port, payload["nonce"], payload["max_bytes"]
 
     def _address(self, host: str, port: int) -> tuple[int, tuple, ipaddress._BaseAddress]:

@@ -107,6 +107,44 @@ class EgressBrokerTLS(unittest.TestCase):
         with self.assertRaisesRegex(egress.EgressDenied, "replayed"):
             self.broker.fetch(signed_permit=self.permit(), authenticated_tenant="tenant-a")
 
+    def test_durable_replay_survives_broker_restart(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "permits.sqlite"
+            store = egress.DurablePermitReplay(path)
+            self.broker.replay_store = store
+            first = self.permit(nonce="7" * 32)
+            self.assertEqual(self.broker.fetch(signed_permit=first,
+                                               authenticated_tenant="tenant-a"),
+                             b"actual-local-tls-upstream")
+            store.close()
+            restarted_store = egress.DurablePermitReplay.reopen(path)
+            try:
+                restarted = egress.EgressBroker(
+                    trusted_keys=self.broker.trusted_keys,
+                    ssl_context=self.broker.ssl_context,
+                    allowed_ports=self.broker.allowed_ports,
+                    allowed_networks=self.broker.allowed_networks,
+                    resolver=self.broker.resolver,
+                    replay_store=restarted_store)
+                before = len(self.calls)
+                with self.assertRaisesRegex(egress.EgressDenied, "replayed"):
+                    restarted.fetch(signed_permit=first, authenticated_tenant="tenant-a")
+                self.assertEqual(len(self.calls), before)
+                self.assertEqual(restarted.fetch(signed_permit=self.permit(nonce="8" * 32),
+                                                 authenticated_tenant="tenant-a"),
+                                 b"actual-local-tls-upstream")
+            finally:
+                restarted_store.close()
+
+    def test_durable_replay_rejects_mutable_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "permits.sqlite"
+            store = egress.DurablePermitReplay(path)
+            store.close()
+            path.chmod(0o666)
+            with self.assertRaisesRegex(egress.EgressDenied, "permissions"):
+                egress.DurablePermitReplay.reopen(path)
+
     def test_rejects_redirect_metadata_mixed_dns_and_rebinding(self):
         redirect = self.permit(url=f"https://localhost:{self.port}/redirect")
         with self.assertRaisesRegex(egress.EgressDenied, "redirects"):
