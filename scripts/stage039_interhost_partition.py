@@ -39,6 +39,30 @@ def check_response(response: dict, status: str, epoch: int) -> None:
         raise PartitionDenied("unexpected mTLS fencing response")
 
 
+def drop_counter(raw: str, address: str, port: int) -> int:
+    """Require one exact scoped nft rule and its observed kernel packet count."""
+    try:
+        document = json.loads(raw)
+        rules = [item["rule"] for item in document["nftables"] if "rule" in item]
+    except (KeyError, TypeError, ValueError) as exc:
+        raise PartitionDenied("kernel nftables JSON counter missing") from exc
+    if len(rules) != 1 or not isinstance(rules[0].get("expr"), list):
+        raise PartitionDenied("expected exactly one scoped kernel drop rule")
+    expressions = rules[0]["expr"]
+    def match(protocol: str, field: str, expected: str | int) -> bool:
+        return any(isinstance(expr, dict) and expr.get("match") == {
+            "op": "==", "left": {"payload": {"protocol": protocol, "field": field}},
+            "right": expected} for expr in expressions)
+    if (not match("ip", "daddr", address) or not match("tcp", "dport", port)
+            or not any(isinstance(expr, dict) and "drop" in expr for expr in expressions)):
+        raise PartitionDenied("kernel packet drop rule differs from exact authority endpoint")
+    counts = [expr["counter"].get("packets") for expr in expressions
+              if isinstance(expr, dict) and isinstance(expr.get("counter"), dict)]
+    if len(counts) != 1 or type(counts[0]) is not int or counts[0] < 0:
+        raise PartitionDenied("kernel packet counter missing from scoped rule")
+    return counts[0]
+
+
 def drill(host: str, port: int, cert: Path, key: Path, ca: Path) -> dict:
     if os.geteuid() != 0 or shutil.which("nft") is None:
         raise PartitionDenied("root Linux nftables execution required")
@@ -69,17 +93,21 @@ def drill(host: str, port: int, cert: Path, key: Path, ca: Path) -> dict:
         run_command(["nft", "add", "chain", "ip", table, "output",
                      "{ type filter hook output priority -100 ; policy accept ; }"])
         run_command(["nft", "add", "rule", "ip", table, "output", "ip", "daddr",
-                     str(address), "tcp", "dport", str(port), "drop"])
-        listing = subprocess.run(["nft", "list", "table", "ip", table],
-                                 capture_output=True, text=True, timeout=5, check=True).stdout
-        if str(address) not in listing or str(port) not in listing or "drop" not in listing:
-            raise PartitionDenied("kernel nftables packet drop rule not observed")
+                     str(address), "tcp", "dport", str(port), "counter", "drop"])
+        def observed_packets():
+            listing = subprocess.run(["nft", "-j", "list", "chain", "ip", table, "output"],
+                                     capture_output=True, text=True, timeout=5, check=True).stdout
+            return drop_counter(listing, str(address), port)
+        initial_packets = observed_packets()
         try:
             response = call("renew")
         except (OSError, ValueError):
             pass
         else:
             raise PartitionDenied("mTLS lease renewed during actual packet partition: " + repr(response))
+        packets_after_blocked_renewal = observed_packets()
+        if packets_after_blocked_renewal <= initial_packets:
+            raise PartitionDenied("failed renewal did not hit scoped kernel packet drop rule")
         if fence.safe_to_write(False, int(time.time()), claimed["expires_unix_secs"]):
             raise PartitionDenied("client accepted write after losing authority")
     finally:
@@ -95,6 +123,8 @@ def drill(host: str, port: int, cert: Path, key: Path, ca: Path) -> dict:
             "client_kernel_boot_id": Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
             "authority_ipv4": str(address), "authority_port": port,
             "nft_output_packet_drop_observed": True,
+            "nft_drop_packets_before_renewal": initial_packets,
+            "nft_drop_packets_after_blocked_renewal": packets_after_blocked_renewal,
             "renewal_during_packet_partition_denied": True,
             "write_after_lost_authority_denied": True,
             "renewal_after_packet_recovery_proved": True,

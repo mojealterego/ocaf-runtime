@@ -97,7 +97,9 @@ sudo -n python3 scripts/stage039_interhost_partition.py \
 
 Skrypt najpierw otrzymuje grant TLS 1.3, następnie w jądrze A instaluje
 regułę `nftables` odcinającą tylko TCP do `<ADRES_B>:24399`. Renewal musi
-zawieść; przywrócenie trasy musi pozwolić na renewal i release. Reguła jest
+zawieść **i licznik pakietów tej dokładnej reguły musi wzrosnąć**; sam timeout
+nie jest dowodem partycji. Raport zawiera liczbę pakietów przed i po próbie.
+Przywrócenie trasy musi pozwolić na renewal i release. Reguła jest
 usuwana także po błędzie. Nie dotyka portu SSH. Na maszynie produkcyjnej
 operator nadal odpowiada za kontrolę pozostałych reguł i łączności.
 
