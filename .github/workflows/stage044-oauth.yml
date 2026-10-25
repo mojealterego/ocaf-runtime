@@ -6,6 +6,9 @@ on:
     branches: [main]
     paths:
       - "src/stage044_*.rs"
+      - "src/bin/ocaf-oauth-gateway.rs"
+      - "deploy/stage044/**"
+      - "scripts/stage044_network_acceptance.py"
       - "tests/stage044_*.rs"
       - "src/lib.rs"
       - ".github/workflows/stage044-oauth.yml"
@@ -13,6 +16,9 @@ on:
   pull_request:
     paths:
       - "src/stage044_*.rs"
+      - "src/bin/ocaf-oauth-gateway.rs"
+      - "deploy/stage044/**"
+      - "scripts/stage044_network_acceptance.py"
       - "tests/stage044_*.rs"
       - "src/lib.rs"
       - ".github/workflows/stage044-oauth.yml"
@@ -38,6 +44,10 @@ jobs:
         run: rustfmt --edition 2021 src/stage044_oauth.rs src/stage044_secret_broker.rs src/stage044_omat_authz.rs tests/stage044_integration.rs
       - name: Compile all stage 0.44 code
         run: cargo check --locked --no-default-features --lib --tests
+      - name: Compile loopback OAuth gateway
+        run: cargo check --locked --no-default-features --bin ocaf-oauth-gateway
+      - name: Python network probe syntax
+        run: python3 -m py_compile scripts/stage044_network_acceptance.py
       - name: OAuth positive and negative tests
         run: cargo test --locked --no-default-features stage044_oauth::tests -- --nocapture
       - name: Pinned OIDC issuer and ID-token negative tests
@@ -46,5 +56,7 @@ jobs:
         run: cargo test --locked --no-default-features stage044_secret_broker::tests -- --nocapture
       - name: Tenant/user/OMAt boundary integration
         run: cargo test --locked --no-default-features --test stage044_integration -- --nocapture
+      - name: HTTP header-smuggling negative tests
+        run: cargo test --locked --no-default-features --bin ocaf-oauth-gateway
       - name: Clippy security gate
         run: cargo clippy --locked --no-default-features --lib --test stage044_integration -- -D warnings
