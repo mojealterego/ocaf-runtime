@@ -130,6 +130,34 @@ Osobny lokalny test zabija `SIGKILL` proces brokera po zatwierdzonej
 transakcji SQLite i potwierdza odmowę replay po ponownym uruchomieniu
 procesu. Nie zastępuje to wspólnego testu awarii z działającym VM.
 
+[Run 40200198836](https://github.com/mojealterego/ocaf-runtime/actions/runs/40200198836)
+na commicie `af103ae3129fcf21bf064fd52b410e92827cdc28` przeszedł pełny
+workflow KVM z osobnym procesem brokera egress. Po pierwszej odpowiedzi TLS
+proces został zabity sygnałem `SIGKILL`, gdy jailed guest nadal działał.
+Drugie żądanie gościa otrzymało odmowę podczas niedostępności brokera;
+nowy proces odczytał trwały rejestr SQLite i odrzucił trzecie żądanie jako
+replay. Bramka sprawdziła serial gościa, piętno kernelowe VMM, brak grant
+podczas awarii oraz treść obu odmów. Artefakt ID `12601347265` ma SHA-256
+archiwum `1ec1d9cba8db6564893e6d1207ecb6c9f3f678dce9cd369ac0f85d2aa4e82d7e`.
+
+[Run 40200342138](https://github.com/mojealterego/ocaf-runtime/actions/runs/40200342138)
+na commicie `9d048cfa0ebee696c990498d08241b8fab3003b1` przeszedł na dwóch
+osobnych hostach CI. Na każdym wykonano 100 rzeczywistych cykli boot
+jailed Firecracker/KVM, dowodu rootfs FD oraz SIGKILL z opróżnieniem cgroup;
+porównanie odrzuca brak dowolnej serii. Artefakty: A ID `12601193534`,
+SHA-256 `d3cbe501ce19197378497706a39dee3d345d479577d4751112c68996b887a0a2`;
+B ID `12601593056`, SHA-256
+`f0274bd94b87ccc8dd102d02fa04875fc3b3a340991a68513141e68cf905b7c9`;
+porównanie ID `12601538179`, SHA-256
+`98fa479bda2b7784b7a8f466cee09f2b542478a7ede84de45bd7b92def767189`.
+Oba hosty CI były efemeryczne, a test nie dowodzi trwałego środowiska,
+komunikacji między hostami ani partycji między nimi.
+
+Właściciel 2026-10-25 zrezygnował z niezależnego audytu etapu 0.39.
+Weryfikator dossier wymaga teraz jego własnego podpisu Ed25519 nad schematem
+v2; [instrukcja odbioru](STAGE039_OWNER_SIGNOFF.md) opisuje dokładne pliki.
+Podpis i trwałe hosty nie zostały jeszcze dostarczone.
+
 [Run 40182499438](https://github.com/mojealterego/ocaf-runtime/actions/runs/40182499438)
 na commicie `ada9056afb6dab8e8352fdfd1f6e2171ad5ca308` przeszedł pełny
 workflow KVM z nową kontrolą inode rootfs. Po potwierdzeniu stanu `Running`
@@ -155,11 +183,13 @@ połączenia między nimi, testu partycji ani 100 cykli na każdym.
 
 ## Stan odbioru
 
-To dowód laboratoryjny na jednym hoście KVM. Raporty zachowują
+To dowody laboratoryjne na jednym i na dwóch efemerycznych hostach KVM. Raporty zachowują
 `stage_039_complete=false` i `production_approved=false`.
 Wymaganie 0.39.27 ma udany test laboratoryjny Aya w gościu. Klucz
 podpisujący manifesty nadal powstaje w tym samym przebiegu CI.
-Pozostałe przypadki wspólnej awarii, niezależny klucz podpisujący, dwa trwałe niezależne hosty KVM oraz odbiór
-operatora nadal wymagają osobnych dowodów. Osobne hashe artefaktów i ich
+Pozostałe przypadki wspólnej awarii, osobny klucz właściciela, dwa trwałe
+hosty KVM oraz jego podpisany odbiór nadal wymagają osobnych dowodów.
+Niezależny audyt został przez właściciela wyłączony z bramki 0.39.
+Osobne hashe artefaktów i ich
 negatywne testy są dowodem laboratoryjnym, nie poświadczeniem dostawcy.
 Korelacja śladów w niezależnym kolektorze pozostaje otwarta.

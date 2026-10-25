@@ -1,5 +1,6 @@
 """Owner-only stage 0.39 dossier signatures cannot self-approve deployment."""
 import hashlib
+import json
 import subprocess
 import tempfile
 import unittest
@@ -55,6 +56,23 @@ class SignedAcceptance(unittest.TestCase):
         self.assertTrue(report["independent_audit_waived_by_owner"])
         self.assertFalse(report["production_approved"])
         self.assertFalse(report["stage_039_complete"])
+
+    def test_owner_only_cli_produces_non_release_receipt(self):
+        report_path = self.root / "verified.json"
+        command = [
+            sys.executable, str(Path(sig.__file__)),
+            "--manifest", str(self.root / "payload.bin"),
+            "--evidence-root", str(self.root),
+            "--operator-pub", str(self.public),
+            "--operator-pin", self.pin,
+            "--operator-signature", str(self.signature),
+            "--report", str(report_path),
+        ]
+        subprocess.run(command, check=True, capture_output=True)
+        report = json.loads(report_path.read_text())
+        self.assertTrue(report["operator_signature_verified"])
+        self.assertFalse(report["stage_039_complete"])
+        self.assertFalse(report["production_approved"])
 
     def test_changed_payload_or_wrong_operator_key_is_denied(self):
         self.manifest["git_commit"] = "b" * 40

@@ -2,6 +2,12 @@
 
 Date: **2026-10-15**. Branch: **main**.
 
+> Historical snapshot. On 2026-10-25 the owner waived the independent
+> audit requirement for stage 0.39 and selected an owner-only Ed25519
+> signature. The current schema and remaining host criteria are in
+> [STAGE039_OWNER_SIGNOFF.md](STAGE039_OWNER_SIGNOFF.md); the dual-signature
+> and 039-AUDIT rows below describe the earlier policy.
+
 ## Proven executed work on actual GitHub-hosted Linux/KVM
 
 | Category | Measured behavior | Result | Actual evidence |
