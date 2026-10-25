@@ -27,6 +27,8 @@ on:
       - stage039/guest-quarantine/**
       - scripts/stage039_real_guest_quarantine.py
       - scripts/tests/test_stage039_real_guest_quarantine.py
+      - scripts/stage039_joint_fault_guest_aya.py
+      - scripts/tests/test_stage039_joint_fault_guest_aya.py
       - stage039/guest-egress-broker/**
       - scripts/stage039_guest_egress_transport.py
       - scripts/stage039_real_guest_vsock_egress.py
@@ -714,6 +716,31 @@ jobs:
           assert report["operator_key_provisioned_independently"] is False
           assert report["stage_039_complete"] is False
           PY
+      - name: ACTUAL missing guest Aya fails closed while host Aya and peer VM remain live
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts.tests.test_stage039_joint_fault_guest_aya -v
+          PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
+          sudo -n python3 scripts/stage039_joint_fault_guest_aya.py \
+            --prefix "$PREFIX" \
+            --report "$GITHUB_WORKSPACE/stage039-real-guest-evidence/joint-fault-guest-aya.json" \
+            --ack-real-kvm-joint-fault
+          sudo -n chown "$(id -u):$(id -g)" stage039-real-guest-evidence/joint-fault-guest-aya.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path("stage039-real-guest-evidence/joint-fault-guest-aya.json").read_text())
+          assert report["status"]=="ONE_HOST_GUEST_AYA_ABSENT_HOST_AYA_LIVE_PEER_SURVIVED"
+          assert report["tenant_a"]["status"]=="REAL_KVM_GUEST_AYA_MISSING_FAIL_CLOSED"
+          assert report["tenant_a"]["host_aya_live_during_denial"] is True
+          assert report["tenant_a"]["tenant_b_live_during_denial"] is True
+          assert report["tenant_a"]["permit_issued"] is False
+          assert report["host_aya_detach"]["host_probe_recovered_after_vm_stop"] is True
+          assert report["broker_fault_tested"] is False
+          assert report["network_partition_tested"] is False
+          assert report["stage_039_complete"] is False
+          PY
       - name: Diagnose sandbox failure using only official public guest image boot logs
         if: failure()
         shell: bash
@@ -740,6 +767,7 @@ jobs:
           test -s stage039-real-guest-evidence/stage039-supply-chain.json
           test -s stage039-real-guest-evidence/loopback-otlp-receipt.json
           test -s stage039-real-guest-evidence/guest-quarantine.json
+          test -s stage039-real-guest-evidence/joint-fault-guest-aya.json
           python3 - <<'PY'
           import json
           from pathlib import Path

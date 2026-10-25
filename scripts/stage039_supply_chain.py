@@ -29,6 +29,7 @@ SOURCE_BUILDS = (
     "scripts/stage039_real_guest_vsock_egress.py",
     "scripts/stage039_preboot_aya.py",
     "scripts/stage039_real_guest_quarantine.py",
+    "scripts/stage039_joint_fault_guest_aya.py",
     "stage039/aya-guard/src/main.rs",
     "stage039/guest-aya/build.sh",
     "stage039/guest-aya/ebpf/src/main.rs",
@@ -41,6 +42,7 @@ SOURCE_BUILDS = (
     "stage039/guest-egress-broker/guest_egress_init.c",
     "stage039/guest-quarantine/quarantine.c",
     "stage039/guest-quarantine/guest_quarantine_init.c",
+    "stage039/guest-quarantine/fault_gate_init.c",
     "stage039/guest-quarantine/spin.wat",
 )
 MAX_SOURCE_BYTES = 16 * 1024 * 1024
