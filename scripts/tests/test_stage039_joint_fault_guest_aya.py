@@ -2,6 +2,7 @@
 from pathlib import Path
 import sys
 import unittest
+import multiprocessing
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -63,6 +64,43 @@ class FaultProofGate(unittest.TestCase):
             with self.assertRaises(fault.JointFaultDenied):
                 self.bridge.prove(self.result, self.proc, "ocaf-" + "b" * 24,
                                   Path("/sys/fs/cgroup/x"), Path("/tmp/serial"), self.other)
+
+    def test_guest_aya_and_real_broker_process_sigkill_denial(self):
+        self.bridge.broker_fault = True
+        self.bridge.broker_sigkill_observed = True
+        self.bridge.guest_challenge = {"guest_bpf_id": 41, "event_count": 2}
+        self.serial = ("OCAF039_FAULT_HOST_AYA_GATE_RELEASED\n"
+                       "OCAF039_Q_AYA_ID=41 COUNT=2 PID=19\n"
+                       "OCAF039_Q_GUEST_DENIED=permit_receive\n")
+        self.invoke()
+        proof = self.result["joint_guest_aya_fault"]
+        self.assertTrue(proof["broker_process_sigkill_observed"])
+        self.assertEqual(proof["guest_aya_program_id"], 41)
+        self.assertFalse(proof["permit_issued"])
+        self.bridge.broker_sigkill_observed = False
+        with self.assertRaises(fault.JointFaultDenied):
+            self.invoke()
+
+    def test_signing_authority_is_a_separate_killable_process(self):
+        context = multiprocessing.get_context("spawn")
+        parent, child = context.Pipe()
+        process = context.Process(target=fault._broker_signer_worker, args=(child,))
+        process.start()
+        child.close()
+        self.addCleanup(parent.close)
+        self.addCleanup(lambda: process.join(timeout=2))
+        self.assertTrue(parent.poll(5))
+        self.assertEqual(parent.recv(), "READY")
+        raw = (b"OCAF039QC1|tenant-a|" + b"a" * 32 + b"|" +
+               b"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa|19|123|41|2\n")
+        parent.send((raw, 98))
+        self.assertTrue(parent.poll(5))
+        self.assertEqual(parent.recv(), ("CHALLENGE_ACCEPTED", 41))
+        process.kill()
+        process.join(timeout=5)
+        self.assertLess(process.exitcode, 0)
+        with self.assertRaises(EOFError):
+            parent.recv()
 
 
 if __name__ == "__main__":

@@ -789,6 +789,32 @@ jobs:
           assert report["network_partition_tested"] is False
           assert report["stage_039_complete"] is False
           PY
+      - name: ACTUAL guest Aya and host Aya remain live while separate broker signer is SIGKILLed
+        shell: bash
+        run: |
+          set -euo pipefail
+          PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
+          sudo -n python3 scripts/stage039_joint_fault_guest_aya.py \
+            --prefix "$PREFIX" --fault-mode broker-sigkill \
+            --report "$GITHUB_WORKSPACE/stage039-real-guest-evidence/joint-broker-sigkill.json" \
+            --ack-real-kvm-joint-fault
+          sudo -n chown "$(id -u):$(id -g)" stage039-real-guest-evidence/joint-broker-sigkill.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('stage039-real-guest-evidence/joint-broker-sigkill.json').read_text())
+          a=r['tenant_a']
+          assert r['status']=='ONE_HOST_GUEST_AYA_LIVE_BROKER_SIGKILL_DENIED'
+          assert a['status']=='REAL_KVM_GUEST_AYA_LIVE_BROKER_SIGKILL_FAIL_CLOSED'
+          assert a['guest_aya_program_id']>0 and a['host_aya_program_id']>0
+          assert a['guest_denial']=='OCAF039_Q_GUEST_DENIED=permit_receive'
+          assert a['broker_process_sigkill_observed'] is True
+          assert a['tenant_b_live_during_denial'] is True
+          assert a['permit_issued'] is False
+          assert r['host_aya_detach']['host_probe_recovered_after_vm_stop'] is True
+          assert r['network_partition_tested'] is False
+          assert r['stage_039_complete'] is False
+          PY
       - name: Diagnose sandbox failure using only official public guest image boot logs
         if: failure()
         shell: bash
@@ -816,6 +842,7 @@ jobs:
           test -s stage039-real-guest-evidence/loopback-otlp-receipt.json
           test -s stage039-real-guest-evidence/guest-quarantine.json
           test -s stage039-real-guest-evidence/joint-fault-guest-aya.json
+          test -s stage039-real-guest-evidence/joint-broker-sigkill.json
           python3 - <<'PY'
           import json
           from pathlib import Path
