@@ -272,10 +272,9 @@ def main() -> int:
         # GitHub's check-run annotations remain queryable through its REST API
         # when the external artifact/log storage is unavailable. Bound and
         # escape the diagnostic so guest serial cannot inject workflow syntax.
-        if os.environ.get("GITHUB_ACTIONS") == "true":
-            detail = f"{type(exc).__name__}: {exc}"[:900]
-            detail = detail.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
-            print(f"::error title=Stage039 guest vsock::{detail}", file=sys.stderr)
+        detail = f"{type(exc).__name__}: {exc}"[:900]
+        detail = detail.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+        print(f"::error title=Stage039 guest vsock::{detail}", file=sys.stderr)
         parser.error(str(exc))
     print(proof["guest_vsock_egress"]["status"])
     return 0
