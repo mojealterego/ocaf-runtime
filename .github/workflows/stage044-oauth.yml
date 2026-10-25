@@ -1,0 +1,48 @@
+name: Stage 0.44 OAuth Security - implementation checks only
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/stage044_*.rs"
+      - "tests/stage044_*.rs"
+      - "src/lib.rs"
+      - ".github/workflows/stage044-oauth.yml"
+      - "scripts/stage044_*.sh"
+  pull_request:
+    paths:
+      - "src/stage044_*.rs"
+      - "tests/stage044_*.rs"
+      - "src/lib.rs"
+      - ".github/workflows/stage044-oauth.yml"
+      - "scripts/stage044_*.sh"
+
+permissions:
+  contents: read
+
+jobs:
+  stage044-code-and-contracts:
+    name: Rust unit and SQLite integration (NOT production acceptance)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          toolchain: "1.99.0"
+          components: rustfmt, clippy
+      - name: Formatting gate
+        run: rustfmt --check --edition 2021 src/stage044_oauth.rs src/stage044_secret_broker.rs src/stage044_omat_authz.rs tests/stage044_integration.rs
+      - name: Compile all stage 0.44 code
+        run: cargo check --locked --no-default-features --lib --tests
+      - name: OAuth positive and negative tests
+        run: cargo test --locked --no-default-features stage044_oauth::tests -- --nocapture
+      - name: Secret broker security tests
+        run: cargo test --locked --no-default-features stage044_secret_broker::tests -- --nocapture
+      - name: Tenant/user/OMAt boundary integration
+        run: cargo test --locked --no-default-features --test stage044_integration -- --nocapture
+      - name: Clippy security gate
+        run: cargo clippy --locked --no-default-features --lib --test stage044_integration -- -D warnings
