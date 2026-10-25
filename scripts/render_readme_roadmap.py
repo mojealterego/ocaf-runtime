@@ -57,8 +57,9 @@ def line(num: int, row: dict, kind: str) -> str:
     status=mark(clean(row["status"]),kind,row)
     ident=clean(row["id"])
     title=clean(row["product"] if kind=="product" else ORIGINAL_EARLY_TITLES.get(row["id"],row["title"]))
-    scope=clean(row["scope"])
-    criterion=clean(row["real_acceptance"] if kind=="product" else row["acceptance"])
+    scope=clean(row.get("scope", row.get("description", "")))
+    criterion=clean(row["real_acceptance"] if kind=="product" else
+                    row.get("acceptance", "Weryfikacja według manifestu kanonicznego"))
     extra=" — wymagania pierwotne etapów "+row["platform_stage"] if kind=="product" else ""
     if kind=="main" and row["id"] in HISTORICAL_IMPLEMENTED_SCOPES:
         extra+=" — **Kod i testy istnieją w repo; pełny odbiór etapu i produkcji: NIE**"
@@ -67,6 +68,19 @@ def line(num: int, row: dict, kind: str) -> str:
         f"{num}. **[{status}]** **{ident} — {title}**{extra}. {scope} "
         f"**Kryterium zakończenia:** {criterion}. **Stan źródłowy:** `{clean(row['status'])}`."
     )
+
+
+def render_section(inventory: dict, builders: dict) -> str:
+    """Render the complete numbered registry from the current manifests.
+
+    Kept as a pure renderer for historical status checks and prospective
+    README updates. It preserves main, technical and Builder product rows.
+    """
+    rows = [(row, "main") for row in inventory["main"]]
+    rows += [(row, "technical") for row in inventory["technical"]]
+    rows += [(row, "product") for row in builders["products"]]
+    return "\n".join(line(index, row, kind)
+                     for index, (row, kind) in enumerate(rows, 1)) + "\n"
 
 
 def render_pinned_panel(builders:dict)->list[str]:
