@@ -84,6 +84,20 @@ class SignedAcceptance(unittest.TestCase):
                 self.manifest, self.root, operator_pub=self.public,
                 operator_pin="0" * 64, operator_signature=self.signature)
 
+    def test_other_signature_algorithm_is_not_accepted_as_owner_ed25519(self):
+        other_private = self.root / "other.key"
+        other_public = self.root / "other.pub"
+        subprocess.run(["openssl", "genpkey", "-algorithm", "ED448",
+                        "-out", str(other_private)], check=True, capture_output=True)
+        subprocess.run(["openssl", "pkey", "-in", str(other_private),
+                        "-pubout", "-out", str(other_public)], check=True,
+                       capture_output=True)
+        with self.assertRaisesRegex(sig.SignedAcceptanceError, "must be Ed25519"):
+            sig.verify_signed_dossier(
+                self.manifest, self.root, operator_pub=other_public,
+                operator_pin=hashlib.sha256(other_public.read_bytes()).hexdigest(),
+                operator_signature=self.signature)
+
     def test_missing_artifact_and_old_auditor_schema_are_denied(self):
         (self.root / (sig.REQUIRED[0] + ".json")).unlink()
         with self.assertRaises(sig.SignedAcceptanceError):

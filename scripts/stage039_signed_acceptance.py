@@ -127,24 +127,35 @@ def verify_signed_dossier(manifest:dict,root:Path,*,operator_pub:Path,
         file=root/entry["artifact_file"]
         if hashlib.sha256(_regular(file,max_bytes=10*1024*1024)).hexdigest()!=entry["sha256"]:
             raise SignedAcceptanceError("signed artifact content does not match pin: "+name)
+    public_bytes = _regular(operator_pub,max_bytes=4096)
+    signature_bytes = _regular(operator_signature,max_bytes=1024)
     if (not isinstance(operator_pin,str) or HEX64.fullmatch(operator_pin) is None or
-            hashlib.sha256(_regular(operator_pub,max_bytes=4096)).hexdigest()!=operator_pin):
+            hashlib.sha256(public_bytes).hexdigest()!=operator_pin):
         raise SignedAcceptanceError("operator key differs from out-of-band pin")
     if not shutil_which_openssl():
         raise SignedAcceptanceError("OpenSSL Ed25519 signature verifier unavailable")
     # Ed25519 pkeyutl requires a *regular* input, not a pipe/stdin.
-    tmp_path=None
+    temporary=[]
     try:
-        with tempfile.NamedTemporaryFile(dir=root,prefix=".verify039-",delete=False) as fp:
-            tmp_path=Path(fp.name)
-            fp.write(canonical)
-        os.chmod(tmp_path,0o600)
-        _regular(operator_signature,max_bytes=1024)
+        for payload in (canonical,public_bytes,signature_bytes):
+            with tempfile.NamedTemporaryFile(dir=root,prefix=".verify039-",delete=False) as fp:
+                temporary.append(Path(fp.name))
+                fp.write(payload)
+            os.chmod(temporary[-1],0o600)
         try:
+            key = subprocess.run([
+                "openssl","pkey","-pubin","-in",str(temporary[1]),
+                "-outform","DER"],stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+                timeout=5,check=False)
+            # RFC 8410 Ed25519 SubjectPublicKeyInfo, including the exact
+            # algorithm OID and a 32-byte public key (no parameters).
+            if (key.returncode != 0 or len(key.stdout) != 44 or
+                    not key.stdout.startswith(bytes.fromhex("302a300506032b6570032100"))):
+                raise SignedAcceptanceError("operator key must be Ed25519")
             proc=subprocess.run([
                 "openssl","pkeyutl","-verify","-pubin",
-                "-inkey",str(operator_pub),"-sigfile",str(operator_signature),
-                "-rawin","-in",str(tmp_path)],
+                "-inkey",str(temporary[1]),"-sigfile",str(temporary[2]),
+                "-rawin","-in",str(temporary[0])],
                 stdout=subprocess.PIPE,stderr=subprocess.PIPE,
                 timeout=5,check=False)
         except (OSError,subprocess.TimeoutExpired) as exc:
@@ -152,7 +163,8 @@ def verify_signed_dossier(manifest:dict,root:Path,*,operator_pub:Path,
         if proc.returncode!=0 or b"Signature Verified Successfully" not in proc.stdout:
             raise SignedAcceptanceError("operator Ed25519 signature invalid")
     finally:
-        if tmp_path is not None:tmp_path.unlink(missing_ok=True)
+        for path in temporary:
+            path.unlink(missing_ok=True)
     return {
         "schema_version":2,
         "status":"SIGNED_DOSSIER_INTEGRITY_VERIFIED_NOT_DEPLOYED",
