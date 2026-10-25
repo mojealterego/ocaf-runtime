@@ -243,8 +243,10 @@ mod tests {
     }
     #[test]
     fn rejected_capacity_requests_do_not_grow_replay_set() {
-        let mut config = OmasServerConfig::default();
-        config.max_agents = 1;
+        let config = OmasServerConfig {
+            max_agents: 1,
+            ..OmasServerConfig::default()
+        };
         let server = OmasServer::new(config).unwrap();
         assert!(server.admit_registration(req("first")).admitted);
         for i in 0..200 {
@@ -260,8 +262,10 @@ mod tests {
 
     #[test]
     fn capacity_denies_a_new_agent() {
-        let mut c = OmasServerConfig::default();
-        c.max_agents = 1;
+        let c = OmasServerConfig {
+            max_agents: 1,
+            ..OmasServerConfig::default()
+        };
         let s = OmasServer::new(c).unwrap();
         assert!(s.admit_registration(req("cap-1")).admitted);
         let mut second = req("cap-2");
