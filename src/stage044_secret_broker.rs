@@ -282,7 +282,7 @@ fn binding(tenant: &str, user: &str, route: &str) -> Vec<u8> {
     format!("ocaf:044:v1\0{tenant}\0{user}\0{route}").into_bytes()
 }
 
-pub(crate) enum BrokerAuthHeader { Bearer, VaultToken }
+pub(crate) enum BrokerAuthHeader { Bearer, VaultToken, Basic }
 
 pub(crate) fn https_post(route: &BrokerRoute, secret: &[u8], json_body: &[u8]) -> Result<BrokerResponse, BrokerError> {
     https_post_with_auth(route, secret, json_body, BrokerAuthHeader::Bearer)
@@ -290,6 +290,19 @@ pub(crate) fn https_post(route: &BrokerRoute, secret: &[u8], json_body: &[u8]) -
 
 pub(crate) fn https_post_with_auth(
     route: &BrokerRoute, secret: &[u8], json_body: &[u8], header: BrokerAuthHeader,
+) -> Result<BrokerResponse, BrokerError> {
+    https_post_inner(route,secret,json_body,header,false)
+}
+
+pub(crate) fn https_post_form_basic(
+    route: &BrokerRoute, basic: &[u8], body: &[u8],
+) -> Result<BrokerResponse, BrokerError> {
+    if body.len() > 8192 { return Err(BrokerError::Denied); }
+    https_post_inner(route,basic,body,BrokerAuthHeader::Basic,true)
+}
+
+fn https_post_inner(
+    route: &BrokerRoute, secret: &[u8], json_body: &[u8], header: BrokerAuthHeader, form: bool,
 ) -> Result<BrokerResponse, BrokerError> {
     let addr = SocketAddr::new(IpAddr::V4(route.pinned_ip), route.port);
     let socket = TcpStream::connect_timeout(&addr, Duration::from_secs(5)).map_err(|_| BrokerError::Transport)?;
@@ -307,11 +320,13 @@ pub(crate) fn https_post_with_auth(
     let header_name = match header {
         BrokerAuthHeader::Bearer => "Authorization: Bearer ",
         BrokerAuthHeader::VaultToken => "X-Vault-Token: ",
+        BrokerAuthHeader::Basic => "Authorization: Basic ",
     };
     let prefix = format!("POST {} HTTP/1.1\r\nHost: {}\r\n{}", route.path, route.hostname, header_name);
     tls.write_all(prefix.as_bytes()).map_err(|_| BrokerError::Transport)?;
     tls.write_all(secret).map_err(|_| BrokerError::Transport)?;
-    tls.write_all(format!("\r\nContent-Type: application/json\r\nAccept: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",json_body.len()).as_bytes())
+    let content_type = if form { "application/x-www-form-urlencoded" } else { "application/json" };
+    tls.write_all(format!("\r\nContent-Type: {content_type}\r\nAccept: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",json_body.len()).as_bytes())
         .map_err(|_| BrokerError::Transport)?;
     tls.write_all(json_body).map_err(|_| BrokerError::Transport)?;
     tls.flush().map_err(|_| BrokerError::Transport)?;
