@@ -127,6 +127,29 @@ SHA-256 archiwum `cebbd88e6af5cc31e111ee3eb9dff8aecffbd6da063c494854bcdc1c816437
 Ten test dotyczy odtworzenia instancji i trwałości replay; awaria całego
 procesu brokera podczas pracy VM oraz partycja sieci pozostają otwarte.
 
+[Run 40182499438](https://github.com/mojealterego/ocaf-runtime/actions/runs/40182499438)
+na commicie `ada9056afb6dab8e8352fdfd1f6e2171ad5ca308` przeszedł pełny
+workflow KVM z nową kontrolą inode rootfs. Po potwierdzeniu stanu `Running`
+runner ponownie obliczał SHA-256 obrazu w chroot, sprawdzał jego tryb i
+liczbę dowiązań, a następnie wymagał deskryptora otwartego przez żywy proces
+Firecracker do tego samego `st_dev` i `st_ino`. Broker wiązał ten raport z
+podpisanym digestem obrazu każdego z dwóch tenantów. Artefakt ID
+`12594637328` ma SHA-256 archiwum
+`7b0773d068efff08392fd89d3235490adc840d1e28b4b02f179c3a3c0b5447f7`.
+
+[Run 40182621380](https://github.com/mojealterego/ocaf-runtime/actions/runs/40182621380)
+na commicie `6c93143d6886603a0236d19f2fa3424dea5aa4c6` dodatkowo porównał
+raporty dwóch osobnych efemerycznych runnerów KVM. Dla obu wymagano
+odmiennego `boot_id`, działającego jailed VM, potwierdzenia otwartego inode
+rootfs oraz opróżnienia cgroup po SIGKILL. Artefakty: tenant A ID
+`12594931606` (SHA-256 `e53453c6396dbf538dbb83c7b1f261d4c055b4ceca6cce0d2c5a50865052e984`),
+tenant B ID `12594936551` (SHA-256
+`29142a6f912920c9e6b13e2d090e8dacf17c97c46d48a6a1528308462857a6b1`),
+porównanie ID `12595001459` (SHA-256
+`dc2d761778313e1eff9203093bb9a58eac344c518b07c161ecd8d901ab9a29aa`).
+To są dwa niezależne jądra CI, ale nie trwałe hosty produkcyjne; nie było
+połączenia między nimi, testu partycji ani 100 cykli na każdym.
+
 ## Stan odbioru
 
 To dowód laboratoryjny na jednym hoście KVM. Raporty zachowują
