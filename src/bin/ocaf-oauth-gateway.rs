@@ -121,7 +121,7 @@ fn decision(state: &State, request: Request) -> (u16, &'static str, Vec<u8>) {
     }
     let segments: Vec<&str> = request.path.split('/').collect();
     if segments.len() != 6
-        || segments[0] != ""
+        || !segments[0].is_empty()
         || segments[1] != "omat"
         || segments[3] != "users"
         || segments[5] != "authorize"

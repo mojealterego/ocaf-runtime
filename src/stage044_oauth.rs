@@ -387,15 +387,17 @@ impl OAuthService {
         let step_up_grant = !allowed.step_up_scopes.is_disjoint(&parsed_scopes);
         let issued = insert_token_pair(
             &tx,
-            &family,
-            &client,
-            &tenant,
-            &user,
-            &resource,
-            &scopes,
-            assurance,
-            now,
-            !step_up_grant,
+            TokenPairInput {
+                family: &family,
+                client: &client,
+                tenant: &tenant,
+                user: &user,
+                resource: &resource,
+                scopes: &scopes,
+                assurance,
+                now,
+                allow_refresh: !step_up_grant,
+            },
         )?;
         tx.commit().map_err(|_| OAuthError::Storage)?;
         Ok(issued)
@@ -468,15 +470,17 @@ impl OAuthService {
         // Refreshed tokens cannot inherit a past step-up authentication.
         let issued = insert_token_pair(
             &tx,
-            &family,
-            &client,
-            &tenant,
-            &user,
-            &resource,
-            &scopes,
-            assurance.min(1),
-            now,
-            true,
+            TokenPairInput {
+                family: &family,
+                client: &client,
+                tenant: &tenant,
+                user: &user,
+                resource: &resource,
+                scopes: &scopes,
+                assurance: assurance.min(1),
+                now,
+                allow_refresh: true,
+            },
         )?;
         tx.commit().map_err(|_| OAuthError::Storage)?;
         Ok(issued)
@@ -579,25 +583,29 @@ impl OAuthService {
     }
 }
 
-fn insert_token_pair(
-    tx: &rusqlite::Transaction<'_>,
-    family: &str,
-    client: &str,
-    tenant: &str,
-    user: &str,
-    resource: &str,
-    scopes: &str,
+struct TokenPairInput<'a> {
+    family: &'a str,
+    client: &'a str,
+    tenant: &'a str,
+    user: &'a str,
+    resource: &'a str,
+    scopes: &'a str,
     assurance: i64,
     now: i64,
     allow_refresh: bool,
+}
+
+fn insert_token_pair(
+    tx: &rusqlite::Transaction<'_>,
+    input: TokenPairInput<'_>,
 ) -> Result<TokenResponse, OAuthError> {
     let access = random_secret()?;
-    let refresh = if allow_refresh {
+    let refresh = if input.allow_refresh {
         random_secret()?
     } else {
         String::new()
     };
-    let tokens = if allow_refresh {
+    let tokens = if input.allow_refresh {
         vec![
             (&access, "access", ACCESS_LIFETIME),
             (&refresh, "refresh", REFRESH_LIFETIME),
@@ -609,10 +617,10 @@ fn insert_token_pair(
         tx.execute(
             "INSERT INTO oauth_tokens(digest,kind,family,client,tenant,user_id,resource,scopes,assurance,expires_at)
              VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)",
-            params![hash_secret(token),kind,family,client,tenant,user,resource,scopes,assurance,now+lifetime]
+            params![hash_secret(token),kind,input.family,input.client,input.tenant,input.user,input.resource,input.scopes,input.assurance,input.now+lifetime]
         ).map_err(|_| OAuthError::Storage)?;
     }
-    let parsed = decode_scopes(scopes)?;
+    let parsed = decode_scopes(input.scopes)?;
     Ok(TokenResponse {
         token_type: "Bearer",
         access_token: access,

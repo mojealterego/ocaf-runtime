@@ -145,23 +145,20 @@ impl ManagedProviderRefresh {
                     .kms
                     .encrypt(&c.tenant, &c.user, &c.provider, next.as_bytes())
                     .map_err(|_| ProviderRefreshError::Unavailable);
-                match encrypted {
-                    Ok(value) => {
-                        let changed = self
-                            .connection()?
-                            .execute(
-                                "UPDATE oauth_provider_refresh SET refresh_ciphertext=?1,
+                if let Ok(value) = encrypted {
+                    let changed = self
+                        .connection()?
+                        .execute(
+                            "UPDATE oauth_provider_refresh SET refresh_ciphertext=?1,
                              revision=revision+1,state='active'
                              WHERE tenant=?2 AND user_id=?3 AND provider=?4
                                AND state='refreshing' AND revision=?5",
-                                params![value, c.tenant, c.user, c.provider, revision],
-                            )
-                            .map_err(|_| ProviderRefreshError::Storage)?;
-                        if changed == 1 {
-                            return Ok(access);
-                        }
+                            params![value, c.tenant, c.user, c.provider, revision],
+                        )
+                        .map_err(|_| ProviderRefreshError::Storage)?;
+                    if changed == 1 {
+                        return Ok(access);
                     }
-                    Err(_) => {}
                 }
                 self.require_reauthorization();
                 Err(ProviderRefreshError::ReauthorizationRequired)

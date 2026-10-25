@@ -30,6 +30,14 @@ pub enum GateError {
     Dispatch(DispatchError),
 }
 
+/// Operator-owned routing inputs are kept together so each dispatch uses a
+/// single, consistent OMAt policy and registry snapshot.
+pub struct OmatDispatchContext<'a> {
+    pub route: &'a OmatRouteGuard,
+    pub policy: &'a OmatPolicy,
+    pub registry: &'a OmatRegistry,
+}
+
 /// Operator-owned map from certificate-authenticated agent identity to a
 /// single user. This mapping MUST be sourced from a verified identity registry,
 /// never from model arguments or tool metadata.
@@ -113,15 +121,21 @@ impl OAuthOmatGate {
         &self,
         oauth: &OAuthService,
         token: &str,
-        route: &OmatRouteGuard,
         peer: &AuthenticatedPeer,
         topic: &str,
         call: &ToolCall,
-        policy: &OmatPolicy,
-        registry: &OmatRegistry,
+        context: OmatDispatchContext<'_>,
     ) -> Result<ToolReceipt, GateError> {
         self.authorize(oauth, token, peer, call)?;
-        dispatch_tool_call(route, peer, topic, call, policy, registry).map_err(GateError::Dispatch)
+        dispatch_tool_call(
+            context.route,
+            peer,
+            topic,
+            call,
+            context.policy,
+            context.registry,
+        )
+        .map_err(GateError::Dispatch)
     }
 }
 

@@ -8,7 +8,9 @@ use ocaf_runtime::stage043_omat_route::{AuthenticatedPeer, OmatRouteGuard};
 use ocaf_runtime::stage044_oauth::{
     AuthenticatedSubject, AuthorizationRequest, CodeExchange, OAuthClient, OAuthService,
 };
-use ocaf_runtime::stage044_omat_authz::{BoundAgent, OAuthOmatGate, ToolAuthorization};
+use ocaf_runtime::stage044_omat_authz::{
+    BoundAgent, OAuthOmatGate, OmatDispatchContext, ToolAuthorization,
+};
 use rusqlite::Connection;
 use serde_json::json;
 use sha2::{Digest, Sha256};
@@ -192,12 +194,14 @@ fn valid_oauth_never_bypasses_omat_execution_and_ostc() {
     let result = gate().dispatch(
         &oauth,
         &alice,
-        &route,
         &peer,
         "ocaf/omat/tenant-a/requests/req-1",
         &call("tenant-a", "agent-a"),
-        &policy,
-        &registry,
+        OmatDispatchContext {
+            route: &route,
+            policy: &policy,
+            registry: &registry,
+        },
     );
     assert!(
         result.is_err(),
