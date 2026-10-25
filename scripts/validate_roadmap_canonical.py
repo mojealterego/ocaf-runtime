@@ -23,8 +23,14 @@ def _ids():
 
 
 def _stage_rows(content: str) -> list[str]:
+    # Only the canonical execution matrix defines stages. Later PDF source
+    # mappings may repeat an ID as a cross-reference (for example 1.98).
+    matrix = content.split("## 3. Pełne 207 etapów głównych od początku", 1)
+    if len(matrix) != 2:
+        raise CanonicalRoadmapError("canonical execution matrix missing")
+    matrix = matrix[1].split("## 5. Rejestr 33 repozytoriów", 1)[0]
     return re.findall(r"^\| \*\*((?:0|1)\.\d{2}(?:\.\d+)?)\*\* \|",
-                      content,flags=re.MULTILINE)
+                      matrix, flags=re.MULTILINE)
 
 
 def validate(inventory: dict, markdown: str, archive: str) -> dict:
@@ -97,7 +103,10 @@ def validate(inventory: dict, markdown: str, archive: str) -> dict:
         raise CanonicalRoadmapError("24+9 references not fully preserved")
     rows=_stage_rows(markdown)
     expected=list(_ids())+tids
-    if len(rows)!=259 or len(set(rows))!=259 or set(rows)!=set(expected):
+    # v10 is a protected historical subset of the current v11 matrix.
+    # Additional, uniquely numbered v11 stages must not invalidate it.
+    if (len(rows)!=len(set(rows)) or
+        any(rows.count(stage_id)!=1 for stage_id in expected)):
         raise CanonicalRoadmapError("rendered roadmap drops, duplicates or renumbers stages")
     # Require every repository to appear as its own physical table row.
     rrows=re.findall(r"^\| \d+ \| `([^`]+)` \|",markdown,re.MULTILINE)

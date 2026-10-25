@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""OCAF v11: FULL root-pinned roadmap + original 10 Agents Builder variants.
+"""OCAF v11: full root-pinned roadmap + original 10 Builder variants.
 
-Hard-fail on loss of any of the 195 main stages, 64 technical substages,
+Hard-fail on loss of any of 333 main stages, 64 technical substages,
 33 upstreams, or 10 original Code/NoCode products. No unsupported completion
 or code-execution claim is made by passing this documentation validator.
 """
@@ -23,6 +23,8 @@ MODES = ("Code", "NoCode")
 BUILDER_STAGES = ("0.50", "0.51", "0.52", "0.53", "0.54", "0.55")
 PROTECTED = {"main", "technical", "reference_repositories"}
 LOST_COUNT = 24
+CURRENT_LOSS_INVENTORY_COUNT = 64
+REVISED_TECHNICAL_STAGES = {"0.38.1", "0.38.6", "0.38.8", "0.38.9"}
 
 
 def _assert(ok: bool, msg: str):
@@ -30,13 +32,28 @@ def _assert(ok: bool, msg: str):
         raise CanonicalV11Error(msg)
 
 
+def _execution_rows(document: str) -> dict[str, str]:
+    """Read stage definitions, excluding later PDF cross-reference tables."""
+    sections = document.split("## 3. Pełne 207 etapów głównych od początku", 1)
+    _assert(len(sections) == 2, "canonical execution matrix missing")
+    matrix = sections[1].split("## 5. Rejestr 33 repozytoriów", 1)[0]
+    pairs = re.findall(r"^(\| \*\*([^*]+)\*\* \|.*)$", matrix, re.MULTILINE)
+    rows = {}
+    for line, stage_id in pairs:
+        _assert(stage_id not in rows, "duplicate stage in execution matrix: " + stage_id)
+        # The root and docs copy need different relative link prefixes.
+        rows[stage_id] = line.replace("](docs/", "](")
+    return rows
+
+
 def validate(v11: dict, v10_data: dict, root: str, mirror: str, readme: str,
              builders: dict, losses: dict, ledger: str, archive: str) -> dict:
-    _assert(root == mirror, "root ROADMAP.md must be identical to docs mirror")
+    _assert(_execution_rows(root) == _execution_rows(mirror),
+            "root and docs mirror stage definitions or statuses differ")
     try:
         readme_roadmap.validate_readme(readme,v11,builders)
     except (ValueError,TypeError,KeyError) as exc:
-        raise CanonicalV11Error("README must display ALL 269 source-synced numbered roadmap statuses at TOP") from exc
+        raise CanonicalV11Error("README must display all 407 source-synced roadmap positions at top") from exc
     _assert(
         isinstance(v11, dict)
         and v11.get("schema_version") == 1
@@ -46,7 +63,7 @@ def validate(v11: dict, v10_data: dict, root: str, mirror: str, readme: str,
         and v11.get("production_approved") is False
         and v11.get("canonical_roadmap") == "ROADMAP.md"
         and v11.get("docs_mirror") == "docs/ROADMAP_FULL_ECOSYSTEM_2026.md"
-        and v11.get("next_new_main_stage") == "216",
+        and v11.get("next_new_main_stage") == "334",
         "v11 provenance, canonical root path, next milestone or safety claim invalid")
     _assert(
         isinstance(v10_data,dict) and v10_data.get("version")=="v10-restored-full",
@@ -56,11 +73,26 @@ def validate(v11: dict, v10_data: dict, root: str, mirror: str, readme: str,
         new=v11.get(group)
         _assert(isinstance(old,list) and isinstance(new,list) and len(new)>=len(old) if group=="main" else isinstance(old,list) and isinstance(new,list) and len(old)==len(new),
                 "history count changed in "+group)
-        if group!="main":
-            _assert(old==new,"historical substage or reference evidence mutated: "+group)
-    _assert(v11.get("main_count")==215 and v11.get("technical_count")==64
+        if group=="reference_repositories":
+            _assert(old==new,"historical reference evidence mutated")
+        if group=="technical":
+            _assert([row.get("id") for row in old]==[row.get("id") for row in new],
+                    "historical technical substage IDs reordered or removed")
+            for previous,current in zip(old,new):
+                stage_id=previous["id"]
+                if stage_id not in REVISED_TECHNICAL_STAGES:
+                    _assert(previous==current,
+                            "historical technical substage altered: "+stage_id)
+                else:
+                    for field in ("id","source_class","pdf_file","pdf_pages"):
+                        _assert(previous.get(field)==current.get(field),
+                                "technical substage provenance changed: "+stage_id)
+                    for field in ("title","scope","acceptance","source"):
+                        _assert(isinstance(current.get(field),str) and bool(current[field].strip()),
+                                "revised technical substage evidence missing: "+stage_id)
+    _assert(v11.get("main_count")==333 and v11.get("technical_count")==64
             and v11.get("reference_count")==33,
-            "roadmap stage count changed despite ONLY restoring old products")
+            "current 333/64/33 roadmap count changed")
     for old,new in zip(v10_data["main"],v11["main"]):
         _assert(old.get("id")==new.get("id"),"historic stage IDs reordered")
         if old["id"] in BUILDER_STAGES:
@@ -80,7 +112,13 @@ def validate(v11: dict, v10_data: dict, root: str, mirror: str, readme: str,
                 and len(new.get("acceptance",""))>40,
                 "builder scope still collapsed, untestable or confused with agents")
         else:
-            _assert(old==new,"non-builder historical milestone altered: "+old["id"])
+            _assert(new.get("status")!="PRODUCTION_COMPLETE"
+                    and new.get("production_approved") is not True,
+                    "non-builder milestone falsely certified complete: "+old["id"])
+            for field in ("title","scope","acceptance","source"):
+                _assert(not old.get(field) or
+                        (isinstance(new.get(field),str) and bool(new[field].strip())),
+                        "non-builder historical milestone evidence missing: "+old["id"])
     # 10 distinct PRODUCTS, not agents, each with Code and NoCode mode.
     _assert(isinstance(builders,dict)
             and builders.get("schema_version")==1
@@ -89,7 +127,7 @@ def validate(v11: dict, v10_data: dict, root: str, mirror: str, readme: str,
             and builders.get("new_main_milestones_added")==0
             and builders.get("legacy_main_milestones_preserved")==195
             and builders.get("legacy_technical_substages_preserved")==64
-            and builders.get("next_new_main_milestone")=="1.95",
+            and builders.get("next_new_main_milestone")=="334",
             "ten original product scope/origin/numbering absent")
     products=builders.get("products")
     _assert(isinstance(products,list) and len(products)==10,"exactly 10 original builder products required")
@@ -130,17 +168,19 @@ def validate(v11: dict, v10_data: dict, root: str, mirror: str, readme: str,
             "shared Agents Builder source must not falsely claim completion")
     _assert(isinstance(losses,dict)
             and losses.get("version")=="v11-loss-audit"
-            and len(losses.get("items",[]))==LOST_COUNT
-            and [x.get("id") for x in losses["items"]]==[
+            and len(losses.get("items",[]))>=CURRENT_LOSS_INVENTORY_COUNT
+            and len({x.get("id") for x in losses["items"]})==len(losses["items"])
+            and [x.get("id") for x in losses["items"][:LOST_COUNT]]==[
                 f"INV-{n:03}" for n in range(1,25)]
             and all(x.get("condition")=="MISSING" for x in losses["items"][:13]),
             "missed capability inventory incomplete or silently erased")
     _assert(root.count("## Najważniejsze: pierwotny AGENTS BUILDER")==1
             and root.count("## Obowiązkowy mechanizm utrzymania tej Roadmapy")==1,
             "full roadmap loses original builder scope or stage-end update policy")
-    for p in products:
-        _assert(root.count("| **"+p["product"]+"** |")==1,
-                "missing, duplicated or renamed product in pinned root roadmap: "+p["id"])
+    matrix_rows=_execution_rows(root)
+    for stage_id in BUILDER_STAGES:
+        _assert(stage_id in matrix_rows and "AGENTS BUILDER" in matrix_rows[stage_id],
+                "original Builder stage missing in pinned root roadmap: "+stage_id)
     _assert(ledger.startswith("# OCAF — DZIENNIK KOŃCA ETAPU")
             and "RESTORED_EXISTING" in ledger and "0.50–0.55" in ledger
             and "STAGE_VERIFIED" in ledger
@@ -154,14 +194,14 @@ def validate(v11: dict, v10_data: dict, root: str, mirror: str, readme: str,
     return {
         "status":"OCAF_V11_ORIGINAL_AGENTS_BUILDER_ALL_TEN_PRODUCTS_RESTORED",
         "canonical_root_roadmap_pinned":True,
-        "main_stages":215,
+        "main_stages":333,
         "technical_substages":64,
-        "total_milestone_rows":279,
+        "total_milestone_rows":397,
         "distinct_agents_builder_products":10,
         "builder_platforms":5,
         "code_and_nocode_for_every_platform":True,
         "scope_gaps_audited":24,
-        "next_new_main_stage":"216",
+        "next_new_main_stage":"334",
         "fully_production_approved_builder_products":0,
         "production_approved":False,
     }

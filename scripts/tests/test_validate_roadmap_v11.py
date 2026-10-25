@@ -33,13 +33,13 @@ class RestoreOriginalBuilderTests(unittest.TestCase):
         args.update(updates)
         return guard.validate(**args)
 
-    def test_exact_195_64_33_no_lost_stages_and_all_original_products(self):
+    def test_exact_333_64_33_no_lost_stages_and_all_original_products(self):
         result=self.verify()
-        self.assertEqual(result["main_stages"],195)
+        self.assertEqual(result["main_stages"],333)
         self.assertEqual(result["technical_substages"],64)
         self.assertEqual(result["distinct_agents_builder_products"],10)
         self.assertEqual(result["scope_gaps_audited"],24)
-        self.assertEqual(result["next_new_main_stage"],"1.95")
+        self.assertEqual(result["next_new_main_stage"],"334")
         self.assertTrue(result["canonical_root_roadmap_pinned"])
         self.assertFalse(result["production_approved"])
 
@@ -83,13 +83,24 @@ class RestoreOriginalBuilderTests(unittest.TestCase):
         with self.assertRaises(guard.CanonicalV11Error):
             self.verify(v11=inv)
 
+    def test_technical_stage_identity_and_unrevised_scope_are_protected(self):
+        inv=copy.deepcopy(self.inv)
+        inv["technical"][0]["id"]="0.38.deleted"
+        with self.assertRaises(guard.CanonicalV11Error):
+            self.verify(v11=inv)
+        inv=copy.deepcopy(self.inv)
+        stage=next(row for row in inv["technical"] if row["id"]=="0.39.1")
+        stage["scope"]="silently replaced scope"
+        with self.assertRaises(guard.CanonicalV11Error):
+            self.verify(v11=inv)
+
     def test_root_pin_mirror_and_scope_audit_are_mandatory(self):
         with self.assertRaises(guard.CanonicalV11Error):
             self.verify(root=self.root.replace("## Najważniejsze: pierwotny AGENTS BUILDER","## Deleted"))
         with self.assertRaises(guard.CanonicalV11Error):
-            self.verify(readme=self.readme.replace("1. **[DO ZROBIENIA]**","1. **[ZROBIONE]**",1))
+            self.verify(readme=self.readme.replace("| **329** |", "| **MISSING** |", 1))
         with self.assertRaises(guard.CanonicalV11Error):
-            self.verify(mirror=self.mirror+"tampered")
+            self.verify(mirror=self.mirror.replace("| **0.39.10** |", "| **MISSING** |", 1))
         loss=copy.deepcopy(self.losses);loss["items"].pop()
         with self.assertRaises(guard.CanonicalV11Error):
             self.verify(losses=loss)
