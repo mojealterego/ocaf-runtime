@@ -697,7 +697,7 @@ jobs:
         run: |
           set -euo pipefail
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts.tests.test_stage039_real_guest_quarantine -v
-          sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends libssl-dev
+          sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends libssl-dev zlib1g-dev libzstd-dev
           PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
           sudo -n python3 scripts/stage039_real_guest_quarantine.py \
             --prefix "$PREFIX" \

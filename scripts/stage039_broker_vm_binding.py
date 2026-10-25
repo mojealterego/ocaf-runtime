@@ -27,6 +27,7 @@ import secrets
 import socket
 import stat
 import struct
+import sys
 import time
 import hmac
 
@@ -503,6 +504,9 @@ def main()->int:
                  aya_seconds=a.aya_seconds,timeout=a.timeout))
         gate.save_report(a.report,r)
     except (OSError,ValueError,asyncio.TimeoutError) as exc:
+        detail=(f"{type(exc).__name__}: {exc}"[:900]
+                .replace("%","%25").replace("\r","%0D").replace("\n","%0A"))
+        print(f"::error title=Stage039 brokered VM::{detail}",file=sys.stderr)
         p.error(str(exc))
     print(json.dumps({"status":r["status"],
          "broker_vm_binding":r["broker_vm_binding"]["status"],
