@@ -1,6 +1,6 @@
 #![cfg(feature = "zenoh")]
 use ocaf_runtime::omat_server::{OmatPolicy, OmatRegistry, ToolCall};
-use ocaf_runtime::stage043_omat_zenoh::{request_omat_zenoh, serve_omat_zenoh, sign_omas_request, OmatZenohAdmission};
+use ocaf_runtime::stage043_omat_zenoh::{request_omat_with_retry, request_omat_zenoh, serve_omat_zenoh, sign_omas_request, OmatZenohAdmission};
 use std::collections::{BTreeSet, HashMap};
 use std::sync::Arc;
 use std::time::Duration;
@@ -115,4 +115,31 @@ fn security_metrics_track_denials_and_replays() {
     assert_eq!(metrics.replays.load(Ordering::Relaxed), 1);
     assert_eq!(metrics.connection_events.load(Ordering::Relaxed), 1);
     assert!(metrics.prometheus().contains("ocaf_omat_replays_total 1"));
+}
+
+
+#[test]
+fn security_metrics_count_rejections_and_replays() {
+    use std::sync::atomic::Ordering;
+    let mut server = admission();
+    let metrics = server.metrics();
+    server.connected(true);
+    let topic = "ocaf/omat/tenant_a/requests/req_1";
+    let signed = sign_omas_request("omas_a", topic, "0123456789abcdef", call("tenant_a"), &[7u8; 32]).unwrap();
+    assert!(server.handle(&signed).is_err());
+    assert!(server.handle(&signed).is_err());
+    assert_eq!(metrics.requests.load(Ordering::Relaxed), 2);
+    assert_eq!(metrics.rejections.load(Ordering::Relaxed), 2);
+    assert_eq!(metrics.replays.load(Ordering::Relaxed), 1);
+    assert!(metrics.prometheus().contains("ocaf_omat_requests_total 2\\n"));
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn retry_rejects_invalid_budget_without_network_io() {
+    let config = zenoh::Config::default();
+    let session = zenoh::open(config).await.unwrap();
+    let error = request_omat_with_retry(&session, "ocaf/omat/test", vec![], 0)
+        .await
+        .unwrap_err();
+    assert!(error.to_string().contains("1..=5"));
 }
