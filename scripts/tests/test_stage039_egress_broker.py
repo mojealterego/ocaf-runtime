@@ -164,6 +164,39 @@ class EgressBrokerTLS(unittest.TestCase):
             subprocess.run([sys.executable, "-c", script, str(path)],
                            check=True, env={"PYTHONPATH": str(Path(egress.__file__).parent)})
 
+    def test_durable_replay_survives_sigkill_after_committed_claim(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "permits.sqlite"
+            store = egress.DurablePermitReplay(path)
+            store.close()
+            script = (
+                "import sys,time; from pathlib import Path; "
+                "from stage039_egress_broker import DurablePermitReplay; "
+                "db=DurablePermitReplay.reopen(Path(sys.argv[1])); "
+                "now=int(time.time()); db.claim('tenant-a','c'*32,now+60,now); "
+                "print('CLAIM_COMMITTED',flush=True); time.sleep(30)"
+            )
+            proc = subprocess.Popen(
+                [sys.executable, "-c", script, str(path)],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                env={"PYTHONPATH": str(Path(egress.__file__).parent)})
+            try:
+                self.assertEqual(proc.stdout.readline().strip(), "CLAIM_COMMITTED")
+                proc.kill()
+                proc.communicate(timeout=5)
+                self.assertLess(proc.returncode, 0)
+                restarted = egress.DurablePermitReplay.reopen(path)
+                try:
+                    now = int(time.time())
+                    with self.assertRaisesRegex(egress.EgressDenied, "replayed"):
+                        restarted.claim("tenant-a", "c" * 32, now + 60, now)
+                finally:
+                    restarted.close()
+            finally:
+                if proc.poll() is None:
+                    proc.kill()
+                    proc.communicate(timeout=5)
+
     def test_rejects_redirect_metadata_mixed_dns_and_rebinding(self):
         redirect = self.permit(url=f"https://localhost:{self.port}/redirect")
         with self.assertRaisesRegex(egress.EgressDenied, "redirects"):

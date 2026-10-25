@@ -126,6 +126,9 @@ po otwarciu rejestru w nowym procesie. Artefakt ma ID `12594508555` oraz
 SHA-256 archiwum `cebbd88e6af5cc31e111ee3eb9dff8aecffbd6da063c494854bcdc1c816437bd`.
 Ten test dotyczy odtworzenia instancji i trwałości replay; awaria całego
 procesu brokera podczas pracy VM oraz partycja sieci pozostają otwarte.
+Osobny lokalny test zabija `SIGKILL` proces brokera po zatwierdzonej
+transakcji SQLite i potwierdza odmowę replay po ponownym uruchomieniu
+procesu. Nie zastępuje to wspólnego testu awarii z działającym VM.
 
 [Run 40182499438](https://github.com/mojealterego/ocaf-runtime/actions/runs/40182499438)
 na commicie `ada9056afb6dab8e8352fdfd1f6e2171ad5ca308` przeszedł pełny
