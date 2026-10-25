@@ -623,6 +623,10 @@ jobs:
               assert raw["tenant_"+tenant]["guest_wasi_execution"]["observed_before_vm_sigkill"] is True
               assert raw["tenant_"+tenant]["guest_wasi_execution"]["traceparent"]==traces[tenant]
               host_aya=raw["tenant_"+tenant]["vm_preboot_aya_egress"]
+              rootfs_fd=raw["tenant_"+tenant]["running_rootfs_fd"]
+              assert rootfs_fd["status"]=="RUNNING_VMM_ROOTFS_FD_MATCHES_PINNED_INODE"
+              assert rootfs_fd["rootfs_sha256"]==raw["tenant_"+tenant]["guest_rootfs_sha256"]
+              assert rootfs_fd["matching_fd_count"]>0
               assert host_aya["host_probe_denied_before_vm_start"] is True
               assert host_aya["guest_wasi_observed_while_attached"] is True
               assert host_aya["aya_detached_after_vm_stop"] is True

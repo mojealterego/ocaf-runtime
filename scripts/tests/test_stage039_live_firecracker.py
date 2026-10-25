@@ -8,6 +8,29 @@ import stage039_live_firecracker as live
 
 
 class LiveContract(unittest.TestCase):
+    def test_running_rootfs_fd_requires_pinned_hash_and_same_open_inode(self):
+        import hashlib, os, tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            image = Path(directory) / "rootfs.ext4"
+            other = Path(directory) / "other.ext4"
+            image.write_bytes(b"reviewed-rootfs")
+            other.write_bytes(b"other-rootfs")
+            image.chmod(0o444)
+            digest = hashlib.sha256(image.read_bytes()).hexdigest()
+            class Process:
+                pid = os.getpid()
+                def poll(self): return None
+            with image.open("rb"):
+                proof = live.attest_running_rootfs_fd(Process(), image, digest)
+                self.assertEqual(proof["status"],
+                                 "RUNNING_VMM_ROOTFS_FD_MATCHES_PINNED_INODE")
+                self.assertGreater(proof["matching_fd_count"], 0)
+            with self.assertRaisesRegex(live.LiveFirecrackerError, "no FD"):
+                live.attest_running_rootfs_fd(Process(), image, digest)
+            with other.open("rb"), self.assertRaisesRegex(
+                    live.LiveFirecrackerError, "digest differs"):
+                live.attest_running_rootfs_fd(Process(), other, digest)
+
     def test_guest_wasi_child_must_finish_before_firecracker_is_sigkilled(self):
         import tempfile, threading, time
         from stage039_guest_wasi import INIT, OUTPUT, PASS, FAILED

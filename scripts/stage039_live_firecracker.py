@@ -106,6 +106,47 @@ def validate_running(api: dict, serial: str, cgroups: str, vm_id: str,
     }
 
 
+def attest_running_rootfs_fd(proc: subprocess.Popen, staged: Path,
+                             expected_sha256: str) -> dict:
+    """Bind the pinned staged rootfs inode to an open FD in the live VMM."""
+    if proc.poll() is not None or type(proc.pid) is not int or proc.pid <= 1:
+        raise LiveFirecrackerError("running VMM PID required for rootfs FD attestation")
+    if (not staged.is_absolute() or staged.is_symlink() or not staged.is_file()
+            or not re.fullmatch(r"[0-9a-f]{64}", expected_sha256)):
+        raise LiveFirecrackerError("unsafe pinned staged rootfs")
+    info = staged.stat()
+    if info.st_nlink != 1 or info.st_mode & 0o022:
+        raise LiveFirecrackerError("staged rootfs inode is mutable or multiply linked")
+    with staged.open("rb") as stream:
+        digest = hashlib.file_digest(stream, "sha256").hexdigest()
+    if digest != expected_sha256:
+        raise LiveFirecrackerError("running staged rootfs digest differs from manifest")
+    fd_dir = Path(f"/proc/{proc.pid}/fd")
+    try:
+        descriptors = list(fd_dir.iterdir())
+    except OSError as exc:
+        raise LiveFirecrackerError("VMM descriptor directory unavailable") from exc
+    if len(descriptors) > 4096:
+        raise LiveFirecrackerError("VMM descriptor scan exceeded bound")
+    matches = []
+    for descriptor in descriptors:
+        if not descriptor.name.isdecimal():
+            continue
+        try:
+            opened = descriptor.stat()
+        except OSError:
+            continue
+        if opened.st_dev == info.st_dev and opened.st_ino == info.st_ino:
+            matches.append(int(descriptor.name))
+    if not matches or proc.poll() is not None:
+        raise LiveFirecrackerError("running VMM has no FD for pinned staged rootfs")
+    return {"status": "RUNNING_VMM_ROOTFS_FD_MATCHES_PINNED_INODE",
+            "rootfs_sha256": digest, "rootfs_inode": info.st_ino,
+            "rootfs_device": info.st_dev, "vmm_pid": proc.pid,
+            "matching_fd_count": len(matches),
+            "stage_039_complete": False, "production_approved": False}
+
+
 def _verified_binary(path: Path, digest: str) -> str:
     if (not path.is_absolute() or ".." in path.parts or path.is_symlink()
             or not isinstance(digest, str) or
@@ -442,6 +483,9 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
                 cgroups = ""
             try:
                 result = validate_running(api, seen, cgroups, vm_id, cgroup_name)
+                result["running_rootfs_fd"] = attest_running_rootfs_fd(
+                    proc, root / "guest/rootfs.ext4",
+                    parsed["assets"]["guest_rootfs"]["sha256"])
                 result.update({
                     "schema_version": 1,
                     "observed_at_utc": datetime.now(timezone.utc).isoformat(),

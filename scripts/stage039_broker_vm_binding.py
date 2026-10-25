@@ -238,12 +238,21 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
         if require_wasi:
             guest=actual_vm.get("guest_wasi_execution")
             preboot=actual_vm.get("vm_preboot_aya_egress")
+            rootfs_fd=actual_vm.get("running_rootfs_fd")
             wasi=m.get("wasi")
             try:
                 expected_trace=traceparent.derive(rec["request_id"], rec["manifest_sha256"],m["tenant_id"])
             except (KeyError,ValueError) as exc:
                 raise BindingError("invalid broker-derived VM trace identity") from exc
-            if (not isinstance(preboot,dict)
+            if (not isinstance(rootfs_fd,dict)
+                or rootfs_fd.get("status")!="RUNNING_VMM_ROOTFS_FD_MATCHES_PINNED_INODE"
+                or rootfs_fd.get("rootfs_sha256")!=m["assets"]["guest_rootfs"]["sha256"]
+                or type(rootfs_fd.get("rootfs_inode")) is not int
+                or rootfs_fd["rootfs_inode"]<=0
+                or type(rootfs_fd.get("matching_fd_count")) is not int
+                or rootfs_fd["matching_fd_count"]<=0
+                or rootfs_fd.get("production_approved") is not False
+                or not isinstance(preboot,dict)
                 or preboot.get("status")!="HOST_AYA_ATTACHED_BEFORE_FIRECRACKER_START"
                 or preboot.get("vm_cgroup_inode")!=actual_vm["cgroup_inode"]
                 or preboot.get("bpf_elf_sha256")!=m["assets"]["aya_cgroup_device"]["sha256"]

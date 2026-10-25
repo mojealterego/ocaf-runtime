@@ -95,6 +95,11 @@ class BrokerVmAcceptanceTests(unittest.TestCase):
             trace=traceparent.derive(self.reports[t]["request_id"],
                                      self.reports[t]["manifest_sha256"],"tenant-"+t)
             actual["tenant_"+t]["guest_rootfs_sha256"]=t*64
+            actual["tenant_"+t]["running_rootfs_fd"]={
+                "status":"RUNNING_VMM_ROOTFS_FD_MATCHES_PINNED_INODE",
+                "rootfs_sha256":t*64,"rootfs_inode":41 if t=="a" else 42,
+                "matching_fd_count":1,"production_approved":False,
+            }
             actual["tenant_"+t]["wasi"]=m["wasi"]
             actual["tenant_"+t]["traceparent"]=trace
             actual["tenant_"+t]["guest_wasi_execution"]={
@@ -144,6 +149,9 @@ class BrokerVmAcceptanceTests(unittest.TestCase):
             {"guest_wasi_execution":{**actual["tenant_b"]["guest_wasi_execution"],
                                      "traceparent":actual["tenant_a"]["traceparent"]}},
             {"vm_preboot_aya_egress":None},
+            {"running_rootfs_fd":None},
+            {"running_rootfs_fd":{**actual["tenant_b"]["running_rootfs_fd"],
+                                    "rootfs_sha256":"a"*64}},
             {"vm_preboot_aya_egress":{**actual["tenant_b"]["vm_preboot_aya_egress"],
                                        "guest_wasi_observed_while_attached":False}},
             {"vm_preboot_aya_egress":{**actual["tenant_b"]["vm_preboot_aya_egress"],
