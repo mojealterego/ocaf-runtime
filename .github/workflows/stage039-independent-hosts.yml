@@ -208,6 +208,7 @@ jobs:
           assert p["two_separate_kernel_boot_ids_observed"] is True
           assert p["two_separate_guest_kernels_booted"] is True
           assert p["two_independent_vm_sigkill_and_cgroup_drain_tests"] is True
+          assert p["both_running_vm_rootfs_fd_inodes_match_pinned_images"] is True
           assert p["durable_production_host_independence_proved"] is False
           assert p["interhost_rpc_tested"] is False
           assert p["production_approved"] is False

@@ -37,12 +37,20 @@ def verify_hosts(a:dict,b:dict)->dict:
         raise IndependentHostError("reused microVM boot identity")
     for expected,report in (("tenant-a",ga),("tenant-b",gb)):
         crash=report.get("vm_sigkill_fault")
+        rootfs_fd=report.get("running_rootfs_fd")
         if (report.get("tenant_id") != expected or
             report.get("status") != "JAILED_FIRECRACKER_GUEST_KERNEL_BOOT_OBSERVED" or
             report.get("firecracker_api_running") is not True or
             report.get("guest_kernel_console_seen") is not True or
             report.get("production_approved") is not False or
             not isinstance(crash,dict) or
+            not isinstance(rootfs_fd,dict) or
+            rootfs_fd.get("status") != "RUNNING_VMM_ROOTFS_FD_MATCHES_PINNED_INODE" or
+            rootfs_fd.get("rootfs_sha256") != report.get("guest_rootfs_sha256") or
+            type(rootfs_fd.get("rootfs_inode")) is not int or
+            rootfs_fd["rootfs_inode"] <= 0 or
+            type(rootfs_fd.get("matching_fd_count")) is not int or
+            rootfs_fd["matching_fd_count"] <= 0 or
             crash.get("status") != "VM_SIGKILL_CGROUP_SUBTREE_DRAINED" or
             crash.get("cgroup_subtree_empty") is not True or
             type(crash.get("sigkill_exit_code")) is not int or
@@ -58,6 +66,7 @@ def verify_hosts(a:dict,b:dict)->dict:
         "two_distinct_vm_ids_observed":True,
         "two_separate_guest_kernels_booted":True,
         "two_independent_vm_sigkill_and_cgroup_drain_tests":True,
+        "both_running_vm_rootfs_fd_inodes_match_pinned_images":True,
         "tenant_a_kernel_boot_id":a["host_boot_id"],
         "tenant_b_kernel_boot_id":b["host_boot_id"],
         "interhost_rpc_tested":False,

@@ -10,6 +10,11 @@ def entry(tenant,boot,vm,host):
     return {"tenant_id":tenant,"host_boot_id":boot,"hostname":host,
             "guest":{"vm_id":vm,"status":"JAILED_FIRECRACKER_GUEST_KERNEL_BOOT_OBSERVED",
                      "firecracker_api_running":True,"guest_kernel_console_seen":True,
+                     "guest_rootfs_sha256":"a"*64,
+                     "running_rootfs_fd":{
+                         "status":"RUNNING_VMM_ROOTFS_FD_MATCHES_PINNED_INODE",
+                         "rootfs_sha256":"a"*64,"rootfs_inode":123,
+                         "matching_fd_count":1},
                      "tenant_id":tenant,"vm_sigkill_fault":{
                          "status":"VM_SIGKILL_CGROUP_SUBTREE_DRAINED",
                          "cgroup_subtree_empty":True,
@@ -45,6 +50,9 @@ class IndependentHostValidator(unittest.TestCase):
             {**b,"tenant_id":"tenant-a"},
             {**b,"guest":{**b["guest"],"tenant_id":"tenant-a"}},
             {**b,"guest":{**b["guest"],"vm_sigkill_fault":{"cgroup_subtree_empty":False}}},
+            {**b,"guest":{**b["guest"],"running_rootfs_fd":None}},
+            {**b,"guest":{**b["guest"],"running_rootfs_fd":{
+                **b["guest"]["running_rootfs_fd"],"rootfs_sha256":"b"*64}}},
         ):
             with self.subTest(mutated=mutated),self.assertRaises(hosts.IndependentHostError):
                 hosts.verify_hosts(a,mutated)
