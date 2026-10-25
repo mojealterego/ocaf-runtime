@@ -502,6 +502,8 @@ mod tests {
         Connection::open(&db).unwrap();
         #[cfg(unix)]
         std::fs::set_permissions(&db, std::fs::Permissions::from_mode(0o600)).unwrap();
+        assert!(private_database(&db), "private database fixture rejected");
+        assert!(client("tenant-a").validate().is_ok(), "client fixture rejected");
         let clock = Arc::new(TestClock(AtomicI64::new(2_000_000)));
         let service = OAuthService::open_inner(&db, vec![client("tenant-a"), client("tenant-b")], clock.clone()).unwrap();
         (dir, service, clock)
