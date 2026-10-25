@@ -53,4 +53,21 @@ assert sqlite3.connect(p).execute('select count(*) from omat_replay').fetchone()
 PY
 kill -9 "$server_pid"; wait "$server_pid" 2>/dev/null || true; server_pid=""
 if OCAF_ZENOH_CONFIG="$root/client.json5" timeout 15 "$client_bin" >"$root/disconnect.log" 2>&1; then echo 'unexpected success after server crash'; exit 1; fi
-printf 'PASS: mTLS two-process signed denial, durable replay after restart, server crash fail-closed\n'
+
+# Recovery probe: client starts while OMAt is unavailable, then connects after restart.
+export OCAF_OMAT_NONCE=0123456789abcdea OCAF_OMAT_RECONNECT_ATTEMPTS=5
+(
+  OCAF_ZENOH_CONFIG="$root/client.json5" timeout 25 "$client_bin" >"$root/recovery.log" 2>&1
+) &
+recovery_pid=$!
+sleep 1
+start_server
+if wait "$recovery_pid"; then
+  echo "unexpected accepted tool execution during reconnect"; exit 1
+fi
+if ! grep -q 'OMAt rejected request' "$root/recovery.log"; then
+  echo "reconnect never reached authenticated OMAt policy"; cat "$root/recovery.log"; exit 1
+fi
+unset OCAF_OMAT_RECONNECT_ATTEMPTS
+kill "$server_pid"; wait "$server_pid" 2>/dev/null || true; server_pid=""
+printf 'PASS: mTLS two-process denial, durable replay, crash fail-closed, bounded reconnect to policy\n'
