@@ -4,9 +4,9 @@ pub mod coordinator;
 pub mod executor;
 pub mod jobs;
 pub mod metrics;
-pub mod ops;
 pub mod omas_policy;
 pub mod omas_signed;
+pub mod ops;
 pub mod registry;
 pub mod rpc;
 pub mod runtime;
@@ -51,8 +51,8 @@ pub mod stage043_omat_route;
 #[cfg(feature = "zenoh")]
 pub mod stage043_omat_zenoh;
 pub mod stage044_oauth;
-pub mod stage044_secret_broker;
 pub mod stage044_omat_authz;
+pub mod stage044_secret_broker;
 
 pub mod stage044_oidc;
 

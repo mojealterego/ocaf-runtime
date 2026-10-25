@@ -36,7 +36,10 @@ pub struct LifecycleReceipt {
 #[derive(Debug, Error, Clone, PartialEq, Eq)]
 pub enum LifecycleError {
     #[error("invalid lifecycle transition from {from:?} to {to:?}")]
-    InvalidTransition { from: LifecycleState, to: LifecycleState },
+    InvalidTransition {
+        from: LifecycleState,
+        to: LifecycleState,
+    },
     #[error("request identity does not match lifecycle identity")]
     IdentityMismatch,
     #[error("hardware gate evidence is insufficient")]
@@ -56,10 +59,16 @@ impl MicrovmLifecycle {
     pub fn claim(request: FirecrackerLaunchRequest) -> Result<Self, LifecycleError> {
         crate::firecracker_ebpf_contract::validate_launch_request(&request)
             .map_err(|_| LifecycleError::GateRejected)?;
-        Ok(Self { request, state: LifecycleState::Claimed, gate_receipt: None })
+        Ok(Self {
+            request,
+            state: LifecycleState::Claimed,
+            gate_receipt: None,
+        })
     }
 
-    pub fn state(&self) -> LifecycleState { self.state }
+    pub fn state(&self) -> LifecycleState {
+        self.state
+    }
 
     pub fn advance(&mut self, next: LifecycleState) -> Result<(), LifecycleError> {
         let allowed = matches!(
@@ -68,7 +77,10 @@ impl MicrovmLifecycle {
                 | (LifecycleState::JailerReady, LifecycleState::EgressAttached)
         );
         if !allowed {
-            return Err(LifecycleError::InvalidTransition { from: self.state, to: next });
+            return Err(LifecycleError::InvalidTransition {
+                from: self.state,
+                to: next,
+            });
         }
         self.state = next;
         Ok(())
@@ -76,7 +88,10 @@ impl MicrovmLifecycle {
 
     pub fn record_gate(&mut self, evidence: &HardwareEvidence) -> Result<(), LifecycleError> {
         if self.state != LifecycleState::EgressAttached {
-            return Err(LifecycleError::InvalidTransition { from: self.state, to: LifecycleState::VmRunning });
+            return Err(LifecycleError::InvalidTransition {
+                from: self.state,
+                to: LifecycleState::VmRunning,
+            });
         }
         let receipt = evaluate_hardware_gate(&self.request, evidence)
             .map_err(|_| LifecycleError::GateRejected)?;
@@ -87,17 +102,26 @@ impl MicrovmLifecycle {
 
     pub fn issue_receipt(&mut self) -> Result<(), LifecycleError> {
         if self.state != LifecycleState::VmRunning || self.gate_receipt.is_none() {
-            return Err(LifecycleError::InvalidTransition { from: self.state, to: LifecycleState::ReceiptIssued });
+            return Err(LifecycleError::InvalidTransition {
+                from: self.state,
+                to: LifecycleState::ReceiptIssued,
+            });
         }
         self.state = LifecycleState::ReceiptIssued;
         Ok(())
     }
 
-    pub fn teardown(&mut self, teardown_verified: bool) -> Result<LifecycleReceipt, LifecycleError> {
+    pub fn teardown(
+        &mut self,
+        teardown_verified: bool,
+    ) -> Result<LifecycleReceipt, LifecycleError> {
         if self.state != LifecycleState::ReceiptIssued || !teardown_verified {
             return Err(LifecycleError::TeardownRequired);
         }
-        let gate = self.gate_receipt.as_ref().ok_or(LifecycleError::TeardownRequired)?;
+        let gate = self
+            .gate_receipt
+            .as_ref()
+            .ok_or(LifecycleError::TeardownRequired)?;
         verify_gate_receipt(gate).map_err(|_| LifecycleError::GateRejected)?;
         self.state = LifecycleState::TornDown;
         Ok(LifecycleReceipt {
@@ -118,19 +142,41 @@ mod tests {
 
     fn request() -> FirecrackerLaunchRequest {
         FirecrackerLaunchRequest {
-            tenant_id: "tenant-a".into(), workload_id: "workload-a".into(),
-            firecracker_sha256: "a".repeat(64), kernel_sha256: "b".repeat(64), rootfs_sha256: "c".repeat(64),
-            jailer_uid: 1000, cgroup_inode: 42,
-            limits: MicrovmLimits { vcpu_count: 1, memory_mib: 128, pids_max: 64, wall_time_ms: 1000 },
-            egress: EgressPolicy { allow_network: false, allowed_cidrs: BTreeSet::new() }, nonce: "nonce-a".into(),
+            tenant_id: "tenant-a".into(),
+            workload_id: "workload-a".into(),
+            firecracker_sha256: "a".repeat(64),
+            kernel_sha256: "b".repeat(64),
+            rootfs_sha256: "c".repeat(64),
+            jailer_uid: 1000,
+            cgroup_inode: 42,
+            limits: MicrovmLimits {
+                vcpu_count: 1,
+                memory_mib: 128,
+                pids_max: 64,
+                wall_time_ms: 1000,
+            },
+            egress: EgressPolicy {
+                allow_network: false,
+                allowed_cidrs: BTreeSet::new(),
+            },
+            nonce: "nonce-a".into(),
         }
     }
 
     fn evidence() -> HardwareEvidence {
-        HardwareEvidence { kvm_device_present: true, kvm_api_version: 12, kvm_vm_created: true,
-            firecracker_process_started: true, guest_booted: true, ebpf_program_loaded: true,
-            ebpf_program_attached: true, egress_policy_enforced: true, teardown_verified: true,
-            production_host_attested: false, kernel_program_id: Some(7) }
+        HardwareEvidence {
+            kvm_device_present: true,
+            kvm_api_version: 12,
+            kvm_vm_created: true,
+            firecracker_process_started: true,
+            guest_booted: true,
+            ebpf_program_loaded: true,
+            ebpf_program_attached: true,
+            egress_policy_enforced: true,
+            teardown_verified: true,
+            production_host_attested: false,
+            kernel_program_id: Some(7),
+        }
     }
 
     #[test]
@@ -150,7 +196,8 @@ mod tests {
         let mut flow = MicrovmLifecycle::claim(request()).unwrap();
         flow.advance(LifecycleState::JailerReady).unwrap();
         flow.advance(LifecycleState::EgressAttached).unwrap();
-        let mut evidence = evidence(); evidence.ebpf_program_attached = false;
+        let mut evidence = evidence();
+        evidence.ebpf_program_attached = false;
         assert!(flow.record_gate(&evidence).is_err());
         assert_eq!(flow.state(), LifecycleState::EgressAttached);
     }

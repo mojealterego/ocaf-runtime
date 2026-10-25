@@ -782,8 +782,7 @@ impl RpcGateway {
         // Apply resource bounds before any execution or job submission.
         // A signed OMAS operation is meaningful only for Execute. All other
         // RPC actions retain their existing, independently enforced ACLs.
-        if request.omas_operation.is_some()
-            && !matches!(&request.action, RpcAction::Execute { .. })
+        if request.omas_operation.is_some() && !matches!(&request.action, RpcAction::Execute { .. })
         {
             return Err(RpcError::Unauthorized);
         }
@@ -1084,10 +1083,11 @@ impl RpcGateway {
                         .execute_signed_omas_for_rpc(operation, call, &request.sender)
                         .await
                 } else {
-                    self.runtime.execute_authenticated_peer(call, &request.sender).await
+                    self.runtime
+                        .execute_authenticated_peer(call, &request.sender)
+                        .await
                 };
-                match execution
-                {
+                match execution {
                     Ok(result) => {
                         // The signed RPC reply must fit its own body limit.
                         // Reject excessive tool output without leaking its content.
@@ -1096,7 +1096,7 @@ impl RpcGateway {
                         } else {
                             (RpcStatus::Ok, result.output)
                         }
-                    },
+                    }
                     Err(RuntimeError::InvalidInput(_)) => (RpcStatus::InvalidInput, Value::Null),
                     Err(RuntimeError::Timeout) => (RpcStatus::Timeout, Value::Null),
                     Err(RuntimeError::ToolExecution(error)) => {

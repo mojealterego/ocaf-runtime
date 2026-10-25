@@ -16,15 +16,20 @@ fn require(name: &str) -> anyhow::Result<String> {
 #[tokio::main(flavor = "multi_thread", worker_threads = 2)]
 async fn main() -> anyhow::Result<()> {
     let path = require("OCAF_ZENOH_CONFIG")?;
-    anyhow::ensure!(Path::new(&path).is_absolute(), "config path must be absolute");
+    anyhow::ensure!(
+        Path::new(&path).is_absolute(),
+        "config path must be absolute"
+    );
     let source = read_zenoh_config(Path::new(&path))?;
     validate_zenoh_config(&source, false)?;
     let config = zenoh::Config::from_json5(&source)
         .map_err(|e| anyhow::anyhow!("invalid Zenoh config: {e}"))?;
     let principal = require("OCAF_OMAT_PEER")?;
     let tenant = require("OCAF_OMAT_TENANT")?;
-    let key: [u8; 32] = B64.decode(require("OCAF_OMAT_SHARED_KEY_B64")?)?
-        .try_into().map_err(|_| anyhow::anyhow!("key must be 32 bytes"))?;
+    let key: [u8; 32] = B64
+        .decode(require("OCAF_OMAT_SHARED_KEY_B64")?)?
+        .try_into()
+        .map_err(|_| anyhow::anyhow!("key must be 32 bytes"))?;
     let nonce = require("OCAF_OMAT_NONCE")?;
     let request_id = require("OCAF_OMAT_REQUEST_ID")?;
     let topic = format!("ocaf/omat/{tenant}/requests/{request_id}");
@@ -46,7 +51,10 @@ async fn main() -> anyhow::Result<()> {
     let mut last_error = None;
     for attempt in 0..=retries {
         if attempt > 0 {
-            tokio::time::sleep(std::time::Duration::from_millis(200 * (1u64 << (attempt - 1)))).await;
+            tokio::time::sleep(std::time::Duration::from_millis(
+                200 * (1u64 << (attempt - 1)),
+            ))
+            .await;
         }
         let session = match zenoh::open(config.clone()).await {
             Ok(session) => session,

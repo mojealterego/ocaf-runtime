@@ -19,7 +19,10 @@ fn require(name: &str) -> anyhow::Result<String> {
 async fn main() -> anyhow::Result<()> {
     let config_path = require("OCAF_ZENOH_CONFIG")?;
     let config_path = Path::new(&config_path);
-    anyhow::ensure!(config_path.is_absolute(), "OCAF_ZENOH_CONFIG must be absolute");
+    anyhow::ensure!(
+        config_path.is_absolute(),
+        "OCAF_ZENOH_CONFIG must be absolute"
+    );
     let source = read_zenoh_config(config_path)?;
     validate_zenoh_config(&source, false)?;
     let config = zenoh::Config::from_json5(&source)
@@ -27,24 +30,37 @@ async fn main() -> anyhow::Result<()> {
     let principal = require("OCAF_OMAT_PEER")?;
     let tenant = require("OCAF_OMAT_TENANT")?;
     let raw = B64.decode(require("OCAF_OMAT_SHARED_KEY_B64")?)?;
-    let key: [u8; 32] = raw.try_into().map_err(|_| anyhow::anyhow!("HMAC key must be 32 bytes"))?;
+    let key: [u8; 32] = raw
+        .try_into()
+        .map_err(|_| anyhow::anyhow!("HMAC key must be 32 bytes"))?;
     let replay_path = require("OCAF_OMAT_REPLAY_DB")?;
-    anyhow::ensure!(Path::new(&replay_path).is_absolute(), "replay DB path must be absolute");
-    let policies = HashMap::from([(tenant.clone(), OmatPolicy {
-        tenant_id: tenant.clone(),
-        allowed_tools: BTreeSet::new(),
-        allowed_capabilities: BTreeSet::new(),
-        max_timeout_ms: 1000,
-        max_output_bytes: 1024,
-        allow_external_side_effects: false,
-    })]);
+    anyhow::ensure!(
+        Path::new(&replay_path).is_absolute(),
+        "replay DB path must be absolute"
+    );
+    let policies = HashMap::from([(
+        tenant.clone(),
+        OmatPolicy {
+            tenant_id: tenant.clone(),
+            allowed_tools: BTreeSet::new(),
+            allowed_capabilities: BTreeSet::new(),
+            max_timeout_ms: 1000,
+            max_output_bytes: 1024,
+            allow_external_side_effects: false,
+        },
+    )]);
     let admission = OmatZenohAdmission::new(
         HashMap::from([(principal.clone(), key)]),
         HashMap::from([(principal, tenant.clone())]),
         policies,
         OmatRegistry::default(),
-    )?.with_replay_database(Path::new(&replay_path))?;
-    let session = Arc::new(zenoh::open(config).await.map_err(|e| anyhow::anyhow!("Zenoh open: {e}"))?);
+    )?
+    .with_replay_database(Path::new(&replay_path))?;
+    let session = Arc::new(
+        zenoh::open(config)
+            .await
+            .map_err(|e| anyhow::anyhow!("Zenoh open: {e}"))?,
+    );
     let selector = format!("ocaf/omat/{tenant}/requests/*");
     serve_omat_zenoh(session, admission, &selector).await
 }

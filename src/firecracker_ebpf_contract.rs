@@ -165,7 +165,10 @@ pub fn evaluate_hardware_gate(
     }
     let checks = [
         (evidence.kvm_vm_created, "kvm_vm_created"),
-        (evidence.firecracker_process_started, "firecracker_process_started"),
+        (
+            evidence.firecracker_process_started,
+            "firecracker_process_started",
+        ),
         (evidence.guest_booted, "guest_booted"),
         (evidence.ebpf_program_loaded, "ebpf_program_loaded"),
         (evidence.ebpf_program_attached, "ebpf_program_attached"),
@@ -236,8 +239,8 @@ fn validate_hash(value: &str, field: &'static str) -> Result<(), GateError> {
 }
 
 fn hash_json<T: Serialize>(value: &T) -> Result<String, GateError> {
-    let bytes = serde_json::to_vec(value)
-        .map_err(|error| GateError::Serialization(error.to_string()))?;
+    let bytes =
+        serde_json::to_vec(value).map_err(|error| GateError::Serialization(error.to_string()))?;
     Ok(hex(&Sha256::digest(bytes)))
 }
 
@@ -250,4 +253,3 @@ fn receipt_digest(receipt: &GateReceipt) -> Result<String, GateError> {
 fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|byte| format!("{byte:02x}")).collect()
 }
-

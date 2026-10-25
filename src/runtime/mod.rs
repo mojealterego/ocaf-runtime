@@ -241,21 +241,22 @@ impl OcafRuntime {
         // Only the tool namespace may be used for signed dispatch.
         // This prevents accepting a broader signed namespace as equivalent.
         if operation.namespace != format!("{}/tools", operation.tenant) {
-            return Err(RuntimeError::AuthRequired(
-                "OMAS namespace mismatch".into(),
-            ));
+            return Err(RuntimeError::AuthRequired("OMAS namespace mismatch".into()));
         }
         let payload = serde_json::to_vec(&request)
             .map_err(|_| RuntimeError::InvalidInput("cannot serialize OMAS request".into()))?;
         if payload != operation.payload {
-            return Err(RuntimeError::AuthRequired("OMAS signed payload mismatch".into()));
+            return Err(RuntimeError::AuthRequired(
+                "OMAS signed payload mismatch".into(),
+            ));
         }
         let replay_database = self.omas_replay_database.as_deref().ok_or_else(|| {
             RuntimeError::AuthRequired("OMAS replay database not configured".into())
         })?;
-        let public_key = self.omas_trusted_key.as_ref().ok_or_else(|| {
-            RuntimeError::AuthRequired("OMAS key not configured".into())
-        })?;
+        let public_key = self
+            .omas_trusted_key
+            .as_ref()
+            .ok_or_else(|| RuntimeError::AuthRequired("OMAS key not configured".into()))?;
         let now = crate::omas_signed::unix_now()
             .map_err(|_| RuntimeError::AuthRequired("invalid system clock".into()))?;
         crate::omas_signed::verify_and_consume(operation, public_key, replay_database, now)
@@ -301,7 +302,9 @@ impl OcafRuntime {
         signed_fuel: Option<u64>,
     ) -> Result<ToolCallResult, RuntimeError> {
         let start = Instant::now();
-        let result = self.execute_inner(&request, start, principal, signed_fuel).await;
+        let result = self
+            .execute_inner(&request, start, principal, signed_fuel)
+            .await;
         let elapsed_us = start.elapsed().as_micros().min(u64::MAX as u128) as u64;
         if result.is_ok() {
             self.metrics.record_success(elapsed_us).await;
@@ -369,7 +372,11 @@ impl OcafRuntime {
 
         let execution = async {
             match signed_fuel {
-                Some(fuel) => tool.executor.execute_signed_fuel(request.args.clone(), &ctx, fuel).await,
+                Some(fuel) => {
+                    tool.executor
+                        .execute_signed_fuel(request.args.clone(), &ctx, fuel)
+                        .await
+                }
                 None => tool.executor.execute(request.args.clone(), &ctx).await,
             }
         };
@@ -415,13 +422,20 @@ mod omas_entrypoint_tests {
 
     #[tokio::test]
     async fn tenant_bound_public_execute_fails_before_tool_lookup() {
-        let runtime = OcafRuntime::new(0).with_tenant_namespace("tenant_a").unwrap();
-        assert!(matches!(runtime.execute(call()).await, Err(RuntimeError::AuthRequired(_))));
+        let runtime = OcafRuntime::new(0)
+            .with_tenant_namespace("tenant_a")
+            .unwrap();
+        assert!(matches!(
+            runtime.execute(call()).await,
+            Err(RuntimeError::AuthRequired(_))
+        ));
     }
 
     #[tokio::test]
     async fn tenant_bound_authenticated_peer_fails_before_tool_lookup() {
-        let runtime = OcafRuntime::new(0).with_tenant_namespace("tenant_a").unwrap();
+        let runtime = OcafRuntime::new(0)
+            .with_tenant_namespace("tenant_a")
+            .unwrap();
         assert!(matches!(
             runtime.execute_authenticated_peer(call(), "node_a").await,
             Err(RuntimeError::AuthRequired(_))
@@ -430,7 +444,9 @@ mod omas_entrypoint_tests {
 
     #[tokio::test]
     async fn tenant_bound_signed_execution_rejects_payload_tampering() {
-        let runtime = OcafRuntime::new(0).with_tenant_namespace("tenant_a").unwrap();
+        let runtime = OcafRuntime::new(0)
+            .with_tenant_namespace("tenant_a")
+            .unwrap();
         let mut operation = crate::omas_signed::SignedOperation {
             tenant: "tenant_a".into(),
             namespace: "tenant_a/tools".into(),
@@ -452,7 +468,9 @@ mod omas_entrypoint_tests {
 
     #[tokio::test]
     async fn tenant_bound_signed_execution_rejects_broader_namespace() {
-        let runtime = OcafRuntime::new(0).with_tenant_namespace("tenant_a").unwrap();
+        let runtime = OcafRuntime::new(0)
+            .with_tenant_namespace("tenant_a")
+            .unwrap();
         let operation = crate::omas_signed::SignedOperation {
             tenant: "tenant_a".into(),
             namespace: "tenant_a".into(),
@@ -473,7 +491,9 @@ mod omas_entrypoint_tests {
 
     #[tokio::test]
     async fn tenant_bound_signed_execution_rejects_missing_replay_store() {
-        let runtime = OcafRuntime::new(0).with_tenant_namespace("tenant_a").unwrap();
+        let runtime = OcafRuntime::new(0)
+            .with_tenant_namespace("tenant_a")
+            .unwrap();
         let operation = crate::omas_signed::SignedOperation {
             tenant: "tenant_a".into(),
             namespace: "tenant_a/tools".into(),
@@ -495,7 +515,8 @@ mod omas_entrypoint_tests {
     #[tokio::test]
     async fn tenant_bound_signed_execution_rejects_missing_trusted_key() {
         let runtime = OcafRuntime::new(0)
-            .with_tenant_namespace("tenant_a").unwrap()
+            .with_tenant_namespace("tenant_a")
+            .unwrap()
             .with_omas_replay_database(std::path::PathBuf::from("/nonexistent/omas-replay.sqlite"));
         let operation = crate::omas_signed::SignedOperation {
             tenant: "tenant_a".into(),
@@ -517,7 +538,9 @@ mod omas_entrypoint_tests {
 
     #[tokio::test]
     async fn tenant_bound_signed_execution_rejects_wrong_opcode_and_target() {
-        let runtime = OcafRuntime::new(0).with_tenant_namespace("tenant_a").unwrap();
+        let runtime = OcafRuntime::new(0)
+            .with_tenant_namespace("tenant_a")
+            .unwrap();
         let mut operation = crate::omas_signed::SignedOperation {
             tenant: "tenant_a".into(),
             namespace: "tenant_a/tools".into(),
@@ -544,7 +567,9 @@ mod omas_entrypoint_tests {
 
     #[tokio::test]
     async fn tenant_bound_signed_execution_rejects_mismatched_tenant() {
-        let runtime = OcafRuntime::new(0).with_tenant_namespace("tenant_a").unwrap();
+        let runtime = OcafRuntime::new(0)
+            .with_tenant_namespace("tenant_a")
+            .unwrap();
         let operation = crate::omas_signed::SignedOperation {
             tenant: "tenant_b".into(),
             namespace: "tenant_b/tools".into(),

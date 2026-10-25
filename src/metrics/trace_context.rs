@@ -67,12 +67,9 @@ impl TraceParent {
         if &raw[0..2] != b"00" {
             return Err(TraceParentError::UnsupportedVersion);
         }
-        let trace_id = decode_hex::<16>(&raw[3..35])
-            .ok_or(TraceParentError::InvalidTraceId)?;
-        let parent_id = decode_hex::<8>(&raw[36..52])
-            .ok_or(TraceParentError::InvalidParentId)?;
-        let flags = decode_hex::<1>(&raw[53..55])
-            .ok_or(TraceParentError::InvalidFlags)?[0];
+        let trace_id = decode_hex::<16>(&raw[3..35]).ok_or(TraceParentError::InvalidTraceId)?;
+        let parent_id = decode_hex::<8>(&raw[36..52]).ok_or(TraceParentError::InvalidParentId)?;
+        let flags = decode_hex::<1>(&raw[53..55]).ok_or(TraceParentError::InvalidFlags)?[0];
         Self::new(trace_id, parent_id, flags)
     }
 

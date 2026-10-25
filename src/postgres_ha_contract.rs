@@ -60,17 +60,34 @@ pub enum PgHaError {
 
 pub fn evaluate_stage_040(evidence: &PgHaEvidence) -> Result<PgHaReceipt, PgHaError> {
     let nodes = [&evidence.primary, &evidence.standby_b, &evidence.standby_c];
-    if nodes.len() != 3 { return Err(PgHaError::NodeCount); }
-    if nodes.iter().any(|n| n.node_id.is_empty() || n.boot_id.is_empty() || n.kernel_id.is_empty()
-        || n.tcp_endpoint.is_empty() || n.wal_lsn.is_empty() || n.host_attestation.is_empty()) {
+    if nodes.len() != 3 {
+        return Err(PgHaError::NodeCount);
+    }
+    if nodes.iter().any(|n| {
+        n.node_id.is_empty()
+            || n.boot_id.is_empty()
+            || n.kernel_id.is_empty()
+            || n.tcp_endpoint.is_empty()
+            || n.wal_lsn.is_empty()
+            || n.host_attestation.is_empty()
+    }) {
         return Err(PgHaError::NodeIdentity);
     }
     if distinct(&nodes.iter().map(|n| n.node_id.as_str()).collect::<Vec<_>>()) < 3
         || distinct(&nodes.iter().map(|n| n.boot_id.as_str()).collect::<Vec<_>>()) < 3
-        || distinct(&nodes.iter().map(|n| n.kernel_id.as_str()).collect::<Vec<_>>()) < 3 {
+        || distinct(
+            &nodes
+                .iter()
+                .map(|n| n.kernel_id.as_str())
+                .collect::<Vec<_>>(),
+        ) < 3
+    {
         return Err(PgHaError::SharedKernel);
     }
-    if nodes.iter().any(|n| !n.tcp_endpoint.contains(':') || !n.replication_streaming) {
+    if nodes
+        .iter()
+        .any(|n| !n.tcp_endpoint.contains(':') || !n.replication_streaming)
+    {
         return Err(PgHaError::WalStream);
     }
     if evidence.witness_lease.is_empty() || !evidence.stale_primary_writes_denied {
@@ -91,16 +108,60 @@ pub fn evaluate_stage_040(evidence: &PgHaEvidence) -> Result<PgHaReceipt, PgHaEr
 }
 
 fn distinct(values: &[&str]) -> usize {
-    values.iter().copied().collect::<std::collections::BTreeSet<_>>().len()
+    values
+        .iter()
+        .copied()
+        .collect::<std::collections::BTreeSet<_>>()
+        .len()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    fn node(id: &str) -> PgHaNodeEvidence { PgHaNodeEvidence { node_id:id.into(), boot_id:format!("boot-{id}"), kernel_id:format!("kernel-{id}"), tcp_endpoint:format!("10.0.0.{id}:5432"), wal_lsn:"0/100".into(), replication_streaming:true, host_attestation:format!("attest-{id}") } }
-    fn evidence() -> PgHaEvidence { PgHaEvidence { primary:node("a"), standby_b:node("b"), standby_c:node("c"), witness_lease:"lease-1".into(), stale_primary_writes_denied:true, promotion_receipt:"promotion-1".into(), recovery_receipt:"recovery-1".into() } }
-    #[test] fn independent_three_kernel_evidence_is_accepted() { let receipt=evaluate_stage_040(&evidence()).unwrap(); assert_eq!(receipt.stage_id,"0.40"); assert!(receipt.live_tcp_wal); }
-    #[test] fn shared_kernel_is_rejected() { let mut e=evidence(); e.standby_c.kernel_id=e.primary.kernel_id.clone(); assert_eq!(evaluate_stage_040(&e),Err(PgHaError::SharedKernel)); }
-    #[test] fn missing_fencing_is_rejected() { let mut e=evidence(); e.stale_primary_writes_denied=false; assert_eq!(evaluate_stage_040(&e),Err(PgHaError::Fencing)); }
-    #[test] fn artifact_handoff_is_not_tcp_stream() { let mut e=evidence(); e.standby_b.replication_streaming=false; assert_eq!(evaluate_stage_040(&e),Err(PgHaError::WalStream)); }
+    fn node(id: &str) -> PgHaNodeEvidence {
+        PgHaNodeEvidence {
+            node_id: id.into(),
+            boot_id: format!("boot-{id}"),
+            kernel_id: format!("kernel-{id}"),
+            tcp_endpoint: format!("10.0.0.{id}:5432"),
+            wal_lsn: "0/100".into(),
+            replication_streaming: true,
+            host_attestation: format!("attest-{id}"),
+        }
+    }
+    fn evidence() -> PgHaEvidence {
+        PgHaEvidence {
+            primary: node("a"),
+            standby_b: node("b"),
+            standby_c: node("c"),
+            witness_lease: "lease-1".into(),
+            stale_primary_writes_denied: true,
+            promotion_receipt: "promotion-1".into(),
+            recovery_receipt: "recovery-1".into(),
+        }
+    }
+    #[test]
+    fn independent_three_kernel_evidence_is_accepted() {
+        let receipt = evaluate_stage_040(&evidence()).unwrap();
+        assert_eq!(receipt.stage_id, "0.40");
+        assert!(receipt.live_tcp_wal);
+    }
+    #[test]
+    fn shared_kernel_is_rejected() {
+        let mut e = evidence();
+        e.standby_c.kernel_id = e.primary.kernel_id.clone();
+        assert_eq!(evaluate_stage_040(&e), Err(PgHaError::SharedKernel));
+    }
+    #[test]
+    fn missing_fencing_is_rejected() {
+        let mut e = evidence();
+        e.stale_primary_writes_denied = false;
+        assert_eq!(evaluate_stage_040(&e), Err(PgHaError::Fencing));
+    }
+    #[test]
+    fn artifact_handoff_is_not_tcp_stream() {
+        let mut e = evidence();
+        e.standby_b.replication_streaming = false;
+        assert_eq!(evaluate_stage_040(&e), Err(PgHaError::WalStream));
+    }
 }

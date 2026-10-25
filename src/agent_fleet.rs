@@ -128,16 +128,16 @@ impl AgentManifest {
         if !valid_component(id, "OCAF-AGENT-") {
             return Err(AgentAdmissionError::InvalidIdentity("agent_id"));
         }
-        if !valid_component(&self.identity.swarm_id, "G")
-            || self.identity.swarm_id.len() != 3
-        {
+        if !valid_component(&self.identity.swarm_id, "G") || self.identity.swarm_id.len() != 3 {
             return Err(AgentAdmissionError::InvalidIdentity("swarm_id"));
         }
         if self.identity.display_name.trim().is_empty()
             || self.identity.specialization.trim().is_empty()
             || self.identity.version.trim().is_empty()
         {
-            return Err(AgentAdmissionError::InvalidIdentity("specialization/version"));
+            return Err(AgentAdmissionError::InvalidIdentity(
+                "specialization/version",
+            ));
         }
         if self.transport != "zenoh" {
             return Err(AgentAdmissionError::InvalidTransport);
@@ -255,7 +255,9 @@ pub enum FleetValidationError {
 fn valid_component(value: &str, prefix: &str) -> bool {
     value.starts_with(prefix)
         && value.len() > prefix.len()
-        && value.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
 }
 
 #[cfg(test)]
@@ -305,14 +307,20 @@ mod tests {
             ostc_ready: true,
             source_access_granted: true,
         };
-        assert_eq!(agent.admit_active(&evidence), Err(AgentAdmissionError::OstcDisabled));
+        assert_eq!(
+            agent.admit_active(&evidence),
+            Err(AgentAdmissionError::OstcDisabled)
+        );
     }
 
     #[test]
     fn shared_omas_omat_endpoint_is_rejected() {
         let mut agent = manifest(AgentLifecycle::Draft);
         agent.omat_endpoint = agent.omas_endpoint.clone();
-        assert_eq!(agent.validate(), Err(AgentAdmissionError::SharedServiceEndpoint));
+        assert_eq!(
+            agent.validate(),
+            Err(AgentAdmissionError::SharedServiceEndpoint)
+        );
     }
 
     #[test]
