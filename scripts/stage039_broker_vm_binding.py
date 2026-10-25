@@ -9,8 +9,9 @@ kill A and verify B remains running. Boot identities, guest/rootfs digests,
 actual kernel cgroup inodes and SIGKILL receipts are bound back to the
 exact reservations, and both leases are finally released.
 
-This is not signed WASI execution inside Firecracker; no WASI runtime is
-present in the test rootfs. It is also not production admission authority.
+The `--require-wasi` path additionally binds real in-guest WASIp1 execution
+to both broker leases and preboot host Aya receipts. The laboratory signer
+and single-host CI run are not production admission authority.
 """
 from __future__ import annotations
 
