@@ -99,13 +99,28 @@ odczytać bezpośrednio z artefaktu. Permit podpisano kluczem utworzonym w tym
 samym teście laboratoryjnym. To nie dowodzi niezależnego operatora ani
 odporności na wspólną awarię brokera i sond.
 
+[Run 40179802694](https://github.com/mojealterego/ocaf-runtime/actions/runs/40179802694)
+na commicie `10c4309c84e1281e7066557a88290ba5938f41c5` przeszedł pełny
+workflow KVM, w tym dodatkowy test negatywny. W osobnym podpisanym obrazie
+usunięto guest Aya; hostowy Aya nadal był aktywny, a drugi jailed VM działał.
+Bramka wymagała dokładnej odmowy `OCAF039_Q_GUEST_DENIED=aya_ready`, braku
+wydania permit, działania VM B podczas odmowy oraz odłączenia hostowego Aya
+i przywrócenia łączności sondy hosta po zakończeniu VM. Artefakt ma ID
+`12593702126` i SHA-256 archiwum
+`1dbf91a2813475634fb30d5a161479781cef5461d88cdc27dcb7d3522be3a092`.
+Poprzedni [run 40156821714](https://github.com/mojealterego/ocaf-runtime/actions/runs/40156821714)
+zatrzymał się na błędnym parserze zakończonej nową linią ścieżki cgroup;
+poprawka parsera ma lokalny test i przeszła w tym biegu. Test sprawdził
+tylko przypadek brakującej sondy gościa; awaria brokera i partycja sieci
+pozostają otwarte.
+
 ## Stan odbioru
 
 To dowód laboratoryjny na jednym hoście KVM. Raporty zachowują
 `stage_039_complete=false` i `production_approved=false`.
 Wymaganie 0.39.27 ma udany test laboratoryjny Aya w gościu. Klucz
 podpisujący manifesty nadal powstaje w tym samym przebiegu CI.
-Wspólny test awarii, niezależny klucz podpisujący, dwa trwałe niezależne hosty KVM oraz odbiór
+Pozostałe przypadki wspólnej awarii, niezależny klucz podpisujący, dwa trwałe niezależne hosty KVM oraz odbiór
 operatora nadal wymagają osobnych dowodów. Osobne hashe artefaktów i ich
 negatywne testy są dowodem laboratoryjnym, nie poświadczeniem dostawcy.
 Korelacja śladów w niezależnym kolektorze pozostaje otwarta.
