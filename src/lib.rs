@@ -59,3 +59,5 @@ pub mod stage044_oidc;
 pub mod stage044_vault;
 
 pub mod stage044_vault_broker;
+
+pub mod stage044_provider_refresh;
