@@ -485,6 +485,8 @@ fn decode_scopes(value: &str) -> Result<BTreeSet<String>, OAuthError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(unix)]
+    use std::os::unix::fs::PermissionsExt;
     use std::sync::atomic::{AtomicI64, Ordering};
     struct TestClock(AtomicI64);
     impl Clock for TestClock { fn now(&self) -> Result<i64, OAuthError> { Ok(self.0.load(Ordering::SeqCst)) } }
@@ -498,6 +500,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let db = dir.path().join("oauth.sqlite");
         Connection::open(&db).unwrap();
+        #[cfg(unix)]
+        std::fs::set_permissions(&db, std::fs::Permissions::from_mode(0o600)).unwrap();
         let clock = Arc::new(TestClock(AtomicI64::new(2_000_000)));
         let service = OAuthService::open_inner(&db, vec![client("tenant-a"), client("tenant-b")], clock.clone()).unwrap();
         (dir, service, clock)
@@ -624,6 +628,8 @@ mod tests {
         let dir=tempfile::tempdir().unwrap();
         assert!(matches!(OAuthService::open(&dir.path().join("missing"),vec![client("tenant-a")]),Err(OAuthError::Configuration)));
         let db=dir.path().join("oauth.sqlite");Connection::open(&db).unwrap();
+        #[cfg(unix)]
+        std::fs::set_permissions(&db, std::fs::Permissions::from_mode(0o600)).unwrap();
         let mut bad=client("tenant-a");bad.redirect_uri="http://127.0.0.1/callback".into();
         assert!(matches!(OAuthService::open(&db,vec![bad]),Err(OAuthError::Configuration)));
     }

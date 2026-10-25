@@ -45,6 +45,8 @@ fn call(tenant:&str,agent:&str) -> ToolCall {
 fn two_tenants_two_users_and_confused_deputy_are_isolated() {
     let dir=tempfile::tempdir().unwrap();let path=dir.path().join("oauth.sqlite");
     Connection::open(&path).unwrap();
+    #[cfg(unix)]
+    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
     let oauth=OAuthService::open(&path,vec![client("tenant-a"),client("tenant-b")]).unwrap();
     let alice=token(&oauth,"tenant-a","alice");
     let bob=token(&oauth,"tenant-b","bob");
@@ -63,6 +65,8 @@ fn two_tenants_two_users_and_confused_deputy_are_isolated() {
 #[test]
 fn valid_oauth_never_bypasses_omat_execution_and_ostc() {
     let dir=tempfile::tempdir().unwrap();let path=dir.path().join("oauth.sqlite");Connection::open(&path).unwrap();
+    #[cfg(unix)]
+    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
     let oauth=OAuthService::open(&path,vec![client("tenant-a")]).unwrap();
     let alice=token(&oauth,"tenant-a","alice");
     let peer=AuthenticatedPeer{principal:"agent-a".into(),tenant:"tenant-a".into()};

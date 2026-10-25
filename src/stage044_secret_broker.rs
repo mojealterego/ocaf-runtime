@@ -365,6 +365,8 @@ fn https_post(route: &BrokerRoute, secret: &[u8], json_body: &[u8]) -> Result<Br
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(unix)]
+    use std::os::unix::fs::PermissionsExt;
     fn route(ip: Ipv4Addr) -> BrokerRoute {
         BrokerRoute { route_id:"provider-a".into(), tool_id:"tool-a".into(),
             hostname:"api.example.com".into(),pinned_ip:ip,port:443,path:"/v1/execute".into(),
@@ -387,6 +389,8 @@ mod tests {
     #[test]
     fn encryption_binds_tenant_user_and_route() {
         let dir=tempfile::tempdir().unwrap();let db=dir.path().join("vault.sqlite");Connection::open(&db).unwrap();
+        #[cfg(unix)]
+        std::fs::set_permissions(&db, std::fs::Permissions::from_mode(0o600)).unwrap();
         let mut broker=SecretBroker::open(&db,[42u8;32],vec![route(Ipv4Addr::new(8,8,8,8))]).unwrap();
         broker.provision_secret("tenant-a","alice","provider-a",b"token-alpha").unwrap();
         let conn=broker.connection().unwrap();
