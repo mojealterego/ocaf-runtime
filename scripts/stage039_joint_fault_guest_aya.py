@@ -41,6 +41,19 @@ class JointFaultDenied(ValueError):
     pass
 
 
+def vm_cgroup_from_peer(peer: transport.VmPeer) -> Path:
+    names = [component for line in peer.cgroup.splitlines()
+             if line.startswith("0::/")
+             for component in line[4:].split("/")
+             if vm_egress.VM_CGROUP.fullmatch(component)]
+    if len(names) != 1:
+        raise JointFaultDenied("VM cgroup identity absent")
+    path = Path("/sys/fs/cgroup") / names[0]
+    if path.is_symlink() or not path.is_dir() or path.stat().st_uid != 0:
+        raise JointFaultDenied("VM cgroup path unsafe")
+    return path
+
+
 def sha(path: Path) -> str:
     with path.open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
@@ -151,11 +164,7 @@ class AyaFaultBridge:
             time.sleep(.02)
         else:
             raise JointFaultDenied("VM process never entered private cgroup")
-        names = [name for name in peer.cgroup.split("/")
-                 if vm_egress.VM_CGROUP.fullmatch(name)]
-        if len(names) != 1:
-            raise JointFaultDenied("VM cgroup identity absent")
-        cgroup = Path("/sys/fs/cgroup") / names[0]
+        cgroup = vm_cgroup_from_peer(peer)
 
         def serve() -> None:
             listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

@@ -9,6 +9,14 @@ import stage039_joint_fault_guest_aya as fault
 
 
 class FaultProofGate(unittest.TestCase):
+    def test_cgroup_path_parses_proc_line_terminator(self):
+        name = "ocaf-stage039-vm-" + "a" * 16 + ".service"
+        peer = mock.Mock(cgroup="0::/" + name + "\n")
+        with mock.patch.object(fault.Path, "is_dir", return_value=True), \
+             mock.patch.object(fault.Path, "is_symlink", return_value=False), \
+             mock.patch.object(fault.Path, "stat", return_value=mock.Mock(st_uid=0)):
+            self.assertEqual(fault.vm_cgroup_from_peer(peer), Path("/sys/fs/cgroup") / name)
+
     def setUp(self):
         self.bridge = fault.AyaFaultBridge(Path("/tmp/nonexistent-ocaf039"))
         self.bridge.guard = mock.Mock()
