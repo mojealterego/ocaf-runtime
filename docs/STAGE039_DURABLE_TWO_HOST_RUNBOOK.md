@@ -34,7 +34,7 @@ Na A (dla B zamienić `a` na `b`, `tenant-a` na `tenant-b`, UID `1002` na
 `1003`; używać oddzielnego `PREFIX` na B):
 
 ```bash
-PREFIX=/opt/o39h<IDENTYFIKATOR>-a
+PREFIX=/opt/o39h20261025-a  # zastąp rzeczywistą ścieżką rejestru A
 mkdir -m 0700 -p "$HOME/ocaf039-before"
 sudo -n python3 scripts/stage039_kvm_soak.py \
   --prefix "$PREFIX" --tenant tenant-a --uid 1002 \
@@ -75,8 +75,9 @@ kanale operatora, osobno od efemerycznej CA z labu. Serwer nasłuchuje na
 rzeczywistym adresie IPv4 B osiągalnym z A:
 
 ```bash
+HOST_B_IPV4='ADRES_IPV4_HOSTA_B'
 python3 scripts/stage039_mtls_fencing.py serve \
-  --host <ADRES_B> --port 24399 \
+  --host "$HOST_B_IPV4" --port 24399 \
   --cert /PRIVATE/server.pem --key /PRIVATE/server.key \
   --ca /PRIVATE/ca.pem --db /PRIVATE/ledger/state.sqlite \
   --ready /PRIVATE/server.ready
@@ -86,8 +87,9 @@ python3 scripts/stage039_mtls_fencing.py serve \
 potwierdzeniu trasy i gotowości serwera, wykonać:
 
 ```bash
+HOST_B_IPV4='ADRES_IPV4_HOSTA_B'
 sudo -n python3 scripts/stage039_interhost_partition.py \
-  --host-b-ipv4 <ADRES_B> --port 24399 \
+  --host-b-ipv4 "$HOST_B_IPV4" --port 24399 \
   --cert /PRIVATE/client.pem --key /PRIVATE/client.key \
   --ca /PRIVATE/ca.pem --report /PRIVATE/interhost-partition.json \
   --ack-real-host-network-partition
