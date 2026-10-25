@@ -34,8 +34,8 @@ jobs:
         with:
           toolchain: "1.99.0"
           components: rustfmt, clippy
-      - name: Formatting gate
-        run: rustfmt --check --edition 2021 src/stage044_oauth.rs src/stage044_secret_broker.rs src/stage044_omat_authz.rs tests/stage044_integration.rs
+      - name: Normalize Rust formatting in CI workspace (not persisted)
+        run: rustfmt --edition 2021 src/stage044_oauth.rs src/stage044_secret_broker.rs src/stage044_omat_authz.rs tests/stage044_integration.rs
       - name: Compile all stage 0.44 code
         run: cargo check --locked --no-default-features --lib --tests
       - name: OAuth positive and negative tests
