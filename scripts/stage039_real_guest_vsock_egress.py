@@ -16,6 +16,7 @@ import json
 import multiprocessing
 import os
 from pathlib import Path
+import secrets
 import shutil
 import ssl
 import subprocess
@@ -96,6 +97,10 @@ class ProcessFaultBroker:
         self.conn = None
         self.calls = 0
         self.process_sigkill_observed = False
+        self.partition_denied = False
+        self.partition_recovered = False
+        self.nft_table = "ocaf039" + secrets.token_hex(4)
+        self.partition_active = False
         self.start()
 
     def start(self) -> None:
@@ -111,6 +116,32 @@ class ProcessFaultBroker:
             raise ValueError("separate broker worker failed to become ready")
         self.proc, self.conn = proc, parent
 
+    def _partition_on(self) -> None:
+        if self.partition_active:
+            raise ValueError("duplicate network partition")
+        rules = (f"add table inet {self.nft_table}\n"
+                 f"add chain inet {self.nft_table} output "
+                 "{ type filter hook output priority -100; policy accept; }\n"
+                 f"add rule inet {self.nft_table} output ip daddr 127.0.0.1 "
+                 f"tcp dport {self.port} drop\n")
+        subprocess.run(["nft", "-f", "-"], input=rules, text=True,
+                       check=True, timeout=5, capture_output=True)
+        self.partition_active = True
+
+    def _partition_off(self) -> None:
+        if self.partition_active:
+            subprocess.run(["nft", "delete", "table", "inet", self.nft_table],
+                           check=True, timeout=5, capture_output=True)
+            self.partition_active = False
+
+    def _request(self, signed_permit: bytes, tenant: str) -> tuple[str, object]:
+        if self.proc is None or self.conn is None or not self.proc.is_alive():
+            raise eg.EgressDenied("no live broker process for bounded request")
+        self.conn.send((signed_permit, tenant))
+        if not self.conn.poll(12):
+            raise eg.EgressDenied("separate broker process response timed out")
+        return self.conn.recv()
+
     def fetch(self, *, signed_permit: bytes, authenticated_tenant: str) -> bytes:
         self.calls += 1
         if self.calls == 2:
@@ -119,13 +150,19 @@ class ProcessFaultBroker:
             raise eg.EgressDenied("broker process unavailable after SIGKILL")
         if self.calls == 3:
             self.start()
-        if self.calls not in (1, 3) or self.proc is None or self.conn is None \
-                or not self.proc.is_alive():
-            raise eg.EgressDenied("no live broker process for bounded request")
-        self.conn.send((signed_permit, authenticated_tenant))
-        if not self.conn.poll(12):
-            raise eg.EgressDenied("separate broker process response timed out")
-        status, response = self.conn.recv()
+        if self.calls == 4:
+            self._partition_on()
+            try:
+                status, response = self._request(signed_permit, authenticated_tenant)
+            finally:
+                self._partition_off()
+            if status != "DENIED" or "TLS egress connection failed closed" not in str(response):
+                raise eg.EgressDenied("real nft partition did not deny fresh permit")
+            self.partition_denied = True
+            raise eg.EgressDenied("kernel nft partition denied fresh permit")
+        if self.calls not in (1, 3, 5):
+            raise eg.EgressDenied("unbounded broker fault request")
+        status, response = self._request(signed_permit, authenticated_tenant)
         if self.calls == 1:
             if status != "GRANTED" or not isinstance(response, bytes):
                 raise eg.EgressDenied("initial broker grant absent")
@@ -137,11 +174,17 @@ class ProcessFaultBroker:
             self.conn.close()
             self.conn = None
             return response
-        if status != "DENIED" or "replayed destination permit" not in str(response):
-            raise eg.EgressDenied("durable replay denial absent after process restart")
-        raise eg.EgressDenied("replayed destination permit after process restart")
+        if self.calls == 3:
+            if status != "DENIED" or "replayed destination permit" not in str(response):
+                raise eg.EgressDenied("durable replay denial absent after process restart")
+            raise eg.EgressDenied("replayed destination permit after process restart")
+        if status != "GRANTED" or not isinstance(response, bytes) or not self.partition_denied:
+            raise eg.EgressDenied("network recovery grant absent")
+        self.partition_recovered = True
+        return response
 
     def close(self) -> None:
+        self._partition_off()
         if self.proc is not None and self.proc.is_alive():
             self.proc.kill()
             self.proc.join(timeout=5)
@@ -188,7 +231,7 @@ class VsockBridge:
         def serve():
             try:
                 self.decisions = transport.listen_many(
-                    self.path, peer=peer, broker=self.broker, requests=3)
+                    self.path, peer=peer, broker=self.broker, requests=5)
             except BaseException as exc:
                 self.failure = exc
 
@@ -216,7 +259,7 @@ class VsockBridge:
                 raise ValueError("guest vsock PID1 rejected the exchange; "
                                  f"guest_markers={markers!r} "
                                  f"decisions={self.decisions!r} bridge_failure={self.failure!r}")
-            if "OCAF039_GUEST_VSOCK_GRANT_CRASH_DENY_RESTART_REPLAY_DENY_PASS" in serial:
+            if "OCAF039_GUEST_VSOCK_CRASH_REPLAY_PARTITION_RECOVERY_PASS" in serial:
                 break
             time.sleep(.1)
         else:
@@ -228,23 +271,30 @@ class VsockBridge:
             raise ValueError("no vsock listener thread")
         self.thread.join(timeout=2)
         if self.thread.is_alive() or self.decisions is None:
-            raise ValueError("vsock broker did not complete all three requests")
-        if (serial.count("OCAF039_GUEST_EGRESS_BROKERED_BYTES=") != 1
+            raise ValueError("vsock broker did not complete all five requests")
+        if (serial.count("OCAF039_GUEST_EGRESS_BROKERED_BYTES=") != 2
                 or f"OCAF039_GUEST_EGRESS_BROKERED_BYTES={len(BODY)}" not in serial
-                or serial.count("OCAF039_GUEST_EGRESS_DENIED") != 2
-                or [d["status"] for d in self.decisions] != ["GRANTED", "DENIED", "DENIED"]
+                or serial.count("OCAF039_GUEST_EGRESS_DENIED") != 3
+                or [d["status"] for d in self.decisions] !=
+                   ["GRANTED", "DENIED", "DENIED", "DENIED", "GRANTED"]
                 or "broker process unavailable" not in self.decisions[1].get("deny_reason", "")
                 or "replayed destination permit" not in self.decisions[2].get("deny_reason", "")
+                or "kernel nft partition denied" not in self.decisions[3].get("deny_reason", "")
                 or not self.broker.process_sigkill_observed
+                or not self.broker.partition_denied
+                or not self.broker.partition_recovered
                 or self.decisions[0].get("response_sha256") != hashlib.sha256(BODY).hexdigest()
+                or self.decisions[4].get("response_sha256") != hashlib.sha256(BODY).hexdigest()
                 or any(d["tenant_id"] != self.tenant or d["vm_pid"] != proc.pid
                        for d in self.decisions)):
             raise ValueError("real guest serial and kernel-bound egress decisions disagree")
-        return {"status": "REAL_GUEST_VSOCK_SIGNED_TLS_GRANT_PROCESS_CRASH_REPLAY_DENY",
+        return {"status": "REAL_GUEST_VSOCK_CRASH_REPLAY_PARTITION_RECOVERY",
                 "guest_cid": self.cid, "guest_serial_sha256": hashlib.sha256(serial.encode()).hexdigest(),
                 "decisions": self.decisions, "broker_process_sigkill_while_guest_live": True,
                 "no_guest_grant_while_broker_dead": True,
                 "durable_replay_denied_after_broker_process_restart": True,
+                "kernel_nft_partition_denied_fresh_permit": True,
+                "fresh_permit_granted_after_partition_recovery": True,
                 "guest_direct_network": False,
                 "guest_kvm_tested": True, "stage_039_complete": False,
                 "production_approved": False}
@@ -255,7 +305,8 @@ class VsockBridge:
             self.thread.join(timeout=.1)
 
 
-def build_guest_image(approved: Path, permit: bytes, work: Path) -> Path:
+def build_guest_image(approved: Path, permits: tuple[bytes, bytes, bytes],
+                      work: Path) -> Path:
     image = approved / "egress_guest_rootfs"
     shutil.copyfile(approved / "guest_rootfs", image)
     subprocess.run(["truncate", "-s", "+64M", str(image)], check=True)
@@ -279,10 +330,14 @@ def build_guest_image(approved: Path, permit: bytes, work: Path) -> Path:
         (mount / "opt/ocaf").mkdir(parents=True, exist_ok=True)
         shutil.copyfile(client, mount / "usr/bin/ocaf-guest-vsock-egress")
         shutil.copyfile(init, mount / "ocaf-egress-init")
-        (mount / "opt/ocaf/egress-permit.json").write_bytes(permit)
+        for name, payload in zip(
+            ("egress-permit.json", "egress-permit-partition.json",
+             "egress-permit-recovery.json"), permits, strict=True):
+            item = mount / "opt/ocaf" / name
+            item.write_bytes(payload)
+            item.chmod(0o444)
         for path in (mount / "usr/bin/ocaf-guest-vsock-egress", mount / "ocaf-egress-init"):
             path.chmod(0o555)
-        (mount / "opt/ocaf/egress-permit.json").chmod(0o444)
         subprocess.run(["sync"], check=True)
     finally:
         subprocess.run(["umount", str(mount)], check=True)
@@ -316,15 +371,19 @@ def run(prefix: Path, report: Path) -> dict:
             signing = Ed25519PrivateKey.generate()
             public = signing.public_key().public_bytes(
                 serialization.Encoding.Raw, serialization.PublicFormat.Raw)
-            payload = {"schema_version": 1, "tenant_id": "tenant-a",
-                       "nonce": os.urandom(16).hex(),
-                       "url": f"https://localhost:{port}/approved",
-                       "expires_unix": int(time.time()) + 180, "max_bytes": len(BODY)}
-            permit = json.dumps({"key_id": "stage039-vsock-lab",
-                                 "public_key": base64.b64encode(public).decode(),
-                                 "signature": base64.b64encode(signing.sign(canonical_payload(payload))).decode(),
-                                 "payload": payload}, sort_keys=True).encode()
-            image = build_guest_image(approved, permit, work)
+            expiry = int(time.time()) + 180
+            def permit() -> bytes:
+                payload = {"schema_version": 1, "tenant_id": "tenant-a",
+                           "nonce": os.urandom(16).hex(),
+                           "url": f"https://localhost:{port}/approved",
+                           "expires_unix": expiry, "max_bytes": len(BODY)}
+                return json.dumps({
+                    "key_id": "stage039-vsock-lab",
+                    "public_key": base64.b64encode(public).decode(),
+                    "signature": base64.b64encode(
+                        signing.sign(canonical_payload(payload))).decode(),
+                    "payload": payload}, sort_keys=True).encode()
+            image = build_guest_image(approved, (permit(), permit(), permit()), work)
             manifest = json.loads((approved / "request.json").read_text())
             manifest["workload_id"] = "ocaf-fc-vsock-lab"
             manifest["assets"]["guest_rootfs"] = {
@@ -347,7 +406,7 @@ def run(prefix: Path, report: Path) -> dict:
                 firecracker_sha=manifest["assets"]["firecracker"]["sha256"],
                 chroot_base=prefix / "jailer", uid=1002, gid=1002, timeout=100,
                 boot_hook=hooked, vsock_bridge=bridge)
-            if proof["guest_vsock_egress"]["status"] != "REAL_GUEST_VSOCK_SIGNED_TLS_GRANT_PROCESS_CRASH_REPLAY_DENY":
+            if proof["guest_vsock_egress"]["status"] != "REAL_GUEST_VSOCK_CRASH_REPLAY_PARTITION_RECOVERY":
                 raise ValueError("real guest vsock proof absent")
             report.write_text(json.dumps(proof, sort_keys=True, indent=2) + "\n")
             return proof

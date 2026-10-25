@@ -6,11 +6,11 @@
 #include <stdio.h>
 #include <signal.h>
 
-static int invoke(void) {
+static int invoke(const char *permit) {
     pid_t child=fork();
     if(child<0)return -1;
     if(child==0){
-        char *const args[]={"/usr/bin/ocaf-guest-vsock-egress",NULL};
+        char *const args[]={"/usr/bin/ocaf-guest-vsock-egress",(char *)permit,NULL};
         char *const env[]={"PATH=/usr/bin:/bin","LANG=C",NULL};
         execve(args[0],args,env);
         _exit(127);
@@ -24,14 +24,16 @@ int main(void) {
     int fd=open("/dev/console",O_WRONLY);
     if(fd>=0){dup2(fd,1);dup2(fd,2);if(fd>2)close(fd);}
     puts("OCAF039_GUEST_VSOCK_PID1_BOOTED");fflush(stdout);
-    int first=invoke();fflush(stdout);
-    int second=invoke();fflush(stdout);
-    int third=invoke();fflush(stdout);
-    if(first==0 && second==4 && third==4){
-        puts("OCAF039_GUEST_VSOCK_GRANT_CRASH_DENY_RESTART_REPLAY_DENY_PASS");
+    int first=invoke(NULL);fflush(stdout);
+    int second=invoke(NULL);fflush(stdout);
+    int third=invoke(NULL);fflush(stdout);
+    int fourth=invoke("/opt/ocaf/egress-permit-partition.json");fflush(stdout);
+    int fifth=invoke("/opt/ocaf/egress-permit-recovery.json");fflush(stdout);
+    if(first==0 && second==4 && third==4 && fourth==4 && fifth==0){
+        puts("OCAF039_GUEST_VSOCK_CRASH_REPLAY_PARTITION_RECOVERY_PASS");
     }else{
-        printf("OCAF039_GUEST_VSOCK_FAILURE first=%d second=%d third=%d\n",
-               first,second,third);
+        printf("OCAF039_GUEST_VSOCK_FAILURE first=%d second=%d third=%d fourth=%d fifth=%d\n",
+               first,second,third,fourth,fifth);
     }
     fflush(stdout);
     for(;;)pause();

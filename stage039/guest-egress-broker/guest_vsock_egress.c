@@ -21,6 +21,8 @@
 #define MAX_REPLY (1024u * 1024u)
 #define HOST_PORT 5000u
 #define PERMIT_FILE "/opt/ocaf/egress-permit.json"
+#define PARTITION_PERMIT "/opt/ocaf/egress-permit-partition.json"
+#define RECOVERY_PERMIT "/opt/ocaf/egress-permit-recovery.json"
 
 static void deny(void) { fputs("OCAF039_GUEST_EGRESS_DENIED\n", stdout); }
 
@@ -51,8 +53,8 @@ static int exact_io(int fd,void *buffer,size_t size,int sending,int64_t deadline
     return 0;
 }
 
-static int read_permit(unsigned char *data,size_t *length) {
-    int fd=open(PERMIT_FILE,O_RDONLY|O_CLOEXEC|O_NOFOLLOW);
+static int read_permit(const char *path,unsigned char *data,size_t *length) {
+    int fd=open(path,O_RDONLY|O_CLOEXEC|O_NOFOLLOW);
     if(fd<0)return -1;
     struct stat st;
     if(fstat(fd,&st)!=0 || !S_ISREG(st.st_mode) || st.st_nlink!=1 ||
@@ -80,9 +82,13 @@ static int read_permit(unsigned char *data,size_t *length) {
     return 0;
 }
 
-int main(void) {
+int main(int argc,char **argv) {
+    const char *permit_path=PERMIT_FILE;
+    if(argc==2 && (!strcmp(argv[1],PARTITION_PERMIT) ||
+                   !strcmp(argv[1],RECOVERY_PERMIT)))permit_path=argv[1];
+    else if(argc!=1){deny();return 4;}
     unsigned char permit[MAX_PERMIT];size_t permit_len=0;
-    if(read_permit(permit,&permit_len)!=0){deny();return 4;}
+    if(read_permit(permit_path,permit,&permit_len)!=0){deny();return 4;}
     int fd=socket(AF_VSOCK,SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK,0);
     if(fd<0){deny();return 4;}
     struct sockaddr_vm address={.svm_family=AF_VSOCK,

@@ -145,7 +145,7 @@ def handle_one(conn: socket.socket, *, peer: VmPeer, broker: SignedFetch) -> dic
 def listen_many(path: Path, *, peer: VmPeer, broker: SignedFetch,
                 requests: int) -> list[dict]:
     """Create one per-VM Firecracker vsock endpoint for bounded requests."""
-    if type(requests) is not int or not 1 <= requests <= 4:
+    if type(requests) is not int or not 1 <= requests <= 5:
         raise TransportDenied("bounded guest request count required")
     if (not isinstance(path, Path) or not path.is_absolute() or path.is_symlink()
             or path.resolve(strict=False) != path or path.parent.is_symlink()):
