@@ -53,3 +53,5 @@ pub mod stage043_omat_zenoh;
 pub mod stage044_oauth;
 pub mod stage044_secret_broker;
 pub mod stage044_omat_authz;
+
+pub mod stage044_oidc;
