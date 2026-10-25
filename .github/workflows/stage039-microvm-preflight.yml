@@ -31,6 +31,10 @@ on:
       - scripts/stage039_mtls_fencing.py
       - scripts/stage039_signed_acceptance.py
       - scripts/tests/test_stage039_signed_acceptance.py
+      - scripts/stage039_durable_host_bundle.py
+      - scripts/tests/test_stage039_durable_host_bundle.py
+      - scripts/stage039_interhost_partition.py
+      - scripts/tests/test_stage039_interhost_partition.py
       - scripts/tests/test_stage039_mtls_fencing.py
       - scripts/tests/test_stage039_cold_recovery.py
       - scripts/tests/test_stage039_jailed_guest_network.py
@@ -126,8 +130,12 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_guest_tc.py -v
       - name: mTLS RPC SAN identity and durable single-authority fail-closed fencing regression
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_mtls_fencing.py -v
-      - name: Cryptographic signed audit/operator dossier has distinct Ed25519 verifier and NO production self-approval
+      - name: Owner-only Ed25519 dossier and waived independent audit cannot self-approve production
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_signed_acceptance.py -v
+      - name: Durable two-host KVM report and interhost nft partition fail-closed contracts
+        run: |
+          python3 -m unittest discover -s scripts/tests -p test_stage039_durable_host_bundle.py -v
+          python3 -m unittest discover -s scripts/tests -p test_stage039_interhost_partition.py -v
       - name: Validate actual guest WASI import and two-VM broker-bound serial receipts fail closed
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_guest_wasi.py -v
       - name: Python source syntax verification
@@ -151,6 +159,8 @@ jobs:
           python3 -m py_compile scripts/stage039_cold_recovery.py scripts/tests/test_stage039_cold_recovery.py
           python3 -m py_compile scripts/stage039_mtls_fencing.py scripts/tests/test_stage039_mtls_fencing.py
           python3 -m py_compile scripts/stage039_signed_acceptance.py scripts/tests/test_stage039_signed_acceptance.py
+          python3 -m py_compile scripts/stage039_durable_host_bundle.py scripts/tests/test_stage039_durable_host_bundle.py
+          python3 -m py_compile scripts/stage039_interhost_partition.py scripts/tests/test_stage039_interhost_partition.py
           python3 -m py_compile scripts/stage039_independent_hosts.py scripts/tests/test_stage039_independent_hosts.py
       - name: Observe KVM, cgroup v2, PID1 systemd, BTF and bpffs on actual CI Linux
         shell: bash

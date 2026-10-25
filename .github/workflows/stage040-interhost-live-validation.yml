@@ -7,6 +7,8 @@ on:
       - .github/workflows/stage040-interhost-live-validation.yml
       - scripts/stage040_interhost_live.py
       - scripts/tests/test_stage040_interhost_live.py
+      - scripts/stage040_live_twohost_probe.py
+      - scripts/tests/test_stage040_live_twohost_probe.py
   workflow_dispatch:
 
 permissions:
@@ -26,7 +28,9 @@ jobs:
         run: |
           set -euo pipefail
           python3 -m unittest discover -s scripts/tests -p test_stage040_interhost_live.py -v
+          python3 -m unittest discover -s scripts/tests -p test_stage040_live_twohost_probe.py -v
           python3 -m py_compile scripts/stage040_interhost_live.py
+          python3 -m py_compile scripts/stage040_live_twohost_probe.py
           echo "STAGE040_INTERHOST_RUNNER_PRECHECK_ONLY_NO_LIVE_REPLICATION_CLAIM"
 
   actual-three-independent-postgresql-hosts:
