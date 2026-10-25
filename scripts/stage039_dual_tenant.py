@@ -168,7 +168,7 @@ def execute(*, manifest_a:Path, manifest_b:Path, approved_root:Path,
             aya_program=aya_program, aya_program_sha=aya_program_sha,
             aya_seconds=aya_seconds, crash_after_proof=True,
             boot_hook=hook,require_guest_wasi=require_guest_wasi,
-            traceparent=trace)
+            traceparent=trace,preboot_host_aya=require_guest_wasi)
 
     with ThreadPoolExecutor(max_workers=2,thread_name_prefix="ocaf39-tenant") as pool:
         fa = pool.submit(launch,manifest_a,1002,hook_a,

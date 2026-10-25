@@ -7,6 +7,7 @@ on:
       - .github/workflows/stage039-real-firecracker-jailer.yml
       - scripts/stage039_live_firecracker.py
       - scripts/stage039_vm_egress.py
+      - scripts/stage039_preboot_aya.py
       - scripts/stage039_vm_resources.py
       - scripts/stage039_vm_crash.py
       - scripts/stage039_dual_tenant.py
@@ -163,7 +164,7 @@ jobs:
         run: |
           set -euo pipefail
           rustup toolchain install 1.99.0 --profile minimal
-          cargo +1.99.0 build --manifest-path stage039/aya-guard/Cargo.toml --release
+          cargo +1.99.0 build --manifest-path stage039/aya-guard/Cargo.toml --release --locked
           PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
           sudo -n install -o root -g root -m 0500 \
             stage039/aya-guard/target/release/ocaf-stage039-aya-guard \
@@ -608,12 +609,19 @@ jobs:
           raw=json.loads(Path("stage039-real-guest-evidence/broker-wasi-vm.json").read_text())
           assert raw["broker_vm_binding"]["wasi_executed_inside_guest"] is True
           assert raw["broker_vm_binding"]["signed_wasi_manifest_verified"] is True
+          assert raw["broker_vm_binding"]["host_aya_egress_attached_before_guest_execution"] is True
           assert raw["broker_vm_binding"]["guest_traceparent_propagated"] is True
           traces=raw["broker_vm_binding"]["tenant_traceparents"]
           assert set(traces)=={"a","b"} and traces["a"]!=traces["b"]
           for tenant in ("a","b"):
               assert raw["tenant_"+tenant]["guest_wasi_execution"]["observed_before_vm_sigkill"] is True
               assert raw["tenant_"+tenant]["guest_wasi_execution"]["traceparent"]==traces[tenant]
+              host_aya=raw["tenant_"+tenant]["vm_preboot_aya_egress"]
+              assert host_aya["host_probe_denied_before_vm_start"] is True
+              assert host_aya["guest_wasi_observed_while_attached"] is True
+              assert host_aya["aya_detached_after_vm_stop"] is True
+              assert host_aya["host_probe_recovered_after_vm_stop"] is True
+              assert host_aya["guest_network_egress_tested"] is False
           assert v["real_guest_wasi_execution_verified"] is True
           assert v["both_tenants_own_vm_and_broker_reservations"] is True
           assert set(v["tenant_receipts"])=={"a","b"}

@@ -18,7 +18,8 @@ def manifest(tenant):
             "isolation":{"network":"none","guest_egress":False,"jailer":True},
             "assets":{"guest_kernel":{"sha256":"a"*64},
                       "guest_rootfs":{"sha256":"b"*64},
-                      "firecracker":{"sha256":"c"*64}}}
+                      "firecracker":{"sha256":"c"*64},
+                      "aya_cgroup_device":{"sha256":"d"*64}}}
 
 
 def admission(tenant,raw):
@@ -113,10 +114,24 @@ class BrokerVmAcceptanceTests(unittest.TestCase):
                 "guest_kernel_bpf_program_id":17 if t=="a" else 18,
                 "serial_sha256": ("a" if t=="a" else "b")*64,
             }
+            actual["tenant_"+t]["vm_preboot_aya_egress"]={
+                "status":"HOST_AYA_ATTACHED_BEFORE_FIRECRACKER_START",
+                "vm_cgroup_inode":actual["tenant_"+t]["cgroup_inode"],
+                "kernel_bpf_program_id":51 if t=="a" else 52,
+                "bpf_elf_sha256":"d"*64,
+                "aya_loader_sha256":"e"*64,
+                "host_probe_denied_before_vm_start":True,
+                "guest_wasi_observed_while_attached":True,
+                "aya_detached_after_vm_stop":True,
+                "host_probe_recovered_after_vm_stop":True,
+                "guest_network_egress_tested":False,
+                "stage_039_complete":False,"production_approved":False,
+            }
         result=binding.verify_binding(self.reports,self.raw,actual,require_wasi=True)
         self.assertTrue(result["wasi_executed_inside_guest"])
         self.assertFalse(result["signed_wasi_manifest_verified"])
         self.assertTrue(result["guest_traceparent_propagated"])
+        self.assertTrue(result["host_aya_egress_attached_before_guest_execution"])
         self.assertNotEqual(result["tenant_traceparents"]["a"],result["tenant_traceparents"]["b"])
         self.assertNotEqual(actual["tenant_a"]["guest_wasi_execution"]["task_nonce"],
                             actual["tenant_b"]["guest_wasi_execution"]["task_nonce"])
@@ -128,6 +143,11 @@ class BrokerVmAcceptanceTests(unittest.TestCase):
                                      "task_nonce":"a"*32}},
             {"guest_wasi_execution":{**actual["tenant_b"]["guest_wasi_execution"],
                                      "traceparent":actual["tenant_a"]["traceparent"]}},
+            {"vm_preboot_aya_egress":None},
+            {"vm_preboot_aya_egress":{**actual["tenant_b"]["vm_preboot_aya_egress"],
+                                       "guest_wasi_observed_while_attached":False}},
+            {"vm_preboot_aya_egress":{**actual["tenant_b"]["vm_preboot_aya_egress"],
+                                       "vm_cgroup_inode":1321}},
         ):
             with self.subTest(tamper=tamper),self.assertRaises(binding.BindingError):
                 bad=json.loads(json.dumps(actual))

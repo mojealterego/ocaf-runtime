@@ -25,6 +25,7 @@ import time
 import stage039_firecracker_spec as spec
 import stage039_kvm_ioctl as kvm
 import stage039_vm_egress as vm_egress
+import stage039_preboot_aya as preboot_aya
 import stage039_vm_resources as vm_resources
 import stage039_vm_crash as vm_crash
 import stage039_microvm_gate as gate
@@ -327,13 +328,16 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
         aya_program: Path | None = None, aya_program_sha: str | None = None,
         aya_seconds: int = 15, crash_after_proof: bool = False,
         boot_hook=None, require_guest_wasi: bool = False,
-        traceparent: str | None = None, vsock_bridge=None) -> dict:
+        traceparent: str | None = None, vsock_bridge=None,
+        preboot_host_aya: bool = False) -> dict:
     import secrets
     inputs = (aya_loader, aya_loader_sha, aya_program, aya_program_sha)
     if any(value is not None for value in inputs) and any(value is None for value in inputs):
         raise LiveFirecrackerError("Aya host-cgroup probe requires all four pinned inputs")
     if aya_loader is not None and not 12 <= aya_seconds <= 60:
         raise LiveFirecrackerError("Aya attach must use a bounded 12..60 second interval")
+    if preboot_host_aya and (aya_loader is None or not require_guest_wasi or not crash_after_proof):
+        raise LiveFirecrackerError("preboot host Aya requires pinned loader, guest WASI and VM teardown")
     if os.geteuid() != 0:
         raise LiveFirecrackerError("operator must run privileged jailer on an authorized KVM host")
     if not 10 <= timeout <= 120:
@@ -363,6 +367,8 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
     root = chroot_base / firecracker.name / vm_id / "root"
     sockpath = validate_api_socket_path(chroot_base, firecracker.name, vm_id)
     proc = None
+    aya_guard = None
+    completed_result = None
     created = False
     try:
         cgroup.mkdir(mode=0o700)
@@ -398,6 +404,13 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
             f.flush()
             os.fsync(f.fileno())
             os.fchmod(f.fileno(), 0o444)
+        if preboot_host_aya:
+            aya_guard = preboot_aya.PrebootAya(
+                cgroup=cgroup, loader=aya_loader, loader_sha=aya_loader_sha,
+                program=aya_program, program_sha=aya_program_sha,
+                lifetime_seconds=timeout+60)
+            aya_guard.start()
+            aya_guard.require_live()
         cmd = build_jailer_command(jailer, firecracker, vm_id, uid, gid,
                                    chroot_base, cgroup_name)
         log = root.parent / "serial-console.log"
@@ -448,12 +461,18 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
                     result["guest_wasi_execution"]["observed_before_vm_sigkill"]=True
                     result["wasi"]=parsed["wasi"]
                     result["traceparent"]=traceparent
+                if aya_guard is not None:
+                    aya_guard.require_live()
+                    result["vm_preboot_aya_egress"]=aya_guard.receipt()
+                    result["vm_preboot_aya_egress"]["guest_wasi_observed_while_attached"]=True
                 if boot_hook is not None:
                     # Test-only synchronization callback. The still-running
                     # process and cgroup inode are independently checked by
                     # the dual-tenant acceptance harness before proceeding.
                     boot_hook(result, proc, vm_id, cgroup)
-                if aya_loader is not None:
+                if aya_guard is not None:
+                    aya_guard.require_live()
+                if aya_loader is not None and aya_guard is None:
                     # Guest boot was checked while the original jailer process lives.
                     # Probe packets originate from a HOST process in the VM cgroup.
                     # This is not a proof that guest network traffic is isolated.
@@ -468,8 +487,11 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
                 result["vm_resource_limits"] = vm_resources.audit_running_resource_limits(
                     cgroup, guest_mem_mib, resource_plan["vm_cgroup_inode"])
                 if crash_after_proof:
+                    if aya_guard is not None:
+                        aya_guard.require_live()
                     result["vm_sigkill_fault"] = vm_crash.kill_and_verify(
                         proc, vm_id, cgroup, deadline_seconds=5)
+                completed_result=result
                 return result
             except LiveFirecrackerError as exc:
                 last_rejection = str(exc)
@@ -495,11 +517,18 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
             except subprocess.TimeoutExpired:
                 proc.kill()
                 proc.wait(timeout=4)
-        if created:
-            try:
-                cgroup.rmdir()
-            except OSError as exc:
-                raise LiveFirecrackerError("live VM cgroup cleanup incomplete") from exc
+        try:
+            if aya_guard is not None:
+                if completed_result is None:
+                    aya_guard.abort()
+                else:
+                    completed_result["vm_preboot_aya_egress"].update(aya_guard.release())
+        finally:
+            if created:
+                try:
+                    cgroup.rmdir()
+                except OSError as exc:
+                    raise LiveFirecrackerError("live VM cgroup cleanup incomplete") from exc
         # Staged artifacts are kept for authorized forensic inspection.
 
 

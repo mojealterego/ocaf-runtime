@@ -181,6 +181,7 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
     bootids=[]
     requestids=[]
     manifest_hashes=[]
+    host_aya_ids=[]
     traceparents={}
     if signed_manifests is not None and set(signed_manifests) != {"a", "b"}:
         raise BindingError("signed manifest set must cover both tenants")
@@ -234,12 +235,28 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
             raise BindingError("running guest/Firecracker digest diverged from admitted inputs")
         if require_wasi:
             guest=actual_vm.get("guest_wasi_execution")
+            preboot=actual_vm.get("vm_preboot_aya_egress")
             wasi=m.get("wasi")
             try:
                 expected_trace=traceparent.derive(rec["request_id"], rec["manifest_sha256"],m["tenant_id"])
             except (KeyError,ValueError) as exc:
                 raise BindingError("invalid broker-derived VM trace identity") from exc
-            if (not isinstance(wasi,dict)
+            if (not isinstance(preboot,dict)
+                or preboot.get("status")!="HOST_AYA_ATTACHED_BEFORE_FIRECRACKER_START"
+                or preboot.get("vm_cgroup_inode")!=actual_vm["cgroup_inode"]
+                or preboot.get("bpf_elf_sha256")!=m["assets"]["aya_cgroup_device"]["sha256"]
+                or not isinstance(preboot.get("aya_loader_sha256"),str)
+                or re.fullmatch("[a-f0-9]{64}",preboot["aya_loader_sha256"]) is None
+                or type(preboot.get("kernel_bpf_program_id")) is not int
+                or preboot["kernel_bpf_program_id"]<=0
+                or preboot.get("host_probe_denied_before_vm_start") is not True
+                or preboot.get("guest_wasi_observed_while_attached") is not True
+                or preboot.get("aya_detached_after_vm_stop") is not True
+                or preboot.get("host_probe_recovered_after_vm_stop") is not True
+                or preboot.get("guest_network_egress_tested") is not False
+                or preboot.get("production_approved") is not False
+                or preboot.get("stage_039_complete") is not False
+                or not isinstance(wasi,dict)
                 or set(wasi)!={"task_nonce","module_sha256"}
                 or actual_vm.get("wasi")!=wasi
                 or not isinstance(guest,dict)
@@ -268,6 +285,7 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
                 or re.fullmatch("[a-f0-9]{64}",guest["serial_sha256"]) is None):
                 raise BindingError("real guest WASIp1 success receipt missing before VM termination")
             traceparents[tenant]=expected_trace
+            host_aya_ids.append(preboot["kernel_bpf_program_id"])
         crash=actual_vm.get("vm_sigkill_fault")
         if (not isinstance(crash,dict)
             or crash.get("status")!="VM_SIGKILL_CGROUP_SUBTREE_DRAINED"
@@ -294,6 +312,8 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
         raise BindingError("VM host kernel identity changed")
     if require_wasi and len(set(traceparents.values()))!=2:
         raise BindingError("tenant VM traces collided")
+    if require_wasi and len(set(host_aya_ids))!=2:
+        raise BindingError("two tenant VM host Aya program IDs collided")
     return {
         "status":"BROKER_SO_PEERCRED_TWO_REAL_JAILED_VM_BOOT_BOUND",
         "schema_version":1,
@@ -308,6 +328,7 @@ def verify_binding(reports:dict,manifests:dict,actual:dict,*,require_wasi:bool=F
         "both_vm_cgroups_drained_after_sigkill":True,
         "tenant_b_survived_tenant_a_crash":True,
         "wasi_executed_inside_guest":bool(require_wasi),
+        "host_aya_egress_attached_before_guest_execution":bool(require_wasi),
         "guest_traceparent_propagated":bool(require_wasi),
         "tenant_traceparents":traceparents,
         "signed_wasi_manifest_verified":signed_manifests is not None,
