@@ -8,6 +8,15 @@ import stage039_independent_hosts as hosts
 
 def entry(tenant,boot,vm,host):
     return {"tenant_id":tenant,"host_boot_id":boot,"hostname":host,
+            "soak":{"status":"ONE_HOST_100_REAL_KVM_JAILED_VM_SIGKILL_CYCLES_PASS",
+                    "tenant_id":tenant,"host_boot_id":boot,
+                    "cycle_count":100,"distinct_vm_ids":100,
+                    "all_running_rootfs_fd_inodes_pinned":True,
+                    "all_vm_cgroups_drained_after_sigkill":True,
+                    "durable_host_identity_proved":False,
+                    "cycles":[{"cycle":i,"vm_id":f"vm-{i}",
+                               "cgroup_drained_after_sigkill":True}
+                              for i in range(1,101)]},
             "guest":{"vm_id":vm,"status":"JAILED_FIRECRACKER_GUEST_KERNEL_BOOT_OBSERVED",
                      "firecracker_api_running":True,"guest_kernel_console_seen":True,
                      "guest_rootfs_sha256":"a"*64,
@@ -53,6 +62,7 @@ class IndependentHostValidator(unittest.TestCase):
             {**b,"guest":{**b["guest"],"running_rootfs_fd":None}},
             {**b,"guest":{**b["guest"],"running_rootfs_fd":{
                 **b["guest"]["running_rootfs_fd"],"rootfs_sha256":"b"*64}}},
+            {**b,"soak":{**b["soak"],"cycle_count":99}},
         ):
             with self.subTest(mutated=mutated),self.assertRaises(hosts.IndependentHostError):
                 hosts.verify_hosts(a,mutated)

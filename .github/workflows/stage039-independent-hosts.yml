@@ -6,12 +6,14 @@ on:
     paths:
       - .github/workflows/stage039-independent-hosts.yml
       - scripts/stage039_independent_hosts.py
+      - scripts/stage039_kvm_soak.py
       - scripts/stage039_live_firecracker.py
       - scripts/stage039_vm_crash.py
       - scripts/stage039_vm_resources.py
       - scripts/stage039_firecracker_spec.py
       - scripts/stage039_kvm_ioctl.py
       - scripts/tests/test_stage039_independent_hosts.py
+      - scripts/tests/test_stage039_kvm_soak.py
   workflow_dispatch:
 
 permissions:
@@ -21,7 +23,7 @@ jobs:
   real-independent-linux-host:
     name: Actual separate Linux KVM host - ${{ matrix.tenant }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 16
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -148,6 +150,37 @@ jobs:
               json.dumps(host,sort_keys=True,indent=2)+"\n")
           print("STAGE039_REAL_INDEPENDENT_LINUX_HOST_GUEST_SIGKILL_PROVED",tenant)
           PY
+      - name: Run 100 real jailed KVM boot and SIGKILL cycles on this host
+        shell: bash
+        env:
+          TENANT: ${{ matrix.tenant }}
+          VM_UID: ${{ matrix.uid }}
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts.tests.test_stage039_kvm_soak -v
+          PREFIX="/opt/o39h${GITHUB_RUN_ID}-${TENANT#tenant-}"
+          sudo -n python3 scripts/stage039_kvm_soak.py \
+            --prefix "$PREFIX" --tenant "$TENANT" --uid "$VM_UID" \
+            --report "$GITHUB_WORKSPACE/stage039-independent-evidence/soak-100.json" \
+            --ack-real-kvm-100-cycle-soak
+          sudo -n chown "$(id -u):$(id -g)" stage039-independent-evidence/soak-100.json
+          python3 - "$TENANT" <<'PY'
+          import json,sys
+          from pathlib import Path
+          root=Path("stage039-independent-evidence")
+          soak=json.loads((root/"soak-100.json").read_text())
+          assert soak["status"]=="ONE_HOST_100_REAL_KVM_JAILED_VM_SIGKILL_CYCLES_PASS"
+          assert soak["tenant_id"]==sys.argv[1]
+          assert soak["cycle_count"]==100 and soak["distinct_vm_ids"]==100
+          assert soak["all_running_rootfs_fd_inodes_pinned"] is True
+          assert soak["all_vm_cgroups_drained_after_sigkill"] is True
+          assert soak["durable_host_identity_proved"] is False
+          host_path=root/("host-"+sys.argv[1]+".json")
+          host=json.loads(host_path.read_text())
+          assert host["host_boot_id"]==soak["host_boot_id"]
+          host["soak"]=soak
+          host_path.write_text(json.dumps(host,sort_keys=True,indent=2)+"\n")
+          PY
       - name: Diagnose failure using bounded public demo guest serial console
         if: failure()
         shell: bash
@@ -209,6 +242,7 @@ jobs:
           assert p["two_separate_guest_kernels_booted"] is True
           assert p["two_independent_vm_sigkill_and_cgroup_drain_tests"] is True
           assert p["both_running_vm_rootfs_fd_inodes_match_pinned_images"] is True
+          assert p["both_hosts_completed_100_real_kvm_cycles"] is True
           assert p["durable_production_host_independence_proved"] is False
           assert p["interhost_rpc_tested"] is False
           assert p["production_approved"] is False

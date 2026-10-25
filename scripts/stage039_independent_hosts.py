@@ -56,6 +56,23 @@ def verify_hosts(a:dict,b:dict)->dict:
             type(crash.get("sigkill_exit_code")) is not int or
             crash["sigkill_exit_code"] != -9):
             raise IndependentHostError("incomplete independent real jailed VM fault proof")
+    for expected,host in (("tenant-a",a),("tenant-b",b)):
+        soak=host.get("soak")
+        cycles=soak.get("cycles") if isinstance(soak,dict) else None
+        if (not isinstance(soak,dict)
+            or soak.get("status")!="ONE_HOST_100_REAL_KVM_JAILED_VM_SIGKILL_CYCLES_PASS"
+            or soak.get("tenant_id")!=expected
+            or soak.get("host_boot_id")!=host["host_boot_id"]
+            or soak.get("cycle_count")!=100 or soak.get("distinct_vm_ids")!=100
+            or soak.get("all_running_rootfs_fd_inodes_pinned") is not True
+            or soak.get("all_vm_cgroups_drained_after_sigkill") is not True
+            or soak.get("durable_host_identity_proved") is not False
+            or not isinstance(cycles,list) or len(cycles)!=100
+            or len({cycle.get("vm_id") for cycle in cycles if isinstance(cycle,dict)})!=100
+            or any(not isinstance(cycle,dict) or cycle.get("cycle")!=number
+                   or cycle.get("cgroup_drained_after_sigkill") is not True
+                   for number,cycle in enumerate(cycles,1))):
+            raise IndependentHostError("host 100-cycle KVM soak proof absent")
     return {
         "schema_version":1,
         "status":"TWO_INDEPENDENT_EPHEMERAL_KERNEL_HOST_KVM_SIGKILL_PROVED",
@@ -67,6 +84,7 @@ def verify_hosts(a:dict,b:dict)->dict:
         "two_separate_guest_kernels_booted":True,
         "two_independent_vm_sigkill_and_cgroup_drain_tests":True,
         "both_running_vm_rootfs_fd_inodes_match_pinned_images":True,
+        "both_hosts_completed_100_real_kvm_cycles":True,
         "tenant_a_kernel_boot_id":a["host_boot_id"],
         "tenant_b_kernel_boot_id":b["host_boot_id"],
         "interhost_rpc_tested":False,
