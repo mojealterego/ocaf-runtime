@@ -7,10 +7,32 @@ use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use rusqlite::{params, Connection};
 use std::path::Path;
 
 type HmacSha256 = Hmac<Sha256>;
+
+#[derive(Default)]
+pub struct OmatSecurityMetrics {
+    pub requests: AtomicU64,
+    pub rejections: AtomicU64,
+    pub replays: AtomicU64,
+    pub connection_events: AtomicU64,
+}
+
+impl OmatSecurityMetrics {
+    pub fn prometheus(&self) -> String {
+        format!(
+            "ocaf_omat_requests_total {}\\nocaf_omat_rejections_total {}\\nocaf_omat_replays_total {}\\nocaf_omat_connection_events_total {}\\n",
+            self.requests.load(Ordering::Relaxed),
+            self.rejections.load(Ordering::Relaxed),
+            self.replays.load(Ordering::Relaxed),
+            self.connection_events.load(Ordering::Relaxed),
+        )
+    }
+}
+
 const MAX_FRAME: usize = 256 * 1024;
 const MAX_REPLAY: usize = 100_000;
 
@@ -25,6 +47,7 @@ pub struct SignedOmatRequest {
 }
 
 pub struct OmatZenohAdmission {
+    metrics: Arc<OmatSecurityMetrics>,
     keys: HashMap<String, [u8; 32]>,
     guard: OmatRouteGuard,
     used: HashSet<(String, String)>,
@@ -44,7 +67,11 @@ impl OmatZenohAdmission {
         anyhow::ensure!(keys.keys().all(|k| tenants.contains_key(k)), "missing tenant binding");
         anyhow::ensure!(keys.values().all(|k| *k != [0; 32]), "zero HMAC key");
         let guard = OmatRouteGuard::new(tenants).map_err(|_| anyhow::anyhow!("invalid tenant mapping"))?;
-        Ok(Self { keys, guard, used: HashSet::new(), replay_db: None, registry, policies })
+        Ok(Self { metrics: Arc::new(OmatSecurityMetrics::default()), keys, guard, used: HashSet::new(), replay_db: None, registry, policies })
+    }
+
+    pub fn metrics(&self) -> Arc<OmatSecurityMetrics> {
+        Arc::clone(&self.metrics)
     }
 
     /// Persist replay identities across process restarts. SQLite uniqueness
@@ -60,9 +87,20 @@ impl OmatZenohAdmission {
     /// caller-provided tenant as the source of authorization authority.
     pub fn connected(&mut self, connected: bool) {
         self.guard.set_transport_connected(connected);
+        self.metrics.connection_events.fetch_add(1, Ordering::Relaxed);
+        tracing::info!(connected, "omat_zenoh_transport_state");
     }
 
     pub fn handle(&mut self, bytes: &[u8]) -> anyhow::Result<()> {
+        self.metrics.requests.fetch_add(1, Ordering::Relaxed);
+        let outcome = self.handle_authenticated(bytes);
+        if outcome.is_err() {
+            self.metrics.rejections.fetch_add(1, Ordering::Relaxed);
+        }
+        outcome
+    }
+
+    fn handle_authenticated(&mut self, bytes: &[u8]) -> anyhow::Result<()> {
         anyhow::ensure!(bytes.len() <= MAX_FRAME, "frame too large");
         let request: SignedOmatRequest = serde_json::from_slice(bytes)?;
         anyhow::ensure!(request.nonce.len() >= 16 && request.nonce.len() <= 128 && request.nonce.bytes().all(|b| b.is_ascii_alphanumeric()), "invalid nonce");
@@ -74,14 +112,20 @@ impl OmatZenohAdmission {
         mac.verify_slice(&signature).map_err(|_| anyhow::anyhow!("bad signature"))?;
         anyhow::ensure!(self.guard.tenant_for(&request.principal).is_some(), "unknown tenant");
         let identity = (request.principal.clone(), request.nonce);
-        anyhow::ensure!(!self.used.contains(&identity), "replay denied");
+        if self.used.contains(&identity) {
+            self.metrics.replays.fetch_add(1, Ordering::Relaxed);
+            anyhow::bail!("replay denied");
+        }
         anyhow::ensure!(self.used.len() < MAX_REPLAY || self.replay_db.is_some(), "replay store full");
         if let Some(db) = &self.replay_db {
             let inserted = db.execute(
                 "INSERT OR IGNORE INTO omat_replay (principal, nonce) VALUES (?1, ?2)",
                 params![&identity.0, &identity.1],
             )?;
-            anyhow::ensure!(inserted == 1, "replay denied");
+            if inserted != 1 {
+                self.metrics.replays.fetch_add(1, Ordering::Relaxed);
+                anyhow::bail!("replay denied");
+            }
         }
         if self.used.len() < MAX_REPLAY {
             self.used.insert(identity);
@@ -116,6 +160,7 @@ pub async fn serve_omat_zenoh(
             None => Err(anyhow::anyhow!("missing payload")),
         };
         if result.is_err() {
+            tracing::warn!(selector = %key, "omat_request_rejected");
             let _ = query.reply_err("rejected").await;
         } else {
             let _ = query.reply(key, b"accepted".as_slice()).await;
