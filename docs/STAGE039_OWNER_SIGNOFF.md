@@ -22,11 +22,52 @@ Weryfikator sprawdza podpis i bajty załączników; sam wynik
 nie ustawia `stage_039_complete=true`.
 
 Po dostarczeniu rzeczywistych raportów z dwóch trwałych hostów operator
-przygotowuje prywatny katalog 0700 z siedmioma plikami dowodowymi.
-Następnie tworzy manifest v2 przez `canonical_manifest` z
-`scripts/stage039_signed_acceptance.py`, podpisuje dokładnie wyjściowe
-bajty Ed25519, a klucz publiczny i jego SHA-256 przekazuje osobnym kanałem.
+przygotowuje prywatny katalog 0700 z siedmioma **niepustymi, odrębnymi**
+plikami dowodowymi. Plik `operator_formal_approval` zawiera świadomą
+decyzję właściciela, oceniany commit i identyfikatory pozostałych dowodów.
+Nie tworzyć tego pliku ani podpisu przed sprawdzeniem brakującego failover.
 Klucza prywatnego nie należy umieszczać w repozytorium.
+
+Właściciel generuje własny klucz tylko na swojej zaufanej maszynie. Jeżeli
+ma już klucz Ed25519, pomija dwa pierwsze polecenia i eksportuje jego
+klucz publiczny w formacie PEM. Ścieżki `/PRIVATE` oznaczają prywatny
+katalog o prawach 0700, a pliki z kluczem prywatnym muszą mieć prawa 0600.
+
+```bash
+umask 077
+openssl genpkey -algorithm Ed25519 -out /PRIVATE/operator.key
+openssl pkey -in /PRIVATE/operator.key -pubout -out /PRIVATE/operator.pub
+sha256sum /PRIVATE/operator.pub
+```
+
+Po wyliczeniu SHA-256 każdego z siedmiu plików operator tworzy
+`/PRIVATE/dossier.json` z dokładnie tymi polami (bez dodatkowych pól):
+
+```json
+{
+  "schema_version": 2,
+  "stage": "0.39",
+  "branch": "main",
+  "git_commit": "PEŁNE_40_ZNAKÓW_SHA_COMMITU",
+  "audit_waiver": "OWNER_WAIVES_INDEPENDENT_AUDIT",
+  "operator_decision": "ACCEPT",
+  "evidence": {
+    "two_jailed_tenant_guest_kernel_ebpf": {"artifact_file": "guest-ebpf.json", "sha256": "SHA256_PLIKU"},
+    "independent_kernel_kvm_hosts": {"artifact_file": "hosts.json", "sha256": "SHA256_PLIKU"},
+    "two_kernel_cold_restart": {"artifact_file": "cold-restart.json", "sha256": "SHA256_PLIKU"},
+    "kernel_tls13_mtls_partition_fencing": {"artifact_file": "partition.json", "sha256": "SHA256_PLIKU"},
+    "production_interhost_mtls_ha": {"artifact_file": "failover.json", "sha256": "SHA256_PLIKU"},
+    "durable_host_partition_soak": {"artifact_file": "soak.json", "sha256": "SHA256_PLIKU"},
+    "operator_formal_approval": {"artifact_file": "approval.json", "sha256": "SHA256_PLIKU"}
+  }
+}
+```
+
+Wartości `SHA256_PLIKU` zastępuje się 64 znakami hex z `sha256sum` dla
+faktycznych plików w `/PRIVATE/evidence/`; commit pochodzi z
+`git rev-parse HEAD` po końcowym uruchomieniu testów. Następnie operator
+kanonizuje manifest v2 przez `canonical_manifest` i podpisuje **dokładnie
+te bajty**. Klucz publiczny i jego SHA-256 przekazuje osobnym kanałem.
 
 ```bash
 PYTHONPATH=scripts python3 - /PRIVATE/dossier.json /PRIVATE/dossier.canonical.json <<'PY'
