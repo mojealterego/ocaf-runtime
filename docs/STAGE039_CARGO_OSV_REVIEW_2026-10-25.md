@@ -25,7 +25,10 @@ Ponowne zapytanie OSV po zmianie objęło 441 unikalnych wersji z tych pięciu
 lockfile i zwróciło **0 dopasowań w chwili zapytania**. To wynik publicznej
 bazy na daną chwilę, nie dowód braku nieznanych podatności ani potwierdzenie
 zamknięcia alertów GitHub. `scripts/supply_chain.py --repo .` przeszedł
-lokalną kontrolę struktury lockfile. W lokalnym środowisku nie ma `cargo`,
-więc `cargo test --locked` i pełny build na tym SHA wymagają CI. Do czasu
-zielonego wyniku CI oraz rozstrzygnięcia alertów Dependabot przegląd
-zależności 0.39.10 pozostaje częściowy.
+lokalną kontrolę struktury lockfile. W lokalnym środowisku nie ma `cargo`.
+[Run 40202208678](https://github.com/mojealterego/ocaf-runtime/actions/runs/40202208678)
+na commicie `f8c0a84` zakończył się sukcesem, w tym `Compile locked release
+binaries` i weryfikacja dowodu wydania. To potwierdza build z nowym lockfile
+na runnerze CI; nie oznacza zamknięcia ośmiu alertów Dependabot, których
+szczegółów obecny token nie może odczytać. Przegląd 0.39.10 pozostaje
+częściowy do czasu rozstrzygnięcia tych alertów i szerszej próby escape.
