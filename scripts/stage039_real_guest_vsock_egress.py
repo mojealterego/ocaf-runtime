@@ -13,6 +13,7 @@ import hashlib
 import http.server
 import ipaddress
 import json
+import multiprocessing
 import os
 from pathlib import Path
 import shutil
@@ -52,37 +53,104 @@ class LabHandler(http.server.BaseHTTPRequestHandler):
         pass
 
 
-class RestartingEgressBroker:
-    """Replace the broker after its first guest grant; retain durable replay."""
+def _broker_worker(conn, store_path: Path, cert: Path, public: bytes, port: int) -> None:
+    """Separate process: the VMM-bound bridge has no direct TLS authority."""
+    store = None
+    try:
+        store = eg.DurablePermitReplay.reopen(store_path)
+        context = ssl.create_default_context(cafile=str(cert))
+        broker = eg.EgressBroker(
+            trusted_keys={"stage039-vsock-lab": public}, ssl_context=context,
+            allowed_ports=frozenset({port}),
+            allowed_networks=(ipaddress.ip_network("127.0.0.1/32"),),
+            resolver=lambda _host, checked_port, **kwargs:
+                __import__("socket").getaddrinfo("127.0.0.1", checked_port, **kwargs),
+            replay_store=store)
+        conn.send(("READY", b""))
+        while True:
+            request = conn.recv()
+            if request is None:
+                break
+            permit, tenant = request
+            try:
+                body = broker.fetch(signed_permit=permit,
+                                    authenticated_tenant=tenant)
+                conn.send(("GRANTED", body))
+            except (eg.EgressDenied, OSError) as exc:
+                conn.send(("DENIED", f"{type(exc).__name__}: {exc}"))
+    except (EOFError, BrokenPipeError):
+        pass
+    finally:
+        if store is not None:
+            store.close()
+        conn.close()
 
-    def __init__(self, broker: eg.EgressBroker, store_path: Path):
-        self.broker = broker
-        self.store_path = store_path
-        self.restart_count = 0
+
+class ProcessFaultBroker:
+    """Crash a real broker process after grant, deny outage, then restart it."""
+
+    def __init__(self, store_path: Path, cert: Path, public: bytes, port: int):
+        self.store_path, self.cert, self.public, self.port = store_path, cert, public, port
+        self.ctx = multiprocessing.get_context("spawn")
+        self.proc = None
+        self.conn = None
+        self.calls = 0
+        self.process_sigkill_observed = False
+        self.start()
+
+    def start(self) -> None:
+        parent, child = self.ctx.Pipe()
+        proc = self.ctx.Process(target=_broker_worker,
+                                args=(child, self.store_path, self.cert, self.public, self.port))
+        proc.start()
+        child.close()
+        if not parent.poll(10) or parent.recv() != ("READY", b"") or not proc.is_alive():
+            proc.kill()
+            proc.join(timeout=5)
+            parent.close()
+            raise ValueError("separate broker worker failed to become ready")
+        self.proc, self.conn = proc, parent
 
     def fetch(self, *, signed_permit: bytes, authenticated_tenant: str) -> bytes:
-        body = self.broker.fetch(signed_permit=signed_permit,
-                                 authenticated_tenant=authenticated_tenant)
-        if self.restart_count == 0:
-            old = self.broker
-            assert old.replay_store is not None
-            old.replay_store.close()
-            reopened = eg.DurablePermitReplay.reopen(self.store_path)
-            self.broker = eg.EgressBroker(
-                trusted_keys=old.trusted_keys, ssl_context=old.ssl_context,
-                allowed_ports=old.allowed_ports,
-                allowed_networks=old.allowed_networks,
-                resolver=old.resolver, clock=old.clock, replay_store=reopened)
-            self.restart_count = 1
-        return body
+        self.calls += 1
+        if self.calls == 2:
+            if self.proc is None or self.proc.is_alive() or not self.process_sigkill_observed:
+                raise ValueError("broker process fault not observed")
+            raise eg.EgressDenied("broker process unavailable after SIGKILL")
+        if self.calls == 3:
+            self.start()
+        if self.calls not in (1, 3) or self.proc is None or self.conn is None \
+                or not self.proc.is_alive():
+            raise eg.EgressDenied("no live broker process for bounded request")
+        self.conn.send((signed_permit, authenticated_tenant))
+        if not self.conn.poll(12):
+            raise eg.EgressDenied("separate broker process response timed out")
+        status, response = self.conn.recv()
+        if self.calls == 1:
+            if status != "GRANTED" or not isinstance(response, bytes):
+                raise eg.EgressDenied("initial broker grant absent")
+            self.proc.kill()
+            self.proc.join(timeout=5)
+            if self.proc.exitcode is None or self.proc.exitcode >= 0:
+                raise eg.EgressDenied("broker SIGKILL did not terminate worker")
+            self.process_sigkill_observed = True
+            self.conn.close()
+            self.conn = None
+            return response
+        if status != "DENIED" or "replayed destination permit" not in str(response):
+            raise eg.EgressDenied("durable replay denial absent after process restart")
+        raise eg.EgressDenied("replayed destination permit after process restart")
 
     def close(self) -> None:
-        if self.broker.replay_store is not None:
-            self.broker.replay_store.close()
+        if self.proc is not None and self.proc.is_alive():
+            self.proc.kill()
+            self.proc.join(timeout=5)
+        if self.conn is not None:
+            self.conn.close()
 
 
 class VsockBridge:
-    def __init__(self, broker: RestartingEgressBroker, tenant: str, uid: int):
+    def __init__(self, broker: ProcessFaultBroker, tenant: str, uid: int):
         self.broker, self.tenant, self.uid = broker, tenant, uid
         self.thread: threading.Thread | None = None
         self.decisions: list[dict] | None = None
@@ -120,7 +188,7 @@ class VsockBridge:
         def serve():
             try:
                 self.decisions = transport.listen_many(
-                    self.path, peer=peer, broker=self.broker, requests=2)
+                    self.path, peer=peer, broker=self.broker, requests=3)
             except BaseException as exc:
                 self.failure = exc
 
@@ -148,7 +216,7 @@ class VsockBridge:
                 raise ValueError("guest vsock PID1 rejected the exchange; "
                                  f"guest_markers={markers!r} "
                                  f"decisions={self.decisions!r} bridge_failure={self.failure!r}")
-            if "OCAF039_GUEST_VSOCK_GRANT_THEN_REPLAY_DENY_PASS" in serial:
+            if "OCAF039_GUEST_VSOCK_GRANT_CRASH_DENY_RESTART_REPLAY_DENY_PASS" in serial:
                 break
             time.sleep(.1)
         else:
@@ -160,20 +228,23 @@ class VsockBridge:
             raise ValueError("no vsock listener thread")
         self.thread.join(timeout=2)
         if self.thread.is_alive() or self.decisions is None:
-            raise ValueError("vsock broker did not complete both requests")
+            raise ValueError("vsock broker did not complete all three requests")
         if (serial.count("OCAF039_GUEST_EGRESS_BROKERED_BYTES=") != 1
                 or f"OCAF039_GUEST_EGRESS_BROKERED_BYTES={len(BODY)}" not in serial
-                or serial.count("OCAF039_GUEST_EGRESS_DENIED") != 1
-                or [d["status"] for d in self.decisions] != ["GRANTED", "DENIED"]
-                or "replayed destination permit" not in self.decisions[1].get("deny_reason", "")
-                or self.broker.restart_count != 1
+                or serial.count("OCAF039_GUEST_EGRESS_DENIED") != 2
+                or [d["status"] for d in self.decisions] != ["GRANTED", "DENIED", "DENIED"]
+                or "broker process unavailable" not in self.decisions[1].get("deny_reason", "")
+                or "replayed destination permit" not in self.decisions[2].get("deny_reason", "")
+                or not self.broker.process_sigkill_observed
                 or self.decisions[0].get("response_sha256") != hashlib.sha256(BODY).hexdigest()
                 or any(d["tenant_id"] != self.tenant or d["vm_pid"] != proc.pid
                        for d in self.decisions)):
             raise ValueError("real guest serial and kernel-bound egress decisions disagree")
-        return {"status": "REAL_GUEST_VSOCK_SIGNED_TLS_GRANT_REPLAY_DENY",
+        return {"status": "REAL_GUEST_VSOCK_SIGNED_TLS_GRANT_PROCESS_CRASH_REPLAY_DENY",
                 "guest_cid": self.cid, "guest_serial_sha256": hashlib.sha256(serial.encode()).hexdigest(),
-                "decisions": self.decisions, "durable_replay_denied_after_broker_restart": True,
+                "decisions": self.decisions, "broker_process_sigkill_while_guest_live": True,
+                "no_guest_grant_while_broker_dead": True,
+                "durable_replay_denied_after_broker_process_restart": True,
                 "guest_direct_network": False,
                 "guest_kvm_tested": True, "stage_039_complete": False,
                 "production_approved": False}
@@ -261,18 +332,10 @@ def run(prefix: Path, report: Path) -> dict:
             manifest_path = approved / "request-egress.json"
             manifest_path.write_text(json.dumps(manifest, sort_keys=True) + "\n")
             manifest_path.chmod(0o600)
-            context = ssl.create_default_context(cafile=str(cert))
             replay_path = approved / "vsock_replay.sqlite"
-            replay_store = eg.DurablePermitReplay(replay_path)
-            broker = eg.EgressBroker(
-                trusted_keys={"stage039-vsock-lab": public}, ssl_context=context,
-                allowed_ports=frozenset({port}),
-                allowed_networks=(ipaddress.ip_network("127.0.0.1/32"),),
-                resolver=lambda _host, checked_port, **kwargs:
-                    __import__("socket").getaddrinfo("127.0.0.1", checked_port, **kwargs),
-                replay_store=replay_store)
-            restarting_broker = RestartingEgressBroker(broker, replay_path)
-            bridge = VsockBridge(restarting_broker, "tenant-a", 1002)
+            eg.DurablePermitReplay(replay_path).close()
+            process_broker = ProcessFaultBroker(replay_path, cert, public, port)
+            bridge = VsockBridge(process_broker, "tenant-a", 1002)
             def hooked(result, proc, vm_id, _cgroup):
                 log = prefix / "jailer" / "firecracker" / vm_id / "serial-console.log"
                 result["guest_vsock_egress"] = bridge.prove(log, proc)
@@ -284,13 +347,13 @@ def run(prefix: Path, report: Path) -> dict:
                 firecracker_sha=manifest["assets"]["firecracker"]["sha256"],
                 chroot_base=prefix / "jailer", uid=1002, gid=1002, timeout=100,
                 boot_hook=hooked, vsock_bridge=bridge)
-            if proof["guest_vsock_egress"]["status"] != "REAL_GUEST_VSOCK_SIGNED_TLS_GRANT_REPLAY_DENY":
+            if proof["guest_vsock_egress"]["status"] != "REAL_GUEST_VSOCK_SIGNED_TLS_GRANT_PROCESS_CRASH_REPLAY_DENY":
                 raise ValueError("real guest vsock proof absent")
             report.write_text(json.dumps(proof, sort_keys=True, indent=2) + "\n")
             return proof
         finally:
-            if "restarting_broker" in locals():
-                restarting_broker.close()
+            if "process_broker" in locals():
+                process_broker.close()
             server.shutdown()
             server.server_close()
             thread.join(timeout=3)

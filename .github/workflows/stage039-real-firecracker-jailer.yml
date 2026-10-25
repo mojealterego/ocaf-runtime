@@ -672,9 +672,11 @@ jobs:
           from pathlib import Path
           p=json.loads(Path("stage039-real-guest-evidence/guest-vsock-egress.json").read_text())
           v=p["guest_vsock_egress"]
-          assert v["status"]=="REAL_GUEST_VSOCK_SIGNED_TLS_GRANT_REPLAY_DENY"
-          assert [d["status"] for d in v["decisions"]]==["GRANTED","DENIED"]
-          assert v["durable_replay_denied_after_broker_restart"] is True
+          assert v["status"]=="REAL_GUEST_VSOCK_SIGNED_TLS_GRANT_PROCESS_CRASH_REPLAY_DENY"
+          assert [d["status"] for d in v["decisions"]]==["GRANTED","DENIED","DENIED"]
+          assert v["broker_process_sigkill_while_guest_live"] is True
+          assert v["no_guest_grant_while_broker_dead"] is True
+          assert v["durable_replay_denied_after_broker_process_restart"] is True
           assert v["guest_kvm_tested"] is True
           assert v["stage_039_complete"] is False
           assert v["production_approved"] is False

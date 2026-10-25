@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""0.39.17: verify cryptographically signed release *dossier*, not production.
+"""0.39.17: verify the owner's signed release dossier, not deployment.
 
-Independent Ed25519 auditor and operator signatures MUST be presented
-over precisely the same canonical JSON manifest, keyed by out-of-band
-trusted SHA256 pins. Artifact bytes are rehashed from private local files.
-Two different test keypairs alone CANNOT demonstrate auditor independence
-or execute deployment. No implicit release flag can ever be produced.
+The project owner waived the independent audit on 2026-10-25. Schema v2
+requires that waiver in the signed payload and one out-of-band pinned Ed25519
+operator key. Artifact bytes are rehashed from private local files. A valid
+signature alone cannot prove host evidence or set a production release flag.
 """
 from __future__ import annotations
 import argparse
@@ -25,7 +24,6 @@ REQUIRED=(
     "kernel_tls13_mtls_partition_fencing",
     "production_interhost_mtls_ha",
     "durable_host_partition_soak",
-    "independent_security_audit",
     "operator_formal_approval",
 )
 HEX64=re.compile(r"[a-f0-9]{64}\Z")
@@ -55,12 +53,13 @@ def parse_manifest(raw:bytes)->dict:
         raise SignedAcceptanceError("malformed signed dossier JSON") from exc
     if (not isinstance(m,dict) or
             set(m)!={"schema_version","stage","branch","git_commit",
-                    "audit_result","operator_decision","evidence"} or
-            type(m["schema_version"]) is not int or m["schema_version"]!=1 or
+                    "audit_waiver","operator_decision","evidence"} or
+            type(m["schema_version"]) is not int or m["schema_version"]!=2 or
             m["stage"]!="0.39" or m["branch"]!="main" or
             not isinstance(m["git_commit"],str) or
             SHA40.fullmatch(m["git_commit"]) is None or
-            m["audit_result"]!="PASS" or m["operator_decision"]!="ACCEPT" or
+            m["audit_waiver"]!="OWNER_WAIVES_INDEPENDENT_AUDIT" or
+            m["operator_decision"]!="ACCEPT" or
             not isinstance(m["evidence"],dict) or
             set(m["evidence"])!=set(REQUIRED)):
         raise SignedAcceptanceError("incomplete or unauthorized dossier schema")
@@ -117,9 +116,8 @@ def _regular(path:Path,*,max_bytes:int)->bytes:
         raise SignedAcceptanceError("unavailable signed evidence file") from exc
 
 
-def verify_signed_dossier(manifest:dict,root:Path,*,auditor_pub:Path,
-                          operator_pub:Path,auditor_pin:str,operator_pin:str,
-                          auditor_signature:Path,operator_signature:Path)->dict:
+def verify_signed_dossier(manifest:dict,root:Path,*,operator_pub:Path,
+                          operator_pin:str,operator_signature:Path)->dict:
     canonical=canonical_manifest(manifest)
     if (not isinstance(root,Path) or not root.is_absolute() or root.is_symlink()
             or not root.is_dir() or root.stat().st_mode & 0o077):
@@ -129,18 +127,9 @@ def verify_signed_dossier(manifest:dict,root:Path,*,auditor_pub:Path,
         file=root/entry["artifact_file"]
         if hashlib.sha256(_regular(file,max_bytes=10*1024*1024)).hexdigest()!=entry["sha256"]:
             raise SignedAcceptanceError("signed artifact content does not match pin: "+name)
-    if (not isinstance(auditor_pin,str) or HEX64.fullmatch(auditor_pin) is None or
-            not isinstance(operator_pin,str) or HEX64.fullmatch(operator_pin) is None or
-            auditor_pin==operator_pin):
-        raise SignedAcceptanceError("distinct out-of-band signer keypins required")
-    keys=(auditor_pub,operator_pub)
-    pins=(auditor_pin,operator_pin)
-    signatures=(auditor_signature,operator_signature)
-    for k,pin in zip(keys,pins):
-        if hashlib.sha256(_regular(k,max_bytes=4096)).hexdigest()!=pin:
-            raise SignedAcceptanceError("external signer public key differs from pinned identity")
-    if keys[0]==keys[1]:
-        raise SignedAcceptanceError("operator and auditor cannot use same public key file")
+    if (not isinstance(operator_pin,str) or HEX64.fullmatch(operator_pin) is None or
+            hashlib.sha256(_regular(operator_pub,max_bytes=4096)).hexdigest()!=operator_pin):
+        raise SignedAcceptanceError("operator key differs from out-of-band pin")
     if not shutil_which_openssl():
         raise SignedAcceptanceError("OpenSSL Ed25519 signature verifier unavailable")
     # Ed25519 pkeyutl requires a *regular* input, not a pipe/stdin.
@@ -150,31 +139,29 @@ def verify_signed_dossier(manifest:dict,root:Path,*,auditor_pub:Path,
             tmp_path=Path(fp.name)
             fp.write(canonical)
         os.chmod(tmp_path,0o600)
-        for pub,signature in zip(keys,signatures):
-            _regular(signature,max_bytes=1024)
-            try:
-                proc=subprocess.run([
-                    "openssl","pkeyutl","-verify","-pubin",
-                    "-inkey",str(pub),"-sigfile",str(signature),
-                    "-rawin","-in",str(tmp_path)],
-                    stdout=subprocess.PIPE,stderr=subprocess.PIPE,
-                    timeout=5,check=False)
-            except (OSError,subprocess.TimeoutExpired) as exc:
-                raise SignedAcceptanceError("cryptographic verification unavailable") from exc
-            if proc.returncode!=0 or b"Signature Verified Successfully" not in proc.stdout:
-                raise SignedAcceptanceError("auditor/operator Ed25519 signature invalid")
+        _regular(operator_signature,max_bytes=1024)
+        try:
+            proc=subprocess.run([
+                "openssl","pkeyutl","-verify","-pubin",
+                "-inkey",str(operator_pub),"-sigfile",str(operator_signature),
+                "-rawin","-in",str(tmp_path)],
+                stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+                timeout=5,check=False)
+        except (OSError,subprocess.TimeoutExpired) as exc:
+            raise SignedAcceptanceError("cryptographic verification unavailable") from exc
+        if proc.returncode!=0 or b"Signature Verified Successfully" not in proc.stdout:
+            raise SignedAcceptanceError("operator Ed25519 signature invalid")
     finally:
         if tmp_path is not None:tmp_path.unlink(missing_ok=True)
     return {
-        "schema_version":1,
+        "schema_version":2,
         "status":"SIGNED_DOSSIER_INTEGRITY_VERIFIED_NOT_DEPLOYED",
         "stage":"0.39",
         "git_commit":manifest["git_commit"],
-        "both_signatures_verified":True,
+        "operator_signature_verified":True,
+        "independent_audit_waived_by_owner":True,
         "signed_manifest_sha256":hashlib.sha256(canonical).hexdigest(),
-        "distinct_signer_keys":True,
         "artifacts_matched_signed_hashes":True,
-        "auditor_independence_established":False,
         "evidence_authenticity_independently_verified":False,
         "durable_host_production_deployed":False,
         "stage_039_complete":False,
@@ -189,19 +176,18 @@ def shutil_which_openssl()->bool:
 
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
-    for key in ("manifest","evidence-root","auditor-pub","operator-pub",
-                "auditor-signature","operator-signature","report"):
+    for key in ("manifest","evidence-root","operator-pub",
+                "operator-signature","report"):
         ap.add_argument("--"+key,type=Path,required=True)
-    for key in ("auditor-pin","operator-pin"):
+    for key in ("operator-pin",):
         ap.add_argument("--"+key,required=True)
     x=ap.parse_args()
     try:
         raw=_regular(x.manifest,max_bytes=32768)
         m=parse_manifest(raw)
         r=verify_signed_dossier(
-            m,x.evidence_root,auditor_pub=x.auditor_pub,
-            operator_pub=x.operator_pub,auditor_pin=x.auditor_pin,
-            operator_pin=x.operator_pin,auditor_signature=x.auditor_signature,
+            m,x.evidence_root,operator_pub=x.operator_pub,
+            operator_pin=x.operator_pin,
             operator_signature=x.operator_signature)
         if x.report.exists():raise SignedAcceptanceError("report exists")
         with x.report.open("x") as file:

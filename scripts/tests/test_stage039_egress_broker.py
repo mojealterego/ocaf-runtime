@@ -19,6 +19,7 @@ from cryptography.hazmat.primitives import serialization
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import stage039_egress_broker as egress
+import stage039_real_guest_vsock_egress as guest_vsock
 from stage039_signed_manifest import canonical_payload
 
 
@@ -196,6 +197,29 @@ class EgressBrokerTLS(unittest.TestCase):
                 if proc.poll() is None:
                     proc.kill()
                     proc.communicate(timeout=5)
+
+    def test_separate_broker_process_crash_denies_then_replay_is_denied(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "permits.sqlite"
+            egress.DurablePermitReplay(path).close()
+            envelope = json.loads(self.permit(nonce="d" * 32))
+            envelope["key_id"] = "stage039-vsock-lab"
+            permit = json.dumps(envelope).encode()
+            broker = guest_vsock.ProcessFaultBroker(path, self.cert,
+                                                     self.public, self.port)
+            try:
+                self.assertEqual(broker.fetch(signed_permit=permit,
+                                              authenticated_tenant="tenant-a"),
+                                 b"actual-local-tls-upstream")
+                self.assertTrue(broker.process_sigkill_observed)
+                with self.assertRaisesRegex(egress.EgressDenied, "process unavailable"):
+                    broker.fetch(signed_permit=permit,
+                                 authenticated_tenant="tenant-a")
+                with self.assertRaisesRegex(egress.EgressDenied, "replayed"):
+                    broker.fetch(signed_permit=permit,
+                                 authenticated_tenant="tenant-a")
+            finally:
+                broker.close()
 
     def test_rejects_redirect_metadata_mixed_dns_and_rebinding(self):
         redirect = self.permit(url=f"https://localhost:{self.port}/redirect")

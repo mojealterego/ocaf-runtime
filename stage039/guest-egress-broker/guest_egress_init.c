@@ -26,10 +26,12 @@ int main(void) {
     puts("OCAF039_GUEST_VSOCK_PID1_BOOTED");fflush(stdout);
     int first=invoke();fflush(stdout);
     int second=invoke();fflush(stdout);
-    if(first==0 && second==4){
-        puts("OCAF039_GUEST_VSOCK_GRANT_THEN_REPLAY_DENY_PASS");
+    int third=invoke();fflush(stdout);
+    if(first==0 && second==4 && third==4){
+        puts("OCAF039_GUEST_VSOCK_GRANT_CRASH_DENY_RESTART_REPLAY_DENY_PASS");
     }else{
-        printf("OCAF039_GUEST_VSOCK_FAILURE first=%d second=%d\n",first,second);
+        printf("OCAF039_GUEST_VSOCK_FAILURE first=%d second=%d third=%d\n",
+               first,second,third);
     }
     fflush(stdout);
     for(;;)pause();
