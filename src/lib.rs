@@ -55,3 +55,5 @@ pub mod stage044_secret_broker;
 pub mod stage044_omat_authz;
 
 pub mod stage044_oidc;
+
+pub mod stage044_vault;
