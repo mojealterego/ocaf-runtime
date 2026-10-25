@@ -59,7 +59,27 @@ na hoście GitHub Actions, bez odbioru produkcyjnego.
 przeszedł pięć negatywnych przypadków na przypiętym Wasmtime v49.0.3 oraz
 rzeczywistą odmowę socket przez seccomp na hoście. Artefakt ID `12573143234`
 ma SHA-256 `f0c86251e5494282f372979bd2b0383914f3b118669889fc838b77ebed0a2be8`.
-To testy hosta; odpowiednie limity procesu WASI wewnątrz VM pozostają otwarte.
+Ten przebieg dotyczył wyłącznie hosta.
+
+[Run 40156218795](https://github.com/mojealterego/ocaf-runtime/actions/runs/40156218795)
+na commicie `3fcb87aae4e47aea0c4ff5c413bfffa18c74368d` przeszedł w całości
+na hoście KVM. Każdy z dwóch gości wykonał także obowiązkowe negatywne
+przypadki Wasmtime (fuel, timeout, pamięć, sygnał CPU, SIGKILL dziecka) i
+odmowę socket przez seccomp; bramka konsoli wymagała dokładnych markerów
+oraz kodu wyjścia supervisora. Osobny jailed gość połączył się przez
+AF_VSOCK z hostowym brokerem; po podpisanym pozwoleniu otrzymał odpowiedź
+z lokalnego serwera TLS, a ponowne użycie pozwolenia zostało odrzucone.
+Host sprawdził `SO_PEERCRED`, PID/start procesu VMM i cgroup. Następnie dwa
+zweryfikowane raporty VM zostały wysłane przez OTLP/HTTP JSON do kolektora
+na pętli zwrotnej hosta. Workflow utworzył również przed startem VM
+CycloneDX 1.5 dla podpisanych zasobów i źródeł Aya. Artefakt
+`stage039-real-firecracker-jailer-linux-evidence` ma ID `12584526385`
+i SHA-256 `d025e852dd5e27f229b423cb8e8cc5761084b1b4197a0a240ebc25bcd3a865c0`.
+Serwer blob ponownie zwrócił 403 przy pobraniu artefaktu do tego środowiska;
+statusy poszczególnych bramek i archiwum są zapisane w GitHub Actions.
+Test egress dotyczył jednego dodatkowego VM i lokalnego serwera TLS.
+Kolektor OTLP był na tym samym hoście, a ślady są eksportem raportów po
+zakończeniu VM, nie telemetrią wysyłaną przez aplikację w gościu.
 
 ## Stan odbioru
 
@@ -67,8 +87,8 @@ To dowód laboratoryjny na jednym hoście KVM. Raporty zachowują
 `stage_039_complete=false` i `production_approved=false`.
 Wymaganie 0.39.27 ma udany test laboratoryjny Aya w gościu. Klucz
 podpisujący manifesty nadal powstaje w tym samym przebiegu CI.
-Zintegrowane egress broker, autoryzowana kwarantanna, wspólny test awarii,
+Autoryzowana kwarantanna, wspólny test awarii,
 niezależny klucz podpisujący, dwa trwałe niezależne hosty KVM oraz odbiór
 operatora nadal wymagają osobnych dowodów. Osobne hashe artefaktów i ich
 negatywne testy są dowodem laboratoryjnym, nie poświadczeniem dostawcy.
-Również korelacja śladów w zewnętrznym kolektorze pozostaje otwarta.
+Korelacja śladów w niezależnym kolektorze pozostaje otwarta.
