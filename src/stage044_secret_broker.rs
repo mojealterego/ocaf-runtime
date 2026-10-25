@@ -52,7 +52,7 @@ pub struct BrokerRoute {
 }
 
 impl BrokerRoute {
-    fn validate(&self) -> Result<(), BrokerError> {
+    pub(crate) fn validate(&self) -> Result<(), BrokerError> {
         let hostname = self.hostname.as_bytes();
         let safe_host = !hostname.is_empty() && hostname.len() <= 253
             && self.hostname.contains('.')
@@ -282,7 +282,15 @@ fn binding(tenant: &str, user: &str, route: &str) -> Vec<u8> {
     format!("ocaf:044:v1\0{tenant}\0{user}\0{route}").into_bytes()
 }
 
+pub(crate) enum BrokerAuthHeader { Bearer, VaultToken }
+
 fn https_post(route: &BrokerRoute, secret: &[u8], json_body: &[u8]) -> Result<BrokerResponse, BrokerError> {
+    https_post_with_auth(route, secret, json_body, BrokerAuthHeader::Bearer)
+}
+
+pub(crate) fn https_post_with_auth(
+    route: &BrokerRoute, secret: &[u8], json_body: &[u8], header: BrokerAuthHeader,
+) -> Result<BrokerResponse, BrokerError> {
     let addr = SocketAddr::new(IpAddr::V4(route.pinned_ip), route.port);
     let socket = TcpStream::connect_timeout(&addr, Duration::from_secs(5)).map_err(|_| BrokerError::Transport)?;
     socket.set_read_timeout(Some(Duration::from_secs(5))).map_err(|_| BrokerError::Transport)?;
@@ -296,7 +304,11 @@ fn https_post(route: &BrokerRoute, secret: &[u8], json_body: &[u8]) -> Result<Br
     if tls.ssl().verify_result() != openssl::x509::X509VerifyResult::OK {
         return Err(BrokerError::Transport);
     }
-    let prefix = format!("POST {} HTTP/1.1\r\nHost: {}\r\nAuthorization: Bearer ", route.path, route.hostname);
+    let header_name = match header {
+        BrokerAuthHeader::Bearer => "Authorization: Bearer ",
+        BrokerAuthHeader::VaultToken => "X-Vault-Token: ",
+    };
+    let prefix = format!("POST {} HTTP/1.1\r\nHost: {}\r\n{}", route.path, route.hostname, header_name);
     tls.write_all(prefix.as_bytes()).map_err(|_| BrokerError::Transport)?;
     tls.write_all(secret).map_err(|_| BrokerError::Transport)?;
     tls.write_all(format!("\r\nContent-Type: application/json\r\nAccept: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",json_body.len()).as_bytes())
