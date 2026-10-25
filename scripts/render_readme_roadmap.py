@@ -93,8 +93,8 @@ def render_pinned_panel(builders:dict)->list[str]:
     rows=[
         "| 📌 **ROADMAPA OCAF — PRZYPIĘTA NA GÓRZE REPOZYTORIUM** | **STATUS / SZYBKI DOSTĘP** |",
         "| :--- | :--- |",
-        "| **[OTWÓRZ PEŁNĄ ROADMAPĘ](ROADMAP.md)** | **195 etapów + 64 podetapy + 10 produktów Agents Builder = 269 pozycji** |",
-        "| **[Pełna lista statusów od 0.00 do 1.94](ROADMAP.md)** | **ZROBIONE / W TRAKCIE / DO ZROBIENIA — szczegóły bezpośrednio pod ramką** |",
+        "| **[OTWÓRZ PEŁNĄ ROADMAPĘ](ROADMAP.md)** | **333 etapy + 64 podetapy + 10 produktów Agents Builder = 407 pozycji** |",
+        "| **[Pełna lista statusów od 0.00 do 333](ROADMAP.md)** | **ZROBIONE / W TRAKCIE / DO ZROBIENIA — szczegóły bezpośrednio pod ramką** |",
     ]
     for platform,label in platforms:
         code=pairs[platform,"Code"]
