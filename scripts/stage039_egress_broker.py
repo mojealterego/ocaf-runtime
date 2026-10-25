@@ -3,8 +3,9 @@
 
 The caller identity must come from an authenticated broker transport. This
 module neither creates that transport nor grants guest network access. Its
-replay set is process-local, so durable broker replay protection is still
-required. The default destination policy admits only globally routable IPs.
+default replay set is process-local. Pass a private DurablePermitReplay ledger
+to retain nonce use across restarts. The default destination policy admits
+only globally routable IPs.
 """
 from __future__ import annotations
 

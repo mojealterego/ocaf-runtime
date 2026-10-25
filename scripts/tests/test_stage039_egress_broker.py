@@ -145,6 +145,25 @@ class EgressBrokerTLS(unittest.TestCase):
             with self.assertRaisesRegex(egress.EgressDenied, "permissions"):
                 egress.DurablePermitReplay.reopen(path)
 
+    def test_durable_replay_is_shared_with_new_process(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "permits.sqlite"
+            store = egress.DurablePermitReplay(path)
+            store.claim("tenant-a", "9" * 32, int(time.time()) + 60,
+                        int(time.time()))
+            store.close()
+            script = (
+                "import sys,time; from pathlib import Path; "
+                "from stage039_egress_broker import DurablePermitReplay,EgressDenied; "
+                "db=DurablePermitReplay.reopen(Path(sys.argv[1])); "
+                "\ntry: db.claim('tenant-a','9'*32,int(time.time())+60,int(time.time()))"
+                "\nexcept EgressDenied as exc: assert 'replayed' in str(exc)"
+                "\nelse: raise AssertionError('replay admitted after process restart')"
+                "\nfinally: db.close()"
+            )
+            subprocess.run([sys.executable, "-c", script, str(path)],
+                           check=True, env={"PYTHONPATH": str(Path(egress.__file__).parent)})
+
     def test_rejects_redirect_metadata_mixed_dns_and_rebinding(self):
         redirect = self.permit(url=f"https://localhost:{self.port}/redirect")
         with self.assertRaisesRegex(egress.EgressDenied, "redirects"):

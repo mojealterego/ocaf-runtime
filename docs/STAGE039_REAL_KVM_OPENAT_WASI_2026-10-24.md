@@ -114,6 +114,19 @@ poprawka parsera ma lokalny test i przeszła w tym biegu. Test sprawdził
 tylko przypadek brakującej sondy gościa; awaria brokera i partycja sieci
 pozostają otwarte.
 
+[Run 40182033376](https://github.com/mojealterego/ocaf-runtime/actions/runs/40182033376)
+na commicie `860a9339f5dc5778f0b3a6347a6b57ef4f443f7a` przeszedł pełny
+workflow KVM. Po pierwszej autoryzowanej odpowiedzi TLS dla gościa broker
+egress zamknął i ponownie otworzył prywatny rejestr SQLite WAL oraz utworzył
+nową instancję. Ponowne przedstawienie tego samego podpisanego permitu
+przez vsock zostało odrzucone bez ponownego kontaktu z serwerem TLS.
+Bramka CI wymaga `durable_replay_denied_after_broker_restart=true` i
+oddzielnych decyzji `GRANTED`, `DENIED`. Lokalny test sprawdził też odmowę
+po otwarciu rejestru w nowym procesie. Artefakt ma ID `12594508555` oraz
+SHA-256 archiwum `cebbd88e6af5cc31e111ee3eb9dff8aecffbd6da063c494854bcdc1c816437bd`.
+Ten test dotyczy odtworzenia instancji i trwałości replay; awaria całego
+procesu brokera podczas pracy VM oraz partycja sieci pozostają otwarte.
+
 ## Stan odbioru
 
 To dowód laboratoryjny na jednym hoście KVM. Raporty zachowują

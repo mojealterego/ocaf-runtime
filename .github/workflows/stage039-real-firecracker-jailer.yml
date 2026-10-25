@@ -31,6 +31,7 @@ on:
       - scripts/tests/test_stage039_joint_fault_guest_aya.py
       - stage039/guest-egress-broker/**
       - scripts/stage039_guest_egress_transport.py
+      - scripts/stage039_egress_broker.py
       - scripts/stage039_real_guest_vsock_egress.py
       - scripts/stage039_prepare_guest_wasi.sh
       - scripts/stage039_supply_chain.py
