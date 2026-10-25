@@ -21,6 +21,8 @@ on:
       - scripts/tests/test_stage039_guest_network.py
       - stage039/guest-egress/**
       - stage039/guest-wasi/**
+      - scripts/stage039_guest_bpf_abi.py
+      - scripts/tests/test_stage039_guest_bpf_abi.py
       - stage039/guest-wasi-negative/**
       - stage039/guest-bpf/**
       - stage039/guest-aya/**
@@ -642,13 +644,33 @@ jobs:
             --rootfs-sha256-a "$(sudo -n sha256sum "$IMAGE_A" | cut -d ' ' -f 1)" \
             --rootfs-sha256-b "$(sudo -n sha256sum "$IMAGE_B" | cut -d ' ' -f 1)" \
             --report "$GITHUB_WORKSPACE/stage039-real-guest-evidence/real-guest-wasi-execution.json"
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts.tests.test_stage039_guest_bpf_abi -v
+          sudo -n python3 scripts/stage039_guest_bpf_abi.py \
+            --broker-report "$GITHUB_WORKSPACE/stage039-real-guest-evidence/broker-wasi-vm.json" \
+            --jailer-base "$JBASE" \
+            --rootfs-sha256-a "$(sudo -n sha256sum "$IMAGE_A" | cut -d ' ' -f 1)" \
+            --rootfs-sha256-b "$(sudo -n sha256sum "$IMAGE_B" | cut -d ' ' -f 1)" \
+            --kernel-config /tmp/ocaf039-real-guest-source/guest-kernel.config \
+            --kernel-config-sha256 05238c0baa2e1266abadaf5c2d90f70a04f2f2a644381f5c03452e9b98a624a4 \
+            --report "$GITHUB_WORKSPACE/stage039-real-guest-evidence/guest-bpf-abi.json"
           sudo -n chown "$(id -u):$(id -g)" \
             stage039-real-guest-evidence/broker-wasi-vm.json \
-            stage039-real-guest-evidence/real-guest-wasi-execution.json
+            stage039-real-guest-evidence/real-guest-wasi-execution.json \
+            stage039-real-guest-evidence/guest-bpf-abi.json
           python3 - <<'PY'
           import json
           from pathlib import Path
           v=json.loads(Path("stage039-real-guest-evidence/real-guest-wasi-execution.json").read_text())
+          abi=json.loads(Path("stage039-real-guest-evidence/guest-bpf-abi.json").read_text())
+          assert abi["status"]=="GUEST_BPF_ABI_PARTIAL_KPROBE_OR_BTF_UNAVAILABLE"
+          assert abi["kernel_config_flags"]["DEBUG_INFO_BTF"] is True
+          assert abi["kernel_config_flags"]["KPROBES"] is False
+          assert set(abi["two_jailed_guest_kernel_abi_observations"])=={"a","b"}
+          assert all(v["btf_file_observed_in_guest"] is True and
+                     v["kprobe_events_observed_in_guest"] is False and
+                     v["bpf_syscall_observed_in_guest"] is True
+                     for v in abi["two_jailed_guest_kernel_abi_observations"].values())
+          assert abi["stage_039_22_complete"] is False
           assert v["status"]=="TWO_REAL_BROKERED_JAILED_FIRECRACKER_GUESTS_WASIP1_FD_WRITE_EXECUTED"
           raw=json.loads(Path("stage039-real-guest-evidence/broker-wasi-vm.json").read_text())
           assert raw["broker_vm_binding"]["wasi_executed_inside_guest"] is True

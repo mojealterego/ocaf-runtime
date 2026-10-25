@@ -88,6 +88,34 @@ static int guest_bpf_socket_filter(void) {
 static void output(const char *s) { size_t n=strlen(s); while(n){ssize_t r=write(1,s,n); if(r<=0)break; s+=r;n-=(size_t)r;} }
 static void fail(void) {output("OCAF039_GUEST_WASI_EXECUTION_FAILED\n");for(;;)pause();}
 
+/* Observation from the guest kernel; a missing kprobe is reported as zero,
+ * never promoted to readiness by the host's kernel configuration. */
+static void report_guest_bpf_abi(void) {
+    int mounted=mount("sysfs","/sys","sysfs",MS_NOSUID|MS_NODEV|MS_NOEXEC,NULL);
+    int sysfs_ready=mounted==0 || errno==EBUSY;
+    int btf=0,kprobe=0;
+    if(sysfs_ready){
+        int fd=open("/sys/kernel/btf/vmlinux",O_RDONLY|O_CLOEXEC|O_NOFOLLOW);
+        if(fd>=0){
+            unsigned char magic[2];
+            btf=read(fd,magic,sizeof(magic))==(ssize_t)sizeof(magic)
+                && magic[0]==0x9f && magic[1]==0xeb;
+            close(fd);
+        }
+    }
+    mounted=mount("tracefs","/sys/kernel/tracing","tracefs",
+                  MS_NOSUID|MS_NODEV|MS_NOEXEC,NULL);
+    if(mounted==0 || errno==EBUSY){
+        int fd=open("/sys/kernel/tracing/kprobe_events",O_RDONLY|O_CLOEXEC|O_NOFOLLOW);
+        if(fd>=0){kprobe=1;close(fd);}
+    }
+    char marker[96];
+    int length=snprintf(marker,sizeof(marker),
+        "OCAF039_GUEST_BPF_ABI_BTF=%d KPROBE=%d SYSCALL=1\n",btf,kprobe);
+    if(length<=0 || (size_t)length>=sizeof(marker))fail();
+    output(marker);
+}
+
 /* The broker supplies this W3C traceparent as a Firecracker boot argument.
  * PID1 reads the guest kernel's actual command line, never an environment
  * variable or Wasmtime output. Host admission independently checks the lease. */
@@ -305,6 +333,7 @@ int main(void) {
         output("OCAF039_GUEST_BPF_LOAD_DENIED\n");
         fail();
     }
+    report_guest_bpf_abi();
     char traceparent[56];
     if(read_guest_traceparent(traceparent)!=0){
         output("OCAF039_GUEST_TRACEPARENT_DENIED\n");fail();
