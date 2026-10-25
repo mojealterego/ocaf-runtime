@@ -31,6 +31,48 @@ class LiveContract(unittest.TestCase):
                     live.LiveFirecrackerError, "digest differs"):
                 live.attest_running_rootfs_fd(Process(), other, digest)
 
+    def test_running_rootfs_fd_rejects_path_swap_after_vmm_open(self):
+        import hashlib, os, tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            image = Path(directory) / "rootfs.ext4"
+            replacement = Path(directory) / "replacement.ext4"
+            image.write_bytes(b"pinned-image")
+            replacement.write_bytes(b"pinned-image")
+            image.chmod(0o444)
+            replacement.chmod(0o444)
+            digest = hashlib.sha256(image.read_bytes()).hexdigest()
+            class Process:
+                pid = os.getpid()
+                def poll(self): return None
+            with image.open("rb"):
+                os.replace(replacement, image)
+                with self.assertRaisesRegex(live.LiveFirecrackerError, "no FD"):
+                    live.attest_running_rootfs_fd(Process(), image, digest)
+
+    def test_running_rootfs_fd_rejects_mutation_during_hash(self):
+        import hashlib, os, tempfile
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            image = Path(directory) / "rootfs.ext4"
+            image.write_bytes(b"pinned-image")
+            image.chmod(0o444)
+            digest = hashlib.sha256(image.read_bytes()).hexdigest()
+            real_digest = hashlib.file_digest
+            class Process:
+                pid = os.getpid()
+                def poll(self): return None
+            def mutate_after_hash(stream, algorithm):
+                result = real_digest(stream, algorithm)
+                image.chmod(0o644)
+                image.write_bytes(b"altered-imag")
+                image.chmod(0o444)
+                return result
+            with image.open("rb"), patch.object(live.hashlib, "file_digest",
+                                                side_effect=mutate_after_hash):
+                with self.assertRaisesRegex(live.LiveFirecrackerError,
+                                            "inode changed during attestation"):
+                    live.attest_running_rootfs_fd(Process(), image, digest)
+
     def test_guest_wasi_child_must_finish_before_firecracker_is_sigkilled(self):
         import tempfile, threading, time
         from stage039_guest_wasi import INIT, OUTPUT, PASS, FAILED

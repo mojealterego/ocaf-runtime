@@ -108,7 +108,7 @@ def validate_running(api: dict, serial: str, cgroups: str, vm_id: str,
 
 def attest_running_rootfs_fd(proc: subprocess.Popen, staged: Path,
                              expected_sha256: str) -> dict:
-    """Bind the pinned staged rootfs inode to an open FD in the live VMM."""
+    """Hash the actual open VMM rootfs inode, not only its pathname."""
     if proc.poll() is not None or type(proc.pid) is not int or proc.pid <= 1:
         raise LiveFirecrackerError("running VMM PID required for rootfs FD attestation")
     if (not staged.is_absolute() or staged.is_symlink() or not staged.is_file()
@@ -117,10 +117,6 @@ def attest_running_rootfs_fd(proc: subprocess.Popen, staged: Path,
     info = staged.stat()
     if info.st_nlink != 1 or info.st_mode & 0o022:
         raise LiveFirecrackerError("staged rootfs inode is mutable or multiply linked")
-    with staged.open("rb") as stream:
-        digest = hashlib.file_digest(stream, "sha256").hexdigest()
-    if digest != expected_sha256:
-        raise LiveFirecrackerError("running staged rootfs digest differs from manifest")
     fd_dir = Path(f"/proc/{proc.pid}/fd")
     try:
         descriptors = list(fd_dir.iterdir())
@@ -129,6 +125,7 @@ def attest_running_rootfs_fd(proc: subprocess.Popen, staged: Path,
     if len(descriptors) > 4096:
         raise LiveFirecrackerError("VMM descriptor scan exceeded bound")
     matches = []
+    verified_digest = None
     for descriptor in descriptors:
         if not descriptor.name.isdecimal():
             continue
@@ -137,11 +134,35 @@ def attest_running_rootfs_fd(proc: subprocess.Popen, staged: Path,
         except OSError:
             continue
         if opened.st_dev == info.st_dev and opened.st_ino == info.st_ino:
+            # /proc/PID/fd/N resolves to the inode held by the live VMM.
+            # Reopen it so the bytes we hash are the bytes the VMM can read.
+            try:
+                with descriptor.open("rb") as stream:
+                    before = os.fstat(stream.fileno())
+                    if ((before.st_dev, before.st_ino) != (info.st_dev, info.st_ino)
+                            or not stat.S_ISREG(before.st_mode)
+                            or before.st_nlink != 1 or before.st_mode & 0o022
+                            or not 0 < before.st_size <= gate.ASSET_MAXIMUM_BYTES["guest_rootfs"]):
+                        raise LiveFirecrackerError("VMM rootfs FD changed or is mutable")
+                    digest = hashlib.file_digest(stream, "sha256").hexdigest()
+                    after = os.fstat(stream.fileno())
+                named = staged.stat(follow_symlinks=False)
+                still_open = descriptor.stat()
+            except OSError as exc:
+                raise LiveFirecrackerError("VMM rootfs FD disappeared during attestation") from exc
+            identity = lambda s: (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+            if (identity(before) != identity(after)
+                    or identity(after) != identity(named)
+                    or identity(after) != identity(still_open)):
+                raise LiveFirecrackerError("VMM rootfs inode changed during attestation")
+            if digest != expected_sha256:
+                raise LiveFirecrackerError("running VMM rootfs FD digest differs from manifest")
+            verified_digest = digest
             matches.append(int(descriptor.name))
     if not matches or proc.poll() is not None:
         raise LiveFirecrackerError("running VMM has no FD for pinned staged rootfs")
     return {"status": "RUNNING_VMM_ROOTFS_FD_MATCHES_PINNED_INODE",
-            "rootfs_sha256": digest, "rootfs_inode": info.st_ino,
+            "rootfs_sha256": verified_digest, "rootfs_inode": info.st_ino,
             "rootfs_device": info.st_dev, "vmm_pid": proc.pid,
             "matching_fd_count": len(matches),
             "stage_039_complete": False, "production_approved": False}
