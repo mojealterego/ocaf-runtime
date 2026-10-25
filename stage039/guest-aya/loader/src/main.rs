@@ -26,16 +26,19 @@ struct OpenatCount {
 
 unsafe impl Pod for OpenatCount {}
 
-fn parse_args(args: &[String]) -> Result<(u32, u64), &'static str> {
-    if args.len() != 3 {
-        return Err("target TGID and timeout seconds required");
+fn parse_args(args: &[String]) -> Result<(u32, u64, u64), &'static str> {
+    if args.len() != 3 && args.len() != 4 {
+        return Err("target TGID, timeout and optional minimum events required");
     }
     let tgid: u32 = args[1].parse().map_err(|_| "invalid target TGID")?;
     let seconds: u64 = args[2].parse().map_err(|_| "invalid timeout")?;
-    if tgid <= 1 || seconds == 0 || seconds > MAX_TIMEOUT {
-        return Err("target or timeout outside bounds");
+    let minimum: u64 = if args.len() == 4 {
+        args[3].parse().map_err(|_| "invalid minimum events")?
+    } else { 1 };
+    if tgid <= 1 || seconds == 0 || seconds > MAX_TIMEOUT || minimum == 0 || minimum > 16 {
+        return Err("target, timeout or minimum events outside bounds");
     }
-    Ok((tgid, seconds))
+    Ok((tgid, seconds, minimum))
 }
 
 fn assert_embedded_digest() -> Result<(), &'static str> {
@@ -85,7 +88,7 @@ fn mount_guest_tracefs() -> Result<(), Box<dyn Error>> {
 }
 
 fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
-    let (target_tgid, seconds) = parse_args(args)?;
+    let (target_tgid, seconds, minimum) = parse_args(args)?;
     assert_embedded_digest()?;
     mount_guest_tracefs()?;
     let mut bpf = Ebpf::load(EBPF_ELF)?;
@@ -122,7 +125,7 @@ fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
                 Array::try_from(bpf.map("OPENAT_COUNTS").ok_or("Aya count map lost")?)?;
             counts.get(&0, 0)?
         };
-        if record.count > 0 && (record.pid_tgid >> 32) as u32 == target_tgid {
+        if record.count >= minimum && (record.pid_tgid >> 32) as u32 == target_tgid {
             let pid = record.pid_tgid as u32;
             if pid == 0 {
                 return Err("guest Aya observed zero PID".into());
@@ -165,8 +168,13 @@ mod tests {
         }
         assert_eq!(
             parse_args(&["probe".into(), "42".into(), "30".into()]),
-            Ok((42, 30))
+            Ok((42, 30, 1))
         );
+        assert_eq!(
+            parse_args(&["probe".into(), "42".into(), "30".into(), "2".into()]),
+            Ok((42, 30, 2))
+        );
+        assert!(parse_args(&["probe".into(), "42".into(), "30".into(), "17".into()]).is_err());
     }
     #[test]
     fn embedded_program_matches_pinned_build_digest() {

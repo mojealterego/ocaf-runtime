@@ -39,9 +39,19 @@ gcc -std=c11 -O2 -static -Wall -Wextra -Werror \
    helper, checks both `STOPPED` and `RELEASED` receipts and the child state,
    while the second tenant VM remains running. On helper crash, PID1 must
    recover or terminate the VM within a bounded deadline.
-4. One-shot permit nonce use, revocation, independent policy evaluation,
-   guest BPF/host evidence authentication, and two-tenant KVM execution
-   remain to be implemented and tested. Until then, stage 0.39 stays open.
+4. `scripts/stage039_real_guest_quarantine.py` now provisions a dedicated
+   Firecracker lab image and two concurrent jailed VMs. It waits for two real
+   guest Aya `openat` events from the selected Wasmtime PID and a separate
+   host Aya cgroup result, then sends a short-lived Ed25519 permit over a
+   Firecracker AF_VSOCK path bound to the VMM through `SO_PEERCRED`. The guest
+   helper must report `STOPPED` and `RELEASED`; host code verifies tenant B
+   remains live while A is stopped. The workflow is a candidate until its
+   actual KVM run passes. The operator and image signing keys are generated
+   in that one CI run, so independent provisioning, revocation, durable
+   multi-host evidence, and production acceptance remain open. This lab does
+   not bind the permit to a durable broker lease. The host Aya cgroup probe
+   finishes and detaches before the permit is sent; simultaneous host/guest
+   BPF enforcement and the joint failure drill in 0.39.25 remain open.
 
 Run the current-host tests with
 `python3 -m unittest discover -s stage039/guest-quarantine/tests -v`.

@@ -24,6 +24,9 @@ on:
       - stage039/guest-wasi-negative/**
       - stage039/guest-bpf/**
       - stage039/guest-aya/**
+      - stage039/guest-quarantine/**
+      - scripts/stage039_real_guest_quarantine.py
+      - scripts/tests/test_stage039_real_guest_quarantine.py
       - stage039/guest-egress-broker/**
       - scripts/stage039_guest_egress_transport.py
       - scripts/stage039_real_guest_vsock_egress.py
@@ -689,6 +692,28 @@ jobs:
           assert proof["collector_independent_host"] is False
           assert proof["stage_039_complete"] is False
           PY
+      - name: ACTUAL signed reversible guest PID quarantine with live peer VM
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts.tests.test_stage039_real_guest_quarantine -v
+          sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends libssl-dev
+          PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
+          sudo -n python3 scripts/stage039_real_guest_quarantine.py \
+            --prefix "$PREFIX" \
+            --report "$GITHUB_WORKSPACE/stage039-real-guest-evidence/guest-quarantine.json" \
+            --ack-real-kvm-quarantine
+          sudo -n chown "$(id -u):$(id -g)" stage039-real-guest-evidence/guest-quarantine.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path("stage039-real-guest-evidence/guest-quarantine.json").read_text())
+          assert report["status"]=="ONE_HOST_TWO_JAILED_VMS_SIGNED_GUEST_QUARANTINE_LAB"
+          assert report["tenant_a"]["status"]=="REAL_KVM_SIGNED_GUEST_PID_STOP_RELEASE_WITH_PEER_SURVIVAL"
+          assert report["tenant_b_survived_a_quarantine"] is True
+          assert report["operator_key_provisioned_independently"] is False
+          assert report["stage_039_complete"] is False
+          PY
       - name: Diagnose sandbox failure using only official public guest image boot logs
         if: failure()
         shell: bash
@@ -714,6 +739,7 @@ jobs:
           test -s stage039-real-guest-evidence/stage039-inputs.cdx.json
           test -s stage039-real-guest-evidence/stage039-supply-chain.json
           test -s stage039-real-guest-evidence/loopback-otlp-receipt.json
+          test -s stage039-real-guest-evidence/guest-quarantine.json
           python3 - <<'PY'
           import json
           from pathlib import Path

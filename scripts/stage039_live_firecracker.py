@@ -391,7 +391,12 @@ def run(*, manifest: Path, approved_root: Path, jailer: Path,
             boot_source = staging["firecracker_config"]["boot-source"]
             if boot_source["boot_args"] != spec.BASE_BOOT_ARGS:
                 raise LiveFirecrackerError("vsock lab requires reviewed netless guest boot args")
-            boot_source["boot_args"] += " init=/ocaf-egress-init"
+            init_path = getattr(vsock_bridge, "guest_init_path", "/ocaf-egress-init")
+            if init_path not in ("/ocaf-egress-init", "/ocaf-q-init"):
+                raise LiveFirecrackerError("unreviewed vsock guest init path")
+            boot_source["boot_args"] += " init=" + init_path
+            if getattr(vsock_bridge, "needs_entropy", False):
+                staging["firecracker_config"]["entropy"] = {}
         if require_guest_wasi:
             # Old minimal 4.14 guest has no early entropy and Wasmtime
             # may block indefinitely in getrandom(); attach real virtio-rng.
