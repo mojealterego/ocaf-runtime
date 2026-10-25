@@ -132,8 +132,9 @@ def handle_one(conn: socket.socket, *, peer: VmPeer, broker: SignedFetch) -> dic
         conn.sendall(struct.pack("!BI", 1, len(body)) + body)
         decision.update(status="GRANTED", guest_response_bytes=len(body),
                         response_sha256=hashlib.sha256(body).hexdigest())
-    except Exception:
+    except Exception as exc:
         # Any failed broker, DNS, TLS, or policy dependency fails closed.
+        decision["deny_reason"] = f"{type(exc).__name__}: {str(exc)[:120]}"
         try:
             conn.sendall(struct.pack("!BI", 0, 0))
         except OSError:

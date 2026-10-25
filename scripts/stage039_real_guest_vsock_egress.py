@@ -101,7 +101,8 @@ class VsockBridge:
         while not self.path.exists() and self.failure is None and time.monotonic() < deadline:
             time.sleep(.01)
         if not self.path.exists() or self.failure is not None:
-            raise ValueError("private Firecracker vsock listener failed to bind")
+            raise ValueError("private Firecracker vsock listener failed to bind: "
+                             + repr(self.failure))
 
     def prove(self, log: Path, proc) -> dict:
         deadline = time.monotonic() + 40
@@ -113,7 +114,11 @@ class VsockBridge:
                 raise ValueError("Firecracker exited during guest vsock exchange")
             serial = live._bounded_console_evidence(log)
             if "OCAF039_GUEST_VSOCK_FAILURE" in serial:
-                raise ValueError("guest vsock PID1 rejected the exchange")
+                markers = [line[-120:] for line in serial.splitlines()
+                           if "OCAF039_" in line][-10:]
+                raise ValueError("guest vsock PID1 rejected the exchange; "
+                                 f"guest_markers={markers!r} "
+                                 f"decisions={self.decisions!r} bridge_failure={self.failure!r}")
             if "OCAF039_GUEST_VSOCK_GRANT_THEN_REPLAY_DENY_PASS" in serial:
                 break
             time.sleep(.1)

@@ -214,6 +214,7 @@ class GuestEgressTransportTests(unittest.TestCase):
         self.assertFalse(path.exists())
         self.assertEqual([r["status"] for r in results],["GRANTED","DENIED"])
         self.assertEqual(results[0]["guest_response_bytes"],len(b"egress-over-kernel-bound-bridge"))
+        self.assertIn("replayed destination permit", results[1]["deny_reason"])
 
 
 if __name__=="__main__":
