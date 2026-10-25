@@ -36,13 +36,14 @@ z tą zmianą.
 - Pozostałe obrazy i binaria wymagają osobnego powiązania z faktycznie
   używanymi deskryptorami lub procesami; nie wolno rozszerzać tego dowodu
   na wszystkie zasoby VM.
-- Nie wykonano próby ucieczki z guest, przeglądu podatności wszystkich
-  zależności ani testu na dwóch trwałych hostach. 0.39.10 pozostaje otwarty.
+- Wykonano tylko ograniczony negatywny test dostępu do pliku hosta opisany
+  niżej. Szerszy test ucieczki z guest, przegląd podatności wszystkich
+  zależności i test na dwóch trwałych hostach pozostają otwarte.
 - API alertów Dependabot dla tego tokenu zwróciło HTTP 403
   (`Resource not accessible by integration`), więc widoczne osiem alertów
   z GitHub nie zostało przypisanych do pakietów ani zakresu 0.39.
 
-## Dodatkowa próba granicy guest→host (oczekuje na CI KVM)
+## Dodatkowa próba granicy guest→host (realne CI KVM)
 
 `scripts/stage039_guest_host_canary.py` buduje statyczny PID1, wstrzykuje go
 do prywatnej kopii ext4 i uruchamia przez jailer. Losowy plik `host-canary`
@@ -55,7 +56,16 @@ SIGKILL i opróżnieniu cgroup. Brak markera lub powodzenie `open` kończy
 próbę błędem. Workflow `stage039-real-firecracker-jailer` wymaga tej próby.
 
 Lokalnie przeszły trzy testy parsera markera i kompilacja statycznego C z
-`-Werror`. Bieżące środowisko nie ma `/dev/kvm`, więc wykonanie wewnątrz
-gościa pozostaje **niepotwierdzone** do zielonego uruchomienia workflow.
-Nawet wtedy próba dowodzi wyłącznie odmowy odczytu konkretnego pliku
-hostowego dwiema ścieżkami; nie dowodzi niemożliwości ucieczki z VM.
+`-Werror`. [Run 40201198228](https://github.com/mojealterego/ocaf-runtime/actions/runs/40201198228)
+na commicie `86a37eb` zakończył się sukcesem po zmianie haszowania FD;
+artefakt KVM ID `12602395232`, SHA-256 archiwum
+`d6c81648fc8fb05c8cdc9e2b33a1d03bf5b103fbbbd56be69c01ef7228647c29`.
+[Run 40201458119](https://github.com/mojealterego/ocaf-runtime/actions/runs/40201458119)
+na commicie `d99b239` zakończył się sukcesem z nowym wymaganym krokiem
+rzeczywistego guest host-canary. Artefakt ID `12602285733`, SHA-256 archiwum
+`9f724d56e2a8172365a1c765f2fd74b988d1d0331ee4b97e541435a54a0fdec4`.
+Zielony workflow obejmuje sprawdzenie dokładnego markera gościa, boot/API,
+cgroup i niezmienionego hostowego canary. Próba dowodzi wyłącznie odmowy
+odczytu konkretnego pliku hostowego dwiema ścieżkami; nie dowodzi
+niemożliwości ucieczki z VM. 0.39.10 pozostaje częściowy z powodu
+niezamkniętego przeglądu podatności i szerszego zakresu escape.
