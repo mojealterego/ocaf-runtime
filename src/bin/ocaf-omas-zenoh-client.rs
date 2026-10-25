@@ -2,7 +2,7 @@
 use base64::engine::general_purpose::STANDARD as B64;
 use base64::Engine as _;
 use ocaf_runtime::omat_server::ToolCall;
-use ocaf_runtime::stage043_omat_zenoh::{request_omat_with_retry, sign_omas_request};
+use ocaf_runtime::stage043_omat_zenoh::{request_omat_zenoh, sign_omas_request};
 use ocaf_runtime::transport_policy::{read_zenoh_config, validate_zenoh_config};
 use std::env;
 use std::path::Path;
