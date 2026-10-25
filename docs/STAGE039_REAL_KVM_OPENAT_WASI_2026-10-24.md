@@ -81,14 +81,31 @@ Test egress dotyczył jednego dodatkowego VM i lokalnego serwera TLS.
 Kolektor OTLP był na tym samym hoście, a ślady są eksportem raportów po
 zakończeniu VM, nie telemetrią wysyłaną przez aplikację w gościu.
 
+[Run 40156485144](https://github.com/mojealterego/ocaf-runtime/actions/runs/40156485144)
+na commicie `b5a97cbd192e954540fd9ae298619d4d8bd03341` zakończył się
+sukcesem na hoście KVM. W obu przebiegach brokera hostowy Aya cgroup egress
+został załadowany **przed** startem Firecracker, blokował próbę połączenia
+procesu w cgroup A, przepuszczał oddzielną cgroup B, pozostał przypięty
+podczas wykonania WASI w gościu i odłączył się po zakończeniu VM. Osobny
+test uruchomił dwa jailed VM; sonda Aya w jądrze A obserwowała `openat`
+Wasmtime, po czym gość otrzymał krótkotrwały podpisany permit przez vsock.
+Pomocnik wstrzymał wskazany PID przez `PTRACE_INTERRUPT`, potwierdził
+tożsamość procesu i zwolnił go przez `PTRACE_DETACH`, gdy B nadal działał.
+Workflow wymagał przejścia wszystkich tych bramek oraz zapisu raportów.
+Artefakt `stage039-real-firecracker-jailer-linux-evidence` ma ID `12585190719`
+i SHA-256 archiwum `1e344f27bb40c358513bef74fada48fe4f0b0aee92c02dd8bd6c539e0f8c1c5e`.
+Serwer blob odmawia pobrania archiwum w tym środowisku; dane liczbowe należy
+odczytać bezpośrednio z artefaktu. Permit podpisano kluczem utworzonym w tym
+samym teście laboratoryjnym. To nie dowodzi niezależnego operatora ani
+odporności na wspólną awarię brokera i sond.
+
 ## Stan odbioru
 
 To dowód laboratoryjny na jednym hoście KVM. Raporty zachowują
 `stage_039_complete=false` i `production_approved=false`.
 Wymaganie 0.39.27 ma udany test laboratoryjny Aya w gościu. Klucz
 podpisujący manifesty nadal powstaje w tym samym przebiegu CI.
-Autoryzowana kwarantanna, wspólny test awarii,
-niezależny klucz podpisujący, dwa trwałe niezależne hosty KVM oraz odbiór
+Wspólny test awarii, niezależny klucz podpisujący, dwa trwałe niezależne hosty KVM oraz odbiór
 operatora nadal wymagają osobnych dowodów. Osobne hashe artefaktów i ich
 negatywne testy są dowodem laboratoryjnym, nie poświadczeniem dostawcy.
 Korelacja śladów w niezależnym kolektorze pozostaje otwarta.
