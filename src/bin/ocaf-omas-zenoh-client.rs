@@ -39,6 +39,34 @@ async fn main() -> anyhow::Result<()> {
         source_access: "disabled".into(),
     };
     let signed = sign_omas_request(&principal, &topic, &nonce, call, &key)?;
-    let session = zenoh::open(config).await.map_err(|e| anyhow::anyhow!("Zenoh open: {e}"))?;
-    request_omat_zenoh(&session, &topic, signed).await
+    let retries: u32 = env::var("OCAF_OMAT_RECONNECT_ATTEMPTS")
+        .unwrap_or_else(|_| "0".to_owned())
+        .parse()?;
+    anyhow::ensure!(retries <= 5, "reconnect attempt limit exceeded");
+    let mut last_error = None;
+    for attempt in 0..=retries {
+        if attempt > 0 {
+            tokio::time::sleep(std::time::Duration::from_millis(200 * (1u64 << (attempt - 1)))).await;
+        }
+        let session = match zenoh::open(config.clone()).await {
+            Ok(session) => session,
+            Err(error) => {
+                tracing::warn!(attempt, "omas_zenoh_connection_failed");
+                last_error = Some(anyhow::anyhow!("Zenoh open: {error}"));
+                continue;
+            }
+        };
+        match request_omat_zenoh(&session, &topic, signed.clone()).await {
+            Ok(()) => return Ok(()),
+            Err(error) => {
+                let message = error.to_string();
+                if message.contains("rejected") || message.contains("unexpected") {
+                    return Err(error);
+                }
+                tracing::warn!(attempt, "omas_zenoh_request_unavailable");
+                last_error = Some(error);
+            }
+        }
+    }
+    Err(last_error.unwrap_or_else(|| anyhow::anyhow!("OMAt unavailable")))
 }
