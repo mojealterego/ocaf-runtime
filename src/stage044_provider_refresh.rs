@@ -7,6 +7,7 @@ use crate::stage044_vault::VaultTransit;
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use rusqlite::{params, Connection, OpenFlags, OptionalExtension, TransactionBehavior};
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -181,6 +182,7 @@ impl ManagedProviderRefresh {
         if !valid_token(clean) {
             refresh.fill(0);return Err(ProviderRefreshError::Unavailable);
         }
+        let old_digest = Sha256::digest(&refresh);
         let mut basic = STANDARD.encode(format!("{}:{clean}",c.client_id)).into_bytes();
         secret.clear();
         let form = format!("grant_type=refresh_token&refresh_token={}",percent_encode(&refresh));
@@ -199,7 +201,9 @@ impl ManagedProviderRefresh {
             .ok_or(ProviderRefreshError::Unavailable)?;
         let ttl = body.get("expires_in").and_then(Value::as_i64)
             .ok_or(ProviderRefreshError::Unavailable)?;
-        if !valid_token(access) || !valid_token(next) || !(1..=86400).contains(&ttl) {
+        if !valid_token(access) || !valid_token(next)
+            || Sha256::digest(next.as_bytes()).as_slice() == old_digest.as_slice()
+            || !(1..=86400).contains(&ttl) {
             return Err(ProviderRefreshError::Unavailable);
         }
         if let Some(scopes) = body.get("scope").and_then(Value::as_str) {
