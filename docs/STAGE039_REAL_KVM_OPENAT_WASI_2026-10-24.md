@@ -140,6 +140,17 @@ replay. Bramka sprawdziła serial gościa, piętno kernelowe VMM, brak grant
 podczas awarii oraz treść obu odmów. Artefakt ID `12601347265` ma SHA-256
 archiwum `1ec1d9cba8db6564893e6d1207ecb6c9f3f678dce9cd369ac0f85d2aa4e82d7e`.
 
+[Run 40200564010](https://github.com/mojealterego/ocaf-runtime/actions/runs/40200564010)
+na commicie `a8129facbca7f8d66ff2b4c11c8e1d476b2f319c` przeszedł pełny
+workflow KVM z pięcioma żądaniami gościa. Po sprawdzeniu awarii procesu
+brokera i replay jądro hosta regułą `nft` odcięło brokerowi TCP do
+przypiętego lokalnego serwera TLS. Nowy, podpisany permit dostał odmowę;
+po usunięciu reguły kolejny nowy permit został wykonany. Artefakt ID
+`12600929729` ma SHA-256 archiwum
+`d97133b4c417608f5296c018873cffe84ba588e470499e07771012c7586ae53d`.
+To prawdziwe odcięcie pakietów na hoście laboratoryjnym, ale bez awarii
+sieci *między* trwałymi hostami i bez guest Aya w tym samym VM egress.
+
 [Run 40200342138](https://github.com/mojealterego/ocaf-runtime/actions/runs/40200342138)
 na commicie `9d048cfa0ebee696c990498d08241b8fab3003b1` przeszedł na dwóch
 osobnych hostach CI. Na każdym wykonano 100 rzeczywistych cykli boot
