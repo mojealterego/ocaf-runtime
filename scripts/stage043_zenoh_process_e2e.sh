@@ -70,4 +70,29 @@ if ! grep -q 'OMAt rejected request' "$root/recovery.log"; then
 fi
 unset OCAF_OMAT_RECONNECT_ATTEMPTS
 kill "$server_pid"; wait "$server_pid" 2>/dev/null || true; server_pid=""
-printf 'PASS: mTLS two-process denial, durable replay, crash fail-closed, bounded reconnect to policy\n'
+
+# Overlapping certificate rotation: bring up a second TLS listener with a
+# newly issued server identity before retiring the original listener.
+openssl req -newkey rsa:2048 -nodes -keyout server-next.key -out server-next.csr -subj /CN=localhost >/dev/null 2>&1
+openssl x509 -req -in server-next.csr -CA ca.pem -CAkey ca.key -CAcreateserial -out server-next.pem -days 1 -extfile server.ext >/dev/null 2>&1
+sed -e 's/17443/17444/g' -e 's/server.key/server-next.key/g' -e 's/server.pem/server-next.pem/g' server.json5 >server-next.json5
+sed 's/17443/17444/g' client.json5 >client-next.json5
+OCAF_ZENOH_CONFIG="$root/server-next.json5" "$server_bin" >"$root/server-next.log" 2>&1 &
+next_pid=$!
+sleep 3
+kill -0 "$next_pid"
+export OCAF_OMAT_NONCE=0123456789abcdeb
+probe_rejected
+export OCAF_OMAT_NONCE=0123456789abcdec
+if output="$(OCAF_ZENOH_CONFIG="$root/client-next.json5" timeout 15 "$client_bin" 2>&1)"; then
+  echo "unexpected tool execution on rotated certificate"; kill "$next_pid"; exit 1
+fi
+grep -q 'OMAt rejected request' <<<"$output" || { echo "$output"; kill "$next_pid"; exit 1; }
+kill "$server_pid"; wait "$server_pid" 2>/dev/null || true; server_pid=""
+export OCAF_OMAT_NONCE=0123456789abcded
+if output="$(OCAF_ZENOH_CONFIG="$root/client-next.json5" timeout 15 "$client_bin" 2>&1)"; then
+  echo "unexpected tool execution after certificate cutover"; kill "$next_pid"; exit 1
+fi
+grep -q 'OMAt rejected request' <<<"$output" || { echo "$output"; kill "$next_pid"; exit 1; }
+kill "$next_pid"; wait "$next_pid" 2>/dev/null || true
+printf 'PASS: mTLS two-process denial, durable replay, crash fail-closed, bounded reconnect, overlapping certificate cutover\n'
