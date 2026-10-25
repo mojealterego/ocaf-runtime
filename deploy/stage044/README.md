@@ -15,7 +15,7 @@ The public PEM key must match a verified signing key from the configured Keycloa
 The sidecar implements /.well-known/oauth-protected-resource, /healthz and POST /omat/{tenant}/users/{user}/authorize. It only checks access and never executes OMAt. There is no deployed reverse proxy, consent callback or public login route in this repository.
 
 ## KMS and HSM
-vault-policy.hcl is a least-privilege Vault Transit encrypt/decrypt/rewrap ACL template, NOT an active Vault integration. Provision a non-exportable derived AES-256-GCM key and operator-separated key rotation. The current Rust SecretBroker encrypts with a local key, not Vault. HSM-backed keys require a verified PKCS#11/managed-key deployment, supported edition, tested key lifecycle, attestations and HA. Neither Vault availability nor HSM integration has been verified.
+vault-policy.hcl is a least-privilege Vault Transit encrypt/decrypt/rewrap ACL template, NOT an active Vault integration. Provision a non-exportable derived AES-256-GCM key and operator-separated key rotation. The new stage044_vault Rust adapter implements remote Vault Transit encrypt/decrypt/rewrap over pinned TLS 1.3, but SecretBroker still uses its local key and has NOT been migrated to Vault. No live Vault endpoint has been verified. HSM-backed keys require a verified PKCS#11/managed-key deployment, supported edition, tested key lifecycle, attestations and HA. Neither Vault availability nor HSM integration has been verified.
 
 ## Real-network acceptance
 On the target host, provision OCAF_E2E_ISSUER, OCAF_E2E_GATEWAY, OCAF_E2E_TENANT, OCAF_E2E_USER, OCAF_E2E_RESOURCE, and OCAF_E2E_TOKEN_FILE (owner-only, 0600). Run:
