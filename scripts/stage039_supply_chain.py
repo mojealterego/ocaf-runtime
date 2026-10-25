@@ -18,6 +18,7 @@ import stage039_signed_manifest as signed
 
 SOURCE_LOCKS = (
     "Cargo.lock",
+    "stage039/aya-guard/Cargo.lock",
     "stage039/guest-aya/ebpf/Cargo.lock",
     "stage039/guest-aya/loader/Cargo.lock",
 )
@@ -26,6 +27,9 @@ SOURCE_BUILDS = (
     "scripts/stage039_egress_broker.py",
     "scripts/stage039_guest_egress_transport.py",
     "scripts/stage039_real_guest_vsock_egress.py",
+    "scripts/stage039_preboot_aya.py",
+    "scripts/stage039_real_guest_quarantine.py",
+    "stage039/aya-guard/src/main.rs",
     "stage039/guest-aya/build.sh",
     "stage039/guest-aya/ebpf/src/main.rs",
     "stage039/guest-aya/loader/src/main.rs",
@@ -35,6 +39,9 @@ SOURCE_BUILDS = (
     "stage039/guest-wasi-negative/memory_grow.wat",
     "stage039/guest-egress-broker/guest_vsock_egress.c",
     "stage039/guest-egress-broker/guest_egress_init.c",
+    "stage039/guest-quarantine/quarantine.c",
+    "stage039/guest-quarantine/guest_quarantine_init.c",
+    "stage039/guest-quarantine/spin.wat",
 )
 MAX_SOURCE_BYTES = 16 * 1024 * 1024
 

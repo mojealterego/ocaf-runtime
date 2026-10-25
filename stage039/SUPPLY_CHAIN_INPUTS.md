@@ -5,7 +5,7 @@ their lab-signed manifests are prepared. It verifies the Ed25519 envelopes
 against the configured lab public key, compares each signed payload to the
 reviewed request, rechecks every SHA-pinned Firecracker/kernel/rootfs/Aya
 loader/Wasmtime/module asset, and inventories the three Cargo lockfiles plus
-the reviewed Aya, WASI negative, egress, and guest build sources. It writes a deterministic CycloneDX 1.5
+the reviewed Aya, WASI negative, egress, quarantine, and guest build sources. It writes a deterministic CycloneDX 1.5
 JSON file for the same input bytes and a separate JSON evidence report. Its
 component names are logical names; no private local paths or key material are
 exported in the SBOM.
