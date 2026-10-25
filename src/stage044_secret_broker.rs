@@ -400,7 +400,10 @@ mod tests {
     }
     #[test]
     fn encryption_binds_tenant_user_and_route() {
-        let dir=tempfile::tempdir().unwrap();let db=dir.path().join("vault.sqlite");Connection::open(&db).unwrap();
+        let dir=tempfile::tempdir().unwrap();
+        #[cfg(unix)]
+        std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+        let db=dir.path().join("vault.sqlite");Connection::open(&db).unwrap();
         #[cfg(unix)]
         std::fs::set_permissions(&db, std::fs::Permissions::from_mode(0o600)).unwrap();
         let mut broker=SecretBroker::open(&db,[42u8;32],vec![route(Ipv4Addr::new(8,8,8,8))]).unwrap();

@@ -45,7 +45,9 @@ fn call(tenant:&str,agent:&str) -> ToolCall {
 }
 #[test]
 fn two_tenants_two_users_and_confused_deputy_are_isolated() {
-    let dir=tempfile::tempdir().unwrap();let path=dir.path().join("oauth.sqlite");
+    let dir=tempfile::tempdir().unwrap();#[cfg(unix)]
+    std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+    let path=dir.path().join("oauth.sqlite");
     Connection::open(&path).unwrap();
     #[cfg(unix)]
     std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
@@ -66,7 +68,9 @@ fn two_tenants_two_users_and_confused_deputy_are_isolated() {
 }
 #[test]
 fn valid_oauth_never_bypasses_omat_execution_and_ostc() {
-    let dir=tempfile::tempdir().unwrap();let path=dir.path().join("oauth.sqlite");Connection::open(&path).unwrap();
+    let dir=tempfile::tempdir().unwrap();#[cfg(unix)]
+    std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+    let path=dir.path().join("oauth.sqlite");Connection::open(&path).unwrap();
     #[cfg(unix)]
     std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
     let oauth=OAuthService::open(&path,vec![client("tenant-a")]).unwrap();

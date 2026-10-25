@@ -498,6 +498,8 @@ mod tests {
     }
     fn fixture() -> (tempfile::TempDir, OAuthService, Arc<TestClock>) {
         let dir = tempfile::tempdir().unwrap();
+        #[cfg(unix)]
+        std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
         let db = dir.path().join("oauth.sqlite");
         Connection::open(&db).unwrap();
         #[cfg(unix)]
