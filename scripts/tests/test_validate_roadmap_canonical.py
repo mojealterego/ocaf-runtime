@@ -50,6 +50,10 @@ class CanonicalRoadmapTests(unittest.TestCase):
         bad["main"][38]["status"]="COMPLETE_PRODUCTION"
         with self.assertRaises(check.CanonicalRoadmapError):
             check.validate(bad,self.md,self.archive)
+        bad=copy.deepcopy(self.inventory)
+        bad["main"][39]["status"]="COMPLETE_PRODUCTION"
+        with self.assertRaises(check.CanonicalRoadmapError):
+            check.validate(bad,self.md,self.archive)
 
     def test_original_legacy_matrix_must_be_preserved(self):
         with self.assertRaises(check.CanonicalRoadmapError):

@@ -91,8 +91,10 @@ def validate(inventory: dict, markdown: str, archive: str) -> dict:
             raise CanonicalRoadmapError("historical 0.00–0.10 description invented")
     if main[38].get("status")!="CLOSED_BY_OPERATOR_TECHNICAL_OPEN":
         raise CanonicalRoadmapError("administrative milestone must retain technical NO-GO")
-    if any(main[i].get("status")!="ACTIVE_TECHNICAL_OPEN" for i in (39,40,41)):
-        raise CanonicalRoadmapError("real WASI/multihost PG/DR production gates still open")
+    if main[39].get("status")!="CLOSED_BY_OPERATOR_SIMULATION_TECHNICAL_OPEN":
+        raise CanonicalRoadmapError("0.39 administrative simulation closure must retain technical NO-GO")
+    if any(main[i].get("status")!="ACTIVE_TECHNICAL_OPEN" for i in (40,41)):
+        raise CanonicalRoadmapError("multihost PG/DR production gates still open")
     keys=[(r.get("name"),r.get("group")) for r in refs]
     if (len(set(keys))!=33
         or not all(isinstance(name,str) and name and

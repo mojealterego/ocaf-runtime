@@ -635,3 +635,9 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - Implementacje/testy: `src/omas_server.rs`, `src/omat_server.rs`, `src/stage043_signed_manifest.rs`, `tests/stage043_security.rs`, `tests/stage043_signed_manifest.rs`; dedykowana bramka: `.github/workflows/stage043-omas-omat.yml`.
 - Zweryfikowany negatywny test: run 40023230307 wykazał akceptację sfałszowanej deklaracji `ostc_enabled` klienta; poprawka wprowadziła domyślnie zamkniętą autorytatywną bramkę serwera. Brak poświadczonego OSTc i wykonawcy blokuje wykonanie.
 - Stan `ACTIVE_TECHNICAL_OPEN`: nie przypisano produkcyjnego GO, nie zadeklarowano sieciowego E2E, sandbox execute, trwałości rejestrów ani odbioru operatora. Istniejące globalne błędy CI (README generator, RustSec, agent-fleet) nie są ukrywane.
+
+### 2026-10-26 — zamknięcie administracyjne 0.39 i przejście do 0.40
+
+- Właściciel polecił uznać etap 0.39 za zakończony na podstawie zastępczej symulacji i kontynuować 0.40. Status kanoniczny to `CLOSED_BY_OPERATOR_SIMULATION_TECHNICAL_OPEN`; [dyrektywa](../STAGE039_OPERATOR_DIRECTIVE_2026-10-26.md) odróżnia to od produkcyjnego odbioru.
+- [Podpisana próba zastępcza](../STAGE039_SIMULATED_TWO_RUNNER_ATTESTATION_2026-10-26.md) obejmuje dwa efemeryczne runnery KVM po 100 cykli, odtworzenie checkpointu przez artefakt i laboratoryjną partycję mTLS. Bezpośrednia partycja między trwałymi hostami i żywy failover pozostają niesprawdzone; `stage_039_complete=false` w raportach technicznych.
+- 0.40.3: walidator surowych dowodów live WAL/topologii, [CI 40282147168](https://github.com/mojealterego/ocaf-runtime/actions/runs/40282147168). 0.40.7: LSN odbioru/replay i lag, [CI 40282197900](https://github.com/mojealterego/ocaf-runtime/actions/runs/40282197900). 0.40.4: trwały digest kluczy świadków i progu, [CI 40282162112](https://github.com/mojealterego/ocaf-runtime/actions/runs/40282162112). To bramki implementacji; brak rzeczywistego trzyhostowego PostgreSQL HA.

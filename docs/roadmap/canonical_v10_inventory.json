@@ -448,7 +448,7 @@
       "acceptance": "[Real Linux KVM CI 38739812121](https://github.com/mojealterego/ocaf-runtime/actions/runs/38739812121): two per-tenant kernel SO_PEERCRED AF_UNIX broker reservations with SHA-pinned netless manifests persisted in SQLite BEFORE launching two simultaneous jailed Firecracker Linux guests; lease/VM id/cgroup/boot hash and SIGKILL/peer survival receipts bound, leases released. [Ledger](STAGE039_040_BROKER_KERNEL_PG_INDEPENDENCE_2026-10-15.md). Signed WASI **inside guest not implemented**; production NO-GO, independent signer gates waived for development only.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
-      "status": "ACTIVE_TECHNICAL_OPEN",
+      "status": "CLOSED_BY_OPERATOR_SIMULATION_TECHNICAL_OPEN",
       "historical_status": "**REAL BROKER SO_PEERCRED ADMISSION→TWO JAILED VM KERNEL BOOTS/FAULTS PASS; SIGNED WASI INSIDE GUEST OPEN**",
       "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
       "source_class": "MATRIX_ORIGINAL"
@@ -3778,7 +3778,7 @@
       "acceptance": "LSN WAL na fizycznie **dwóch oddzielnych kernels**: host A writes; B `pg_stat_wal_receiver.status=streaming`; B reads same checksum while A actually sends via network. GitHub artifact-mediated transfer **nie jest** TCP.",
       "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
       "dependencies": [],
-      "status": "PLANNED",
+      "status": "RUNNER_IMPLEMENTED_LIVE_TWO_KERNEL_EVIDENCE_PENDING",
       "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
       "source_class": "PDF_DRAFT"
     },
@@ -3789,7 +3789,7 @@
       "acceptance": "3 odrębne kernels; stale primary blocked from effect-writes; split-brain/partition and restart fence, bounded RPO/RTO with witness.",
       "negative": "Dopuszczać tylko faktyczne testy negatywne / brak oszukanego PASS.",
       "dependencies": [],
-      "status": "PLANNED",
+      "status": "PARTIAL_QUORUM_CERTIFICATE_HARDENING_THREE_HOST_EVIDENCE_PENDING",
       "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
       "source_class": "PDF_DRAFT"
     },
@@ -3825,7 +3825,7 @@
         "0.40.3",
         "1.20"
       ],
-      "status": "PLANNED",
+      "status": "RUNNER_IMPLEMENTED_LIVE_TWO_KERNEL_EVIDENCE_PENDING",
       "priority": "P0",
       "owner": "database",
       "pdf_file": "Dokument bez nazwy(2).PDF",
