@@ -208,13 +208,36 @@ pub async fn serve_omat_zenoh(
     admission: OmatZenohAdmission,
     key: &str,
 ) -> anyhow::Result<()> {
+    serve_omat_zenoh_until(session, admission, key, std::future::pending()).await
+}
+
+/// Complete the current request/reply before honoring a graceful shutdown.
+/// The operator must keep the old listener alive until its upstream routing
+/// is drained; this only guarantees completion of the request being handled.
+pub async fn serve_omat_zenoh_until<F>(
+    session: Arc<zenoh::Session>,
+    admission: OmatZenohAdmission,
+    key: &str,
+    shutdown: F,
+) -> anyhow::Result<()>
+where
+    F: std::future::Future<Output = ()> + Send,
+{
     let state = tokio::sync::Mutex::new(admission);
     let queryable = session
         .declare_queryable(key)
         .await
         .map_err(|e| anyhow::anyhow!("declare OMAt queryable: {e}"))?;
     state.lock().await.connected(true);
-    while let Ok(query) = queryable.recv_async().await {
+    tokio::pin!(shutdown);
+    loop {
+        let query = tokio::select! {
+            _ = &mut shutdown => break,
+            result = queryable.recv_async() => match result {
+                Ok(query) => query,
+                Err(_) => break,
+            },
+        };
         let result = match query.payload() {
             Some(payload) => state.lock().await.handle(payload.to_bytes().as_ref()),
             None => Err(anyhow::anyhow!("missing payload")),
