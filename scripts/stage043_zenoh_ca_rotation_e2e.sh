@@ -6,6 +6,14 @@ umask 077
 root="$(mktemp -d)"
 declare -a server_pids=()
 cleanup() {
+  local status=$? log
+  if (( status != 0 )); then
+    for log in "$root"/*.log; do
+      [[ -f "$log" ]] || continue
+      printf -- '--- diagnostic: %s ---\\n' "$(basename "$log")"
+      tail -n 30 "$log" || true
+    done
+  fi
   for pid in "${server_pids[@]}"; do kill "$pid" 2>/dev/null || true; done
   for pid in "${server_pids[@]}"; do wait "$pid" 2>/dev/null || true; done
   rm -rf "$root"
