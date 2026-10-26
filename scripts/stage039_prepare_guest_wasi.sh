@@ -8,6 +8,12 @@ if [[ "$#" -ne 2 || "$EUID" -ne 0 ]]; then
 fi
 PREFIX="$1"; SRC="$2"
 [[ "$PREFIX" == /opt/ocaf039-real-* && "$SRC" == /* && -d "$SRC/stage039/guest-wasi" ]] || exit 2
+KPROBE_CFLAGS=()
+case "${OCAF_STAGE039_KPROBE_INTEGRATION:-0}" in
+  0) ;;
+  1) KPROBE_CFLAGS=(-DOCAF_GUEST_KPROBE_INTEGRATION=1) ;;
+  *) echo "invalid guest kprobe integration toggle" >&2; exit 2 ;;
+esac
 APPROVED="$PREFIX/approved"
 [[ -f "$APPROVED/guest_rootfs" && -f "$APPROVED/request.json" ]] || exit 2
 WORK="/tmp/ocaf39-real-guest-wasi-$(basename "$PREFIX")"
@@ -101,6 +107,7 @@ for key in a b; do
   [[ "$output" == "$expected" ]] || { echo "WASIp1 module preflight mismatch" >&2; exit 4; }
   wasm_sha="$(sha256sum "$WORK/hello-$key.wasm" | cut -d ' ' -f 1)"
   gcc -std=c11 -O2 -static -Wall -Wextra -Werror \
+    "${KPROBE_CFLAGS[@]}" \
     "-DOCAF_WASI_TENANT=\"$tenant\"" \
     "-DOCAF_WASI_NONCE=\"$nonce\"" \
     "-DOCAF_WASI_MODULE_SHA256=\"$wasm_sha\"" \

@@ -150,6 +150,116 @@ jobs:
           cp "$SOURCE/linux-6.1.188/.config" stage039-kprobe-evidence/kernel.config
           cp "$SOURCE/linux-6.1.188/vmlinux" stage039-kprobe-evidence/vmlinux
           cp "$SOURCE/built-sha256.txt" stage039-kprobe-evidence/built-sha256.txt
+      - name: Provision custom kernel, guest assets and host Aya for two brokered tenants
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+            python3-cryptography wabt e2fsprogs libc6-dev
+          rustup toolchain install 1.99.0 --profile minimal
+          cargo +1.99.0 build --manifest-path stage039/aya-guard/Cargo.toml --release --locked
+          echo '992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95  stage039/aya-ebpf-egress/prebuilt/stage039-deny-egress.elf' | sha256sum --check -
+          SOURCE="$RUNNER_TEMP/kprobe-source"
+          PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
+          sudo -n install -d -o root -g root -m 0700 "$PREFIX" "$PREFIX/approved" "$PREFIX/jailer"
+          sudo -n install -o root -g root -m 0555 "$SOURCE/release-v1.17.0-x86_64/firecracker-v1.17.0-x86_64" "$PREFIX/approved/firecracker"
+          sudo -n install -o root -g root -m 0555 "$SOURCE/release-v1.17.0-x86_64/jailer-v1.17.0-x86_64" "$PREFIX/approved/jailer"
+          sudo -n install -o root -g root -m 0444 "$SOURCE/linux-6.1.188/vmlinux" "$PREFIX/approved/guest_kernel"
+          sudo -n install -o root -g root -m 0444 "$SOURCE/hello-rootfs.ext4" "$PREFIX/approved/guest_rootfs"
+          sudo -n install -o root -g root -m 0444 stage039/aya-ebpf-egress/prebuilt/stage039-deny-egress.elf "$PREFIX/approved/aya_cgroup_device"
+          sudo -n install -o root -g root -m 0500 stage039/aya-guard/target/release/ocaf-stage039-aya-guard "$PREFIX/approved/aya-guard"
+          sudo -n python3 - "$PREFIX/approved" <<'PY'
+          import hashlib,json,sys
+          from pathlib import Path
+          approved=Path(sys.argv[1])
+          assets={name:{'path':str(approved/name),'sha256':hashlib.sha256((approved/name).read_bytes()).hexdigest()}
+                  for name in ('firecracker','guest_kernel','guest_rootfs','aya_cgroup_device')}
+          assert assets['guest_rootfs']['sha256']=='786f0612582cadcee4c8ad46e30e4cc93dff9a3c0b4ede3f3c597b4c241dd547'
+          assert assets['aya_cgroup_device']['sha256']=='992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95'
+          request={'schema_version':1,'workload_id':'ocaf-fc-kprobe-integration',
+                   'tenant_id':'tenant-a','agent_id':'agent-a',
+                   'isolation':{'hypervisor':'firecracker','jailer':True,'network':'none',
+                                'guest_egress':False,'rootfs_readonly':True,
+                                'mmds_enabled':False,'seccomp':'default','vcpus':1,'mem_mib':256},
+                   'assets':assets}
+          (approved/'request.json').write_text(json.dumps(request,sort_keys=True)+'\n')
+          (approved/'request.json').chmod(0o600)
+          PY
+      - name: Prepare two distinct signed WASI guests with integrated kprobe probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
+          sudo -n env OCAF_STAGE039_KPROBE_INTEGRATION=1 \
+            bash scripts/stage039_prepare_guest_wasi.sh "$PREFIX" "$GITHUB_WORKSPACE"
+          sudo -n python3 - "$PREFIX/approved" <<'PY'
+          import base64,json,sys
+          from pathlib import Path
+          from cryptography.hazmat.primitives import serialization
+          from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+          sys.path.insert(0,'scripts')
+          from stage039_signed_manifest import canonical_payload
+          root=Path(sys.argv[1]);key=Ed25519PrivateKey.generate()
+          public=key.public_key().public_bytes(serialization.Encoding.Raw,serialization.PublicFormat.Raw)
+          (root/'stage039-ci-public.key').write_bytes(public)
+          (root/'stage039-ci-public.key').chmod(0o400)
+          for tenant in ('a','b'):
+              payload=json.loads((root/f'request-wasi-{tenant}.json').read_text())
+              envelope={'key_id':'stage039-ci','public_key':base64.b64encode(public).decode(),
+                        'signature':base64.b64encode(key.sign(canonical_payload(payload))).decode(),
+                        'payload':payload}
+              path=root/f'signed-wasi-{tenant}.json'
+              path.write_text(json.dumps(envelope,sort_keys=True)+'\n')
+              path.chmod(0o400)
+          PY
+      - name: Run two brokered jailed KVM guests with guest kprobe, Aya and WASI
+        shell: bash
+        run: |
+          set -euo pipefail
+          PREFIX="/opt/ocaf039-real-${GITHUB_RUN_ID}"
+          IMAGE_A="$PREFIX/approved/guest_rootfs_wasi_a"
+          IMAGE_B="$PREFIX/approved/guest_rootfs_wasi_b"
+          sudo -n python3 scripts/stage039_broker_vm_binding.py \
+            --manifest-a "$PREFIX/approved/request-wasi-a.json" \
+            --manifest-b "$PREFIX/approved/request-wasi-b.json" \
+            --approved-root "$PREFIX/approved" \
+            --firecracker "$PREFIX/approved/firecracker" \
+            --firecracker-sha256 "$(sudo -n sha256sum "$PREFIX/approved/firecracker" | cut -d ' ' -f 1)" \
+            --jailer "$PREFIX/approved/jailer" \
+            --jailer-sha256 "$(sudo -n sha256sum "$PREFIX/approved/jailer" | cut -d ' ' -f 1)" \
+            --chroot-base "$PREFIX/jailer" --ledger-dir "$PREFIX/broker-wasi" \
+            --aya-loader "$PREFIX/approved/aya-guard" \
+            --aya-loader-sha256 "$(sudo -n sha256sum "$PREFIX/approved/aya-guard" | cut -d ' ' -f 1)" \
+            --aya-program "$PREFIX/approved/aya_cgroup_device" \
+            --aya-program-sha256 992cd7a365067f52bce5afe5ca9758dad0e15ad9291b71991914040faaa55c95 \
+            --aya-seconds 12 --timeout 110 --require-guest-wasi \
+            --signed-manifest-a "$PREFIX/approved/signed-wasi-a.json" \
+            --signed-manifest-b "$PREFIX/approved/signed-wasi-b.json" \
+            --trusted-public-key "$PREFIX/approved/stage039-ci-public.key" \
+            --report "$GITHUB_WORKSPACE/stage039-kprobe-evidence/broker-pair.json" \
+            --ack-broker-two-jailed-vm-real-kvm
+          sudo -n python3 scripts/stage039_guest_kprobe_pair.py \
+            --broker-report "$GITHUB_WORKSPACE/stage039-kprobe-evidence/broker-pair.json" \
+            --jailer-base "$PREFIX/jailer" \
+            --rootfs-sha256-a "$(sudo -n sha256sum "$IMAGE_A" | cut -d ' ' -f 1)" \
+            --rootfs-sha256-b "$(sudo -n sha256sum "$IMAGE_B" | cut -d ' ' -f 1)" \
+            --kernel-sha256 "$(sudo -n sha256sum "$PREFIX/approved/guest_kernel" | cut -d ' ' -f 1)" \
+            --kernel-config "$RUNNER_TEMP/kprobe-source/linux-6.1.188/.config" \
+            --kernel-config-sha256 "$(sha256sum "$RUNNER_TEMP/kprobe-source/linux-6.1.188/.config" | cut -d ' ' -f 1)" \
+            --report "$GITHUB_WORKSPACE/stage039-kprobe-evidence/two-tenant-kprobe.json"
+          sudo -n chown "$(id -u):$(id -g)" stage039-kprobe-evidence/broker-pair.json stage039-kprobe-evidence/two-tenant-kprobe.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          result=json.loads(Path('stage039-kprobe-evidence/two-tenant-kprobe.json').read_text())
+          assert result['status']=='TWO_BROKERED_JAILED_KVM_GUEST_KPROBE_AYA_WASI_LAB_PASS'
+          assert result['host_aya_and_guest_aya_correlated'] is True
+          assert set(result['tenants'])=={'a','b'}
+          assert all(t['guest_kprobe_program_id']>0 and t['guest_kprobe_event_count']>0
+                     and t['guest_aya_openat_program_id']>0 and t['guest_aya_openat_event_count']>0
+                     for t in result['tenants'].values())
+          assert result['stage_039_complete'] is False
+          PY
       - name: Capture bounded guest failure diagnostics
         if: failure()
         shell: bash

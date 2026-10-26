@@ -29,6 +29,9 @@
 #include <sys/syscall.h>
 #include <poll.h>
 #include <sys/mount.h>
+#ifdef OCAF_GUEST_KPROBE_INTEGRATION
+#include "../guest-kprobe/guest_kprobe.h"
+#endif
 
 #ifndef OCAF_WASI_TENANT
 #define OCAF_WASI_TENANT "legacy-test"
@@ -334,6 +337,20 @@ int main(void) {
         fail();
     }
     report_guest_bpf_abi();
+#ifdef OCAF_GUEST_KPROBE_INTEGRATION
+    unsigned int kprobe_id = 0;
+    uint64_t kprobe_count = 0;
+    if (ocaf_guest_kprobe_proof(&kprobe_id, &kprobe_count) != 0) {
+        output("OCAF039_GUEST_KPROBE_INTEGRATION_FAIL\n");
+        fail();
+    }
+    char kprobe_marker[160];
+    int kprobe_len = snprintf(kprobe_marker, sizeof(kprobe_marker),
+        "OCAF039_GUEST_KPROBE_INTEGRATED_ID=%u COUNT=%llu NONCE=%s\n",
+        kprobe_id, (unsigned long long)kprobe_count, OCAF_WASI_NONCE);
+    if (kprobe_len <= 0 || (size_t)kprobe_len >= sizeof(kprobe_marker)) fail();
+    output(kprobe_marker);
+#endif
     char traceparent[56];
     if(read_guest_traceparent(traceparent)!=0){
         output("OCAF039_GUEST_TRACEPARENT_DENIED\n");fail();
