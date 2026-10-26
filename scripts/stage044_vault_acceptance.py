@@ -9,6 +9,7 @@ import ssl
 import stat
 import urllib.error
 import urllib.request
+from stage044_http_guard import guarded_opener
 
 def env(name):
     value = os.environ.get(name, "")
@@ -40,7 +41,7 @@ def main():
         body = json.dumps(payload, separators=(",", ":")).encode()
         req = urllib.request.Request(url, data=body, method="POST",
             headers={"X-Vault-Token":token,"Content-Type":"application/json","Accept":"application/json"})
-        opener = urllib.request.build_opener(urllib.request.HTTPSHandler(context=ssl_ctx))
+        opener = guarded_opener(ssl_ctx)
         try:
             with opener.open(req, timeout=8) as response:
                 status, raw = response.status, response.read(65537)

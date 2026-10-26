@@ -10,6 +10,8 @@ on:
       - "deploy/stage044/**"
       - "scripts/stage044_network_acceptance.py"
       - "scripts/stage044_vault_acceptance.py"
+      - "scripts/stage044_http_guard.py"
+      - "scripts/tests/test_stage044_http_guard.py"
       - "tests/stage044_*.rs"
       - "src/lib.rs"
       - ".github/workflows/stage044-oauth.yml"
@@ -21,6 +23,8 @@ on:
       - "deploy/stage044/**"
       - "scripts/stage044_network_acceptance.py"
       - "scripts/stage044_vault_acceptance.py"
+      - "scripts/stage044_http_guard.py"
+      - "scripts/tests/test_stage044_http_guard.py"
       - "tests/stage044_*.rs"
       - "src/lib.rs"
       - ".github/workflows/stage044-oauth.yml"
@@ -49,7 +53,9 @@ jobs:
       - name: Compile loopback OAuth gateway
         run: cargo check --locked --no-default-features --bin ocaf-oauth-gateway
       - name: Python network probe syntax
-        run: python3 -m py_compile scripts/stage044_network_acceptance.py scripts/stage044_vault_acceptance.py
+        run: |
+          python3 -m py_compile scripts/stage044_network_acceptance.py scripts/stage044_vault_acceptance.py scripts/stage044_http_guard.py
+          python3 -m unittest discover -s scripts/tests -p test_stage044_http_guard.py -v
       - name: OAuth positive and negative tests
         run: cargo test --locked --no-default-features stage044_oauth::tests -- --nocapture
       - name: Pinned OIDC issuer and ID-token negative tests

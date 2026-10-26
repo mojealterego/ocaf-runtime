@@ -22,6 +22,8 @@ On the target host, provision OCAF_E2E_ISSUER, OCAF_E2E_GATEWAY, OCAF_E2E_TENANT
     python3 scripts/stage044_network_acceptance.py
 This probes TLS 1.3, issuer metadata, protected resource metadata, positive authorization, wrong tenant/user, malformed bearer, and 48 concurrent negative requests. It fails if configuration is missing. It does not substitute for live browser PKCE+consent+MFA, external provider refresh, Vault KMS/HSM, certificate rotation, chaos/network partitions, or hybrid PQC downgrade tests. Those remain blocking acceptance criteria.
 
+Both token-bearing network probes reject HTTP redirects. A 3xx response from the configured issuer, gateway or Vault endpoint is a failed acceptance observation; bearer and Vault tokens must never be sent to a `Location` target. The local regression test checks this for both secret header names.
+
 No production GO until all these tests run and are recorded on the actual infrastructure.
 
 ManagedProviderRefresh in src/stage044_provider_refresh.rs uses a Vault-encrypted, per-tenant/user/provider refresh token, SQLite IMMEDIATE one-use state, fixed HTTPS Basic-auth token endpoint, and conservative reauthorization on ambiguous failures. It is NOT wired to a deployed provider and has not passed real refresh/restart E2E. On any interrupted refresh, require user re-consent rather than replaying the old token.

@@ -8,6 +8,7 @@ import ssl
 import stat
 import urllib.error
 import urllib.request
+from stage044_http_guard import guarded_opener
 
 def required(name):
     value = os.environ.get(name, "")
@@ -22,7 +23,7 @@ def fetch(url, method="GET", token=None):
     if token:
         headers["Authorization"] = "Bearer " + token
     req = urllib.request.Request(url, method=method, headers=headers)
-    opener = urllib.request.build_opener(urllib.request.HTTPSHandler(context=ctx))
+    opener = guarded_opener(ctx)
     try:
         with opener.open(req, timeout=8) as resp:
             body = resp.read(65537)
