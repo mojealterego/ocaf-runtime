@@ -73,8 +73,13 @@ jobs:
           assert required <= options, f'kernel did not retain requested features: {sorted(required-options)}'
           PY
           make -j 2 vmlinux
-          file vmlinux
-          sha256sum .config vmlinux > "$RUNNER_TEMP/kprobe-source/built-sha256.txt"
+          # The broker admission cap is 128 MiB. Remove DWARF from the
+          # distributable ELF while retaining the kernel's allocated BTF.
+          objcopy --strip-debug vmlinux vmlinux-guest
+          readelf -S vmlinux-guest | grep -F '.BTF'
+          test "$(stat -c %s vmlinux-guest)" -le 134217728
+          file vmlinux vmlinux-guest
+          sha256sum .config vmlinux vmlinux-guest > "$RUNNER_TEMP/kprobe-source/built-sha256.txt"
       - name: Boot custom kernel under real Firecracker jailer and attach guest kprobe
         shell: bash
         run: |
@@ -89,7 +94,7 @@ jobs:
           sudo -n install -o root -g root -m 0555 \
             "$SOURCE/release-v1.17.0-x86_64/jailer-v1.17.0-x86_64" "$PREFIX/approved/jailer"
           sudo -n install -o root -g root -m 0444 \
-            "$SOURCE/linux-6.1.188/vmlinux" "$PREFIX/approved/guest_kernel"
+            "$SOURCE/linux-6.1.188/vmlinux-guest" "$PREFIX/approved/guest_kernel"
           sudo -n install -o root -g root -m 0444 \
             "$SOURCE/hello-rootfs.ext4" "$PREFIX/approved/guest_rootfs"
           set +e
@@ -127,7 +132,7 @@ jobs:
                   raise SystemExit(1)
           report=json.loads(Path('stage039-kprobe-evidence/guest.json').read_text())
           pins=(Path(os.environ['RUNNER_TEMP'])/'kprobe-source'/'built-sha256.txt').read_text()
-          kernel_pins=re.findall(r'(?m)^([0-9a-f]{64})  vmlinux$',pins)
+          kernel_pins=re.findall(r'(?m)^([0-9a-f]{64})  vmlinux-guest$',pins)
           require(len(kernel_pins)==1,'missing unique built kernel SHA-256 receipt')
           serial=Path(sys.argv[1])/'jailer'/'firecracker'/report['vm_id']/'serial-console.log'
           # The jailer serial log is intentionally root-owned mode 0600.
@@ -149,6 +154,7 @@ jobs:
           PY
           cp "$SOURCE/linux-6.1.188/.config" stage039-kprobe-evidence/kernel.config
           cp "$SOURCE/linux-6.1.188/vmlinux" stage039-kprobe-evidence/vmlinux
+          cp "$SOURCE/linux-6.1.188/vmlinux-guest" stage039-kprobe-evidence/vmlinux-guest
           cp "$SOURCE/built-sha256.txt" stage039-kprobe-evidence/built-sha256.txt
       - name: Provision custom kernel, guest assets and host Aya for two brokered tenants
         shell: bash
@@ -164,7 +170,7 @@ jobs:
           sudo -n install -d -o root -g root -m 0700 "$PREFIX" "$PREFIX/approved" "$PREFIX/jailer"
           sudo -n install -o root -g root -m 0555 "$SOURCE/release-v1.17.0-x86_64/firecracker-v1.17.0-x86_64" "$PREFIX/approved/firecracker"
           sudo -n install -o root -g root -m 0555 "$SOURCE/release-v1.17.0-x86_64/jailer-v1.17.0-x86_64" "$PREFIX/approved/jailer"
-          sudo -n install -o root -g root -m 0444 "$SOURCE/linux-6.1.188/vmlinux" "$PREFIX/approved/guest_kernel"
+          sudo -n install -o root -g root -m 0444 "$SOURCE/linux-6.1.188/vmlinux-guest" "$PREFIX/approved/guest_kernel"
           sudo -n install -o root -g root -m 0444 "$SOURCE/hello-rootfs.ext4" "$PREFIX/approved/guest_rootfs"
           sudo -n install -o root -g root -m 0444 stage039/aya-ebpf-egress/prebuilt/stage039-deny-egress.elf "$PREFIX/approved/aya_cgroup_device"
           sudo -n install -o root -g root -m 0500 stage039/aya-guard/target/release/ocaf-stage039-aya-guard "$PREFIX/approved/aya-guard"
@@ -266,17 +272,25 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p stage039-kprobe-evidence
-          PREFIX="/opt/ocaf039-kprobe-${GITHUB_RUN_ID}"
-          if [[ -d "$PREFIX/jailer" ]]; then
-            sudo -n find "$PREFIX/jailer" -name serial-console.log -type f -print -exec tail -c 16000 {} \; \
-              | tee stage039-kprobe-evidence/serial-diagnostic.txt
-            excerpt="$(tail -c 1200 stage039-kprobe-evidence/serial-diagnostic.txt | tr '\n' ' ' | tr '%' '_')"
-            if [[ -n "$excerpt" ]]; then
-              printf '::warning title=Bounded guest serial diagnostic::%s\n' "$excerpt"
+          for label in kprobe real; do
+            PREFIX="/opt/ocaf039-${label}-${GITHUB_RUN_ID}"
+            if [[ -d "$PREFIX/jailer" ]]; then
+              sudo -n find "$PREFIX/jailer" -name serial-console.log -type f -print -exec tail -c 4000 {} \; \
+                | tee -a stage039-kprobe-evidence/serial-diagnostic.txt
             fi
-          else
-            printf 'Guest jailer directory was not created\n' \
-              | tee stage039-kprobe-evidence/serial-diagnostic.txt
+            if [[ -d "$PREFIX/approved" ]]; then
+              sudo -n find "$PREFIX/approved" -maxdepth 1 -type f \
+                -printf '%f %s bytes mode=%m links=%n\n' \
+                | tee -a stage039-kprobe-evidence/asset-diagnostic.txt
+            fi
+          done
+          if [[ -f stage039-kprobe-evidence/serial-diagnostic.txt ]]; then
+            excerpt="$(tail -c 1200 stage039-kprobe-evidence/serial-diagnostic.txt | tr '\n' ' ' | tr '%' '_')"
+            printf '::warning title=Bounded guest serial diagnostic::%s\n' "$excerpt"
+          fi
+          if [[ -f stage039-kprobe-evidence/asset-diagnostic.txt ]]; then
+            excerpt="$(tail -c 800 stage039-kprobe-evidence/asset-diagnostic.txt | tr '\n' ' ' | tr '%' '_')"
+            printf '::warning title=Guest asset sizes::%s\n' "$excerpt"
           fi
       - name: Preserve custom-kernel lab evidence
         if: always()
