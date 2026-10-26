@@ -130,6 +130,20 @@ jobs:
           cp "$SOURCE/linux-6.1.188/.config" stage039-kprobe-evidence/kernel.config
           cp "$SOURCE/linux-6.1.188/vmlinux" stage039-kprobe-evidence/vmlinux
           cp "$SOURCE/built-sha256.txt" stage039-kprobe-evidence/built-sha256.txt
+      - name: Capture bounded guest failure diagnostics
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p stage039-kprobe-evidence
+          PREFIX="/opt/ocaf039-kprobe-${GITHUB_RUN_ID}"
+          if [[ -d "$PREFIX/jailer" ]]; then
+            sudo -n find "$PREFIX/jailer" -name serial-console.log -type f -print -exec tail -c 16000 {} \; \
+              | tee stage039-kprobe-evidence/serial-diagnostic.txt
+          else
+            printf 'Guest jailer directory was not created\n' \
+              | tee stage039-kprobe-evidence/serial-diagnostic.txt
+          fi
       - name: Preserve custom-kernel lab evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
