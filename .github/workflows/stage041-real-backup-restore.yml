@@ -6,7 +6,9 @@ on:
     paths:
       - .github/workflows/stage041-real-backup-restore.yml
       - scripts/stage041_backup_restore.py
+      - scripts/stage041_encrypted_backup.py
       - scripts/tests/test_stage041_backup_restore.py
+      - scripts/tests/test_stage041_encrypted_backup.py
   workflow_dispatch:
 
 permissions:
@@ -21,7 +23,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Verify backup digest mismatch and fail-closed recovery assertions
-        run: python3 -m unittest discover -s scripts/tests -p test_stage041_backup_restore.py -v
+        run: |
+          python3 -m unittest discover -s scripts/tests -p test_stage041_backup_restore.py -v
+          python3 -m unittest discover -s scripts/tests -p test_stage041_encrypted_backup.py -v
       - name: Prepare PostgreSQL 16 local binaries
         shell: bash
         run: |
@@ -32,6 +36,10 @@ jobs:
           fi
           test -x /usr/lib/postgresql/16/bin/pg_dump
           test -x /usr/lib/postgresql/16/bin/pg_restore
+          if ! python3 -c 'import cryptography' >/dev/null 2>&1; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-cryptography
+          fi
       - name: REAL PostgreSQL 25 durable receipt rows, custom dump, corrupt rejection and exact restore
         shell: bash
         run: |
@@ -65,6 +73,46 @@ jobs:
           assert r["cross_host_restore_tested"] is False
           assert r["production_approved"] is False
           print("STAGE041_REAL_POSTGRESQL_BACKUP_RESTORE_SHA256_TAMPER_PROVED")
+          PY
+      - name: Encrypt and authenticate actual pg_dump bytes then deny tamper, revoked key and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json,secrets,sys,tempfile
+          from pathlib import Path
+          sys.path.insert(0,"scripts")
+          from stage041_encrypted_backup import EncryptedBackupError,seal_snapshot,unseal_snapshot
+          root=Path("stage041-evidence").resolve()
+          original=root/"snapshot.pgcustom"
+          expected=json.loads((root/"report.json").read_text())["backup_sha256"]
+          with tempfile.TemporaryDirectory(prefix="ocaf41-encryption-") as folder:
+              private=Path(folder)
+              envelope=private/"envelope";envelope.mkdir()
+              key=secrets.token_bytes(32)
+              manifest=seal_snapshot(original,envelope,key=key,generation=1)
+              target=private/"restored.pgcustom"
+              report=unseal_snapshot(envelope,target,key=key,minimum_generation=1)
+              assert hashlib.sha256(target.read_bytes()).hexdigest()==expected
+              target.unlink()
+              for policy in ({"key":secrets.token_bytes(32),"minimum_generation":1},
+                             {"key":key,"minimum_generation":2},
+                             {"key":key,"minimum_generation":1,
+                              "revoked_key_ids":frozenset({manifest["key_id"]})}):
+                  try:unseal_snapshot(envelope,target,**policy)
+                  except EncryptedBackupError:pass
+                  else:raise AssertionError("unsafe encrypted backup recovery accepted")
+              ciphertext=envelope/"snapshot.aesgcm"
+              original_bytes=ciphertext.read_bytes()
+              ciphertext.write_bytes(original_bytes[:-1]+bytes([original_bytes[-1]^1]))
+              try:unseal_snapshot(envelope,target,key=key,minimum_generation=1)
+              except EncryptedBackupError:pass
+              else:raise AssertionError("tampered real PostgreSQL encrypted dump accepted")
+              assert not target.exists()
+          (root/"envelope-local-check.json").write_text(json.dumps(report,sort_keys=True)+"\n")
+          assert report["immutable_offsite_storage_proved"] is False
+          assert report["stage_041_complete"] is False
+          print("STAGE041_REAL_POSTGRESQL_DUMP_AES256GCM_LOCAL_RECOVERY_AND_NEGATIVES_PASS")
           PY
       - name: Preserve actual backup and report with measured restoration time
         if: always()
