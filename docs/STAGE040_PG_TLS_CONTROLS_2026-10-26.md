@@ -21,3 +21,9 @@ To test laboratoryjny na **jednym jądrze** z efemerycznymi certyfikatami.
 Nie dowodzi TLS między niezależnymi hostami ani hybrydy PQC. Raport zachowuje
 `independent_host_tls_tested=false`, `pqc_hybrid_tested=false`,
 `stage_040_complete=false` i `production_approved=false`.
+
+[Rzeczywisty przebieg CI 40282896779](https://github.com/mojealterego/ocaf-runtime/actions/runs/40282896779)
+na commicie `8e90ff8a03c92f32643746bb2dfa58838b2611a4` zakończył się
+sukcesem. Artefakt `stage040-postgres-tls-role-lab-not-interhost` ma GitHub
+artifact ID `12633201847` oraz zgłoszony digest archiwum SHA-256
+`fbfe0bde939b39eabe81505f563f8763736c60fa4f0df4c65f7c539f3f8b500c`.
