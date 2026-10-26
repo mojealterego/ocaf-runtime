@@ -171,7 +171,10 @@ async fn real_zenoh_loopback_rejects_and_fails_closed_after_server_shutdown() {
 
 #[test]
 fn replay_survives_server_restart() {
+    use std::os::unix::fs::PermissionsExt;
+
     let dir = tempfile::tempdir().unwrap();
+    std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
     let path = dir.path().join("replay.sqlite");
     let topic = "ocaf/omat/tenant_a/requests/req_1";
     let signed = sign_omas_request(
@@ -205,6 +208,7 @@ fn replay_store_rejects_symlink_shared_directory_and_shared_file() {
     use std::os::unix::fs::{symlink, PermissionsExt};
 
     let dir = tempfile::tempdir().unwrap();
+    std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
     let real = dir.path().join("real.sqlite");
     let link = dir.path().join("link.sqlite");
     let first = admission().with_replay_database(&real).unwrap();
