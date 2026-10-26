@@ -758,6 +758,9 @@ jobs:
           proof=json.loads(Path("stage039-real-guest-evidence/loopback-otlp-receipt.json").read_text())
           assert proof["otlp_http_json_posted"] is True
           assert proof["loopback_collector_received"] is True
+          assert proof["collector_tenant_binding_verified"] is True
+          assert proof["collector_trace_count"] == 2
+          assert proof["collector_distinct_vm_count"] == 2
           assert set(proof["tenant_traces"])=={"a","b"}
           assert proof["tenant_traces"]["a"]["traceparent"]!=proof["tenant_traces"]["b"]["traceparent"]
           assert proof["guest_application_instrumented"] is False

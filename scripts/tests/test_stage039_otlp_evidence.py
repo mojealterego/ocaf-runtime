@@ -59,10 +59,22 @@ class OtlpEvidenceTests(unittest.TestCase):
         payload, proof = otlp.build_export(broker, guest, 123456789)
         self.assertEqual(len(payload["resourceSpans"]), 2)
         self.assertNotEqual(proof["a"]["traceparent"], proof["b"]["traceparent"])
-        result = otlp.export_to_loopback(payload)
+        result = otlp.export_to_loopback(payload, proof)
         self.assertTrue(result["otlp_http_json_posted"])
         self.assertTrue(result["loopback_collector_received"])
+        self.assertTrue(result["collector_tenant_binding_verified"])
+        self.assertEqual(result["collector_trace_count"], 2)
+        self.assertEqual(result["collector_distinct_vm_count"], 2)
         self.assertEqual(len(result["collector_body_sha256"]), 64)
+
+    def test_collector_rejects_swapped_tenant_or_trace_after_source_validation(self):
+        broker, guest = fixture()
+        payload, proof = otlp.build_export(broker, guest, 123456789)
+        mutated = copy.deepcopy(payload)
+        attrs = mutated["resourceSpans"][0]["scopeSpans"][0]["spans"][0]["attributes"]
+        next(item for item in attrs if item["key"] == "ocaf.tenant_id")["value"]["stringValue"] = "tenant-b"
+        with self.assertRaises(otlp.EvidenceError):
+            otlp.export_to_loopback(mutated, proof)
 
     def test_mutated_guest_or_lease_trace_denied_before_export(self):
         base_broker, base_guest = fixture()

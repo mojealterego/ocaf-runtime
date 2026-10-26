@@ -16,6 +16,7 @@ from pathlib import Path
 import sys
 import threading
 import time
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 import stage039_traceparent as traceparent
@@ -50,6 +51,84 @@ def _read(path: Path) -> dict:
 def _attr(key: str, value: str | int) -> dict:
     return {"key": key, "value": {"intValue": str(value)} if type(value) is int
             else {"stringValue": value}}
+
+
+def _collector_attributes(value: object) -> dict[str, object]:
+    """Decode the bounded OTLP attribute subset used by this evidence bridge."""
+    if not isinstance(value, list):
+        raise EvidenceError("collector attributes must be a list")
+    decoded: dict[str, object] = {}
+    for item in value:
+        if (not isinstance(item, dict) or set(item) != {"key", "value"}
+                or not isinstance(item["key"], str)
+                or not isinstance(item["value"], dict)):
+            raise EvidenceError("invalid collector attribute shape")
+        key, raw = item["key"], item["value"]
+        if key in decoded or set(raw) not in ({"stringValue"}, {"intValue"}):
+            raise EvidenceError("duplicate or unsupported collector attribute")
+        if set(raw) == {"stringValue"} and not isinstance(raw["stringValue"], str):
+            raise EvidenceError("invalid collector string attribute")
+        if set(raw) == {"intValue"} and (not isinstance(raw["intValue"], str)
+                                           or not raw["intValue"].isdigit()):
+            raise EvidenceError("invalid collector integer attribute")
+        decoded[key] = next(iter(raw.values()))
+    return decoded
+
+
+def verify_collector_tenant_binding(payload: dict, proof: dict) -> dict:
+    """Verify collector-visible trace, tenant and VM bindings after HTTP POST.
+
+    ``build_export`` authenticates the source evidence before export.  This
+    second check authenticates what the collector actually received, closing
+    the gap where a malformed or cross-tenant OTLP payload could otherwise be
+    accepted by a transport-only loopback test.
+    """
+    spans = []
+    resource_spans = payload.get("resourceSpans") if isinstance(payload, dict) else None
+    if not isinstance(resource_spans, list) or len(resource_spans) != 2:
+        raise EvidenceError("collector must receive exactly two resource spans")
+    if not isinstance(proof, dict) or set(proof) != {"a", "b"}:
+        raise EvidenceError("collector proof must contain both tenants")
+    for resource in resource_spans:
+        if (not isinstance(resource, dict)
+                or set(resource) != {"resource", "scopeSpans"}
+                or not isinstance(resource["scopeSpans"], list)
+                or len(resource["scopeSpans"]) != 1):
+            raise EvidenceError("invalid collector resource span shape")
+        scope = resource["scopeSpans"][0]
+        if (not isinstance(scope, dict) or set(scope) != {"scope", "spans"}
+                or not isinstance(scope["spans"], list) or len(scope["spans"]) != 1):
+            raise EvidenceError("invalid collector scope span shape")
+        span = scope["spans"][0]
+        if (not isinstance(span, dict)
+                or not {"traceId", "spanId", "attributes"}.issubset(span)):
+            raise EvidenceError("collector span identity or attributes missing")
+        try:
+            trace_id = base64.b64decode(span["traceId"], validate=True)
+            span_id = base64.b64decode(span["spanId"], validate=True)
+        except (TypeError, ValueError) as exc:
+            raise EvidenceError("collector span IDs are not canonical base64") from exc
+        if len(trace_id) != 16 or len(span_id) != 8 or not any(trace_id) or not any(span_id):
+            raise EvidenceError("collector span IDs have invalid length or zero value")
+        attrs = _collector_attributes(span["attributes"])
+        tenant = attrs.get("ocaf.tenant_id")
+        vm_id = attrs.get("ocaf.vm_id")
+        if not isinstance(tenant, str) or not isinstance(vm_id, str):
+            raise EvidenceError("collector span lacks tenant or VM binding")
+        spans.append((trace_id.hex(), span_id.hex(), tenant, vm_id))
+    if len({item[0] for item in spans}) != 2 or len({item[3] for item in spans}) != 2:
+        raise EvidenceError("collector reused trace or VM identity")
+    for trace_id, span_id, tenant, vm_id in spans:
+        key = tenant.removeprefix("tenant-")
+        expected = proof.get(key)
+        if (key not in {"a", "b"} or not isinstance(expected, dict)
+                or trace_id != expected["traceparent"][3:35]
+                or span_id != expected["traceparent"][36:52]
+                or vm_id != expected["vm_id"]):
+            raise EvidenceError("collector trace, tenant or VM binding diverged")
+    return {"collector_tenant_binding_verified": True,
+            "collector_trace_count": 2,
+            "collector_distinct_vm_count": 2}
 
 
 def build_export(broker: dict, guest: dict, now_ns: int) -> tuple[dict, dict]:
@@ -134,7 +213,7 @@ def build_export(broker: dict, guest: dict, now_ns: int) -> tuple[dict, dict]:
     return {"resourceSpans": resource_spans}, proof
 
 
-def export_to_loopback(payload: dict) -> dict:
+def export_to_loopback(payload: dict, proof: dict | None = None) -> dict:
     """Perform an actual OTLP/HTTP JSON POST and verify collector bytes."""
     body = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode()
     if not 0 < len(body) <= MAX_BODY:
@@ -152,6 +231,8 @@ def export_to_loopback(payload: dict) -> dict:
                 parsed = json.loads(raw, object_pairs_hook=_unique)
                 if not isinstance(parsed, dict) or set(parsed) != {"resourceSpans"}:
                     raise EvidenceError("invalid OTLP JSON body")
+                if proof is not None:
+                    received.append(verify_collector_tenant_binding(parsed, proof))
                 received.append(raw)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
@@ -169,18 +250,25 @@ def export_to_loopback(payload: dict) -> dict:
     try:
         url = f"http://127.0.0.1:{server.server_port}/v1/traces"
         request = Request(url, body, {"Content-Type": "application/json"}, method="POST")
-        with urlopen(request, timeout=3) as response:
-            if response.status != 200 or response.read(4096) != b"{}":
-                raise EvidenceError("OTLP collector response denied")
-        if len(received) != 1 or received[0] != body:
+        try:
+            with urlopen(request, timeout=3) as response:
+                if response.status != 200 or response.read(4096) != b"{}":
+                    raise EvidenceError("OTLP collector response denied")
+        except (HTTPError, URLError, TimeoutError) as exc:
+            raise EvidenceError("OTLP collector rejected exported payload") from exc
+        expected_count = 2 if proof is not None else 1
+        if len(received) != expected_count or received[-1] != body:
             raise EvidenceError("collector body diverged from exported spans")
     finally:
         server.shutdown()
         server.server_close()
         thread.join(timeout=3)
-    return {"otlp_http_json_posted": True, "loopback_collector_received": True,
+    result = {"otlp_http_json_posted": True, "loopback_collector_received": True,
             "collector_body_sha256": hashlib.sha256(body).hexdigest(),
             "collector_body_bytes": len(body)}
+    if proof is not None:
+        result.update(received[0])
+    return result
 
 
 def main() -> None:
@@ -191,7 +279,7 @@ def main() -> None:
     args = parser.parse_args()
     try:
         payload, proof = build_export(_read(args.broker_report), _read(args.guest_report), time.time_ns())
-        transport = export_to_loopback(payload)
+        transport = export_to_loopback(payload, proof)
     except Exception as exc:
         if os.environ.get("GITHUB_ACTIONS") == "true":
             detail = f"{type(exc).__name__}: {exc}"[:900]
