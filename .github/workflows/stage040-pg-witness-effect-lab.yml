@@ -1,0 +1,70 @@
+name: OCAF 0.40 real PostgreSQL majority effect adapter lab
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage040-pg-witness-effect-lab.yml
+      - scripts/stage040_pg_witness_effect_lab.py
+      - scripts/stage040_quorum_certificate.py
+      - scripts/tests/test_stage040_pg_witness_effect_lab.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-witness-adapter:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Majority, stale epoch and SQL injection negatives
+        run: python3 -m unittest discover -s scripts/tests -p test_stage040_pg_witness_effect_lab.py -v
+      - name: Install PostgreSQL 16 if absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! test -x /usr/lib/postgresql/16/bin/pg_ctl; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16
+          fi
+          test -x /usr/lib/postgresql/16/bin/initdb
+          test -x /usr/lib/postgresql/16/bin/psql
+      - name: Real PostgreSQL write, missing-majority denial and stale-writer denial
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          LAB="/tmp/ocaf40-witness-${GITHUB_RUN_ID}"
+          sudo -n install -d -o postgres -g postgres -m 0700 "$LAB"
+          sudo -n install -o postgres -g postgres -m 0500 scripts/stage040_pg_witness_effect_lab.py "$LAB/driver.py"
+          sudo -n install -o postgres -g postgres -m 0400 scripts/stage040_quorum_certificate.py "$LAB/stage040_quorum_certificate.py"
+          sudo -n -u postgres python3 "$LAB/driver.py" \
+            --pg-bin-dir /usr/lib/postgresql/16/bin \
+            --report "$LAB/report.json" --ack-one-postmaster-lab
+          sudo -n cp "$LAB/report.json" "$GITHUB_WORKSPACE/stage040-witness-report.json"
+          sudo -n chown "$(id -u):$(id -g)" stage040-witness-report.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('stage040-witness-report.json').read_text())
+          assert r['status']=='ONE_POSTMASTER_MAJORITY_EFFECT_ADAPTER_LAB_PASS'
+          assert r['postgresql_rows']==['1:node-a','2:node-b']
+          assert r['majority_vote_required_before_sql'] is True
+          assert r['minority_partition_sql_not_invoked'] is True
+          assert r['stale_epoch_sql_not_invoked'] is True
+          assert r['postgresql_server_side_fencing_proved'] is False
+          assert r['three_host_ha_tested'] is False
+          assert r['stage_040_complete'] is False
+          PY
+      - name: Preserve one-postmaster adapter evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage040-one-postmaster-majority-adapter-not-ha
+          path: stage040-witness-report.json
+          retention-days: 30
+          if-no-files-found: warn
