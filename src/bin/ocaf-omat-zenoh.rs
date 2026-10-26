@@ -2,7 +2,7 @@
 use base64::engine::general_purpose::STANDARD as B64;
 use base64::Engine as _;
 use ocaf_runtime::omat_server::{OmatPolicy, OmatRegistry};
-use ocaf_runtime::stage043_omat_zenoh::{serve_omat_zenoh, OmatZenohAdmission};
+use ocaf_runtime::stage043_omat_zenoh::{serve_omat_zenoh_until, OmatZenohAdmission};
 use ocaf_runtime::transport_policy::{read_zenoh_config, validate_zenoh_config};
 use std::collections::{BTreeSet, HashMap};
 use std::env;
@@ -15,8 +15,28 @@ fn require(name: &str) -> anyhow::Result<String> {
     Ok(value)
 }
 
+async fn shutdown_signal() {
+    #[cfg(unix)]
+    {
+        match tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()) {
+            Ok(mut signal) => {
+                tokio::select! {
+                    _ = signal.recv() => {},
+                    _ = tokio::signal::ctrl_c() => {},
+                }
+                return;
+            }
+            Err(error) => {
+                tracing::error!(%error, "omat_sigterm_handler_unavailable");
+            }
+        }
+    }
+    let _ = tokio::signal::ctrl_c().await;
+}
+
 #[tokio::main(flavor = "multi_thread", worker_threads = 2)]
 async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt::init();
     let config_path = require("OCAF_ZENOH_CONFIG")?;
     let config_path = Path::new(&config_path);
     anyhow::ensure!(
@@ -62,5 +82,5 @@ async fn main() -> anyhow::Result<()> {
             .map_err(|e| anyhow::anyhow!("Zenoh open: {e}"))?,
     );
     let selector = format!("ocaf/omat/{tenant}/requests/*");
-    serve_omat_zenoh(session, admission, &selector).await
+    serve_omat_zenoh_until(session, admission, &selector, shutdown_signal()).await
 }
