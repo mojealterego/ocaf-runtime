@@ -71,7 +71,9 @@ static int proof(unsigned int *program_id, uint64_t *events) {
             || event_id == 0) return -1;
 
     struct bpf_insn instructions[] = {
-        {.code = BPF_ALU64 | BPF_MOV | BPF_K, .dst_reg = BPF_REG_0, .imm = 0},
+        /* A tracepoint-attached kprobe program returns 1 to retain events;
+         * returning 0 filters them and leaves perf's count at zero. */
+        {.code = BPF_ALU64 | BPF_MOV | BPF_K, .dst_reg = BPF_REG_0, .imm = 1},
         {.code = BPF_JMP | BPF_EXIT},
     };
     static const char license[] = "GPL";
