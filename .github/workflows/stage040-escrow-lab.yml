@@ -1,0 +1,64 @@
+name: OCAF 0.40.13 PostgreSQL-local escrow synchronous failover lab
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage040-escrow-lab.yml
+      - scripts/stage040_escrow_lab.py
+      - scripts/tests/test_stage040_escrow_lab.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  escrow-local-pg:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Reject overstated escrow receipts
+        run: python3 -m unittest discover -s scripts/tests -p test_stage040_escrow_lab.py -v
+      - name: Install PostgreSQL 16 if needed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! test -x /usr/lib/postgresql/16/bin/pg_basebackup; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16
+          fi
+          test -x /usr/lib/postgresql/16/bin/initdb
+      - name: Real local synchronous WAL escrow and duplicate rejection after promotion
+        shell: bash
+        run: |
+          set -euo pipefail
+          EVIDENCE="/tmp/ocaf40-escrow-${GITHUB_RUN_ID}"
+          sudo -n install -d -o postgres -g postgres -m 0700 "$EVIDENCE"
+          sudo -n -u postgres python3 scripts/stage040_escrow_lab.py \
+            --pg-bin-dir /usr/lib/postgresql/16/bin \
+            --report "$EVIDENCE/escrow.json" \
+            --ack-local-postgres-escrow-lab
+          mkdir -p stage040-escrow-evidence
+          sudo -n cp "$EVIDENCE/escrow.json" stage040-escrow-evidence/escrow.json
+          sudo -n chown "$(id -u):$(id -g)" stage040-escrow-evidence/escrow.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from sys import path
+          path.insert(0, 'scripts')
+          from stage040_escrow_lab import validate_report
+          result = json.loads(Path('stage040-escrow-evidence/escrow.json').read_text())
+          validate_report(result)
+          print('OCAF040_PG_LOCAL_ESCROW_SYNC_FAILOVER_REPLAY_PASS_NOT_DISTRIBUTED_HA')
+          PY
+      - name: Preserve bounded local PostgreSQL receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage040-local-escrow-sync-failover-not-distributed-ha
+          path: stage040-escrow-evidence/
+          retention-days: 30
+          if-no-files-found: warn
