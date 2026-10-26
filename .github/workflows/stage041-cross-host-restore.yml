@@ -7,7 +7,11 @@ on:
       - .github/workflows/stage041-cross-host-restore.yml
       - scripts/stage041_cross_host_restore.py
       - scripts/stage041_backup_restore.py
+      - scripts/stage041_encrypted_backup.py
+      - scripts/stage041_encrypted_artifact_gate.py
       - scripts/tests/test_stage041_cross_host_restore.py
+      - scripts/tests/test_stage041_encrypted_backup.py
+      - scripts/tests/test_stage041_encrypted_artifact_gate.py
   workflow_dispatch:
 
 permissions:
@@ -18,10 +22,21 @@ jobs:
     name: Source Linux kernel A — actual PG custom backup after durable 25 rows
     runs-on: ubuntu-24.04
     timeout-minutes: 12
+    outputs:
+      envelope_key_hex: ${{ steps.ephemeral_key.outputs.key_hex }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+      - name: Generate one-run lab key through job output, separate from encrypted artifact
+        id: ephemeral_key
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import secrets
+          print("key_hex=" + secrets.token_hex(32))
+          PY
       - name: Stage PostgreSQL 16 binaries
         shell: bash
         run: |
@@ -31,6 +46,10 @@ jobs:
             sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16
           fi
           test -x /usr/lib/postgresql/16/bin/pg_restore
+          if ! python3 -c 'import cryptography' >/dev/null 2>&1; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-cryptography
+          fi
       - name: Start real PostgreSQL, write dataset, backup/restore and shut source down
         shell: bash
         run: |
@@ -74,14 +93,41 @@ jobs:
           print("STAGE041_REAL_SOURCE_POSTGRESQL_STOPPED_AND_PINNED_BACKUP_CREATED")
           print("STAGE041_SOURCE_LINUX_KERNEL_BOOT_ID",boot)
           PY
-      - name: Preserve real source backup and boot-bound digest
-        if: always()
+      - name: Authenticate and encrypt real pg_dump; upload only ciphertext
+        shell: bash
+        env:
+          STAGE041_KEY_HEX: ${{ steps.ephemeral_key.outputs.key_hex }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os,sys
+          from pathlib import Path
+          sys.path.insert(0,"scripts")
+          from stage041_encrypted_backup import seal_snapshot
+          root=Path("stage041-cross-source").resolve()
+          envelope=root/"envelope";envelope.mkdir(mode=0o700)
+          manifest=seal_snapshot(root/"snapshot.pgcustom",envelope,
+                                 key=bytes.fromhex(os.environ["STAGE041_KEY_HEX"]),
+                                 generation=1)
+          assert manifest["snapshot_sha256"] in (root/"manifest.json").read_text()
+          (root/"snapshot.pgcustom").unlink()
+          assert not (root/"snapshot.pgcustom").exists()
+          print("STAGE041_ENCRYPTED_SOURCE_ARTIFACT_HAS_NO_PLAINTEXT_DUMP")
+          PY
+      - name: Fail closed if plaintext remains or encrypted bundle is incomplete
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -O -m unittest discover -s scripts/tests -p test_stage041_encrypted_artifact_gate.py -v
+          python3 -O scripts/stage041_encrypted_artifact_gate.py --bundle stage041-cross-source
+      - name: Preserve encrypted real backup and boot-bound digest
+        if: success()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: stage041-source-pgcustom
+          name: stage041-source-pgcustom-encrypted
           path: stage041-cross-source/
           retention-days: 30
-          if-no-files-found: warn
+          if-no-files-found: error
 
   new-kernel-recovery:
     name: New Linux kernel B — verify artifact SHA, initdb and actual pg_restore
@@ -92,13 +138,15 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - name: Download source-host immutable artifact into fresh VM
+      - name: Download source-host encrypted artifact into fresh VM
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: stage041-source-pgcustom
+          name: stage041-source-pgcustom-encrypted
           path: stage041-cross-download
       - name: Independently check adversarial recovery tests
-        run: python3 -m unittest discover -s scripts/tests -p test_stage041_cross_host_restore.py -v
+        run: |
+          python3 -m unittest discover -s scripts/tests -p test_stage041_cross_host_restore.py -v
+          python3 -m unittest discover -s scripts/tests -p test_stage041_encrypted_backup.py -v
       - name: Stage PostgreSQL 16 binaries on separate runner
         shell: bash
         run: |
@@ -108,8 +156,14 @@ jobs:
             sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16
           fi
           test -x /usr/lib/postgresql/16/bin/initdb
+          if ! python3 -c 'import cryptography' >/dev/null 2>&1; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-cryptography
+          fi
       - name: Recover into new real PostgreSQL and verify content hashes on second kernel
         shell: bash
+        env:
+          STAGE041_KEY_HEX: ${{ needs.source-kernel-backup.outputs.envelope_key_hex }}
         run: |
           set -euo pipefail
           umask 077
@@ -119,10 +173,59 @@ jobs:
             "$GITHUB_WORKSPACE/scripts/stage041_cross_host_restore.py" "$BASE/driver.py"
           sudo -n install -o postgres -g postgres -m 0500 \
             "$GITHUB_WORKSPACE/scripts/stage041_backup_restore.py" "$BASE/stage041_backup_restore.py"
-          for file in snapshot.pgcustom source.json manifest.json; do
+          sudo -n install -o postgres -g postgres -m 0500 \
+            "$GITHUB_WORKSPACE/scripts/stage041_encrypted_backup.py" "$BASE/stage041_encrypted_backup.py"
+          sudo -n install -d -o postgres -g postgres -m 0700 "$BASE/inputs/envelope"
+          for file in source.json manifest.json; do
             sudo -n install -o postgres -g postgres -m 0600 \
               "stage041-cross-download/$file" "$BASE/inputs/$file"
           done
+          for file in snapshot.aesgcm manifest.json; do
+            sudo -n install -o postgres -g postgres -m 0600 \
+              "stage041-cross-download/envelope/$file" "$BASE/inputs/envelope/$file"
+          done
+          sudo -n -u postgres env STAGE041_KEY_HEX="$STAGE041_KEY_HEX" python3 - "$BASE" <<'PY'
+          import json,os,sys
+          from pathlib import Path
+          sys.path.insert(0,sys.argv[1])
+          from stage041_encrypted_backup import EncryptedBackupError,unseal_snapshot
+          root=Path(sys.argv[1])
+          envelope=root/"inputs/envelope"
+          target=root/"inputs/snapshot.pgcustom"
+          key=bytes.fromhex(os.environ["STAGE041_KEY_HEX"])
+          record=json.loads((envelope/"manifest.json").read_text())
+          for policy in ({"key":b"x"*32,"minimum_generation":1},
+                         {"key":key,"minimum_generation":2},
+                         {"key":key,"minimum_generation":1,
+                          "revoked_key_ids":frozenset({record["key_id"]})}):
+              try:unseal_snapshot(envelope,target,**policy)
+              except EncryptedBackupError:pass
+              else:raise AssertionError("unsafe cross-kernel encrypted recovery accepted")
+          ciphertext=envelope/"snapshot.aesgcm"
+          original_ciphertext=ciphertext.read_bytes()
+          ciphertext.write_bytes(original_ciphertext[:-1]+bytes([original_ciphertext[-1]^1]))
+          try:unseal_snapshot(envelope,target,key=key,minimum_generation=1)
+          except EncryptedBackupError:pass
+          else:raise AssertionError("tampered cross-kernel ciphertext accepted")
+          ciphertext.write_bytes(original_ciphertext)
+          assert not target.exists()
+          proof=unseal_snapshot(envelope,target,key=key,minimum_generation=1)
+          assert proof["immutable_offsite_storage_proved"] is False
+          assert proof["snapshot_sha256"]==json.loads((root/"inputs/manifest.json").read_text())["snapshot_sha256"]
+          (root/"evidence/encryption-transfer.json").write_text(json.dumps({
+              "schema_version":1,
+              "status":"TWO_EPHEMERAL_KERNELS_ENCRYPTED_PG_DUMP_TRANSFER_PASS",
+              "source_boot_id":json.loads((root/"inputs/manifest.json").read_text())["source_boot_id"],
+              "recovery_boot_id":Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
+              "snapshot_sha256":proof["snapshot_sha256"],
+              "ciphertext_sha256":proof["ciphertext_sha256"],
+              "ciphertext_wrong_key_revoked_key_and_generation_rollback_denied":True,
+              "key_channel":"ephemeral_github_job_output_not_independent_kms",
+              "immutable_offsite_storage_proved":False,
+              "stage_041_complete":False,"production_approved":False,
+          },sort_keys=True)+"\n")
+          print("STAGE041_TWO_EPHEMERAL_KERNELS_ENCRYPTED_PG_DUMP_DECRYPTED")
+          PY
           sudo -n -u postgres python3 - "$BASE" <<'PY'
           import json,shutil,sys
           from pathlib import Path
@@ -159,7 +262,8 @@ jobs:
             --ack-cross-kernel-ephemeral-restore
           mkdir -p stage041-cross-recovered
           sudo -n cp "$BASE/evidence/recovery.json" stage041-cross-recovered/recovery.json
-          sudo -n chown "$(id -u):$(id -g)" stage041-cross-recovered/recovery.json
+          sudo -n cp "$BASE/evidence/encryption-transfer.json" stage041-cross-recovered/encryption-transfer.json
+          sudo -n chown "$(id -u):$(id -g)" stage041-cross-recovered/*.json
           python3 - <<'PY'
           import json
           from pathlib import Path
@@ -175,6 +279,10 @@ jobs:
           assert d["physical_host_disaster_recovery_tested"] is False
           assert d["stage_041_complete"] is False
           assert d["production_approved"] is False
+          e=json.loads(Path("stage041-cross-recovered/encryption-transfer.json").read_text())
+          assert e["source_boot_id"]!=e["recovery_boot_id"]
+          assert e["snapshot_sha256"]==d["snapshot_sha256"]
+          assert e["immutable_offsite_storage_proved"] is False
           print("STAGE041_REAL_DIFFERENT_LINUX_KERNEL_POSTGRESQL_SHA256_RECOVERY_PROVED")
           PY
       - name: Preserve recovered real PG data-hash and measured restoration time
