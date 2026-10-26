@@ -123,6 +123,21 @@ def run(inventory: dict, known_hosts: Path, report: Path, *, ssh=None,
     after_boots, after_receiver = snapshot()
     if after_boots != before_boots:
         raise InterhostPgError("host kernel restarted during live WAL observation")
+    received_lsn = sql("b", "SELECT pg_last_wal_receive_lsn()")
+    received_position = lsn_position(received_lsn)
+    replay_position = lsn_position(observed_lsn)
+    if received_position < source_position or replay_position > received_position:
+        raise InterhostPgError("standby WAL receive/replay telemetry contradicts live TCP challenge")
+    transport_health = {
+        "primary_challenge_lsn": source_lsn,
+        "standby_receive_lsn": received_lsn,
+        "standby_replay_lsn": observed_lsn,
+        "primary_to_receive_lag_bytes": max(0, source_position - received_position),
+        "primary_to_replay_lag_bytes": max(0, source_position - replay_position),
+        "received_not_before_challenge": True,
+        "replay_not_ahead_of_received": True,
+        "distinct_kernel_boot_ids": True,
+    }
     output = {
         "schema_version": 1,
         "status": "TWO_KERNEL_PG_WAL_STREAMING_OBSERVED_LAB_ONLY",
@@ -134,6 +149,7 @@ def run(inventory: dict, known_hosts: Path, report: Path, *, ssh=None,
         "standby_receiver_after": after_receiver,
         "fresh_nonce": challenge, "primary_wal_lsn": source_lsn,
         "standby_replay_lsn": observed_lsn,
+        "transport_health": transport_health,
         "direct_tcp_stream_observed": True,
         "third_host_witness_tested": False,
         "fencing_tested": False,

@@ -6,6 +6,11 @@ już uruchomionych hostach Linux**: primary A i standby B. Odczytuje dwa różne
 sprawdza TCP `pg_stat_replication` i `pg_stat_wal_receiver`, zapisuje świeży
 nonce SQL na A i czeka, aż B odtworzy dokładnie ten rekord i LSN. Ponownie
 sprawdza jądra, role i stan strumieniowania przed utworzeniem raportu.
+Raport zawiera również `transport_health`: LSN świeżego zapisu primary,
+LSN odebrany i odtworzony przez standby oraz obliczone opóźnienie w bajtach.
+Próba odrzuca raport, gdy B twierdzi, że odtworzył WAL, którego jeszcze nie
+odebrał, albo jego odbiór nie osiągnął LSN świeżego zapisu. To jest bramka
+telemetrii 0.40.7 uruchamiana tylko przy rzeczywistym TCP między hostami.
 
 Wymaga osobnej, jednorazowej bazy `ocaf_stage040_lab`, uprzednio zestawionej
 replikacji PostgreSQL, dostępu `sudo -n -u postgres psql` na obu hostach oraz
@@ -28,7 +33,7 @@ Adresy `host` i `replication_address` muszą być różnymi literalnymi IPv4.
 Raport `TWO_KERNEL_PG_WAL_STREAMING_OBSERVED_LAB_ONLY` potwierdza tylko tę
 konkretną próbę A→B, gdy została uruchomiona na prawdziwych hostach. Testy
 jednostkowe sprawdzają odmowę przy tym samym kernelu, brakującym strumieniu,
-braku replay i nieprzypiętym SSH. Żaden taki test jednostkowy nie stanowi
+braku replay, sprzecznym LSN odbioru/replay i nieprzypiętym SSH. Żaden taki test jednostkowy nie stanowi
 dowodu istniejącej infrastruktury. Raport zachowuje
 `third_host_witness_tested=false`, `fencing_tested=false`,
 `stage_040_complete=false` i `production_approved=false`.

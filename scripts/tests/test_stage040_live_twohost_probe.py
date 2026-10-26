@@ -16,6 +16,7 @@ class FakeRemote:
     def __init__(self):
         self.streaming = True
         self.replayed = True
+        self.received_lsn = "0/101"
         self.calls = []
 
     def __call__(self, node, known_hosts, argv, *, timeout):
@@ -37,6 +38,8 @@ class FakeRemote:
             return "0/100"
         if query == "SELECT pg_last_wal_replay_lsn()":
             return "0/101" if self.replayed else "0/FF"
+        if query == "SELECT pg_last_wal_receive_lsn()":
+            return self.received_lsn
         if query.startswith("SELECT nonce ||"):
             return "a" * 32 + ":" + self.boots["a"]
         raise AssertionError(query)
@@ -70,6 +73,8 @@ class LiveTwoHostGate(unittest.TestCase):
         self.assertFalse(result["stage_040_complete"])
         self.assertFalse(result["fencing_tested"])
         self.assertEqual(result["fresh_nonce"], "a" * 32)
+        self.assertEqual(result["transport_health"]["standby_receive_lsn"], "0/101")
+        self.assertEqual(result["transport_health"]["primary_to_replay_lag_bytes"], 0)
         self.assertEqual(json.loads((self.root / "receipt.json").read_text()), result)
         self.assertTrue(any("INSERT INTO" in argv[-1] for _, argv in self.remote.calls))
 
@@ -85,6 +90,18 @@ class LiveTwoHostGate(unittest.TestCase):
 
     def test_artifact_without_replayed_wal_cannot_pass(self):
         self.remote.replayed = False
+        with self.assertRaises(gate.InterhostPgError):
+            self.invoke()
+        self.assertFalse((self.root / "receipt.json").exists())
+
+    def test_replay_ahead_of_received_wal_is_denied(self):
+        self.remote.received_lsn = "0/100"
+        with self.assertRaises(gate.InterhostPgError):
+            self.invoke()
+        self.assertFalse((self.root / "receipt.json").exists())
+
+    def test_received_wal_behind_primary_challenge_is_denied(self):
+        self.remote.received_lsn = "0/FF"
         with self.assertRaises(gate.InterhostPgError):
             self.invoke()
         self.assertFalse((self.root / "receipt.json").exists())
