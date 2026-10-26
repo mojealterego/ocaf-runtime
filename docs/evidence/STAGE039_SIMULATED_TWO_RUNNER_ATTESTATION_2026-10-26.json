@@ -1,0 +1,121 @@
+{
+  "authorization_context": "User instructed simulation as the available alternative and requested a proxy signature in this conversation on 2026-10-26.",
+  "created_at_utc": "2026-10-26T06:40:01Z",
+  "evidence": {
+    "artifact_mediated_cold_recovery": {
+      "artifacts": [
+        {
+          "archive_expired": false,
+          "archive_sha256": "658597c7fe3f86c85115b64c237ad41d2346cc0e0a9b4f2acfe5243214313af2",
+          "archive_size_bytes": 2274,
+          "id": 12632088450,
+          "name": "stage039-cold-recovery-verified"
+        },
+        {
+          "archive_expired": false,
+          "archive_sha256": "262bab172e35e141b784d6af8ae4404d2ab371d74ddb1b988fe2393616745c89",
+          "archive_size_bytes": 2065,
+          "id": 12632245508,
+          "name": "stage039-cold-source"
+        }
+      ],
+      "conclusion": "success",
+      "head_sha": "5f3bc65936aa913e834045cfa36b56589d86cda5",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "name": "Real independent KVM kernel A - guest UDP and VM SIGKILL"
+        },
+        {
+          "conclusion": "success",
+          "name": "Distinct KVM host B replays checkpoint nonce inside newly booted jailed guest"
+        }
+      ],
+      "run_id": 40280840120,
+      "status": "completed"
+    },
+    "independent_ephemeral_kvm_pair": {
+      "artifacts": [
+        {
+          "archive_expired": false,
+          "archive_sha256": "afa0411b252fab697f682469291e7eb1a7736e79f446c2a89110c7517c5eb549",
+          "archive_size_bytes": 638,
+          "id": 12632163195,
+          "name": "ocaf039-independent-comparison"
+        },
+        {
+          "archive_expired": false,
+          "archive_sha256": "37a84f98ab5880627334d1235eedf3acdd7d79a3dca32dea5e1e764b97138a86",
+          "archive_size_bytes": 15771,
+          "id": 12632073706,
+          "name": "ocaf039-independent-tenant-a"
+        },
+        {
+          "archive_expired": false,
+          "archive_sha256": "45438586337ee31fe96e9d4f629f43478941ba757d422db6f7167a92e0731c7d",
+          "archive_size_bytes": 15741,
+          "id": 12631679640,
+          "name": "ocaf039-independent-tenant-b"
+        }
+      ],
+      "conclusion": "success",
+      "head_sha": "5f3bc65936aa913e834045cfa36b56589d86cda5",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "name": "Actual separate Linux KVM host - tenant-a"
+        },
+        {
+          "conclusion": "success",
+          "name": "Actual separate Linux KVM host - tenant-b"
+        },
+        {
+          "conclusion": "success",
+          "name": "Reject same host, missing VM SIGKILL or forged host identity"
+        }
+      ],
+      "run_id": 40280840038,
+      "status": "completed"
+    },
+    "kernel_netns_mtls_partition": {
+      "artifacts": [
+        {
+          "archive_expired": false,
+          "archive_sha256": "7c36bdebadb11163e03d5cb73d398ffe033b2837678f8d02c036d11d03c1b4fa",
+          "archive_size_bytes": 950,
+          "id": 12631323456,
+          "name": "stage039-real-kernel-tls13-mtls-fencing-not-ha"
+        }
+      ],
+      "conclusion": "success",
+      "head_sha": "5f3bc65936aa913e834045cfa36b56589d86cda5",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "name": "Real TLS1.3 veth netns attack/failover-fencing lab (one Linux kernel)"
+        }
+      ],
+      "run_id": 40280839982,
+      "status": "completed"
+    }
+  },
+  "owner_personal_signature": false,
+  "report_type": "DELEGATED_TECHNICAL_ATTESTATION_OF_SIMULATION",
+  "repository": "https://github.com/mojealterego/ocaf-runtime",
+  "schema_version": 1,
+  "scope": {
+    "artifact_archive_bytes_independently_inspected": false,
+    "artifact_mediated_recovery_on_second_ephemeral_runner": true,
+    "direct_interhost_network_partition_tested": false,
+    "production_approved": false,
+    "production_interhost_ha_tested": false,
+    "same_kernel_two_namespace_mtls_partition_and_fencing_lab": true,
+    "stage_039_complete": false,
+    "two_distinct_ephemeral_kvm_runner_jobs_with_100_cycles_each": true,
+    "two_persistent_hosts_tested": false
+  },
+  "signed_by": "AI_ASSISTANT_AS_DISCLOSED_DELEGATE",
+  "source_commit": "5f3bc65936aa913e834045cfa36b56589d86cda5",
+  "stage": "0.39",
+  "verification_basis": "GitHub Actions REST run/job conclusions and artifact metadata; artifact archive bytes were unavailable from this environment (Azure Blob 403)."
+}
