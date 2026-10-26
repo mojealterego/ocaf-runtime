@@ -13,12 +13,27 @@ def evidence():
         "boot_ids":{"a":"11111111-1111-4111-8111-111111111111",
                     "b":"22222222-2222-4222-8222-222222222222",
                     "c":"33333333-3333-4333-8333-333333333333"},
+        "boot_ids_after":{"a":"11111111-1111-4111-8111-111111111111",
+                          "b":"22222222-2222-4222-8222-222222222222",
+                          "c":"33333333-3333-4333-8333-333333333333"},
         "client_addresses":["10.60.0.2","10.60.0.3"],
+        "client_addresses_after":["10.60.0.2","10.60.0.3"],
         "standby_addresses":{"b":"10.60.0.2","c":"10.60.0.3"},
+        "source_replication_address":"10.60.0.1",
+        "postgres_port":5540,
+        "receiver_snapshots":{
+            phase:{role:{"status":"streaming","sender_host":"10.60.0.1",
+                         "sender_port":5540,"written_lsn":"0/300"}
+                   for role in ("b","c")}
+            for phase in ("before","after")},
         "source_writable":True,"b_in_recovery":True,"c_in_recovery":True,
         "replication_b_status":"streaming","replication_c_status":"streaming",
         "source_nonce":"a"*32,"standby_b_nonce":"a"*32,"standby_c_nonce":"a"*32,
+        "standby_b_origin_boot_id":"11111111-1111-4111-8111-111111111111",
+        "standby_c_origin_boot_id":"11111111-1111-4111-8111-111111111111",
         "source_wal_lsn":"0/16D4D20",
+        "standby_b_wal_replay_lsn":"0/16D4D20",
+        "standby_c_wal_replay_lsn":"0/16D4D20",
         "standby_b_wal_replay_at_or_above_source_lsn":True,
         "standby_c_wal_replay_at_or_above_source_lsn":True,
         "used_ssh_host_key_pinning":True,
@@ -47,6 +62,7 @@ class RealIndependentHostPgTests(unittest.TestCase):
             {"physical_host_power_off_tested":True},
             {"client_addresses":["10.60.0.2","10.60.0.2"]},
             {"standby_b_nonce":"f"*32},
+            {"standby_b_origin_boot_id":valid["boot_ids"]["b"]},
             {"standby_c_wal_replay_at_or_above_source_lsn":False},
             {"replication_c_status":"stopped"},
         ]
@@ -228,9 +244,16 @@ class InjectedInterhostHarnessTests(unittest.TestCase):
             {"standby_b_wal_replay_lsn":"0/1"},
             {"boot_ids_after":{**valid["boot_ids"],"c":valid["boot_ids"]["b"]}},
             {"client_addresses_after":["10.60.0.2","10.60.0.9"]},
+            {"receiver_snapshots":{}},
+            {"source_replication_address":"10.60.0.2"},
         ):
             with self.subTest(change=change),self.assertRaises(pg.InterhostPgError):
                 pg.validate_receipt({**valid,**change})
+        for missing in ("boot_ids_after","client_addresses_after","receiver_snapshots",
+                        "source_replication_address","standby_b_wal_replay_lsn",
+                        "standby_b_origin_boot_id"):
+            with self.subTest(missing=missing),self.assertRaises(pg.InterhostPgError):
+                pg.validate_receipt({key:value for key,value in valid.items() if key!=missing})
 
     def test_inventory_requires_private_static_host_key_pins(self):
         self.known.chmod(0o644)

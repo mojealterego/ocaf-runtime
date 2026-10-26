@@ -112,12 +112,18 @@ def validate_receipt(report:dict)->dict:
         or set(report["boot_ids"])!=set(ROLES)
         or any(not isinstance(x,str) or BOOT.fullmatch(x) is None for x in report["boot_ids"].values())
         or len(set(report["boot_ids"].values()))!=3
+        or report.get("boot_ids_after")!=report["boot_ids"]
         or not isinstance(report.get("standby_addresses"),dict)
         or set(report["standby_addresses"])!=set(("b","c"))
         or not isinstance(report.get("client_addresses"),list)
         or report["client_addresses"] != sorted(report["standby_addresses"].values())
+        or report.get("client_addresses_after")!=report["client_addresses"]
         or len(set(report["client_addresses"]))!=2
         or any(_ipv4(x) != x for x in report["client_addresses"])
+        or type(report.get("postgres_port")) is not int
+        or not 1024<=report["postgres_port"]<=65535
+        or not isinstance(report.get("source_replication_address"),str)
+        or _ipv4(report["source_replication_address"]) in report["client_addresses"]
         or report.get("source_writable") is not True
         or report.get("b_in_recovery") is not True or report.get("c_in_recovery") is not True
         or report.get("replication_b_status")!="streaming"
@@ -135,6 +141,9 @@ def validate_receipt(report:dict)->dict:
         safe_nonce(report.get(role))
     if not (report["source_nonce"]==report["standby_b_nonce"]==report["standby_c_nonce"]):
         raise InterhostPgError("PG standby SQL challenge was not actually replayed")
+    if (report.get("standby_b_origin_boot_id")!=report["boot_ids"]["a"]
+            or report.get("standby_c_origin_boot_id")!=report["boot_ids"]["a"]):
+        raise InterhostPgError("standby challenge origin is not the observed primary boot")
     for key in ("standby_b_wal_replay_at_or_above_source_lsn",
                 "standby_c_wal_replay_at_or_above_source_lsn"):
         if report.get(key) is not True:
@@ -144,24 +153,17 @@ def validate_receipt(report:dict)->dict:
         raise InterhostPgError("source WAL position cannot be zero after challenge commit")
     for role in ("b","c"):
         replay_key=f"standby_{role}_wal_replay_lsn"
-        if replay_key in report and lsn_position(report[replay_key])<source_position:
+        if replay_key not in report or lsn_position(report[replay_key])<source_position:
             raise InterhostPgError("observed standby WAL LSN precedes source challenge")
-    if "boot_ids_after" in report and report["boot_ids_after"]!=report["boot_ids"]:
-        raise InterhostPgError("host kernel changed during observation")
-    if "client_addresses_after" in report and report["client_addresses_after"]!=report["client_addresses"]:
-        raise InterhostPgError("streaming client topology changed during observation")
-    if "receiver_snapshots" in report:
-        snapshots=report["receiver_snapshots"]
-        if (not isinstance(snapshots,dict) or set(snapshots)!={"before","after"}
-            or type(report.get("postgres_port")) is not int
-            or not 1024<=report["postgres_port"]<=65535):
-            raise InterhostPgError("invalid observed receiver snapshots")
-        primary=_ipv4(report.get("source_replication_address"))
-        for phase in ("before","after"):
-            if not isinstance(snapshots[phase],dict) or set(snapshots[phase])!={"b","c"}:
-                raise InterhostPgError("missing standby receiver observation")
-            for receiver in snapshots[phase].values():
-                validate_receiver(receiver,primary,report["postgres_port"])
+    snapshots=report.get("receiver_snapshots")
+    if not isinstance(snapshots,dict) or set(snapshots)!={"before","after"}:
+        raise InterhostPgError("missing observed receiver snapshots")
+    primary=report["source_replication_address"]
+    for phase in ("before","after"):
+        if not isinstance(snapshots[phase],dict) or set(snapshots[phase])!={"b","c"}:
+            raise InterhostPgError("missing standby receiver observation")
+        for receiver in snapshots[phase].values():
+            validate_receiver(receiver,primary,report["postgres_port"])
     return report
 
 def validate_receiver(receiver:dict,primary:str,port:int)->dict:
@@ -296,6 +298,8 @@ def run_lab(config:dict,known_hosts:Path,report:Path,*,ssh=None)->dict:
         "source_nonce":nonce,
         "standby_b_nonce":copied["b"].split(":",1)[0],
         "standby_c_nonce":copied["c"].split(":",1)[0],
+        "standby_b_origin_boot_id":copied["b"].split(":",1)[1],
+        "standby_c_origin_boot_id":copied["c"].split(":",1)[1],
         "source_wal_lsn":lsn,
         "standby_b_wal_replay_lsn":replay_lsn["b"],
         "standby_c_wal_replay_lsn":replay_lsn["c"],
