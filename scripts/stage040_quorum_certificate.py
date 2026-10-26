@@ -141,8 +141,10 @@ class QuorumCertificateGate:
                 or any(not _identifier(name) or not _key(key)
                        for name, key in witness_keys.items())):
             raise CertificateError("at least three bounded independent witness keys required")
-        if len(set(witness_keys)) != len(witness_keys):
-            raise CertificateError("duplicate witness identity")
+        # A majority counts independent authorities, not labels.  Reusing a
+        # secret under two IDs lets one compromised witness forge two votes.
+        if len(set(witness_keys.values())) != len(witness_keys):
+            raise CertificateError("witness keys must be distinct per authority")
         majority = len(witness_keys) // 2 + 1
         if threshold is None:
             threshold = majority

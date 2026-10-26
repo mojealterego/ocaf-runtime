@@ -143,6 +143,16 @@ class QuorumCertificateTests(unittest.TestCase):
                     self.path, cluster_id="cluster-a", witness_keys=keys,
                     threshold=threshold, clock=lambda: 100, clock_domain="test-clock")
 
+    def test_two_witness_names_cannot_share_one_signing_key(self):
+        self.gate.close()
+        self.path.unlink()
+        duplicated = dict(self.keys)
+        duplicated["w2"] = duplicated["w1"]
+        with self.assertRaisesRegex(CertificateError, "keys must be distinct"):
+            QuorumCertificateGate(
+                self.path, cluster_id="cluster-a", witness_keys=duplicated,
+                clock=lambda: 100, clock_domain="test-clock")
+
 
 if __name__ == "__main__":
     unittest.main()
