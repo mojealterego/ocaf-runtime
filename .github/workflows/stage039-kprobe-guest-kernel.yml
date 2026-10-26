@@ -119,7 +119,7 @@ jobs:
             exit 1
           fi
           python3 - "$PREFIX" <<'PY'
-          import json,os,re,sys
+          import json,os,re,subprocess,sys
           from pathlib import Path
           def require(condition, reason):
               if not condition:
@@ -130,8 +130,11 @@ jobs:
           kernel_pins=re.findall(r'(?m)^([0-9a-f]{64})  vmlinux$',pins)
           require(len(kernel_pins)==1,'missing unique built kernel SHA-256 receipt')
           serial=Path(sys.argv[1])/'jailer'/'firecracker'/report['vm_id']/'serial-console.log'
-          raw=serial.read_text(errors='replace')
-          hits=re.findall(r'(?m)^OCAF039_GUEST_KPROBE_PASS program_id=([1-9][0-9]*) event_count=([1-9][0-9]*)$',raw)
+          # The jailer serial log is intentionally root-owned mode 0600.
+          # Read only a bounded tail through sudo; do not weaken its ACL.
+          raw=subprocess.run(['sudo','-n','tail','-c','65536',str(serial)],
+                             check=True,capture_output=True,text=True).stdout
+          hits=re.findall(r'(?m)^OCAF039_GUEST_KPROBE_PASS program_id=([1-9][0-9]*) event_count=([1-9][0-9]*)\r?$',raw)
           require(len(hits)==1,'missing unique positive guest kprobe pass marker')
           require('OCAF039_GUEST_KPROBE_FAIL' not in raw,'guest also emitted kprobe failure')
           require(report['live_vm']['firecracker_api_running'] is True,'Firecracker API not running at live probe')
