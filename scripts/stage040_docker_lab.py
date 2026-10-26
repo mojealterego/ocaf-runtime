@@ -75,7 +75,10 @@ def _validate_requested_work(report:dict,seconds:int,witness:bool)->None:
             or observed.get("harness_write_guard_only") is not True
             or observed.get("database_server_side_fencing_tested") is not False
             or observed.get("physical_host_fault_tested") is not False
-            or observed.get("final_committed_event_ids")!="1,2,3,4"):
+            or observed.get("former_a_rejoined_by_pg_rewind") is not True
+            or observed.get("physical_replication_slot_active_on_c") is not True
+            or observed.get("former_a_wal_receiver_status")!="streaming"
+            or observed.get("final_committed_event_ids")!="1,2,3,4,5"):
             raise DockerLabError("requested single-host witness observation missing")
     elif report.get("witness_lab") is not None:
         raise DockerLabError("unexpected witness exercise in container report")

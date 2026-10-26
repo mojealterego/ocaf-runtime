@@ -64,12 +64,17 @@ def validate_report(r:dict)->dict:
     if witness is not None and (not isinstance(witness,dict)
             or witness.get("authority")!="single_local_sqlite_witness"
             or witness.get("majority_consensus_tested") is not False
-            or witness.get("former_a_rejoined_by_pg_rewind") is not True
-            or witness.get("physical_replication_slot_active_on_c") is not True
             or witness.get("former_a_wal_receiver_status")!="streaming"
-            or witness.get("final_committed_event_ids")!="1,2,3,4,5"
             or witness.get("database_server_side_fencing_tested") is not False):
-        raise PostgresHAError("incomplete local rewind or falsely advertised witness scope")
+        raise PostgresHAError("incomplete or falsely advertised local witness scope")
+    if witness is not None:
+        if witness.get("former_a_rejoined_by_pg_rewind") is True:
+            if (witness.get("physical_replication_slot_active_on_c") is not True
+                    or witness.get("final_committed_event_ids")!="1,2,3,4,5"):
+                raise PostgresHAError("incomplete local rewind/slot WAL catch-up")
+        elif (witness.get("former_a_rejoined_from_fresh_basebackup") is not True
+                or witness.get("final_committed_event_ids")!="1,2,3,4"):
+            raise PostgresHAError("missing legacy fresh-basebackup rejoin evidence")
     return r
 
 

@@ -33,7 +33,11 @@ def complete_report(*,seconds=30,witness=True):
             "authority":"single_local_sqlite_witness",
             "majority_consensus_tested":False,"harness_write_guard_only":True,
             "database_server_side_fencing_tested":False,
-            "physical_host_fault_tested":False,"final_committed_event_ids":"1,2,3,4",
+            "physical_host_fault_tested":False,
+            "former_a_rejoined_by_pg_rewind":True,
+            "physical_replication_slot_active_on_c":True,
+            "former_a_wal_receiver_status":"streaming",
+            "final_committed_event_ids":"1,2,3,4,5",
         } if witness else None,
         "full_nested_observation":{"do_not_lose":[1,2,3]},
     }
