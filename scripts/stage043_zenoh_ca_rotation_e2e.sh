@@ -162,6 +162,7 @@ final_pid="$last_server_pid"
 probe_handled new-to-final 30
 probe_tls_rejected old-to-final 31
 probe_tls_rejected old-server-new-trust 32
+probe_handled old-to-old 35
 kill "$old_pid"; wait "$old_pid" 2>/dev/null || true
 kill "$overlap_pid"; wait "$overlap_pid" 2>/dev/null || true
 probe_handled new-to-final 33
@@ -170,7 +171,7 @@ probe_handled new-to-final 34
 python3 - <<'PY'
 import os, sqlite3
 path = os.environ['OCAF_OMAT_REPLAY_DB']
-expected = {1, 2, 3, 4, *range(10, 22), 30, 33, 34}
+expected = {1, 2, 3, 4, *range(10, 22), 30, 33, 34, 35}
 rows = sqlite3.connect(path).execute('SELECT principal, nonce FROM omat_replay').fetchall()
 assert len(rows) == len(expected), (len(rows), len(expected))
 assert all(principal == 'omas_a' for principal, _ in rows)
@@ -178,4 +179,4 @@ actual = {int(nonce.removeprefix('rotation')) for _, nonce in rows}
 assert actual == expected, (actual, expected)
 assert 31 not in actual and 32 not in actual
 PY
-printf 'PASS: independent mTLS roots; old/new trust overlap; old identities rejected after withdrawal; all 19 authenticated ingress requests accounted for\n'
+printf 'PASS: independent mTLS roots; old/new trust overlap; old identities rejected after withdrawal; all 20 authenticated ingress requests accounted for\n'
