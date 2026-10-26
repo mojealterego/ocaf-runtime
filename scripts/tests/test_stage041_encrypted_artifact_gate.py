@@ -1,0 +1,56 @@
+"""Pre-upload gate must reject plaintext even with Python optimization enabled."""
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from stage041_encrypted_artifact_gate import ArtifactGateError, verify_encrypted_only
+
+
+class GateTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name) / "bundle"
+        envelope = self.root / "envelope"
+        envelope.mkdir(parents=True)
+        snapshot_hash = hashlib.sha256(b"PGDMP real plaintext").hexdigest()
+        ciphertext = b"opaque authenticated encrypted backup bytes"
+        (self.root / "source.json").write_text("{}\n")
+        (self.root / "manifest.json").write_text(json.dumps({
+            "snapshot_sha256": snapshot_hash}) + "\n")
+        (envelope / "snapshot.aesgcm").write_bytes(ciphertext)
+        (envelope / "manifest.json").write_text(json.dumps({
+            "snapshot_sha256": snapshot_hash,
+            "ciphertext_sha256": hashlib.sha256(ciphertext).hexdigest(),
+            "production_approved": False,
+            "immutable_offsite_storage_proved": False}) + "\n")
+
+    def test_complete_encrypted_only_bundle_passes(self):
+        verify_encrypted_only(self.root)
+
+    def test_plaintext_file_is_rejected_with_python_optimize(self):
+        (self.root / "snapshot.pgcustom").write_bytes(b"PGDMP plaintext")
+        script = Path(__file__).resolve().parents[1] / "stage041_encrypted_artifact_gate.py"
+        result = subprocess.run([sys.executable, "-O", str(script), "--bundle", str(self.root)],
+                                capture_output=True, text=True, check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("plaintext", result.stderr)
+
+    def test_ciphertext_mutation_and_symlink_are_rejected(self):
+        target = self.root / "envelope/snapshot.aesgcm"
+        target.write_bytes(target.read_bytes() + b"x")
+        with self.assertRaises(ArtifactGateError):
+            verify_encrypted_only(self.root)
+        target.unlink()
+        target.symlink_to(self.root / "source.json")
+        with self.assertRaises(ArtifactGateError):
+            verify_encrypted_only(self.root)
+
+
+if __name__ == "__main__":
+    unittest.main()
