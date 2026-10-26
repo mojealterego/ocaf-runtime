@@ -212,6 +212,21 @@ fn replay_store_rejects_symlink_shared_directory_and_shared_file() {
     let mode = std::fs::metadata(&real).unwrap().permissions().mode();
     assert_eq!(mode & 0o077, 0, "new replay file must be private");
 
+    // An ancestor can be an operator-owned symlink (for example, /tmp on a
+    // runner). SQLite must use the resolved private directory, not reopen the
+    // original ancestor path after validation.
+    let actual_parent = dir.path().join("actual");
+    std::fs::create_dir(&actual_parent).unwrap();
+    std::fs::set_permissions(&actual_parent, std::fs::Permissions::from_mode(0o700)).unwrap();
+    let nested = actual_parent.join("nested");
+    std::fs::create_dir(&nested).unwrap();
+    std::fs::set_permissions(&nested, std::fs::Permissions::from_mode(0o700)).unwrap();
+    let alias = dir.path().join("alias");
+    symlink(&actual_parent, &alias).unwrap();
+    let through_alias = alias.join("nested/replay.sqlite");
+    assert!(admission().with_replay_database(&through_alias).is_ok());
+    assert!(nested.join("replay.sqlite").is_file());
+
     symlink(&real, &link).unwrap();
     assert!(admission().with_replay_database(&link).is_err());
     let hardlink = dir.path().join("hardlink.sqlite");
