@@ -11,9 +11,19 @@ prawdziwym pliku kopii PostgreSQL. Osobno próbuje zmienić szyfrogram, użyć
 innego lub odwołanego klucza oraz obniżyć generację; każda próba musi zostać
 odrzucona. Klucz jest losowany w pamięci runnera i nie trafia do artefaktu.
 
-Ten test nie dowodzi trwałego offsite, niezmienności zewnętrznego magazynu,
-osobnego kanału dystrybucji kluczy ani odtworzenia na drugim kernelu z
-zaszyfrowanego artefaktu. `stage_041_complete=false` i
+Workflow `stage041-cross-host-restore.yml` przesyła **wyłącznie szyfrogram**
+kopii przez artefakt GitHub Actions. Klucz z jednego przebiegu przechodzi
+osobno przez output joba; drugi efemeryczny runner Linux odrzuca zmieniony
+szyfrogram, błędny lub odwołany klucz i cofniętą generację, odszyfrowuje
+kopię i uruchamia rzeczywisty `pg_restore` na innym kernelu. Weryfikacja przed
+uploadem odmawia publikacji przy dodatkowym pliku plaintext, brakującym
+składniku albo błędnym tagu AES-GCM; negatywne testy działają także z
+`python -O`. [Dwukernelowy przebieg 40352308866](https://github.com/mojealterego/ocaf-runtime/actions/runs/40352308866)
+potwierdził kontrolę tagu przed uploadem i odtworzenie na drugim kernelu.
+
+To laboratorium nie dowodzi trwałego offsite, niezmienności magazynu,
+niezależnego KMS ani awarii fizycznego hosta. Output joba GitHub nie jest
+produkcyjnym kanałem dystrybucji klucza. `stage_041_complete=false` i
 `production_approved=false` pozostają wymagane. Do odbioru 0.41.6 nadal
 potrzebne są niezależny magazyn z retencją WORM, trwały KMS, polityka
-rotacji/odwołania oraz ćwiczenie odtworzeniowe z innego hosta.
+rotacji/odwołania i ćwiczenie odtworzeniowe na trwałym obcym hoście.
