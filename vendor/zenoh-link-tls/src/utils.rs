@@ -347,16 +347,21 @@ impl<'a> TlsClientConfig<'a> {
             None => TLS_CLOSE_LINK_ON_EXPIRATION_DEFAULT,
         };
 
-        // Allows mixed user-generated CA and webPKI CA
-        tracing::debug!("Loading default Web PKI certificates.");
-        let mut root_cert_store = RootCertStore {
-            roots: webpki_roots::TLS_SERVER_ROOTS.to_vec(),
+        // An explicitly configured CA is an exclusive trust boundary.
+        // Mixing it with public WebPKI roots would allow a retired identity
+        // issued by a public CA to remain trusted after CA withdrawal.
+        let root_cert_store = match load_trust_anchors(config)? {
+            Some(custom_root_cert) => {
+                tracing::debug!("Using only explicitly configured TLS trust anchors.");
+                custom_root_cert
+            }
+            None => {
+                tracing::debug!("Loading default Web PKI certificates.");
+                RootCertStore {
+                    roots: webpki_roots::TLS_SERVER_ROOTS.to_vec(),
+                }
+            }
         };
-
-        if let Some(custom_root_cert) = load_trust_anchors(config)? {
-            tracing::debug!("Loading user-generated certificates.");
-            root_cert_store.extend(custom_root_cert.roots);
-        }
 
         // Install ring based rustls CryptoProvider.
         rustls::crypto::ring::default_provider()
