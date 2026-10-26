@@ -69,6 +69,24 @@ class HAProofContracts(unittest.TestCase):
             with self.subTest(change=change),self.assertRaises(ha.PostgresHAError):
                 ha.validate_report({**ref,**change})
 
+    def test_witness_rewind_receipt_requires_active_slot_and_replayed_commits(self):
+        witness={"authority":"single_local_sqlite_witness",
+                 "majority_consensus_tested":False,
+                 "former_a_rejoined_by_pg_rewind":True,
+                 "physical_replication_slot_active_on_c":True,
+                 "former_a_wal_receiver_status":"streaming",
+                 "final_committed_event_ids":"1,2,3,4,5",
+                 "database_server_side_fencing_tested":False}
+        valid={**record(),"witness_lab":witness}
+        self.assertEqual(ha.validate_report(valid),valid)
+        for change in ({"former_a_rejoined_by_pg_rewind":False},
+                       {"physical_replication_slot_active_on_c":False},
+                       {"former_a_wal_receiver_status":"stopped"},
+                       {"final_committed_event_ids":"1,2,3,4"},
+                       {"database_server_side_fencing_tested":True}):
+            with self.subTest(change=change),self.assertRaises(ha.PostgresHAError):
+                ha.validate_report({**valid,"witness_lab":{**witness,**change}})
+
     def test_port_assignment_and_path_bounds(self):
         ha.validate_local_pg_ports((25101,25102,25103))
         for invalid in ((25101,25101,25103),(0,25102,25103),

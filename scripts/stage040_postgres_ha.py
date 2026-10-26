@@ -6,7 +6,8 @@ on ONE ephemeral Linux kernel, NOT three physical hosts or a production
 consensus cluster. It tests actual streaming WAL replay, an IMMEDIATE
 primary server crash, standby promotion and standby reparent/replay.
 The old primary remains STOPPED in the default lab. The optional witness lab
-rebuilds it as a standby from a fresh base backup after a second failover.
+rewinds it with PostgreSQL pg_rewind and a physical replication slot after a
+second failover, then verifies streamed catch-up from the new primary C.
 Neither mode provides external/server-side fencing from future raw writes.
 """
 from __future__ import annotations
@@ -59,6 +60,16 @@ def validate_report(r:dict)->dict:
             r.get("production_approved") is not False or
             r.get("stage_040_complete") is not False):
         raise PostgresHAError("incomplete or falsely approved actual PostgreSQL lab report")
+    witness=r.get("witness_lab")
+    if witness is not None and (not isinstance(witness,dict)
+            or witness.get("authority")!="single_local_sqlite_witness"
+            or witness.get("majority_consensus_tested") is not False
+            or witness.get("former_a_rejoined_by_pg_rewind") is not True
+            or witness.get("physical_replication_slot_active_on_c") is not True
+            or witness.get("former_a_wal_receiver_status")!="streaming"
+            or witness.get("final_committed_event_ids")!="1,2,3,4,5"
+            or witness.get("database_server_side_fencing_tested") is not False):
+        raise PostgresHAError("incomplete local rewind or falsely advertised witness scope")
     return r
 
 
@@ -200,7 +211,7 @@ def run_lab(*,pg_bin:Path,report:Path,soak_seconds:int=0,
     if (not isinstance(report,Path) or not report.is_absolute()
             or ".." in report.parts or report.exists() or report.is_symlink()):
         raise PostgresHAError("new absolute evidence destination required")
-    needed=("initdb","pg_ctl","pg_basebackup","psql") + (("pgbench",) if soak_seconds else ())
+    needed=("initdb","pg_ctl","pg_basebackup","psql") + (("pgbench",) if soak_seconds else ()) + (("pg_rewind",) if exercise_witness else ())
     for binary in needed:
         if not (pg_bin/binary).is_file():
             raise PostgresHAError("PostgreSQL tools not installed: "+binary)
@@ -246,7 +257,7 @@ def run_lab(*,pg_bin:Path,report:Path,soak_seconds:int=0,
             if witness is not None:
                 leases["a"]=witness.renew("node-a",leases["a"].epoch,ttl_seconds=300)
         _run([bindir("initdb"),"-D",str(paths["a"]),
-              "--auth-local=trust","--auth-host=trust",
+              "--auth-local=trust","--auth-host=trust","--data-checksums",
               "--no-instructions"],timeout=45)
         conf=paths["a"]/"postgresql.conf"
         conf.write_text(conf.read_text()+"\nwal_level = replica\nmax_wal_senders = 8\n"
@@ -364,8 +375,8 @@ def run_lab(*,pg_bin:Path,report:Path,soak_seconds:int=0,
             raise PostgresHAError("PostgreSQL processes or WAL handover inconsistent")
         version=query("b","SHOW server_version")
         if witness is not None:
-            # Show a second REAL PostgreSQL crash, then recovery of former A
-            # from a fresh base backup. This is not pg_rewind or a host fault.
+            # Show a second REAL PostgreSQL crash, then rewind former A to C's
+            # promoted timeline. A slot retains C's WAL while A rejoins.
             try:
                 witness.grant("node-c",ttl_seconds=300)
             except QuorumError:
@@ -390,13 +401,24 @@ def run_lab(*,pg_bin:Path,report:Path,soak_seconds:int=0,
                 pass
             else:
                 raise PostgresHAError("witness accepted second old-primary write")
-            shutil.rmtree(paths["a"])
-            _run(pg_basebackup_command(bindir("pg_basebackup"),ports[2],paths["a"]),timeout=90)
+            slot="ocaf40_rejoin_a"
+            if write("c",f"SELECT slot_name FROM pg_create_physical_replication_slot('{slot}', true)")!=slot:
+                raise PostgresHAError("physical WAL retention slot not created on promoted C")
+            write("c","INSERT INTO ocaf40_events VALUES (5,'before-rewind-rejoin')")
+            source_connection=f"host=127.0.0.1 port={ports[2]} user=postgres dbname=postgres"
+            _run([bindir("pg_rewind"),"--target-pgdata",str(paths["a"]),
+                  "--source-server",source_connection,"--write-recovery-conf"],timeout=90)
+            auto=paths["a"]/"postgresql.auto.conf"
+            auto.write_text("\n".join(line for line in auto.read_text().splitlines()
+                                  if not line.lstrip().startswith("primary_slot_name"))+
+                            f"\nprimary_slot_name = '{slot}'\n")
             start("a")
             _wait(lambda:query("a","SELECT pg_is_in_recovery()")=="t"
-                  and query("a","SELECT COUNT(*) FROM ocaf40_events")=="4",seconds=25)
+                  and query("a","SELECT COUNT(*) FROM ocaf40_events")=="5",seconds=35)
             if query("a","SELECT status FROM pg_stat_wal_receiver LIMIT 1")!="streaming":
                 raise PostgresHAError("former A did not rejoin actual WAL streaming from C")
+            if query("c",f"SELECT active FROM pg_replication_slots WHERE slot_name='{slot}'")!="t":
+                raise PostgresHAError("former A did not consume its physical WAL slot")
             witness_observation={
                 "authority":"single_local_sqlite_witness",
                 "majority_consensus_tested":False,
@@ -405,14 +427,15 @@ def run_lab(*,pg_bin:Path,report:Path,soak_seconds:int=0,
                 "overlapping_primary_grant_denied":True,
                 "old_a_and_b_harness_writes_denied":True,
                 "postgres_b_immediate_crash_then_c_promoted":True,
-                "former_a_rejoined_from_fresh_basebackup":True,
+                "former_a_rejoined_by_pg_rewind":True,
+                "physical_replication_slot_active_on_c":True,
                 "former_a_wal_receiver_status":"streaming",
                 "final_committed_event_ids":query("c","SELECT string_agg(id::text,',' ORDER BY id) FROM ocaf40_events"),
                 "harness_write_guard_only":True,
                 "database_server_side_fencing_tested":False,
                 "physical_host_fault_tested":False,
             }
-            if witness_observation["final_committed_event_ids"]!="1,2,3,4":
+            if witness_observation["final_committed_event_ids"]!="1,2,3,4,5":
                 raise PostgresHAError("second failover lost or duplicated committed events")
         result={
             "schema_version":1,

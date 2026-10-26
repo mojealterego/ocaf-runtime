@@ -50,6 +50,7 @@ jobs:
           test -x /usr/lib/postgresql/16/bin/initdb
           test -x /usr/lib/postgresql/16/bin/pg_ctl
           test -x /usr/lib/postgresql/16/bin/pgbench
+          test -x /usr/lib/postgresql/16/bin/pg_rewind
           /usr/lib/postgresql/16/bin/pg_ctl --version
       - name: REAL streaming two standbys, IMMEDIATE primary crash and C reparent after B promotion
         shell: bash
@@ -103,8 +104,9 @@ jobs:
           assert witness["epochs"]==[1,2,3]
           assert witness["overlapping_primary_grant_denied"] is True
           assert witness["old_a_and_b_harness_writes_denied"] is True
-          assert witness["former_a_rejoined_from_fresh_basebackup"] is True
-          assert witness["final_committed_event_ids"]=="1,2,3,4"
+          assert witness["former_a_rejoined_by_pg_rewind"] is True
+          assert witness["physical_replication_slot_active_on_c"] is True
+          assert witness["final_committed_event_ids"]=="1,2,3,4,5"
           assert witness["database_server_side_fencing_tested"] is False
           assert r["synchronous_replication"]["source_write_synchronous_commit"]=="remote_apply"
           assert r["synchronous_replication"]["synchronous_mode_during_b_c_failover"] is False
