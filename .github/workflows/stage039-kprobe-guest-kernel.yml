@@ -92,6 +92,7 @@ jobs:
             "$SOURCE/linux-6.1.188/vmlinux" "$PREFIX/approved/guest_kernel"
           sudo -n install -o root -g root -m 0444 \
             "$SOURCE/hello-rootfs.ext4" "$PREFIX/approved/guest_rootfs"
+          set +e
           sudo -n python3 scripts/stage039_guest_host_canary.py \
             --firecracker "$PREFIX/approved/firecracker" \
             --firecracker-sha256 "$(sudo -n sha256sum "$PREFIX/approved/firecracker" | cut -d ' ' -f 1)" \
@@ -104,7 +105,15 @@ jobs:
             --rootfs-sha256 786f0612582cadcee4c8ad46e30e4cc93dff9a3c0b4ede3f3c597b4c241dd547 \
             --probe-source "$GITHUB_WORKSPACE/stage039/guest-kprobe/kprobe_canary_init.c" \
             --report "$GITHUB_WORKSPACE/stage039-kprobe-evidence/guest.json" \
-            --ack-real-jailed-guest-canary-probe
+            --ack-real-jailed-guest-canary-probe \
+            2>&1 | tee stage039-kprobe-evidence/runner-diagnostic.txt
+          runner_status=${PIPESTATUS[0]}
+          set -e
+          if (( runner_status != 0 )); then
+            excerpt="$(tail -c 1400 stage039-kprobe-evidence/runner-diagnostic.txt | tr '\n' ' ' | tr '%' '_')"
+            printf '::error title=Guest runner failure::%s\n' "$excerpt"
+            exit "$runner_status"
+          fi
           sudo -n chown "$(id -u):$(id -g)" stage039-kprobe-evidence/guest.json
           python3 - "$PREFIX" <<'PY'
           import json,os,re,sys
@@ -131,7 +140,7 @@ jobs:
           cp "$SOURCE/linux-6.1.188/vmlinux" stage039-kprobe-evidence/vmlinux
           cp "$SOURCE/built-sha256.txt" stage039-kprobe-evidence/built-sha256.txt
       - name: Capture bounded guest failure diagnostics
-        if: always()
+        if: failure()
         shell: bash
         run: |
           set -euo pipefail
@@ -140,6 +149,10 @@ jobs:
           if [[ -d "$PREFIX/jailer" ]]; then
             sudo -n find "$PREFIX/jailer" -name serial-console.log -type f -print -exec tail -c 16000 {} \; \
               | tee stage039-kprobe-evidence/serial-diagnostic.txt
+            excerpt="$(tail -c 1200 stage039-kprobe-evidence/serial-diagnostic.txt | tr '\n' ' ' | tr '%' '_')"
+            if [[ -n "$excerpt" ]]; then
+              printf '::warning title=Bounded guest serial diagnostic::%s\n' "$excerpt"
+            fi
           else
             printf 'Guest jailer directory was not created\n' \
               | tee stage039-kprobe-evidence/serial-diagnostic.txt
