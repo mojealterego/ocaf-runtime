@@ -1,0 +1,62 @@
+name: OCAF 0.40 PostgreSQL TLS 1.3 role and certificate controls (one-kernel lab)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage040-postgres-tls-controls.yml
+      - scripts/stage040_pg_tls_lab.py
+      - scripts/tests/test_stage040_pg_tls_lab.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pg-tls-controls:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Validate strict TLS and role policy
+        run: python3 -m unittest -v scripts.tests.test_stage040_pg_tls_lab
+      - name: Install PostgreSQL 16 server if absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! test -x /usr/lib/postgresql/16/bin/pg_basebackup; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16
+          fi
+          test -x /usr/lib/postgresql/16/bin/initdb
+          test -x /usr/lib/postgresql/16/bin/pg_ctl
+          test -x /usr/lib/postgresql/16/bin/psql
+          test -x /usr/lib/postgresql/16/bin/pg_basebackup
+      - name: Real TCP TLS1.3, separate role, rogue certificate and downgrade negatives
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p stage040-pg-tls-evidence
+          sudo -n python3 scripts/stage040_pg_tls_lab.py \
+            --pg-bin /usr/lib/postgresql/16/bin \
+            --report "$GITHUB_WORKSPACE/stage040-pg-tls-evidence/lab.json"
+          sudo -n chown "$(id -u):$(id -g)" stage040-pg-tls-evidence/lab.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from scripts.stage040_pg_tls_lab import validate_report
+          report=json.loads(Path('stage040-pg-tls-evidence/lab.json').read_text())
+          validate_report(report)
+          assert report['postgresql_version'].startswith('16.')
+          print('STAGE040_REAL_SINGLE_KERNEL_PG_TLS13_ROLE_CERT_NEGATIVES_PASS')
+          PY
+      - name: Preserve bounded single-kernel evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage040-postgres-tls-role-lab-not-interhost
+          path: stage040-pg-tls-evidence/
+          retention-days: 30
+          if-no-files-found: warn
