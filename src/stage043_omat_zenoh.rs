@@ -7,7 +7,7 @@ use rusqlite::{params, Connection, OpenFlags};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use std::collections::{HashMap, HashSet};
-use std::path::{Component, Path};
+use std::path::{Component, Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
@@ -38,7 +38,7 @@ const MAX_REPLAY: usize = 100_000;
 
 /// SQLite also creates -wal/-shm sidecars. The containing directory is part
 /// of the replay authority and must not be writable/readable by other users.
-fn prepare_private_replay_file(path: &Path) -> anyhow::Result<()> {
+fn prepare_private_replay_file(path: &Path) -> anyhow::Result<PathBuf> {
     anyhow::ensure!(
         path.is_absolute() && !path.components().any(|c| c == Component::ParentDir),
         "replay database path must be absolute and normalized"
@@ -51,26 +51,33 @@ fn prepare_private_replay_file(path: &Path) -> anyhow::Result<()> {
         let parent = path
             .parent()
             .ok_or_else(|| anyhow::anyhow!("replay database parent missing"))?;
-        let parent_meta = parent.symlink_metadata()?;
+        // Reject a symlink as the final directory component, then resolve
+        // possible symlinked ancestors once and use only that resolved path.
+        anyhow::ensure!(parent.symlink_metadata()?.is_dir(), "invalid replay parent");
+        let canonical_parent = parent.canonicalize()?;
+        let parent_meta = canonical_parent.symlink_metadata()?;
         anyhow::ensure!(
             parent_meta.is_dir()
-                && parent.canonicalize()? == parent
                 && parent_meta.uid() == unsafe { libc::geteuid() }
                 && parent_meta.permissions().mode() & 0o077 == 0,
             "replay database needs an owned private directory"
         );
+        let file_name = path
+            .file_name()
+            .ok_or_else(|| anyhow::anyhow!("replay database file name missing"))?;
+        let canonical_path = canonical_parent.join(file_name);
         match OpenOptions::new()
             .write(true)
             .create_new(true)
             .mode(0o600)
             .custom_flags(libc::O_NOFOLLOW)
-            .open(path)
+            .open(&canonical_path)
         {
             Ok(file) => drop(file),
             Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {}
             Err(error) => return Err(error.into()),
         }
-        let file_meta = path.symlink_metadata()?;
+        let file_meta = canonical_path.symlink_metadata()?;
         anyhow::ensure!(
             file_meta.is_file()
                 && file_meta.uid() == unsafe { libc::geteuid() }
@@ -78,10 +85,10 @@ fn prepare_private_replay_file(path: &Path) -> anyhow::Result<()> {
                 && file_meta.nlink() == 1,
             "replay database needs an owned private regular file"
         );
+        Ok(canonical_path)
     }
     #[cfg(not(unix))]
     anyhow::bail!("private replay database requires a Unix host");
-    Ok(())
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -146,9 +153,9 @@ impl OmatZenohAdmission {
     /// Persist replay identities across process restarts. SQLite uniqueness
     /// is the authority; an in-memory set is only a fast path.
     pub fn with_replay_database(mut self, path: &Path) -> anyhow::Result<Self> {
-        prepare_private_replay_file(path)?;
+        let canonical_path = prepare_private_replay_file(path)?;
         let db = Connection::open_with_flags(
-            path,
+            &canonical_path,
             OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NOFOLLOW,
         )?;
         db.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; CREATE TABLE IF NOT EXISTS omat_replay (principal TEXT NOT NULL, nonce TEXT NOT NULL, PRIMARY KEY(principal, nonce));")?;
