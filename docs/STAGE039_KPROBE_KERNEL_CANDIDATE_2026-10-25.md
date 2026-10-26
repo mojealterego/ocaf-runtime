@@ -24,38 +24,43 @@ Rzeczywisty przebieg KVM
 potwierdza w dwóch gościach BTF i BPF syscall, lecz brak kprobe na użytym
 jądrze 6.1.188.
 
-Następnym technicznym krokiem jest osobny, powtarzalny build jądra z
-przypiętego źródła i konfiguracji Firecracker, uzupełnionej o
-`CONFIG_MODULES=y`, `CONFIG_KPROBES=y` i `CONFIG_KPROBE_EVENTS=y` przy zachowaniu BTF,
-`CONFIG_BPF_EVENTS=y`, `CONFIG_PERF_EVENTS=y` i `CONFIG_BPF_SYSCALL=y`.
-Źródło, łatki, konfigurację wynikową i binarny `vmlinux` trzeba przypiąć
-SHA-256; wynik `make olddefconfig` należy sprawdzić, bo może odrzucić
-żądane opcje. Pierwszy przebieg [40230951701](https://github.com/mojealterego/ocaf-runtime/actions/runs/40230951701)
-zakończył się właśnie taką odmową przed kompilacją: `KPROBES` i
-`KPROBE_EVENTS` zostały usunięte, ponieważ konfiguracja bazowa Firecracker
-wyłącza `MODULES`, a upstream Linux 6.1 wymaga `MODULES` dla `KPROBES`.
-Workflow został poprawiony, lecz nie stanowi to jeszcze dowodu udanego
-build ani attach. Następnie obraz musi uruchomić istniejący guest Aya/WASI
-na realnym jailed Firecracker. Pełna bramka 0.39.22 wymaga **udanego
-załadowania i attach programu kprobe wewnątrz gościa** z dodatnim kernel
-program ID i zdarzeniem `openat`; sama obecność pliku `kprobe_events`
-lub flaga `.config` nie jest wystarczającym dowodem. Do takiego testu
-status 0.39.22 pozostaje `PARTIAL`.
+## Wynik ręcznego testu KVM z 2026-10-26
 
-Eksperymentalny workflow
-`.github/workflows/stage039-kprobe-guest-kernel.yml` przygotowuje taką
-próbę jako **wyłącznie ręczne** `workflow_dispatch`, aby kosztowny build
-jądra nie uruchamiał się przy każdym push. Źródło upstream
-`linux-6.1.188.tar.xz` jest przypięte SHA-256
+[Run 40260131539](https://github.com/mojealterego/ocaf-runtime/actions/runs/40260131539)
+na commicie `071869835156da575813699dd8096192d1167daf` zakończył się
+**SUCCESS**. Wszystkie kroki, w tym rzeczywisty KVM, budowa jądra oraz
+uruchomienie guest przez Firecracker jailer, zakończyły się sukcesem.
+Archiwum `stage039-experimental-guest-kprobe-evidence` ma ID
+`12624219410`, rozmiar `239599477` bajtów i raportowany przez GitHub
+SHA-256 archiwum
+`6e4cd75468f3aa4c91b915a556077b413bb2729b3e8d1275ffe2ed5705e2a442`.
+Archiwum zawiera wynikową `.config`, ELF `vmlinux`, ich SHA-256, raport
+guest i skrót wyniku. Bieżące środowisko dostaje HTTP 403 z magazynu
+artefaktów GitHub, więc zawartości archiwum i dokładnej wartości
+`program_id` nie odczytano tu niezależnie; potwierdzone są metadane API
+oraz sukces bramek kodu workflow.
+
+Workflow buduje upstream Linux `6.1.188` ze źródła o SHA-256
 `ed4d0acb1307c235230c89efc094e210e6290593f94a7e617f28b1001101a33a`
-z `sha256sums.asc` kernel.org, a wejściowa konfiguracja Firecracker ma
-SHA podany w tabeli. Workflow wymaga zachowania opcji przez
-`make olddefconfig`, buduje ELF `vmlinux`, uruchamia go za jailer na
-rzeczywistym KVM, a guest PID1 wykonuje `BPF_PROG_LOAD`, tworzy zdarzenie
-kprobe, przyłącza program przez `PERF_EVENT_IOC_SET_BPF` i wymaga
-dodatniego program ID oraz faktycznej liczby zdarzeń po `getpid`.
-Osobno sprawdza brak dostępu gościa do hostowego canary i opróżnienie
-cgroup po zatrzymaniu VM. Dopóki ten workflow nie przejdzie na konkretnym
-SHA, jest to **kod próby**, a nie dowód udanego attach. Nawet zielony
-wynik jednej laboratoryjnej VM nie zastąpi pełnego odbioru dwóch tenantów
-i trwałych hostów.
+na wejściowej konfiguracji debug Firecracker o SHA z tabeli. Wymaga po
+`make olddefconfig` wartości `CONFIG_MODULES=y`, `CONFIG_KPROBES=y`,
+`CONFIG_KPROBE_EVENTS=y`, `CONFIG_DEBUG_INFO_BTF=y`, `CONFIG_BPF_EVENTS=y`,
+`CONFIG_PERF_EVENTS=y` i `CONFIG_BPF_SYSCALL=y`. Pierwszy przebieg
+[40230951701](https://github.com/mojealterego/ocaf-runtime/actions/runs/40230951701)
+wykazał, że bez `MODULES` upstream odrzuca `KPROBES`; po poprawce jądro
+zbudowano i uruchomiono. Guest PID1 sprawdza BTF, tworzy zdarzenie kprobe
+`__x64_sys_getpid`, ładuje program BPF typu KPROBE, odczytuje dodatnie
+kernel program ID, przyłącza program przez `PERF_EVENT_IOC_SET_BPF`,
+wykonuje `getpid` i wymaga dodatniej liczby zdarzeń. Host wymaga dokładnie
+jednego guest markera z dodatnimi ID i licznikiem, aktywnego API VM,
+zgodności hashu otwartego rootfs FD, odmowy odczytu hostowego canary oraz
+pustego cgroup po SIGKILL. Pojedyncza flaga `.config` nie może przejść tej
+bramki.
+
+To **jedna laboratoryjna VM z małym programem BPF w C**, z sondą `getpid`.
+Nie jest to jeszcze połączony test dwóch tenantów, Aya `openat`, WASI i
+tej samej nowej konfiguracji jądra; brak też trwałego przypiętego artefaktu
+jądra i niezależnej atestacji jego pochodzenia. Dlatego status 0.39.22
+pozostaje `PARTIAL_REAL_KVM_KPROBE_LAB_PASS`, a etap 0.39 jako całość
+pozostaje otwarty. Workflow jest ręczny (`workflow_dispatch`), aby build
+jądra nie obciążał każdego push.

@@ -24,9 +24,10 @@ ID `12601919898` ma SHA-256
 Raport ma status `GUEST_BPF_ABI_PARTIAL_KPROBE_OR_BTF_UNAVAILABLE`, nie
 potwierdza gotowości kprobe i zachowuje `stage_039_22_complete=false`.
 
-Do zamknięcia 0.39.22 potrzebne jest przypięte i zweryfikowane jądro
-gościa z BTF oraz KPROBES/KPROBE_EVENTS, a następnie rzeczywisty udany
-załadunek i attach programu kprobe **wewnątrz gościa** z dodatnim kernel
-program ID. Sama obecność pliku `kprobe_events` nie dowodzi udanego attach.
-Obecny runner rejestruje ABI i odrzuca brak, duplikat lub podrobiony marker;
-nie podnosi statusu etapu do PASS.
+Późniejszy, oddzielny [test niestandardowego jądra](STAGE039_KPROBE_KERNEL_CANDIDATE_2026-10-25.md)
+przeszedł w [run 40260131539](https://github.com/mojealterego/ocaf-runtime/actions/runs/40260131539):
+jedna rzeczywista jailed VM gościa załadowała i przyłączyła program kprobe,
+uzyskała dodatnie ID i licznik zdarzeń `getpid`. Ten wynik nie zmienia
+odczytu oficjalnego obrazu Firecracker z dwóch VM powyżej. Połączenie
+nowego jądra z dwoma tenantami, guest Aya `openat` i WASI pozostaje do
+udowodnienia przed pełnym zamknięciem 0.39.22 i 0.39.
