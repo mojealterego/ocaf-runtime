@@ -29,15 +29,22 @@ these keys):
 8. `load_soak_slo`
 9. `independent_security_review`
 
-Each check has exactly `path`, `sha256` and `observed_at_utc`. `path` is a
+Each check has exactly `path`, `sha256`, `observed_at_utc` and `scope`. `path` is a
 single regular-file basename in the same private directory as the manifest,
 without symbolic links, traversal or nested directories. `sha256` is the
 lowercase SHA-256 digest of its nonempty, at-most-10-MiB contents.
 `observed_at_utc` is an ISO-8601 UTC timestamp ending in `Z`. Evidence
 older than 30 days, in the future, malformed or tampered is rejected.
+The `scope` value must match the expected proof type: `independent_real_hosts`
+for fencing, multi-host mTLS, credential rotation, independent sink, backup
+restore and soak; `real_guest_host` for sandbox isolation; `dependency_audit`
+for the dependency check; and `independent_human_review` for the security
+review. Ephemeral lab results cannot satisfy real-host checks. A file path
+or content digest cannot be reused for another check.
 Duplicate JSON object keys, extra/missing checks and oversized manifests
 are also rejected. The checks are an inventory — test authenticity, host
-independence and approval still require external verification.
+independence and approval still require external verification. The manifest's
+`scope` is an operator assertion, not proof of host identity.
 
 Store evidence **outside the repository** and outside publicly accessible
 CI artifacts; the verifier has no need for credentials, personal data,

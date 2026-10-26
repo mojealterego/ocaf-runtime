@@ -654,3 +654,7 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - 0.43: konfiguracja OMAt odrzuca dwa principal z identycznym kluczem HMAC; 0.44: próby odbioru OAuth/Vault blokują przekierowania niosące tokeny. Te poprawki granic bezpieczeństwa nie zamykają etapów ani nie aktywują dostępu OSTc.
 
 - 0.41.6: [CI 40352308866](https://github.com/mojealterego/ocaf-runtime/actions/runs/40352308866) potwierdza zaszyfrowany transfer prawdziwego `pg_dump` i restore na drugim efemerycznym kernelu oraz uwierzytelnienie artefaktu przed uploadem. Niezmienny offsite, niezależny KMS i trwały host pozostają otwarte.
+
+### 2026-10-26 — 0.42.3 release evidence scope
+
+- Offline release manifest now requires an explicit evidence scope and rejects ephemeral lab scope for real-host acceptance checks, as well as reused paths or digests across checks. This validates manifest structure only; independently verified physical host evidence and production approval remain open.

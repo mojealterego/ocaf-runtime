@@ -30,6 +30,17 @@ REQUIRED_EVIDENCE = (
     "load_soak_slo",
     "independent_security_review",
 )
+REQUIRED_SCOPES = {
+    "postgres_single_primary_fencing": "independent_real_hosts",
+    "multi_host_mtls_failover": "independent_real_hosts",
+    "credential_rotation_revocation": "independent_real_hosts",
+    "independent_sink_idempotency": "independent_real_hosts",
+    "tool_sandbox_isolation": "real_guest_host",
+    "backup_restore_rehearsal": "independent_real_hosts",
+    "dependency_license_security_audit": "dependency_audit",
+    "load_soak_slo": "independent_real_hosts",
+    "independent_security_review": "independent_human_review",
+}
 MAX_EVIDENCE_AGE = timedelta(days=30)
 MAX_ARTIFACT_BYTES = 10 * 1024 * 1024
 MAX_MANIFEST_BYTES = 1024 * 1024
@@ -87,8 +98,10 @@ def _manifest(manifest: Path) -> dict[str, Any]:
 
 
 def _verify_evidence(root: Path, name: str, data: Any, now: datetime) -> str | None:
-    if not isinstance(data, dict) or set(data) != {"path", "sha256", "observed_at_utc"}:
+    if not isinstance(data, dict) or set(data) != {"path", "sha256", "observed_at_utc", "scope"}:
         return f"evidence_schema_invalid:{name}"
+    if data["scope"] != REQUIRED_SCOPES[name]:
+        return f"evidence_scope_invalid:{name}"
     raw_path, checksum, observed = data["path"], data["sha256"], data["observed_at_utc"]
     if not isinstance(raw_path, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", raw_path) or raw_path in (".", ".."):
         return f"evidence_path_unsafe:{name}"
@@ -144,10 +157,18 @@ def evaluate(repo: Path, manifest: Path | None, now: datetime | None = None) -> 
         except (OSError, UnicodeError, ValueError, TypeError):
             blockers.append("evidence_manifest_invalid")
         else:
+            used_paths: set[str] = set()
+            used_hashes: set[str] = set()
             for name in REQUIRED_EVIDENCE:
-                issue = _verify_evidence(manifest.parent, name, checks[name], now)
+                item = checks[name]
+                issue = _verify_evidence(manifest.parent, name, item, now)
                 if issue:
                     blockers.append(issue)
+                elif item["path"] in used_paths or item["sha256"] in used_hashes:
+                    blockers.append(f"evidence_reused:{name}")
+                else:
+                    used_paths.add(item["path"])
+                    used_hashes.add(item["sha256"])
     return {
         "schema_version": 1,
         "status": "NO_GO" if blockers else "EVIDENCE_COMPLETE_UNVERIFIED",

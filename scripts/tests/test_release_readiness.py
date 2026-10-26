@@ -5,7 +5,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from scripts.release_readiness import REQUIRED_EVIDENCE, evaluate, apply_operator_override
+from scripts.release_readiness import REQUIRED_EVIDENCE, REQUIRED_SCOPES, evaluate, apply_operator_override
 
 NOW = datetime(2026, 10, 13, 12, 0, tzinfo=timezone.utc)
 
@@ -42,6 +42,7 @@ checksum = "0123456789abcdef" * 4
                 'path': path.name,
                 'sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
                 'observed_at_utc': observed.isoformat().replace('+00:00', 'Z'),
+                'scope': REQUIRED_SCOPES[name],
             }
         manifest = self.evidence / 'manifest.json'
         manifest.write_text(json.dumps({'schema_version': 1, 'checks': checks}), encoding='utf-8')
@@ -100,6 +101,26 @@ checksum = "0123456789abcdef" * 4
         manifest.write_text(json.dumps(data), encoding='utf-8')
         report = evaluate(self.repo, manifest, NOW)
         self.assertIn('evidence_manifest_invalid', report['blockers'])
+
+    def test_lab_scope_cannot_satisfy_real_host_gate(self):
+        self.write_dependency_lock()
+        manifest = self.make_manifest()
+        data = json.loads(manifest.read_text())
+        data['checks']['backup_restore_rehearsal']['scope'] = 'ephemeral_lab'
+        manifest.write_text(json.dumps(data), encoding='utf-8')
+        report = evaluate(self.repo, manifest, NOW)
+        self.assertIn('evidence_scope_invalid:backup_restore_rehearsal', report['blockers'])
+
+    def test_one_artifact_cannot_satisfy_multiple_checks(self):
+        self.write_dependency_lock()
+        manifest = self.make_manifest()
+        data = json.loads(manifest.read_text())
+        first, second = REQUIRED_EVIDENCE[:2]
+        data['checks'][second]['path'] = data['checks'][first]['path']
+        data['checks'][second]['sha256'] = data['checks'][first]['sha256']
+        manifest.write_text(json.dumps(data), encoding='utf-8')
+        report = evaluate(self.repo, manifest, NOW)
+        self.assertIn('evidence_reused:' + second, report['blockers'])
 
     def test_symlink_evidence_rejected(self):
         self.write_dependency_lock()
