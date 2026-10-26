@@ -2,6 +2,15 @@
 
 **Zasada bez wyjątków:** każdy domknięty lub zweryfikowany częściowo etap aktualizuje **tę samą** kanoniczną Roadmapę (`/ROADMAP.md`, lustrzane `docs/ROADMAP_FULL_ECOSYSTEM_2026.md`, manifest v11) i dostarcza realny raport CI. Nowe punkty dopisujemy po ostatnim numerze. Historycznie zgubionych wymagań nie przenosimy z ich miejsca.
 
+## 2026-10-26 — STAGE_PARTIAL — 0.43 — dual-CA Zenoh mTLS rotation
+
+- **Zakres:** dwa niezależne zestawy CA i certyfikatów serwera/klienta, nakładający się okres zaufania, nowy listener z wyłącznie nową CA, odrzucenie wycofanych tożsamości, współdzielony SQLite WAL oraz kontrolowane wycofanie starego listenera po odebraniu odpowiedzi na żądania w toku.
+- **Kod:** `src/stage043_omat_zenoh.rs` (`serve_omat_zenoh_until`), `src/bin/ocaf-omat-zenoh.rs` (SIGTERM), `vendor/zenoh-link-tls/src/utils.rs` (wyłączne korzenie zaufania po podaniu prywatnej CA).
+- **Test:** `scripts/stage043_zenoh_ca_rotation_e2e.sh`, `tests/stage043_omat_zenoh.rs`; bramka `.github/workflows/stage043-omas-omat.yml`.
+- **Dowód lokalny:** OpenSSL 3.5.5 — PASS dla obu łańcuchów PKI, bundle i negatywnej weryfikacji starych certyfikatów po usunięciu starej CA. **Dowód E2E Zenoh:** oczekuje na wynik GitHub Actions; nie oznaczać jako PASS przed odczytaniem logów.
+- **Status:** `IMPLEMENTED / E2E_PENDING`; `production_approved=false`. To kontrolowana rotacja blue/green, a nie hot-reload certyfikatu wewnątrz pojedynczej sesji. Dowód obejmuje autoryzowany ingress i brak utraty odpowiedzi przy zaplanowanym drenażu, nie rzeczywiste wykonanie narzędzi OSTc ani nieplanowaną awarię hosta.
+- **Szczegóły:** `docs/audits/STAGE043_MTLS_DUAL_CA_ROTATION_2026-10-26.md`. Nie dodano ani nie renumerowano etapów.
+
 ## 2026-10-15 — RESTORED_EXISTING — 0.50–0.55 — Agents Builder Code i NoCode
 
 - **Co odzyskano:** 10 wymaganych produktów **Agents Builder Cloud Windows macOS Android iOS, każdy Code i NoCode**; odrębne GUI i testy per platforma; wspólne IR, debugger, uprawnienia i publikacja.
