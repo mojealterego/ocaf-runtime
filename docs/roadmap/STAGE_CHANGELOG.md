@@ -652,3 +652,5 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 
 - 0.41.6: [CI 40349448627](https://github.com/mojealterego/ocaf-runtime/actions/runs/40349448627) potwierdza lokalny AES-256-GCM roundtrip bajtów prawdziwego `pg_dump` i negatywne testy manipulacji, odwołania klucza oraz cofnięcia generacji. Brak niezależnego KMS, niezmiennego offsite i zaszyfrowanego restore na drugim kernelu; [zakres](../STAGE041_ENCRYPTED_BACKUP_2026-10-26.md).
 - 0.43: konfiguracja OMAt odrzuca dwa principal z identycznym kluczem HMAC; 0.44: próby odbioru OAuth/Vault blokują przekierowania niosące tokeny. Te poprawki granic bezpieczeństwa nie zamykają etapów ani nie aktywują dostępu OSTc.
+
+- 0.41.6: [CI 40352308866](https://github.com/mojealterego/ocaf-runtime/actions/runs/40352308866) potwierdza zaszyfrowany transfer prawdziwego `pg_dump` i restore na drugim efemerycznym kernelu oraz uwierzytelnienie artefaktu przed uploadem. Niezmienny offsite, niezależny KMS i trwały host pozostają otwarte.
