@@ -114,22 +114,30 @@ jobs:
             printf '::error title=Guest runner failure::%s\n' "$excerpt"
             exit "$runner_status"
           fi
-          sudo -n chown "$(id -u):$(id -g)" stage039-kprobe-evidence/guest.json
+          if ! sudo -n chown "$(id -u):$(id -g)" stage039-kprobe-evidence/guest.json; then
+            echo '::error title=Guest proof validation::cannot read guest report after runner success'
+            exit 1
+          fi
           python3 - "$PREFIX" <<'PY'
           import json,os,re,sys
           from pathlib import Path
+          def require(condition, reason):
+              if not condition:
+                  print(f'::error title=Guest proof validation::{reason}')
+                  raise SystemExit(1)
           report=json.loads(Path('stage039-kprobe-evidence/guest.json').read_text())
           pins=(Path(os.environ['RUNNER_TEMP'])/'kprobe-source'/'built-sha256.txt').read_text()
           kernel_pins=re.findall(r'(?m)^([0-9a-f]{64})  vmlinux$',pins)
-          assert len(kernel_pins)==1
+          require(len(kernel_pins)==1,'missing unique built kernel SHA-256 receipt')
           serial=Path(sys.argv[1])/'jailer'/'firecracker'/report['vm_id']/'serial-console.log'
           raw=serial.read_text(errors='replace')
           hits=re.findall(r'(?m)^OCAF039_GUEST_KPROBE_PASS program_id=([1-9][0-9]*) event_count=([1-9][0-9]*)$',raw)
-          assert len(hits)==1 and 'OCAF039_GUEST_KPROBE_FAIL' not in raw
-          assert report['live_vm']['firecracker_api_running'] is True
-          assert report['live_vm']['running_rootfs_fd']['rootfs_sha256']==report['rootfs_sha256']
-          assert report['vm_sigkill']['cgroup_subtree_empty'] is True
-          assert report['stage_039_complete'] is False
+          require(len(hits)==1,'missing unique positive guest kprobe pass marker')
+          require('OCAF039_GUEST_KPROBE_FAIL' not in raw,'guest also emitted kprobe failure')
+          require(report['live_vm']['firecracker_api_running'] is True,'Firecracker API not running at live probe')
+          require(report['live_vm']['running_rootfs_fd']['rootfs_sha256']==report['rootfs_sha256'],'live rootfs FD digest mismatch')
+          require(report['vm_sigkill']['cgroup_subtree_empty'] is True,'VM cgroup not drained after SIGKILL')
+          require(report['stage_039_complete'] is False,'lab report incorrectly claims full stage completion')
           out={'status':'ONE_CUSTOM_PINNED_SOURCE_GUEST_KPROBE_ATTACHED_LAB_ONLY',
                'guest_kprobe_program_id':int(hits[0][0]),'guest_kprobe_event_count':int(hits[0][1]),
                'guest_vm_id':report['vm_id'],'guest_kernel_sha256':kernel_pins[0],
