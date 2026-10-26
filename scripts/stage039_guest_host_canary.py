@@ -123,7 +123,12 @@ def execute(*, firecracker: Path, firecracker_sha: str, jailer: Path,
                 break
             time.sleep(0.15)
         if observed is None:
-            raise CanaryDenied("real guest canary result not observed before deadline")
+            # A failed guest start must expose enough bounded context to tell
+            # an early jailer exit from a booted guest that rejected the probe.
+            tail = fc._bounded_console_evidence(log)[-600:]
+            raise CanaryDenied(
+                "real guest canary result not observed before deadline; "
+                f"jailer_exit={proc.poll()!r}; console_tail={tail!r}")
         if hashlib.sha256(canary.read_bytes()).hexdigest() != canary_sha:
             raise CanaryDenied("host canary changed while guest was running")
         killed = vm_crash.kill_and_verify(proc, vm_id, cgroup)
