@@ -24,6 +24,8 @@ This probes TLS 1.3, issuer metadata, protected resource metadata, positive auth
 
 Both token-bearing network probes reject HTTP redirects. A 3xx response from the configured issuer, gateway or Vault endpoint is a failed acceptance observation; bearer and Vault tokens must never be sent to a `Location` target. The local regression test checks this for both secret header names.
 
+Acceptance checks use explicit exceptions, including negative requests and Vault plaintext comparisons. Python's optimized mode (`python -O`) must not turn a failed probe into `PASS`; the CI regression test runs both probes in that mode against deliberately invalid mocked responses.
+
 No production GO until all these tests run and are recorded on the actual infrastructure.
 
 ManagedProviderRefresh in src/stage044_provider_refresh.rs uses a Vault-encrypted, per-tenant/user/provider refresh token, SQLite IMMEDIATE one-use state, fixed HTTPS Basic-auth token endpoint, and conservative reauthorization on ambiguous failures. It is NOT wired to a deployed provider and has not passed real refresh/restart E2E. On any interrupted refresh, require user re-consent rather than replaying the old token.

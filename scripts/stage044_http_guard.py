@@ -15,3 +15,9 @@ def guarded_opener(tls_context):
     return urllib.request.build_opener(
         urllib.request.HTTPSHandler(context=tls_context), RejectRedirect()
     )
+
+
+def require(condition, observation):
+    """Enforce acceptance checks even when Python runs with `-O`."""
+    if not condition:
+        raise RuntimeError("stage 0.44 acceptance failed: " + observation)

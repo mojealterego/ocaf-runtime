@@ -9,7 +9,7 @@ import ssl
 import stat
 import urllib.error
 import urllib.request
-from stage044_http_guard import guarded_opener
+from stage044_http_guard import guarded_opener, require
 
 def env(name):
     value = os.environ.get(name, "")
@@ -52,12 +52,14 @@ def main():
         return json.loads(raw)
     enc = call("encrypt", {"plaintext":base64.b64encode(plaintext).decode(),"context":ctx})
     cipher = enc["data"]["ciphertext"]
-    assert cipher.startswith("vault:v")
+    require(cipher.startswith("vault:v"), "Vault ciphertext format")
     dec = call("decrypt", {"ciphertext":cipher,"context":ctx})
-    assert base64.b64decode(dec["data"]["plaintext"],validate=True) == plaintext
+    require(base64.b64decode(dec["data"]["plaintext"],validate=True) == plaintext,
+            "Vault decrypt equality")
     rewrapped = call("rewrap", {"ciphertext":cipher,"context":ctx})["data"]["ciphertext"]
     dec2 = call("decrypt", {"ciphertext":rewrapped,"context":ctx})
-    assert base64.b64decode(dec2["data"]["plaintext"],validate=True) == plaintext
+    require(base64.b64decode(dec2["data"]["plaintext"],validate=True) == plaintext,
+            "Vault rewrap decrypt equality")
     call("decrypt", {"ciphertext":cipher,"context":ctx_bad}, expected=400)
     print(json.dumps({"stage":"0.44","vault_transit":"PASS","context_isolation":"PASS",
         "rewrap":"PASS","hsm_hardware_attestation":"NOT_TESTED",

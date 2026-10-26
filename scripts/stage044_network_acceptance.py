@@ -8,7 +8,7 @@ import ssl
 import stat
 import urllib.error
 import urllib.request
-from stage044_http_guard import guarded_opener
+from stage044_http_guard import guarded_opener, require
 
 def required(name):
     value = os.environ.get(name, "")
@@ -51,30 +51,30 @@ def main():
     if not token or len(token) > 16384 or any(ch.isspace() for ch in token):
         raise RuntimeError("invalid test token")
     status, data = fetch(issuer + "/.well-known/openid-configuration")
-    assert status == 200
+    require(status == 200, "issuer discovery status")
     meta = json.loads(data)
-    assert meta["issuer"] == issuer
-    assert meta["authorization_endpoint"].startswith(issuer + "/")
-    assert meta["token_endpoint"].startswith(issuer + "/")
-    assert "code" in meta["response_types_supported"]
-    assert "authorization_code" in meta["grant_types_supported"]
-    assert "S256" in meta.get("code_challenge_methods_supported", [])
+    require(meta["issuer"] == issuer, "issuer identity")
+    require(meta["authorization_endpoint"].startswith(issuer + "/"), "authorization endpoint")
+    require(meta["token_endpoint"].startswith(issuer + "/"), "token endpoint")
+    require("code" in meta["response_types_supported"], "authorization code support")
+    require("authorization_code" in meta["grant_types_supported"], "grant type support")
+    require("S256" in meta.get("code_challenge_methods_supported", []), "PKCE S256 support")
     status, data = fetch(gateway + "/.well-known/oauth-protected-resource")
-    assert status == 200
+    require(status == 200, "protected resource metadata status")
     protected = json.loads(data)
-    assert protected["resource"] == resource
-    assert issuer in protected["authorization_servers"]
+    require(protected["resource"] == resource, "protected resource audience")
+    require(issuer in protected["authorization_servers"], "protected resource issuer")
     endpoint = gateway + "/omat/" + tenant + "/users/" + user + "/authorize"
-    assert fetch(endpoint, "POST")[0] == 401
-    assert fetch(endpoint, "POST", "invalid.jwt.token")[0] in (401,403)
-    assert fetch(endpoint, "POST", token)[0] == 204
-    assert fetch(gateway + "/omat/wrong-tenant/users/" + user + "/authorize", "POST", token)[0] == 403
-    assert fetch(gateway + "/omat/" + tenant + "/users/wrong-user/authorize", "POST", token)[0] == 403
+    require(fetch(endpoint, "POST")[0] == 401, "missing bearer denied")
+    require(fetch(endpoint, "POST", "invalid.jwt.token")[0] in (401,403), "malformed bearer denied")
+    require(fetch(endpoint, "POST", token)[0] == 204, "authorized bearer accepted")
+    require(fetch(gateway + "/omat/wrong-tenant/users/" + user + "/authorize", "POST", token)[0] == 403, "wrong tenant denied")
+    require(fetch(gateway + "/omat/" + tenant + "/users/wrong-user/authorize", "POST", token)[0] == 403, "wrong user denied")
     def negative(index):
         status, _ = fetch(endpoint, "POST", "invalid.jwt.token" + str(index))
         return status in (401,403)
     with concurrent.futures.ThreadPoolExecutor(max_workers=12) as pool:
-        assert all(pool.map(negative, range(48))), "negative-load bypass"
+        require(all(pool.map(negative, range(48))), "negative-load bypass")
     print(json.dumps({"stage":"0.44","network":"PASS","negative_requests":48,
         "tls":"1.3","consent_mfa":"NOT_TESTED","kms_hsm":"NOT_TESTED",
         "external_refresh":"NOT_TESTED"}))
