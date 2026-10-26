@@ -48,8 +48,9 @@ fn rejects_shared_hmac_secret_across_authenticated_principals() {
         ("omas_a".to_owned(), "tenant_a".to_owned()),
         ("omas_b".to_owned(), "tenant_b".to_owned()),
     ]);
-    assert!(OmatZenohAdmission::new(keys, tenants, HashMap::new(), OmatRegistry::default())
-        .is_err());
+    assert!(
+        OmatZenohAdmission::new(keys, tenants, HashMap::new(), OmatRegistry::default()).is_err()
+    );
 }
 
 #[test]
