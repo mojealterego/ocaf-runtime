@@ -6,6 +6,7 @@ on:
     paths:
       - .github/workflows/stage040-real-postgres-ha.yml
       - scripts/stage040_postgres_ha.py
+      - scripts/stage040_failover_trace.py
       - scripts/stage040_quorum.py
       - scripts/stage040_docker_lab.py
       - scripts/stage040_wal.py
@@ -15,6 +16,7 @@ on:
       - scripts/tests/test_stage040_wal.py
       - scripts/tests/test_stage040_soak.py
       - scripts/tests/test_stage040_postgres_ha.py
+      - scripts/tests/test_stage040_failover_trace.py
       - scripts/tests/test_stage040_pgbench_soak.py
   workflow_dispatch:
 
@@ -30,7 +32,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Test fail-closed 3-process PostgreSQL failover claims
-        run: python3 -m unittest discover -s scripts/tests -p test_stage040_postgres_ha.py -v
+        run: |
+          python3 -m unittest discover -s scripts/tests -p test_stage040_postgres_ha.py -v
+          python3 -m unittest discover -s scripts/tests -p test_stage040_failover_trace.py -v
       - name: Verify 8-client PostgreSQL WAL pgbench duration, throughput and standby checksum contracts
         run: python3 -m unittest discover -s scripts/tests -p test_stage040_pgbench_soak.py -v
       - name: Verify durable single-witness authority and evidence rejection cases
@@ -63,6 +67,8 @@ jobs:
             "$GITHUB_WORKSPACE/scripts/stage040_postgres_ha.py" "$EVIDENCE/driver.py"
           sudo -n install -o postgres -g postgres -m 0400 \
             "$GITHUB_WORKSPACE/scripts/stage040_quorum.py" "$EVIDENCE/stage040_quorum.py"
+          sudo -n install -o postgres -g postgres -m 0400 \
+            "$GITHUB_WORKSPACE/scripts/stage040_failover_trace.py" "$EVIDENCE/stage040_failover_trace.py"
           sudo -n -u postgres python3 "$EVIDENCE/driver.py" \
             --pg-bin-dir /usr/lib/postgresql/16/bin \
             --report "$EVIDENCE/actual-postgresql-streaming-failover.json" \
@@ -110,6 +116,11 @@ jobs:
           assert witness["database_server_side_fencing_tested"] is False
           assert r["synchronous_replication"]["source_write_synchronous_commit"]=="remote_apply"
           assert r["synchronous_replication"]["synchronous_mode_during_b_c_failover"] is False
+          trace=r["failover_trace"]
+          assert trace["scope"]=="ONE_KERNEL_THREE_POSTMASTERS"
+          assert trace["committed_markers_replayed"] is True
+          assert trace["all_client_rpo_zero_proved"] is False
+          assert trace["stage_040_complete"] is False
           assert r["production_approved"] is False
           print("STAGE040_REAL_THREE_POSTGRES_PROCESSES_WAL_PRIMARY_CRASH_AND_REPARENT_PROVED")
           PY

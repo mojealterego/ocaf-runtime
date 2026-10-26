@@ -271,6 +271,12 @@ def run_lab(*,pg_bin:Path,report:Path,soak_seconds:int=0,
         start("a")
         if query("a","SELECT pg_is_in_recovery()")!="f":
             raise PostgresHAError("original primary reports recovery mode")
+        # pg_rewind reads the old primary's WAL back to divergence. Heavy
+        # pgbench churn can recycle that segment before the later rejoin.
+        # Reserve WAL on A before any workload when exercising rewind.
+        if exercise_witness:
+            if query("a","SELECT slot_name FROM pg_create_physical_replication_slot('ocaf40_rewind_source_a', true)")!="ocaf40_rewind_source_a":
+                raise PostgresHAError("old-primary rewind WAL retention slot missing")
         write("a","CREATE TABLE ocaf40_events (id integer PRIMARY KEY, payload text NOT NULL)")
         write("a","INSERT INTO ocaf40_events VALUES (1,'pre-standby')")
         if soak_seconds:
@@ -339,6 +345,8 @@ def run_lab(*,pg_bin:Path,report:Path,soak_seconds:int=0,
                   and query(n,f"SELECT pg_last_wal_replay_lsn() >= '{source_lsn}'::pg_lsn")=="t",
                   seconds=20)
         pre_crash_replay={n:query(n,"SELECT pg_last_wal_replay_lsn()") for n in ("b","c")}
+        timeline_sql="SELECT substr(pg_walfile_name(pg_current_wal_lsn()),1,8)"
+        a_timeline=query("a",timeline_sql)
         # A crash is real: request PostgreSQL's IMMEDIATE termination; no
         # graceful checkpoint. This is NOT a host power-off experiment.
         pgctl("a","-m","immediate","-w","stop")
@@ -359,6 +367,8 @@ def run_lab(*,pg_bin:Path,report:Path,soak_seconds:int=0,
         pgctl("b","-w","promote")
         _wait(lambda:query("b","SELECT pg_is_in_recovery()")=="f")
         write("b","INSERT INTO ocaf40_events VALUES (3,'post-promotion')")
+        b_timeline=query("b",timeline_sql)
+        b_commit_lsn=query("b","SELECT pg_current_wal_lsn()")
         # Reparent C from stopped primary A to new timeline on promoted B.
         pgctl("c","-m","fast","-w","stop")
         started.discard("c")
@@ -372,6 +382,9 @@ def run_lab(*,pg_bin:Path,report:Path,soak_seconds:int=0,
         _wait(lambda:query("c","SELECT pg_is_in_recovery()")=="t"
               and query("c","SELECT COUNT(*) FROM ocaf40_events")=="3",
               seconds=25)
+        _wait(lambda:query("c",f"SELECT pg_last_wal_replay_lsn() >= '{b_commit_lsn}'::pg_lsn")=="t",
+              seconds=25)
+        c_replay_after_b=query("c","SELECT pg_last_wal_replay_lsn()")
         wal_receiver=query("c","SELECT status FROM pg_stat_wal_receiver LIMIT 1")
         if wal_receiver!="streaming":
             raise PostgresHAError("standby C did not establish new streaming WAL connection to B")
@@ -379,6 +392,7 @@ def run_lab(*,pg_bin:Path,report:Path,soak_seconds:int=0,
                 query("b","SELECT COUNT(*) FROM ocaf40_events")!="3"):
             raise PostgresHAError("PostgreSQL processes or WAL handover inconsistent")
         version=query("b","SHOW server_version")
+        failover_trace=None
         if witness is not None:
             # Show a second REAL PostgreSQL crash, then rewind former A to C's
             # promoted timeline. A slot retains C's WAL while A rejoins.
@@ -410,6 +424,8 @@ def run_lab(*,pg_bin:Path,report:Path,soak_seconds:int=0,
             if write("c",f"SELECT slot_name FROM pg_create_physical_replication_slot('{slot}', true)")!=slot:
                 raise PostgresHAError("physical WAL retention slot not created on promoted C")
             write("c","INSERT INTO ocaf40_events VALUES (5,'before-rewind-rejoin')")
+            c_timeline=query("c",timeline_sql)
+            c_commit_lsn=query("c","SELECT pg_current_wal_lsn()")
             source_connection=f"host=127.0.0.1 port={ports[2]} user=postgres dbname=postgres"
             _run([bindir("pg_rewind"),"--target-pgdata",str(paths["a"]),
                   "--source-server",source_connection,"--write-recovery-conf"],timeout=90)
@@ -420,6 +436,27 @@ def run_lab(*,pg_bin:Path,report:Path,soak_seconds:int=0,
             start("a")
             _wait(lambda:query("a","SELECT pg_is_in_recovery()")=="t"
                   and query("a","SELECT COUNT(*) FROM ocaf40_events")=="5",seconds=35)
+            _wait(lambda:query("a",f"SELECT pg_last_wal_replay_lsn() >= '{c_commit_lsn}'::pg_lsn")=="t",
+                  seconds=35)
+            from stage040_failover_trace import validate_trace
+            failover_trace=validate_trace({
+                "schema_version":1,
+                "scope":"ONE_KERNEL_THREE_POSTMASTERS",
+                "a_timeline_before_crash":a_timeline,
+                "b_timeline_after_promotion":b_timeline,
+                "c_timeline_after_promotion":c_timeline,
+                "a_commit_lsn":source_lsn,
+                "b_replay_lsn_before_promotion":pre_crash_replay["b"],
+                "c_replay_lsn_before_promotion":pre_crash_replay["c"],
+                "b_commit_lsn":b_commit_lsn,
+                "c_replay_lsn_after_b_commit":c_replay_after_b,
+                "c_commit_lsn":c_commit_lsn,
+                "a_replay_lsn_after_c_commit":query("a","SELECT pg_last_wal_replay_lsn()"),
+                "committed_markers_replayed":True,
+                "all_client_rpo_zero_proved":False,
+                "external_fencing_proved":False,
+                "stage_040_complete":False,
+            })
             if query("a","SELECT status FROM pg_stat_wal_receiver LIMIT 1")!="streaming":
                 raise PostgresHAError("former A did not rejoin actual WAL streaming from C")
             if query("c",f"SELECT active FROM pg_replication_slots WHERE slot_name='{slot}'")!="t":
@@ -451,6 +488,7 @@ def run_lab(*,pg_bin:Path,report:Path,soak_seconds:int=0,
             "postgres_version":version,
             "witness_lab":witness_observation,
             "synchronous_replication":sync_replication,
+            "failover_trace":failover_trace,
             "pre_crash_source_wal_lsn":source_lsn,
             "pre_crash_standby_replay_lsns":pre_crash_replay,
             "ports":list(ports),
