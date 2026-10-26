@@ -113,6 +113,18 @@ class QuorumCertificateTests(unittest.TestCase):
                 self.path, cluster_id="cluster-a", witness_keys=self.keys,
                 clock=lambda: 100, clock_domain="another-clock")
 
+    def test_same_id_key_rotation_and_threshold_change_fail_closed(self):
+        self.gate.admit(self.votes())
+        self.gate.close()
+        rotated = dict(self.keys)
+        rotated["w2"] = b"rotated-witness-key".ljust(32, b"!")
+        with self.assertRaises(CertificateError):
+            QuorumCertificateGate(
+                self.path, cluster_id="cluster-a", witness_keys=rotated,
+                clock=lambda: 100, clock_domain="test-clock")
+        with self.assertRaises(CertificateError):
+            self.open_gate(threshold=3)
+
     def test_corrupt_durable_state_never_reinitializes(self):
         self.gate.admit(self.votes())
         self.gate.close()

@@ -12,6 +12,10 @@ format is domain separated and canonical.  Key distribution and remote witness
 availability are deployment concerns.  Consequently this module is a real
 fail-closed admission control, but is not evidence that three remote failure
 domains or PostgreSQL server-side fencing have been deployed.
+
+The persisted membership digest includes witness key fingerprints and the
+threshold. Existing state written by the older name-only format fails closed
+on reopen; operators must fence the old authority before controlled rebootstrap.
 """
 from __future__ import annotations
 
@@ -162,8 +166,19 @@ class QuorumCertificateGate:
         self._threshold = threshold
         self._clock = clock
         self._clock_domain = clock_domain
+        # The durable authority must not silently change its trust roots or
+        # voting rule after restart. A digest of witness names alone would
+        # accept same-ID key rotation, and a separate threshold change could
+        # weaken a previously admitted certificate's authority domain.
+        membership = {
+            "threshold": threshold,
+            "witnesses": [(name, hashlib.sha256(self._keys[name]).hexdigest())
+                          for name in sorted(self._keys)],
+        }
         self._membership_sha256 = hashlib.sha256(
-            b"\0".join(name.encode("ascii") for name in sorted(self._keys))).hexdigest()
+            b"OCAF-STAGE040-WITNESS-MEMBERSHIP-V2\0" +
+            json.dumps(membership, sort_keys=True, separators=(",", ":"),
+                       ensure_ascii=True).encode("ascii")).hexdigest()
         self.path = self._private_path(state_path)
         self._conn: sqlite3.Connection | None = None
         try:
