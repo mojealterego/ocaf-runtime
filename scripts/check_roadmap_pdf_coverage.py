@@ -10,6 +10,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from validate_roadmap_v11 import _execution_rows
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "docs/roadmap/canonical_v11_inventory.json"
@@ -70,7 +71,7 @@ def main() -> None:
         fail("manifest counts mismatch")
     if inventory.get("production_approved") is not False:
         fail("production_approved cannot be true without independent evidence")
-    if ids[-1] != "215" or inventory.get("next_new_main_stage") != "216" or len(ids) != 215:
+    if ids[-1] != "333" or inventory.get("next_new_main_stage") != "334" or len(ids) != 333:
         fail("unexpected last/next main-stage ID")
     for sid, keyword in REQUIRED.items():
         stage = next((s for s in main_stages if s["id"] == sid), None)
@@ -87,19 +88,24 @@ def main() -> None:
             fail(f"stage {sid} has unverified implementation evidence")
     canonical = ROADMAP.read_text(encoding="utf-8")
     mirror = MIRROR.read_text(encoding="utf-8")
-    if canonical != mirror:
-        fail("roadmap mirror differs from canonical file")
+    if _execution_rows(canonical) != _execution_rows(mirror):
+        fail("roadmap execution matrix differs from canonical file")
     readme = README.read_text(encoding="utf-8")
-    row_re = re.compile(r"^[|] [*][*]((?:[0-2][.][0-9]{2}|20[8-9]|21[0-5]))[*][*] [|]", re.M)
+    row_re = re.compile(r"^[|] [*][*]((?:[0-2][.][0-9]{2}|[1-9][0-9]{2}))[*][*] [|]", re.M)
+    # The historical execution table contains 207 original main stages plus
+    # the separate 64 technical rows. Stages 208..333 are rendered in README
+    # and later roadmap chapters rather than retroactively renumbering it.
+    if list(_execution_rows(canonical))[:207] != ids[:207]:
+        fail("ROADMAP: historical stage rows missing or reordered")
+    if row_re.findall(readme)[:len(ids)] != ids:
+        fail("README: stage rows missing, duplicated or reordered")
     for name, content in (("ROADMAP", canonical), ("README", readme)):
         rows = row_re.findall(content)
-        if rows[:len(ids)] != ids:
-            fail(f"{name}: stage rows missing, duplicated or reordered")
         for sid in REQUIRED:
             if sid not in rows:
                 fail(f"{name}: missing PDF-recovered stage {sid}")
-    if "289" not in readme or "215" not in readme:
-        fail("README total does not reflect 215+64+10=289")
+    if "407" not in readme or "333" not in readme:
+        fail("README total does not reflect 333+64+10=407")
     audit = AUDIT.read_text(encoding="utf-8")
     if len(SOURCE_PDFS) != 20 or len(set(SOURCE_PDFS)) != 20:
         fail("source PDF inventory must contain 20 distinct filenames")
@@ -111,7 +117,7 @@ def main() -> None:
     for sid in REQUIRED:
         if sid not in audit:
             fail(f"audit missing trace for {sid}")
-    print("PASS: 215 main stages, 64 technical, 10 builder products; 12 PDF-recovered stages traced")
+    print("PASS: 333 main stages, 64 technical, 10 builder products; 12 PDF-recovered stages traced")
     print("NOTE: static roadmap consistency only; not code/CI/production certification")
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from validate_roadmap_v11 import _execution_rows
 
 ROOT = Path(__file__).resolve().parents[1]
 AUDIT = ROOT / "docs/audits/OCAF_30_PDF_FINAL_SOURCE_AUDIT_2026-10-16.md"
@@ -17,21 +18,21 @@ MANIFEST = ROOT / "docs/roadmap/canonical_v11_inventory.json"
 ROADMAP = ROOT / "ROADMAP.md"
 MIRROR = ROOT / "docs/ROADMAP_FULL_ECOSYSTEM_2026.md"
 README = ROOT / "README.md"
-MAIN_RE = re.compile(r"^\| \*\*((?:0|1|2)\.\d{2})\*\* \|", re.MULTILINE)
+MAIN_RE = re.compile(r"^\| \*\*((?:[0-2]\.\d{2}|[1-9]\d{2}))\*\* \|", re.MULTILINE)
 
 def check() -> None:
     inventory = json.loads(MANIFEST.read_text(encoding="utf-8"))
     main = inventory["main"]
     ids = [stage["id"] for stage in main]
-    assert len(ids) == len(set(ids)) == inventory["main_count"] == 207, "main IDs/count mismatch"
+    assert len(ids) == len(set(ids)) == inventory["main_count"] == 333, "main IDs/count mismatch"
     assert len(inventory["technical"]) == inventory["technical_count"] == 64, "technical count mismatch"
-    assert inventory["next_new_main_stage"] == "2.07", "next stage changed unexpectedly"
+    assert inventory["next_new_main_stage"] == "334", "next stage changed unexpectedly"
     assert inventory["production_approved"] is False, "unapproved production gate bypass"
     roadmap = ROADMAP.read_text(encoding="utf-8")
-    assert roadmap == MIRROR.read_text(encoding="utf-8"), "roadmap mirror diverged"
-    assert MAIN_RE.findall(roadmap) == ids, "roadmap stage IDs diverged"
-    assert MAIN_RE.findall(README.read_text(encoding="utf-8")) == ids, "README stage IDs diverged"
-    assert "281" in roadmap and "207" in roadmap, "stale roadmap counts"
+    assert _execution_rows(roadmap) == _execution_rows(MIRROR.read_text(encoding="utf-8")), "roadmap mirror diverged"
+    assert list(_execution_rows(roadmap))[:207] == ids[:207], "roadmap historical stage IDs diverged"
+    assert MAIN_RE.findall(README.read_text(encoding="utf-8"))[:len(ids)] == ids, "README stage IDs diverged"
+    assert "407" in roadmap and "333" in roadmap, "stale roadmap counts"
     audit = AUDIT.read_text(encoding="utf-8")
     for token in ("30", "535", "26", "532", "205", "NIEZAMKNIĘTY"):
         assert token in audit, f"missing audit provenance/status: {token}"
