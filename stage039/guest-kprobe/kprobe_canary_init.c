@@ -21,6 +21,7 @@
 #error PROBE_NONCE required
 #endif
 
+static const char *phase = "startup";
 static void stop_forever(void) { for (;;) pause(); }
 static int read_u32(const char *path, unsigned int *number) {
     char data[32] = {0};
@@ -31,32 +32,41 @@ static int read_u32(const char *path, unsigned int *number) {
     if (count <= 0 || count >= (ssize_t)sizeof(data)) return -1;
     return sscanf(data, "%u", number) == 1 ? 0 : -1;
 }
-static int denied(const char *path) {
+static int denied(const char *path, const char *stage) {
+    phase = stage;
     int fd = open(path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
     if (fd >= 0) { close(fd); return 0; }
     return errno == ENOENT || errno == EACCES || errno == EPERM;
 }
 static int proof(unsigned int *program_id, uint64_t *events) {
+    phase = "mount_proc";
     if (mount("proc", "/proc", "proc", MS_NOSUID | MS_NODEV | MS_NOEXEC, NULL) != 0
             && errno != EBUSY) return -1;
+    phase = "mount_sysfs";
     if (mount("sysfs", "/sys", "sysfs", MS_NOSUID | MS_NODEV | MS_NOEXEC, NULL) != 0
             && errno != EBUSY) return -1;
     unsigned char magic[2];
+    phase = "open_btf";
     int btf = open("/sys/kernel/btf/vmlinux", O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
     if (btf < 0) return -1;
+    phase = "read_btf_magic";
     int btf_ok = read(btf, magic, sizeof(magic)) == (ssize_t)sizeof(magic)
               && magic[0] == 0x9f && magic[1] == 0xeb;
     close(btf);
     if (!btf_ok) return -1;
+    phase = "mount_tracefs";
     if (mount("tracefs", "/sys/kernel/tracing", "tracefs",
               MS_NOSUID | MS_NODEV | MS_NOEXEC, NULL) != 0 && errno != EBUSY) return -1;
+    phase = "open_kprobe_events";
     int control = open("/sys/kernel/tracing/kprobe_events", O_WRONLY | O_CLOEXEC | O_NOFOLLOW);
     if (control < 0) return -1;
     const char *event = "p:ocaf039_getpid __x64_sys_getpid\n";
+    phase = "create_kprobe_event";
     int created = write(control, event, strlen(event)) == (ssize_t)strlen(event);
     close(control);
     if (!created) return -1;
     unsigned int event_id = 0;
+    phase = "read_kprobe_event_id";
     if (read_u32("/sys/kernel/tracing/events/kprobes/ocaf039_getpid/id", &event_id) != 0
             || event_id == 0) return -1;
 
@@ -70,6 +80,7 @@ static int proof(unsigned int *program_id, uint64_t *events) {
     attr.insn_cnt = sizeof(instructions) / sizeof(instructions[0]);
     attr.insns = (uint64_t)(uintptr_t)instructions;
     attr.license = (uint64_t)(uintptr_t)license;
+    phase = "bpf_prog_load";
     int program = syscall(SYS_bpf, BPF_PROG_LOAD, &attr, sizeof(attr));
     if (program < 0) return -1;
     struct bpf_prog_info info = {0};
@@ -77,6 +88,7 @@ static int proof(unsigned int *program_id, uint64_t *events) {
     attr.info.bpf_fd = program;
     attr.info.info_len = sizeof(info);
     attr.info.info = (uint64_t)(uintptr_t)&info;
+    phase = "bpf_prog_info";
     if (syscall(SYS_bpf, BPF_OBJ_GET_INFO_BY_FD, &attr, sizeof(attr)) < 0 || info.id == 0) {
         close(program); return -1;
     }
@@ -86,14 +98,21 @@ static int proof(unsigned int *program_id, uint64_t *events) {
     perf.config = event_id;
     perf.sample_period = 1;
     perf.disabled = 1;
+    phase = "perf_event_open";
     int link = syscall(SYS_perf_event_open, &perf, -1, 0, -1, PERF_FLAG_FD_CLOEXEC);
     if (link < 0) { close(program); return -1; }
-    if (ioctl(link, PERF_EVENT_IOC_SET_BPF, program) != 0
-            || ioctl(link, PERF_EVENT_IOC_ENABLE, 0) != 0) {
+    phase = "perf_attach_bpf";
+    if (ioctl(link, PERF_EVENT_IOC_SET_BPF, program) != 0) {
         close(link); close(program); return -1;
     }
+    phase = "perf_enable";
+    if (ioctl(link, PERF_EVENT_IOC_ENABLE, 0) != 0) {
+        close(link); close(program); return -1;
+    }
+    phase = "trigger_getpid";
     for (int i = 0; i < 64; i++) (void)syscall(SYS_getpid);
     uint64_t count = 0;
+    phase = "read_perf_count";
     int observed = read(link, &count, sizeof(count)) == (ssize_t)sizeof(count) && count > 0;
     close(link);
     close(program);
@@ -113,14 +132,16 @@ int main(void) {
     int ok = console >= 0 && n1 > 0 && n1 < (int)sizeof(direct)
           && n2 > 0 && n2 < (int)sizeof(through_proc)
           && proof(&program_id, &events) == 0
-          && denied(direct) && denied(through_proc);
+          && denied(direct, "canary_direct")
+          && denied(through_proc, "canary_proc_root");
     if (console >= 0) {
         if (ok) {
             dprintf(console, "OCAF039_GUEST_KPROBE_PASS program_id=%u event_count=%llu\n",
                     program_id, (unsigned long long)events);
             dprintf(console, "OCAF039_GUEST_HOST_CANARY_DENIED:%s\n", PROBE_NONCE);
         } else {
-            dprintf(console, "OCAF039_GUEST_KPROBE_FAIL:%s\n", PROBE_NONCE);
+            dprintf(console, "OCAF039_GUEST_KPROBE_FAIL:%s phase=%s errno=%d\n",
+                    PROBE_NONCE, phase, errno);
         }
         close(console);
     }

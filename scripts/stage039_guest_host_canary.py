@@ -113,6 +113,12 @@ def execute(*, firecracker: Path, firecracker_sha: str, jailer: Path,
         observed = None
         while time.monotonic() < deadline and proc.poll() is None:
             serial = fc._bounded_console_evidence(log)
+            failure_prefix = "OCAF039_GUEST_KPROBE_FAIL:" + nonce
+            failure_lines = [line for line in serial.splitlines()
+                             if line.startswith(failure_prefix)]
+            if failure_lines:
+                raise CanaryDenied("guest PID1 kprobe proof failed: "
+                                   + failure_lines[-1][:200])
             if "OCAF039_GUEST_HOST_CANARY_" in serial:
                 require_guest_marker(serial, nonce)
                 current = Path(f"/proc/{proc.pid}/cgroup").read_text()
