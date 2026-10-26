@@ -242,7 +242,6 @@ async fn retry_rejects_invalid_budget_without_network_io() {
     assert!(error.to_string().contains("1..=5"));
 }
 
-
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn graceful_rotation_shutdown_releases_old_queryable() {
     use ocaf_runtime::stage043_omat_zenoh::serve_omat_zenoh_until;
