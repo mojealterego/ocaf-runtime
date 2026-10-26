@@ -57,10 +57,27 @@ zgodności hashu otwartego rootfs FD, odmowy odczytu hostowego canary oraz
 pustego cgroup po SIGKILL. Pojedyncza flaga `.config` nie może przejść tej
 bramki.
 
-To **jedna laboratoryjna VM z małym programem BPF w C**, z sondą `getpid`.
-Nie jest to jeszcze połączony test dwóch tenantów, Aya `openat`, WASI i
-tej samej nowej konfiguracji jądra; brak też trwałego przypiętego artefaktu
-jądra i niezależnej atestacji jego pochodzenia. Dlatego status 0.39.22
-pozostaje `PARTIAL_REAL_KVM_KPROBE_LAB_PASS`, a etap 0.39 jako całość
-pozostaje otwarty. Workflow jest ręczny (`workflow_dispatch`), aby build
-jądra nie obciążał każdego push.
+W [run 40262951835](https://github.com/mojealterego/ocaf-runtime/actions/runs/40262951835)
+na commicie `19574a02a5428bbc0f4165bc701b7949f8fdb75d` zakończył się
+również **SUCCESS** rozszerzony test dwóch tenantów na tym samym hoście KVM.
+Wynikowy ELF jądra pozbawiono DWARF przez `objcopy --strip-debug`, po czym
+sprawdzono zachowanie sekcji `.BTF` i limit obrazu 128 MiB wymagany przez
+broker. Jego hash powstał w buildzie i został przypięty do obu manifestów.
+Dwie oddzielne, podpisane laboratoryjnym kluczem obrazy WASI uruchomiono
+jednocześnie w dwóch jailed VM za brokerem `SO_PEERCRED`. Host Aya był
+przyłączony przed wykonaniem zadań; guest Aya potwierdził dodatnie ID i
+zdarzenia `openat` Wasmtime. Każdy guest PID1 załadował i przyłączył
+kprobe do `__x64_sys_getpid`, odczytał dodatnie ID programu i licznik,
+a walidator powiązał marker z własnym nonce zadania, hashem serialu,
+VM ID, guest Aya `openat`, traceparent i host Aya. Weryfikacja odrzuca
+duplikaty i zamianę tenantów. Artefakt `stage039-experimental-guest-kprobe-evidence`
+ma ID `12624989899`, rozmiar `256365172` bajtów i GitHub SHA-256 archiwum
+`7a70f70d68e0288c4a40b81b7be9a67ab7301eabe5c783bc482ef8a91579a029`.
+Zawartości archiwum nie pobrano lokalnie z powodu HTTP 403 z magazynu
+artefaktów; sukces jest oparty na metadanych API i przejściu bramek kodu.
+
+To nadal test **jednego efemerycznego hosta** z efemerycznym podpisującym
+manifesty. Niezależne hosty, trwały przypięty obraz jądra oraz niezależna
+atestacja pochodzenia pozostają otwarte. Status 0.39.22 to
+`PARTIAL_REAL_KVM_TWO_TENANT_KPROBE_AYA_WASI_LAB_PASS`; etap 0.39 jako
+całość pozostaje otwarty. Workflow jest ręczny (`workflow_dispatch`).

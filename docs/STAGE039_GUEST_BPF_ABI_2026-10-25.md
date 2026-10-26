@@ -24,10 +24,14 @@ ID `12601919898` ma SHA-256
 Raport ma status `GUEST_BPF_ABI_PARTIAL_KPROBE_OR_BTF_UNAVAILABLE`, nie
 potwierdza gotowości kprobe i zachowuje `stage_039_22_complete=false`.
 
-Późniejszy, oddzielny [test niestandardowego jądra](STAGE039_KPROBE_KERNEL_CANDIDATE_2026-10-25.md)
-przeszedł w [run 40260131539](https://github.com/mojealterego/ocaf-runtime/actions/runs/40260131539):
-jedna rzeczywista jailed VM gościa załadowała i przyłączyła program kprobe,
-uzyskała dodatnie ID i licznik zdarzeń `getpid`. Ten wynik nie zmienia
-odczytu oficjalnego obrazu Firecracker z dwóch VM powyżej. Połączenie
-nowego jądra z dwoma tenantami, guest Aya `openat` i WASI pozostaje do
-udowodnienia przed pełnym zamknięciem 0.39.22 i 0.39.
+Późniejszy [test niestandardowego jądra](STAGE039_KPROBE_KERNEL_CANDIDATE_2026-10-25.md)
+przeszedł najpierw w jednej VM w
+[run 40260131539](https://github.com/mojealterego/ocaf-runtime/actions/runs/40260131539),
+a następnie w dwóch brokerowanych jailed VM z odrębnymi zadaniami WASI,
+guest Aya `openat` i host Aya w
+[run 40262951835](https://github.com/mojealterego/ocaf-runtime/actions/runs/40262951835).
+Każdy guest załadował i przyłączył program kprobe z dodatnim ID oraz
+licznikiem `getpid`. Ten wynik nie zmienia odczytu **oficjalnego** obrazu
+Firecracker z dwóch VM powyżej: nadal nie ma on KPROBES. Trwałe
+przypięcie dystrybuowanego jądra, niezależna atestacja jego pochodzenia i
+test wielohostowy pozostają otwarte; 0.39 jako całość jest nadal otwarty.
