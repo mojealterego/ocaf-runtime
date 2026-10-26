@@ -241,3 +241,60 @@ async fn retry_rejects_invalid_budget_without_network_io() {
         .unwrap_err();
     assert!(error.to_string().contains("1..=5"));
 }
+
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn graceful_rotation_shutdown_releases_old_queryable() {
+    use ocaf_runtime::stage043_omat_zenoh::serve_omat_zenoh_until;
+    let mut config = zenoh::Config::default();
+    config.insert_json5("mode", "\"peer\"").unwrap();
+    config
+        .insert_json5("scouting/multicast/enabled", "false")
+        .unwrap();
+    config
+        .insert_json5("scouting/gossip/enabled", "false")
+        .unwrap();
+    let session = Arc::new(zenoh::open(config).await.unwrap());
+    let key = "ocaf/omat/tenant_a/requests/req_1";
+    let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
+    let serving_session = Arc::clone(&session);
+    let task = tokio::spawn(async move {
+        serve_omat_zenoh_until(serving_session, admission(), key, async {
+            let _ = shutdown_rx.await;
+        })
+        .await
+    });
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    let signed = sign_omas_request(
+        "omas_a",
+        key,
+        "0123456789abcdef",
+        call("tenant_a"),
+        &[7u8; 32],
+    )
+    .unwrap();
+    assert!(request_omat_zenoh(&session, key, signed)
+        .await
+        .unwrap_err()
+        .to_string()
+        .contains("rejected"));
+    shutdown_tx.send(()).unwrap();
+    tokio::time::timeout(Duration::from_secs(3), task)
+        .await
+        .expect("graceful shutdown deadline")
+        .unwrap()
+        .unwrap();
+    let signed = sign_omas_request(
+        "omas_a",
+        key,
+        "0123456789abcdee",
+        call("tenant_a"),
+        &[7u8; 32],
+    )
+    .unwrap();
+    let error = request_omat_zenoh(&session, key, signed)
+        .await
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains("timeout") || error.contains("unavailable"));
+}
