@@ -116,6 +116,8 @@ jobs:
           PY
       - name: Fail closed if plaintext remains or encrypted bundle is incomplete
         shell: bash
+        env:
+          STAGE041_KEY_HEX: ${{ steps.ephemeral_key.outputs.key_hex }}
         run: |
           set -euo pipefail
           python3 -O -m unittest discover -s scripts/tests -p test_stage041_encrypted_artifact_gate.py -v
