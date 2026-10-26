@@ -5,6 +5,7 @@ use ocaf_runtime::stage043_omat_zenoh::{
     OmatZenohAdmission,
 };
 use std::collections::{BTreeSet, HashMap};
+use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -196,6 +197,37 @@ fn replay_survives_server_restart() {
         .unwrap_err()
         .to_string()
         .contains("replay"));
+}
+
+#[cfg(unix)]
+#[test]
+fn replay_store_rejects_symlink_shared_directory_and_shared_file() {
+    use std::os::unix::fs::{symlink, PermissionsExt};
+
+    let dir = tempfile::tempdir().unwrap();
+    let real = dir.path().join("real.sqlite");
+    let link = dir.path().join("link.sqlite");
+    let first = admission().with_replay_database(&real).unwrap();
+    drop(first);
+    let mode = std::fs::metadata(&real).unwrap().permissions().mode();
+    assert_eq!(mode & 0o077, 0, "new replay file must be private");
+
+    symlink(&real, &link).unwrap();
+    assert!(admission().with_replay_database(&link).is_err());
+    let hardlink = dir.path().join("hardlink.sqlite");
+    std::fs::hard_link(&real, &hardlink).unwrap();
+    assert!(admission().with_replay_database(&real).is_err());
+    std::fs::remove_file(&hardlink).unwrap();
+    assert!(admission()
+        .with_replay_database(Path::new("relative-replay.sqlite"))
+        .is_err());
+
+    std::fs::set_permissions(&real, std::fs::Permissions::from_mode(0o644)).unwrap();
+    assert!(admission().with_replay_database(&real).is_err());
+    std::fs::set_permissions(&real, std::fs::Permissions::from_mode(0o600)).unwrap();
+
+    std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o755)).unwrap();
+    assert!(admission().with_replay_database(&real).is_err());
 }
 
 #[test]

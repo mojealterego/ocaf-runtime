@@ -24,6 +24,11 @@ wykonaniem kodu i nie może uruchomić zewnętrznego procesu.
 1. Zbuduj osobny binarny proces OMAt z przypiętym commitem i toolchainem.
 2. Załaduj wyłącznie podpisane manifesty narzędzi z przypisanym tenantem.
 3. Skonfiguruj endpoint Zenoh; autoryzacja pozostaje w OMAt.
+   Dla `ocaf-omat-zenoh` ustaw `OCAF_OMAT_REPLAY_DB` na absolutną ścieżkę
+   w katalogu należącym do użytkownika usługi z uprawnieniami `0700`.
+   Baza jest tworzona z `0600`; plik istniejący musi mieć ten sam właścicielski
+   zakres dostępu. Symlinki, hardlinki i współdzielony katalog są odrzucane,
+   ponieważ SQLite zapisuje też pliki WAL/SHM obok bazy nonce.
 4. Podłącz executor WASI/Firecracker po przedstawieniu jego własnego digestu,
    receiptu startu, limitów i testów negatywnych.
 5. Włącz narzędzie dopiero po kontroli schematu wejścia/wyjścia i rollbacku.
