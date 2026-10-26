@@ -39,6 +39,20 @@ fn admission() -> OmatZenohAdmission {
 }
 
 #[test]
+fn rejects_shared_hmac_secret_across_authenticated_principals() {
+    let keys = HashMap::from([
+        ("omas_a".to_owned(), [7u8; 32]),
+        ("omas_b".to_owned(), [7u8; 32]),
+    ]);
+    let tenants = HashMap::from([
+        ("omas_a".to_owned(), "tenant_a".to_owned()),
+        ("omas_b".to_owned(), "tenant_b".to_owned()),
+    ]);
+    assert!(OmatZenohAdmission::new(keys, tenants, HashMap::new(), OmatRegistry::default())
+        .is_err());
+}
+
+#[test]
 fn signed_admission_rejects_forgery_cross_tenant_and_replay() {
     let mut server = admission();
     server.connected(true);

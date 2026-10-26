@@ -72,6 +72,12 @@ impl OmatZenohAdmission {
             "missing tenant binding"
         );
         anyhow::ensure!(keys.values().all(|k| *k != [0; 32]), "zero HMAC key");
+        // A principal is an authority boundary. If two names share a secret,
+        // either peer can sign as the other and cross its tenant binding.
+        anyhow::ensure!(
+            keys.values().collect::<HashSet<_>>().len() == keys.len(),
+            "HMAC keys must be distinct per principal"
+        );
         let guard =
             OmatRouteGuard::new(tenants).map_err(|_| anyhow::anyhow!("invalid tenant mapping"))?;
         Ok(Self {
