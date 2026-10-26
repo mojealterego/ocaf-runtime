@@ -658,3 +658,5 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 ### 2026-10-26 — 0.42.3 release evidence scope
 
 - Offline release manifest now requires an explicit evidence scope and rejects ephemeral lab scope for real-host acceptance checks, as well as reused paths or digests across checks. This validates manifest structure only; independently verified physical host evidence and production approval remain open.
+
+- 0.42.2: [CI 40409879533](https://github.com/mojealterego/ocaf-runtime/actions/runs/40409879533) passed root-crate dependency policy, locked build, CycloneDX and signed exact-commit release evidence; future workspace crates and upstream license inventory are outside this result.
