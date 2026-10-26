@@ -229,7 +229,7 @@ fn security_metrics_count_rejections_and_replays() {
     assert_eq!(metrics.replays.load(Ordering::Relaxed), 1);
     assert!(metrics
         .prometheus()
-        .contains("ocaf_omat_requests_total 2\\n"));
+        .contains("ocaf_omat_requests_total 2\n"));
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
