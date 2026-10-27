@@ -1,0 +1,13 @@
+[package]
+name = "ocaf-transport-crdt"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "MIT"
+description = "Fail-closed transport policy boundary for the planned OCAF transport/CRDT crate"
+
+[dependencies]
+json5 = "0.4"
+libc = "0.2"
+serde_json = "1.0"
+thiserror = "1.0"

@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "crates/ocaf-stage-ledger"]
+members = [".", "crates/ocaf-stage-ledger", "crates/ocaf-transport-crdt"]
 default-members = ["."]
 resolver = "2"
 
@@ -66,6 +66,7 @@ full = ["zenoh"]
 
 [dependencies]
 ocaf_stage_ledger = { path = "crates/ocaf-stage-ledger" }
+ocaf_transport_crdt = { package = "ocaf-transport-crdt", path = "crates/ocaf-transport-crdt" }
 async-trait = "0.1"
 anyhow = "1.0"
 base64 = "0.22"

@@ -7,16 +7,22 @@ on:
       - Cargo.toml
       - Cargo.lock
       - src/stage_ledger.rs
+      - src/transport_policy.rs
       - crates/ocaf-stage-ledger/**
+      - crates/ocaf-transport-crdt/**
       - tests/stage042_workspace_compat.rs
+      - tests/stage042_transport_workspace_compat.rs
       - .github/workflows/stage042-workspace-compat.yml
   pull_request:
     paths:
       - Cargo.toml
       - Cargo.lock
       - src/stage_ledger.rs
+      - src/transport_policy.rs
       - crates/ocaf-stage-ledger/**
+      - crates/ocaf-transport-crdt/**
       - tests/stage042_workspace_compat.rs
+      - tests/stage042_transport_workspace_compat.rs
       - .github/workflows/stage042-workspace-compat.yml
 
 permissions:
@@ -43,7 +49,7 @@ jobs:
           data=json.loads(Path('metadata.json').read_text())
           members=set(data['workspace_members'])
           by_name={p['name']:p for p in data['packages'] if p['id'] in members}
-          if set(by_name) != {'ocaf_runtime','ocaf_stage_ledger'}:
+          if set(by_name) != {'ocaf_runtime','ocaf_stage_ledger','ocaf-transport-crdt'}:
               raise SystemExit('workspace membership changed unexpectedly')
           root=by_name['ocaf_runtime']
           bins={t['name'] for t in root['targets'] if 'bin' in t['kind']}
@@ -60,4 +66,4 @@ jobs:
           set -euo pipefail
           cargo fmt --all -- --check
           cargo test --locked --workspace --no-default-features --lib
-          cargo test --locked -p ocaf_runtime --no-default-features --test stage042_workspace_compat
+          cargo test --locked -p ocaf_runtime --no-default-features --test stage042_workspace_compat --test stage042_transport_workspace_compat --test transport_policy

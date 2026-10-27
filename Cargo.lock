@@ -1758,6 +1758,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ocaf-transport-crdt"
+version = "0.1.0"
+dependencies = [
+ "json5",
+ "libc",
+ "serde_json",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "ocaf_runtime"
 version = "0.26.0"
 dependencies = [
@@ -1770,6 +1780,7 @@ dependencies = [
  "jsonschema",
  "libc",
  "native-tls",
+ "ocaf-transport-crdt",
  "ocaf_stage_ledger",
  "openssl",
  "postgres-native-tls",
