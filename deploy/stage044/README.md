@@ -8,9 +8,11 @@ Use Keycloak as a real OIDC authorization server. It owns the browser login, MFA
 The Rust ocaf-oauth-gateway is a protected-resource authorization sidecar, not an authorization server. It binds only to 127.0.0.1. A separate hardened public TLS 1.3 reverse proxy must forward the original bearer token to the sidecar and require its HTTP 204 response before any OMAt dispatch. The OMAt mTLS/policy check remains independently mandatory. Do not expose OMAt or this plaintext sidecar directly.
 
 ## Runtime configuration
-Required: OCAF_OIDC_ISSUER, OCAF_OIDC_CLIENT_ID, OCAF_OIDC_TENANT, OCAF_OIDC_KEY_ID, OCAF_OIDC_PUBLIC_KEY_FILE, OCAF_OIDC_MFA_ACR, OCAF_OIDC_RESOURCE, OCAF_OIDC_REQUIRED_SCOPES.
+Required: OCAF_OIDC_ISSUER, OCAF_OIDC_CLIENT_ID, OCAF_OIDC_TENANT, OCAF_OIDC_KEY_ID, OCAF_OIDC_PUBLIC_KEY_FILE, OCAF_OIDC_MFA_ACR, OCAF_OIDC_RESOURCE, OCAF_OIDC_REQUIRED_SCOPES, OCAF_OIDC_MIN_ASSURANCE.
 Optional: OCAF_OAUTH_BIND (IPv4 loopback only; default 127.0.0.1:8765).
 The public PEM key must match a verified signing key from the configured Keycloak JWKS and pinned kid. Automating JWKS refresh with overlap is still open. Do not trust JWT-supplied key URLs or identity headers.
+
+Set OCAF_OIDC_MIN_ASSURANCE to `2` when this gateway guards a privileged or write scope; it then requires a signed matching MFA ACR with `auth_time` no older than 300 seconds. Set it to `1` only for a gateway restricted to read-only scopes. The setting is mandatory and values outside `1` or `2` prevent startup. A valid signature and write scope alone do not prove fresh MFA. The reverse proxy and OMAt must enforce the same privilege policy; a deployment with mixed read/write scopes needs separate gateway instances or an equivalent independently reviewed route policy.
 
 The sidecar implements /.well-known/oauth-protected-resource, /healthz and POST /omat/{tenant}/users/{user}/authorize. It only checks access and never executes OMAt. There is no deployed reverse proxy, consent callback or public login route in this repository.
 

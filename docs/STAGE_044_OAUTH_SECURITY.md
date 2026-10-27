@@ -69,6 +69,8 @@ SQLite file and WAL directory must be pre-provisioned, private (0700 directory, 
 
 Each client has an operator-controlled `step_up_scopes` subset. Requests for those scopes require `assurance_level >= 2` and authentication no older than 300 seconds. Such grants do **not** receive refresh tokens. Refresh of ordinary grants reduces the assurance level to 1. This prevents a long-lived refresh token from indefinitely extending a privileged authentication event. A production identity gateway must map real MFA/ACR/AMR evidence into this assurance level, with challenge behavior compatible with RFC 9470.
 
+The loopback protected-resource gateway also requires an explicit `OCAF_OIDC_MIN_ASSURANCE` value. Set `2` for a privileged/write-scope gateway; a signed token with stale MFA or a nonmatching ACR then receives 403 even if its scope and audience are valid. `1` is suitable only for an instance restricted to read-only scopes. This is a code-level boundary; the deployed reverse proxy, actual IdP MFA flow and OMAt policy still need matching live acceptance.
+
 ### Broker rules
 
 `BrokerRoute` is registered by the operator and fixes the upstream hostname, public IPv4, HTTPS port 443, HTTP path, tool identity, resource, scopes and minimum assurance. The LLM cannot choose or modify these fields. There is no DNS lookup during execution, preventing DNS-rebinding through untrusted requests. TLS certificate validation still uses the configured hostname. Non-2xx status, redirects, chunked or ambiguous responses, unbounded payloads and reflected plaintext secret are rejected. Operator pinning must be updated when the provider's actual public address changes; a stale pin fails closed.

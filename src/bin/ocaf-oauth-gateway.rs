@@ -21,6 +21,7 @@ struct State {
     issuer: String,
     resource: String,
     scopes: BTreeSet<String>,
+    min_assurance: u8,
 }
 
 struct Request {
@@ -150,7 +151,11 @@ fn decision(state: &State, request: Request) -> (u16, &'static str, Vec<u8>) {
         .trust
         .verify_access_token(token, &state.resource, &state.scopes, now);
     match verified {
-        Ok(identity) if identity.tenant == segments[2] && identity.user == segments[4] => {
+        Ok(identity)
+            if identity.tenant == segments[2]
+                && identity.user == segments[4]
+                && identity.assurance_level >= state.min_assurance =>
+        {
             (204, "application/json", Vec::new())
         }
         _ => (
@@ -212,6 +217,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if scopes.is_empty() || scopes.len() > 64 {
         return Err("invalid scopes".into());
     }
+    // Require an explicit operator decision. A gateway that guards write or
+    // other privileged scopes must require fresh MFA (assurance level 2).
+    let min_assurance = match config("OCAF_OIDC_MIN_ASSURANCE")?.as_str() {
+        "1" => 1,
+        "2" => 2,
+        _ => return Err("invalid minimum assurance; expected 1 or 2".into()),
+    };
     let pem_path = config("OCAF_OIDC_PUBLIC_KEY_FILE")?;
     let pem = std::fs::read(pem_path)?;
     let trust = OidcTrust::new(
@@ -233,6 +245,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         issuer,
         resource,
         scopes,
+        min_assurance,
     });
     let listener = TcpListener::bind(addr).await?;
     let semaphore = Arc::new(Semaphore::new(MAX_CONNECTIONS));
@@ -250,6 +263,86 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
+    use openssl::hash::MessageDigest;
+    use openssl::pkey::{PKey, Private};
+    use openssl::rsa::Rsa;
+    use openssl::sign::Signer;
+    use serde_json::{json, Value};
+
+    fn signed_access_token(key: &PKey<Private>, claims: Value) -> String {
+        let header = URL_SAFE_NO_PAD.encode(br#"{"alg":"RS256","kid":"kid-1","typ":"JWT"}"#);
+        let payload = URL_SAFE_NO_PAD.encode(serde_json::to_vec(&claims).unwrap());
+        let body = format!("{header}.{payload}");
+        let mut signer = Signer::new(MessageDigest::sha256(), key).unwrap();
+        signer.update(body.as_bytes()).unwrap();
+        format!(
+            "{body}.{}",
+            URL_SAFE_NO_PAD.encode(signer.sign_to_vec().unwrap())
+        )
+    }
+
+    #[test]
+    fn privileged_route_requires_fresh_signed_mfa() {
+        let key = PKey::from_rsa(Rsa::generate(2048).unwrap()).unwrap();
+        let public = key.public_key_to_pem().unwrap();
+        let trust = OidcTrust::new(
+            "https://idp.example/realms/ocaf".into(),
+            "ocaf-client".into(),
+            "tenant-a".into(),
+            "kid-1".into(),
+            &public,
+            "urn:ocaf:mfa".into(),
+        )
+        .unwrap();
+        let state = State {
+            trust,
+            issuer: "https://idp.example/realms/ocaf".into(),
+            resource: "https://omat.example".into(),
+            scopes: ["tool:write".to_owned()].into_iter().collect(),
+            min_assurance: 2,
+        };
+        let now = i64::try_from(
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+        )
+        .unwrap();
+        let claims = |auth_time| {
+            json!({
+                "iss":"https://idp.example/realms/ocaf",
+                "aud":"https://omat.example", "azp":"ocaf-client",
+                "typ":"Bearer", "sub":"alice", "scope":"tool:write",
+                "iat":now-10, "auth_time":auth_time, "exp":now+120,
+                "acr":"urn:ocaf:mfa"
+            })
+        };
+        let request = |token: String| Request {
+            method: "POST".into(),
+            path: "/omat/tenant-a/users/alice/authorize".into(),
+            authorization: Some(format!("Bearer {token}")),
+        };
+        assert_eq!(
+            decision(&state, request(signed_access_token(&key, claims(now - 10)))).0,
+            204
+        );
+        assert_eq!(
+            decision(
+                &state,
+                request(signed_access_token(&key, claims(now - 301)))
+            )
+            .0,
+            403
+        );
+        let mut no_mfa = claims(now - 10);
+        no_mfa["acr"] = json!("urn:ocaf:password");
+        assert_eq!(
+            decision(&state, request(signed_access_token(&key, no_mfa))).0,
+            403
+        );
+    }
+
     #[test]
     fn denies_header_smuggling_and_unauthenticated_authorization() {
         assert!(parse_request(b"POST /omat/t/users/u/authorize HTTP/1.1\r\nHost: a\r\nTransfer-Encoding: chunked\r\n\r\n").is_err());
