@@ -145,12 +145,17 @@ jobs:
           test -n "$container"
           docker exec "$container" psql -v ON_ERROR_STOP=1 -U ocaf -d ocaf_test -c \
             "ALTER ROLE ocaf PASSWORD 'ocaf_rotated_local_test_password'"
+          # The image permits trusted loopback connections inside the container.
+          # Connect to its non-loopback address so PostgreSQL actually checks
+          # the password, as it does for the prior binary on the runner.
+          container_ip="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$container")"
+          test -n "$container_ip"
           if docker exec -e PGPASSWORD=ocaf_local_test_password "$container" \
-              psql -h 127.0.0.1 -U ocaf -d ocaf_test -Atc 'SELECT 1' >/dev/null 2>&1; then
+              psql -h "$container_ip" -U ocaf -d ocaf_test -Atc 'SELECT 1' >/dev/null 2>&1; then
             echo 'old PostgreSQL credential remained valid' >&2
             exit 1
           fi
           test "$(docker exec -e PGPASSWORD=ocaf_rotated_local_test_password "$container" \
-            psql -h 127.0.0.1 -U ocaf -d ocaf_test -Atc 'SELECT 1')" = 1
+            psql -h "$container_ip" -U ocaf -d ocaf_test -Atc 'SELECT 1')" = 1
           python3 -m scripts.stage042_pg_rollback_probe \
             --bundle prior --expect-revoked
