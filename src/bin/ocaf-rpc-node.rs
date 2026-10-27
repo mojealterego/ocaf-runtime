@@ -47,7 +47,7 @@ fn load_key_env(name: &str) -> anyhow::Result<[u8; 32]> {
 }
 
 fn signed_rpc_client(node_id: &str, remote_id: &str, key: [u8; 32]) -> anyhow::Result<RpcClient> {
-    let client = RpcClient::new(node_id, remote_id, key)?;
+    let mut client = RpcClient::new(node_id, remote_id, key)?;
     match env::var("OCAF_RPC_CERT_KEY_FILE") {
         Ok(filename) => {
             let path = Path::new(&filename);
@@ -55,13 +55,37 @@ fn signed_rpc_client(node_id: &str, remote_id: &str, key: [u8; 32]) -> anyhow::R
                 anyhow::bail!("OCAF_RPC_CERT_KEY_FILE must be an absolute path");
             }
             let pem = read_private_text(path, 16_384)?;
-            Ok(client.with_certificate_private_key(pem.into_bytes())?)
+            client = client.with_certificate_private_key(pem.into_bytes())?;
         }
-        Err(env::VarError::NotPresent) => Ok(client),
-        Err(error) => Err(anyhow::anyhow!(
-            "invalid RPC certificate key file environment: {error}"
-        )),
+        Err(env::VarError::NotPresent) => {}
+        Err(error) => anyhow::bail!("invalid RPC certificate key file environment: {error}"),
     }
+    let names = [
+        "OCAF_OMAS_TENANT",
+        "OCAF_OMAS_SIGNING_KEY_FILE",
+        "OCAF_OMAS_FUEL",
+    ];
+    let configured = names
+        .iter()
+        .filter(|name| env::var_os(name).is_some())
+        .count();
+    if configured != 0 {
+        anyhow::ensure!(
+            configured == names.len(),
+            "incomplete OMAS signer configuration"
+        );
+        anyhow::ensure!(
+            env::var("OCAF_ROLE").as_deref() == Ok("client")
+                && env::var("OCAF_RPC_INGRESS").as_deref() == Ok("tls-bound"),
+            "OMAS signer requires TLS-bound client mode"
+        );
+        let path = std::path::PathBuf::from(require("OCAF_OMAS_SIGNING_KEY_FILE")?);
+        anyhow::ensure!(path.is_absolute(), "OMAS signer path must be absolute");
+        let pem = read_private_text(&path, 16_384)?;
+        let fuel = require("OCAF_OMAS_FUEL")?.parse::<u64>()?;
+        client = client.with_omas_signer(&require("OCAF_OMAS_TENANT")?, pem.as_bytes(), fuel)?;
+    }
+    Ok(client)
 }
 
 #[cfg(feature = "tls-bound")]

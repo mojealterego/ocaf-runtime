@@ -41,6 +41,9 @@ struct PeerConfig {
     certificate_sha256: Option<String>,
     #[serde(default)]
     tls_dns_san: Option<String>,
+    /// Separate OMAS authority for this exact authenticated RPC sender.
+    #[serde(default)]
+    omas_tenant: Option<String>,
     allowed_tools: Vec<String>,
     #[serde(default)]
     submit_jobs: bool,
@@ -172,6 +175,14 @@ fn load_peers(path: &Path) -> anyhow::Result<HashMap<String, PeerPolicy>> {
                 anyhow::bail!("TLS-bound ingress requires peer certificate and DNS SAN for {node}")
             }
             None => {}
+        }
+        if let Some(tenant) = entry.omas_tenant {
+            if !tls_mode {
+                anyhow::bail!("OMAS tenant binding requires TLS-bound RPC ingress");
+            }
+            policy = policy
+                .with_omas_tenant(&tenant)
+                .map_err(|_| anyhow::anyhow!("invalid OMAS peer tenant for {node}"))?;
         }
         if entry.submit_jobs {
             policy = policy.allow_job_submission();

@@ -72,10 +72,11 @@ jobs:
           sudo install -d -o ocaf -g ocaf -m 0700 /var/lib/ocaf
           sudo install -o ocaf -g ocaf -m 0600 /dev/null /var/lib/ocaf/ci-signed-wasi-diagnostics.log
           for filename in module.wasm manifest.json manifest.sig publisher.pem \
-                          server.pem server.key ca.pem agent-a.pem agent-b.pem peers.json; do
+                          server.pem server.key ca.pem agent-a.pem agent-b.pem peers.json omas.pem; do
             sudo install -o ocaf -g ocaf -m 0600 \
               "$fixture/$filename" "/var/lib/ocaf/$filename"
           done
+          sudo install -o ocaf -g ocaf -m 0600 /dev/null /var/lib/ocaf/omas-replay.sqlite
           port="$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()')"
           wasmtime_sha="$(sha256sum /opt/ocaf/bin/wasmtime | cut -d ' ' -f 1)"
           sudo systemd-run --unit=ocaf-ci-signed-wasi --service-type=exec \
@@ -99,6 +100,8 @@ jobs:
             --setenv=OCAF_RPC_INGRESS=tls-bound \
             --setenv=OCAF_REQUIRE_PEER_CERT_POP=1 \
             --setenv=OCAF_TENANT_NAMESPACE=tenant-ci \
+            --setenv=OCAF_OMAS_PUBLIC_KEY_FILE=/var/lib/ocaf/omas.pem \
+            --setenv=OCAF_OMAS_REPLAY_DB_PATH=/var/lib/ocaf/omas-replay.sqlite \
             --setenv=OCAF_TLS_RPC_BIND="127.0.0.1:$port" \
             --setenv=OCAF_TLS_SERVER_CERT_FILE=/var/lib/ocaf/server.pem \
             --setenv=OCAF_TLS_SERVER_KEY_FILE=/var/lib/ocaf/server.key \
@@ -156,6 +159,9 @@ jobs:
             export OCAF_TLS_SERVER_CA_FILE="$fixture/ca.pem"
             export OCAF_TLS_RPC_ADDRESS="127.0.0.1:$port"
             export OCAF_TLS_RPC_SERVER_DNS=localhost
+            export OCAF_OMAS_TENANT=tenant-ci
+            export OCAF_OMAS_SIGNING_KEY_FILE="$fixture/omas.key"
+            export OCAF_OMAS_FUEL=2000000
             export OCAF_ACTION=discover
             response="$(target/debug/ocaf-rpc-node)"
             python3 -c 'import json,sys; data=json.loads(sys.stdin.read()); assert isinstance(data.get("output"),list) and any(isinstance(tool,dict) and tool.get("name")=="ocaf_ci_noop" for tool in data["output"]), "Signed WASI tool missing from authenticated discovery"' <<< "$response"

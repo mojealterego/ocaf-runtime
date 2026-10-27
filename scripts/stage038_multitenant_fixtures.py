@@ -42,6 +42,9 @@ def rewrite_signed_tenant(root: Path, tenant: str, principal: str, tool: str) ->
     for peer, config in peers.items():
         config["allowed_tools"] = [tool] if peer == principal else ["demo_echo"]
         config["certificate_pem_path"] = f"/var/lib/ocaf-{tenant}/{peer}.pem"
+        config.pop("omas_tenant", None)
+        if peer == principal:
+            config["omas_tenant"] = tenant
     peers_path.write_text(json.dumps(peers, sort_keys=True), encoding="utf-8")
     for name in ("module.wasm", "manifest.json", "signing-input.bin",
                  "manifest.sig", "peers.json"):

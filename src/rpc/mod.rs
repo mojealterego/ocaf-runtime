@@ -13,6 +13,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use base64::engine::general_purpose::STANDARD as B64;
 use base64::Engine as _;
 use hmac::{Hmac, Mac};
+use openssl::pkey::{Id, PKey, Private};
+use openssl::sign::Signer;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -1185,6 +1187,7 @@ pub struct RpcClient {
     remote_id: String,
     key: [u8; 32],
     certificate_private_key_pem: Option<Vec<u8>>,
+    omas_signer: Option<(String, Arc<PKey<Private>>, u64)>,
 }
 
 impl RpcClient {
@@ -1199,6 +1202,7 @@ impl RpcClient {
             remote_id: remote_id.into(),
             key,
             certificate_private_key_pem: None,
+            omas_signer: None,
         })
     }
 
@@ -1213,12 +1217,74 @@ impl RpcClient {
         Ok(self)
     }
 
+    /// Attach a separate OMAS Ed25519 authority to Execute requests. A fresh
+    /// nonce and the exact generated RPC call ID are signed for every request.
+    /// Operators must protect the signing key independently of the RPC HMAC
+    /// and use an authenticated encrypted transport.
+    pub fn with_omas_signer(
+        mut self,
+        tenant: &str,
+        private_key_pem: &[u8],
+        fuel: u64,
+    ) -> Result<Self, RpcError> {
+        if !crate::omas_policy::safe_key(tenant)
+            || tenant.contains('/')
+            || private_key_pem.len() > 16 * 1024
+            || !(1..=crate::omas_policy::MAX_FUEL).contains(&fuel)
+        {
+            return Err(RpcError::Malformed);
+        }
+        let key = PKey::private_key_from_pem(private_key_pem).map_err(|_| RpcError::Malformed)?;
+        if key.id() != Id::ED25519 {
+            return Err(RpcError::Malformed);
+        }
+        self.omas_signer = Some((tenant.to_owned(), Arc::new(key), fuel));
+        Ok(self)
+    }
+
     pub fn prepare(
         &self,
         action: RpcAction,
         ttl_ms: u64,
     ) -> Result<(RpcRequest, Vec<u8>), RpcError> {
         let mut req = RpcRequest::new(&self.node_id, &self.remote_id, now_ms()?, ttl_ms, action)?;
+        if let (Some((tenant, key, fuel)), RpcAction::Execute { tool, args }) =
+            (&self.omas_signer, &req.action)
+        {
+            let call = ToolCallRequest {
+                call_id: req.request_id.clone(),
+                tool: tool.clone(),
+                args: args.clone(),
+                auth: None,
+            };
+            let mut operation = crate::omas_signed::SignedOperation {
+                tenant: tenant.clone(),
+                namespace: format!("{tenant}/tools"),
+                target: format!("{tenant}/tools/{tool}"),
+                opcode: 1,
+                fuel: *fuel,
+                issued_at: i64::try_from(req.issued_at_ms / 1_000)
+                    .map_err(|_| RpcError::Unavailable)?,
+                nonce: Uuid::new_v4().simple().to_string(),
+                payload: serde_json::to_vec(&call).map_err(|_| RpcError::Malformed)?,
+                rpc_sender: Some(self.node_id.clone()),
+                signature: Vec::new(),
+            };
+            if !crate::omas_policy::admit(
+                tenant,
+                &operation.namespace,
+                &operation.target,
+                operation.payload.len().saturating_add(4096),
+                operation.payload.len(),
+                *fuel,
+            ) {
+                return Err(RpcError::Malformed);
+            }
+            operation.signature = Signer::new_without_digest(key)
+                .and_then(|mut signer| signer.sign_oneshot_to_vec(&operation.canonical_bytes()))
+                .map_err(|_| RpcError::Unavailable)?;
+            req.omas_operation = Some(operation);
+        }
         if let Some(private_key) = &self.certificate_private_key_pem {
             req = req.with_certificate_proof(private_key)?;
         }

@@ -67,10 +67,11 @@ jobs:
           for tenant in tenant-a tenant-b; do
             sudo install -d -m 0700 -o ocaf -g ocaf "/var/lib/ocaf-$tenant"
             sudo install -o ocaf -g ocaf -m 0600 /dev/null "/var/lib/ocaf-$tenant/coordinator.log"
-            for name in module.wasm manifest.json manifest.sig publisher.pem server.pem server.key ca.pem peers.json agent-a.pem agent-b.pem; do
+            for name in module.wasm manifest.json manifest.sig publisher.pem server.pem server.key ca.pem peers.json agent-a.pem agent-b.pem omas.pem; do
               sudo install -o ocaf -g ocaf -m 0600 \
                 "$RUNNER_TEMP/ocaf-multitenant/$tenant/$name" "/var/lib/ocaf-$tenant/$name"
             done
+            sudo install -o ocaf -g ocaf -m 0600 /dev/null "/var/lib/ocaf-$tenant/omas-replay.sqlite"
             port="$(python3 -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1]);s.close()')"
             if [ "$tenant" = tenant-a ]; then echo "OCAF_PORT_A=$port" >> "$GITHUB_ENV"; else echo "OCAF_PORT_B=$port" >> "$GITHUB_ENV"; fi
             sudo systemd-run --unit="ocaf-$tenant" --service-type=exec \
@@ -95,6 +96,8 @@ jobs:
               --setenv=OCAF_RPC_INGRESS=tls-bound \
               --setenv=OCAF_REQUIRE_PEER_CERT_POP=1 \
               --setenv="OCAF_TENANT_NAMESPACE=$tenant" \
+              --setenv="OCAF_OMAS_PUBLIC_KEY_FILE=/var/lib/ocaf-$tenant/omas.pem" \
+              --setenv="OCAF_OMAS_REPLAY_DB_PATH=/var/lib/ocaf-$tenant/omas-replay.sqlite" \
               --setenv="OCAF_TLS_RPC_BIND=127.0.0.1:$port" \
               --setenv="OCAF_TLS_SERVER_CERT_FILE=/var/lib/ocaf-$tenant/server.pem" \
               --setenv="OCAF_TLS_SERVER_KEY_FILE=/var/lib/ocaf-$tenant/server.key" \

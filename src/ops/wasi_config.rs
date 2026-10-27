@@ -6,9 +6,10 @@ use std::env;
 use std::fs::OpenOptions;
 use std::io::Read;
 use std::os::unix::fs::{MetadataExt, OpenOptionsExt, PermissionsExt};
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 use anyhow::{bail, Result};
+use openssl::pkey::{Id, PKey};
 
 use crate::executor::wasi::{PinnedWasmtime, WasmToolExecutor};
 use crate::runtime::OcafRuntime;
@@ -59,6 +60,55 @@ fn read_operator_file(p: &Path, name: &str, max_bytes: u64) -> Result<Vec<u8>> {
 fn owner_only_file(name: &str, max_bytes: u64) -> Result<Vec<u8>> {
     let p = path(name)?;
     read_operator_file(&p, name, max_bytes)
+}
+
+fn owner_only_replay_database(path: &Path) -> Result<()> {
+    if !path.is_absolute() || path.components().any(|part| part == Component::ParentDir) {
+        bail!("OMAS replay database path must be absolute and normalized");
+    }
+    let file = path.symlink_metadata()?;
+    let parent = path
+        .parent()
+        .ok_or_else(|| anyhow::anyhow!("OMAS replay path has no parent"))?;
+    let directory = parent.symlink_metadata()?;
+    if parent.canonicalize()? != parent {
+        bail!("OMAS replay database parent must not contain a symlink");
+    }
+    if !file.file_type().is_file()
+        || file.nlink() != 1
+        || file.uid() != unsafe { libc::geteuid() }
+        || file.permissions().mode() & 0o077 != 0
+        || !directory.file_type().is_dir()
+        || directory.uid() != unsafe { libc::geteuid() }
+        || directory.permissions().mode() & 0o077 != 0
+    {
+        bail!("OMAS replay database and parent must be private, owned, regular files");
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod omas_replay_path_tests {
+    use super::owner_only_replay_database;
+    use std::os::unix::fs::{symlink, PermissionsExt};
+
+    #[test]
+    fn accepts_private_database_and_rejects_symlink_or_public_parent() {
+        let root = tempfile::tempdir().unwrap();
+        let dir = root.path().join("private");
+        std::fs::create_dir(&dir).unwrap();
+        std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let db = dir.join("nonce.sqlite");
+        std::fs::write(&db, b"").unwrap();
+        std::fs::set_permissions(&db, std::fs::Permissions::from_mode(0o600)).unwrap();
+        assert!(owner_only_replay_database(&db).is_ok());
+        let link = dir.join("link.sqlite");
+        symlink(&db, &link).unwrap();
+        assert!(owner_only_replay_database(&link).is_err());
+        std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o755)).unwrap();
+        assert!(owner_only_replay_database(&db).is_err());
+        assert!(owner_only_replay_database(&dir.join("..").join("private/nonce.sqlite")).is_err());
+    }
 }
 
 const SIGNED_WASI_REQUIRED_ENV: [&str; 6] = [
@@ -114,10 +164,38 @@ fn lowercase_sha256(raw: &str) -> Result<[u8; 32]> {
 /// Agent identity must be derived from an authenticated TLS-bound RPC peer.
 /// The caller supplies a deployment-owned namespace via environment only.
 pub async fn runtime_from_env() -> Result<OcafRuntime> {
-    let namespace = env::var("OCAF_TENANT_NAMESPACE").ok();
+    let namespace = match env::var("OCAF_TENANT_NAMESPACE") {
+        Ok(value) => Some(value),
+        Err(env::VarError::NotPresent) => None,
+        Err(env::VarError::NotUnicode(_)) => bail!("invalid tenant namespace environment"),
+    };
     let mut runtime = OcafRuntime::new(0);
     if let Some(value) = &namespace {
         runtime = runtime.with_tenant_namespace(value)?;
+    }
+
+    let omas_key_requested = env::var_os("OCAF_OMAS_PUBLIC_KEY_FILE").is_some();
+    let omas_replay_requested = env::var_os("OCAF_OMAS_REPLAY_DB_PATH").is_some();
+    if namespace.is_some() {
+        if !omas_key_requested || !omas_replay_requested {
+            bail!("tenant-bound runtime requires complete OMAS key and replay configuration");
+        }
+        let key = owner_only_file("OCAF_OMAS_PUBLIC_KEY_FILE", 2048)?;
+        let public = PKey::public_key_from_pem(&key)?;
+        if public.id() != Id::ED25519 {
+            bail!("OMAS public key must be Ed25519");
+        }
+        let bytes: [u8; 32] = public
+            .raw_public_key()?
+            .try_into()
+            .map_err(|_| anyhow::anyhow!("invalid OMAS Ed25519 public key"))?;
+        let replay = path("OCAF_OMAS_REPLAY_DB_PATH")?;
+        owner_only_replay_database(&replay)?;
+        runtime = runtime
+            .with_omas_trusted_key(bytes)
+            .with_omas_replay_database(replay);
+    } else if omas_key_requested || omas_replay_requested {
+        bail!("OMAS authority cannot be configured without a tenant namespace");
     }
 
     let config_names: HashSet<String> = env::vars_os()

@@ -66,6 +66,9 @@ def invoke(binary: Path, root: Path, tenant: str, principal: str,
         "OCAF_TLS_CLIENT_CERT_FILE": str(data / f"{principal}.pem"),
         "OCAF_TLS_CLIENT_KEY_FILE": str(data / f"{principal}.key"),
         "OCAF_RPC_CERT_KEY_FILE": str(data / f"{principal}.key"),
+        "OCAF_OMAS_TENANT": tenant,
+        "OCAF_OMAS_SIGNING_KEY_FILE": str(data / "omas.key"),
+        "OCAF_OMAS_FUEL": "2000000",
     })
     peers = json.loads((data / "peers.json").read_text(encoding="utf-8"))
     env["OCAF_SHARED_KEY_B64"] = peers[principal]["key_b64"]

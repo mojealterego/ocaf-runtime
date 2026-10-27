@@ -87,6 +87,21 @@ jobs:
           for f in agent-a.csr agent-b.csr transport.pub; do
             "$py" scripts/stage038_tunnel_client.py --mode get --item "$f" --file "$fixture/remote-$f"
           done
+          python3 - "$fixture" <<'PY'
+          import json,sys
+          from pathlib import Path
+          root=Path(sys.argv[1])
+          keys=json.loads((root/'remote-transport.pub').read_text())
+          if set(keys) != {'transport_pub_pem','omas_pub_pem'}:
+              raise SystemExit('unexpected remote public-key bundle')
+          for field,destination in (('transport_pub_pem','remote-transport-rsa.pub'),
+                                    ('omas_pub_pem','remote-omas.pem')):
+              text=keys[field]
+              if not isinstance(text,str) or not text.startswith('-----BEGIN PUBLIC KEY-----') or len(text)>2048:
+                  raise SystemExit('invalid remote public key')
+              (root/destination).write_text(text)
+          PY
+          openssl pkey -pubin -in "$fixture/remote-omas.pem" -text -noout | grep -q ED25519
           for agent in agent-a agent-b; do
             openssl req -verify -noout -in "$fixture/remote-$agent.csr" >/dev/null 2>&1
             openssl x509 -req -in "$fixture/remote-$agent.csr" \
@@ -108,7 +123,7 @@ jobs:
           (root/'peers.json').write_text(json.dumps(peers,sort_keys=True))
           (root/'hmac-clear.json').write_text(json.dumps(sealed))
           PY
-          openssl pkeyutl -encrypt -pubin -inkey "$fixture/remote-transport.pub" \
+          openssl pkeyutl -encrypt -pubin -inkey "$fixture/remote-transport-rsa.pub" \
             -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 \
             -in "$fixture/hmac-clear.json" -out "$fixture/hmac.sealed"
           "$py" scripts/stage038_tunnel_client.py --mode put --item hmac.sealed --file "$fixture/hmac.sealed"
@@ -147,6 +162,8 @@ jobs:
           for file in module.wasm manifest.json manifest.sig publisher.pem server.pem server.key ca.pem peers.json; do
             sudo install -o ocaf -g ocaf -m 0600 "$fixture/$file" "/var/lib/ocaf/$file"
           done
+          sudo install -o ocaf -g ocaf -m 0600 "$fixture/remote-omas.pem" /var/lib/ocaf/omas.pem
+          sudo install -o ocaf -g ocaf -m 0600 /dev/null /var/lib/ocaf/omas-replay.sqlite
           for agent in agent-a agent-b; do
             sudo install -o ocaf -g ocaf -m 0600 "$fixture/remote-$agent.pem" "/var/lib/ocaf/$agent.pem"
           done
@@ -173,6 +190,8 @@ jobs:
             --setenv=OCAF_RPC_INGRESS=tls-bound \
             --setenv=OCAF_REQUIRE_PEER_CERT_POP=1 \
             --setenv=OCAF_TENANT_NAMESPACE=tenant-ci \
+            --setenv=OCAF_OMAS_PUBLIC_KEY_FILE=/var/lib/ocaf/omas.pem \
+            --setenv=OCAF_OMAS_REPLAY_DB_PATH=/var/lib/ocaf/omas-replay.sqlite \
             --setenv=OCAF_TLS_RPC_BIND="127.0.0.1:$port" \
             --setenv=OCAF_TLS_SERVER_CERT_FILE=/var/lib/ocaf/server.pem \
             --setenv=OCAF_TLS_SERVER_KEY_FILE=/var/lib/ocaf/server.key \
@@ -269,7 +288,17 @@ jobs:
               -keyout "$agent.key" -out "$agent.csr" -subj "/CN=$agent" >/dev/null 2>&1
           done
           openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out transport.key >/dev/null 2>&1
-          openssl pkey -in transport.key -pubout -out transport.pub >/dev/null 2>&1
+          openssl pkey -in transport.key -pubout -out transport-rsa.pub >/dev/null 2>&1
+          openssl genpkey -algorithm ED25519 -out omas.key >/dev/null 2>&1
+          openssl pkey -in omas.key -pubout -out omas.pem >/dev/null 2>&1
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          Path('transport.pub').write_text(json.dumps({
+              'transport_pub_pem':Path('transport-rsa.pub').read_text(),
+              'omas_pub_pem':Path('omas.pem').read_text()
+          },sort_keys=True))
+          PY
           for item in agent-a.csr agent-b.csr transport.pub; do
             "$RUNNER_TEMP/ocaf038-python/bin/python" "$GITHUB_WORKSPACE/scripts/stage038_tunnel_client.py" \
               --mode put --item "$item" --file "$RUNNER_TEMP/ocaf038-client/$item"
@@ -367,6 +396,7 @@ jobs:
           export OCAF_TLS_CLIENT_CERT_FILE="$client/agent-a.pem"
           export OCAF_TLS_CLIENT_KEY_FILE="$client/agent-a.key"
           export OCAF_SHARED_KEY_B64="$("$py" -c 'import json,sys;print(json.load(open(sys.argv[1]))["agent-a"])' "$client/private-hmac.json")"
+          export OCAF_OMAS_TENANT=tenant-ci OCAF_OMAS_SIGNING_KEY_FILE="$client/omas.key" OCAF_OMAS_FUEL=2000000
           phase=authenticated_discovery
           passed=false
           for i in $(seq 1 35); do

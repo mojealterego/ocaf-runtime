@@ -128,6 +128,11 @@ def main() -> int:
         openssl("pkeyutl", "-verify", "-pubin", "-inkey", str(root / "publisher.pem"),
                 "-rawin", "-in", str(root / "signing-input.bin"),
                 "-sigfile", str(root / "manifest.sig"))
+        # A separate ephemeral authority signs OMAS operation V2. The WASI
+        # publisher key must never also become the RPC admission key.
+        openssl("genpkey", "-algorithm", "ED25519", "-out", str(root / "omas.key"))
+        openssl("pkey", "-in", str(root / "omas.key"), "-pubout",
+                "-out", str(root / "omas.pem"))
         openssl("req", "-x509", "-newkey", "ec", "-pkeyopt", "ec_paramgen_curve:P-256",
                 "-nodes", "-keyout", str(root / "ca.key"),
                 "-out", str(root / "ca.pem"), "-days", "1",
@@ -164,6 +169,8 @@ def main() -> int:
                     "certificate_sha256": hashlib.sha256(cert_der).hexdigest(),
                     "tls_dns_san": name + ".test",
                 }
+                if name == "agent-a":
+                    peers[name]["omas_tenant"] = "tenant-ci"
         put(root, "peers.json", json.dumps(peers, sort_keys=True).encode())
         print(json.dumps({"result": "ephemeral_synthetic_fixtures_generated",
                           "peer_count": len(peers), "certificates_private": True}))

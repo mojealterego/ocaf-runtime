@@ -109,9 +109,11 @@ podpisanego manifestu w usługach sieciowych.
 
 `OcafRuntime::with_tenant_namespace` ustala przestrzeń
 dzierżawcy wyłącznie z zaufanej konfiguracji. Po sprawdzeniu
-certyfikatu sesji TLS, PoP, HMAC i replay handler RPC przekazuje
-uwierzytelniony sender do
-`execute_authenticated_peer`. Executor dopuszcza tylko
+certyfikatu sesji TLS, PoP i HMAC handler RPC przekazuje
+uwierzytelniony sender do podpisanej operacji OMAs V2. Związany z tenantem
+serwer wymaga osobnego podpisu Ed25519 nad tenantem, celem, dokładnym
+żądaniem, identyfikatorem nadawcy i jednorazowym nonce; baza SQLite
+zużywa nonce przed wykonaniem. Executor dopuszcza tylko
 dosłowną zgodność `tenant:agent` z podpisanym manifestem.
 Nieznany tenant lub anonimowe `OcafRuntime::execute`
 zwracają odmowę w podpisanej ścieżce.
@@ -130,6 +132,8 @@ Wspólny, operatorowy loader:
 | `OCAF_RPC_INGRESS` | dokładnie `tls-bound` |
 | `OCAF_REQUIRE_PEER_CERT_POP` | `1` |
 | `OCAF_TENANT_NAMESPACE` | zatwierdzona nazwa dzierżawcy |
+| `OCAF_OMAS_PUBLIC_KEY_FILE` | prywatnie przechowywany PEM publicznego klucza Ed25519 odrębnej władzy OMAs |
+| `OCAF_OMAS_REPLAY_DB_PATH` | istniejący plik SQLite `0600` w katalogu operatora `0700`, tylko dla właściciela |
 | `OCAF_WASI_MANIFEST_FILE` | ścieżka absolutna do JSON z podpisaną polityką |
 | `OCAF_WASI_SIGNATURE_FILE` | ścieżka absolutna do 64-bajtowego podpisu Ed25519 |
 | `OCAF_WASI_PUBLISHER_KEY_FILE` | ścieżka absolutna do PEM klucza publicznego wydawcy |
@@ -143,6 +147,15 @@ własnością operatora, mieć uprawnienia tylko dla właściciela
 Binarium Wasmtime wymaga niezależnego bezpieczeństwa ścieżki,
 ochrony katalogów nadrzędnych i SHA-256. Brak któregokolwiek
 warunku powoduje odmowę startu, bez Zenoh fallbacku.
+Klient z dostępem do podpisanych wywołań `Execute` ustawia
+`OCAF_OMAS_TENANT`, `OCAF_OMAS_SIGNING_KEY_FILE` (bezwzględna ścieżka
+do prywatnego PEM `0600`) i `OCAF_OMAS_FUEL` (1–50 000 000). Wszystkie
+trzy wartości są obowiązkowe razem. Klucz OMAs jest odrębny od klucza
+wydawcy modułu WASI i od certyfikatu mTLS. Operacje odkrywania pozostają
+pod dotychczasową polityką RPC; wykonanie narzędzia wymaga także OMAs V2.
+Brak klucza, prywatnej bazy nonce albo pełnej konfiguracji podpisu zatrzymuje
+lub odrzuca żądanie. Jednorazowe klucze w GitHub Actions są dowodem wyłącznie
+laboratorium CI, a nie trwałego wdrożenia.
 Zdalny worker w wariancie TLS używa osobnej sesji mTLS
 do *każdego* `Heartbeat`, `ClaimJob`, `ValidateLease`
 i `FinishJob` bez automatycznego retry skutków.
