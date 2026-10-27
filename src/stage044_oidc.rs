@@ -9,7 +9,10 @@ use openssl::hash::MessageDigest;
 use openssl::memcmp;
 use openssl::pkey::{PKey, Public};
 use openssl::sign::Verifier;
+use serde::de::{MapAccess, Visitor};
+use serde::{Deserialize, Deserializer};
 use serde_json::Value;
+use std::fmt;
 use thiserror::Error;
 
 #[derive(Debug, Error, PartialEq, Eq)]
@@ -29,6 +32,38 @@ pub struct OidcTrust {
     key_id: String,
     key: PKey<Public>,
     mfa_acr: String,
+}
+
+struct UniqueObject(Value);
+
+impl<'de> Deserialize<'de> for UniqueObject {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct ObjectVisitor;
+        impl<'de> Visitor<'de> for ObjectVisitor {
+            type Value = UniqueObject;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a JSON object without duplicate fields")
+            }
+
+            fn visit_map<M: MapAccess<'de>>(self, mut map: M) -> Result<Self::Value, M::Error> {
+                let mut fields = serde_json::Map::new();
+                while let Some((key, value)) = map.next_entry::<String, Value>()? {
+                    if fields.insert(key, value).is_some() {
+                        return Err(serde::de::Error::custom("duplicate JWT field"));
+                    }
+                }
+                Ok(UniqueObject(Value::Object(fields)))
+            }
+        }
+        deserializer.deserialize_map(ObjectVisitor)
+    }
+}
+
+fn unique_object(bytes: &[u8]) -> Result<Value, OidcError> {
+    serde_json::from_slice::<UniqueObject>(bytes)
+        .map(|object| object.0)
+        .map_err(|_| OidcError::InvalidToken)
 }
 
 impl OidcTrust {
@@ -114,8 +149,7 @@ impl OidcTrust {
                 .decode(v)
                 .map_err(|_| OidcError::InvalidToken)
         };
-        let header: Value =
-            serde_json::from_slice(&decode(h)?).map_err(|_| OidcError::InvalidToken)?;
+        let header = unique_object(&decode(h)?)?;
         if header.get("alg").and_then(Value::as_str) != Some("RS256")
             || header.get("kid").and_then(Value::as_str) != Some(self.key_id.as_str())
             || header.get("crit").is_some()
@@ -138,8 +172,7 @@ impl OidcTrust {
         {
             return Err(OidcError::Signature);
         }
-        let claims: Value =
-            serde_json::from_slice(&decode(p)?).map_err(|_| OidcError::InvalidToken)?;
+        let claims = unique_object(&decode(p)?)?;
         let string = |key: &str| claims.get(key).and_then(Value::as_str);
         if string("iss") != Some(self.issuer.as_str())
             || string("typ") != Some("Bearer")
@@ -244,8 +277,7 @@ impl OidcTrust {
                 .decode(part)
                 .map_err(|_| OidcError::InvalidToken)
         };
-        let header: Value =
-            serde_json::from_slice(&decode(h)?).map_err(|_| OidcError::InvalidToken)?;
+        let header = unique_object(&decode(h)?)?;
         if header.get("alg").and_then(Value::as_str) != Some("RS256")
             || header.get("kid").and_then(Value::as_str) != Some(self.key_id.as_str())
             || header.get("crit").is_some()
@@ -269,8 +301,7 @@ impl OidcTrust {
         {
             return Err(OidcError::Signature);
         }
-        let claims: Value =
-            serde_json::from_slice(&decode(p)?).map_err(|_| OidcError::InvalidToken)?;
+        let claims = unique_object(&decode(p)?)?;
         let claim = |name: &str| claims.get(name).and_then(Value::as_str);
         if claim("iss") != Some(self.issuer.as_str())
             || claim("nonce").is_none_or(|v| !memcmp::eq(v.as_bytes(), expected_nonce.as_bytes()))
@@ -377,6 +408,16 @@ mod tests {
             URL_SAFE_NO_PAD.encode(signer.sign_to_vec().unwrap())
         )
     }
+    fn signed_raw_token(key: &PKey<openssl::pkey::Private>, header: &str, claims: &str) -> String {
+        let body = format!(
+            "{}.{}",
+            URL_SAFE_NO_PAD.encode(header),
+            URL_SAFE_NO_PAD.encode(claims)
+        );
+        let mut signer = Signer::new(MessageDigest::sha256(), key).unwrap();
+        signer.update(body.as_bytes()).unwrap();
+        format!("{body}.{}", URL_SAFE_NO_PAD.encode(signer.sign_to_vec().unwrap()))
+    }
     fn setup() -> (OidcTrust, PKey<openssl::pkey::Private>) {
         let key = PKey::from_rsa(Rsa::generate(2048).unwrap()).unwrap();
         let pubkey = key.public_key_to_pem().unwrap();
@@ -414,6 +455,36 @@ mod tests {
                 .assurance_level,
             1
         );
+    }
+    #[test]
+    fn rejects_signed_jwt_with_duplicate_security_fields() {
+        let (trust, key) = setup();
+        let header = r#"{"alg":"none","alg":"RS256","kid":"kid-1","typ":"JWT"}"#;
+        let claims = format!(
+            r#"{{"iss":"https://evil.example","iss":"https://idp.example/realms/ocaf","aud":"ocaf-client","sub":"alice","nonce":"{NONCE}","iat":1000,"auth_time":1000,"exp":1300,"acr":"urn:ocaf:mfa"}}"#
+        );
+        let valid_header = r#"{"alg":"RS256","kid":"kid-1","typ":"JWT"}"#;
+        for jwt in [
+            signed_raw_token(&key, header, &claims),
+            signed_raw_token(&key, valid_header, &claims),
+        ] {
+            assert!(matches!(
+                trust.verify_id_token(&jwt, NONCE, 1010),
+                Err(OidcError::InvalidToken)
+            ));
+        }
+        let access_claims = r#"{"iss":"https://idp.example/realms/ocaf","aud":"https://omat.example","azp":"ocaf-client","typ":"Bearer","sub":"alice","scope":"admin","scope":"tool:read","iat":1000,"auth_time":1000,"exp":1300}"#;
+        let read: std::collections::BTreeSet<String> =
+            ["tool:read".to_owned()].into_iter().collect();
+        assert!(matches!(
+            trust.verify_access_token(
+                &signed_raw_token(&key, valid_header, access_claims),
+                "https://omat.example",
+                &read,
+                1010
+            ),
+            Err(OidcError::InvalidToken)
+        ));
     }
     #[test]
     fn rejects_nonce_audience_signature_kid_and_expiry() {
