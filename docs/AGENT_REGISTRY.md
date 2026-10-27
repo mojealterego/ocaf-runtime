@@ -26,17 +26,20 @@ Dowody dla statusów agentów i rojów przechodzą przez [`EVIDENCE_PIPELINE.md`
 Flota jest zapisana jako 111 niezależnych pakietów w
 [`AGENT-FLEET-111`](<../OCAF Agents MOJEALTEREGO/AGENT-FLEET-111/>). Każdy pakiet ma własną unikalną nazwę oryginalną (`display_name`) oraz stabilny identyfikator techniczny `OCAF-AGENT-NNN`. Nazwa jest częścią manifestu, konfiguracji, punktu wejścia, dokumentacji i nazwy pakietu Cargo.
 
-Każdy pakiet ma własną tożsamość, kod, manifest, kontrakt modelu, namespace pamięci,
-politykę narzędzi, test bezpieczeństwa, instrukcję, kontrakt instalatora i
-rekord certyfikacyjny. `model_backend`, OMAs i OMAt są jeszcze
-`UNASSIGNED`, dlatego rejestr nie udaje uruchomionych procesów: aktywnych
-runtime jest `0`. Kontrolę wykonuje
+Każdy pakiet ma własną tożsamość, pliki źródłowe Rust, manifest, kontrakt modelu,
+namespace pamięci, politykę narzędzi, test bezpieczeństwa, instrukcję,
+kontrakt instalatora i rekord certyfikacyjny. Obecne pliki źródłowe są
+kontraktami w stanie DRAFT; nie stanowią jeszcze 111 autonomicznych procesów AI.
+`model_backend`, OMAs i OMAt są `UNASSIGNED`, więc aktywnych runtime jest `0`.
+Spójność inwentarza sprawdza
 [`ocaf_agent_fleet_supervisor.py`](../scripts/ocaf_agent_fleet_supervisor.py).
 
-### Flota 33 kompletnych rojów AI
+### Flota 33 rojów zapisana w manifestach
 
 Każdy rój ma własny manifest, skład, kontrakt etapowania i handoff, healthcheck,
-test kontraktu oraz rekord certyfikacyjny. Rejestr: [SWARM_REGISTRY_33.md](agents/SWARM_REGISTRY_33.md),
+test kontraktu oraz rekord certyfikacyjny. To struktura w stanie
+`STRUCTURED_NOT_DEPLOYED`; nie ma jeszcze 33 wykonawczych pakietów Cargo ani
+dowodu rzeczywistej pracy grup. Rejestr: [SWARM_REGISTRY_33.md](agents/SWARM_REGISTRY_33.md),
 manifest maszynowy: [swarm_registry_33.json](agents/swarm_registry_33.json),
 pakiety: [SWARM-FLEET-33](<../OCAF Agents MOJEALTEREGO/SWARM-FLEET-33/>).
 

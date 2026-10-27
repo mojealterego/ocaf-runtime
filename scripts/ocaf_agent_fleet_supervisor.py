@@ -43,6 +43,29 @@ def load(path: Path) -> Any:
         raise SupervisorError(f"invalid JSON: {path}: {exc}") from exc
 
 
+def agent_package_path(agent_root: Path, entry: dict[str, Any]) -> Path:
+    """Resolve the registry's named package without accepting a path escape."""
+    aid = entry["agent_id"]
+    display_name = entry.get("display_name")
+    package_path = entry.get("package_path")
+    if not isinstance(display_name, str) or not display_name.strip():
+        raise SupervisorError(f"{aid}: missing display_name")
+    if not isinstance(package_path, str):
+        raise SupervisorError(f"{aid}: missing package_path")
+    parts = package_path.split("/")
+    if (len(parts) != 2 or parts[0] != agent_root.name
+            or any(part in ("", ".", "..") for part in parts)
+            or not parts[1].startswith(f"{aid}-")):
+        raise SupervisorError(f"{aid}: invalid package_path")
+    slug = display_name.lower().replace(" ", "-")
+    if parts[1] != f"{aid}-{slug}":
+        raise SupervisorError(f"{aid}: package_path does not match display_name")
+    package = agent_root / parts[1]
+    if package.is_symlink() or not package.is_dir():
+        raise SupervisorError(f"{aid}: missing or symlinked package directory")
+    return package
+
+
 def validate(agent_root: Path, swarm_root: Path, registry_path: Path) -> dict[str, Any]:
     registry = load(registry_path)
     agents = registry.get("agents")
@@ -50,7 +73,10 @@ def validate(agent_root: Path, swarm_root: Path, registry_path: Path) -> dict[st
         raise SupervisorError("registry must contain exactly 111 agents")
     if registry.get("operational_swarm_count") != 33:
         raise SupervisorError("registry must declare exactly 33 swarms")
+    if registry.get("active_runtime_agent_count") != 0:
+        raise SupervisorError("agent registry cannot declare ACTIVE while OSTc is disabled")
     ids = set()
+    package_dirs_expected = set()
     agent_groups: dict[str, str] = {}
     for entry in agents:
         aid = entry.get("agent_id")
@@ -63,25 +89,37 @@ def validate(agent_root: Path, swarm_root: Path, registry_path: Path) -> dict[st
         agent_groups[aid] = group_id
         if entry.get("ostc_enabled") is not False or entry.get("source_access") != "disabled" or entry.get("active_admission") != "DENY":
             raise SupervisorError(f"unsafe gate in {aid}")
-        package = agent_root / aid
+        package = agent_package_path(agent_root, entry)
+        if package.name in package_dirs_expected:
+            raise SupervisorError(f"{aid}: duplicate package directory")
+        package_dirs_expected.add(package.name)
         for relative in REQUIRED_AGENT_FILES:
-            if not (package / relative).is_file():
+            path = package / relative
+            if path.is_symlink() or not path.is_file():
                 raise SupervisorError(f"{aid}: missing {relative}")
         config = (package / "config/agent.toml").read_text(encoding="utf-8")
         if f'agent_id = "{aid}"' not in config:
             raise SupervisorError(f"{aid}: config identity mismatch")
         if f'group_id = "{group_id}"' not in config:
             raise SupervisorError(f"{aid}: config group mismatch")
+        if (f'display_name = "{entry["display_name"]}"' not in config
+                or f'package_name = "{entry.get("package_name")}"' not in config):
+            raise SupervisorError(f"{aid}: config package identity mismatch")
+        if ('ostc_enabled = false' not in config or 'source_access = "disabled"' not in config
+                or 'active_admission = "DENY"' not in config):
+            raise SupervisorError(f"{aid}: config ACTIVE/OSTc gate mismatch")
 
     package_dirs = {
         path.name for path in agent_root.glob("OCAF-AGENT-*") if path.is_dir()
     }
-    if package_dirs != ids:
+    if package_dirs != package_dirs_expected:
         raise SupervisorError("agent package directories do not match registry exactly")
 
     fleet = load(swarm_root / "fleet_manifest.json")
     if fleet.get("declared_swarm_count") != 33:
         raise SupervisorError("swarm manifest must declare 33 swarms")
+    if fleet.get("active_runtime_swarm_count") != 0:
+        raise SupervisorError("swarm fleet cannot declare ACTIVE while OSTc is disabled")
     swarm_ids = set()
     members = []
     for path in sorted(swarm_root.glob("OCAF-SWARM-*/manifest.json")):
@@ -89,6 +127,8 @@ def validate(agent_root: Path, swarm_root: Path, registry_path: Path) -> dict[st
         sid = manifest.get("swarm_id")
         if not isinstance(sid, str) or sid in swarm_ids:
             raise SupervisorError(f"duplicate or invalid swarm_id: {sid}")
+        if path.parent.name != sid:
+            raise SupervisorError(f"{sid}: swarm directory does not match manifest identity")
         swarm_ids.add(sid)
         listed = manifest.get("members")
         if not isinstance(listed, list) or manifest.get("member_count") != len(listed):
@@ -106,7 +146,9 @@ def validate(agent_root: Path, swarm_root: Path, registry_path: Path) -> dict[st
         members.extend(listed)
     if len(swarm_ids) != 33 or len(members) != 111 or set(members) != ids or len(set(members)) != 111:
         raise SupervisorError("swarm membership must cover exactly the 111 registered agents")
-    return {"agents": 111, "swarms": 33, "active_agents": 0, "active_swarms": 0, "ostc_enabled": False, "source_access": "disabled", "active_admission": "DENY"}
+    return {"agents": 111, "swarms": 33, "active_agents": 0, "active_swarms": 0,
+            "inventory_only": True, "ostc_enabled": False,
+            "source_access": "disabled", "active_admission": "DENY"}
 
 
 def write_event(log: Path, event: str, detail: dict[str, Any]) -> None:
@@ -126,7 +168,7 @@ def main() -> int:
     try:
         summary = validate(args.agent_root, args.swarm_root, args.registry)
         write_event(args.log, "FLEET_VALIDATED", summary)
-        print(json.dumps({"status": "PASS", **summary}, sort_keys=True))
+        print(json.dumps({"status": "INVENTORY_VALIDATED", **summary}, sort_keys=True))
         return 0
     except SupervisorError as exc:
         write_event(args.log, "FLEET_REJECTED", {"status": "FAIL", "reason": str(exc), "active_admission": "DENY"})

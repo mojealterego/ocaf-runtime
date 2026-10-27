@@ -1,8 +1,10 @@
 # Lokalny supervisor floty agentów
 
 `scripts/ocaf_agent_fleet_supervisor.py` ładuje osobne manifesty 111 agentów i
-33 rojów, sprawdza członkostwo, kompletność katalogów, rozdzielenie OMAs/OMAt
-oraz bramki `OSTc=DISABLED` i `ACTIVE=DENY`. Zapisuje każdy przebieg jako
+33 rojów, sprawdza członkostwo, nazwy rzeczywistych katalogów pakietów,
+kompletność plików kontraktu oraz bramki `OSTc=DISABLED` i `ACTIVE=DENY`.
+Konfiguracje nadal mają niewyznaczone końcówki OMAs i OMAt; supervisor nie
+testuje ich rzeczywistego rozdzielenia sieciowego. Zapisuje każdy przebieg jako
 append-only JSONL.
 
 ```sh
@@ -11,5 +13,9 @@ append-only JSONL.
 ```
 
 Supervisor nie uruchamia modeli, nie przyznaje dostępu do źródeł i nie udaje
-aktywacji. Wynik `PASS` oznacza poprawność kontraktów i manifestów. Aktualny
-przebieg raportuje `111` agentów, `33` roje i `0` aktywnych procesów.
+aktywacji. Wynik `INVENTORY_VALIDATED` oznacza wyłącznie zgodność 111 wpisów
+agentów i 33 manifestów rojów z plikami pakietów oraz bezpiecznymi deklaracjami.
+Nie oznacza kompilacji, autonomii AI, transportu Zenoh ani E2E. Aktualny
+przebieg raportuje `111` pakietów w stanie DRAFT, `33` roje opisane manifestami
+i `0` aktywnych procesów. Osobna bramka `ocaf-agent-artifact-gate` nadal
+odrzuca brak wykonawczego kodu dla 33 grup inżynierskich.

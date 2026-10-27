@@ -15,6 +15,10 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+      - name: Verify 111 named draft packages and 33 swarm membership manifests
+        run: |
+          python3 -m unittest scripts.tests.test_agent_fleet_supervisor -v
+          python3 scripts/ocaf_agent_fleet_supervisor.py --log "$RUNNER_TEMP/ocaf-fleet-inventory.jsonl"
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
       - name: Build and test standalone Rust structural validator
         run: |
