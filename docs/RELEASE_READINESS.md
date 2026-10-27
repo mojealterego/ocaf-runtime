@@ -16,7 +16,7 @@ independent release requirements. A well-formed lockfile is not an audit.
 ## Evidence contract
 
 The private JSON manifest must contain exactly two top-level keys:
-`schema_version` (integer `1`) and `checks` (a mapping with **exactly**
+`schema_version` (integer `2`) and `checks` (a mapping with **exactly**
 these keys):
 
 1. `postgres_single_primary_fencing`
@@ -25,9 +25,14 @@ these keys):
 4. `independent_sink_idempotency`
 5. `tool_sandbox_isolation`
 6. `backup_restore_rehearsal`
-7. `dependency_license_security_audit`
-8. `load_soak_slo`
-9. `independent_security_review`
+7. `stateful_release_rollback`
+8. `dependency_license_security_audit`
+9. `load_soak_slo`
+10. `independent_security_review`
+
+Version 1 manifests must be regenerated for version 2; version 2 explicitly
+adds the stateful rollback check and evidence scopes. The operator directive
+file is a separate contract and retains its own version number.
 
 Each check has exactly `path`, `sha256`, `observed_at_utc` and `scope`. `path` is a
 single regular-file basename in the same private directory as the manifest,
@@ -39,7 +44,10 @@ The `scope` value must match the expected proof type: `independent_real_hosts`
 for fencing, multi-host mTLS, credential rotation, independent sink, backup
 restore and soak; `real_guest_host` for sandbox isolation; `dependency_audit`
 for the dependency check; and `independent_human_review` for the security
-review. Ephemeral lab results cannot satisfy real-host checks. A file path
+review. `stateful_release_rollback` requires `stateful_real_host`, including
+restoration of application state and denial of revoked credentials. The
+ephemeral 0.42.4 CLI rehearsal cannot fill this check. Ephemeral lab results
+cannot satisfy real-host checks. A file path
 or content digest cannot be reused for another check.
 Duplicate JSON object keys, extra/missing checks and oversized manifests
 are also rejected. The checks are an inventory — test authenticity, host

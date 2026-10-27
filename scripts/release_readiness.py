@@ -26,6 +26,7 @@ REQUIRED_EVIDENCE = (
     "independent_sink_idempotency",
     "tool_sandbox_isolation",
     "backup_restore_rehearsal",
+    "stateful_release_rollback",
     "dependency_license_security_audit",
     "load_soak_slo",
     "independent_security_review",
@@ -37,6 +38,7 @@ REQUIRED_SCOPES = {
     "independent_sink_idempotency": "independent_real_hosts",
     "tool_sandbox_isolation": "real_guest_host",
     "backup_restore_rehearsal": "independent_real_hosts",
+    "stateful_release_rollback": "stateful_real_host",
     "dependency_license_security_audit": "dependency_audit",
     "load_soak_slo": "independent_real_hosts",
     "independent_security_review": "independent_human_review",
@@ -89,7 +91,7 @@ def _manifest(manifest: Path) -> dict[str, Any]:
         raise ValueError("invalid manifest")
     data = json.loads(manifest.read_text(encoding="utf-8"), object_pairs_hook=_unique_fields)
     if (not isinstance(data, dict) or set(data) != {"schema_version", "checks"}
-            or type(data["schema_version"]) is not int or data["schema_version"] != 1):
+            or type(data["schema_version"]) is not int or data["schema_version"] != 2):
         raise ValueError("invalid manifest schema")
     checks = data["checks"]
     if not isinstance(checks, dict) or set(checks) != set(REQUIRED_EVIDENCE):

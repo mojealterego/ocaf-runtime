@@ -45,7 +45,7 @@ checksum = "0123456789abcdef" * 4
                 'scope': REQUIRED_SCOPES[name],
             }
         manifest = self.evidence / 'manifest.json'
-        manifest.write_text(json.dumps({'schema_version': 1, 'checks': checks}), encoding='utf-8')
+        manifest.write_text(json.dumps({'schema_version': 2, 'checks': checks}), encoding='utf-8')
         return manifest
 
     def test_missing_evidence_and_lockfile_fail_closed(self):
@@ -102,6 +102,14 @@ checksum = "0123456789abcdef" * 4
         report = evaluate(self.repo, manifest, NOW)
         self.assertIn('evidence_manifest_invalid', report['blockers'])
 
+    def test_old_manifest_version_requires_explicit_migration(self):
+        self.write_dependency_lock()
+        manifest = self.make_manifest()
+        data = json.loads(manifest.read_text())
+        data['schema_version'] = 1
+        manifest.write_text(json.dumps(data), encoding='utf-8')
+        self.assertIn('evidence_manifest_invalid', evaluate(self.repo, manifest, NOW)['blockers'])
+
     def test_lab_scope_cannot_satisfy_real_host_gate(self):
         self.write_dependency_lock()
         manifest = self.make_manifest()
@@ -110,6 +118,15 @@ checksum = "0123456789abcdef" * 4
         manifest.write_text(json.dumps(data), encoding='utf-8')
         report = evaluate(self.repo, manifest, NOW)
         self.assertIn('evidence_scope_invalid:backup_restore_rehearsal', report['blockers'])
+
+    def test_ephemeral_cli_rollback_cannot_satisfy_stateful_host_gate(self):
+        self.write_dependency_lock()
+        manifest = self.make_manifest()
+        data = json.loads(manifest.read_text())
+        data['checks']['stateful_release_rollback']['scope'] = 'ephemeral_lab'
+        manifest.write_text(json.dumps(data), encoding='utf-8')
+        report = evaluate(self.repo, manifest, NOW)
+        self.assertIn('evidence_scope_invalid:stateful_release_rollback', report['blockers'])
 
     def test_one_artifact_cannot_satisfy_multiple_checks(self):
         self.write_dependency_lock()
