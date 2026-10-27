@@ -46,6 +46,73 @@ class SupplyChainTests(unittest.TestCase):
         self.assertEqual(result["registry_packages"], 1)
         self.assertEqual(len(result["cargo_lock_sha256"]), 64)
 
+    def _add_workspace_member(self, path, name):
+        member = self.root / path
+        member.mkdir(parents=True)
+        (member / "Cargo.toml").write_text(
+            f'[package]\nname = "{name}"\nversion = "0.1.0"\n'
+            'publish = false\nlicense = "MIT"\n', encoding="utf-8")
+        cargo = self.root / "Cargo.toml"
+        source = cargo.read_text(encoding="utf-8")
+        if "[workspace]" not in source:
+            source = '[workspace]\nmembers = ["."]\ndefault-members = ["."]\n\n' + source
+        source = source.replace('members = ["."]', f'members = [".", "{path}"]', 1)
+        source += f'\n[dependencies]\n{name} = {{ path = "{path}" }}\n'
+        cargo.write_text(source, encoding="utf-8")
+        locked = self.lock.read_text(encoding="utf-8").replace(
+            'dependencies = ["test-crate"]',
+            f'dependencies = ["test-crate", "{name}"]',
+        )
+        self.lock.write_text(locked + f'\n[[package]]\nname = "{name}"\nversion = "0.1.0"\n', encoding="utf-8")
+
+    def test_accepts_reviewed_workspace_member(self):
+        self._add_workspace_member("crates/ocaf-stage-ledger", "ocaf_stage_ledger")
+        self.assertEqual(sc.inspect(self.root)["workspace_members"], {"ocaf_stage_ledger": "0.1.0"})
+
+    def test_accepts_second_reviewed_workspace_member(self):
+        self._add_workspace_member("crates/ocaf-transport-crdt", "ocaf-transport-crdt")
+        self.assertEqual(sc.inspect(self.root)["workspace_members"], {"ocaf-transport-crdt": "0.1.0"})
+
+    def test_rejects_unlisted_workspace_member(self):
+        self._add_workspace_member("crates/ocaf-stage-ledger", "ocaf_stage_ledger")
+        cargo = self.root / "Cargo.toml"
+        cargo.write_text(cargo.read_text().replace("crates/ocaf-stage-ledger", "crates/unreviewed"))
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
+    def test_rejects_workspace_member_identity_swap(self):
+        self._add_workspace_member("crates/ocaf-stage-ledger", "ocaf_stage_ledger")
+        member = self.root / "crates/ocaf-stage-ledger/Cargo.toml"
+        member.write_text(member.read_text().replace("ocaf_stage_ledger", "injected"))
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
+    def test_rejects_unbound_workspace_member(self):
+        self._add_workspace_member("crates/ocaf-stage-ledger", "ocaf_stage_ledger")
+        cargo = self.root / "Cargo.toml"
+        cargo.write_text(cargo.read_text().replace(
+            'ocaf_stage_ledger = { path = "crates/ocaf-stage-ledger" }',
+            'ocaf_stage_ledger = "0.1.0"',
+        ))
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
+    def test_rejects_workspace_member_missing_from_lock(self):
+        self._add_workspace_member("crates/ocaf-stage-ledger", "ocaf_stage_ledger")
+        self.lock.write_text(self.lock.read_text().replace(
+            '[[package]]\nname = "ocaf_stage_ledger"\nversion = "0.1.0"\n', ""
+        ))
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
+    def test_rejects_symlinked_workspace_member(self):
+        self._add_workspace_member("crates/ocaf-stage-ledger", "ocaf_stage_ledger")
+        crate = self.root / "crates/ocaf-stage-ledger"
+        crate.rename(self.root / "actual-crate")
+        crate.symlink_to(self.root / "actual-crate", target_is_directory=True)
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
     def _create_reviewed_patch(self):
         crate = self.root / "vendor/zenoh-transport"
         crate.mkdir(parents=True)

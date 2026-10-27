@@ -16,6 +16,12 @@ CHECKSUM = re.compile(r"[0-9a-f]{64}")
 MAX_MANIFEST_BYTES = 512 * 1024
 MAX_LOCK_BYTES = 8 * 1024 * 1024
 MAX_PACKAGES = 10_000
+# Local workspace code has no registry checksum. Each path and identity is
+# reviewed here so an unrelated local package cannot enter the locked graph.
+REVIEWED_WORKSPACE_MEMBERS = {
+    "crates/ocaf-stage-ledger": ("ocaf_stage_ledger", "0.1.0"),
+    "crates/ocaf-transport-crdt": ("ocaf-transport-crdt", "0.1.0"),
+}
 
 
 class PolicyError(ValueError):
@@ -49,6 +55,50 @@ def _toml(blob: bytes) -> dict[str, Any]:
     return doc
 
 
+def _workspace_members(root: Path, manifest: dict[str, Any]) -> dict[str, str]:
+    """Return reviewed local package versions from an exact workspace layout."""
+    workspace = manifest.get("workspace")
+    if workspace is None:
+        return {}
+    if not isinstance(workspace, dict):
+        raise PolicyError("invalid Cargo workspace definition")
+    paths = workspace.get("members")
+    if not isinstance(paths, list) or not paths or paths[0] != "." or \
+            len(paths) != len(set(str(path) for path in paths)) or \
+            workspace.get("default-members") != ["."]:
+        raise PolicyError("unreviewed Cargo workspace members or defaults")
+    if any(not isinstance(path, str) or (path != "." and path not in REVIEWED_WORKSPACE_MEMBERS)
+           for path in paths):
+        raise PolicyError("unreviewed Cargo workspace member")
+    dependencies = manifest.get("dependencies", {})
+    if not isinstance(dependencies, dict):
+        raise PolicyError("invalid root dependency table")
+    accepted: dict[str, str] = {}
+    for path in paths[1:]:
+        name, version = REVIEWED_WORKSPACE_MEMBERS[path]
+        member_root = root / path
+        for directory in (member_root.parent, member_root):
+            try:
+                mode = directory.lstat().st_mode
+            except OSError as exc:
+                raise PolicyError("reviewed workspace path is unavailable") from exc
+            if not stat.S_ISDIR(mode):
+                raise PolicyError("reviewed workspace path must be a directory")
+        member = _toml(_read_regular(member_root / "Cargo.toml", MAX_MANIFEST_BYTES))
+        package = member.get("package")
+        if not isinstance(package, dict) or \
+                (package.get("name"), package.get("version")) != (name, version) or \
+                package.get("publish") is not False or package.get("license") != "MIT":
+            raise PolicyError("reviewed workspace package identity or license changed")
+        bound = [alias for alias, dep in dependencies.items()
+                 if isinstance(dep, dict) and dep.get("path") == path and
+                 dep.get("package", alias) == name]
+        if len(bound) != 1:
+            raise PolicyError("workspace member is not bound to the root package")
+        accepted[name] = version
+    return accepted
+
+
 def inspect(repository: Path) -> dict[str, Any]:
     """Check locked identities and sources; not a registry/download verification."""
     root = repository.absolute()
@@ -59,6 +109,7 @@ def inspect(repository: Path) -> dict[str, Any]:
     name, version = package.get("name"), package.get("version")
     if not isinstance(name, str) or not name or not isinstance(version, str) or not version:
         raise PolicyError("invalid Cargo.toml package identity")
+    workspace_members = _workspace_members(root, manifest)
     blob = _read_regular(root / "Cargo.lock", MAX_LOCK_BYTES)
     lock = _toml(blob)
     if type(lock.get("version")) is not int or lock["version"] != 4:
@@ -146,6 +197,7 @@ def inspect(repository: Path) -> dict[str, Any]:
     hardened_registry = {name_: 0 for name_ in hardened}
     deprecated_seen = set()
     roots = 0
+    member_counts = {member: 0 for member in workspace_members}
     external = 0
     for pkg in packages:
         if not isinstance(pkg, dict):
@@ -159,6 +211,13 @@ def inspect(repository: Path) -> dict[str, Any]:
                 raise PolicyError("local package may not claim a registry checksum")
             if (pname, pversion) == (name, version):
                 roots += 1
+                locked_dependencies = pkg.get("dependencies", [])
+                if not isinstance(locked_dependencies, list) or any(
+                    member not in locked_dependencies for member in workspace_members
+                ):
+                    raise PolicyError("root lockfile does not depend on workspace members")
+            elif pname in workspace_members and workspace_members[pname] == pversion:
+                member_counts[pname] += 1
             elif patched_transport is not None and (pname, pversion) == ("zenoh-transport", "1.10.1"):
                 vendored_seen += 1
             elif token_patch is not None and (pname, pversion) == ("token-cell", "2.1.1"):
@@ -198,6 +257,8 @@ def inspect(repository: Path) -> dict[str, Any]:
         seen.add(identity)
     if roots != 1 or external == 0:
         raise PolicyError("expected root and locked crates.io dependencies not found")
+    if any(count != 1 for count in member_counts.values()):
+        raise PolicyError("reviewed workspace member is missing from Cargo.lock")
     if patched_transport is not None and (vendored_seen != 1 or registry_transport or lz4_safe != 1):
         raise PolicyError("patched Zenoh transport or safe LZ4 dependency is not exclusively locked")
     if token_patch is not None and (token_vendored != 1 or token_registry or pastey_safe != 1):
@@ -212,6 +273,7 @@ def inspect(repository: Path) -> dict[str, Any]:
         "lock_format": 4,
         "cargo_lock_sha256": hashlib.sha256(blob).hexdigest(),
         "registry_packages": external,
+        "workspace_members": dict(sorted(workspace_members.items())),
         "vendored_zenoh_transport": vendored_seen == 1,
         "vendored_token_cell": token_vendored == 1,
         "migrated_zenoh_tls_config": bool(hardened_requested),
