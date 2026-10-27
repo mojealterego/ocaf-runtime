@@ -2,8 +2,10 @@
 
 OMAt jest oddzielnym procesem serwerowym dla narzędzi. OCAF i OMAs mogą
 wysyłać żądania przez Zenoh, ale Zenoh nie nadaje uprawnień. OMAt sprawdza
-tenant, agenta, wersję manifestu, capabilities, schemat wejścia, limit czasu,
-limit wyjścia, idempotency key i ryzyko efektu ubocznego.
+tenant, identyfikatory agenta, capabilities, schemat wejścia, deklarowany
+limit czasu, limit wyjścia, format idempotency key i ryzyko efektu ubocznego.
+Przypięcie wersji manifestu do wywołania i egzekwowanie czasu przez executor
+są nadal wymaganiami dalszej integracji.
 
 ## Kontrakt
 
@@ -11,13 +13,26 @@ Implementacja kontraktu znajduje się w `src/omat_server.rs`.
 
 - `OmatRegistry` przechowuje manifesty narzędzi per `tenant_id`.
 - `OmatPolicy` jest allowlistą narzędzi i capabilities.
-- `OmatRegistry::admit` daje deterministyczny receipt `ALLOW_BOUNDED`.
-- `OmatRegistry::execute` kończy się `ExecutorUnavailable`, dopóki nie ma
-  osobno zarejestrowanego, zweryfikowanego executora.
+- `discover_for` zwraca tylko identyfikator, wersję, digest i typowane pola
+  uprawnień; nie przekazuje swobodnego opisu narzędzia jako instrukcji.
+  `schemas_for` wydaje schemat wyłącznie dla aktualnego digestu i polityki
+  tenanta. Zmiana wersji (`replace_if_digest`) oraz odwołanie
+  (`revoke_if_digest`) wymagają digestu poprzedniego manifestu. Odwołany
+  manifest znika z discovery i nie jest dopuszczany do wywołań. To jest
+  atomowa kontrola lokalnego rejestru w pamięci, nie trwały protokół
+  aktualizacji ani źródło zaufania podpisu.
+- `OmatRegistry::admit` odmawia, dopóki nie istnieje zaufane potwierdzenie
+  OSTc. Flaga `ostc_enabled` w żądaniu nie jest takim potwierdzeniem.
+- `OmatRegistry::execute` odmawia przy tym samym ograniczeniu; przyszły
+  brak executora skutkowałby `ExecutorUnavailable` po prawdziwym
+  potwierdzeniu OSTc.
 - `health` raportuje serwer, wersję protokołu i licznik narzędzi.
 
 Brak executora jest celową bramką fail-closed. Sam wpis w katalogu nie jest
-wykonaniem kodu i nie może uruchomić zewnętrznego procesu.
+wykonaniem kodu i nie może uruchomić zewnętrznego procesu. Schematy z
+niezaufanych manifestów są danymi walidacyjnymi; konsument nie może używać
+ich pól opisowych jako instrukcji ani pomijać ponownego sprawdzenia digestu
+przy przyszłym wykonaniu.
 
 ## Uruchomienie docelowe
 
@@ -45,6 +60,7 @@ timeout/output, niezgodne schema, niepoprawny idempotency key oraz żądanie z
 ## Weryfikacja
 
 Testy jednostkowe `omat_server` obejmują rejestrację, listowanie, tenant
-boundary, blokadę OSTc, side effects, fail-closed executor i health. Test
-produkcyjny wymaga osobnego procesu, Zenoh multi-node, podpisu manifestu,
-izolowanego executora oraz pozytywnych i negatywnych dowodów E2E.
+boundary, blokadę OSTc, side effects, fail-closed executor, health, zmianę
+schematu między discovery i pobraniem oraz odwołanie. Test produkcyjny wymaga
+osobnego procesu, Zenoh multi-node, podpisu manifestu, trwałego rejestru
+wersji, izolowanego executora oraz pozytywnych i negatywnych dowodów E2E.
