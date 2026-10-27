@@ -41,6 +41,10 @@ jobs:
           fi
           test -x /usr/lib/postgresql/16/bin/initdb
           test -x /usr/lib/postgresql/16/bin/psql
+          if ! sudo -n -u postgres python3 -c 'import cryptography' >/dev/null 2>&1; then
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-cryptography
+          fi
+          sudo -n -u postgres python3 -c 'import cryptography'
       - name: Real PostgreSQL write, missing-majority denial and stale-writer denial
         shell: bash
         run: |
