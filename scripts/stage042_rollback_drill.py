@@ -13,6 +13,7 @@ import json
 import subprocess
 import tarfile
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 
 from scripts.verify_release_bundle import ARCHIVE, BundleError
@@ -22,7 +23,8 @@ PROBE = "ocaf-cluster-health"
 INVALID_ARG = "--ocaf-rollback-probe-invalid"
 
 
-def _probe(bundle: Path) -> dict[str, object]:
+@contextmanager
+def _binary(bundle: Path):
     with tempfile.TemporaryDirectory(prefix="ocaf-rollback-") as directory:
         executable = Path(directory) / PROBE
         try:
@@ -38,6 +40,11 @@ def _probe(bundle: Path) -> dict[str, object]:
             raise BundleError("rollback probe binary invalid")
         executable.write_bytes(content)
         executable.chmod(0o500)
+        yield executable, content
+
+
+def _probe(bundle: Path) -> dict[str, object]:
+    with _binary(bundle) as (executable, content):
         try:
             result = subprocess.run([str(executable), INVALID_ARG],
                                     capture_output=True, timeout=10,
@@ -48,6 +55,33 @@ def _probe(bundle: Path) -> dict[str, object]:
             raise BundleError("rollback CLI behavior mismatch")
         return {"binary_sha256": hashlib.sha256(content).hexdigest(),
                 "invalid_option_exit": result.returncode}
+
+
+def database_probe(bundle: Path, expected_pending: int, dsn: str) -> dict[str, object]:
+    """Check that an attested CLI reads the expected restored PG state."""
+    if not 0 <= expected_pending <= 1000 or not dsn:
+        raise BundleError("invalid PostgreSQL rollback probe configuration")
+    with _binary(bundle) as (executable, content):
+        env = {"PATH": "/usr/bin:/bin", "OCAF_CLUSTER_PG_DSN": dsn,
+               "OCAF_CLUSTER_ID": "stage042_rollback",
+               "OCAF_ALLOW_INSECURE_LOOPBACK": "1"}
+        try:
+            result = subprocess.run([str(executable), "--json", "--no-fail"],
+                                    capture_output=True, timeout=15, env=env,
+                                    check=False)
+            if result.returncode != 0:
+                raise BundleError("PostgreSQL rollback CLI failed")
+            payload = json.loads(result.stdout)
+        except (OSError, subprocess.TimeoutExpired, ValueError) as error:
+            raise BundleError("PostgreSQL rollback CLI invalid response") from error
+        snapshot = payload.get("snapshot") if isinstance(payload, dict) else None
+        if (not isinstance(snapshot, dict) or
+                type(snapshot.get("jobs_pending")) is not int or
+                snapshot["jobs_pending"] != expected_pending):
+            raise BundleError("PostgreSQL rollback state mismatch")
+        return {"binary_sha256": hashlib.sha256(content).hexdigest(),
+                "jobs_pending": snapshot["jobs_pending"],
+                "scope": "single ephemeral PostgreSQL snapshot"}
 
 
 def drill(repo: Path, candidate: Path, prior: Path, candidate_sha: str,

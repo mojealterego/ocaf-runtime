@@ -29,6 +29,20 @@ jobs:
   rollback-drill:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
+        env:
+          POSTGRES_USER: ocaf
+          POSTGRES_PASSWORD: ocaf_local_test_password
+          POSTGRES_DB: ocaf_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ocaf -d ocaf_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -94,3 +108,31 @@ jobs:
             --repo . --candidate candidate --prior prior \
             --candidate-sha "$CANDIDATE_SHA" --prior-sha "$PRIOR_SHA" \
             --repository "$GITHUB_REPOSITORY"
+      - name: Build a disposable PostgreSQL snapshot and exercise candidate against updated state
+        env:
+          OCAF_TEST_PG_DSN: host=127.0.0.1 port=5432 user=ocaf password=ocaf_local_test_password dbname=ocaf_test sslmode=disable
+        run: |
+          set -euo pipefail
+          container="$(docker ps -q --filter name=postgres)"
+          test -n "$container"
+          docker exec "$container" psql -v ON_ERROR_STOP=1 -U ocaf -d ocaf_test -c \
+            "CREATE TABLE ocaf_pg_nodes_v2(cluster_id TEXT NOT NULL, expires_at_ms BIGINT NOT NULL);
+             CREATE TABLE ocaf_pg_jobs_v1(cluster_id TEXT NOT NULL, status TEXT NOT NULL, lease_expires_at_ms BIGINT NOT NULL);
+             INSERT INTO ocaf_pg_jobs_v1 VALUES ('stage042_rollback','pending',0);"
+          docker exec "$container" pg_dump -U ocaf -d ocaf_test -Fc \
+            -t ocaf_pg_nodes_v2 -t ocaf_pg_jobs_v1 -f /tmp/ocaf42-prior.dump
+          docker exec "$container" psql -v ON_ERROR_STOP=1 -U ocaf -d ocaf_test -c \
+            "INSERT INTO ocaf_pg_jobs_v1 VALUES ('stage042_rollback','pending',0);"
+          python3 -m scripts.stage042_pg_rollback_probe \
+            --bundle candidate --expected-pending 2
+      - name: Restore prior PostgreSQL snapshot and exercise prior signed binary
+        env:
+          OCAF_TEST_PG_DSN: host=127.0.0.1 port=5432 user=ocaf password=ocaf_local_test_password dbname=ocaf_test sslmode=disable
+        run: |
+          set -euo pipefail
+          container="$(docker ps -q --filter name=postgres)"
+          test -n "$container"
+          docker exec "$container" pg_restore -U ocaf -d ocaf_test \
+            --clean --if-exists --exit-on-error /tmp/ocaf42-prior.dump
+          python3 -m scripts.stage042_pg_rollback_probe \
+            --bundle prior --expected-pending 1

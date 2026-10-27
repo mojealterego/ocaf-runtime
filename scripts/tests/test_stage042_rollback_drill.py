@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.stage042_rollback_drill import _probe
+from scripts.stage042_rollback_drill import _probe, database_probe
 from scripts.verify_release_bundle import ARCHIVE, BundleError
 
 
@@ -38,6 +38,17 @@ class RollbackDrillTests(unittest.TestCase):
             pass
         with self.assertRaises(BundleError):
             _probe(self.bundle)
+
+    def test_postgres_probe_requires_expected_state(self) -> None:
+        self.archive(b'#!/bin/sh\necho \'{"snapshot":{"jobs_pending":2}}\'\n')
+        result = database_probe(self.bundle, 2, "host=127.0.0.1")
+        self.assertEqual(result["jobs_pending"], 2)
+        with self.assertRaisesRegex(BundleError, "state mismatch"):
+            database_probe(self.bundle, 1, "host=127.0.0.1")
+
+    def test_postgres_probe_rejects_empty_dsn(self) -> None:
+        with self.assertRaisesRegex(BundleError, "configuration"):
+            database_probe(self.bundle, 2, "")
 
 
 if __name__ == "__main__":
