@@ -69,7 +69,7 @@ jobs:
           PRIOR_SHA: ${{ inputs.prior_sha }}
         run: |
           set -euo pipefail
-          python3 scripts/verify_rollback_pair.py \
+          python3 -m scripts.verify_rollback_pair \
             --repo . --candidate candidate --prior prior \
             --candidate-sha "$CANDIDATE_SHA" --prior-sha "$PRIOR_SHA" \
             --repository "$GITHUB_REPOSITORY"
@@ -90,7 +90,7 @@ jobs:
           PRIOR_SHA: ${{ inputs.prior_sha }}
         run: |
           set -euo pipefail
-          python3 scripts/stage042_rollback_drill.py \
+          python3 -m scripts.stage042_rollback_drill \
             --repo . --candidate candidate --prior prior \
             --candidate-sha "$CANDIDATE_SHA" --prior-sha "$PRIOR_SHA" \
             --repository "$GITHUB_REPOSITORY"
