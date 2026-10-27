@@ -136,3 +136,21 @@ jobs:
             --clean --if-exists --exit-on-error /tmp/ocaf42-prior.dump
           python3 -m scripts.stage042_pg_rollback_probe \
             --bundle prior --expected-pending 1
+      - name: Rotate PostgreSQL password and deny restored prior binary with revoked credential
+        env:
+          OCAF_TEST_PG_DSN: host=127.0.0.1 port=5432 user=ocaf password=ocaf_local_test_password dbname=ocaf_test sslmode=disable
+        run: |
+          set -euo pipefail
+          container="$(docker ps -q --filter name=postgres)"
+          test -n "$container"
+          docker exec "$container" psql -v ON_ERROR_STOP=1 -U ocaf -d ocaf_test -c \
+            "ALTER ROLE ocaf PASSWORD 'ocaf_rotated_local_test_password'"
+          if docker exec -e PGPASSWORD=ocaf_local_test_password "$container" \
+              psql -h 127.0.0.1 -U ocaf -d ocaf_test -Atc 'SELECT 1' >/dev/null 2>&1; then
+            echo 'old PostgreSQL credential remained valid' >&2
+            exit 1
+          fi
+          test "$(docker exec -e PGPASSWORD=ocaf_rotated_local_test_password "$container" \
+            psql -h 127.0.0.1 -U ocaf -d ocaf_test -Atc 'SELECT 1')" = 1
+          python3 -m scripts.stage042_pg_rollback_probe \
+            --bundle prior --expect-revoked

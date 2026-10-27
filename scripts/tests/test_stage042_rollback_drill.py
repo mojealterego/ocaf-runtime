@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.stage042_rollback_drill import _probe, database_probe
+from scripts.stage042_rollback_drill import _probe, database_probe, revoked_database_probe
 from scripts.verify_release_bundle import ARCHIVE, BundleError
 
 
@@ -49,6 +49,18 @@ class RollbackDrillTests(unittest.TestCase):
     def test_postgres_probe_rejects_empty_dsn(self) -> None:
         with self.assertRaisesRegex(BundleError, "configuration"):
             database_probe(self.bundle, 2, "")
+
+    def test_revoked_credential_denial_requires_nonzero_and_no_leak(self) -> None:
+        self.archive(b'#!/bin/sh\necho "database unavailable" >&2\nexit 1\n')
+        self.assertTrue(revoked_database_probe(
+            self.bundle, "host=127.0.0.1 password=revoked dbname=test"
+        )["revoked_credential_denied"])
+        self.archive(b'#!/bin/sh\necho "revoked" >&2\nexit 1\n')
+        with self.assertRaisesRegex(BundleError, "accepted or leaked"):
+            revoked_database_probe(self.bundle, "password=revoked")
+        self.archive(b'#!/bin/sh\nexit 0\n')
+        with self.assertRaisesRegex(BundleError, "accepted or leaked"):
+            revoked_database_probe(self.bundle, "password=revoked")
 
 
 if __name__ == "__main__":

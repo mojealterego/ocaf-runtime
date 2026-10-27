@@ -84,6 +84,31 @@ def database_probe(bundle: Path, expected_pending: int, dsn: str) -> dict[str, o
                 "scope": "single ephemeral PostgreSQL snapshot"}
 
 
+def revoked_database_probe(bundle: Path, revoked_dsn: str) -> dict[str, object]:
+    """After a successful snapshot probe, deny use of a rotated DB password."""
+    if not revoked_dsn:
+        raise BundleError("missing revoked PostgreSQL credential")
+    password = revoked_dsn.partition("password=")[2].split(" ", 1)[0]
+    if not password:
+        raise BundleError("revoked PostgreSQL probe needs a password")
+    with _binary(bundle) as (executable, content):
+        env = {"PATH": "/usr/bin:/bin", "OCAF_CLUSTER_PG_DSN": revoked_dsn,
+               "OCAF_CLUSTER_ID": "stage042_rollback",
+               "OCAF_ALLOW_INSECURE_LOOPBACK": "1"}
+        try:
+            result = subprocess.run([str(executable), "--json", "--no-fail"],
+                                    capture_output=True, timeout=15, env=env,
+                                    check=False)
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise BundleError("revoked PostgreSQL probe did not complete") from error
+        if (result.returncode == 0 or result.stdout or
+                password.encode() in result.stderr):
+            raise BundleError("revoked PostgreSQL credential was accepted or leaked")
+        return {"binary_sha256": hashlib.sha256(content).hexdigest(),
+                "revoked_credential_denied": True,
+                "scope": "ephemeral PostgreSQL password rotation"}
+
+
 def drill(repo: Path, candidate: Path, prior: Path, candidate_sha: str,
           prior_sha: str, repository: str) -> dict[str, object]:
     pair = verify_pair(repo, candidate, prior, candidate_sha, prior_sha, repository)
