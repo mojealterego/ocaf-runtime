@@ -9,7 +9,6 @@ fn prepare_db(dir: &tempfile::TempDir, path: &std::path::Path) {
     std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600)).unwrap();
 }
 
-
 fn request(tenant: &str, agent: &str, id: &str) -> AgentRegistrationRequest {
     AgentRegistrationRequest {
         request_id: id.into(),

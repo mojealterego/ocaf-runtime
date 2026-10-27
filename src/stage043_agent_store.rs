@@ -24,7 +24,9 @@ fn private_agent_database(path: &Path) -> Result<PathBuf, String> {
             return Err("agent database parent must not be a symlink".into());
         }
         let canonical_parent = parent.canonicalize().map_err(|e| e.to_string())?;
-        let parent_meta = canonical_parent.symlink_metadata().map_err(|e| e.to_string())?;
+        let parent_meta = canonical_parent
+            .symlink_metadata()
+            .map_err(|e| e.to_string())?;
         if parent_meta.uid() != unsafe { libc::geteuid() }
             || parent_meta.permissions().mode() & 0o077 != 0
         {
@@ -32,7 +34,9 @@ fn private_agent_database(path: &Path) -> Result<PathBuf, String> {
         }
         let canonical_path =
             canonical_parent.join(path.file_name().ok_or("missing database file")?);
-        let file = canonical_path.symlink_metadata().map_err(|e| e.to_string())?;
+        let file = canonical_path
+            .symlink_metadata()
+            .map_err(|e| e.to_string())?;
         if !file.file_type().is_file()
             || file.uid() != unsafe { libc::geteuid() }
             || file.permissions().mode() & 0o077 != 0
