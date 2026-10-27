@@ -174,17 +174,37 @@ impl OmatZenohAdmission {
     }
 
     pub fn handle(&mut self, bytes: &[u8]) -> anyhow::Result<()> {
+        self.handle_checked(bytes, None)
+    }
+
+    /// Bind the signed topic to the actual Zenoh selector before consuming
+    /// the nonce. A frame routed to another listener must not be accepted.
+    pub fn handle_for_topic(&mut self, bytes: &[u8], actual_topic: &str) -> anyhow::Result<()> {
+        self.handle_checked(bytes, Some(actual_topic))
+    }
+
+    fn handle_checked(&mut self, bytes: &[u8], actual_topic: Option<&str>) -> anyhow::Result<()> {
         self.metrics.requests.fetch_add(1, Ordering::Relaxed);
-        let outcome = self.handle_authenticated(bytes);
+        let outcome = self.handle_authenticated(bytes, actual_topic);
         if outcome.is_err() {
             self.metrics.rejections.fetch_add(1, Ordering::Relaxed);
         }
         outcome
     }
 
-    fn handle_authenticated(&mut self, bytes: &[u8]) -> anyhow::Result<()> {
+    fn handle_authenticated(
+        &mut self,
+        bytes: &[u8],
+        actual_topic: Option<&str>,
+    ) -> anyhow::Result<()> {
         anyhow::ensure!(bytes.len() <= MAX_FRAME, "frame too large");
         let request: SignedOmatRequest = serde_json::from_slice(bytes)?;
+        if let Some(topic) = actual_topic {
+            anyhow::ensure!(
+                request.topic == topic,
+                "signed topic does not match Zenoh selector"
+            );
+        }
         anyhow::ensure!(
             request.nonce.len() >= 16
                 && request.nonce.len() <= 128
@@ -304,7 +324,10 @@ where
             },
         };
         let result = match query.payload() {
-            Some(payload) => state.lock().await.handle(payload.to_bytes().as_ref()),
+            Some(payload) => state
+                .lock()
+                .await
+                .handle_for_topic(payload.to_bytes().as_ref(), key),
             None => Err(anyhow::anyhow!("missing payload")),
         };
         if result.is_err() {

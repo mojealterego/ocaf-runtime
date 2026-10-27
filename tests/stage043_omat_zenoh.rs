@@ -55,6 +55,38 @@ fn rejects_shared_hmac_secret_across_authenticated_principals() {
 }
 
 #[test]
+fn signed_topic_must_match_transport_selector_before_nonce_is_consumed() {
+    let mut server = admission();
+    server.connected(true);
+    let signed_topic = "ocaf/omat/tenant_a/requests/req_1";
+    let other_selector = "ocaf/omat/tenant_a/requests/req_2";
+    let signed = sign_omas_request(
+        "omas_a",
+        signed_topic,
+        "selectorboundnonce1",
+        call("tenant_a"),
+        &[7u8; 32],
+    )
+    .unwrap();
+    assert!(server
+        .handle_for_topic(&signed, other_selector)
+        .unwrap_err()
+        .to_string()
+        .contains("selector"));
+    // The rejected delivery must not burn the nonce. The correct selector
+    // still reaches the expected fail-closed tool policy.
+    assert_eq!(
+        server.handle_for_topic(&signed, signed_topic).unwrap_err().to_string(),
+        "OMAt request denied"
+    );
+    assert!(server
+        .handle_for_topic(&signed, signed_topic)
+        .unwrap_err()
+        .to_string()
+        .contains("replay"));
+}
+
+#[test]
 fn signed_admission_rejects_forgery_cross_tenant_and_replay() {
     let mut server = admission();
     server.connected(true);
@@ -133,6 +165,19 @@ async fn real_zenoh_loopback_rejects_and_fails_closed_after_server_shutdown() {
     let task =
         tokio::spawn(async move { serve_omat_zenoh(server_session, admission(), key).await });
     tokio::time::sleep(Duration::from_millis(200)).await;
+    let misrouted = sign_omas_request(
+        "omas_a",
+        "ocaf/omat/tenant_a/requests/req_2",
+        "misroutednonce123",
+        call("tenant_a"),
+        &[7u8; 32],
+    )
+    .unwrap();
+    let mismatch = request_omat_zenoh(&session, key, misrouted)
+        .await
+        .unwrap_err()
+        .to_string();
+    assert!(mismatch.contains("rejected"), "unexpected Zenoh result: {mismatch}");
     let signed = sign_omas_request(
         "omas_a",
         key,
