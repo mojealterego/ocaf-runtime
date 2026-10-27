@@ -4,6 +4,8 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import shutil
+import subprocess
 import tarfile
 import tempfile
 import unittest
@@ -11,6 +13,7 @@ from pathlib import Path
 
 from scripts.create_release_manifest import ManifestError, build_manifest
 from scripts.verify_release_bundle import BundleError, verify_bundle
+from scripts.verify_rollback_pair import verify_pair
 
 BINARIES = ("ocaf-coordinator", "ocaf-cluster-health", "ocaf-rpc-node", "ocaf-effect-sink")
 ARCHIVE = "ocaf_runtime-linux-x86_64.tar.gz"
@@ -71,6 +74,46 @@ class ReleaseBundleTests(unittest.TestCase):
         self.assertEqual(set(evidence["sha256"]), {ARCHIVE, SBOM, MANIFEST})
         self.assertEqual(evidence["binaries"], sorted(BINARIES))
         self.assertEqual(evidence["source"]["git_sha"], SHA)
+
+    def test_rollback_pair_binds_distinct_bundles_to_ancestor_commits(self) -> None:
+        repo = self.root / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        subprocess.run(["git", "-C", str(repo), "-c", "user.name=Test",
+                        "-c", "user.email=test@example.invalid", "commit", "--allow-empty",
+                        "-qm", "prior"], check=True)
+        prior_sha = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
+        subprocess.run(["git", "-C", str(repo), "-c", "user.name=Test",
+                        "-c", "user.email=test@example.invalid", "commit", "--allow-empty",
+                        "-qm", "candidate"], check=True)
+        candidate_sha = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
+        prior = self.root / "prior"
+        candidate = self.root / "candidate"
+        prior.mkdir()
+        candidate.mkdir()
+        for bundle in (prior, candidate):
+            for name in (ARCHIVE, SBOM):
+                shutil.copy2(self.root / name, bundle / name)
+        for bundle, sha in ((prior, prior_sha), (candidate, candidate_sha)):
+            manifest = build_manifest(bundle, sha, REPOSITORY)
+            (bundle / MANIFEST).write_text(json.dumps(manifest), encoding="utf-8")
+            lines = [f"{hashlib.sha256((bundle / name).read_bytes()).hexdigest()}  {name}\n"
+                     for name in (ARCHIVE, SBOM, MANIFEST)]
+            (bundle / "SHA256SUMS").write_text("".join(lines), encoding="ascii")
+        with self.assertRaisesRegex(BundleError, "identical"):
+            verify_pair(repo, candidate, prior, candidate_sha, prior_sha, REPOSITORY)
+        with (candidate / ARCHIVE).open("ab") as handle:
+            handle.write(b"different archive padding")
+        manifest = build_manifest(candidate, candidate_sha, REPOSITORY)
+        (candidate / MANIFEST).write_text(json.dumps(manifest), encoding="utf-8")
+        lines = [f"{hashlib.sha256((candidate / name).read_bytes()).hexdigest()}  {name}\n"
+                 for name in (ARCHIVE, SBOM, MANIFEST)]
+        (candidate / "SHA256SUMS").write_text("".join(lines), encoding="ascii")
+        report = verify_pair(repo, candidate, prior, candidate_sha, prior_sha, REPOSITORY)
+        self.assertEqual(report["status"], "PAIR_VERIFIED_UNATTESTED")
+        self.assertFalse(report["behavior_verified"])
+        with self.assertRaisesRegex(BundleError, "ancestor"):
+            verify_pair(repo, prior, candidate, prior_sha, candidate_sha, REPOSITORY)
 
     def test_rejects_tampered_archive(self) -> None:
         with (self.root / ARCHIVE).open("ab") as f:
