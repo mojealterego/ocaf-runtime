@@ -327,14 +327,16 @@ where
             Some(payload) => state
                 .lock()
                 .await
-                .handle_for_topic(payload.to_bytes().as_ref(), key),
+                .handle_for_topic(payload.to_bytes().as_ref(), query.key_expr().as_str()),
             None => Err(anyhow::anyhow!("missing payload")),
         };
         if result.is_err() {
             tracing::warn!(selector = %key, "omat_request_rejected");
             let _ = query.reply_err("rejected").await;
         } else {
-            let _ = query.reply(key, b"accepted".as_slice()).await;
+            let _ = query
+                .reply(query.key_expr().as_str(), b"accepted".as_slice())
+                .await;
         }
     }
     state.lock().await.connected(false);

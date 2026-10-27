@@ -76,7 +76,10 @@ fn signed_topic_must_match_transport_selector_before_nonce_is_consumed() {
     // The rejected delivery must not burn the nonce. The correct selector
     // still reaches the expected fail-closed tool policy.
     assert_eq!(
-        server.handle_for_topic(&signed, signed_topic).unwrap_err().to_string(),
+        server
+            .handle_for_topic(&signed, signed_topic)
+            .unwrap_err()
+            .to_string(),
         "OMAt request denied"
     );
     assert!(server
@@ -177,7 +180,10 @@ async fn real_zenoh_loopback_rejects_and_fails_closed_after_server_shutdown() {
         .await
         .unwrap_err()
         .to_string();
-    assert!(mismatch.contains("rejected"), "unexpected Zenoh result: {mismatch}");
+    assert!(
+        mismatch.contains("rejected"),
+        "unexpected Zenoh result: {mismatch}"
+    );
     let signed = sign_omas_request(
         "omas_a",
         key,
