@@ -21,6 +21,14 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+      - name: Install Ed25519 witness dependency if absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! python3 -c 'import cryptography' >/dev/null 2>&1; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-cryptography
+          fi
       - name: Majority, stale epoch and SQL injection negatives
         run: python3 -m unittest discover -s scripts/tests -p test_stage040_pg_witness_effect_lab.py -v
       - name: Install PostgreSQL 16 if absent
@@ -54,6 +62,7 @@ jobs:
           assert r['status']=='ONE_POSTMASTER_MAJORITY_EFFECT_ADAPTER_LAB_PASS'
           assert r['postgresql_rows']==['1:node-a','2:node-b']
           assert r['majority_vote_required_before_sql'] is True
+          assert r['candidate_gate_holds_only_public_witness_keys'] is True
           assert r['minority_partition_sql_not_invoked'] is True
           assert r['stale_epoch_sql_not_invoked'] is True
           assert r['postgresql_server_side_fencing_proved'] is False

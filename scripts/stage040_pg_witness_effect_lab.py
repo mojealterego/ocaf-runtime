@@ -19,8 +19,11 @@ import tempfile
 import time
 from typing import Callable, Sequence
 
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
 from stage040_quorum_certificate import (
-    CertificateError, QuorumCertificateGate, WitnessVote, issue_vote,
+    CertificateError, QuorumCertificateGate, WitnessVote, issue_vote_ed25519,
 )
 
 
@@ -84,13 +87,21 @@ def run_lab(pg_bin: Path) -> dict:
                                 "-d", "postgres", "-c", statement])
             sql("CREATE TABLE ocaf40_guarded_events (epoch bigint NOT NULL, "
                 "candidate text NOT NULL, nonce text PRIMARY KEY)")
-            keys = {name: secrets.token_bytes(32) for name in ("w1", "w2", "w3")}
+            # This remains a one-host lab. A candidate-side gate sees only
+            # public keys; the three private keys model separate witnesses.
+            keys = {name: Ed25519PrivateKey.generate() for name in ("w1", "w2", "w3")}
+            public_keys = {
+                name: key.public_key().public_bytes(
+                    encoding=serialization.Encoding.Raw,
+                    format=serialization.PublicFormat.Raw)
+                for name, key in keys.items()
+            }
             gate = QuorumCertificateGate(root/"quorum.sqlite", cluster_id="pg-lab",
-                                         witness_keys=keys)
+                                         witness_public_keys=public_keys)
             try:
                 def votes(candidate: str, epoch: int, witnesses: tuple[str, ...]):
                     now = time.monotonic()
-                    return [issue_vote(witness_id=name, key=keys[name],
+                    return [issue_vote_ed25519(witness_id=name, private_key=keys[name],
                                        cluster_id="pg-lab", candidate_id=candidate,
                                        epoch=epoch, lease_id=f"lease-{epoch}",
                                        issued_at=now, expires_at=now+20)
@@ -141,6 +152,7 @@ def run_lab(pg_bin: Path) -> dict:
                     "status": "ONE_POSTMASTER_MAJORITY_EFFECT_ADAPTER_LAB_PASS",
                     "postgresql_rows": rows.splitlines(),
                     "majority_vote_required_before_sql": True,
+                    "candidate_gate_holds_only_public_witness_keys": True,
                     "minority_partition_sql_not_invoked": True,
                     "stale_epoch_sql_not_invoked": True,
                     "postgresql_server_side_fencing_proved": False,

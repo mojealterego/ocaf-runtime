@@ -7,11 +7,11 @@ present matching, authenticated votes from a strict majority of the configured
 witness set.  The admitted epoch is persisted so an old or conflicting
 certificate cannot become valid after process restart.
 
-Witness authentication uses an independent HMAC key per witness and the vote
-format is domain separated and canonical.  Key distribution and remote witness
-availability are deployment concerns.  Consequently this module is a real
-fail-closed admission control, but is not evidence that three remote failure
-domains or PostgreSQL server-side fencing have been deployed.
+Ed25519 admission keeps only witness *public* keys on the candidate side. The
+older HMAC mode remains for existing local labs, but is unsuitable when the
+candidate might be compromised: its verifier holds every signing secret. Key
+distribution and remote witness availability are deployment concerns. Neither
+mode proves remote failure domains or PostgreSQL server-side fencing.
 
 The persisted membership digest includes witness key fingerprints and the
 threshold. Existing state written by the older name-only format fails closed
@@ -33,12 +33,18 @@ import stat
 import time
 from typing import Mapping, Sequence
 
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+    Ed25519PrivateKey, Ed25519PublicKey,
+)
+
 
 MAX_EPOCH = 2**63 - 1
 MAX_LEASE_SECONDS = 300.0
 MAX_CLOCK_SECONDS = 10**12
 _IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}\Z")
 _SIGNATURE = re.compile(r"[a-f0-9]{64}\Z")
+_ED25519_SIGNATURE = re.compile(r"[a-f0-9]{128}\Z")
 
 
 class CertificateError(ValueError):
@@ -81,7 +87,7 @@ class QuorumReceipt:
     witness_ids: tuple[str, ...]
 
 
-def _payload(vote: WitnessVote) -> bytes:
+def _payload(vote: WitnessVote, *, scheme: str = "hmac-sha256") -> bytes:
     document = {
         "candidate_id": vote.candidate_id,
         "cluster_id": vote.cluster_id,
@@ -91,7 +97,9 @@ def _payload(vote: WitnessVote) -> bytes:
         "lease_id": vote.lease_id,
         "witness_id": vote.witness_id,
     }
-    return (b"OCAF-STAGE040-WITNESS-V1\0" +
+    domain = (b"OCAF-STAGE040-WITNESS-ED25519-V1\0" if scheme == "ed25519"
+              else b"OCAF-STAGE040-WITNESS-V1\0")
+    return (domain +
             json.dumps(document, sort_keys=True, separators=(",", ":"),
                        ensure_ascii=True, allow_nan=False).encode("ascii"))
 
@@ -114,6 +122,20 @@ def issue_vote(*, witness_id: str, key: bytes, cluster_id: str,
     return WitnessVote(**{**asdict(unsigned), "signature": signature})
 
 
+def issue_vote_ed25519(*, witness_id: str, private_key: Ed25519PrivateKey,
+                       cluster_id: str, candidate_id: str, epoch: int,
+                       lease_id: str, issued_at: float,
+                       expires_at: float) -> WitnessVote:
+    """Sign inside one witness authority; never send this key to a candidate."""
+    unsigned = WitnessVote(witness_id, cluster_id, candidate_id, epoch,
+                           lease_id, issued_at, expires_at, "")
+    _validate_unsigned(unsigned)
+    if not isinstance(private_key, Ed25519PrivateKey):
+        raise CertificateError("Ed25519 witness private key required")
+    signature = private_key.sign(_payload(unsigned, scheme="ed25519")).hex()
+    return WitnessVote(**{**asdict(unsigned), "signature": signature})
+
+
 def _validate_unsigned(vote: WitnessVote) -> None:
     if not isinstance(vote, WitnessVote):
         raise CertificateError("typed witness vote required")
@@ -133,22 +155,40 @@ class QuorumCertificateGate:
     """Verify strict-majority votes and persist the fencing high-water mark."""
 
     def __init__(self, state_path: Path | str, *, cluster_id: str,
-                 witness_keys: Mapping[str, bytes], threshold: int | None = None,
+                 witness_keys: Mapping[str, bytes] | None = None,
+                 witness_public_keys: Mapping[str, bytes] | None = None,
+                 allow_shared_secret_lab: bool = False,
+                 threshold: int | None = None,
                  clock=time.monotonic, clock_domain: str | None = None):
         if not _identifier(cluster_id):
             raise CertificateError("invalid cluster identity")
-        if (not isinstance(witness_keys, Mapping) or len(witness_keys) < 3
-                or any(not _identifier(name) or not _key(key)
-                       for name, key in witness_keys.items())):
+        if (witness_keys is None) == (witness_public_keys is None):
+            raise CertificateError("select exactly one witness signature scheme")
+        self._scheme = "ed25519" if witness_public_keys is not None else "hmac-sha256"
+        if self._scheme == "hmac-sha256" and allow_shared_secret_lab is not True:
+            raise CertificateError("shared-secret HMAC mode requires explicit lab opt-in")
+        if self._scheme == "ed25519" and allow_shared_secret_lab is not False:
+            raise CertificateError("lab opt-in cannot accompany public-key quorum")
+        keys = witness_public_keys if witness_public_keys is not None else witness_keys
+        if (not isinstance(keys, Mapping) or len(keys) < 3
+                or any(not _identifier(name) or not isinstance(key, bytes)
+                       or (len(key) != 32 if self._scheme == "ed25519" else not _key(key))
+                       for name, key in keys.items())):
             raise CertificateError("at least three bounded independent witness keys required")
-        # A majority counts independent authorities, not labels.  Reusing a
-        # secret under two IDs lets one compromised witness forge two votes.
-        if len(set(witness_keys.values())) != len(witness_keys):
+        if self._scheme == "ed25519":
+            try:
+                for key in keys.values():
+                    Ed25519PublicKey.from_public_bytes(key)
+            except ValueError as exc:
+                raise CertificateError("invalid Ed25519 witness public key") from exc
+        # A majority counts independent authorities, not labels. Duplicate
+        # key material lets one signer impersonate multiple witness IDs.
+        if len(set(keys.values())) != len(keys):
             raise CertificateError("witness keys must be distinct per authority")
-        majority = len(witness_keys) // 2 + 1
+        majority = len(keys) // 2 + 1
         if threshold is None:
             threshold = majority
-        if type(threshold) is not int or not majority <= threshold <= len(witness_keys):
+        if type(threshold) is not int or not majority <= threshold <= len(keys):
             raise CertificateError("threshold must be a strict configured majority")
         if not callable(clock):
             raise CertificateError("authoritative clock must be callable")
@@ -164,7 +204,7 @@ class QuorumCertificateGate:
             raise CertificateError("invalid bounded clock domain")
 
         self._cluster_id = cluster_id
-        self._keys = dict(witness_keys)
+        self._keys = dict(keys)
         self._threshold = threshold
         self._clock = clock
         self._clock_domain = clock_domain
@@ -177,8 +217,11 @@ class QuorumCertificateGate:
             "witnesses": [(name, hashlib.sha256(self._keys[name]).hexdigest())
                           for name in sorted(self._keys)],
         }
+        membership_domain = (b"OCAF-STAGE040-WITNESS-MEMBERSHIP-ED25519-V1\0"
+                             if self._scheme == "ed25519"
+                             else b"OCAF-STAGE040-WITNESS-MEMBERSHIP-V2\0")
         self._membership_sha256 = hashlib.sha256(
-            b"OCAF-STAGE040-WITNESS-MEMBERSHIP-V2\0" +
+            membership_domain +
             json.dumps(membership, sort_keys=True, separators=(",", ":"),
                        ensure_ascii=True).encode("ascii")).hexdigest()
         self.path = self._private_path(state_path)
@@ -310,11 +353,20 @@ class QuorumCertificateGate:
                 raise CertificateError("duplicate witness vote")
             witness_ids.add(vote.witness_id)
             key = self._keys.get(vote.witness_id)
-            if key is None or not _SIGNATURE.fullmatch(vote.signature):
+            signature_pattern = (_ED25519_SIGNATURE if self._scheme == "ed25519"
+                                 else _SIGNATURE)
+            if key is None or not isinstance(vote.signature, str) or not signature_pattern.fullmatch(vote.signature):
                 raise CertificateError("unknown witness or malformed signature")
-            expected = hmac.new(key, _payload(vote), hashlib.sha256).hexdigest()
-            if not hmac.compare_digest(expected, vote.signature):
-                raise CertificateError("invalid witness signature")
+            if self._scheme == "ed25519":
+                try:
+                    Ed25519PublicKey.from_public_bytes(key).verify(
+                        bytes.fromhex(vote.signature), _payload(vote, scheme="ed25519"))
+                except (InvalidSignature, ValueError) as exc:
+                    raise CertificateError("invalid witness signature") from exc
+            else:
+                expected = hmac.new(key, _payload(vote), hashlib.sha256).hexdigest()
+                if not hmac.compare_digest(expected, vote.signature):
+                    raise CertificateError("invalid witness signature")
             common = (vote.cluster_id, vote.candidate_id, vote.epoch, vote.lease_id,
                       vote.issued_at, vote.expires_at)
             if reference is None:

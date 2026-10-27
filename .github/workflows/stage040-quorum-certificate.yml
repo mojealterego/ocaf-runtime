@@ -20,5 +20,13 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+      - name: Install Ed25519 verifier dependency if absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! python3 -c 'import cryptography' >/dev/null 2>&1; then
+            sudo -n apt-get update -qq
+            sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-cryptography
+          fi
       - name: Verify majority, key membership and restart fencing negatives
         run: python3 -m unittest discover -s scripts/tests -p test_stage040_quorum_certificate.py -v

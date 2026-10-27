@@ -3,25 +3,35 @@ import sys
 import tempfile
 import unittest
 
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from stage040_pg_witness_effect_lab import admitted_effect, LabError
-from stage040_quorum_certificate import CertificateError, QuorumCertificateGate, issue_vote
+from stage040_quorum_certificate import CertificateError, QuorumCertificateGate, issue_vote_ed25519
 
 
 class PostgreSQLEffectAdmissionTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.keys = {name: name.encode().ljust(32, b"!")
+        self.keys = {name: Ed25519PrivateKey.generate()
                      for name in ("w1", "w2", "w3")}
+        public_keys = {
+            name: key.public_key().public_bytes(
+                encoding=serialization.Encoding.Raw,
+                format=serialization.PublicFormat.Raw)
+            for name, key in self.keys.items()
+        }
         self.gate = QuorumCertificateGate(
             Path(self.tmp.name)/"quorum.sqlite", cluster_id="pg-lab",
-            witness_keys=self.keys, clock=lambda: 100, clock_domain="test-clock")
+            witness_public_keys=public_keys, clock=lambda: 100,
+            clock_domain="test-clock")
         self.addCleanup(self.gate.close)
         self.executed = []
 
     def votes(self, candidate="node-a", epoch=1, witnesses=("w1", "w2")):
-        return [issue_vote(witness_id=name, key=self.keys[name],
+        return [issue_vote_ed25519(witness_id=name, private_key=self.keys[name],
                            cluster_id="pg-lab", candidate_id=candidate,
                            epoch=epoch, lease_id=f"lease-{epoch}",
                            issued_at=100, expires_at=120) for name in witnesses]
