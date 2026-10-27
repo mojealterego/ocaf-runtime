@@ -477,14 +477,18 @@ mod tests {
         let mut inverted = claims();
         inverted["iat"] = json!(1050);
         inverted["exp"] = json!(1040);
-        assert!(trust.verify_id_token(
-            &signed_token(&key, inverted.clone(), "kid-1", "RS256"), NONCE, 1010
-        ).is_err());
+        assert!(trust
+            .verify_id_token(
+                &signed_token(&key, inverted.clone(), "kid-1", "RS256"),
+                NONCE,
+                1010
+            )
+            .is_err());
         inverted["iat"] = json!(1000);
         inverted["nbf"] = json!(1045);
-        assert!(trust.verify_id_token(
-            &signed_token(&key, inverted, "kid-1", "RS256"), NONCE, 1010
-        ).is_err());
+        assert!(trust
+            .verify_id_token(&signed_token(&key, inverted, "kid-1", "RS256"), NONCE, 1010)
+            .is_err());
     }
     #[test]
     fn access_token_requires_bearer_type_resource_and_scope() {
@@ -515,16 +519,24 @@ mod tests {
         let mut inverted = claims.clone();
         inverted["iat"] = json!(1050);
         inverted["exp"] = json!(1040);
-        assert!(trust.verify_access_token(
-            &signed_token(&key, inverted.clone(), "kid-1", "RS256"),
-            "https://omat.example", &read, 1010
-        ).is_err());
+        assert!(trust
+            .verify_access_token(
+                &signed_token(&key, inverted.clone(), "kid-1", "RS256"),
+                "https://omat.example",
+                &read,
+                1010
+            )
+            .is_err());
         inverted["iat"] = json!(1000);
         inverted["nbf"] = json!(1045);
-        assert!(trust.verify_access_token(
-            &signed_token(&key, inverted, "kid-1", "RS256"),
-            "https://omat.example", &read, 1010
-        ).is_err());
+        assert!(trust
+            .verify_access_token(
+                &signed_token(&key, inverted, "kid-1", "RS256"),
+                "https://omat.example",
+                &read,
+                1010
+            )
+            .is_err());
         assert_eq!(
             trust
                 .verify_access_token(&token, "https://omat.example", &read, 1010)
