@@ -1770,6 +1770,7 @@ dependencies = [
  "jsonschema",
  "libc",
  "native-tls",
+ "ocaf_stage_ledger",
  "openssl",
  "postgres-native-tls",
  "rusqlite",
@@ -1786,6 +1787,14 @@ dependencies = [
  "tracing-subscriber",
  "uuid",
  "zenoh",
+]
+
+[[package]]
+name = "ocaf_stage_ledger"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror 1.0.69",
 ]
 
 [[package]]

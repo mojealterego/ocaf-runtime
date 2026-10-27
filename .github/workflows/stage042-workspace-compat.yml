@@ -1,0 +1,63 @@
+name: Stage 0.42 Cargo workspace compatibility
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - Cargo.toml
+      - Cargo.lock
+      - src/stage_ledger.rs
+      - crates/ocaf-stage-ledger/**
+      - tests/stage042_workspace_compat.rs
+      - .github/workflows/stage042-workspace-compat.yml
+  pull_request:
+    paths:
+      - Cargo.toml
+      - Cargo.lock
+      - src/stage_ledger.rs
+      - crates/ocaf-stage-ledger/**
+      - tests/stage042_workspace_compat.rs
+      - .github/workflows/stage042-workspace-compat.yml
+
+permissions:
+  contents: read
+
+jobs:
+  workspace-boundary:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          components: rustfmt
+      - name: Keep committed lockfile and original CLI entrypoints
+        run: |
+          set -euo pipefail
+          cargo metadata --locked --format-version 1 --no-deps > metadata.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('metadata.json').read_text())
+          members=set(data['workspace_members'])
+          by_name={p['name']:p for p in data['packages'] if p['id'] in members}
+          if set(by_name) != {'ocaf_runtime','ocaf_stage_ledger'}:
+              raise SystemExit('workspace membership changed unexpectedly')
+          root=by_name['ocaf_runtime']
+          bins={t['name'] for t in root['targets'] if 'bin' in t['kind']}
+          required={'ocaf-cluster-health','ocaf-effect-sink','ocaf-rpc-node',
+                    'ocaf-coordinator','ocaf-ha-probe','ocaf-omas-server',
+                    'ocaf-omas-mtls-server','ocaf-omat-server','ocaf-omat-zenoh',
+                    'ocaf-omas-zenoh-client'}
+          if not required <= bins:
+              raise SystemExit(f'public CLI targets missing: {sorted(required-bins)}')
+          PY
+          git diff --exit-code -- Cargo.lock
+      - name: Format and test both real workspace members
+        run: |
+          set -euo pipefail
+          cargo fmt --all -- --check
+          cargo test --locked --workspace --no-default-features --lib
+          cargo test --locked -p ocaf_runtime --no-default-features --test stage042_workspace_compat

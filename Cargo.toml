@@ -1,3 +1,8 @@
+[workspace]
+members = [".", "crates/ocaf-stage-ledger"]
+default-members = ["."]
+resolver = "2"
+
 [package]
 name = "ocaf_runtime"
 version = "0.26.0"
@@ -60,6 +65,7 @@ zenoh = ["dep:zenoh"]
 full = ["zenoh"]
 
 [dependencies]
+ocaf_stage_ledger = { path = "crates/ocaf-stage-ledger" }
 async-trait = "0.1"
 anyhow = "1.0"
 base64 = "0.22"
