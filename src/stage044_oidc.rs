@@ -416,7 +416,10 @@ mod tests {
         );
         let mut signer = Signer::new(MessageDigest::sha256(), key).unwrap();
         signer.update(body.as_bytes()).unwrap();
-        format!("{body}.{}", URL_SAFE_NO_PAD.encode(signer.sign_to_vec().unwrap()))
+        format!(
+            "{body}.{}",
+            URL_SAFE_NO_PAD.encode(signer.sign_to_vec().unwrap())
+        )
     }
     fn setup() -> (OidcTrust, PKey<openssl::pkey::Private>) {
         let key = PKey::from_rsa(Rsa::generate(2048).unwrap()).unwrap();
