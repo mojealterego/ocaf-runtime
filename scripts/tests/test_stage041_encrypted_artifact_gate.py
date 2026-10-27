@@ -25,9 +25,29 @@ class GateTests(unittest.TestCase):
         self.key = b"k" * 32
         sealed = seal_snapshot(snapshot, envelope, key=self.key, generation=1)
         snapshot_hash = sealed["snapshot_sha256"]
-        (self.root / "source.json").write_text("{}\n")
+        source = {
+            "schema_version": 1,
+            "status": "POSTGRES_REAL_BACKUP_RESTORE_IDENTICAL_RECORDS_PASSED",
+            "original_rows": 25, "restored_rows": 25,
+            "original_checksum": "a" * 64, "restored_checksum": "a" * 64,
+            "backup_file": "snapshot.pgcustom", "backup_sha256": snapshot_hash,
+            "backup_size_bytes": snapshot.stat().st_size,
+            "tampered_backup_rejected": True, "postgres_server_real": True,
+            "backup_was_custom_pg_dump": True, "restore_was_pg_restore": True,
+            "same_kernel_source_and_restore": True,
+            "cross_host_restore_tested": False, "stage_041_complete": False,
+            "production_approved": False,
+        }
+        (self.root / "source.json").write_text(json.dumps(source) + "\n")
         (self.root / "manifest.json").write_text(json.dumps({
-            "snapshot_sha256": snapshot_hash}) + "\n")
+            "schema_version": 1,
+            "source_boot_id": "11111111-1111-4111-8111-111111111111",
+            "source_report_sha256": hashlib.sha256((self.root / "source.json").read_bytes()).hexdigest(),
+            "snapshot_sha256": snapshot_hash,
+            "snapshot_size_bytes": snapshot.stat().st_size,
+            "run_nonce": "0123456789abcdef",
+            "production_approved": False,
+        }) + "\n")
 
     def test_complete_encrypted_only_bundle_passes(self):
         verify_encrypted_only(self.root, key=self.key)
@@ -60,6 +80,22 @@ class GateTests(unittest.TestCase):
         manifest_path.write_text(json.dumps(manifest))
         with self.assertRaises(ArtifactGateError):
             verify_encrypted_only(self.root, key=self.key)
+
+    def test_source_report_mutation_is_rejected_before_upload(self):
+        source = self.root / "source.json"
+        source.write_text(source.read_text().replace('"original_rows": 25', '"original_rows": 24'))
+        with self.assertRaises(ArtifactGateError):
+            verify_encrypted_only(self.root, key=self.key)
+
+    def test_manifest_extra_field_and_false_size_are_rejected(self):
+        manifest = self.root / "manifest.json"
+        for mutation in ({"claimed_host": "physical"}, {"snapshot_size_bytes": 1}):
+            with self.subTest(mutation=mutation):
+                original = json.loads(manifest.read_text())
+                manifest.write_text(json.dumps({**original, **mutation}))
+                with self.assertRaises(ArtifactGateError):
+                    verify_encrypted_only(self.root, key=self.key)
+                manifest.write_text(json.dumps(original))
 
 
 if __name__ == "__main__":
