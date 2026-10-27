@@ -63,7 +63,7 @@ OMAs/OMAt is the native protocol. Per-user MCP endpoints mentioned in source PDF
 | `scripts/stage044_pqc_tls_probe.sh` | Real hybrid TLS probe and classical-only downgrade rejection | Run log digests; external host required |
 | `.github/workflows/stage044-oauth.yml` | Compile, unit/integration, fmt, clippy on Linux | GitHub Actions run artifacts/logs (after commit) |
 
-SQLite file and WAL directory must be pre-provisioned, private (0700 directory, 0600 file), with final-component symlinks rejected. `PRAGMA synchronous=FULL` and `IMMEDIATE` transactions are used. A single SQLite file is not a multi-host HA authority; HA replication/fencing remains dependent on stages 0.40/0.41. Tokens are opaque, random, 256-bit, and only SHA-256 digests are stored. PKCE challenge is a canonical 43-character base64url-encoded SHA-256 digest. `state` is echoed but must be generated, stored and verified by the external OAuth client; a minimum length check alone does not prevent CSRF.
+SQLite file and WAL directory must be pre-provisioned, private (0700 directory, 0600 file), owned by the service UID, with symlinks and hardlinks rejected. `PRAGMA synchronous=FULL` and `IMMEDIATE` transactions are used. A single SQLite file is not a multi-host HA authority; HA replication/fencing remains dependent on stages 0.40/0.41. Tokens are opaque, random, 256-bit, and only SHA-256 digests are stored. PKCE challenge is a canonical 43-character base64url-encoded SHA-256 digest. `state` is echoed but must be generated, stored and verified by the external OAuth client; a minimum length check alone does not prevent CSRF.
 
 ### Step-up rule
 

@@ -10,7 +10,7 @@ use rusqlite::{params, Connection, OpenFlags, OptionalExtension, TransactionBeha
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeSet, HashMap};
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use thiserror::Error;
@@ -633,29 +633,47 @@ fn insert_token_pair(
 /// The DB and its WAL directory are operator-private. SQLite NOFOLLOW also
 /// protects against final-component symlink swaps at connection time.
 pub(crate) fn private_database(path: &Path) -> bool {
-    if !path.is_absolute() {
+    if !path.is_absolute() || path.components().any(|part| part == Component::ParentDir) {
         return false;
     }
-    let Ok(file) = path.symlink_metadata() else {
-        return false;
-    };
     let Some(parent) = path.parent() else {
         return false;
     };
     let Ok(directory) = parent.symlink_metadata() else {
         return false;
     };
-    if !file.file_type().is_file() || !directory.file_type().is_dir() {
+    if !directory.file_type().is_dir() {
         return false;
     }
     #[cfg(unix)]
     {
-        use std::os::unix::fs::PermissionsExt;
-        if file.permissions().mode() & 0o077 != 0 || directory.permissions().mode() & 0o077 != 0 {
+        use std::os::unix::fs::{MetadataExt, PermissionsExt};
+        let Ok(canonical_parent) = parent.canonicalize() else {
+            return false;
+        };
+        let Ok(directory) = canonical_parent.symlink_metadata() else {
+            return false;
+        };
+        if directory.uid() != unsafe { libc::geteuid() }
+            || directory.permissions().mode() & 0o077 != 0
+        {
             return false;
         }
+        let Some(file_name) = path.file_name() else {
+            return false;
+        };
+        let Ok(file) = canonical_parent.join(file_name).symlink_metadata() else {
+            return false;
+        };
+        file.file_type().is_file()
+            && file.uid() == unsafe { libc::geteuid() }
+            && file.permissions().mode() & 0o077 == 0
+            && file.nlink() == 1
     }
-    true
+    #[cfg(not(unix))]
+    {
+        false
+    }
 }
 
 fn random_secret() -> Result<String, OAuthError> {
@@ -1103,5 +1121,32 @@ mod tests {
             OAuthService::open(&db, vec![bad]),
             Err(OAuthError::Configuration)
         ));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn private_database_rejects_hardlinks_symlinks_and_public_parent() {
+        use std::os::unix::fs::symlink;
+
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+        let db = dir.path().join("oauth.sqlite");
+        Connection::open(&db).unwrap();
+        std::fs::set_permissions(&db, std::fs::Permissions::from_mode(0o600)).unwrap();
+        assert!(private_database(&db));
+
+        let alias = dir.path().join("other.sqlite");
+        std::fs::hard_link(&db, &alias).unwrap();
+        assert!(!private_database(&db));
+        assert!(!private_database(&alias));
+        std::fs::remove_file(&alias).unwrap();
+        assert!(private_database(&db));
+
+        symlink(&db, &alias).unwrap();
+        assert!(!private_database(&alias));
+        std::fs::remove_file(&alias).unwrap();
+
+        std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o755)).unwrap();
+        assert!(!private_database(&db));
     }
 }
