@@ -675,3 +675,5 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoÅ›Ä
 
 - Root/mirror stage rows now say ACTIVE_TECHNICAL_OPEN instead of PLANNED_OR_UNVERIFIED. The update records existing code and laboratory CI while preserving workspace, stateful rollback and deployment gates.
 - 0.40 quorum SQLite storage rejects unsafe sidecars and symlinked ancestors ([CI 40454075356](https://github.com/mojealterego/ocaf-runtime/actions/runs/40454075356)); 0.44 JWT parser rejects duplicate top-level security fields; its final CI result is tracked separately.
+
+- 0.42.4: [CI 40454393345](https://github.com/mojealterego/ocaf-runtime/actions/runs/40454393345) verified the attested candidate against two pending PostgreSQL jobs, restored a real `pg_dump` baseline, then verified the prior binary saw one. Scope is one ephemeral test schema, not a durable deployment migration.
