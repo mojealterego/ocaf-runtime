@@ -660,3 +660,9 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - Offline release manifest now requires an explicit evidence scope and rejects ephemeral lab scope for real-host acceptance checks, as well as reused paths or digests across checks. This validates manifest structure only; independently verified physical host evidence and production approval remain open.
 
 - 0.42.2: [CI 40409879533](https://github.com/mojealterego/ocaf-runtime/actions/runs/40409879533) passed root-crate dependency policy, locked build, CycloneDX and signed exact-commit release evidence; future workspace crates and upstream license inventory are outside this result.
+
+### 2026-10-27 — 0.41, 0.42.4, 0.44 hardening
+
+- 0.41: pre-upload ciphertext gate now binds the transfer to a bounded source report, actual local restore evidence and full metadata schema. Durable independent offsite remains open.
+- 0.42.4: source-bound rollback pair preflight rejects identical archive bytes, unrelated commits and mismatched bundles. It does not verify signatures or behavior; fresh-runner rehearsal remains open.
+- 0.44: OIDC rejects malformed not-before and internally contradictory token lifetimes; dedicated negative tests added.
