@@ -27,7 +27,7 @@ class WorkspaceSbomTests(unittest.TestCase):
             '[workspace]\nmembers = [".", "crates/ocaf-stage-ledger"]\n'
             'default-members = ["."]\n'
             '[package]\nname = "ocaf_runtime"\nversion = "0.26.0"\n'
-            '[dependencies]\nocaf_stage_ledger = { path = "crates/ocaf-stage-ledger" }\n',
+            '[dependencies]\nocaf_stage_ledger = { version = "0.1.0", path = "crates/ocaf-stage-ledger" }\n',
             encoding="utf-8")
         (member / "Cargo.toml").write_text(
             '[package]\nname = "ocaf_stage_ledger"\nversion = "0.1.0"\n'
@@ -60,7 +60,7 @@ class WorkspaceSbomTests(unittest.TestCase):
         cargo.write_text(cargo.read_text().replace(
             'members = [".", "crates/ocaf-stage-ledger"]',
             'members = [".", "crates/ocaf-stage-ledger", "crates/ocaf-transport-crdt"]'
-        ) + '\nocaf_transport_crdt = { package = "ocaf-transport-crdt", path = "crates/ocaf-transport-crdt" }\n')
+        ) + '\nocaf_transport_crdt = { version = "0.1.0", package = "ocaf-transport-crdt", path = "crates/ocaf-transport-crdt" }\n')
         aggregate = self.root / "bom.json"
         data = json.loads(aggregate.read_text())
         data["components"].append({"name": "ocaf-transport-crdt", "version": "0.1.0"})

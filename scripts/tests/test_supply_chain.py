@@ -57,7 +57,7 @@ class SupplyChainTests(unittest.TestCase):
         if "[workspace]" not in source:
             source = '[workspace]\nmembers = ["."]\ndefault-members = ["."]\n\n' + source
         source = source.replace('members = ["."]', f'members = [".", "{path}"]', 1)
-        source += f'\n[dependencies]\n{name} = {{ path = "{path}" }}\n'
+        source += f'\n[dependencies]\n{name} = {{ version = "0.1.0", path = "{path}" }}\n'
         cargo.write_text(source, encoding="utf-8")
         locked = self.lock.read_text(encoding="utf-8").replace(
             'dependencies = ["test-crate"]',
@@ -91,8 +91,18 @@ class SupplyChainTests(unittest.TestCase):
         self._add_workspace_member("crates/ocaf-stage-ledger", "ocaf_stage_ledger")
         cargo = self.root / "Cargo.toml"
         cargo.write_text(cargo.read_text().replace(
-            'ocaf_stage_ledger = { path = "crates/ocaf-stage-ledger" }',
+            'ocaf_stage_ledger = { version = "0.1.0", path = "crates/ocaf-stage-ledger" }',
             'ocaf_stage_ledger = "0.1.0"',
+        ))
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
+    def test_rejects_wildcard_workspace_dependency(self):
+        self._add_workspace_member("crates/ocaf-stage-ledger", "ocaf_stage_ledger")
+        cargo = self.root / "Cargo.toml"
+        cargo.write_text(cargo.read_text().replace(
+            'version = "0.1.0", path = "crates/ocaf-stage-ledger"',
+            'path = "crates/ocaf-stage-ledger"',
         ))
         with self.assertRaises(sc.PolicyError):
             sc.inspect(self.root)

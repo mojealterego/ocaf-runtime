@@ -85,27 +85,40 @@ jobs:
           from stage041_encrypted_backup import EncryptedBackupError,seal_snapshot,unseal_snapshot
           root=Path("stage041-evidence").resolve()
           original=root/"snapshot.pgcustom"
-          expected=json.loads((root/"report.json").read_text())["backup_sha256"]
+          source_report=(root/"report.json").read_bytes()
+          expected=json.loads(source_report)["backup_sha256"]
           with tempfile.TemporaryDirectory(prefix="ocaf41-encryption-") as folder:
               private=Path(folder)
               envelope=private/"envelope";envelope.mkdir()
               key=secrets.token_bytes(32)
-              manifest=seal_snapshot(original,envelope,key=key,generation=1)
+              transfer=private/"lab-transfer-manifest.json"
+              transfer.write_text(json.dumps({
+                  "scope":"one-host-ephemeral-lab", "snapshot_sha256":expected,
+                  "source_report_sha256":hashlib.sha256(source_report).hexdigest()
+              },sort_keys=True,separators=(",",":"))+"\n")
+              transfer_digest=hashlib.sha256(transfer.read_bytes()).hexdigest()
+              manifest=seal_snapshot(original,envelope,key=key,generation=1,
+                                     transfer_manifest_sha256=transfer_digest)
               target=private/"restored.pgcustom"
-              report=unseal_snapshot(envelope,target,key=key,minimum_generation=1)
+              report=unseal_snapshot(envelope,target,key=key,minimum_generation=1,
+                                     expected_transfer_manifest_sha256=transfer_digest)
               assert hashlib.sha256(target.read_bytes()).hexdigest()==expected
               target.unlink()
               for policy in ({"key":secrets.token_bytes(32),"minimum_generation":1},
                              {"key":key,"minimum_generation":2},
                              {"key":key,"minimum_generation":1,
-                              "revoked_key_ids":frozenset({manifest["key_id"]})}):
+                              "revoked_key_ids":frozenset({manifest["key_id"]})},
+                             {"key":key,"minimum_generation":1,
+                              "expected_transfer_manifest_sha256":"0"*64}):
+                  policy.setdefault("expected_transfer_manifest_sha256",transfer_digest)
                   try:unseal_snapshot(envelope,target,**policy)
                   except EncryptedBackupError:pass
                   else:raise AssertionError("unsafe encrypted backup recovery accepted")
               ciphertext=envelope/"snapshot.aesgcm"
               original_bytes=ciphertext.read_bytes()
               ciphertext.write_bytes(original_bytes[:-1]+bytes([original_bytes[-1]^1]))
-              try:unseal_snapshot(envelope,target,key=key,minimum_generation=1)
+              try:unseal_snapshot(envelope,target,key=key,minimum_generation=1,
+                                  expected_transfer_manifest_sha256=transfer_digest)
               except EncryptedBackupError:pass
               else:raise AssertionError("tampered real PostgreSQL encrypted dump accepted")
               assert not target.exists()

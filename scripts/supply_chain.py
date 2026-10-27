@@ -92,7 +92,7 @@ def _workspace_members(root: Path, manifest: dict[str, Any]) -> dict[str, str]:
             raise PolicyError("reviewed workspace package identity or license changed")
         bound = [alias for alias, dep in dependencies.items()
                  if isinstance(dep, dict) and dep.get("path") == path and
-                 dep.get("package", alias) == name]
+                 dep.get("package", alias) == name and dep.get("version") == version]
         if len(bound) != 1:
             raise PolicyError("workspace member is not bound to the root package")
         accepted[name] = version

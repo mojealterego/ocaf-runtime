@@ -65,8 +65,8 @@ zenoh = ["dep:zenoh"]
 full = ["zenoh"]
 
 [dependencies]
-ocaf_stage_ledger = { path = "crates/ocaf-stage-ledger" }
-ocaf_transport_crdt = { package = "ocaf-transport-crdt", path = "crates/ocaf-transport-crdt" }
+ocaf_stage_ledger = { version = "0.1.0", path = "crates/ocaf-stage-ledger" }
+ocaf_transport_crdt = { version = "0.1.0", package = "ocaf-transport-crdt", path = "crates/ocaf-transport-crdt" }
 async-trait = "0.1"
 anyhow = "1.0"
 base64 = "0.22"

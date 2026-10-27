@@ -26,11 +26,22 @@ binary then observed exactly one pending job. This demonstrates one database
 snapshot recovery and a prior-version read against restored state on an
 ephemeral runner.
 
+[Run 40495471794](https://github.com/mojealterego/ocaf-runtime/actions/runs/40495471794)
+also rotated the disposable PostgreSQL role password after that restore. A
+client using the old password was denied over the container's non-loopback TCP
+address; the rotated password succeeded. The prior signed binary, still using
+the old DSN through the runner's published TCP port, returned an authentication
+failure and the probe reported `revoked_credential_denied: true`. The earlier
+attempt [40494702250](https://github.com/mojealterego/ocaf-runtime/actions/runs/40494702250)
+failed safely because its password check used trusted container loopback and
+could not prove revocation. The corrected run checks the authenticated route.
+
 The standalone Python report deliberately says `signature_verified: false`:
 the Python program does not verify GitHub signatures. The preceding workflow
 step verified both attestations for both archives and is the signature
 evidence. This rehearsal exercises one CLI error path and one PostgreSQL
 read after restoring a small test snapshot. It does not roll back a real
 schema migration, credentials, agent runtime, or production deployment.
-It does not establish behavior after secret revocation or on a
-durable host. Stage 0.42.4 remains technically open for those cases.
+It establishes only one disposable PostgreSQL password rotation, not general
+secret revocation or behavior on a durable host. Stage 0.42.4 remains
+technically open for real migration, agent runtime and durable-host recovery.
