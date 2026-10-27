@@ -1,10 +1,50 @@
 //! Durable staged-agent registry for OMAs 0.43. Operator-provisioned SQLite,
 //! fail-closed; no ACTIVE admission and no source-access authorization.
+//! Operator provisions an absolute path under an owned 0700 directory with
+//! an owned 0600 regular database file. SQLite sidecars stay private there.
 use crate::omas_server::{
     AdmissionDecision, AgentRegistrationRequest, OmasServer, OmasServerConfig,
 };
 use rusqlite::{params, Connection, OpenFlags, TransactionBehavior};
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
+
+fn private_agent_database(path: &Path) -> Result<PathBuf, String> {
+    if !path.is_absolute() || path.components().any(|part| part == Component::ParentDir) {
+        return Err("agent database path must be absolute and normalized".into());
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::{MetadataExt, PermissionsExt};
+        let parent = path.parent().ok_or("agent database parent missing")?;
+        if !parent
+            .symlink_metadata()
+            .map_err(|e| e.to_string())?
+            .is_dir()
+        {
+            return Err("agent database parent must not be a symlink".into());
+        }
+        let canonical_parent = parent.canonicalize().map_err(|e| e.to_string())?;
+        let parent_meta = canonical_parent.symlink_metadata().map_err(|e| e.to_string())?;
+        if parent_meta.uid() != unsafe { libc::geteuid() }
+            || parent_meta.permissions().mode() & 0o077 != 0
+        {
+            return Err("agent database needs an owned private directory".into());
+        }
+        let canonical_path =
+            canonical_parent.join(path.file_name().ok_or("missing database file")?);
+        let file = canonical_path.symlink_metadata().map_err(|e| e.to_string())?;
+        if !file.file_type().is_file()
+            || file.uid() != unsafe { libc::geteuid() }
+            || file.permissions().mode() & 0o077 != 0
+            || file.nlink() != 1
+        {
+            return Err("agent database needs an owned private regular file".into());
+        }
+        Ok(canonical_path)
+    }
+    #[cfg(not(unix))]
+    Err("private agent database requires a Unix host".into())
+}
 
 pub struct Stage043AgentStore {
     path: PathBuf,
@@ -14,17 +54,9 @@ pub struct Stage043AgentStore {
 impl Stage043AgentStore {
     pub fn open(path: &Path, config: OmasServerConfig) -> Result<Self, String> {
         config.validate()?;
-        if !path.is_file()
-            || path
-                .symlink_metadata()
-                .map_err(|e| e.to_string())?
-                .file_type()
-                .is_symlink()
-        {
-            return Err("operator-provisioned regular SQLite file required".into());
-        }
+        let canonical_path = private_agent_database(path)?;
         let store = Self {
-            path: path.to_path_buf(),
+            path: canonical_path,
             config,
         };
         let conn = store.connection()?;

@@ -50,6 +50,9 @@ fn mtls_rejects_anonymous_client_and_accepts_pinned_certificate() {
     let agents = temp.path().join("agents.sqlite");
     let nonces = temp.path().join("nonces.sqlite");
     Connection::open(&agents).unwrap();
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(temp.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+    std::fs::set_permissions(&agents, std::fs::Permissions::from_mode(0o600)).unwrap();
     Connection::open(&nonces).unwrap();
     let reserved = TcpListener::bind("127.0.0.1:0").unwrap();
     let address = reserved.local_addr().unwrap();

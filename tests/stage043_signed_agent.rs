@@ -154,6 +154,9 @@ fn signed_transport_registration_persists_and_rejects_replay_after_restart() {
     let agent_db = tmp.path().join("agents.sqlite");
     Connection::open(&replay_db).unwrap().close().unwrap();
     Connection::open(&agent_db).unwrap().close().unwrap();
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(tmp.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+    std::fs::set_permissions(&agent_db, std::fs::Permissions::from_mode(0o600)).unwrap();
     let req = request();
     let op = sign(&req, &key);
     let store = Stage043AgentStore::open(&agent_db, OmasServerConfig::default()).unwrap();
