@@ -166,14 +166,16 @@ impl OidcTrust {
             .get("iat")
             .and_then(Value::as_i64)
             .ok_or(OidcError::InvalidToken)?;
+        let nbf = claims
+            .get("nbf")
+            .map(|value| value.as_i64().ok_or(OidcError::InvalidToken))
+            .transpose()?;
         if exp <= now
             || exp > now.saturating_add(3600)
+            || exp <= iat
             || iat > now.saturating_add(60)
             || iat < now.saturating_sub(3600)
-            || claims
-                .get("nbf")
-                .and_then(Value::as_i64)
-                .is_some_and(|nbf| nbf > now.saturating_add(60))
+            || nbf.is_some_and(|value| value > now.saturating_add(60) || value >= exp)
         {
             return Err(OidcError::InvalidToken);
         }
@@ -301,20 +303,22 @@ impl OidcTrust {
             .get("iat")
             .and_then(Value::as_i64)
             .ok_or(OidcError::InvalidToken)?;
+        let nbf = claims
+            .get("nbf")
+            .map(|value| value.as_i64().ok_or(OidcError::InvalidToken))
+            .transpose()?;
         let auth_time = claims
             .get("auth_time")
             .and_then(Value::as_i64)
             .ok_or(OidcError::InvalidToken)?;
         if exp <= now
             || exp > now.saturating_add(3600)
+            || exp <= iat
             || iat > now.saturating_add(60)
             || iat < now.saturating_sub(3600)
             || auth_time > now.saturating_add(60)
             || auth_time < now.saturating_sub(3600)
-            || claims
-                .get("nbf")
-                .and_then(Value::as_i64)
-                .is_some_and(|nbf| nbf > now.saturating_add(60))
+            || nbf.is_some_and(|value| value > now.saturating_add(60) || value >= exp)
         {
             return Err(OidcError::InvalidToken);
         }
@@ -457,6 +461,21 @@ mod tests {
             .is_ok());
     }
     #[test]
+    fn rejects_malformed_or_contradictory_identity_token_time_claims() {
+        let (trust, key) = setup();
+        for (name, value) in [
+            ("nbf", json!("1000")),
+            ("nbf", json!(1300)),
+            ("exp", json!(999)),
+        ] {
+            let mut c = claims();
+            c[name] = value;
+            assert!(trust
+                .verify_id_token(&signed_token(&key, c, "kid-1", "RS256"), NONCE, 1010)
+                .is_err());
+        }
+    }
+    #[test]
     fn access_token_requires_bearer_type_resource_and_scope() {
         let (trust, key) = setup();
         let claims = json!({"iss":"https://idp.example/realms/ocaf",
@@ -466,6 +485,22 @@ mod tests {
         let token = signed_token(&key, claims.clone(), "kid-1", "RS256");
         let read: std::collections::BTreeSet<String> =
             ["tool:read".to_owned()].into_iter().collect();
+        for (name, value) in [
+            ("nbf", json!("1000")),
+            ("nbf", json!(1300)),
+            ("exp", json!(999)),
+        ] {
+            let mut invalid = claims.clone();
+            invalid[name] = value;
+            assert!(trust
+                .verify_access_token(
+                    &signed_token(&key, invalid, "kid-1", "RS256"),
+                    "https://omat.example",
+                    &read,
+                    1010
+                )
+                .is_err());
+        }
         assert_eq!(
             trust
                 .verify_access_token(&token, "https://omat.example", &read, 1010)
