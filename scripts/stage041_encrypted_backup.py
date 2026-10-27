@@ -79,10 +79,22 @@ def _write_new(path: Path, data: bytes) -> None:
         raise EncryptedBackupError("absolute output path required")
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL |
                  getattr(os, "O_NOFOLLOW", 0), 0o600)
-    with os.fdopen(fd, "wb") as output:
-        output.write(data)
-        output.flush()
-        os.fsync(output.fileno())
+    created = os.fstat(fd)
+    try:
+        with os.fdopen(fd, "wb") as output:
+            output.write(data)
+            output.flush()
+            os.fsync(output.fileno())
+    except BaseException:
+        # A failed write or fsync must not leave an incomplete snapshot that
+        # a later recovery attempt could mistake for a completed output.
+        try:
+            current = path.lstat()
+            if stat.S_ISREG(current.st_mode) and current.st_ino == created.st_ino:
+                path.unlink()
+        except OSError:
+            pass
+        raise
 
 
 def seal_snapshot(snapshot: Path, envelope_dir: Path, *, key: bytes,

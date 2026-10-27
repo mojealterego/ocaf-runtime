@@ -4,11 +4,13 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from stage041_encrypted_backup import (
     EncryptedBackupError, seal_snapshot, unseal_snapshot,
 )
+import stage041_encrypted_backup as backup
 
 
 class EncryptedBackupTests(unittest.TestCase):
@@ -65,6 +67,21 @@ class EncryptedBackupTests(unittest.TestCase):
         path.write_text(json.dumps(record))
         with self.assertRaises(EncryptedBackupError):
             self.recover()
+
+    def test_failed_durable_write_removes_partial_recovery_output(self):
+        destination = self.root / "restored.pgcustom"
+        with mock.patch.object(backup.os, "fsync", side_effect=OSError("disk failure")):
+            with self.assertRaises(OSError):
+                self.recover()
+        self.assertFalse(destination.exists())
+
+    def test_failed_envelope_write_removes_partial_ciphertext(self):
+        fresh = self.root / "fresh"
+        fresh.mkdir()
+        with mock.patch.object(backup.os, "fsync", side_effect=OSError("disk failure")):
+            with self.assertRaises(OSError):
+                seal_snapshot(self.source, fresh, key=self.key, generation=13)
+        self.assertFalse((fresh / "snapshot.aesgcm").exists())
 
 
 if __name__ == "__main__":
