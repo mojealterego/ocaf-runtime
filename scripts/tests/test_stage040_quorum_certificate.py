@@ -1,5 +1,6 @@
 import dataclasses
 import math
+import os
 from pathlib import Path
 import sqlite3
 import sys
@@ -152,6 +153,30 @@ class QuorumCertificateTests(unittest.TestCase):
             QuorumCertificateGate(
                 self.path, cluster_id="cluster-a", witness_keys=duplicated,
                 clock=lambda: 100, clock_domain="test-clock")
+
+    def test_preexisting_symlink_or_hardlinked_wal_is_denied(self):
+        self.gate.close()
+        for suffix in ("-wal", "-shm"):
+            sibling = Path(str(self.path) + suffix)
+            target = Path(self.tmp.name) / ("target" + suffix)
+            target.write_bytes(b"external authority")
+            sibling.symlink_to(target)
+            with self.assertRaises(CertificateError):
+                self.open_gate()
+            sibling.unlink()
+            os.link(target, sibling)
+            with self.assertRaises(CertificateError):
+                self.open_gate()
+            sibling.unlink()
+
+    def test_symlinked_parent_directory_is_denied(self):
+        self.gate.close()
+        alias = Path(self.tmp.name) / "alias"
+        alias.symlink_to(self.tmp.name, target_is_directory=True)
+        with self.assertRaises(CertificateError):
+            QuorumCertificateGate(
+                alias / "quorum.sqlite3", cluster_id="cluster-a",
+                witness_keys=self.keys, clock=lambda: 100, clock_domain="test-clock")
 
 
 if __name__ == "__main__":

@@ -226,8 +226,18 @@ class QuorumCertificateGate:
             parent = path.parent
             info = parent.stat()
             if (not parent.is_dir() or parent.is_symlink() or info.st_uid != os.geteuid()
-                    or info.st_mode & 0o077):
+                    or info.st_mode & 0o077 or parent.resolve(strict=True) != parent):
                 raise CertificateError("quorum storage needs an owned private directory")
+            # SQLite may open existing WAL/SHM siblings before creating its
+            # own files. Reject aliases to another authority file.
+            for sibling in (path, Path(str(path) + "-wal"), Path(str(path) + "-shm")):
+                try:
+                    sidecar = sibling.lstat()
+                except FileNotFoundError:
+                    continue
+                if (not stat.S_ISREG(sidecar.st_mode) or sidecar.st_uid != os.geteuid()
+                        or sidecar.st_mode & 0o077 or sidecar.st_nlink != 1):
+                    raise CertificateError("untrusted quorum SQLite inode")
             try:
                 fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_EXCL
                              | getattr(os, "O_NOFOLLOW", 0), 0o600)
