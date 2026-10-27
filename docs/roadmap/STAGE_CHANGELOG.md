@@ -666,3 +666,7 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - 0.41: pre-upload ciphertext gate now binds the transfer to a bounded source report, actual local restore evidence and full metadata schema. Durable independent offsite remains open.
 - 0.42.4: source-bound rollback pair preflight rejects identical archive bytes, unrelated commits and mismatched bundles. It does not verify signatures or behavior; fresh-runner rehearsal remains open.
 - 0.44: OIDC rejects malformed not-before and internally contradictory token lifetimes; dedicated negative tests added.
+
+### 2026-10-27 — 0.42.4 attested ephemeral rollback drill
+
+- [CI 40453820456](https://github.com/mojealterego/ocaf-runtime/actions/runs/40453820456) verified two commit-bound bundles and both build/SBOM attestations per bundle, then ran the candidate and prior CLI binaries on a fresh runner. This is a single CLI behavior probe; stateful rollback and revoked-secret denial remain open. [Evidence scope](../STAGE042_ROLLBACK_DRILL_2026-10-27.md).
