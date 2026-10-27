@@ -114,6 +114,18 @@ class GateTests(unittest.TestCase):
         with self.assertRaises(ArtifactGateError):
             verify_encrypted_only(self.root, key=self.key)
 
+    def test_preupload_rejects_invalid_authenticated_scope_fields(self):
+        path = self.root / "envelope/manifest.json"
+        original = json.loads(path.read_text())
+        for mutation in ({"schema_version": True}, {"generation": 0},
+                         {"generation": True}, {"generation": 2**63},
+                         {"immutable_offsite_storage_proved": True}):
+            with self.subTest(mutation=mutation):
+                path.write_text(json.dumps({**original, **mutation}))
+                with self.assertRaises(ArtifactGateError):
+                    verify_encrypted_only(self.root, key=self.key)
+        path.write_text(json.dumps(original))
+
 
 if __name__ == "__main__":
     unittest.main()

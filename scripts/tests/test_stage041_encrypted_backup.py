@@ -23,14 +23,18 @@ class EncryptedBackupTests(unittest.TestCase):
         self.envelope = self.root / "envelope"
         self.envelope.mkdir()
         self.key = b"k" * 32
+        self.transfer_digest = "a" * 64
         self.manifest = seal_snapshot(self.source, self.envelope, key=self.key,
-                                      generation=12)
+                                      generation=12,
+                                      transfer_manifest_sha256=self.transfer_digest)
 
     def recover(self, **kwargs):
         return unseal_snapshot(self.envelope, self.root / "restored.pgcustom",
                                key=kwargs.pop("key", self.key),
                                minimum_generation=kwargs.pop("minimum_generation", 12),
-                               revoked_key_ids=kwargs.pop("revoked_key_ids", frozenset()))
+                               revoked_key_ids=kwargs.pop("revoked_key_ids", frozenset()),
+                               expected_transfer_manifest_sha256=kwargs.pop(
+                                   "expected_transfer_manifest_sha256", self.transfer_digest))
 
     def test_real_bytes_roundtrip_and_no_production_claim(self):
         result = self.recover()
@@ -80,7 +84,8 @@ class EncryptedBackupTests(unittest.TestCase):
         fresh.mkdir()
         with mock.patch.object(backup.os, "fsync", side_effect=OSError("disk failure")):
             with self.assertRaises(OSError):
-                seal_snapshot(self.source, fresh, key=self.key, generation=13)
+                seal_snapshot(self.source, fresh, key=self.key, generation=13,
+                              transfer_manifest_sha256=self.transfer_digest)
         self.assertFalse((fresh / "snapshot.aesgcm").exists())
 
     def test_transfer_manifest_binding_rejects_rewritten_metadata(self):
@@ -97,6 +102,18 @@ class EncryptedBackupTests(unittest.TestCase):
         unseal_snapshot(bound, destination, key=self.key, minimum_generation=13,
                         expected_transfer_manifest_sha256="a" * 64)
         self.assertEqual(destination.read_bytes(), self.source.read_bytes())
+
+    def test_unbound_or_malformed_transfer_digest_denied(self):
+        fresh = self.root / "unbound"
+        fresh.mkdir()
+        for digest in (None, "not-a-sha256", "A" * 64):
+            with self.subTest(digest=digest), self.assertRaises(EncryptedBackupError):
+                seal_snapshot(self.source, fresh, key=self.key, generation=13,
+                              transfer_manifest_sha256=digest)
+        for digest in (None, "not-a-sha256", "A" * 64):
+            with self.subTest(expected=digest), self.assertRaises(EncryptedBackupError):
+                self.recover(expected_transfer_manifest_sha256=digest)
+            self.assertFalse((self.root / "restored.pgcustom").exists())
 
 
 if __name__ == "__main__":

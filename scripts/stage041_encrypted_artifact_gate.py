@@ -79,6 +79,10 @@ def verify_encrypted_only(root: Path, *, key: bytes) -> None:
             or source.get("cross_host_restore_tested") is not False
             or source.get("stage_041_complete") is not False
             or set(envelope) != encrypted.FIELDS
+            or type(envelope["schema_version"]) is not int
+            or envelope["schema_version"] != 1
+            or type(envelope["generation"]) is not int
+            or not 1 <= envelope["generation"] <= 2**63 - 1
             or not isinstance(transfer.get("snapshot_sha256"), str)
             or SHA.fullmatch(transfer["snapshot_sha256"]) is None
             or transfer["snapshot_sha256"] != envelope.get("snapshot_sha256")

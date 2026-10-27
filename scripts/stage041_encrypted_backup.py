@@ -98,13 +98,12 @@ def _write_new(path: Path, data: bytes) -> None:
 
 
 def seal_snapshot(snapshot: Path, envelope_dir: Path, *, key: bytes,
-                  generation: int, transfer_manifest_sha256: str | None = None) -> dict:
+                  generation: int, transfer_manifest_sha256: str) -> dict:
     key_id = _key_id(key)
     if type(generation) is not int or not 1 <= generation <= 2**63 - 1:
         raise EncryptedBackupError("positive bounded backup generation required")
-    if (transfer_manifest_sha256 is not None and
-            (not isinstance(transfer_manifest_sha256, str) or
-             HEX.fullmatch(transfer_manifest_sha256) is None)):
+    if (not isinstance(transfer_manifest_sha256, str) or
+            HEX.fullmatch(transfer_manifest_sha256) is None):
         raise EncryptedBackupError("invalid transfer manifest binding")
     if (not isinstance(envelope_dir, Path) or not envelope_dir.is_absolute()
             or envelope_dir.is_symlink() or not envelope_dir.is_dir()
@@ -129,16 +128,15 @@ def seal_snapshot(snapshot: Path, envelope_dir: Path, *, key: bytes,
 
 def unseal_snapshot(envelope_dir: Path, destination: Path, *, key: bytes,
                     minimum_generation: int, revoked_key_ids: frozenset[str] = frozenset(),
-                    expected_transfer_manifest_sha256: str | None = None) -> dict:
+                    expected_transfer_manifest_sha256: str) -> dict:
     key_id = _key_id(key)
     if (type(minimum_generation) is not int or minimum_generation < 1
             or not isinstance(revoked_key_ids, frozenset)
             or not isinstance(envelope_dir, Path) or not envelope_dir.is_absolute()
             or envelope_dir.is_symlink() or not envelope_dir.is_dir()):
         raise EncryptedBackupError("invalid recovery policy or envelope directory")
-    if (expected_transfer_manifest_sha256 is not None and
-            (not isinstance(expected_transfer_manifest_sha256, str) or
-             HEX.fullmatch(expected_transfer_manifest_sha256) is None)):
+    if (not isinstance(expected_transfer_manifest_sha256, str) or
+            HEX.fullmatch(expected_transfer_manifest_sha256) is None):
         raise EncryptedBackupError("invalid expected transfer manifest digest")
     raw = _regular_bytes(envelope_dir / "manifest.json", 4096)
     try:
