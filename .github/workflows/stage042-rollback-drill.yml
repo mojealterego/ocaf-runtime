@@ -1,0 +1,96 @@
+name: Stage 0.42 source-bound rollback drill (ephemeral CI only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Full main commit SHA of candidate release
+        required: true
+        type: string
+      candidate_run_id:
+        description: Successful Supply Chain and Provenance run ID
+        required: true
+        type: string
+      prior_sha:
+        description: Full ancestor main commit SHA of prior release
+        required: true
+        type: string
+      prior_run_id:
+        description: Successful prior Supply Chain and Provenance run ID
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  attestations: read
+
+jobs:
+  rollback-drill:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Validate explicit immutable identifiers
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          PRIOR_SHA: ${{ inputs.prior_sha }}
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          PRIOR_RUN_ID: ${{ inputs.prior_run_id }}
+        run: |
+          set -euo pipefail
+          [[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$PRIOR_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$CANDIDATE_RUN_ID" =~ ^[1-9][0-9]{0,18}$ ]]
+          [[ "$PRIOR_RUN_ID" =~ ^[1-9][0-9]{0,18}$ ]]
+          test "$CANDIDATE_RUN_ID" != "$PRIOR_RUN_ID"
+          git merge-base --is-ancestor "$PRIOR_SHA" "$CANDIDATE_SHA"
+      - name: Download candidate artifact from named run
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          run-id: ${{ inputs.candidate_run_id }}
+          github-token: ${{ github.token }}
+          name: ocaf-linux-x86_64-${{ inputs.candidate_sha }}
+          path: candidate
+      - name: Download prior artifact from named run
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          run-id: ${{ inputs.prior_run_id }}
+          github-token: ${{ github.token }}
+          name: ocaf-linux-x86_64-${{ inputs.prior_sha }}
+          path: prior
+      - name: Verify both bundles and both build and SBOM attestations
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          PRIOR_SHA: ${{ inputs.prior_sha }}
+        run: |
+          set -euo pipefail
+          python3 scripts/verify_rollback_pair.py \
+            --repo . --candidate candidate --prior prior \
+            --candidate-sha "$CANDIDATE_SHA" --prior-sha "$PRIOR_SHA" \
+            --repository "$GITHUB_REPOSITORY"
+          for label in candidate prior; do
+            if [[ "$label" == candidate ]]; then sha="$CANDIDATE_SHA"; else sha="$PRIOR_SHA"; fi
+            archive="$label/ocaf_runtime-linux-x86_64.tar.gz"
+            gh attestation verify "$archive" --repo "$GITHUB_REPOSITORY" \
+              --source-ref refs/heads/main --source-digest "$sha" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/supply-chain.yml"
+            gh attestation verify "$archive" --repo "$GITHUB_REPOSITORY" \
+              --predicate-type https://cyclonedx.org/bom \
+              --source-ref refs/heads/main --source-digest "$sha" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/supply-chain.yml"
+          done
+      - name: Exercise candidate then prior CLI in disposable runner
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          PRIOR_SHA: ${{ inputs.prior_sha }}
+        run: |
+          set -euo pipefail
+          python3 scripts/stage042_rollback_drill.py \
+            --repo . --candidate candidate --prior prior \
+            --candidate-sha "$CANDIDATE_SHA" --prior-sha "$PRIOR_SHA" \
+            --repository "$GITHUB_REPOSITORY"
