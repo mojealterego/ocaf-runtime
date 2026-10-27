@@ -23,8 +23,7 @@ class GateTests(unittest.TestCase):
         snapshot = Path(self.temp.name) / "real.pgcustom"
         snapshot.write_bytes(b"PGDMP real plaintext")
         self.key = b"k" * 32
-        sealed = seal_snapshot(snapshot, envelope, key=self.key, generation=1)
-        snapshot_hash = sealed["snapshot_sha256"]
+        snapshot_hash = hashlib.sha256(snapshot.read_bytes()).hexdigest()
         source = {
             "schema_version": 1,
             "status": "POSTGRES_REAL_BACKUP_RESTORE_IDENTICAL_RECORDS_PASSED",
@@ -48,6 +47,11 @@ class GateTests(unittest.TestCase):
             "run_nonce": "0123456789abcdef",
             "production_approved": False,
         }) + "\n")
+        # The envelope is bound to the transfer manifest, which pins the
+        # source report and the PostgreSQL snapshot.
+        seal_snapshot(snapshot, envelope, key=self.key, generation=1,
+                      transfer_manifest_sha256=hashlib.sha256(
+                          (self.root / "manifest.json").read_bytes()).hexdigest())
 
     def test_complete_encrypted_only_bundle_passes(self):
         verify_encrypted_only(self.root, key=self.key)
@@ -96,6 +100,19 @@ class GateTests(unittest.TestCase):
                 with self.assertRaises(ArtifactGateError):
                     verify_encrypted_only(self.root, key=self.key)
                 manifest.write_text(json.dumps(original))
+
+    def test_rewritten_source_and_transfer_manifest_cannot_rebind_ciphertext(self):
+        source = self.root / "source.json"
+        report = json.loads(source.read_text())
+        report["original_checksum"] = "b" * 64
+        report["restored_checksum"] = "b" * 64
+        source.write_text(json.dumps(report))
+        manifest = self.root / "manifest.json"
+        transfer = json.loads(manifest.read_text())
+        transfer["source_report_sha256"] = hashlib.sha256(source.read_bytes()).hexdigest()
+        manifest.write_text(json.dumps(transfer))
+        with self.assertRaises(ArtifactGateError):
+            verify_encrypted_only(self.root, key=self.key)
 
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ MAX_SNAPSHOT = 64 * 1024 * 1024
 HEX = re.compile(r"[a-f0-9]{64}\Z")
 FIELDS = {"schema_version", "algorithm", "key_id", "generation", "nonce_hex",
           "snapshot_sha256", "ciphertext_sha256", "production_approved",
-          "immutable_offsite_storage_proved"}
+          "immutable_offsite_storage_proved", "transfer_manifest_sha256"}
 
 
 class EncryptedBackupError(ValueError):
@@ -98,10 +98,14 @@ def _write_new(path: Path, data: bytes) -> None:
 
 
 def seal_snapshot(snapshot: Path, envelope_dir: Path, *, key: bytes,
-                  generation: int) -> dict:
+                  generation: int, transfer_manifest_sha256: str | None = None) -> dict:
     key_id = _key_id(key)
     if type(generation) is not int or not 1 <= generation <= 2**63 - 1:
         raise EncryptedBackupError("positive bounded backup generation required")
+    if (transfer_manifest_sha256 is not None and
+            (not isinstance(transfer_manifest_sha256, str) or
+             HEX.fullmatch(transfer_manifest_sha256) is None)):
+        raise EncryptedBackupError("invalid transfer manifest binding")
     if (not isinstance(envelope_dir, Path) or not envelope_dir.is_absolute()
             or envelope_dir.is_symlink() or not envelope_dir.is_dir()
             or any((envelope_dir / name).exists() for name in ("snapshot.aesgcm", "manifest.json"))):
@@ -112,6 +116,7 @@ def seal_snapshot(snapshot: Path, envelope_dir: Path, *, key: bytes,
                 "key_id": key_id, "generation": generation,
                 "nonce_hex": nonce.hex(),
                 "snapshot_sha256": hashlib.sha256(plaintext).hexdigest(),
+                "transfer_manifest_sha256": transfer_manifest_sha256,
                 "production_approved": False,
                 "immutable_offsite_storage_proved": False}
     ciphertext = AESGCM(key).encrypt(nonce, plaintext, _aad(manifest))
@@ -123,13 +128,18 @@ def seal_snapshot(snapshot: Path, envelope_dir: Path, *, key: bytes,
 
 
 def unseal_snapshot(envelope_dir: Path, destination: Path, *, key: bytes,
-                    minimum_generation: int, revoked_key_ids: frozenset[str] = frozenset()) -> dict:
+                    minimum_generation: int, revoked_key_ids: frozenset[str] = frozenset(),
+                    expected_transfer_manifest_sha256: str | None = None) -> dict:
     key_id = _key_id(key)
     if (type(minimum_generation) is not int or minimum_generation < 1
             or not isinstance(revoked_key_ids, frozenset)
             or not isinstance(envelope_dir, Path) or not envelope_dir.is_absolute()
             or envelope_dir.is_symlink() or not envelope_dir.is_dir()):
         raise EncryptedBackupError("invalid recovery policy or envelope directory")
+    if (expected_transfer_manifest_sha256 is not None and
+            (not isinstance(expected_transfer_manifest_sha256, str) or
+             HEX.fullmatch(expected_transfer_manifest_sha256) is None)):
+        raise EncryptedBackupError("invalid expected transfer manifest digest")
     raw = _regular_bytes(envelope_dir / "manifest.json", 4096)
     try:
         manifest = json.loads(raw, object_pairs_hook=_unique)
@@ -139,6 +149,7 @@ def unseal_snapshot(envelope_dir: Path, destination: Path, *, key: bytes,
             or type(manifest["schema_version"]) is not int or manifest["schema_version"] != 1
             or manifest["algorithm"] != "AES-256-GCM"
             or manifest["key_id"] != key_id or key_id in revoked_key_ids
+            or manifest["transfer_manifest_sha256"] != expected_transfer_manifest_sha256
             or type(manifest["generation"]) is not int
             or not minimum_generation <= manifest["generation"] <= 2**63 - 1
             or not isinstance(manifest["nonce_hex"], str)

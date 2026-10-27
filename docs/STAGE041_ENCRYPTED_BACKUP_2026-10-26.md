@@ -5,6 +5,9 @@ za pomocą AES-256-GCM. Metadane generacji, identyfikator klucza i skrót
 oryginalnej kopii są związane z szyfrogramem przez AAD. Odtwarzanie sprawdza
 tag, skróty, minimalną generację i listę odwołanych kluczy przed zapisaniem
 jakichkolwiek bajtów docelowych. Pliki wyjściowe powstają z prawami `0600`.
+W transferze między runnerami AAD wiąże także SHA-256 manifestu transferu,
+który wiąże raport źródłowy. Zmiana raportu lub manifestu po zaszyfrowaniu
+powoduje odmowę odtworzenia nawet przy niezmienionym szyfrogramie.
 
 Workflow `stage041-real-backup-restore.yml` wykonuje lokalny roundtrip na
 prawdziwym pliku kopii PostgreSQL. Osobno próbuje zmienić szyfrogram, użyć

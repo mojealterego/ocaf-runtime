@@ -55,6 +55,8 @@ def verify_encrypted_only(root: Path, *, key: bytes) -> None:
         source = json.loads(source_bytes, object_pairs_hook=_unique)
     except (OSError, ValueError, UnicodeError, TypeError) as exc:
         raise ArtifactGateError("invalid encrypted transfer manifest") from exc
+    transfer_digest = hashlib.sha256(
+        encrypted._regular_bytes(root / "manifest.json", 4096)).hexdigest()
     if (not isinstance(transfer, dict) or not isinstance(envelope, dict)
             or not isinstance(source, dict)
             or set(transfer) != recovery.MANIFEST_FIELDS
@@ -82,6 +84,7 @@ def verify_encrypted_only(root: Path, *, key: bytes) -> None:
             or transfer["snapshot_sha256"] != envelope.get("snapshot_sha256")
             or envelope.get("algorithm") != "AES-256-GCM"
             or envelope.get("key_id") != key_id
+            or envelope.get("transfer_manifest_sha256") != transfer_digest
             or not isinstance(envelope.get("nonce_hex"), str)
             or re.fullmatch(r"[a-f0-9]{24}", envelope["nonce_hex"]) is None
             or not isinstance(envelope.get("ciphertext_sha256"), str)

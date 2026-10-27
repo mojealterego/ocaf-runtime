@@ -100,7 +100,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import os,sys
+          import hashlib,os,sys
           from pathlib import Path
           sys.path.insert(0,"scripts")
           from stage041_encrypted_backup import seal_snapshot
@@ -108,7 +108,9 @@ jobs:
           envelope=root/"envelope";envelope.mkdir(mode=0o700)
           manifest=seal_snapshot(root/"snapshot.pgcustom",envelope,
                                  key=bytes.fromhex(os.environ["STAGE041_KEY_HEX"]),
-                                 generation=1)
+                                 generation=1,
+                                 transfer_manifest_sha256=hashlib.sha256(
+                                     (root/"manifest.json").read_bytes()).hexdigest())
           assert manifest["snapshot_sha256"] in (root/"manifest.json").read_text()
           (root/"snapshot.pgcustom").unlink()
           assert not (root/"snapshot.pgcustom").exists()
@@ -187,7 +189,7 @@ jobs:
               "stage041-cross-download/envelope/$file" "$BASE/inputs/envelope/$file"
           done
           sudo -n -u postgres env STAGE041_KEY_HEX="$STAGE041_KEY_HEX" python3 - "$BASE" <<'PY'
-          import json,os,sys
+          import hashlib,json,os,sys
           from pathlib import Path
           sys.path.insert(0,sys.argv[1])
           from stage041_encrypted_backup import EncryptedBackupError,unseal_snapshot
@@ -196,22 +198,27 @@ jobs:
           target=root/"inputs/snapshot.pgcustom"
           key=bytes.fromhex(os.environ["STAGE041_KEY_HEX"])
           record=json.loads((envelope/"manifest.json").read_text())
+          transfer_digest=hashlib.sha256((root/"inputs/manifest.json").read_bytes()).hexdigest()
           for policy in ({"key":b"x"*32,"minimum_generation":1},
                          {"key":key,"minimum_generation":2},
                          {"key":key,"minimum_generation":1,
                           "revoked_key_ids":frozenset({record["key_id"]})}):
-              try:unseal_snapshot(envelope,target,**policy)
+              try:unseal_snapshot(envelope,target,
+                                  expected_transfer_manifest_sha256=transfer_digest,
+                                  **policy)
               except EncryptedBackupError:pass
               else:raise AssertionError("unsafe cross-kernel encrypted recovery accepted")
           ciphertext=envelope/"snapshot.aesgcm"
           original_ciphertext=ciphertext.read_bytes()
           ciphertext.write_bytes(original_ciphertext[:-1]+bytes([original_ciphertext[-1]^1]))
-          try:unseal_snapshot(envelope,target,key=key,minimum_generation=1)
+          try:unseal_snapshot(envelope,target,key=key,minimum_generation=1,
+                              expected_transfer_manifest_sha256=transfer_digest)
           except EncryptedBackupError:pass
           else:raise AssertionError("tampered cross-kernel ciphertext accepted")
           ciphertext.write_bytes(original_ciphertext)
           assert not target.exists()
-          proof=unseal_snapshot(envelope,target,key=key,minimum_generation=1)
+          proof=unseal_snapshot(envelope,target,key=key,minimum_generation=1,
+                                expected_transfer_manifest_sha256=transfer_digest)
           assert proof["immutable_offsite_storage_proved"] is False
           assert proof["snapshot_sha256"]==json.loads((root/"inputs/manifest.json").read_text())["snapshot_sha256"]
           (root/"evidence/encryption-transfer.json").write_text(json.dumps({

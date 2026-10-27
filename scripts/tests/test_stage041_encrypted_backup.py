@@ -83,6 +83,21 @@ class EncryptedBackupTests(unittest.TestCase):
                 seal_snapshot(self.source, fresh, key=self.key, generation=13)
         self.assertFalse((fresh / "snapshot.aesgcm").exists())
 
+    def test_transfer_manifest_binding_rejects_rewritten_metadata(self):
+        bound = self.root / "bound"
+        bound.mkdir()
+        seal_snapshot(self.source, bound, key=self.key, generation=13,
+                      transfer_manifest_sha256="a" * 64)
+        destination = self.root / "bound-restored.pgcustom"
+        for digest in (None, "b" * 64):
+            with self.subTest(digest=digest), self.assertRaises(EncryptedBackupError):
+                unseal_snapshot(bound, destination, key=self.key, minimum_generation=13,
+                                expected_transfer_manifest_sha256=digest)
+            self.assertFalse(destination.exists())
+        unseal_snapshot(bound, destination, key=self.key, minimum_generation=13,
+                        expected_transfer_manifest_sha256="a" * 64)
+        self.assertEqual(destination.read_bytes(), self.source.read_bytes())
+
 
 if __name__ == "__main__":
     unittest.main()
