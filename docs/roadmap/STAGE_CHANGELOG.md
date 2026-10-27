@@ -670,3 +670,8 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 ### 2026-10-27 — 0.42.4 attested ephemeral rollback drill
 
 - [CI 40453820456](https://github.com/mojealterego/ocaf-runtime/actions/runs/40453820456) verified two commit-bound bundles and both build/SBOM attestations per bundle, then ran the candidate and prior CLI binaries on a fresh runner. This is a single CLI behavior probe; stateful rollback and revoked-secret denial remain open. [Evidence scope](../STAGE042_ROLLBACK_DRILL_2026-10-27.md).
+
+### 2026-10-27 — roadmap status correction for 0.42 and 0.44
+
+- Root/mirror stage rows now say ACTIVE_TECHNICAL_OPEN instead of PLANNED_OR_UNVERIFIED. The update records existing code and laboratory CI while preserving workspace, stateful rollback and deployment gates.
+- 0.40 quorum SQLite storage rejects unsafe sidecars and symlinked ancestors ([CI 40454075356](https://github.com/mojealterego/ocaf-runtime/actions/runs/40454075356)); 0.44 JWT parser rejects duplicate top-level security fields; its final CI result is tracked separately.
