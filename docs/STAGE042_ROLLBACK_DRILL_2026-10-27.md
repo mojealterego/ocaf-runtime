@@ -18,6 +18,10 @@ The executable SHA-256 values were different:
 - Candidate: `0e96da3c0e01f186446258e73e76e2b087470b78639dc823bdda61ae909fa7bb`
 - Prior: `9f049a237ecd7cd21f88270d45ea7bba54cd0448198f6223bd2adbac4b80c68f`
 
+These are hashes of extracted executables from run 40453820456, not hashes
+of the release archives. No numeric binary digest from run 40550752997 is
+reproduced in this document.
+
 A second run, [40454393345](https://github.com/mojealterego/ocaf-runtime/actions/runs/40454393345),
 repeated those checks and added real disposable PostgreSQL 16 state. The
 candidate binary observed two pending jobs. The runner restored a custom
@@ -35,6 +39,24 @@ failure and the probe reported `revoked_credential_denied: true`. The earlier
 attempt [40494702250](https://github.com/mojealterego/ocaf-runtime/actions/runs/40494702250)
 failed safely because its password check used trusted container loopback and
 could not prove revocation. The corrected run checks the authenticated route.
+
+[Run 40550752997](https://github.com/mojealterego/ocaf-runtime/actions/runs/40550752997)
+also succeeded on 2026-10-27 using the source-bound rollback workflow at
+`8e6ee742210ec29312d60c56e3d2616dd1fbb101`. The workflow required
+explicit candidate/prior source commits and supply-chain run IDs, checked
+ancestry, downloaded both named release bundles, verified each bundle and
+both build and CycloneDX attestations against its own source commit and
+the pinned `supply-chain.yml` signer workflow, then exercised the candidate
+and prior CLIs. Its disposable PostgreSQL 16 service passed the two-pending
+to one-pending snapshot restore and denied the prior binary after rotating
+the old password over an authenticated TCP route. Separately,
+[supply-chain run 40549480569](https://github.com/mojealterego/ocaf-runtime/actions/runs/40549480569)
+succeeded for the three-crate workspace at
+`6ffb8cb99ddab2c2dfe1f37e9eaaf864a62d8033`, including dependency
+policy, locked build, workspace CycloneDX 1.5 SBOM and exact-commit
+build/SBOM attestation verification. These are CI results for the named
+source revisions; they do not establish durable-host recovery or production
+approval.
 
 The standalone Python report deliberately says `signature_verified: false`:
 the Python program does not verify GitHub signatures. The preceding workflow

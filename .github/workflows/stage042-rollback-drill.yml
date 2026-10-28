@@ -1,3 +1,4 @@
+# release-evidence-scope: ephemeral_lab
 name: Stage 0.42 source-bound rollback drill (ephemeral CI only)
 
 on:
