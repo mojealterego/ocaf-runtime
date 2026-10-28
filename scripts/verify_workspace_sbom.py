@@ -16,6 +16,11 @@ from .supply_chain import (MAX_MANIFEST_BYTES, REVIEWED_WORKSPACE_MEMBERS,
                            PolicyError, _read_regular, _toml, _workspace_members)
 
 MAX_SBOM_BYTES = 16 * 1024 * 1024
+# The standalone G01 binary is a workspace member without a root package
+# dependency. Its own BOM must show the reviewed local library it executes.
+STANDALONE_BOM_DEPENDENCIES = {
+    "swarms/g01": ("ocaf_stage_ledger", "0.1.0"),
+}
 
 
 class SbomError(ValueError):
@@ -53,6 +58,14 @@ def _component_identity(bom: dict[str, Any]) -> tuple[str, str]:
     return name, version
 
 
+def _component_occurrences(components: list[Any], name: str, version: str) -> int:
+    return sum(
+        isinstance(component, dict) and
+        (component.get("name"), component.get("version")) == (name, version)
+        for component in components
+    )
+
+
 def verify(repository: Path) -> dict[str, Any]:
     root = repository.absolute()
     try:
@@ -71,18 +84,20 @@ def verify(repository: Path) -> dict[str, Any]:
     if not isinstance(components, list) or not components:
         raise SbomError("aggregate SBOM has no components")
     for name, version in members.items():
-        occurrences = sum(
-            isinstance(component, dict) and
-            (component.get("name"), component.get("version")) == (name, version)
-            for component in components
-        )
-        if occurrences != 1:
+        if _component_occurrences(components, name, version) != 1:
             raise SbomError("aggregate SBOM omits or duplicates a workspace member")
     for member_path in manifest.get("workspace", {}).get("members", [])[1:]:
         name, version = REVIEWED_WORKSPACE_MEMBERS[member_path]
         member_bom = _read_bom(root / member_path / "bom.json")
         if _component_identity(member_bom) != (name, version):
             raise SbomError("member SBOM package identity mismatch")
+        if member_path in STANDALONE_BOM_DEPENDENCIES:
+            dependency_name, dependency_version = STANDALONE_BOM_DEPENDENCIES[member_path]
+            member_components = member_bom.get("components")
+            if (not isinstance(member_components, list) or
+                    _component_occurrences(member_components, dependency_name,
+                                           dependency_version) != 1):
+                raise SbomError("standalone member SBOM omits or duplicates reviewed dependency")
     return {"status": "PASS", "workspace_members": members,
             "aggregate_components": len(components),
             "scope": "workspace-cyclonedx-content-not-signature-verification"}

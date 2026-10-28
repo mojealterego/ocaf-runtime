@@ -42,6 +42,33 @@ class WorkspaceSbomTests(unittest.TestCase):
             json.dumps(bom("ocaf_stage_ledger", [{"name": "serde", "version": "1.0.0"}])),
             encoding="utf-8")
 
+    def add_g01(self) -> Path:
+        path = "swarms/g01"
+        member = self.root / path
+        (member / "src").mkdir(parents=True)
+        (member / "src/main.rs").write_text("fn main() {}\n", encoding="utf-8")
+        (member / "Cargo.toml").write_text(
+            '[package]\nname = "ocaf-g01-swarm"\nversion = "0.1.0"\n'
+            'publish = false\nlicense = "MIT"\n'
+            '[[bin]]\nname = "ocaf-g01-swarm"\npath = "src/main.rs"\n'
+            '[dependencies]\n'
+            'ocaf_stage_ledger = { version = "0.1.0", path = "../../crates/ocaf-stage-ledger" }\n',
+            encoding="utf-8")
+        root_manifest = self.root / "Cargo.toml"
+        root_manifest.write_text(root_manifest.read_text(encoding="utf-8").replace(
+            'members = [".", "crates/ocaf-stage-ledger"]',
+            'members = [".", "crates/ocaf-stage-ledger", "swarms/g01"]'),
+            encoding="utf-8")
+        aggregate = self.root / "bom.json"
+        data = json.loads(aggregate.read_text(encoding="utf-8"))
+        data["components"].append({"name": "ocaf-g01-swarm", "version": "0.1.0",
+                                   "type": "application"})
+        aggregate.write_text(json.dumps(data), encoding="utf-8")
+        (member / "bom.json").write_text(json.dumps(bom("ocaf-g01-swarm", [
+            {"name": "ocaf_stage_ledger", "version": "0.1.0", "type": "library"}
+        ])), encoding="utf-8")
+        return member
+
     def test_accepts_aggregate_and_per_member_sboms(self):
         report = verify(self.root)
         self.assertEqual(report["status"], "PASS")
@@ -69,6 +96,50 @@ class WorkspaceSbomTests(unittest.TestCase):
         (member / "bom.json").unlink()
         with self.assertRaises(SbomError):
             verify(self.root)
+
+    def test_accepts_standalone_g01_with_aggregate_and_own_bom(self):
+        self.add_g01()
+        report = verify(self.root)
+        self.assertEqual(report["workspace_members"], {
+            "ocaf_stage_ledger": "0.1.0", "ocaf-g01-swarm": "0.1.0"})
+
+    def test_rejects_aggregate_missing_or_duplicate_g01(self):
+        self.add_g01()
+        path = self.root / "bom.json"
+        original = json.loads(path.read_text(encoding="utf-8"))
+        for components in (original["components"][:-1],
+                           original["components"] + [dict(original["components"][-1])]):
+            with self.subTest(components=components):
+                data = dict(original, components=components)
+                path.write_text(json.dumps(data), encoding="utf-8")
+                with self.assertRaisesRegex(SbomError, "aggregate SBOM omits or duplicates"):
+                    verify(self.root)
+
+    def test_rejects_missing_or_mismatched_g01_member_bom(self):
+        member = self.add_g01()
+        path = member / "bom.json"
+        original = path.read_text(encoding="utf-8")
+        path.unlink()
+        with self.assertRaises(SbomError):
+            verify(self.root)
+        data = json.loads(original)
+        data["metadata"]["component"]["name"] = "forged-swarm"
+        path.write_text(json.dumps(data), encoding="utf-8")
+        with self.assertRaisesRegex(SbomError, "member SBOM package identity mismatch"):
+            verify(self.root)
+
+    def test_rejects_g01_member_bom_without_exact_ledger_dependency(self):
+        member = self.add_g01()
+        path = member / "bom.json"
+        original = json.loads(path.read_text(encoding="utf-8"))
+        for components in ([],
+                           [{"name": "ocaf_stage_ledger", "version": "9.9.9"}],
+                           original["components"] + [dict(original["components"][0])]):
+            with self.subTest(components=components):
+                data = dict(original, components=components)
+                path.write_text(json.dumps(data), encoding="utf-8")
+                with self.assertRaisesRegex(SbomError, "standalone member SBOM omits or duplicates"):
+                    verify(self.root)
 
     def test_rejects_aggregate_missing_member(self):
         path = self.root / "bom.json"
