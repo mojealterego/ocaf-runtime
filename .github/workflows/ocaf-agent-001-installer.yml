@@ -1,0 +1,60 @@
+name: OCAF Asterion 001 installer (DRAFT only)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'OCAF Agents MOJEALTEREGO/AGENT-FLEET-111/OCAF-AGENT-001-asterion/**'
+      - '.github/workflows/ocaf-agent-001-installer.yml'
+      - 'crates/ocaf-stage-ledger/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-installer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: '0'
+      CARGO_PROFILE_TEST_DEBUG: '0'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          toolchain: '1.99.0'
+      - name: Build tested local installer archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          agent='OCAF Agents MOJEALTEREGO/AGENT-FLEET-111/OCAF-AGENT-001-asterion'
+          sh "$agent/packaging/build.sh"
+          archive="$agent/dist/ocaf-agent-001-asterion-0.1.0.tar.gz"
+          test -s "$archive"
+          sha256sum --check "$archive.sha256"
+      - name: Install and verify fail-closed DRAFT status
+        shell: bash
+        run: |
+          set -euo pipefail
+          agent='OCAF Agents MOJEALTEREGO/AGENT-FLEET-111/OCAF-AGENT-001-asterion'
+          archive="$agent/dist/ocaf-agent-001-asterion-0.1.0.tar.gz"
+          export OCAF_AGENT_PREFIX="$RUNNER_TEMP/ocaf-agent-001-installed"
+          sh "$agent/packaging/install.sh" "$archive"
+          "$OCAF_AGENT_PREFIX/bin/ocaf-agent-001" status \
+            "$OCAF_AGENT_PREFIX/share/ocaf-agent-001/agent.toml" \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["agent_id"] == "OCAF-AGENT-001" and d["lifecycle"] == "DRAFT" and d["active_admission"] == "DENY" and d["ostc_enabled"] is False and d["remote_transport"] == "disabled"'
+          sh "$agent/packaging/uninstall.sh"
+          test ! -e "$OCAF_AGENT_PREFIX/bin/ocaf-agent-001"
+      - name: Upload installer and checksum for operator review
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ocaf-agent-001-asterion-draft-${{ github.sha }}
+          path: |
+            OCAF Agents MOJEALTEREGO/AGENT-FLEET-111/OCAF-AGENT-001-asterion/dist/ocaf-agent-001-asterion-0.1.0.tar.gz
+            OCAF Agents MOJEALTEREGO/AGENT-FLEET-111/OCAF-AGENT-001-asterion/dist/ocaf-agent-001-asterion-0.1.0.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 7

@@ -20,3 +20,10 @@ The archive is a local development artifact and is ignored by Git. It has no
 publisher signature. Certificate status remains **NOT ISSUED**. A SHA-256
 digest identifies bytes only; it does not establish authenticity or
 production readiness.
+
+The `ocaf-agent-001-installer.yml` GitHub Actions workflow rebuilds the
+archive from the pushed commit, checks its SHA-256, installs it in a disposable
+runner prefix, verifies `DRAFT` and `ACTIVE=DENY`, then uploads the archive
+and checksum for operator review. The workflow artifact is retained for seven
+days; its run ID and result must be checked separately before citing it as
+remote build evidence.
