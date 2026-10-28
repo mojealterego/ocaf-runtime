@@ -222,13 +222,35 @@ impl OcafRuntime {
                 "OMAS V2 RPC sender binding missing or mismatched".into(),
             ));
         }
-        self.execute_signed_omas(operation, request).await
+        // The signed WASI manifest names the authenticated RPC agent, not
+        // the OMAS authority that approved this operation. Keep that agent
+        // identity through execution after verifying the V2 sender binding.
+        self.execute_signed_omas_attributed(
+            operation,
+            request,
+            &format!("{}:{authenticated_sender}", operation.tenant),
+        )
+        .await
     }
 
     pub async fn execute_signed_omas(
         &self,
         operation: &crate::omas_signed::SignedOperation,
         request: ToolCallRequest,
+    ) -> Result<ToolCallResult, RuntimeError> {
+        self.execute_signed_omas_attributed(
+            operation,
+            request,
+            &format!("{}:omas_signed", operation.tenant),
+        )
+        .await
+    }
+
+    async fn execute_signed_omas_attributed(
+        &self,
+        operation: &crate::omas_signed::SignedOperation,
+        request: ToolCallRequest,
+        principal: &str,
     ) -> Result<ToolCallResult, RuntimeError> {
         if self.tenant_namespace.as_deref() != Some(operation.tenant.as_str())
             || operation.opcode != 1
@@ -261,12 +283,8 @@ impl OcafRuntime {
             .map_err(|_| RuntimeError::AuthRequired("invalid system clock".into()))?;
         crate::omas_signed::verify_and_consume(operation, public_key, replay_database, now)
             .map_err(|error| RuntimeError::AuthRequired(error.to_string()))?;
-        self.execute_attributed(
-            request,
-            &format!("{}:omas_signed", operation.tenant),
-            Some(operation.fuel),
-        )
-        .await
+        self.execute_attributed(request, principal, Some(operation.fuel))
+            .await
     }
 
     /// Register only the manifest actually verified by the Ed25519 WASI

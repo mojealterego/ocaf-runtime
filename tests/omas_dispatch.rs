@@ -6,14 +6,15 @@ use openssl::pkey::PKey;
 use openssl::sign::Signer;
 use serde_json::{json, Value};
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
-struct CountExecutor(Arc<AtomicUsize>);
+struct CountExecutor(Arc<AtomicUsize>, Arc<Mutex<Vec<String>>>);
 
 #[async_trait::async_trait]
 impl ToolExecutor for CountExecutor {
-    async fn execute(&self, args: Value, _ctx: &ExecutionContext) -> Result<Value, ToolError> {
+    async fn execute(&self, args: Value, ctx: &ExecutionContext) -> Result<Value, ToolError> {
         self.0.fetch_add(1, Ordering::SeqCst);
+        self.1.lock().unwrap().push(ctx.agent_id.clone());
         Ok(args)
     }
     async fn execute_signed_fuel(
@@ -117,6 +118,7 @@ async fn signed_dispatch_runs_once_and_rejects_replay_and_tampering() {
         .with_omas_trusted_key(public)
         .with_omas_replay_database(database.clone());
     let counter = Arc::new(AtomicUsize::new(0));
+    let principals = Arc::new(Mutex::new(Vec::new()));
     runtime
         .register(
             ToolManifest {
@@ -129,7 +131,7 @@ async fn signed_dispatch_runs_once_and_rejects_replay_and_tampering() {
                 timeout_ms: 1_000,
                 enabled: true,
             },
-            CountExecutor(counter.clone()),
+            CountExecutor(counter.clone(), principals.clone()),
         )
         .await
         .unwrap();
@@ -318,12 +320,20 @@ async fn signed_dispatch_runs_once_and_rejects_replay_and_tampering() {
         .await
         .is_err());
     assert_eq!(counter.load(Ordering::SeqCst), 0);
+    let mut tampered_sender = rpc_signed.clone();
+    tampered_sender.rpc_sender = Some("node-b".into());
+    assert!(runtime
+        .execute_signed_omas_for_rpc(&tampered_sender, request.clone(), "node-b")
+        .await
+        .is_err());
+    assert_eq!(counter.load(Ordering::SeqCst), 0);
     let rpc_result = runtime
         .execute_signed_omas_for_rpc(&rpc_signed, request.clone(), "node-a")
         .await
         .unwrap();
     assert_eq!(rpc_result.output, json!({"value": 42}));
     assert_eq!(counter.load(Ordering::SeqCst), 1);
+    assert_eq!(principals.lock().unwrap().as_slice(), ["tenant_a:node-a"]);
     assert!(runtime
         .execute_signed_omas_for_rpc(&rpc_signed, request.clone(), "node-a")
         .await
@@ -336,6 +346,10 @@ async fn signed_dispatch_runs_once_and_rejects_replay_and_tampering() {
         .unwrap();
     assert_eq!(result.output, json!({"value":42}));
     assert_eq!(counter.load(Ordering::SeqCst), 2);
+    assert_eq!(
+        principals.lock().unwrap().as_slice(),
+        ["tenant_a:node-a", "tenant_a:omas_signed"]
+    );
 
     assert!(runtime
         .execute_signed_omas(&signed, request.clone())

@@ -33,6 +33,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
       - name: Build actual TLS-bound OCAF coordinator with locked dependencies
         run: cargo build --locked --features tls-bound --bin ocaf-coordinator --bin ocaf-rpc-node
+      - name: Verify sender-bound OMAS dispatch preserves the WASI agent principal
+        run: cargo test --locked --features tls-bound --test omas_dispatch
       - name: Verify and install pinned real Wasmtime 49.0.2 under root control
         shell: bash
         run: |
