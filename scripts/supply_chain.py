@@ -21,7 +21,10 @@ MAX_PACKAGES = 10_000
 REVIEWED_WORKSPACE_MEMBERS = {
     "crates/ocaf-stage-ledger": ("ocaf_stage_ledger", "0.1.0"),
     "crates/ocaf-transport-crdt": ("ocaf-transport-crdt", "0.1.0"),
+    "swarms/g01": ("ocaf-g01-swarm", "0.1.0"),
 }
+# Swarm CLIs are workspace build targets, not dependencies of ocaf_runtime.
+STANDALONE_WORKSPACE_EXECUTABLES = frozenset({"swarms/g01"})
 
 
 class PolicyError(ValueError):
@@ -93,7 +96,23 @@ def _workspace_members(root: Path, manifest: dict[str, Any]) -> dict[str, str]:
         bound = [alias for alias, dep in dependencies.items()
                  if isinstance(dep, dict) and dep.get("path") == path and
                  dep.get("package", alias) == name and dep.get("version") == version]
-        if len(bound) != 1:
+        if path in STANDALONE_WORKSPACE_EXECUTABLES:
+            root_ref = any(
+                alias == name or (isinstance(dep, dict) and
+                                  (dep.get("path") == path or dep.get("package") == name))
+                for alias, dep in dependencies.items()
+            )
+            if (root_ref or member.get("bin") != [{"name": name, "path": "src/main.rs"}]
+                    or member.get("lib") is not None or package.get("edition") != "2021"):
+                raise PolicyError("standalone swarm executable boundary changed")
+            member_dependencies = member.get("dependencies")
+            if ("crates/ocaf-stage-ledger" not in paths or
+                    not isinstance(member_dependencies, dict) or
+                    member_dependencies.get("ocaf_stage_ledger") != {
+                        "path": "../../crates/ocaf-stage-ledger", "version": "0.1.0"
+                    }):
+                raise PolicyError("standalone swarm ledger dependency is unpinned")
+        elif len(bound) != 1:
             raise PolicyError("workspace member is not bound to the root package")
         accepted[name] = version
     return accepted
@@ -110,6 +129,12 @@ def inspect(repository: Path) -> dict[str, Any]:
     if not isinstance(name, str) or not name or not isinstance(version, str) or not version:
         raise PolicyError("invalid Cargo.toml package identity")
     workspace_members = _workspace_members(root, manifest)
+    workspace = manifest.get("workspace")
+    workspace_paths = workspace["members"][1:] if isinstance(workspace, dict) else []
+    root_members = {REVIEWED_WORKSPACE_MEMBERS[path][0] for path in workspace_paths
+                    if path not in STANDALONE_WORKSPACE_EXECUTABLES}
+    standalone_members = {REVIEWED_WORKSPACE_MEMBERS[path][0] for path in workspace_paths
+                          if path in STANDALONE_WORKSPACE_EXECUTABLES}
     blob = _read_regular(root / "Cargo.lock", MAX_LOCK_BYTES)
     lock = _toml(blob)
     if type(lock.get("version")) is not int or lock["version"] != 4:
@@ -212,11 +237,16 @@ def inspect(repository: Path) -> dict[str, Any]:
             if (pname, pversion) == (name, version):
                 roots += 1
                 locked_dependencies = pkg.get("dependencies", [])
-                if not isinstance(locked_dependencies, list) or any(
-                    member not in locked_dependencies for member in workspace_members
-                ):
-                    raise PolicyError("root lockfile does not depend on workspace members")
+                if (not isinstance(locked_dependencies, list) or
+                        any(member not in locked_dependencies for member in root_members) or
+                        any(member in locked_dependencies for member in standalone_members)):
+                    raise PolicyError("root lockfile workspace dependency boundary changed")
             elif pname in workspace_members and workspace_members[pname] == pversion:
+                if pname == REVIEWED_WORKSPACE_MEMBERS["swarms/g01"][0]:
+                    member_dependencies = pkg.get("dependencies")
+                    if (not isinstance(member_dependencies, list) or
+                            "ocaf_stage_ledger" not in member_dependencies):
+                        raise PolicyError("standalone swarm lockfile omits ledger dependency")
                 member_counts[pname] += 1
             elif patched_transport is not None and (pname, pversion) == ("zenoh-transport", "1.10.1"):
                 vendored_seen += 1

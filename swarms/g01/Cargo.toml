@@ -11,7 +11,7 @@ name = "ocaf-g01-swarm"
 path = "src/main.rs"
 
 [dependencies]
-ocaf_stage_ledger = { path = "../../crates/ocaf-stage-ledger" }
+ocaf_stage_ledger = { version = "0.1.0", path = "../../crates/ocaf-stage-ledger" }
 fs2 = "0.4"
 openssl = "0.10"
 serde = { version = "1.0", features = ["derive"] }

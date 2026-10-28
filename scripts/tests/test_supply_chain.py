@@ -73,6 +73,92 @@ class SupplyChainTests(unittest.TestCase):
         self._add_workspace_member("crates/ocaf-transport-crdt", "ocaf-transport-crdt")
         self.assertEqual(sc.inspect(self.root)["workspace_members"], {"ocaf-transport-crdt": "0.1.0"})
 
+    def _add_standalone_g01(self):
+        self._add_workspace_member("crates/ocaf-stage-ledger", "ocaf_stage_ledger")
+        g01 = self.root / "swarms/g01"
+        g01.mkdir(parents=True)
+        (g01 / "Cargo.toml").write_text(
+            '[package]\nname = "ocaf-g01-swarm"\nversion = "0.1.0"\n'
+            'edition = "2021"\npublish = false\nlicense = "MIT"\n'
+            '[[bin]]\nname = "ocaf-g01-swarm"\npath = "src/main.rs"\n'
+            '[dependencies]\nocaf_stage_ledger = { version = "0.1.0", '
+            'path = "../../crates/ocaf-stage-ledger" }\n', encoding="utf-8")
+        cargo = self.root / "Cargo.toml"
+        cargo.write_text(cargo.read_text().replace(
+            'members = [".", "crates/ocaf-stage-ledger"]',
+            'members = [".", "crates/ocaf-stage-ledger", "swarms/g01"]'))
+        self.lock.write_text(self.lock.read_text() +
+            '\n[[package]]\nname = "ocaf-g01-swarm"\nversion = "0.1.0"\n'
+            'dependencies = ["ocaf_stage_ledger"]\n')
+
+    def test_accepts_reviewed_standalone_g01_without_root_dependency(self):
+        self._add_standalone_g01()
+        self.assertEqual(sc.inspect(self.root)["workspace_members"], {
+            "ocaf_stage_ledger": "0.1.0", "ocaf-g01-swarm": "0.1.0"})
+
+    def test_rejects_g01_root_dependency_boundary_crossing(self):
+        self._add_standalone_g01()
+        cargo = self.root / "Cargo.toml"
+        cargo.write_text(cargo.read_text() +
+                         'ocaf_g01_swarm = { version = "0.1.0", '
+                         'package = "ocaf-g01-swarm", path = "swarms/g01" }\n')
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
+    def test_rejects_g01_unpinned_or_redirected_ledger_dependency(self):
+        self._add_standalone_g01()
+        member = self.root / "swarms/g01/Cargo.toml"
+        original = member.read_text()
+        for replacement in (
+            'ocaf_stage_ledger = { path = "../../crates/ocaf-stage-ledger" }',
+            'ocaf_stage_ledger = { version = "0.1.0", path = "../../other" }',
+            'ocaf_stage_ledger = "0.1.0"',
+        ):
+            with self.subTest(replacement=replacement):
+                member.write_text(original.replace(
+                    'ocaf_stage_ledger = { version = "0.1.0", '
+                    'path = "../../crates/ocaf-stage-ledger" }', replacement))
+                with self.assertRaises(sc.PolicyError):
+                    sc.inspect(self.root)
+        member.write_text(original)
+
+    def test_rejects_g01_binary_or_package_identity_swap(self):
+        self._add_standalone_g01()
+        member = self.root / "swarms/g01/Cargo.toml"
+        original = member.read_text()
+        for old, new in ((
+            'name = "ocaf-g01-swarm"\npath = "src/main.rs"',
+            'name = "unreviewed"\npath = "src/main.rs"'), (
+            'name = "ocaf-g01-swarm"\nversion = "0.1.0"',
+            'name = "unreviewed"\nversion = "0.1.0"')):
+            with self.subTest(old=old):
+                member.write_text(original.replace(old, new))
+                with self.assertRaises(sc.PolicyError):
+                    sc.inspect(self.root)
+        member.write_text(original)
+
+    def test_rejects_g01_missing_or_forged_lockfile_edge(self):
+        self._add_standalone_g01()
+        original = self.lock.read_text()
+        for changed in (
+            original.replace('dependencies = ["ocaf_stage_ledger"]', 'dependencies = []'),
+            original.replace('[[package]]\nname = "ocaf-g01-swarm"\nversion = "0.1.0"\n'
+                             'dependencies = ["ocaf_stage_ledger"]\n', ''),
+        ):
+            with self.subTest(changed=changed[-100:]):
+                self.lock.write_text(changed)
+                with self.assertRaises(sc.PolicyError):
+                    sc.inspect(self.root)
+        self.lock.write_text(original)
+
+    def test_rejects_unknown_member_even_with_reviewed_g01(self):
+        self._add_standalone_g01()
+        cargo = self.root / "Cargo.toml"
+        cargo.write_text(cargo.read_text().replace(
+            '"swarms/g01"]', '"swarms/g01", "swarms/unknown"]'))
+        with self.assertRaises(sc.PolicyError):
+            sc.inspect(self.root)
+
     def test_rejects_unlisted_workspace_member(self):
         self._add_workspace_member("crates/ocaf-stage-ledger", "ocaf_stage_ledger")
         cargo = self.root / "Cargo.toml"
