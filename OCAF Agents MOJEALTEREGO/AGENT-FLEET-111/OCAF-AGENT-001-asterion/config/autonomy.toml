@@ -1,6 +1,7 @@
 agent_id = "OCAF-AGENT-001"
 display_name = "Asterion"
-planner = "UNASSIGNED"
+planner = "deterministic-stage-ledger"
 model = "UNASSIGNED"
-state_store = "ocaf-asterion-state"
+state_store = "none; caller supplies a JSON stage list"
 human_approval_for_side_effects = true
+max_steps = 4

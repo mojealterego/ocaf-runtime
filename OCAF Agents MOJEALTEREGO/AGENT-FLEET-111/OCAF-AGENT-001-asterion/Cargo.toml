@@ -1,4 +1,20 @@
+[workspace]
+
 [package]
 name = "ocaf-agent-001-asterion"
 version = "0.1.0"
 edition = "2021"
+publish = false
+license = "MIT"
+description = "Asterion: bounded local OCAF stage assistance"
+
+[[bin]]
+name = "ocaf-agent-001"
+path = "src/main.rs"
+
+[dependencies]
+ocaf_stage_ledger = { path = "../../../crates/ocaf-stage-ledger" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+toml = "0.8"
