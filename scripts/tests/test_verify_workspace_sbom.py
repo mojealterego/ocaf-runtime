@@ -49,7 +49,7 @@ class WorkspaceSbomTests(unittest.TestCase):
         (member / "src/main.rs").write_text("fn main() {}\n", encoding="utf-8")
         (member / "Cargo.toml").write_text(
             '[package]\nname = "ocaf-g01-swarm"\nversion = "0.1.0"\n'
-            'publish = false\nlicense = "MIT"\n'
+            'edition = "2021"\npublish = false\nlicense = "MIT"\n'
             '[[bin]]\nname = "ocaf-g01-swarm"\npath = "src/main.rs"\n'
             '[dependencies]\n'
             'ocaf_stage_ledger = { version = "0.1.0", path = "../../crates/ocaf-stage-ledger" }\n',
@@ -134,7 +134,9 @@ class WorkspaceSbomTests(unittest.TestCase):
         original = json.loads(path.read_text(encoding="utf-8"))
         for components in ([],
                            [{"name": "ocaf_stage_ledger", "version": "9.9.9"}],
-                           original["components"] + [dict(original["components"][0])]):
+                           original["components"] + [dict(original["components"][0])],
+                           original["components"] + [{"name": "ocaf_stage_ledger",
+                                                      "version": "9.9.9"}]):
             with self.subTest(components=components):
                 data = dict(original, components=components)
                 path.write_text(json.dumps(data), encoding="utf-8")

@@ -94,9 +94,13 @@ def verify(repository: Path) -> dict[str, Any]:
         if member_path in STANDALONE_BOM_DEPENDENCIES:
             dependency_name, dependency_version = STANDALONE_BOM_DEPENDENCIES[member_path]
             member_components = member_bom.get("components")
-            if (not isinstance(member_components, list) or
-                    _component_occurrences(member_components, dependency_name,
-                                           dependency_version) != 1):
+            dependency_components = (
+                [component for component in member_components
+                 if isinstance(component, dict) and component.get("name") == dependency_name]
+                if isinstance(member_components, list) else []
+            )
+            if (len(dependency_components) != 1 or
+                    dependency_components[0].get("version") != dependency_version):
                 raise SbomError("standalone member SBOM omits or duplicates reviewed dependency")
     return {"status": "PASS", "workspace_members": members,
             "aggregate_components": len(components),
