@@ -37,7 +37,7 @@ permissions:
   contents: read
 jobs:
   omas-security:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -66,15 +66,24 @@ jobs:
         run: cargo test --no-default-features pinned_engine_tests -- --nocapture
       - name: Validate WASI fuel test shell syntax
         run: bash -n tests/scripts/verify_wasmtime_fuel_exhaustion.sh
-      - name: Real Wasmtime fuel exhaustion (required security gate)
-        env:
-          WASMTIME_BIN: ${{ vars.OCAF_WASMTIME_BIN }}
-          WASMTIME_SHA256: ${{ vars.OCAF_WASMTIME_SHA256 }}
+      - name: Fetch and verify pinned Wasmtime for real fuel test
         run: |
-          if [[ -z "$WASMTIME_BIN" || -z "$WASMTIME_SHA256" ]]; then
-            echo "::error::Configure OCAF_WASMTIME_BIN and OCAF_WASMTIME_SHA256; fuel exhaustion gate cannot be skipped"
-            exit 1
-          fi
+          set -euo pipefail
+          test "$(uname -m)" = x86_64
+          archive=wasmtime-v49.0.2-x86_64-linux.tar.xz
+          mkdir -p "$RUNNER_TEMP/ocaf-wasmtime"
+          curl --fail --silent --show-error --location --retry 3 --proto '=https' --tlsv1.2 \
+            "https://github.com/bytecodealliance/wasmtime/releases/download/v49.0.2/$archive" \
+            -o "$RUNNER_TEMP/ocaf-wasmtime/$archive"
+          echo "a4d6e9e3a5a60f527cf7793d674c48930c80c2e8977995b8a275cad3254b9322  $RUNNER_TEMP/ocaf-wasmtime/$archive" \
+            | sha256sum --check --status
+          tar -xJf "$RUNNER_TEMP/ocaf-wasmtime/$archive" -C "$RUNNER_TEMP/ocaf-wasmtime"
+          test -x "$RUNNER_TEMP/ocaf-wasmtime/wasmtime-v49.0.2-x86_64-linux/wasmtime"
+      - name: Real Wasmtime fuel exhaustion (required security gate)
+        run: |
+          set -euo pipefail
+          export WASMTIME_BIN="$RUNNER_TEMP/ocaf-wasmtime/wasmtime-v49.0.2-x86_64-linux/wasmtime"
+          export WASMTIME_SHA256="$(sha256sum "$WASMTIME_BIN" | cut -d ' ' -f 1)"
           bash tests/scripts/verify_wasmtime_fuel_exhaustion.sh
       - name: Clippy
         run: cargo clippy --no-default-features --all-targets -- -D warnings
