@@ -1,0 +1,33 @@
+name: OCAF 0.41 S3 Object Lock verifier offline tests (no live offsite proof)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage041-s3-object-lock-verifier.yml
+      - scripts/stage041_s3_object_lock_verify.py
+      - scripts/tests/test_stage041_s3_object_lock_verify.py
+      - docs/STAGE041_S3_OBJECT_LOCK_OFFSITE_2026-10-28.md
+      - docs/STAGE041_ENCRYPTED_BACKUP_2026-10-26.md
+  pull_request:
+    paths:
+      - .github/workflows/stage041-s3-object-lock-verifier.yml
+      - scripts/stage041_s3_object_lock_verify.py
+      - scripts/tests/test_stage041_s3_object_lock_verify.py
+      - docs/STAGE041_S3_OBJECT_LOCK_OFFSITE_2026-10-28.md
+      - docs/STAGE041_ENCRYPTED_BACKUP_2026-10-26.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fake-aws-negative-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Exercise fail-closed verifier with a fake AWS CLI
+        run: python3 -O -m unittest discover -s scripts/tests -p test_stage041_s3_object_lock_verify.py -v

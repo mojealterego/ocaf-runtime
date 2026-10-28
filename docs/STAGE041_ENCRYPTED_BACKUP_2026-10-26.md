@@ -30,3 +30,7 @@ produkcyjnym kanałem dystrybucji klucza. `stage_041_complete=false` i
 `production_approved=false` pozostają wymagane. Do odbioru 0.41.6 nadal
 potrzebne są niezależny magazyn z retencją WORM, trwały KMS, polityka
 rotacji/odwołania i ćwiczenie odtworzeniowe na trwałym obcym hoście.
+
+Interfejs weryfikacji czterech wersji kopii w S3 Object Lock i jego negatywne
+testy offline opisuje [STAGE041_S3_OBJECT_LOCK_OFFSITE_2026-10-28.md](STAGE041_S3_OBJECT_LOCK_OFFSITE_2026-10-28.md).
+Sam interfejs nie jest dowodem wykonania kopii w rzeczywistym S3.
