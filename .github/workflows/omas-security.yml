@@ -49,21 +49,21 @@ jobs:
       - name: Format
         run: cargo fmt --all -- --check
       - name: OMAS unit and negative tests
-        run: cargo test --no-default-features omas -- --nocapture
+        run: cargo test --locked --no-default-features omas -- --nocapture
       - name: Tenant entrypoint, payload and namespace security regressions
         run: cargo test --locked --no-default-features omas_entrypoint_tests -- --nocapture
       - name: Durable nonce replay after SQLite reopen
         run: cargo test --locked --no-default-features replay_remains_rejected_after_database_reopen -- --nocapture
       - name: Concurrent nonce replay regression
-        run: cargo test --no-default-features concurrent_replay_allows_exactly_one_admission -- --nocapture
+        run: cargo test --locked --no-default-features concurrent_replay_allows_exactly_one_admission -- --nocapture
       - name: OMAS signed operation tests
-        run: cargo test --no-default-features signature_binds_operation_and_replay_persists
+        run: cargo test --locked --no-default-features signature_binds_operation_and_replay_persists
       - name: Signed dispatch integration test
-        run: cargo test --no-default-features --test omas_dispatch
+        run: cargo test --locked --no-default-features --test omas_dispatch
       - name: WASI signed fuel boundary tests
-        run: cargo test --no-default-features signed_fuel_never_exceeds_either_ceiling -- --nocapture
+        run: cargo test --locked --no-default-features signed_fuel_never_exceeds_either_ceiling -- --nocapture
       - name: Signed WASI engine regression tests
-        run: cargo test --no-default-features pinned_engine_tests -- --nocapture
+        run: cargo test --locked --no-default-features pinned_engine_tests -- --nocapture
       - name: Validate WASI fuel test shell syntax
         run: bash -n tests/scripts/verify_wasmtime_fuel_exhaustion.sh
       - name: Fetch and verify pinned Wasmtime for real fuel test
@@ -88,4 +88,4 @@ jobs:
           export WASMTIME_SHA256="$(sha256sum "$WASMTIME_BIN" | cut -d ' ' -f 1)"
           bash tests/scripts/verify_wasmtime_fuel_exhaustion.sh
       - name: Clippy
-        run: cargo clippy --no-default-features --all-targets -- -D warnings
+        run: cargo clippy --locked --no-default-features --all-targets -- -D warnings
