@@ -9,7 +9,7 @@ use sha2::{Digest, Sha256};
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const WINDOW_SECONDS: i64 = 300;
+pub(crate) const WINDOW_SECONDS: i64 = 300;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SignedOperation {
     pub tenant: String,
@@ -69,6 +69,51 @@ pub fn verify_and_consume(
     database: &Path,
     now: i64,
 ) -> Result<(), SignedOperationError> {
+    verify_signature(operation, public_key, now)?;
+    // SQLITE_OPEN_NOFOLLOW makes the final-component symlink check atomic
+    // with SQLite's open. Protect all ancestor directories and journal sidecars
+    // with operator-controlled filesystem permissions.
+    let flags =
+        rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE | rusqlite::OpenFlags::SQLITE_OPEN_NOFOLLOW;
+    let mut conn =
+        Connection::open_with_flags(database, flags).map_err(|_| SignedOperationError::Store)?;
+    conn.busy_timeout(std::time::Duration::from_secs(5))
+        .map_err(|_| SignedOperationError::Store)?;
+    let tx = conn
+        .transaction_with_behavior(TransactionBehavior::Immediate)
+        .map_err(|_| SignedOperationError::Store)?;
+    tx.execute_batch(
+        "CREATE TABLE IF NOT EXISTS omas_nonce (
+        tenant TEXT NOT NULL, nonce TEXT NOT NULL, expires_at INTEGER NOT NULL,
+        PRIMARY KEY (tenant, nonce)
+    );",
+    )
+    .map_err(|_| SignedOperationError::Store)?;
+    // Retain nonces through the entire signature validity interval.
+    tx.execute("DELETE FROM omas_nonce WHERE expires_at < ?1", params![now])
+        .map_err(|_| SignedOperationError::Store)?;
+    let expires_at = operation.issued_at.saturating_add(WINDOW_SECONDS);
+    let inserted = tx
+        .execute(
+            "INSERT OR IGNORE INTO omas_nonce (tenant, nonce, expires_at) VALUES (?1, ?2, ?3)",
+            params![operation.tenant, operation.nonce, expires_at],
+        )
+        .map_err(|_| SignedOperationError::Store)?;
+    if inserted != 1 {
+        return Err(SignedOperationError::Replay);
+    }
+    tx.commit().map_err(|_| SignedOperationError::Store)?;
+    Ok(())
+}
+
+/// Validate policy, freshness and the V1/V2 Ed25519 signature without changing
+/// replay state. Callers that mutate their own SQLite store must consume a
+/// nonce in the same transaction as that mutation.
+pub(crate) fn verify_signature(
+    operation: &SignedOperation,
+    public_key: &[u8; 32],
+    now: i64,
+) -> Result<(), SignedOperationError> {
     if !(1..=5).contains(&operation.opcode)
         || !omas_policy::admit(
             &operation.tenant,
@@ -107,39 +152,6 @@ pub fn verify_and_consume(
     {
         return Err(SignedOperationError::Signature);
     }
-    // SQLITE_OPEN_NOFOLLOW makes the final-component symlink check atomic
-    // with SQLite's open. Protect all ancestor directories and journal sidecars
-    // with operator-controlled filesystem permissions.
-    let flags =
-        rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE | rusqlite::OpenFlags::SQLITE_OPEN_NOFOLLOW;
-    let mut conn =
-        Connection::open_with_flags(database, flags).map_err(|_| SignedOperationError::Store)?;
-    conn.busy_timeout(std::time::Duration::from_secs(5))
-        .map_err(|_| SignedOperationError::Store)?;
-    let tx = conn
-        .transaction_with_behavior(TransactionBehavior::Immediate)
-        .map_err(|_| SignedOperationError::Store)?;
-    tx.execute_batch(
-        "CREATE TABLE IF NOT EXISTS omas_nonce (
-        tenant TEXT NOT NULL, nonce TEXT NOT NULL, expires_at INTEGER NOT NULL,
-        PRIMARY KEY (tenant, nonce)
-    );",
-    )
-    .map_err(|_| SignedOperationError::Store)?;
-    // Retain nonces through the entire signature validity interval.
-    tx.execute("DELETE FROM omas_nonce WHERE expires_at < ?1", params![now])
-        .map_err(|_| SignedOperationError::Store)?;
-    let expires_at = operation.issued_at.saturating_add(WINDOW_SECONDS);
-    let inserted = tx
-        .execute(
-            "INSERT OR IGNORE INTO omas_nonce (tenant, nonce, expires_at) VALUES (?1, ?2, ?3)",
-            params![operation.tenant, operation.nonce, expires_at],
-        )
-        .map_err(|_| SignedOperationError::Store)?;
-    if inserted != 1 {
-        return Err(SignedOperationError::Replay);
-    }
-    tx.commit().map_err(|_| SignedOperationError::Store)?;
     Ok(())
 }
 pub fn unix_now() -> Result<i64, SignedOperationError> {

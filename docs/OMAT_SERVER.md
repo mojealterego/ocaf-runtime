@@ -34,6 +34,34 @@ niezaufanych manifestów są danymi walidacyjnymi; konsument nie może używać
 ich pól opisowych jako instrukcji ani pomijać ponownego sprawdzenia digestu
 przy przyszłym wykonaniu.
 
+## Trwałe, podpisane odwołanie manifestu
+
+`Stage043ToolStore::revoke_signed` przyjmuje `ToolRevocationRequest` z
+`tenant_id`, `tool_id` i dokładnym, małoliterowym `sha256:<64 cyfr hex>`
+zarejestrowanego manifestu. Żądanie musi być zapisane w kanonicznym JSON
+stanowiącym `payload` istniejącego `SignedOperation` Ed25519 V2. Operacja
+wiąże ten payload, tenant, namespace `<tenant>/tools`, target
+`<tenant>/tools/control/revoke`, opcode `5`, fuel `1`, nonce, czas wystawienia oraz
+`rpc_sender`. Nie ma publicznego API `revoke(tenant, tool_id)` bez podpisu.
+
+Wywołujący musi dostarczyć tenant i klucz publiczny z niezależnej mapy
+zaufania oraz tożsamość `authenticated_rpc_sender` z uwierzytelnionej sesji
+transportu. Nie wolno brać tych wartości z JSON klienta. Weryfikacja podpisu
+oraz 300-sekundowego okna świeżości poprzedza zmianę bazy. SQLite zachowuje
+nonce w `stage043_revoke_nonce`; jego zapis i warunkowe ustawienie trwałego
+tombstone (`tenant`, `tool_id`, dokładny digest, `revoked = 0`) następują w
+jednej transakcji. Błędny podpis, replay, inny tenant/tool, zmieniony payload,
+nieaktualny digest, uszkodzony manifest lub błąd bazy odmawiają odwołania.
+Poprawnie podpisana próba zużywa nonce również przy odmowie z powodu
+nieistniejącego wpisu, starego digestu lub uszkodzenia wpisu; ponowienie
+wymaga nowego podpisu i nonce. Błąd transakcji pozostaje odmową fail-closed.
+Po restarcie odwołany identyfikator pozostaje niedostępny i nie można go
+ponownie zarejestrować pod tą samą tożsamością.
+
+To jest lokalne API trwałego magazynu. Podłączenie go do uwierzytelnionego
+transportu i pełne testy E2E nadal są otwarte. Odwołanie nie włącza OSTc,
+stanu ACTIVE ani executora.
+
 ## Uruchomienie docelowe
 
 1. Zbuduj osobny binarny proces OMAt z przypiętym commitem i toolchainem.
@@ -64,3 +92,6 @@ boundary, blokadę OSTc, side effects, fail-closed executor, health, zmianę
 schematu między discovery i pobraniem oraz odwołanie. Test produkcyjny wymaga
 osobnego procesu, Zenoh multi-node, podpisu manifestu, trwałego rejestru
 wersji, izolowanego executora oraz pozytywnych i negatywnych dowodów E2E.
+`tests/stage043_persistence.rs` sprawdza także trwałe podpisane odwołanie,
+replay po restarcie, wyścig nonce/CAS i negatywne przypadki podpisu, nadawcy,
+tenanta, payloadu, czasu oraz nieaktualnego digestu.
