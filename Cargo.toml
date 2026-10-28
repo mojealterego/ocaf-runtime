@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "crates/ocaf-stage-ledger", "crates/ocaf-transport-crdt"]
+members = [".", "crates/ocaf-stage-ledger", "crates/ocaf-transport-crdt", "swarms/g01"]
 default-members = ["."]
 resolver = "2"
 

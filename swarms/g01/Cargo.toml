@@ -1,0 +1,26 @@
+[package]
+name = "ocaf-g01-swarm"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "MIT"
+description = "Local dependency-ordered engineering swarm handoff with signed operator receipts"
+
+[[bin]]
+name = "ocaf-g01-swarm"
+path = "src/main.rs"
+
+[dependencies]
+ocaf_stage_ledger = { path = "../../crates/ocaf-stage-ledger" }
+fs2 = "0.4"
+openssl = "0.10"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
+thiserror = "1.0"
+uuid = { version = "1", features = ["v4"] }
+# The registry records a future Zenoh requirement. No network transport is opened in this release.
+zenoh = { version = "1.10", optional = true, default-features = false, features = ["transport_tcp"] }
+
+[dev-dependencies]
+tempfile = "3"

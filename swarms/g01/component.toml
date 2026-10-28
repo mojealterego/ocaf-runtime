@@ -1,0 +1,7 @@
+id = "G01"
+kind = "swarm"
+transport = "none"
+zenoh_required = true
+maturity = "development"
+status = "IN_DEVELOPMENT"
+swarm_id = "OCAF-SWARM-01"

@@ -1,6 +1,6 @@
 # ID	repository_relative_folder	kind	zenoh_required
 
-G01	agents/engineering/G01	agent	true
+G01	swarms/g01	swarm	true
 G02	agents/engineering/G02	agent	true
 G03	agents/engineering/G03	agent	true
 G04	agents/engineering/G04	agent	true

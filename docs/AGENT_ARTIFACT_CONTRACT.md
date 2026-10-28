@@ -5,7 +5,7 @@ Dotyczy **każdego Agenta, Systemu Agentowego, Roju OCAF, narzędzia OMAt i serw
 ## Struktura każdego komponentu
 
 ```text
-agents/engineering/G01/
+swarms/g01/
   component.toml
   Cargo.toml
   src/main.rs  (lub src/lib.rs)
@@ -35,6 +35,6 @@ Dla każdego komponentu, każdego etapu i jego podetapów należy uzyskać:
 4. Niezależny przegląd kodu oraz formalny odbiór operatora, tam gdzie wymaga go Roadmapa.
 5. Kompletną dokumentację techniczną, API, użytkową, operacyjną, kompatybilności i certyfikacyjną.
 
-**Status 33 grup Make G01–G33:** scenariusze istnieją, lecz brak odpowiednich katalogów Rust w aktualnej gałęzi main. Rejestr jest deklaracją wymaganych artefaktów, nie poświadczeniem ich gotowości. Pełna kontrola musi pozostać niespełniona aż do utworzenia i odbioru wszystkich komponentów. Nie zastępować jej usuwaniem wymaganych wpisów.
+**Status 33 grup Make G01–G33:** G01 ma lokalny pakiet Rust w stanie rozwoju; pozostałe G02–G33 nadal wymagają odpowiednich katalogów i odbioru. Rejestr jest deklaracją wymaganych artefaktów, nie poświadczeniem ich gotowości. Pełna kontrola musi pozostać niespełniona aż do utworzenia i odbioru wszystkich komponentów. Nie zastępować jej usuwaniem wymaganych wpisów.
 
 Nie zmieniać historycznej numeracji etapów Roadmapy. Etap kończy się dopiero po potwierdzonym wykonaniu wszystkich swoich podetapów.
