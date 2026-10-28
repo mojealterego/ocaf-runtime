@@ -6,9 +6,13 @@ Local development run, 2026-10-28 UTC:
   changes in the delivery commit.
 - `cargo test --locked`: **PASS**, 4 integration and 4 security tests.
 - `packaging/build.sh`: **PASS**; reran tests and built the release binary.
-- Archive: `dist/ocaf-agent-001-asterion-0.1.0.tar.gz` (471779 bytes).
+- Archive: `dist/ocaf-agent-001-asterion-0.1.0.tar.gz` (471556 bytes
+  after deterministic tar metadata).
 - Archive SHA-256:
-  `6a9c13c1559a109beda219f254910bbfb59f603c373a5cd3ae579f4c0662adda`.
+  `b2a9fcf2d4897cd15c70ede2be45ac93e51895fb29fb1ea05e3f69d67304787f`.
+- Two consecutive builds from the same source and binary produced that same
+  archive hash after sorting entries, fixing tar metadata and omitting gzip
+  timestamps. This is local reproducibility only.
 - Archive installation, installed `status`/`plan`/`claim`, uninstall:
   **PASS** in an isolated temporary prefix.
 - Installer rejected a forged archive whose checksum manifest omitted the

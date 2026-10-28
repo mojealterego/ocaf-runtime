@@ -26,6 +26,8 @@ install -m 0644 "$ROOT/certification/CERTIFICATE_RECORD.md" "$PKG/share/ocaf-age
   sha256sum bin/ocaf-agent-001 share/ocaf-agent-001/*.toml share/ocaf-agent-001/*.md > SHA256SUMS
 )
 mkdir -p "$(dirname -- "$OUTPUT")"
-tar -C "$WORK" -czf "$OUTPUT" ocaf-agent-001
+tar --sort=name --owner=0 --group=0 --numeric-owner \
+  --mtime="@${SOURCE_DATE_EPOCH:-0}" -cf - -C "$WORK" ocaf-agent-001 \
+  | gzip -n > "$OUTPUT"
 sha256sum "$OUTPUT" > "$OUTPUT.sha256"
 printf 'built %s\n' "$OUTPUT"
