@@ -71,6 +71,11 @@ Each client has an operator-controlled `step_up_scopes` subset. Requests for tho
 
 The loopback protected-resource gateway also requires an explicit `OCAF_OIDC_MIN_ASSURANCE` value. Set `2` for a privileged/write-scope gateway; a signed token with stale MFA or a nonmatching ACR then receives 403 even if its scope and audience are valid. `1` is suitable only for an instance restricted to read-only scopes. This is a code-level boundary; the deployed reverse proxy, actual IdP MFA flow and OMAt policy still need matching live acceptance.
 
+The gateway test also sends signed RS256 bearer tokens over an actual loopback
+TCP connection. It checks acceptance and the denial of a foreign tenant, a
+different user, stale MFA, wrong audience and HTTP header smuggling. This is
+local HTTP evidence only; TLS proxy and external IdP integration remain open.
+
 ### Broker rules
 
 `BrokerRoute` is registered by the operator and fixes the upstream hostname, public IPv4, HTTPS port 443, HTTP path, tool identity, resource, scopes and minimum assurance. The LLM cannot choose or modify these fields. There is no DNS lookup during execution, preventing DNS-rebinding through untrusted requests. TLS certificate validation still uses the configured hostname. Non-2xx status, redirects, chunked or ambiguous responses, unbounded payloads and reflected plaintext secret are rejected. Operator pinning must be updated when the provider's actual public address changes; a stale pin fails closed.

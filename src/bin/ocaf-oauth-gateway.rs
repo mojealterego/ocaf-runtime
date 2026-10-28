@@ -270,6 +270,28 @@ mod tests {
     use openssl::sign::Signer;
     use serde_json::{json, Value};
 
+    async fn loopback_response(state: Arc<State>, raw: &[u8]) -> String {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let serving = tokio::spawn(async move {
+            let (socket, _) = listener.accept().await.unwrap();
+            handle(socket, state).await;
+        });
+        let mut client = TcpStream::connect(address).await.unwrap();
+        client.write_all(raw).await.unwrap();
+        let mut response = Vec::new();
+        client.read_to_end(&mut response).await.unwrap();
+        serving.await.unwrap();
+        String::from_utf8(response).unwrap()
+    }
+
+    fn raw_authorize(path: &str, token: &str) -> Vec<u8> {
+        format!(
+            "POST {path} HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer {token}\r\nContent-Length: 0\r\n\r\n"
+        )
+        .into_bytes()
+    }
+
     fn signed_access_token(key: &PKey<Private>, claims: Value) -> String {
         let header = URL_SAFE_NO_PAD.encode(br#"{"alg":"RS256","kid":"kid-1","typ":"JWT"}"#);
         let payload = URL_SAFE_NO_PAD.encode(serde_json::to_vec(&claims).unwrap());
@@ -358,5 +380,81 @@ mod tests {
         assert!(
             parse_request(b"POST /omat/t/users/u/authorize HTTP/1.1\r\nHost: a\r\n\r\n").is_ok()
         );
+    }
+
+    #[tokio::test]
+    async fn loopback_http_enforces_signed_identity_and_mfa_on_real_socket() {
+        let key = PKey::from_rsa(Rsa::generate(2048).unwrap()).unwrap();
+        let trust = OidcTrust::new(
+            "https://idp.example/realms/ocaf".into(),
+            "ocaf-client".into(),
+            "tenant-a".into(),
+            "kid-1".into(),
+            &key.public_key_to_pem().unwrap(),
+            "urn:ocaf:mfa".into(),
+        )
+        .unwrap();
+        let state = Arc::new(State {
+            trust,
+            issuer: "https://idp.example/realms/ocaf".into(),
+            resource: "https://omat.example".into(),
+            scopes: ["tool:write".to_owned()].into_iter().collect(),
+            min_assurance: 2,
+        });
+        let now = i64::try_from(
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+        )
+        .unwrap();
+        let claims = |auth_time| {
+            json!({
+                "iss":"https://idp.example/realms/ocaf",
+                "aud":"https://omat.example", "azp":"ocaf-client",
+                "typ":"Bearer", "sub":"alice", "scope":"tool:write",
+                "iat":now-10, "auth_time":auth_time, "exp":now+120,
+                "acr":"urn:ocaf:mfa"
+            })
+        };
+        let valid = signed_access_token(&key, claims(now - 10));
+        let path = "/omat/tenant-a/users/alice/authorize";
+        assert!(
+            loopback_response(Arc::clone(&state), &raw_authorize(path, &valid))
+                .await
+                .starts_with("HTTP/1.1 204 No Content\r\n")
+        );
+        assert!(loopback_response(
+            Arc::clone(&state),
+            &raw_authorize("/omat/tenant-b/users/alice/authorize", &valid),
+        )
+        .await
+        .starts_with("HTTP/1.1 403 Forbidden\r\n"));
+        assert!(loopback_response(
+            Arc::clone(&state),
+            &raw_authorize("/omat/tenant-a/users/bob/authorize", &valid),
+        )
+        .await
+        .starts_with("HTTP/1.1 403 Forbidden\r\n"));
+        let stale_mfa = signed_access_token(&key, claims(now - 301));
+        assert!(
+            loopback_response(Arc::clone(&state), &raw_authorize(path, &stale_mfa))
+                .await
+                .starts_with("HTTP/1.1 403 Forbidden\r\n")
+        );
+        let mut wrong_audience_claims = claims(now - 10);
+        wrong_audience_claims["aud"] = json!("https://wrong.example");
+        let wrong_audience = signed_access_token(&key, wrong_audience_claims);
+        assert!(
+            loopback_response(Arc::clone(&state), &raw_authorize(path, &wrong_audience))
+                .await
+                .starts_with("HTTP/1.1 403 Forbidden\r\n")
+        );
+        let smuggled = format!(
+            "POST {path} HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer {valid}\r\nTransfer-Encoding: chunked\r\n\r\n"
+        );
+        assert!(loopback_response(state, smuggled.as_bytes())
+            .await
+            .starts_with("HTTP/1.1 400 Bad Request\r\n"));
     }
 }
