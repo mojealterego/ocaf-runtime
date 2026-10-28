@@ -286,9 +286,11 @@ def verify_offsite_copy(inventory: Path, bundle: Path, *, bucket: str,
                              "sha256": remote_digest, "size_bytes": remote_size,
                              "retain_until": until.isoformat().replace("+00:00", "Z")})
     _strict_bundle(bundle)
-    return {"schema_version": 1, "status": "S3_OBJECT_LOCK_COPY_VERIFIED",
+    return {"schema_version": 1, "status": "S3_OBJECT_LOCK_COPY_CHECKS_PASSED",
             "bucket": bucket, "expected_bucket_owner": expected_bucket_owner,
             "region": region, "objects": verified,
+            "aws_cli_binary_attested": False,
+            "inventory_signature_verified": False,
             "independent_kms_proved": False, "durable_host_restore_proved": False,
             "stage_041_complete": False, "production_approved": False}
 

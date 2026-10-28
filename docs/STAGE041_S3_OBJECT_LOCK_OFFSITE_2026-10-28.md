@@ -67,6 +67,7 @@ SHA-256 and size with the local bytes and inventory. Every AWS request passes
 `--expected-bucket-owner`. AWS CLI calls use argument arrays without a shell;
 the tool discards partial downloads when a check fails. Its successful JSON
 report is copy verification only and always includes
+`aws_cli_binary_attested=false`, `inventory_signature_verified=false`,
 `independent_kms_proved=false`, `durable_host_restore_proved=false`,
 `stage_041_complete=false`, and `production_approved=false`.
 

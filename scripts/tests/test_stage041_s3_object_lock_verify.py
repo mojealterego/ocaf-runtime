@@ -121,8 +121,10 @@ class S3ObjectLockTests(unittest.TestCase):
 
     def test_exact_four_versions_download_and_verify(self):
         report = self._verify()
-        self.assertEqual(report["status"], "S3_OBJECT_LOCK_COPY_VERIFIED")
+        self.assertEqual(report["status"], "S3_OBJECT_LOCK_COPY_CHECKS_PASSED")
         self.assertEqual(len(report["objects"]), 4)
+        self.assertFalse(report["aws_cli_binary_attested"])
+        self.assertFalse(report["inventory_signature_verified"])
         self.assertFalse(report["stage_041_complete"])
         self.assertFalse(report["independent_kms_proved"])
         calls = [json.loads(line) for line in self.log.read_text().splitlines()]
