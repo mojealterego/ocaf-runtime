@@ -695,3 +695,9 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - **Pamięć:** `scripts/sasos_memory_models.py` implementuje sprawdzalny byte-exact archive i bounded surprise-gated memory; nie jest wytrenowanym Titans ani NICE/R3Mem.
 - **Zewnętrzne E2E:** ręczny workflow `sasos334-external-acceptance.yml` wymaga rzeczywistego IdP, Vault i KVM na hoście operatora. Brak konfiguracji oznacza FAIL/QUEUED, nie PASS. Rzeczywisty guest Firecracker jest testowany w oddzielnej bramce 0.39.
 - **Dowody:** `deploy/stage334/README.md`, `docs/DRIVE_044_049_IMPLEMENTATION_MAP.md`. Finalny status CI należy powiązać z aktualnym commit SHA; nie deklarować PASS przed uruchomieniem.
+
+### 2026-10-29 — bramki Stage 334 i rzeczywisty Zenoh SHM (dowody CI)
+
+- [PASS Stage 334: run 40941557248](https://github.com/mojealterego/ocaf-runtime/actions/runs/40941557248) — testowany SHA `261f8ed7a268eff4a771bce77b2ef6efbc7695bc`. Wszystkie kroki: walidacja 555 deklaracji, Z3 + pozytywny SAT control, memfd, testy memory, rustfmt, cargo tests capability/adapter/OAuth, clippy. **Nie** potwierdzono zewnętrznych backendów.
+- [PASS real Zenoh 1.10.1 SHM: run 40942073444](https://github.com/mojealterego/ocaf-runtime/actions/runs/40942073444) — testowany SHA `d52c9d9f18c4363eebedf266fdee0e079578ae2a`, [artefakt 12927641458](https://github.com/mojealterego/ocaf-runtime/actions/runs/40942073444/artifacts/12927641458). Dwa oddzielne procesy, 32768 B, odbiór `ZBytes.as_shm()` i negatywna gałąź `as_shm() is None` przy wyłączeniu SHM u odbiorcy, sumy SHA-256 poprawne. **Nie** jest to uruchomienie Rust OMAt ani komunikacja między hostami.
+- Stan końcowy etapu 334 bez zmian: `IMPLEMENTED_PARTIAL`. Operator-owned IdP/Vault/KVM, Firecracker na docelowym hoście, produkcyjne backendy, formalny dowód całego runtime i trenowane modele pamięci nie mają potwierdzonego E2E; OSTc nadal odłożone na ostatnią bramkę, dotychczasowy fail-closed zachowany.
