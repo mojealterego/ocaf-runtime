@@ -15,7 +15,8 @@ fn bindings() -> SasosAdapterBindings {
             broker_tool_id: "calendar-read".into(),
             max_body_bytes: 4096,
         }],
-    ).unwrap()
+    )
+    .unwrap()
 }
 #[test]
 fn all_555_catalog_entries_are_distinct_and_unactivated() {
@@ -29,10 +30,12 @@ fn all_555_catalog_entries_are_distinct_and_unactivated() {
 fn adapter_requires_exact_operator_binding_and_declared_fields() {
     let b = bindings();
     assert_eq!(b.len(), 1);
-    let ok = b.prepare_call(
-        "SASOS_TOOL_004_BEFORESUNSET_MCP_COORDINATOR",
-        &json!({"tasks_pointer":"opaque-task-id","time_horizon_hours":24}),
-    ).unwrap();
+    let ok = b
+        .prepare_call(
+            "SASOS_TOOL_004_BEFORESUNSET_MCP_COORDINATOR",
+            &json!({"tasks_pointer":"opaque-task-id","time_horizon_hours":24}),
+        )
+        .unwrap();
     assert_eq!(ok.route_id, "before-sunset");
     assert_eq!(ok.broker_tool_id, "calendar-read");
     assert!(serde_json::from_slice::<serde_json::Value>(&ok.body).is_ok());
@@ -44,7 +47,7 @@ fn adapter_requires_exact_operator_binding_and_declared_fields() {
         json!({"tasks_pointer":"id"}),
         json!({"tasks_pointer":"id","time_horizon_hours":24,"override":"admin"}),
         json!({"tasks_pointer":null,"time_horizon_hours":24}),
-        json!(["id",24]),
+        json!(["id", 24]),
     ] {
         assert!(matches!(
             b.prepare_call("SASOS_TOOL_004_BEFORESUNSET_MCP_COORDINATOR", &bad),
