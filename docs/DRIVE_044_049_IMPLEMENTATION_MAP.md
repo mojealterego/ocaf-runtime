@@ -11,7 +11,7 @@ Numery **0.45–0.49 z PDF nie odpowiadają numerom kanonicznej Roadmapy**. Zach
 | --- | --- | --- | --- |
 | s.1–3 | Aktywny dyspozytor native/WASI/MicroVM/MCP/API; 555 usług | **334**, 0.43, 0.39 | `src/omat_server.rs` ma admission i fail-closed executor, `src/runtime/mod.rs` ma prawdziwy `ToolExecutor`, lecz brak 555 backendów i OSTc. Wymagany adapter realnego procesu z revocation i E2E; 555 wpisów pozostaje `CATALOG_ONLY`. |
 | s.4–9 | OAuth/OIDC PKCE S256, state/nonce, MFA, consent, refresh/revoke, Vault | **0.44** | Istnieją `src/stage044_oauth.rs`, `stage044_oidc.rs`, `stage044_vault.rs`, `stage044_provider_refresh.rs`, `ocaf-oauth-gateway`. Brak dowodu pełnego flow na docelowym IdP + Vault + ingress. Nie zastępować działającego kodu PDF-em. |
-| s.10–12 | HMAC capability tickets, caveats, PPID, ochrona BOLA | **334**, 0.07, 0.43, 1.51 | Dodano `src/sasos_capability.rs`: związek tenant/subject/resource, MAC obejmuje wszystkie pola, zawężanie bytes/expiry/verbs, weryfikacja MAC i testy negatywne. **Nie jest podłączony do OMAt**; brak trwałego revocation/replay. |
+| s.10–12 | HMAC capability tickets, caveats, PPID, ochrona BOLA | **334**, 0.07, 0.43, 1.51 | Dodano `src/sasos_capability.rs`: związek tenant/subject/resource, MAC obejmuje wszystkie pola, zawężanie bytes/expiry/verbs, weryfikacja MAC i testy negatywne. Podłączony do podpisanego ingress OMAt/Zenoh i OAuth; trwały nonce ledger chroni ramki przed replay, lecz nie ma pełnego odwołania biletów capability. |
 | s.13–14 | Wasmtime fuel/memory, Firecracker KVM, zeroize, brak sieci | **0.38**, **0.39**, 329, 334 | Istnieją kontrakty sandbox i testy 0.39; PDF nie wykonuje rzeczywistego Wasmtime ani Firecracker. Wymagane realne guest E2E, seccomp, broker, limity i obserwowalne czyszczenie zasobów. |
 | s.15–17 | Zenoh SHM, Merkle DAG, CRDT, Bloom, konwergencja | **0.46**, 1.15, 1.18, 1.19, 327, 334 | `crates/ocaf-transport-crdt` istnieje, ale deklaracja zero-copy między hostami przez przesłanie wskaźnika nie jest prawdziwym SHM. Test dwóch hostów, konwergencja po partycji, fencing stanu autorytatywnego, fałszywe trafienia Bloom. |
 | s.18–20 | BMC/ImandraX, AST/SMT, LTN i ślady kontrprzykładów | **328**, 326, 334 | Bez rzeczywistego solvera i dowodu związania artefaktu nie ma formalnego PASS. Testy: deadlock ABBA, błędne finally, reentrancy, nieznany wynik i timeout => INCONCLUSIVE/DENY. |
@@ -31,7 +31,7 @@ Numery **0.45–0.49 z PDF nie odpowiadają numerom kanonicznej Roadmapy**. Zach
 - **Źródło sprawdzone:** rozdziały i strony 1–28, zgodność SHA-256.
 - **Kod istniejący:** `src/omat_server.rs`, `src/runtime/mod.rs`, moduły 0.44, `crates/ocaf-transport-crdt` i rejestr 555.
 - **Nowy kod:** `src/sasos_capability.rs`, testy w module (podpis, cross-tenant, eskalacja, expiry, tampering). Do czasu wyniku CI: IMPLEMENTED_UNVERIFIED.
-- **Brak:** aktywnych backendów 555, podłączenia capability do OMAt, realnego E2E z IdP/Vault/KVM, niezależnych benchmarków, produkcyjnego odbioru.
+- **Brak:** aktywnych backendów 555, realnego E2E z IdP/Vault/KVM, niezależnych benchmarków, produkcyjnego odbioru.
 - **Bramka:** nie zmieniać `CATALOG_ONLY` ani `production_approved=false` bez weryfikowalnego dowodu rzeczywistego wykonania i decyzji operatora.
 
 ## Dalsza integracja etapu 334 — bramka capability / OMAt (2026-10-29)
@@ -90,3 +90,33 @@ backendów 555 usług, realnych testów z zewnętrznym IdP/Vault,
 docelowego Firecracker KVM, Zenoh SHM (tylko ten sam host),
 certyfikatów formalnego solvera i walidacji modelu Titans/NICE.
 Brak dowodów oznacza status PLANNED / NOT_VERIFIED, nie PASS.
+
+## Rozwinięcie 2026-10-29 — adaptery, SMT, pamięć, SHM, infrastruktura
+
+- **Rzeczywisty adapter zewnętrzny (kod):**
+  `src/sasos_service_adapters.rs` waliduje cały katalog i przyjmuje
+  wyłącznie jawne mapowania z prywatnego pliku operatora. `execute`
+  używa istniejącego `VaultSecretBroker` z `AuthorizedGrant`,
+  izolacją tenant/user, Vault Transit, TLS i pinned public IPv4.
+  Nie otwiera natywnego executora i nie obchodzi OSTc.
+  Testy: `tests/sasos_service_adapters.rs`. Bez skonfigurowanego
+  Vault i dostawcy jest to IMPLEMENTED_UNVERIFIED_EXTERNAL_E2E,
+  nie aktywacja żadnej z 555 usług.
+- **OSTc:** operator przesunął tę bramkę na koniec prac; zachowano
+  fail-closed w `OmatRegistry::execute` dla native/WASI/MicroVM.
+- **Formalne modele:** cztery pliki SMT w `verification/sasos334`,
+  Z3, 3 × UNSAT + kontrola SAT, SHA-256 wejść; tylko
+  BOUNDED_SMT_MODEL_CHECKED, bez formalnego dowodu Rust i Imandra.
+- **SHM:** `scripts/sasos_shm_probe.py` — Linux memfd przekazywany
+  osobnemu procesowi, kontrola nonce, SHA i negatywny test zmiany
+  payloadu. Nie jest to jeszcze Zenoh SHM ani zero-copy między hostami.
+- **Pamięć:** `scripts/sasos_memory_models.py` — bezstratny
+  tenant-private zlib+SHA store i surprise-gated bounded EMA
+  z checkpointem. Nie stanowi wytrenowanego Titans/NICE/R3Mem.
+- **Rzeczywiste środowisko:** `.github/workflows/sasos334-external-acceptance.yml`
+  wymaga hosta operatora, rzeczywistego IdP, Vault Transit i KVM.
+  `stage039-real-firecracker-jailer.yml` osobno testuje guest boot.
+  Brak środowiska oznacza brak PASS, nie symulowany dowód.
+- **Operator runbook:** `deploy/stage334/README.md`.
+  Wyniki CI i commit SHA trzeba zweryfikować po uruchomieniu;
+  status etapu 334 pozostaje PLANNED / IMPLEMENTED_PARTIAL.
