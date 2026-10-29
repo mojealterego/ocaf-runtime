@@ -245,9 +245,11 @@
       "requirement": "Referencje Label/GUID, transakcje, replay, persistence",
       "canonical_ids": [],
       "mapping": "UNMAPPED",
-      "status": "DECISION_REQUIRED",
-      "evidence": [],
-      "remaining": "Ustalić czy warstwa dokumentów Open CASCADE należy do produktu; określić kontrakt i migrację bez drugiego runtime",
+      "status": "PARTIAL",
+      "evidence": [
+        "src/document_state.rs"
+      ],
+      "remaining": "PDF 1.15–1.18: lokalna biblioteka i 3 testy PASS. Pozostają 1.19 trwały hash-chain zdarzeń, 1.20 replay, 1.21 external links, 1.22 sterowniki persistence oraz integracja z projektem/tenantem. Brak binarek wydaniowych.",
       "id": "DRIVE-015"
     },
     {

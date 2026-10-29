@@ -69,3 +69,5 @@ pub mod stage044_provider_refresh;
 pub mod sasos_capability;
 
 pub mod sasos_service_adapters;
+
+pub mod document_state;
