@@ -2,7 +2,10 @@
 use base64::engine::general_purpose::STANDARD as B64;
 use base64::Engine as _;
 use ocaf_runtime::omat_server::ToolCall;
-use ocaf_runtime::stage043_omat_zenoh::{request_omat_zenoh, sign_omas_request};
+use ocaf_runtime::sasos_capability::CapabilityTicket;
+use ocaf_runtime::stage043_omat_zenoh::{
+    request_omat_zenoh, sign_omas_request, sign_omas_request_with_capability,
+};
 use ocaf_runtime::transport_policy::{read_zenoh_config, validate_zenoh_config};
 use std::env;
 use std::path::Path;
@@ -43,7 +46,13 @@ async fn main() -> anyhow::Result<()> {
         ostc_enabled: false,
         source_access: "disabled".into(),
     };
-    let signed = sign_omas_request(&principal, &topic, &nonce, call, &key)?;
+    let signed = if let Ok(path) = env::var("OCAF_OMAT_CAPABILITY_TICKET_FILE") {
+        let data = ocaf_runtime::ops::secrets::read_private_text(Path::new(&path), 8192)?;
+        let ticket: CapabilityTicket = serde_json::from_str(&data)?;
+        sign_omas_request_with_capability(&principal, &topic, &nonce, call, ticket, &key)?
+    } else {
+        sign_omas_request(&principal, &topic, &nonce, call, &key)?
+    };
     let retries: u32 = env::var("OCAF_OMAT_RECONNECT_ATTEMPTS")
         .unwrap_or_else(|_| "0".to_owned())
         .parse()?;
