@@ -9,6 +9,7 @@ on:
       - "src/stage043_omat_zenoh.rs"
       - "src/stage044_omat_authz.rs"
       - "src/bin/ocaf-omat-zenoh.rs"
+      - "src/bin/ocaf-omas-zenoh-client.rs"
       - "tests/sasos_omat_capability.rs"
       - "tests/stage044_integration.rs"
       - "scripts/sasos_activation_gate.py"
