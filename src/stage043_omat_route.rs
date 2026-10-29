@@ -139,7 +139,13 @@ pub fn dispatch_tool_call_with_capability(
     let size = u64::try_from(bytes.len())
         .map_err(|_| DispatchError::Capability(CapabilityError::Denied))?;
     authority
-        .authorize(ticket, peer, &omat_resource_id(call), CapabilityAction::Execute, size)
+        .authorize(
+            ticket,
+            peer,
+            &omat_resource_id(call),
+            CapabilityAction::Execute,
+            size,
+        )
         .map_err(DispatchError::Capability)?;
     dispatch_tool_call(guard, peer, topic, call, policy, registry)
 }
