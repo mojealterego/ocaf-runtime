@@ -3,8 +3,10 @@
 //! a request's user, tenant or agent fields cannot select an OAuth principal.
 use crate::omat_server::{OmatPolicy, OmatRegistry, ToolCall, ToolReceipt};
 use crate::stage043_omat_route::{
-    dispatch_tool_call, AuthenticatedPeer, DispatchError, OmatRouteGuard,
+    dispatch_tool_call, dispatch_tool_call_with_capability, AuthenticatedPeer, DispatchError,
+    OmatRouteGuard,
 };
+use crate::sasos_capability::{CapabilityAuthority, CapabilityTicket};
 use crate::stage044_oauth::{AuthorizedGrant, OAuthError, OAuthService};
 use std::collections::{BTreeSet, HashMap};
 
@@ -134,6 +136,27 @@ impl OAuthOmatGate {
             call,
             context.policy,
             context.registry,
+        )
+        .map_err(GateError::Dispatch)
+    }
+
+    /// Compose OAuth, mTLS-bound OMAt route, object capability and the
+    /// independent OSTc/executor gates. No individual grant bypasses another.
+    pub fn dispatch_with_capability(
+        &self,
+        oauth: &OAuthService,
+        token: &str,
+        peer: &AuthenticatedPeer,
+        topic: &str,
+        call: &ToolCall,
+        context: OmatDispatchContext<'_>,
+        authority: &CapabilityAuthority,
+        ticket: &CapabilityTicket,
+    ) -> Result<ToolReceipt, GateError> {
+        self.authorize(oauth, token, peer, call)?;
+        dispatch_tool_call_with_capability(
+            context.route, peer, topic, call, context.policy, context.registry,
+            authority, ticket,
         )
         .map_err(GateError::Dispatch)
     }
