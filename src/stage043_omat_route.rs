@@ -107,7 +107,7 @@ pub fn dispatch_tool_call(
 /// depending on a caller-controlled memory address or on ambiguous separators.
 pub fn omat_resource_id(call: &ToolCall) -> String {
     let identity = format!(
-        "ocaf.omat.resource.v1\\0{}\\0{}\\0{}",
+        "ocaf.omat.resource.v1\0{}\0{}\0{}",
         call.tenant_id, call.agent_id, call.tool_id
     );
     format!("omat://sha256/{:x}", Sha256::digest(identity.as_bytes()))
