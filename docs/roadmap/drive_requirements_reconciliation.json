@@ -1,0 +1,672 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "0ab23d5",
+  "production_approved": false,
+  "sources": {
+    "oauth": "docs/DRIVE_044_049_IMPLEMENTATION_MAP.md",
+    "builder": "docs/sources/drive-ocaf/agents-builder-050-055.txt",
+    "roadmap115": "docs/sources/drive-ocaf/roadmap-115-154.txt",
+    "architecture155": "docs/sources/drive-ocaf/architecture-155-206.txt"
+  },
+  "mapping_note": "PROPOSED identifies semantic candidates, not accepted renumbering. REQUIRES_VERIFICATION does not assert missing implementation. Ranges follow grouped source sections.",
+  "items": [
+    {
+      "source": "oauth",
+      "source_section": "dispatcher",
+      "requirement": "555 backendów",
+      "canonical_ids": [
+        "334"
+      ],
+      "mapping": "SEMANTIC",
+      "status": "PARTIAL",
+      "evidence": [
+        "src/sasos_service_adapters.rs",
+        "tests/sasos_service_adapters.rs"
+      ],
+      "remaining": "Bindingi i sekrety konkretnych providerów; realny E2E; następne klasy backendów; OSTc dla ścieżek uprzywilejowanych",
+      "id": "DRIVE-001"
+    },
+    {
+      "source": "oauth",
+      "source_section": "0.44",
+      "requirement": "OAuth OIDC PKCE MFA Vault",
+      "canonical_ids": [
+        "0.44"
+      ],
+      "mapping": "SEMANTIC",
+      "status": "PARTIAL",
+      "evidence": [
+        "src/stage044_oauth.rs",
+        "src/stage044_vault.rs"
+      ],
+      "remaining": "Rzeczywisty IdP/Vault/refresh/revoke E2E; JWKS rotation; akceptacja docelowej infrastruktury",
+      "id": "DRIVE-002"
+    },
+    {
+      "source": "oauth",
+      "source_section": "0.45",
+      "requirement": "Capabilities",
+      "canonical_ids": [
+        "1.46",
+        "1.50",
+        "1.51",
+        "334"
+      ],
+      "mapping": "SEMANTIC",
+      "status": "PARTIAL",
+      "evidence": [
+        "src/sasos_capability.rs",
+        "tests/sasos_omat_capability.rs"
+      ],
+      "remaining": "Audyt trwałego revocation/replay i integracji w każdej ścieżce wykonania",
+      "id": "DRIVE-003"
+    },
+    {
+      "source": "oauth",
+      "source_section": "0.46",
+      "requirement": "WASI Firecracker",
+      "canonical_ids": [
+        "0.39",
+        "334"
+      ],
+      "mapping": "SEMANTIC",
+      "status": "LAB_VERIFIED",
+      "evidence": [
+        "tests/wasi_sandbox.rs",
+        "deploy/stage334/README.md"
+      ],
+      "remaining": "Testy na hoście operatora, powiązanie z dyspozytorem i OSTc, odbiór produkcyjny",
+      "id": "DRIVE-004"
+    },
+    {
+      "source": "oauth",
+      "source_section": "0.47",
+      "requirement": "Zenoh SHM CRDT",
+      "canonical_ids": [
+        "0.46",
+        "1.15",
+        "1.18",
+        "1.19",
+        "1.55",
+        "1.57"
+      ],
+      "mapping": "SEMANTIC",
+      "status": "PARTIAL",
+      "evidence": [
+        "scripts/stage334_zenoh_shm.py"
+      ],
+      "remaining": "Produkcyjna ścieżka OMAt SHM; typed memory; CRDT convergence/offline partitions; benchmarki",
+      "id": "DRIVE-005"
+    },
+    {
+      "source": "oauth",
+      "source_section": "0.48",
+      "requirement": "BMC LTN",
+      "canonical_ids": [
+        "334"
+      ],
+      "mapping": "SEMANTIC",
+      "status": "PARTIAL",
+      "evidence": [
+        "scripts/sasos_solver_evidence.py"
+      ],
+      "remaining": "Model rzeczywistego kodu i granice dowodu; adapter ImandraX; walidacja LTN na realnych wejściach",
+      "id": "DRIVE-006"
+    },
+    {
+      "source": "oauth",
+      "source_section": "0.49",
+      "requirement": "Titans NICE RQGM",
+      "canonical_ids": [
+        "1.27",
+        "1.29",
+        "1.30",
+        "1.67",
+        "1.70",
+        "334"
+      ],
+      "mapping": "SEMANTIC",
+      "status": "PARTIAL",
+      "evidence": [
+        "scripts/sasos_memory_models.py"
+      ],
+      "remaining": "Rzeczywiste modele i wagi; korpus jakości; stabilność; formalne granice mutacji i rollback",
+      "id": "DRIVE-007"
+    },
+    {
+      "source": "builder",
+      "source_section": "0.50",
+      "requirement": "Wspólne IR Code/NoCode",
+      "canonical_ids": [
+        "0.50"
+      ],
+      "mapping": "EXACT",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "docs/roadmap/agents_builder_products_v11.json"
+      ],
+      "remaining": "Typed DAG, ograniczony DSL, deterministyczny roundtrip i migracje",
+      "id": "DRIVE-008"
+    },
+    {
+      "source": "builder",
+      "source_section": "0.51",
+      "requirement": "Edytory Code i NoCode",
+      "canonical_ids": [
+        "0.51"
+      ],
+      "mapping": "EXACT",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "docs/roadmap/agents_builder_products_v11.json"
+      ],
+      "remaining": "Diagnostyka Code, canvas NoCode, zgodność reprezentacji",
+      "id": "DRIVE-009"
+    },
+    {
+      "source": "builder",
+      "source_section": "0.52",
+      "requirement": "Cloud Code i NoCode",
+      "canonical_ids": [
+        "0.52"
+      ],
+      "mapping": "EXACT",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "docs/roadmap/agents_builder_products_v11.json"
+      ],
+      "remaining": "Dwa produkty przeglądarkowe z izolacją tenantów i E2E",
+      "id": "DRIVE-010"
+    },
+    {
+      "source": "builder",
+      "source_section": "0.53",
+      "requirement": "Windows/macOS Code i NoCode",
+      "canonical_ids": [
+        "0.53"
+      ],
+      "mapping": "EXACT",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "docs/roadmap/agents_builder_products_v11.json"
+      ],
+      "remaining": "Cztery aplikacje, rzeczywiste buildy i GUI/offline E2E",
+      "id": "DRIVE-011"
+    },
+    {
+      "source": "builder",
+      "source_section": "0.54",
+      "requirement": "Android/iOS Code i NoCode",
+      "canonical_ids": [
+        "0.54"
+      ],
+      "mapping": "EXACT",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "docs/roadmap/agents_builder_products_v11.json"
+      ],
+      "remaining": "Cztery aplikacje, buildy platformowe i testy na urządzeniach/symulatorach",
+      "id": "DRIVE-012"
+    },
+    {
+      "source": "builder",
+      "source_section": "0.55",
+      "requirement": "Pakowanie i weryfikacja builderów",
+      "canonical_ids": [
+        "0.55"
+      ],
+      "mapping": "EXACT",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "docs/roadmap/agents_builder_products_v11.json"
+      ],
+      "remaining": "Manifesty, sandbox preview, podpisy, kontrola uprawnień i wydania",
+      "id": "DRIVE-013"
+    },
+    {
+      "source": "builder",
+      "source_section": "design/i18n",
+      "requirement": "Atelier Sovereign i polski język kanoniczny",
+      "canonical_ids": [
+        "0.51",
+        "0.52",
+        "0.53",
+        "0.54"
+      ],
+      "mapping": "SEMANTIC",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [],
+      "remaining": "Design tokens, katalog PL, fallback locale, dostępność i testy UI",
+      "id": "DRIVE-014"
+    },
+    {
+      "source": "roadmap115",
+      "source_section": "1.15–1.22",
+      "requirement": "Referencje Label/GUID, transakcje, replay, persistence",
+      "canonical_ids": [],
+      "mapping": "UNMAPPED",
+      "status": "DECISION_REQUIRED",
+      "evidence": [],
+      "remaining": "Ustalić czy warstwa dokumentów Open CASCADE należy do produktu; określić kontrakt i migrację bez drugiego runtime",
+      "id": "DRIVE-015"
+    },
+    {
+      "source": "roadmap115",
+      "source_section": "1.23–1.30",
+      "requirement": "Policy, approval, idempotency, tenant, koszty",
+      "canonical_ids": [
+        "0.44",
+        "1.46",
+        "1.47"
+      ],
+      "mapping": "PROPOSED",
+      "status": "REQUIRES_VERIFICATION",
+      "evidence": [],
+      "remaining": "Porównać każdy kontrakt z OMAs/OMAt; approval binding i audyt, limity kosztów",
+      "id": "DRIVE-016"
+    },
+    {
+      "source": "roadmap115",
+      "source_section": "1.31–1.38",
+      "requirement": "ContractObligations",
+      "canonical_ids": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "PROPOSED",
+      "status": "REQUIRES_VERIFICATION",
+      "evidence": [],
+      "remaining": "Ekstrakcja zobowiązań, terminy, evidence, role i interfejsy domenowe",
+      "id": "DRIVE-017"
+    },
+    {
+      "source": "roadmap115",
+      "source_section": "1.39–1.46",
+      "requirement": "ComplianceEvidence i SupplierDueDiligence",
+      "canonical_ids": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "PROPOSED",
+      "status": "REQUIRES_VERIFICATION",
+      "evidence": [],
+      "remaining": "Łańcuch dowodów, screening, limity zakupowe, autoryzacja i testy domenowe",
+      "id": "DRIVE-018"
+    },
+    {
+      "source": "roadmap115",
+      "source_section": "1.47–1.54",
+      "requirement": "Wyszukiwanie, orchestration, UX",
+      "canonical_ids": [
+        "1.65",
+        "1.94"
+      ],
+      "mapping": "PROPOSED",
+      "status": "REQUIRES_VERIFICATION",
+      "evidence": [],
+      "remaining": "Porównać retrieval/router/UX z istniejącym runtime; rzeczywiste dane i ewaluacja",
+      "id": "DRIVE-019"
+    },
+    {
+      "source": "architecture155",
+      "source_section": "1.55–1.57",
+      "requirement": "Drzewo Label/GUID, undo/redo, recomputation",
+      "canonical_ids": [],
+      "mapping": "UNMAPPED",
+      "status": "DECISION_REQUIRED",
+      "evidence": [],
+      "remaining": "Rozstrzygnąć zakres Open CASCADE i wspólne IR zamiast nadpisania etapów transportu",
+      "id": "DRIVE-020"
+    },
+    {
+      "source": "architecture155",
+      "source_section": "1.58–1.60",
+      "requirement": "Policy, event store i sterowniki persistence",
+      "canonical_ids": [
+        "0.44",
+        "1.46"
+      ],
+      "mapping": "PROPOSED",
+      "status": "REQUIRES_VERIFICATION",
+      "evidence": [],
+      "remaining": "Sprawdzić atomowość i idempotencję, kontrakty approval oraz migracje danych",
+      "id": "DRIVE-021"
+    },
+    {
+      "source": "architecture155",
+      "source_section": "1.61–1.65",
+      "requirement": "Retrieval lexical/vector",
+      "canonical_ids": [
+        "1.65"
+      ],
+      "mapping": "PROPOSED",
+      "status": "REQUIRES_VERIFICATION",
+      "evidence": [],
+      "remaining": "Realne adaptery i ocena retrieval na korpusie",
+      "id": "DRIVE-022"
+    },
+    {
+      "source": "architecture155",
+      "source_section": "1.66–1.70",
+      "requirement": "Reasoning i self-consistency",
+      "canonical_ids": [
+        "1.66",
+        "1.69"
+      ],
+      "mapping": "PROPOSED",
+      "status": "REQUIRES_VERIFICATION",
+      "evidence": [],
+      "remaining": "Ślady decyzji, ograniczenia kosztów i niezależna ocena jakości",
+      "id": "DRIVE-023"
+    },
+    {
+      "source": "architecture155",
+      "source_section": "1.71–1.75",
+      "requirement": "Router modeli",
+      "canonical_ids": [
+        "1.94"
+      ],
+      "mapping": "PROPOSED",
+      "status": "REQUIRES_VERIFICATION",
+      "evidence": [],
+      "remaining": "Wiązanie realnych providerów, profile kosztów/latencji i awarie",
+      "id": "DRIVE-024"
+    },
+    {
+      "source": "architecture155",
+      "source_section": "1.76–1.80",
+      "requirement": "Prompt DSL i koperty",
+      "canonical_ids": [
+        "0.50",
+        "0.51"
+      ],
+      "mapping": "PROPOSED",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [],
+      "remaining": "Parser i typowanie DSL, walidacja oraz testy roundtrip",
+      "id": "DRIVE-025"
+    },
+    {
+      "source": "architecture155",
+      "source_section": "1.81–1.85",
+      "requirement": "GEM H-MoE OODA",
+      "canonical_ids": [
+        "1.92",
+        "1.94"
+      ],
+      "mapping": "PROPOSED",
+      "status": "REQUIRES_VERIFICATION",
+      "evidence": [],
+      "remaining": "Zweryfikować realne wykonanie grafów, routing i zakończenie pętli",
+      "id": "DRIVE-026"
+    },
+    {
+      "source": "architecture155",
+      "source_section": "1.86–1.90",
+      "requirement": "Pakiety domenowe",
+      "canonical_ids": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "PROPOSED",
+      "status": "REQUIRES_VERIFICATION",
+      "evidence": [],
+      "remaining": "Implementacja kontraktów domenowych i akceptacja z danymi",
+      "id": "DRIVE-027"
+    },
+    {
+      "source": "architecture155",
+      "source_section": "1.91–1.99",
+      "requirement": "ClaimLedger i dowody",
+      "canonical_ids": [
+        "1.66",
+        "1.99"
+      ],
+      "mapping": "PROPOSED",
+      "status": "REQUIRES_VERIFICATION",
+      "evidence": [],
+      "remaining": "Schemat provenance, evidence binding, niezależna ocena bez samocertyfikacji",
+      "id": "DRIVE-028"
+    },
+    {
+      "source": "architecture155",
+      "source_section": "2.00",
+      "requirement": "Unified kernel",
+      "canonical_ids": [
+        "1.94"
+      ],
+      "mapping": "PROPOSED",
+      "status": "REQUIRES_VERIFICATION",
+      "evidence": [],
+      "remaining": "Integracja obecnego runtime, kontrakty granic i E2E",
+      "id": "DRIVE-029"
+    },
+    {
+      "source": "architecture155",
+      "source_section": "2.01",
+      "requirement": "Zenoh transport",
+      "canonical_ids": [
+        "0.46",
+        "1.15"
+      ],
+      "mapping": "PROPOSED",
+      "status": "PARTIAL",
+      "evidence": [],
+      "remaining": "Zintegrować z produkcyjną ścieżką OMAt i sprawdzić backpressure",
+      "id": "DRIVE-030"
+    },
+    {
+      "source": "architecture155",
+      "source_section": "2.02",
+      "requirement": "Model kolaboracji",
+      "canonical_ids": [
+        "2.03"
+      ],
+      "mapping": "PROPOSED",
+      "status": "REQUIRES_VERIFICATION",
+      "evidence": [],
+      "remaining": "Jawne metryki ewaluacji i bramki operatora",
+      "id": "DRIVE-031"
+    },
+    {
+      "source": "architecture155",
+      "source_section": "2.03",
+      "requirement": "Voice narrative firewall",
+      "canonical_ids": [
+        "1.05"
+      ],
+      "mapping": "PROPOSED",
+      "status": "REQUIRES_VERIFICATION",
+      "evidence": [],
+      "remaining": "Rzeczywisty pipeline audio, walidacja stanu i testy przerwań",
+      "id": "DRIVE-032"
+    },
+    {
+      "source": "architecture155",
+      "source_section": "2.04",
+      "requirement": "Rust hot path",
+      "canonical_ids": [
+        "1.55"
+      ],
+      "mapping": "PROPOSED",
+      "status": "REQUIRES_VERIFICATION",
+      "evidence": [],
+      "remaining": "Zdefiniować i zmierzyć rzeczywistą ścieżkę krytyczną",
+      "id": "DRIVE-033"
+    },
+    {
+      "source": "architecture155",
+      "source_section": "2.05",
+      "requirement": "Harness ewaluacji",
+      "canonical_ids": [
+        "1.99"
+      ],
+      "mapping": "PROPOSED",
+      "status": "REQUIRES_VERIFICATION",
+      "evidence": [],
+      "remaining": "Powtarzalny korpus, artefakty i niezależne wyniki",
+      "id": "DRIVE-034"
+    },
+    {
+      "source": "architecture155",
+      "source_section": "2.06",
+      "requirement": "Release guard",
+      "canonical_ids": [],
+      "mapping": "UNMAPPED",
+      "status": "DECISION_REQUIRED",
+      "evidence": [],
+      "remaining": "Przypisać do istniejącej bramy wydania po ustaleniu wymagań; bez zmiany kanonicznego 2.06",
+      "id": "DRIVE-035"
+    },
+    {
+      "source": "builder",
+      "source_section": "AB-CLOUD-CODE",
+      "requirement": "Agents Builder Chmurowy Code",
+      "canonical_ids": [
+        "0.52"
+      ],
+      "mapping": "EXACT",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "docs/roadmap/agents_builder_products_v11.json"
+      ],
+      "remaining": "Browser Code IDE edits graph DSL, compiles/simulates typed agent, persists versioned project in tenant-scoped Cloud workspace; full build log",
+      "id": "DRIVE-036"
+    },
+    {
+      "source": "builder",
+      "source_section": "AB-CLOUD-NOCODE",
+      "requirement": "Agents Builder Chmurowy NoCode",
+      "canonical_ids": [
+        "0.52"
+      ],
+      "mapping": "EXACT",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "docs/roadmap/agents_builder_products_v11.json"
+      ],
+      "remaining": "Browser NoCode canvas builds equivalent graph from nodes, round-trips graph JSON with compiled DSL for supported subset, and previews without source editing",
+      "id": "DRIVE-037"
+    },
+    {
+      "source": "builder",
+      "source_section": "AB-WINDOWS-CODE",
+      "requirement": "Agents Builder Desktopowy Windows Code",
+      "canonical_ids": [
+        "0.53"
+      ],
+      "mapping": "EXACT",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "docs/roadmap/agents_builder_products_v11.json"
+      ],
+      "remaining": "Actual Windows runner builds, installs and launches signed/verified executable; Code IDE opens agent project, compiles valid Rust/DSL, persists/reopens offline",
+      "id": "DRIVE-038"
+    },
+    {
+      "source": "builder",
+      "source_section": "AB-WINDOWS-NOCODE",
+      "requirement": "Agents Builder Desktopowy Windows NoCode",
+      "canonical_ids": [
+        "0.53"
+      ],
+      "mapping": "EXACT",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "docs/roadmap/agents_builder_products_v11.json"
+      ],
+      "remaining": "Actual Windows GUI smoke: NoCode drag/drop creates graph, save/reopen offline, convert supported graph to Code, publish artifact only with explicit approval",
+      "id": "DRIVE-039"
+    },
+    {
+      "source": "builder",
+      "source_section": "AB-MACOS-CODE",
+      "requirement": "Agents Builder Desktopowy macOS Code",
+      "canonical_ids": [
+        "0.53"
+      ],
+      "mapping": "EXACT",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "docs/roadmap/agents_builder_products_v11.json"
+      ],
+      "remaining": "Actual macOS runner builds/boots executable, validates bundle codesign entitlement metadata, edits and compiles Agent Builder Code project offline",
+      "id": "DRIVE-040"
+    },
+    {
+      "source": "builder",
+      "source_section": "AB-MACOS-NOCODE",
+      "requirement": "Agents Builder Desktopowy macOS NoCode",
+      "canonical_ids": [
+        "0.53"
+      ],
+      "mapping": "EXACT",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "docs/roadmap/agents_builder_products_v11.json"
+      ],
+      "remaining": "Actual macOS GUI smoke saves/loads NoCode agent, connects nodes, previews, converts and checks typed IR roundtrip, controls permissions",
+      "id": "DRIVE-041"
+    },
+    {
+      "source": "builder",
+      "source_section": "AB-ANDROID-CODE",
+      "requirement": "Agents Builder Android Code",
+      "canonical_ids": [
+        "0.54"
+      ],
+      "mapping": "EXACT",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "docs/roadmap/agents_builder_products_v11.json"
+      ],
+      "remaining": "Actual Android ARM64 emulator/device installs APK, creates/edits Code agent in bounded DSL, saves locally offline and resumes after app restart",
+      "id": "DRIVE-042"
+    },
+    {
+      "source": "builder",
+      "source_section": "AB-ANDROID-NOCODE",
+      "requirement": "Agents Builder Android NoCode",
+      "canonical_ids": [
+        "0.54"
+      ],
+      "mapping": "EXACT",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "docs/roadmap/agents_builder_products_v11.json"
+      ],
+      "remaining": "Android instrumentation creates visual NoCode graph, validates typed edges and safe preview, exports/imports offline, survives process death",
+      "id": "DRIVE-043"
+    },
+    {
+      "source": "builder",
+      "source_section": "AB-IOS-CODE",
+      "requirement": "Agents Builder iOS Code",
+      "canonical_ids": [
+        "0.54"
+      ],
+      "mapping": "EXACT",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "docs/roadmap/agents_builder_products_v11.json"
+      ],
+      "remaining": "Actual Xcode iOS simulator/device run creates/edits Code agent under app Sandbox, validates typed agent DSL, restores local project after restart",
+      "id": "DRIVE-044"
+    },
+    {
+      "source": "builder",
+      "source_section": "AB-IOS-NOCODE",
+      "requirement": "Agents Builder iOS NoCode",
+      "canonical_ids": [
+        "0.54"
+      ],
+      "mapping": "EXACT",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": [
+        "docs/roadmap/agents_builder_products_v11.json"
+      ],
+      "remaining": "Actual iOS simulator UI builds multi-node NoCode workflow, round-trips supported IR with Code view, persists offline and respects app life-cycle",
+      "id": "DRIVE-045"
+    }
+  ]
+}

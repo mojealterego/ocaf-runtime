@@ -453,7 +453,14 @@
       "status": "CLOSED_BY_OPERATOR_SIMULATION_TECHNICAL_OPEN",
       "historical_status": "**REAL BROKER SO_PEERCRED ADMISSION→TWO JAILED VM KERNEL BOOTS/FAULTS PASS; SIGNED WASI INSIDE GUEST OPEN**",
       "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
-      "source_class": "MATRIX_ORIGINAL"
+      "source_class": "MATRIX_ORIGINAL",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-004",
+          "mapping": "SEMANTIC",
+          "status": "LAB_VERIFIED"
+        }
+      ]
     },
     {
       "id": "0.40",
@@ -537,7 +544,24 @@
       "status": "PLANNED_OR_UNVERIFIED",
       "historical_status": "P1",
       "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
-      "source_class": "MATRIX_ORIGINAL"
+      "source_class": "MATRIX_ORIGINAL",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-002",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        },
+        {
+          "requirement_id": "DRIVE-016",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        },
+        {
+          "requirement_id": "DRIVE-021",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        }
+      ]
     },
     {
       "id": "0.45",
@@ -561,7 +585,19 @@
       "status": "PLANNED_OR_UNVERIFIED",
       "historical_status": "P1",
       "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
-      "source_class": "MATRIX_ORIGINAL"
+      "source_class": "MATRIX_ORIGINAL",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-005",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        },
+        {
+          "requirement_id": "DRIVE-030",
+          "mapping": "PROPOSED",
+          "status": "PARTIAL"
+        }
+      ]
     },
     {
       "id": "0.47",
@@ -612,7 +648,19 @@
       "source_class": "MATRIX_ORIGINAL",
       "previous_title": "Builder Core",
       "previous_scope": "ocaf-builder-core canonical typed DAG/IR, manifest compiler",
-      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json"
+      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-008",
+          "mapping": "EXACT",
+          "status": "NOT_IMPLEMENTED"
+        },
+        {
+          "requirement_id": "DRIVE-025",
+          "mapping": "PROPOSED",
+          "status": "NOT_IMPLEMENTED"
+        }
+      ]
     },
     {
       "id": "0.51",
@@ -627,7 +675,24 @@
       "source_class": "MATRIX_ORIGINAL",
       "previous_title": "Builder UX",
       "previous_scope": "No-Code canvas <-> bounded supported DSL and conflict-aware CRDT",
-      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json"
+      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-009",
+          "mapping": "EXACT",
+          "status": "NOT_IMPLEMENTED"
+        },
+        {
+          "requirement_id": "DRIVE-014",
+          "mapping": "SEMANTIC",
+          "status": "NOT_IMPLEMENTED"
+        },
+        {
+          "requirement_id": "DRIVE-025",
+          "mapping": "PROPOSED",
+          "status": "NOT_IMPLEMENTED"
+        }
+      ]
     },
     {
       "id": "0.52",
@@ -642,7 +707,29 @@
       "source_class": "MATRIX_ORIGINAL",
       "previous_title": "Cloud Builder",
       "previous_scope": "Axum multi-tenant workspace backend, RBAC and audit",
-      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json"
+      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-010",
+          "mapping": "EXACT",
+          "status": "NOT_IMPLEMENTED"
+        },
+        {
+          "requirement_id": "DRIVE-014",
+          "mapping": "SEMANTIC",
+          "status": "NOT_IMPLEMENTED"
+        },
+        {
+          "requirement_id": "DRIVE-036",
+          "mapping": "EXACT",
+          "status": "NOT_IMPLEMENTED"
+        },
+        {
+          "requirement_id": "DRIVE-037",
+          "mapping": "EXACT",
+          "status": "NOT_IMPLEMENTED"
+        }
+      ]
     },
     {
       "id": "0.53",
@@ -657,7 +744,39 @@
       "source_class": "MATRIX_ORIGINAL",
       "previous_title": "Desktop Builder",
       "previous_scope": "Tauri v2 local-first offline desktop IDE",
-      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json"
+      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-011",
+          "mapping": "EXACT",
+          "status": "NOT_IMPLEMENTED"
+        },
+        {
+          "requirement_id": "DRIVE-014",
+          "mapping": "SEMANTIC",
+          "status": "NOT_IMPLEMENTED"
+        },
+        {
+          "requirement_id": "DRIVE-038",
+          "mapping": "EXACT",
+          "status": "NOT_IMPLEMENTED"
+        },
+        {
+          "requirement_id": "DRIVE-039",
+          "mapping": "EXACT",
+          "status": "NOT_IMPLEMENTED"
+        },
+        {
+          "requirement_id": "DRIVE-040",
+          "mapping": "EXACT",
+          "status": "NOT_IMPLEMENTED"
+        },
+        {
+          "requirement_id": "DRIVE-041",
+          "mapping": "EXACT",
+          "status": "NOT_IMPLEMENTED"
+        }
+      ]
     },
     {
       "id": "0.54",
@@ -672,7 +791,39 @@
       "source_class": "MATRIX_ORIGINAL",
       "previous_title": "Mobile Builder",
       "previous_scope": "Rust/UniFFI + SwiftUI/Compose + bounded mobile agent runtime",
-      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json"
+      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-012",
+          "mapping": "EXACT",
+          "status": "NOT_IMPLEMENTED"
+        },
+        {
+          "requirement_id": "DRIVE-014",
+          "mapping": "SEMANTIC",
+          "status": "NOT_IMPLEMENTED"
+        },
+        {
+          "requirement_id": "DRIVE-042",
+          "mapping": "EXACT",
+          "status": "NOT_IMPLEMENTED"
+        },
+        {
+          "requirement_id": "DRIVE-043",
+          "mapping": "EXACT",
+          "status": "NOT_IMPLEMENTED"
+        },
+        {
+          "requirement_id": "DRIVE-044",
+          "mapping": "EXACT",
+          "status": "NOT_IMPLEMENTED"
+        },
+        {
+          "requirement_id": "DRIVE-045",
+          "mapping": "EXACT",
+          "status": "NOT_IMPLEMENTED"
+        }
+      ]
     },
     {
       "id": "0.55",
@@ -687,7 +838,14 @@
       "source_class": "MATRIX_ORIGINAL",
       "previous_title": "Builder Safety",
       "previous_scope": "Graph static verification, typed edges, critical caps, WASI preview",
-      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json"
+      "builder_products_manifest": "docs/roadmap/agents_builder_products_v11.json",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-013",
+          "mapping": "EXACT",
+          "status": "NOT_IMPLEMENTED"
+        }
+      ]
     },
     {
       "id": "0.56",
@@ -1301,7 +1459,14 @@
       ],
       "status": "PLANNED",
       "source": "docs/ROADMAP_TWO_PDF_RUST_MODULES_2026-10-15.md",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-032",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        }
+      ]
     },
     {
       "id": "1.06",
@@ -1461,7 +1626,19 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/apex_tier0_extension.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-005",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        },
+        {
+          "requirement_id": "DRIVE-030",
+          "mapping": "PROPOSED",
+          "status": "PARTIAL"
+        }
+      ]
     },
     {
       "id": "1.16",
@@ -1526,7 +1703,14 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/apex_tier0_extension.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-005",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        }
+      ]
     },
     {
       "id": "1.19",
@@ -1547,7 +1731,14 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/apex_tier0_extension.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-005",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        }
+      ]
     },
     {
       "id": "1.20",
@@ -1728,7 +1919,14 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/apex_tier0_extension.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-007",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        }
+      ]
     },
     {
       "id": "1.28",
@@ -1775,7 +1973,14 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/apex_tier0_extension.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-007",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        }
+      ]
     },
     {
       "id": "1.30",
@@ -1798,7 +2003,14 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/apex_tier0_extension.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-007",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        }
+      ]
     },
     {
       "id": "1.31",
@@ -2163,7 +2375,24 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/apex_tier0_extension.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-003",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        },
+        {
+          "requirement_id": "DRIVE-016",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        },
+        {
+          "requirement_id": "DRIVE-021",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        }
+      ]
     },
     {
       "id": "1.47",
@@ -2186,7 +2415,14 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/apex_tier0_extension.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-016",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        }
+      ]
     },
     {
       "id": "1.48",
@@ -2254,7 +2490,14 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/apex_tier0_extension.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-003",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        }
+      ]
     },
     {
       "id": "1.51",
@@ -2277,7 +2520,14 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/apex_tier0_extension.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-003",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        }
+      ]
     },
     {
       "id": "1.52",
@@ -2368,7 +2618,19 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/sovereign_workspace_v9.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-005",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        },
+        {
+          "requirement_id": "DRIVE-033",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        }
+      ]
     },
     {
       "id": "1.56",
@@ -2413,7 +2675,14 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/sovereign_workspace_v9.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-005",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        }
+      ]
     },
     {
       "id": "1.58",
@@ -2602,7 +2871,19 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/sovereign_workspace_v9.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-019",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        },
+        {
+          "requirement_id": "DRIVE-022",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        }
+      ]
     },
     {
       "id": "1.66",
@@ -2627,7 +2908,19 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/sovereign_workspace_v9.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-023",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        },
+        {
+          "requirement_id": "DRIVE-028",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        }
+      ]
     },
     {
       "id": "1.67",
@@ -2651,7 +2944,14 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/sovereign_workspace_v9.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-007",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        }
+      ]
     },
     {
       "id": "1.68",
@@ -2701,7 +3001,14 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/sovereign_workspace_v9.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-023",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        }
+      ]
     },
     {
       "id": "1.70",
@@ -2726,7 +3033,14 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/sovereign_workspace_v9.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-007",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        }
+      ]
     },
     {
       "id": "1.71",
@@ -3272,7 +3586,29 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/sovereign_workspace_v9.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-017",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        },
+        {
+          "requirement_id": "DRIVE-018",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        },
+        {
+          "requirement_id": "DRIVE-026",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        },
+        {
+          "requirement_id": "DRIVE-027",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        }
+      ]
     },
     {
       "id": "1.93",
@@ -3299,7 +3635,24 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/sovereign_workspace_v9.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-017",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        },
+        {
+          "requirement_id": "DRIVE-018",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        },
+        {
+          "requirement_id": "DRIVE-027",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        }
+      ]
     },
     {
       "id": "1.94",
@@ -3329,7 +3682,29 @@
       ],
       "evidence": [],
       "source": "docs/roadmap/sovereign_workspace_v9.json",
-      "source_class": "PDF_DRAFT"
+      "source_class": "PDF_DRAFT",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-019",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        },
+        {
+          "requirement_id": "DRIVE-024",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        },
+        {
+          "requirement_id": "DRIVE-026",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        },
+        {
+          "requirement_id": "DRIVE-029",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        }
+      ]
     },
     {
       "id": "1.95",
@@ -3450,7 +3825,19 @@
       "pdf_file": "Analiza AGI I Ludzkich AI (1).PDF",
       "evidence": [],
       "source": "docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md",
-      "source_class": "PDF_SOURCE_VERIFIED"
+      "source_class": "PDF_SOURCE_VERIFIED",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-028",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        },
+        {
+          "requirement_id": "DRIVE-034",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        }
+      ]
     },
     {
       "id": "2.00",
@@ -3545,7 +3932,14 @@
       "pdf_file": "Analiza AGI I Ludzkich AI (1).PDF",
       "evidence": [],
       "source": "docs/audits/OCAF_20_PDF_DOCUMENTATION_AUDIT_2026-10-15.md",
-      "source_class": "PDF_SOURCE_VERIFIED"
+      "source_class": "PDF_SOURCE_VERIFIED",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-031",
+          "mapping": "PROPOSED",
+          "status": "REQUIRES_VERIFICATION"
+        }
+      ]
     },
     {
       "id": "2.04",
@@ -4979,7 +5373,34 @@
       ],
       "status": "PLANNED",
       "source": "Architektura OCAF_ OAuth i Usługi - Google Gemini.PDF.pdf, s.1–28; docs/DRIVE_044_049_IMPLEMENTATION_MAP.md",
-      "source_class": "ROADMAP_STAGE_DEFINITION"
+      "source_class": "ROADMAP_STAGE_DEFINITION",
+      "drive_requirements": [
+        {
+          "requirement_id": "DRIVE-001",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        },
+        {
+          "requirement_id": "DRIVE-003",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        },
+        {
+          "requirement_id": "DRIVE-004",
+          "mapping": "SEMANTIC",
+          "status": "LAB_VERIFIED"
+        },
+        {
+          "requirement_id": "DRIVE-006",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        },
+        {
+          "requirement_id": "DRIVE-007",
+          "mapping": "SEMANTIC",
+          "status": "PARTIAL"
+        }
+      ]
     }
   ],
   "technical": [
@@ -6920,9 +7341,25 @@
     "imandra_proof": "NOT_VERIFIED",
     "production_approved": false,
     "verified_ci": [
-      {"run_id": 40941557248, "sha": "261f8ed7a268eff4a771bce77b2ef6efbc7695bc", "scope": "catalog-capability-adapters-Z3-memfd-memory-rustfmt-clippy", "conclusion": "success"},
-      {"run_id": 40942073444, "sha": "d52c9d9f18c4363eebedf266fdee0e079578ae2a", "scope": "real-zenoh-1.10.1-shm-two-process-and-fallback-single-host", "conclusion": "success"},
-      {"run_id": 40942543567, "sha": "52be86f370ec0b63aa81e607623aad40683f16c7", "scope": "real-firecracker-1.17-kvm-two-jailed-guests-wasi-aya-one-host", "conclusion": "success", "artifact_id": 12928795139}
+      {
+        "run_id": 40941557248,
+        "sha": "261f8ed7a268eff4a771bce77b2ef6efbc7695bc",
+        "scope": "catalog-capability-adapters-Z3-memfd-memory-rustfmt-clippy",
+        "conclusion": "success"
+      },
+      {
+        "run_id": 40942073444,
+        "sha": "d52c9d9f18c4363eebedf266fdee0e079578ae2a",
+        "scope": "real-zenoh-1.10.1-shm-two-process-and-fallback-single-host",
+        "conclusion": "success"
+      },
+      {
+        "run_id": 40942543567,
+        "sha": "52be86f370ec0b63aa81e607623aad40683f16c7",
+        "scope": "real-firecracker-1.17-kvm-two-jailed-guests-wasi-aya-one-host",
+        "conclusion": "success",
+        "artifact_id": 12928795139
+      }
     ]
   }
 }
