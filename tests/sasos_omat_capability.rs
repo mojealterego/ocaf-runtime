@@ -7,8 +7,8 @@ use ocaf_runtime::sasos_capability::{
     CapabilityAction, CapabilityAuthority, CapabilityCaveat, CapabilityError, CapabilityVerbs,
 };
 use ocaf_runtime::stage043_omat_route::{
-    dispatch_tool_call_with_capability, omat_resource_id, AuthenticatedPeer, DispatchError,
-    CapabilityGrant, OmatRouteGuard, RouteError,
+    dispatch_tool_call_with_capability, omat_resource_id, AuthenticatedPeer, CapabilityGrant,
+    DispatchError, OmatRouteGuard, RouteError,
 };
 use ocaf_runtime::stage043_omat_zenoh::{
     sign_omas_request, sign_omas_request_with_capability, OmatZenohAdmission,
@@ -97,7 +97,10 @@ fn guarded_route_enforces_capability_before_ostc() {
         &call,
         &policy(),
         &OmatRegistry::default(),
-        CapabilityGrant { authority: &authority, ticket: &ticket },
+        CapabilityGrant {
+            authority: &authority,
+            ticket: &ticket,
+        },
     );
     assert_eq!(result, Err(DispatchError::Route(RouteError::Disconnected)));
     guard.set_transport_connected(true);
@@ -108,7 +111,10 @@ fn guarded_route_enforces_capability_before_ostc() {
         &call,
         &policy(),
         &OmatRegistry::default(),
-        CapabilityGrant { authority: &authority, ticket: &ticket },
+        CapabilityGrant {
+            authority: &authority,
+            ticket: &ticket,
+        },
     );
     assert_eq!(
         result,
@@ -126,7 +132,10 @@ fn guarded_route_enforces_capability_before_ostc() {
             &swapped,
             &policy(),
             &OmatRegistry::default(),
-            CapabilityGrant { authority: &authority, ticket: &ticket },
+            CapabilityGrant {
+                authority: &authority,
+                ticket: &ticket
+            },
         ),
         Err(DispatchError::Capability(CapabilityError::Denied))
     );
@@ -149,7 +158,10 @@ fn guarded_route_enforces_capability_before_ostc() {
             &call,
             &policy(),
             &OmatRegistry::default(),
-            CapabilityGrant { authority: &authority, ticket: &wrong },
+            CapabilityGrant {
+                authority: &authority,
+                ticket: &wrong
+            },
         ),
         Err(DispatchError::Capability(CapabilityError::Denied))
     );
@@ -172,7 +184,10 @@ fn guarded_route_enforces_capability_before_ostc() {
             &call,
             &policy(),
             &OmatRegistry::default(),
-            CapabilityGrant { authority: &authority, ticket: &short },
+            CapabilityGrant {
+                authority: &authority,
+                ticket: &short
+            },
         ),
         Err(DispatchError::Capability(CapabilityError::Denied))
     );
