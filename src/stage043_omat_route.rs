@@ -2,6 +2,10 @@
 //! Routing authorization is independent of transport: the caller MUST verify
 //! the peer using mutual TLS before creating an AuthenticatedPeer.
 use crate::omat_server::{OmatPolicy, OmatRegistry, ToolCall, ToolReceipt};
+use crate::sasos_capability::{
+    CapabilityAction, CapabilityAuthority, CapabilityError, CapabilityTicket,
+};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -99,9 +103,51 @@ pub fn dispatch_tool_call(
     registry.execute(call, policy).map_err(DispatchError::Tool)
 }
 
+/// Canonical resource identity binds all three authority dimensions, without
+/// depending on a caller-controlled memory address or on ambiguous separators.
+pub fn omat_resource_id(call: &ToolCall) -> String {
+    let identity = format!(
+        "ocaf.omat.resource.v1\\0{}\\0{}\\0{}",
+        call.tenant_id, call.agent_id, call.tool_id
+    );
+    format!("omat://sha256/{:x}", Sha256::digest(identity.as_bytes()))
+}
+
+/// A capability is a *mandatory additional* check, not a replacement for
+/// transport authentication, tenant policy, OSTc or the executor boundary.
+/// Never call this with an identity taken from the tool request body.
+pub fn dispatch_tool_call_with_capability(
+    guard: &OmatRouteGuard,
+    peer: &AuthenticatedPeer,
+    topic: &str,
+    call: &ToolCall,
+    policy: &OmatPolicy,
+    registry: &OmatRegistry,
+    authority: &CapabilityAuthority,
+    ticket: &CapabilityTicket,
+) -> Result<ToolReceipt, DispatchError> {
+    guard.authorize(peer, topic).map_err(DispatchError::Route)?;
+    if call.tenant_id != peer.tenant || policy.tenant_id != peer.tenant {
+        return Err(DispatchError::Route(RouteError::Unauthorized));
+    }
+    let expected_topic = format!("ocaf/omat/{}/requests/{}", peer.tenant, call.request_id);
+    if topic != expected_topic {
+        return Err(DispatchError::Route(RouteError::InvalidTopic));
+    }
+    let bytes = serde_json::to_vec(&call.arguments)
+        .map_err(|_| DispatchError::Capability(CapabilityError::Invalid))?;
+    let size = u64::try_from(bytes.len())
+        .map_err(|_| DispatchError::Capability(CapabilityError::Denied))?;
+    authority
+        .authorize(ticket, peer, &omat_resource_id(call), CapabilityAction::Execute, size)
+        .map_err(DispatchError::Capability)?;
+    dispatch_tool_call(guard, peer, topic, call, policy, registry)
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DispatchError {
     Route(RouteError),
+    Capability(CapabilityError),
     Tool(crate::omat_server::OmatError),
 }
 
