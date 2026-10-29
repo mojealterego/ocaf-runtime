@@ -25,3 +25,22 @@ odmowę replay, zły HMAC, zły digest schematu, ukrycie złośliwego opisu,
 oraz odwołanie widoczne w kolejnym discovery. Lokalna baza SQLite jest
 obszarem zaufania operatora. Nie ma tu dowodu rozproszonego klastra,
 certyfikacji, benchmarku produkcyjnego ani wykonania narzędzia.
+
+## Katalog SASOS 001–555
+
+`scripts/import_sasos_tool_catalog.py` przyjmuje kompletny plik źródłowy Rust
+z definicjami `SasosTool001`–`SasosTool555` i wywołaniami `tools.insert`.
+Sprawdza ciągłość numeracji, unikalność ID oraz zgodność wpisów rejestru
+z definicjami. Polecenie:
+
+```sh
+python3 scripts/import_sasos_tool_catalog.py katalog.rs katalog.json
+```
+
+Wynik jest katalogiem metadanych z `status: CATALOG_ONLY` oraz
+`executable: false`. Deklaracje `SecurityClearance` i `execution_runtime`
+są zachowane jako tekst, a nie stosowane jako uprawnienia lub adaptery.
+Wartości demonstracyjne `imandra_verified: true` i `latency_microseconds: 7`
+z metody domyślnej nie stanowią dowodu; eksport podaje `false` i `null`.
+Importer nie wykonuje kodu Rust ani żadnego narzędzia. Do aktywacji potrzebne
+są osobne implementacje, podpisane manifesty i kontrole OSTc.
