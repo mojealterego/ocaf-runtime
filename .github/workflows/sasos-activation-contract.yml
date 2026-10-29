@@ -1,0 +1,57 @@
+name: Stage 334 SASOS capability and 555 catalog integrity (not activation)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/sasos_capability.rs"
+      - "src/stage043_omat_route.rs"
+      - "src/stage043_omat_zenoh.rs"
+      - "src/stage044_omat_authz.rs"
+      - "src/bin/ocaf-omat-zenoh.rs"
+      - "tests/sasos_omat_capability.rs"
+      - "tests/stage044_integration.rs"
+      - "scripts/sasos_activation_gate.py"
+      - "scripts/tests/test_sasos_activation_gate.py"
+      - "omat/catalog/sasos_tools_001_555.json"
+      - ".github/workflows/sasos-activation-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  catalog-and-authorization:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Audit all 555 declarations (not backend execution)
+        run: |
+          python3 -m unittest discover -s scripts/tests -p test_sasos_activation_gate.py -v
+          python3 scripts/sasos_activation_gate.py > sasos-catalog-audit.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path("sasos-catalog-audit.json").read_text())
+          assert report["declared_services"]==555
+          assert report["active_backends_verified"]==0
+          assert report["status"]=="CATALOG_AUDITED_NOT_ACTIVATED"
+          print("SASOS_CATALOG_INTEGRITY_PASS_NO_BACKENDS_ACTIVATED")
+          PY
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          toolchain: "1.99.0"
+          components: rustfmt, clippy
+      - name: Rust formatting
+        run: cargo fmt --all -- --check
+      - name: Capability and live Zenoh ingress negative tests
+        run: cargo test --locked --test sasos_omat_capability -- --nocapture
+      - name: OAuth and capability composition tests
+        run: cargo test --locked --no-default-features --test stage044_integration -- --nocapture
+      - name: Core capability and OMAt policy tests
+        run: cargo test --locked --no-default-features --lib sasos_capability::tests -- --nocapture
+      - name: Clippy
+        run: cargo clippy --locked --no-default-features --lib --tests -- -D warnings
