@@ -688,7 +688,7 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 
 ### 2026-10-29 — etap 334: rzeczywiste adaptery i weryfikowalne modele (OSTc odłożone)
 
-- **IMPLEMENTED_PARTIAL, nie PRODUCTION_APPROVED:** `src/sasos_service_adapters.rs` realizuje rzeczywisty HTTPS POST przez istniejący OAuth/Vault broker dla jawnie skonfigurowanych tras, waliduje katalog 555, odrzuca Ring0, nieznane i niepoprawne argumenty. Nie uruchomiono ani nie potwierdzono 555 backendów.
+- **IMPLEMENTED_PARTIAL, nie PRODUCTION_APPROVED:** `src/sasos_service_adapters.rs` realizuje rzeczywisty HTTPS POST przez istniejący OAuth/Vault broker dla jawnie skonfigurowanych tras, waliduje katalog 555, odrzuca Ring0/Ring1, nieznane i niepoprawne argumenty. Nie uruchomiono ani nie potwierdzono 555 backendów.
 - **Capability:** istniejąca bramka OMAt/Zenoh wymaga podpisanego biletu, lecz nie omija nieatestowanego OSTc. Zgodnie z decyzją operatora końcowy OSTc pozostaje na końcu prac; nie wyłączono fail-closed dla native/WASI/Firecracker.
 - **SMT:** modele w `verification/sasos334` i rzeczywisty runner Z3; ograniczone modele i kontrola SAT, nie formalny dowód Rust ani Imandra.
 - **SHM:** `scripts/sasos_shm_probe.py` testuje dwa procesy Linux memfd z odrzuceniem modyfikacji; to nie Zenoh SHM E2E ani zero-copy między hostami.
