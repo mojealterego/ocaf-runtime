@@ -2,9 +2,11 @@
 use base64::engine::general_purpose::STANDARD as B64;
 use base64::Engine as _;
 use ocaf_runtime::omat_server::{OmatPolicy, OmatRegistry};
+use ocaf_runtime::stage043_omat_discovery::{serve_discovery_until, DurableDiscovery};
 use ocaf_runtime::stage043_omat_zenoh::{serve_omat_zenoh_until, OmatZenohAdmission};
+use ocaf_runtime::stage043_store::Stage043ToolStore;
 use ocaf_runtime::transport_policy::{read_zenoh_config, validate_zenoh_config};
-use std::collections::{BTreeSet, HashMap};
+use std::collections::HashMap;
 use std::env;
 use std::path::Path;
 use std::sync::Arc;
@@ -58,22 +60,43 @@ async fn main() -> anyhow::Result<()> {
         Path::new(&replay_path).is_absolute(),
         "replay DB path must be absolute"
     );
-    let policies = HashMap::from([(
-        tenant.clone(),
-        OmatPolicy {
-            tenant_id: tenant.clone(),
-            allowed_tools: BTreeSet::new(),
-            allowed_capabilities: BTreeSet::new(),
-            max_timeout_ms: 1000,
-            max_output_bytes: 1024,
-            allow_external_side_effects: false,
-        },
-    )]);
+    let tool_db = require("OCAF_OMAT_TOOL_DB")?;
+    let tool_db = Path::new(&tool_db);
+    anyhow::ensure!(tool_db.is_absolute(), "tool DB path must be absolute");
+    let store = Stage043ToolStore::open_existing(tool_db)?;
+    let policy_path = require("OCAF_OMAT_POLICY_JSON")?;
+    let policy_path = Path::new(&policy_path);
+    anyhow::ensure!(
+        policy_path.is_absolute() && !policy_path.is_symlink(),
+        "private absolute policy path required"
+    );
+    let policy_metadata = policy_path.metadata()?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::{MetadataExt, PermissionsExt};
+        anyhow::ensure!(
+            policy_metadata.uid() == unsafe { libc::geteuid() }
+                && policy_metadata.permissions().mode() & 0o077 == 0,
+            "policy file must be private and owned by OMAt"
+        );
+    }
+    anyhow::ensure!(
+        policy_metadata.is_file() && policy_metadata.len() <= 1024 * 1024,
+        "bounded policy file required"
+    );
+    let policy: OmatPolicy = serde_json::from_slice(&std::fs::read(policy_path)?)?;
+    anyhow::ensure!(policy.tenant_id == tenant, "policy tenant mismatch");
+    let policies = HashMap::from([(tenant.clone(), policy.clone())]);
+    let principal_for_discovery = principal.clone();
+    let mut registry = OmatRegistry::default();
+    for manifest in store.list_active(&tenant)? {
+        registry.register(manifest)?;
+    }
     let admission = OmatZenohAdmission::new(
         HashMap::from([(principal.clone(), key)]),
         HashMap::from([(principal, tenant.clone())]),
         policies,
-        OmatRegistry::default(),
+        registry,
     )?
     .with_replay_database(Path::new(&replay_path))?;
     let session = Arc::new(
@@ -82,5 +105,27 @@ async fn main() -> anyhow::Result<()> {
             .map_err(|e| anyhow::anyhow!("Zenoh open: {e}"))?,
     );
     let selector = format!("ocaf/omat/{tenant}/requests/*");
-    serve_omat_zenoh_until(session, admission, &selector, shutdown_signal()).await
+    let discovery = DurableDiscovery::open(
+        store,
+        policy,
+        principal_for_discovery,
+        key,
+        Path::new(&replay_path),
+    )?;
+    let (stop_tx, stop_rx) = tokio::sync::watch::channel(false);
+    tokio::spawn(async move {
+        shutdown_signal().await;
+        let _ = stop_tx.send(true);
+    });
+    let mut request_stop = stop_rx.clone();
+    let mut discovery_stop = stop_rx;
+    tokio::try_join!(
+        serve_omat_zenoh_until(Arc::clone(&session), admission, &selector, async move {
+            let _ = request_stop.changed().await;
+        }),
+        serve_discovery_until(session, discovery, &tenant, async move {
+            let _ = discovery_stop.changed().await;
+        })
+    )?;
+    Ok(())
 }

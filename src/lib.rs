@@ -49,6 +49,8 @@ pub mod stage043_mtls_admission;
 pub mod stage043_omat_route;
 
 #[cfg(feature = "zenoh")]
+pub mod stage043_omat_discovery;
+#[cfg(feature = "zenoh")]
 pub mod stage043_omat_zenoh;
 pub mod stage044_oauth;
 pub mod stage044_omat_authz;

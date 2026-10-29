@@ -183,6 +183,31 @@ impl Stage043ToolStore {
         Ok(Some(tool))
     }
 
+    /// Reload tenant-owned active manifests from durable storage on each
+    /// discovery. A corrupt row fails the whole query instead of disappearing.
+    pub fn list_active(&self, tenant: &str) -> Result<Vec<ToolManifest>, StoreError> {
+        let connection = self.connection()?;
+        let mut query = connection
+            .prepare("SELECT tool_id FROM stage043_tools WHERE tenant = ?1 ORDER BY tool_id")
+            .map_err(|_| StoreError::Database)?;
+        let ids = query
+            .query_map(params![tenant], |row| row.get::<_, String>(0))
+            .map_err(|_| StoreError::Database)?;
+        let mut tools = Vec::new();
+        let mut rows = 0usize;
+        for id in ids {
+            rows += 1;
+            let id = id.map_err(|_| StoreError::Database)?;
+            if rows > 4096 {
+                return Err(StoreError::Integrity);
+            }
+            if let Some(manifest) = self.get_active(tenant, &id)? {
+                tools.push(manifest);
+            }
+        }
+        Ok(tools)
+    }
+
     /// Revoke exactly the signed manifest for this tenant and tool. The caller
     /// must derive the sender, tenant and Ed25519 key from an authenticated,
     /// operator-managed mapping; none may come from the request body. A replay
