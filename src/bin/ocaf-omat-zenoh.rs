@@ -3,6 +3,7 @@ use base64::engine::general_purpose::STANDARD as B64;
 use base64::Engine as _;
 use ocaf_runtime::omat_server::{OmatPolicy, OmatRegistry};
 use ocaf_runtime::stage043_omat_discovery::{serve_discovery_until, DurableDiscovery};
+use ocaf_runtime::stage043_omat_revoke_zenoh::{serve_revoke_zenoh_until, RevokeAuthority};
 use ocaf_runtime::stage043_omat_zenoh::{serve_omat_zenoh_until, OmatZenohAdmission};
 use ocaf_runtime::stage043_store::Stage043ToolStore;
 use ocaf_runtime::transport_policy::{read_zenoh_config, validate_zenoh_config};
@@ -15,6 +16,18 @@ fn require(name: &str) -> anyhow::Result<String> {
     let value = env::var(name)?;
     anyhow::ensure!(!value.is_empty(), "empty environment variable: {name}");
     Ok(value)
+}
+
+struct B64Decoded([u8; 32]);
+impl B64Decoded {
+    fn new(raw: &str) -> anyhow::Result<Self> {
+        let bytes = B64.decode(raw)?;
+        let key: [u8; 32] = bytes
+            .try_into()
+            .map_err(|_| anyhow::anyhow!("Ed25519 public key must be 32 bytes"))?;
+        anyhow::ensure!(key != [0; 32], "zero revoke public key");
+        Ok(Self(key))
+    }
 }
 
 async fn shutdown_signal() {
@@ -87,6 +100,14 @@ async fn main() -> anyhow::Result<()> {
     let policy: OmatPolicy = serde_json::from_slice(&std::fs::read(policy_path)?)?;
     anyhow::ensure!(policy.tenant_id == tenant, "policy tenant mismatch");
     let policies = HashMap::from([(tenant.clone(), policy.clone())]);
+    let revoke_sender = require("OCAF_OMAT_REVOKE_SENDER")?;
+    let revoke_public: B64Decoded = B64Decoded::new(&require("OCAF_OMAT_REVOKE_PUBLIC_KEY_B64")?)?;
+    let authority = RevokeAuthority {
+        tenant: tenant.clone(),
+        sender: revoke_sender,
+        public_key: revoke_public.0,
+        store: store.clone(),
+    };
     let principal_for_discovery = principal.clone();
     let mut registry = OmatRegistry::default();
     for manifest in store.list_active(&tenant)? {
@@ -98,7 +119,8 @@ async fn main() -> anyhow::Result<()> {
         policies,
         registry,
     )?
-    .with_replay_database(Path::new(&replay_path))?;
+    .with_replay_database(Path::new(&replay_path))?
+    .with_tool_store(store.clone());
     let session = Arc::new(
         zenoh::open(config)
             .await
@@ -118,13 +140,17 @@ async fn main() -> anyhow::Result<()> {
         let _ = stop_tx.send(true);
     });
     let mut request_stop = stop_rx.clone();
-    let mut discovery_stop = stop_rx;
+    let mut discovery_stop = stop_rx.clone();
+    let mut revoke_stop = stop_rx;
     tokio::try_join!(
         serve_omat_zenoh_until(Arc::clone(&session), admission, &selector, async move {
             let _ = request_stop.changed().await;
         }),
-        serve_discovery_until(session, discovery, &tenant, async move {
+        serve_discovery_until(Arc::clone(&session), discovery, &tenant, async move {
             let _ = discovery_stop.changed().await;
+        }),
+        serve_revoke_zenoh_until(session, authority, async move {
+            let _ = revoke_stop.changed().await;
         })
     )?;
     Ok(())

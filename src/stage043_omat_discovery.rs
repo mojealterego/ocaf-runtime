@@ -58,6 +58,7 @@ impl DurableDiscovery {
             replay_path,
             OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NOFOLLOW,
         )?;
+        replay.busy_timeout(std::time::Duration::from_secs(5))?;
         replay.execute_batch(
             "CREATE TABLE IF NOT EXISTS stage043_discovery_nonce (
             principal TEXT NOT NULL, nonce TEXT NOT NULL,
