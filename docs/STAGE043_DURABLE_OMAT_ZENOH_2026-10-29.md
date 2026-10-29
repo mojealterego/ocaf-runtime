@@ -44,3 +44,14 @@ Wartości demonstracyjne `imandra_verified: true` i `latency_microseconds: 7`
 z metody domyślnej nie stanowią dowodu; eksport podaje `false` i `null`.
 Importer nie wykonuje kodu Rust ani żadnego narzędzia. Do aktywacji potrzebne
 są osobne implementacje, podpisane manifesty i kontrole OSTc.
+
+Katalog z pliku Drive `ocaf_runtime_omat_555_production_v2.rs` został
+zweryfikowany i zapisany w `omat/catalog/sasos_tools_001_555.json`.
+SHA-256 pobranego źródła:
+`b4e9797990e827dba7113ab7f28fcb532f1bb058cf822bee6324d95f33e9df18`.
+SHA-256 eksportu JSON:
+`52635fe8e35f47fc394351c6620cb970646820b4967b061e3c6d09dc4410482a`.
+W tym katalogu 316–320 to kolejno R3Mem, Titans, ImandraX, MARS i CWM.
+Późniejszy fragment „OMAt Kernel Core + MARS 5-Step Pipeline” ponownie
+używa tych numerów dla innych funkcji, więc wymaga osobnej decyzji o wersji
+lub nowych identyfikatorów przed rejestracją adapterów.
