@@ -95,3 +95,19 @@ wersji, izolowanego executora oraz pozytywnych i negatywnych dowodów E2E.
 `tests/stage043_persistence.rs` sprawdza także trwałe podpisane odwołanie,
 replay po restarcie, wyścig nonce/CAS i negatywne przypadki podpisu, nadawcy,
 tenanta, payloadu, czasu oraz nieaktualnego digestu.
+
+## Signed network revocation (stage 0.43)
+
+The dedicated Zenoh control selector `ocaf/omat/{tenant}/control/revoke`
+accepts a bounded JSON `SignedRevokeFrame` with `ToolRevocationRequest` and
+Ed25519 V2 `SignedOperation`. The OMAt operator configuration supplies the
+trusted sender, tenant and public key; the frame cannot choose them. The
+store requires exact tenant, manifest digest, opcode 5, fuel 1, timestamp,
+payload, and signed sender. A nonce and tombstone commit in one SQLite
+transaction. The reply `revoked` is sent only after the commit. Network or
+signature failures return a generic rejection. The regular tool route can
+read the durable store on every call, so the next request sees the tombstone.
+The test uses an actual Zenoh queryable and rejects wrong tenant selector,
+forged signature and replay, then reopens the store to prove durability.
+Execution remains denied while OSTc is disabled; a successful revocation
+never activates a tool.

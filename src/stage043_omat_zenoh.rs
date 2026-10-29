@@ -2,6 +2,7 @@
 //! operator configuration responsibility; message authentication is mandatory.
 use crate::omat_server::{OmatPolicy, OmatRegistry, ToolCall};
 use crate::stage043_omat_route::{dispatch_tool_call, AuthenticatedPeer, OmatRouteGuard};
+use crate::stage043_store::Stage043ToolStore;
 use hmac::{Hmac, Mac};
 use rusqlite::{params, Connection, OpenFlags};
 use serde::{Deserialize, Serialize};
@@ -108,6 +109,7 @@ pub struct OmatZenohAdmission {
     used: HashSet<(String, String)>,
     replay_db: Option<Connection>,
     registry: OmatRegistry,
+    durable_store: Option<Stage043ToolStore>,
     policies: HashMap<String, OmatPolicy>,
 }
 
@@ -142,8 +144,16 @@ impl OmatZenohAdmission {
             used: HashSet::new(),
             replay_db: None,
             registry,
+            durable_store: None,
             policies,
         })
+    }
+
+    /// Once attached, the durable store is the source of truth for every call.
+    /// Revocation cannot leave a stale executable in the process cache.
+    pub fn with_tool_store(mut self, store: Stage043ToolStore) -> Self {
+        self.durable_store = Some(store);
+        self
     }
 
     pub fn metrics(&self) -> Arc<OmatSecurityMetrics> {
@@ -266,13 +276,24 @@ impl OmatZenohAdmission {
             .policies
             .get(&tenant)
             .ok_or_else(|| anyhow::anyhow!("no tenant policy"))?;
+        let mut live_registry = OmatRegistry::default();
+        let registry = if let Some(store) = &self.durable_store {
+            if let Some(manifest) = store.get_active(&tenant, &request.call.tool_id)? {
+                live_registry
+                    .register(manifest)
+                    .map_err(|_| anyhow::anyhow!("stored tool invalid"))?;
+            }
+            &live_registry
+        } else {
+            &self.registry
+        };
         dispatch_tool_call(
             &self.guard,
             &peer,
             &request.topic,
             &request.call,
             policy,
-            &self.registry,
+            registry,
         )
         .map(|_| ())
         .map_err(|_| anyhow::anyhow!("OMAt request denied"))
