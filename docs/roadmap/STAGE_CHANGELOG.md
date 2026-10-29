@@ -685,3 +685,13 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - 0.40 quorum SQLite storage rejects unsafe sidecars and symlinked ancestors ([CI 40454075356](https://github.com/mojealterego/ocaf-runtime/actions/runs/40454075356)); 0.44 JWT parser rejects duplicate top-level security fields; its final CI result is tracked separately.
 
 - 0.42.4: [CI 40454393345](https://github.com/mojealterego/ocaf-runtime/actions/runs/40454393345) verified the attested candidate against two pending PostgreSQL jobs, restored a real `pg_dump` baseline, then verified the prior binary saw one. Scope is one ephemeral test schema, not a durable deployment migration.
+
+### 2026-10-29 — etap 334: rzeczywiste adaptery i weryfikowalne modele (OSTc odłożone)
+
+- **IMPLEMENTED_PARTIAL, nie PRODUCTION_APPROVED:** `src/sasos_service_adapters.rs` realizuje rzeczywisty HTTPS POST przez istniejący OAuth/Vault broker dla jawnie skonfigurowanych tras, waliduje katalog 555, odrzuca Ring0, nieznane i niepoprawne argumenty. Nie uruchomiono ani nie potwierdzono 555 backendów.
+- **Capability:** istniejąca bramka OMAt/Zenoh wymaga podpisanego biletu, lecz nie omija nieatestowanego OSTc. Zgodnie z decyzją operatora końcowy OSTc pozostaje na końcu prac; nie wyłączono fail-closed dla native/WASI/Firecracker.
+- **SMT:** modele w `verification/sasos334` i rzeczywisty runner Z3; ograniczone modele i kontrola SAT, nie formalny dowód Rust ani Imandra.
+- **SHM:** `scripts/sasos_shm_probe.py` testuje dwa procesy Linux memfd z odrzuceniem modyfikacji; to nie Zenoh SHM E2E ani zero-copy między hostami.
+- **Pamięć:** `scripts/sasos_memory_models.py` implementuje sprawdzalny byte-exact archive i bounded surprise-gated memory; nie jest wytrenowanym Titans ani NICE/R3Mem.
+- **Zewnętrzne E2E:** ręczny workflow `sasos334-external-acceptance.yml` wymaga rzeczywistego IdP, Vault i KVM na hoście operatora. Brak konfiguracji oznacza FAIL/QUEUED, nie PASS. Rzeczywisty guest Firecracker jest testowany w oddzielnej bramce 0.39.
+- **Dowody:** `deploy/stage334/README.md`, `docs/DRIVE_044_049_IMPLEMENTATION_MAP.md`. Finalny status CI należy powiązać z aktualnym commit SHA; nie deklarować PASS przed uruchomieniem.
