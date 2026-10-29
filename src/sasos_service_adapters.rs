@@ -55,6 +55,12 @@ pub struct SasosCatalog {
 
 impl SasosCatalog {
     pub fn from_json(raw: &str) -> Result<Self, SasosAdapterError> {
+        // The service catalog is part of the reviewed binary, not a mutable
+        // authority source. A caller cannot lower Ring0 clearance by
+        // replacing JSON at runtime while retaining the same tool identity.
+        if raw != include_str!("../omat/catalog/sasos_tools_001_555.json") {
+            return Err(SasosAdapterError::InvalidConfiguration);
+        }
         if raw.len() > 2_000_000 {
             return Err(SasosAdapterError::InvalidConfiguration);
         }
