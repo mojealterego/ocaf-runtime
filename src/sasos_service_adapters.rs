@@ -71,13 +71,16 @@ impl SasosCatalog {
         }
         let mut entries = BTreeMap::new();
         for (index, row) in rows.into_iter().enumerate() {
-            let number = u16::try_from(index + 1)
-                .map_err(|_| SasosAdapterError::InvalidConfiguration)?;
+            let number =
+                u16::try_from(index + 1).map_err(|_| SasosAdapterError::InvalidConfiguration)?;
             let prefix = format!("SASOS_TOOL_{number:03}_");
             if row.number != number
                 || !row.tool_id.starts_with(&prefix)
                 || row.tool_id.len() <= prefix.len()
-                || !row.tool_id.bytes().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == b'_')
+                || !row
+                    .tool_id
+                    .bytes()
+                    .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == b'_')
                 || row.name.is_empty()
                 || row.description.is_empty()
                 || row.declared_runtime.is_empty()
@@ -91,8 +94,10 @@ impl SasosCatalog {
                 || row.connected_modules.len() > 128
                 || row.required_fields.iter().any(|f| !safe_field(f))
                 || row.connected_modules.iter().any(|f| !safe_field(f))
-                || row.required_fields.iter().collect::<BTreeSet<_>>().len() != row.required_fields.len()
-                || row.connected_modules.iter().collect::<BTreeSet<_>>().len() != row.connected_modules.len()
+                || row.required_fields.iter().collect::<BTreeSet<_>>().len()
+                    != row.required_fields.len()
+                || row.connected_modules.iter().collect::<BTreeSet<_>>().len()
+                    != row.connected_modules.len()
                 || entries.insert(row.tool_id.clone(), row).is_some()
             {
                 return Err(SasosAdapterError::InvalidConfiguration);
@@ -217,16 +222,22 @@ impl SasosAdapterBindings {
         sasos_tool_id: &str,
         arguments: &Value,
     ) -> Result<SasosPreparedCall, SasosAdapterError> {
-        let entry = self.entries.get(sasos_tool_id).ok_or(SasosAdapterError::Unbound)?;
-        let fields = arguments.as_object().ok_or(SasosAdapterError::InvalidArguments)?;
+        let entry = self
+            .entries
+            .get(sasos_tool_id)
+            .ok_or(SasosAdapterError::Unbound)?;
+        let fields = arguments
+            .as_object()
+            .ok_or(SasosAdapterError::InvalidArguments)?;
         if fields.len() != entry.required_fields.len()
-            || fields.iter().any(|(name, value)| {
-                !entry.required_fields.contains(name) || value.is_null()
-            })
+            || fields
+                .iter()
+                .any(|(name, value)| !entry.required_fields.contains(name) || value.is_null())
         {
             return Err(SasosAdapterError::InvalidArguments);
         }
-        let body = serde_json::to_vec(arguments).map_err(|_| SasosAdapterError::InvalidArguments)?;
+        let body =
+            serde_json::to_vec(arguments).map_err(|_| SasosAdapterError::InvalidArguments)?;
         if body.len() > entry.max_body_bytes {
             return Err(SasosAdapterError::InvalidArguments);
         }
@@ -263,11 +274,15 @@ fn safe_id(value: &str) -> bool {
         && value.len() <= 128
         && value != "."
         && value != ".."
-        && value.bytes().all(|c| c.is_ascii_alphanumeric() || b"._-".contains(&c))
+        && value
+            .bytes()
+            .all(|c| c.is_ascii_alphanumeric() || b"._-".contains(&c))
 }
 
 fn safe_field(value: &str) -> bool {
     !value.is_empty()
         && value.len() <= 256
-        && value.bytes().all(|c| c.is_ascii_alphanumeric() || b"._-".contains(&c))
+        && value
+            .bytes()
+            .all(|c| c.is_ascii_alphanumeric() || b"._-".contains(&c))
 }
