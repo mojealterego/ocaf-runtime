@@ -36,6 +36,7 @@ jobs:
           archive="$agent/dist/ocaf-agent-001-asterion-0.1.0.tar.gz"
           test -s "$archive"
           sha256sum --check "$archive.sha256"
+          sha256sum "$archive"
       - name: Install and verify fail-closed DRAFT status
         shell: bash
         run: |

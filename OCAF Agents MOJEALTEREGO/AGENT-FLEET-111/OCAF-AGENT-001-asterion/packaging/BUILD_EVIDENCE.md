@@ -31,3 +31,12 @@ runner prefix, verifies `DRAFT` and `ACTIVE=DENY`, then uploads the archive
 and checksum for operator review. The workflow artifact is retained for seven
 days; its run ID and result must be checked separately before citing it as
 remote build evidence.
+
+[CI run 40790950576](https://github.com/mojealterego/ocaf-runtime/actions/runs/40790950576)
+completed successfully for source commit
+`d8e00cbe220b9c619b4f93485e2ce0fd76a59bbc` and uploaded artifact
+`ocaf-agent-001-asterion-draft-d8e00cbe220b9c619b4f93485e2ce0fd76a59bbc`
+(artifact ID `12860724609`). The remote artifact could not be downloaded from
+this workspace because GitHub's backing blob URL returned HTTP 403, so the
+local SHA-256 above is not asserted to be the CI archive SHA-256. The workflow
+checks its own archive checksum before upload.
