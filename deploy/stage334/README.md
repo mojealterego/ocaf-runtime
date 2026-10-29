@@ -50,7 +50,7 @@ Przykład **formatu** prywatnego pliku bindingów (nie stan aktywacji):
 
 Binding nie wystarczy: `VaultSecretBroker` musi posiadać dokładnie
 zgodny `BrokerRoute` i osobny, rzeczywiście zaprowizjonowany sekret
-dla tenant/user/route. Wpisy Ring0 wymagają odrębnej oceny sandbox.
+dla tenant/user/route. Wpisy Ring0 i Ring1 są blokowane bez OSTc; tylko Ring2Worker może uzyskać jawny binding HTTPS.
 
 ## Infrastruktura IdP, Vault, KVM
 
