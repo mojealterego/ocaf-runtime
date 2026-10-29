@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - .github/workflows/stage039-real-firecracker-jailer.yml
+      - deploy/stage334/**
       - scripts/stage039_live_firecracker.py
       - scripts/stage039_vm_egress.py
       - scripts/stage039_preboot_aya.py
