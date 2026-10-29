@@ -57,7 +57,7 @@ fn no_ring0_kernel_backend_without_ostc() {
     let r = SasosAdapterBindings::new(
         &catalog(),
         vec![SasosServiceBinding {
-            sasos_tool_id: "SASOS_TOOL_001_OPENAI_GPT4O".into(),
+            sasos_tool_id: "SASOS_TOOL_002_ANTHROPIC_CLAUDE_OPUS_4_6".into(),
             route_id: "provider".into(),
             broker_tool_id: "model".into(),
             max_body_bytes: 4096,
