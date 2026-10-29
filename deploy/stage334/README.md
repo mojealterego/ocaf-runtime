@@ -88,9 +88,15 @@ wymaga ACK i odrzuca modyfikację danych. Testuje wspólną
 pamięć **na jednym hoście**. Nie testuje jeszcze przekazania
 Zenoh `ZShm`/negocjacji transportu, nie dowodzi zero-copy
 między hostami i nie aktywuje feature `shared-memory` w runtime.
-Dla prawdziwego Zenoh SHM potrzebne są testy z włączonym feature,
-dwa procesy Zenoh i zebrane liczniki dostarczenia, negatywne
-testy fallback oraz wersjonowany Cargo.lock.
+**Zweryfikowane dodatkowo na Zenoh 1.10.1:** dwa odrębne procesy
+Zenoh Python (Rust binding), 32768-bajtowy ZShm i test fallback na
+zwykły ZBytes przy wyłączonym SHM po stronie odbiorcy.
+[Run 40942073444](https://github.com/mojealterego/ocaf-runtime/actions/runs/40942073444)
+PASS, [artefakt 12927641458](https://github.com/mojealterego/ocaf-runtime/actions/runs/40942073444/artifacts/12927641458).
+To test biblioteki Zenoh na jednym hoście; połączenie tej ścieżki
+z produkcyjnym OMAt Rust, mTLS, failover i wielohostową polityką
+nadal jest otwarte. Zero-copy między hostami nie jest wymaganym ani
+prawdziwym trybem SHM.
 
 ## Solver i modele pamięci
 
@@ -121,3 +127,18 @@ testy OAuth/capability. Wynik wiązać z konkretnym commit SHA.
 ręczny, realny IdP/Vault/KVM ioctl na hoście operatora.
 `stage039-real-firecracker-jailer.yml`: osobna bramka guest boot.
 Żaden z tych wyników samodzielnie nie zamyka etapu 334.
+
+## Zweryfikowane GitHub Actions (przypisane do źródła)
+
+- [Etap 334 — PASS, run 40941557248](https://github.com/mojealterego/ocaf-runtime/actions/runs/40941557248),
+  commit `261f8ed7a268eff4a771bce77b2ef6efbc7695bc`:
+  walidacja 555 deklaracji, Z3, memfd, testy pamięci,
+  `cargo fmt`, `cargo test` capability/adapter/OAuth i `cargo clippy`.
+  Dowodzi laboratoryjnych kontraktów, nie uruchomienia usług.
+- [Zenoh SHM — PASS, run 40942073444](https://github.com/mojealterego/ocaf-runtime/actions/runs/40942073444),
+  commit `d52c9d9f18c4363eebedf266fdee0e079578ae2a`:
+  dwuprocesowy SHM i kopia/fallback na jednym kernelu.
+- **Niezweryfikowane:** self-hosted `sasos334-external-acceptance.yml`,
+  poświadczenia realnego IdP/Vault, operator-owned Firecracker,
+  komplet 555 providerów, pełny Titans/NICE, formalny dowód programu,
+  produkcyjny OMAt SHM i operator acceptance. Brak PASS dla tych obszarów.
