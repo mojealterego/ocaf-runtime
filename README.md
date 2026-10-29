@@ -1804,3 +1804,12 @@ Ponownie przesłane materiały: **48 = Notes_261014_204557.pdf (127 stron)**, **
 | **331** | TechRecon i Strategist | **PLANNED** |
 | **332** | AppForge 66 i GameBuilder | **PLANNED** |
 | **333** | Audyt implementacji DGM i konsolidacji 606 repozytoriów | **PLANNED** |
+
+
+### Etap 334 — zweryfikowane laboratoryjne CI, bez produkcyjnego odbioru (2026-10-29)
+
+- [SASOS katalog 555, capability, adapter HTTPS/Vault, Z3 i testy pamięci — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/40941557248), SHA `261f8ed7a268eff4a771bce77b2ef6efbc7695bc`.
+- [Zenoh 1.10.1, dwa procesy Linux, rzeczywisty SHM i fallback — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/40942073444), SHA `d52c9d9f18c4363eebedf266fdee0e079578ae2a`. To nie zero-copy między hostami ani integracja Rust OMAt.
+- Katalog 555 pozostaje `CATALOG_ONLY`; **0 potwierdzonych aktywnych backendów**. Operator-owned IdP/Vault, docelowy Firecracker i pełny runtime E2E niezatwierdzone. OSTc odłożone zgodnie z decyzją operatora, bez zmiany dotychczasowego fail-closed.
+
+Szczegóły: [deploy/stage334/README.md](deploy/stage334/README.md).
