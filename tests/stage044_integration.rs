@@ -4,11 +4,11 @@ use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use ocaf_runtime::omat_server::{
     ExecutorKind, OmatPolicy, OmatRegistry, ToolCall, ToolManifest, ToolRisk,
 };
-use ocaf_runtime::stage043_omat_route::{
-    omat_resource_id, AuthenticatedPeer, DispatchError, OmatRouteGuard,
-};
 use ocaf_runtime::sasos_capability::{
     CapabilityAuthority, CapabilityCaveat, CapabilityError, CapabilityVerbs,
+};
+use ocaf_runtime::stage043_omat_route::{
+    omat_resource_id, AuthenticatedPeer, DispatchError, OmatRouteGuard,
 };
 use ocaf_runtime::stage044_oauth::{
     AuthenticatedSubject, AuthorizationRequest, CodeExchange, OAuthClient, OAuthService,
@@ -231,18 +231,19 @@ fn oauth_and_capability_are_both_required_before_omat_execution() {
     };
     let call = call("tenant-a", "agent-a");
     let authority = CapabilityAuthority::new([23; 32]).unwrap();
-    let ticket = authority.mint(
-        &peer,
-        &omat_resource_id(&call),
-        CapabilityCaveat {
-            max_bytes: 1024,
-            expires_at_unix: 4_000_000_000,
-            verbs: CapabilityVerbs::EXECUTE,
-        },
-    ).unwrap();
-    let mut route = OmatRouteGuard::new(
-        HashMap::from([("agent-a".into(), "tenant-a".into())])
-    ).unwrap();
+    let ticket = authority
+        .mint(
+            &peer,
+            &omat_resource_id(&call),
+            CapabilityCaveat {
+                max_bytes: 1024,
+                expires_at_unix: 4_000_000_000,
+                verbs: CapabilityVerbs::EXECUTE,
+            },
+        )
+        .unwrap();
+    let mut route =
+        OmatRouteGuard::new(HashMap::from([("agent-a".into(), "tenant-a".into())])).unwrap();
     route.set_transport_connected(true);
     let policy = OmatPolicy {
         tenant_id: "tenant-a".into(),
@@ -253,20 +254,22 @@ fn oauth_and_capability_are_both_required_before_omat_execution() {
         allow_external_side_effects: false,
     };
     let mut registry = OmatRegistry::default();
-    registry.register(ToolManifest {
-        tenant_id: "tenant-a".into(),
-        tool_id: "echo".into(),
-        version: "1".into(),
-        description: "bounded echo".into(),
-        input_schema: json!({"type":"object"}),
-        output_schema: json!({"type":"object"}),
-        capabilities: scopes(),
-        risk: ToolRisk::ReadOnly,
-        executor: ExecutorKind::Wasi,
-        timeout_ms: 500,
-        max_output_bytes: 1024,
-        enabled: true,
-    }).unwrap();
+    registry
+        .register(ToolManifest {
+            tenant_id: "tenant-a".into(),
+            tool_id: "echo".into(),
+            version: "1".into(),
+            description: "bounded echo".into(),
+            input_schema: json!({"type":"object"}),
+            output_schema: json!({"type":"object"}),
+            capabilities: scopes(),
+            risk: ToolRisk::ReadOnly,
+            executor: ExecutorKind::Wasi,
+            timeout_ms: 500,
+            max_output_bytes: 1024,
+            enabled: true,
+        })
+        .unwrap();
     let context = || OmatDispatchContext {
         route: &route,
         policy: &policy,
@@ -274,7 +277,14 @@ fn oauth_and_capability_are_both_required_before_omat_execution() {
     };
     let topic = "ocaf/omat/tenant-a/requests/req-1";
     let result = gate().dispatch_with_capability(
-        &oauth, &access, &peer, topic, &call, context(), &authority, &ticket,
+        &oauth,
+        &access,
+        &peer,
+        topic,
+        &call,
+        context(),
+        &authority,
+        &ticket,
     );
     assert!(matches!(
         result,
@@ -284,18 +294,39 @@ fn oauth_and_capability_are_both_required_before_omat_execution() {
     ));
     let mut altered = call.clone();
     altered.agent_id = "agent-b".into();
-    assert!(gate().dispatch_with_capability(
-        &oauth, &access, &peer, topic, &altered, context(), &authority, &ticket,
-    ).is_err());
-    let bad = authority.mint(&peer, &omat_resource_id(&call),
-        CapabilityCaveat {
-            max_bytes: 1024, expires_at_unix: 4_000_000_000,
-            verbs: CapabilityVerbs::READ,
-        }
-    ).unwrap();
+    assert!(gate()
+        .dispatch_with_capability(
+            &oauth,
+            &access,
+            &peer,
+            topic,
+            &altered,
+            context(),
+            &authority,
+            &ticket,
+        )
+        .is_err());
+    let bad = authority
+        .mint(
+            &peer,
+            &omat_resource_id(&call),
+            CapabilityCaveat {
+                max_bytes: 1024,
+                expires_at_unix: 4_000_000_000,
+                verbs: CapabilityVerbs::READ,
+            },
+        )
+        .unwrap();
     assert!(matches!(
         gate().dispatch_with_capability(
-            &oauth, &access, &peer, topic, &call, context(), &authority, &bad,
+            &oauth,
+            &access,
+            &peer,
+            topic,
+            &call,
+            context(),
+            &authority,
+            &bad,
         ),
         Err(ocaf_runtime::stage044_omat_authz::GateError::Dispatch(
             DispatchError::Capability(CapabilityError::Denied)
@@ -304,7 +335,14 @@ fn oauth_and_capability_are_both_required_before_omat_execution() {
     oauth.revoke_user("tenant-a", "alice").unwrap();
     assert!(matches!(
         gate().dispatch_with_capability(
-            &oauth, &access, &peer, topic, &call, context(), &authority, &ticket,
+            &oauth,
+            &access,
+            &peer,
+            topic,
+            &call,
+            context(),
+            &authority,
+            &ticket,
         ),
         Err(ocaf_runtime::stage044_omat_authz::GateError::OAuth(_))
     ));
