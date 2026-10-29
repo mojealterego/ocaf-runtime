@@ -131,7 +131,7 @@ async fn main() -> anyhow::Result<()> {
         anyhow::ensure!(path.is_absolute(), "capability key path must be absolute");
         let encoded = ocaf_runtime::ops::secrets::read_private_text(path, 128)?;
         let cap_key: [u8; 32] = B64
-            .decode(encoded.trim_end_matches(['\\r', '\\n']))?
+            .decode(encoded.trim_end_matches(['\r', '\n']))?
             .try_into()
             .map_err(|_| anyhow::anyhow!("capability authority key must be 32 bytes"))?;
         anyhow::ensure!(cap_key != key, "capability key must differ from OMAs transport key");
