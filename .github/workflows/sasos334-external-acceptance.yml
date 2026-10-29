@@ -1,0 +1,105 @@
+name: Stage 334 external IdP Vault KVM acceptance (operator host only)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-infrastructure:
+    # Deliberately requires an operator-provisioned runner. GitHub-hosted
+    # ephemeral CI is NOT a substitute for the target infrastructure.
+    runs-on: [self-hosted, linux, x64, ocaf-stage334-e2e]
+    timeout-minutes: 45
+    env:
+      OCAF_E2E_ISSUER: ${{ vars.OCAF_E2E_ISSUER }}
+      OCAF_E2E_GATEWAY: ${{ vars.OCAF_E2E_GATEWAY }}
+      OCAF_E2E_RESOURCE: ${{ vars.OCAF_E2E_RESOURCE }}
+      OCAF_E2E_TENANT: ${{ vars.OCAF_E2E_TENANT }}
+      OCAF_E2E_USER: ${{ vars.OCAF_E2E_USER }}
+      OCAF_E2E_TOKEN_FILE: ${{ vars.OCAF_E2E_TOKEN_FILE }}
+      OCAF_E2E_PROVIDER: ${{ vars.OCAF_E2E_PROVIDER }}
+      OCAF_VAULT_ADDR: ${{ vars.OCAF_VAULT_ADDR }}
+      OCAF_VAULT_KEY: ${{ vars.OCAF_VAULT_KEY }}
+      OCAF_VAULT_TOKEN_FILE: ${{ vars.OCAF_VAULT_TOKEN_FILE }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Validate operator-controlled environment without printing credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -m 0700 stage334-evidence
+          for name in OCAF_E2E_ISSUER OCAF_E2E_GATEWAY OCAF_E2E_RESOURCE OCAF_E2E_TENANT OCAF_E2E_USER OCAF_E2E_PROVIDER OCAF_VAULT_ADDR OCAF_VAULT_KEY; do
+            test -n "${!name}" || { echo "MISSING_REQUIRED_OPERATOR_CONFIGURATION"; exit 1; }
+          done
+          for name in OCAF_E2E_TOKEN_FILE OCAF_VAULT_TOKEN_FILE; do
+            file="${!name}"
+            test -n "$file" && test -f "$file" && test ! -L "$file" || exit 1
+            test "$(stat -c '%a' "$file")" = 600 || exit 1
+          done
+      - name: Real pinned-issuer HTTPS OAuth negative and positive network acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/stage044_network_acceptance.py > stage334-evidence/idp.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("stage334-evidence/idp.json").read_text())
+          assert r["network"]=="PASS" and r["negative_requests"]==48
+          assert r["consent_mfa"]=="NOT_TESTED"
+          PY
+      - name: Real HTTPS Vault Transit encrypt decrypt rewrap and cross-tenant denial
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/stage044_vault_acceptance.py > stage334-evidence/vault.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("stage334-evidence/vault.json").read_text())
+          assert r["vault_transit"]=="PASS"
+          assert r["context_isolation"]=="PASS"
+          assert r["hsm_hardware_attestation"]=="NOT_TESTED"
+          PY
+      - name: Actual kernel KVM ioctl capability on operator host (not guest boot)
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo -n python3 scripts/stage039_kvm_ioctl.py --report stage334-evidence/kvm.json
+          sudo -n chown "$(id -u):$(id -g)" stage334-evidence/kvm.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("stage334-evidence/kvm.json").read_text())
+          assert r["kvm_vm_fd_created"] is True
+          assert r["status"]=="KVM_IOCTL_VM_CREATED_NOT_BOOTED"
+          PY
+      - name: Seal bounded infrastructure evidence without false Firecracker claims
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          evidence={"status":"IDP_VAULT_KVM_IOCTL_VERIFIED_NOT_FULL_E2E",
+                    "firecracker_guest_boot_verified":False,
+                    "hsm_hardware_attested":False,
+                    "full_555_backends_verified":False,
+                    "ostc_attested":False,
+                    "production_approved":False}
+          Path("stage334-evidence/summary.json").write_text(json.dumps(evidence,sort_keys=True)+"\n")
+          PY
+          sha256sum stage334-evidence/*.json > stage334-evidence/sha256sums.txt
+      - name: Preserve observed external acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage334-operator-infrastructure-evidence
+          path: stage334-evidence/
+          retention-days: 30
+          if-no-files-found: warn
