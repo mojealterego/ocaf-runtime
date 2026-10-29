@@ -6,7 +6,9 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
+import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from sasos_memory_models import LosslessTenantArchive, SurpriseGatedMemory, MemoryContractError
 
 
