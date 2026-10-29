@@ -1,0 +1,55 @@
+name: Stage 334 real Zenoh SHM two-process and negotiated fallback lab
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/stage334_zenoh_shm.py"
+      - ".github/workflows/stage334-real-zenoh-shm.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zenoh-shm-real-linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install pinned real Zenoh Python binding with binary wheel
+        run: |
+          set -euo pipefail
+          python3 -m venv /tmp/ocaf334-zenoh-venv
+          /tmp/ocaf334-zenoh-venv/bin/pip install --disable-pip-version-check --only-binary=:all: eclipse-zenoh==1.10.1
+          /tmp/ocaf334-zenoh-venv/bin/python - <<'PY'
+          import zenoh
+          assert hasattr(zenoh, "shm") and hasattr(zenoh.shm, "ShmProvider"), "Wheel lacks compiled SHM"
+          PY
+      - name: Real Zenoh same-host two-process SHM and fallback (not interhost)
+        run: |
+          set -euo pipefail
+          /tmp/ocaf334-zenoh-venv/bin/python scripts/stage334_zenoh_shm.py --report stage334-zenoh-shm-evidence.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path("stage334-zenoh-shm-evidence.json").read_text())
+          assert report["status"] == "ZENOH_SAME_HOST_TWO_PROCESS_SHM_AND_FALLBACK_VERIFIED"
+          assert report["shm_delivery"]["received_shm"] is True
+          assert report["fallback_delivery"]["received_shm"] is False
+          assert report["cross_host_zero_copy_verified"] is False
+          assert report["production_omat_ingress_tested"] is False
+          PY
+          sha256sum scripts/stage334_zenoh_shm.py stage334-zenoh-shm-evidence.json > stage334-zenoh-shm-input-output.sha256
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage334-zenoh-shm-real-linux-lab
+          path: |
+            stage334-zenoh-shm-evidence.json
+            stage334-zenoh-shm-input-output.sha256
+          retention-days: 30
+          if-no-files-found: warn
