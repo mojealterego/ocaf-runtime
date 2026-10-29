@@ -101,3 +101,31 @@ fn reject_duplicate_binding_invalid_identifiers_and_invalid_catalog() {
     ));
     assert!(SasosCatalog::from_json("[]").is_err());
 }
+
+#[cfg(unix)]
+#[test]
+fn operator_bindings_require_private_file_and_reject_symlink() {
+    use std::os::unix::fs::{symlink, PermissionsExt};
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("bindings.json");
+    let payload = json!([{
+        "sasos_tool_id":"SASOS_TOOL_004_BEFORESUNSET_MCP_COORDINATOR",
+        "route_id":"before-sunset",
+        "broker_tool_id":"calendar-read",
+        "max_body_bytes":4096
+    }]);
+    std::fs::write(&path, payload.to_string()).unwrap();
+    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+    assert!(SasosAdapterBindings::from_private_file(&catalog(), &path).is_ok());
+    let linked = dir.path().join("linked.json");
+    symlink(&path, &linked).unwrap();
+    assert!(matches!(
+        SasosAdapterBindings::from_private_file(&catalog(), &linked),
+        Err(SasosAdapterError::InvalidConfiguration)
+    ));
+    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).unwrap();
+    assert!(matches!(
+        SasosAdapterBindings::from_private_file(&catalog(), &path),
+        Err(SasosAdapterError::InvalidConfiguration)
+    ));
+}
