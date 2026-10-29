@@ -315,13 +315,23 @@ impl OmatZenohAdmission {
         };
         // No fallback to legacy admission: a missing authority or ticket
         // cannot bypass capability, OSTc, or the executor boundary.
-        let authority = self.capability_authority.as_ref()
+        let authority = self
+            .capability_authority
+            .as_ref()
             .ok_or_else(|| anyhow::anyhow!("OMAt request denied"))?;
-        let ticket = request.capability.as_ref()
+        let ticket = request
+            .capability
+            .as_ref()
             .ok_or_else(|| anyhow::anyhow!("OMAt request denied"))?;
         dispatch_tool_call_with_capability(
-            &self.guard, &peer, &request.topic, &request.call,
-            policy, registry, authority, ticket,
+            &self.guard,
+            &peer,
+            &request.topic,
+            &request.call,
+            policy,
+            registry,
+            authority,
+            ticket,
         )
         .map(|_| ())
         .map_err(|_| anyhow::anyhow!("OMAt request denied"))
