@@ -8,13 +8,13 @@ use ocaf_runtime::sasos_capability::{
     CapabilityAuthority, CapabilityCaveat, CapabilityError, CapabilityVerbs,
 };
 use ocaf_runtime::stage043_omat_route::{
-    omat_resource_id, AuthenticatedPeer, DispatchError, OmatRouteGuard,
+    omat_resource_id, AuthenticatedPeer, CapabilityGrant, DispatchError, OmatRouteGuard,
 };
 use ocaf_runtime::stage044_oauth::{
     AuthenticatedSubject, AuthorizationRequest, CodeExchange, OAuthClient, OAuthService,
 };
 use ocaf_runtime::stage044_omat_authz::{
-    BoundAgent, OAuthOmatGate, OmatDispatchContext, ToolAuthorization,
+    BoundAgent, OAuthOmatGate, OmatCapabilityDispatchContext, OmatDispatchContext, ToolAuthorization,
 };
 use rusqlite::Connection;
 use serde_json::json;
@@ -270,11 +270,6 @@ fn oauth_and_capability_are_both_required_before_omat_execution() {
             enabled: true,
         })
         .unwrap();
-    let context = || OmatDispatchContext {
-        route: &route,
-        policy: &policy,
-        registry: &registry,
-    };
     let topic = "ocaf/omat/tenant-a/requests/req-1";
     let result = gate().dispatch_with_capability(
         &oauth,
@@ -282,9 +277,17 @@ fn oauth_and_capability_are_both_required_before_omat_execution() {
         &peer,
         topic,
         &call,
-        context(),
-        &authority,
-        &ticket,
+        OmatCapabilityDispatchContext {
+            dispatch: OmatDispatchContext {
+                route: &route,
+                policy: &policy,
+                registry: &registry,
+            },
+            capability: CapabilityGrant {
+                authority: &authority,
+                ticket: &ticket,
+            },
+        },
     );
     assert!(matches!(
         result,
@@ -301,9 +304,17 @@ fn oauth_and_capability_are_both_required_before_omat_execution() {
             &peer,
             topic,
             &altered,
-            context(),
-            &authority,
-            &ticket,
+            OmatCapabilityDispatchContext {
+                dispatch: OmatDispatchContext {
+                    route: &route,
+                    policy: &policy,
+                    registry: &registry,
+                },
+                capability: CapabilityGrant {
+                    authority: &authority,
+                    ticket: &ticket,
+                },
+            },
         )
         .is_err());
     let bad = authority
@@ -324,9 +335,17 @@ fn oauth_and_capability_are_both_required_before_omat_execution() {
             &peer,
             topic,
             &call,
-            context(),
-            &authority,
-            &bad,
+            OmatCapabilityDispatchContext {
+                dispatch: OmatDispatchContext {
+                    route: &route,
+                    policy: &policy,
+                    registry: &registry,
+                },
+                capability: CapabilityGrant {
+                    authority: &authority,
+                    ticket: &bad,
+                },
+            },
         ),
         Err(ocaf_runtime::stage044_omat_authz::GateError::Dispatch(
             DispatchError::Capability(CapabilityError::Denied)
@@ -340,9 +359,17 @@ fn oauth_and_capability_are_both_required_before_omat_execution() {
             &peer,
             topic,
             &call,
-            context(),
-            &authority,
-            &ticket,
+            OmatCapabilityDispatchContext {
+                dispatch: OmatDispatchContext {
+                    route: &route,
+                    policy: &policy,
+                    registry: &registry,
+                },
+                capability: CapabilityGrant {
+                    authority: &authority,
+                    ticket: &ticket,
+                },
+            },
         ),
         Err(ocaf_runtime::stage044_omat_authz::GateError::OAuth(_))
     ));
