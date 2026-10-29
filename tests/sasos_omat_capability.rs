@@ -1,3 +1,4 @@
+#![cfg(feature = "zenoh")]
 //! Stage 334: capability-bound OMAt ingress contract.
 //! These tests deliberately do not assert successful execution: OSTc and
 //! service executors remain independently fail-closed.
