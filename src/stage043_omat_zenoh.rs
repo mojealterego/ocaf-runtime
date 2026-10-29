@@ -1,7 +1,10 @@
 //! Authenticated Zenoh ingress for OMAt. Zenoh transport encryption is an
 //! operator configuration responsibility; message authentication is mandatory.
 use crate::omat_server::{OmatPolicy, OmatRegistry, ToolCall};
-use crate::stage043_omat_route::{dispatch_tool_call, AuthenticatedPeer, OmatRouteGuard};
+use crate::sasos_capability::{CapabilityAuthority, CapabilityTicket};
+use crate::stage043_omat_route::{
+    dispatch_tool_call_with_capability, AuthenticatedPeer, OmatRouteGuard,
+};
 use crate::stage043_store::Stage043ToolStore;
 use hmac::{Hmac, Mac};
 use rusqlite::{params, Connection, OpenFlags};
@@ -99,6 +102,8 @@ pub struct SignedOmatRequest {
     pub topic: String,
     pub nonce: String,
     pub call: ToolCall,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub capability: Option<CapabilityTicket>,
     pub mac_hex: String,
 }
 
@@ -111,6 +116,7 @@ pub struct OmatZenohAdmission {
     registry: OmatRegistry,
     durable_store: Option<Stage043ToolStore>,
     policies: HashMap<String, OmatPolicy>,
+    capability_authority: Option<CapabilityAuthority>,
 }
 
 impl OmatZenohAdmission {
@@ -146,7 +152,15 @@ impl OmatZenohAdmission {
             registry,
             durable_store: None,
             policies,
+            capability_authority: None,
         })
+    }
+
+    /// Install a separate operator-provisioned capability authority.
+    /// Without this key, capability dispatch is unavailable, not permissive.
+    pub fn with_capability_authority(mut self, authority: CapabilityAuthority) -> Self {
+        self.capability_authority = Some(authority);
+        self
     }
 
     /// Once attached, the durable store is the source of truth for every call.
@@ -227,12 +241,24 @@ impl OmatZenohAdmission {
             .ok_or_else(|| anyhow::anyhow!("unknown principal"))?;
         let mut mac =
             HmacSha256::new_from_slice(key).map_err(|_| anyhow::anyhow!("invalid key"))?;
-        let canonical = serde_json::to_vec(&(
-            &request.principal,
-            &request.topic,
-            &request.nonce,
-            &request.call,
-        ))?;
+        // Bind the capability to the authenticated OMAs frame MAC.
+        // Legacy frames retain their signature but cannot execute.
+        let canonical = if let Some(ticket) = &request.capability {
+            serde_json::to_vec(&(
+                &request.principal,
+                &request.topic,
+                &request.nonce,
+                &request.call,
+                ticket,
+            ))?
+        } else {
+            serde_json::to_vec(&(
+                &request.principal,
+                &request.topic,
+                &request.nonce,
+                &request.call,
+            ))?
+        };
         mac.update(&canonical);
         let signature = decode_hex(&request.mac_hex)?;
         mac.verify_slice(&signature)
@@ -287,13 +313,15 @@ impl OmatZenohAdmission {
         } else {
             &self.registry
         };
-        dispatch_tool_call(
-            &self.guard,
-            &peer,
-            &request.topic,
-            &request.call,
-            policy,
-            registry,
+        // No fallback to legacy admission: a missing authority or ticket
+        // cannot bypass capability, OSTc, or the executor boundary.
+        let authority = self.capability_authority.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("OMAt request denied"))?;
+        let ticket = request.capability.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("OMAt request denied"))?;
+        dispatch_tool_call_with_capability(
+            &self.guard, &peer, &request.topic, &request.call,
+            policy, registry, authority, ticket,
         )
         .map(|_| ())
         .map_err(|_| anyhow::anyhow!("OMAt request denied"))
@@ -384,6 +412,7 @@ pub fn sign_omas_request(
         topic: topic.to_owned(),
         nonce: nonce.to_owned(),
         call,
+        capability: None,
         mac_hex,
     })?)
 }
