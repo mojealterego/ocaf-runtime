@@ -6914,9 +6914,13 @@
       ".github/workflows/sasos334-external-acceptance.yml"
     ],
     "external_idp_vault_kvm_e2e": "NOT_VERIFIED",
-    "zenoh_shm_e2e": "NOT_VERIFIED",
+    "zenoh_shm_e2e": "ZENOH_LIBRARY_SINGLE_HOST_TWO_PROCESS_SHM_FALLBACK_VERIFIED; OMAT_NOT_VERIFIED",
     "titans_nice_full_models": "NOT_IMPLEMENTED",
     "imandra_proof": "NOT_VERIFIED",
-    "production_approved": false
+    "production_approved": false,
+    "verified_ci": [
+      {"run_id": 40941557248, "sha": "261f8ed7a268eff4a771bce77b2ef6efbc7695bc", "scope": "catalog-capability-adapters-Z3-memfd-memory-rustfmt-clippy", "conclusion": "success"},
+      {"run_id": 40942073444, "sha": "d52c9d9f18c4363eebedf266fdee0e079578ae2a", "scope": "real-zenoh-1.10.1-shm-two-process-and-fallback-single-host", "conclusion": "success"}
+    ]
   }
 }
