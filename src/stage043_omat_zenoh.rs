@@ -3,7 +3,7 @@
 use crate::omat_server::{OmatPolicy, OmatRegistry, ToolCall};
 use crate::sasos_capability::{CapabilityAuthority, CapabilityTicket};
 use crate::stage043_omat_route::{
-    dispatch_tool_call_with_capability, AuthenticatedPeer, OmatRouteGuard,
+    dispatch_tool_call_with_capability, AuthenticatedPeer, CapabilityGrant, OmatRouteGuard,
 };
 use crate::stage043_store::Stage043ToolStore;
 use hmac::{Hmac, Mac};
@@ -330,8 +330,7 @@ impl OmatZenohAdmission {
             &request.call,
             policy,
             registry,
-            authority,
-            ticket,
+            CapabilityGrant { authority, ticket },
         )
         .map(|_| ())
         .map_err(|_| anyhow::anyhow!("OMAt request denied"))
