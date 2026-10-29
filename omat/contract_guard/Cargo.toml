@@ -1,3 +1,5 @@
+[workspace]
+
 [package]
 name = "ocaf-agent-contract-guard"
 version = "0.1.0"

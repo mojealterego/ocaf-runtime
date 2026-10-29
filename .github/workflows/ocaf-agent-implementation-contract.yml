@@ -20,6 +20,6 @@ jobs:
         with:
           toolchain: stable
       - name: Compile contract guard and execute Rust negative tests
-        run: cargo test --manifest-path omat/contract_guard/Cargo.toml --all-targets --offline
+        run: cargo test --manifest-path omat/contract_guard/Cargo.toml --all-targets --locked --offline
       - name: Fail closed on Markdown-only components
-        run: cargo run --manifest-path omat/contract_guard/Cargo.toml --offline -- --repo-root . --registry docs/agents/component_registry.tsv
+        run: cargo run --manifest-path omat/contract_guard/Cargo.toml --locked --offline -- --repo-root . --registry docs/agents/component_registry.tsv
