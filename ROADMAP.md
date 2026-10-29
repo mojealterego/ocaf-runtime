@@ -1,6 +1,6 @@
 # OCAF — JEDYNA PEŁNA KANONICZNA ROADMAPA OD POCZĄTKU (v11, 15.10.2026)
 
-**PIN GITHUB: pełna Roadmapa znajduje się w `/ROADMAP.md`, a README kieruje do niej.** 207 etapów historycznych + 126 etapów 208–333 + 64 podetapy techniczne + 10 produktów Agents Builder = **407 pozycji**; 33 repozytoria referencyjne nie są etapami. **Następny nowy etap: `334`.** Zachować wszystkie historyczne identyfikatory; statusy wymagają dowodów.
+**PIN GITHUB: pełna Roadmapa znajduje się w `/ROADMAP.md`, a README kieruje do niej.** 207 etapów historycznych + 127 etapów 208–334 + 64 podetapy techniczne + 10 produktów Agents Builder = **408 pozycji**; 33 repozytoria referencyjne nie są etapami. **Następny nowy etap: `335`.** Zachować wszystkie historyczne identyfikatory; statusy wymagają dowodów.
 
 ## Najważniejsze: pierwotny AGENTS BUILDER — Code i NoCode na pięciu platformach
 
@@ -1199,6 +1199,11 @@ Pliki: Dokument bez nazwy (4).PDF, Dokument bez nazwy(1).PDF, Dokument bez nazwy
 
 ### Etap 333 — Audyt twierdzeń implementacyjnych z dokumentu DGM
 **Status: PLANNED.** Źródło: s.3–16, 18–31. Przykładowy kod nie zawiera rzeczywistego transportu Zenoh SHM, parsera AST/SMT, sondy eBPF, wykonywania MCP, pobierania GGUF ani commitów Git; zawiera symulowane testy, sztuczny SHA i niezweryfikowane benchmarki. Każdą deklarację PASS/produkcyjności zweryfikować niezależnym testem na main; nie nadpisywać Cargo.toml ani src/main.rs przykładami.
+
+### Etap 334 — SASOS: aktywacja usług z rzeczywistymi backendami i dowodami wykonania
+**Status: PLANNED.** Źródło: PDF „Architektura OCAF: OAuth i Usługi”, s.1–28 (SHA-256 e3c74e0b5b0f68fa31f5c91ac6bb446cdf495e1b66cd724cc66953d099c1a8ee). Wpiąć katalog 555 usług do istniejącego OMAt i OcafRuntime bez drugiego jądra: wersjonowane manifesty, rzeczywiste adaptery native/WASI/Firecracker/MCP/HTTPS, podpis, powiązanie tenant–agent–zasób, granularne capability tickets z monotoniczną atenuacją, odwołanie i idempotencja, timeout/backpressure, izolacja, bezpieczne sekrety, audyt i mierzone wykonanie. Powiązania istniejące: 0.43 (OMAt), 0.44 (OAuth/OIDC/Vault), 0.07 i 1.51 (capabilities), 0.38–0.39 (WASI/Firecracker), 0.46/1.15/1.18/1.19 (Zenoh SHM/CRDT), 327/322 (Titans/pamięć), 328/326 (AST/SMT), 329 (sandbox i narzędzia). NIE renumerować istniejących 0.45–0.49; w PDF mają inne znaczenia. Nie akceptować symulacji, nieprawdziwych wskaźników pamięci między hostami, niezweryfikowanych <10us ani fikcyjnego formal proof. Wstępny prymityw biletów HMAC w src/sasos_capability.rs jest NIEPODŁĄCZONY do wykonania OMAt i nie aktywuje katalogu.
+**Kryterium odbioru:** PASS dopiero po rzeczywistym procesowym E2E co najmniej jednego backendu, pozytywnych i negatywnych testach izolacji dwóch tenantów, odwołania, zawężania uprawnień, restartu, replay, timeoutu, weryfikacji efektu i metryk; każdy z 555 wpisów ma indywidualny dowód backendu przed zmianą CATALOG_ONLY. Eksperymenty Imandra/Titans/NICE/CRDT wymagają odrębnych sprawdzalnych artefaktów i benchmarków. Dowody CI i SHA, brak produkcyjnego GO bez odbioru operatora.
+**Odmowa:** Brak realnego backendu, stub, odwrócenie bajtów, echo w powłoce, prefiks WASM_SANITY_PASS, fikcyjne tokeny/Vault, odpowiedź DISPATCHED_TO_MCP, same flagi zeroize, pozorny SHA/Merkle, niezbadana odwracalność i pozorny dowód formalny NIE stanowią wykonania ani PASS.
 
 
 ## Audyt: konsolidacja 606 repozytoriów — PDF 15 stron i załączony Rust

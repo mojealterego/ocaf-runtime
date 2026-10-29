@@ -20,8 +20,8 @@ class FullReadmeRoadmapTests(unittest.TestCase):
 
     def test_complete_manifest_is_pinned(self):
         result = renderer.validate_readme(self.readme, self.inv, self.builders)
-        self.assertEqual(result["numbered_items"], 407)
-        self.assertEqual(result["main_stage_items"], 333)
+        self.assertEqual(result["numbered_items"], 408)
+        self.assertEqual(result["main_stage_items"], 334)
         self.assertEqual(result["technical_substage_items"], 64)
         self.assertEqual(result["original_agents_builder_variants"], 10)
         self.assertFalse(result["production_approved"])
@@ -59,7 +59,7 @@ class FullReadmeRoadmapTests(unittest.TestCase):
 
     def test_manifest_mutation_requires_readme_update(self):
         modified = copy.deepcopy(self.inv)
-        modified["main"].append({"id": "334", "title": "New stage"})
+        modified["main"].append({"id": "335", "title": "New stage"})
         modified["main_count"] += 1
         with self.assertRaises(renderer.ReadmeRoadmapError):
             renderer.validate_readme(self.readme, modified, self.builders)

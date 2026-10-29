@@ -1,5 +1,5 @@
 <!-- OCAF_README_ROADMAP_BEGIN -->
-**AKTUALNY STAN (2026-10-16): 333 etapy główne, 64 podetapy techniczne, 10 produktów Agents Builder; razem 407 pozycji. Następny etap: 334. Audyt 606 repozytoriów: planowany, bez dowodów integracji.**
+**AKTUALNY STAN (2026-10-16): 334 etapy główne, 64 podetapy techniczne, 10 produktów Agents Builder; razem 408 pozycji. Następny etap: 335. Audyt 606 repozytoriów: planowany, bez dowodów integracji.**
 
 
 [![UWAGA CZYTAĆ — ZAKAZ SAMOWOLKI](https://img.shields.io/badge/UWAGA%20CZYTA%C4%86-ZAKAZ%20SAMOWOLKI-ff0000?style=for-the-badge&labelColor=8b0000)](ROADMAP.md)
@@ -15,11 +15,11 @@
 <h2><font color="red">PEŁNA ROADMAPA OCAF JEST NA SAMEJ GÓRZE REPOZYTORIUM — NIE USUWAĆ, NIE PRZENOSIĆ, NIE SKRACAĆ!</font></h2>
 </div>
 
-> **UWAGA CZYTAĆ — ZASADA BEZWZGLĘDNA:** Aktualny manifest v11 rejestruje **333 etapy główne, 64 podetapy techniczne i 10 produktów Agents Builder (407 pozycji)**. Historyczny stan 215/64/10 pozostaje zachowany w archiwach i changelogu. Nie usuwać ani nie renumerować etapów. Status produkcyjny wymaga niezależnych dowodów.
+> **UWAGA CZYTAĆ — ZASADA BEZWZGLĘDNA:** Aktualny manifest v11 rejestruje **334 etapy główne, 64 podetapy techniczne i 10 produktów Agents Builder (408 pozycji)**. Historyczny stan 215/64/10 pozostaje zachowany w archiwach i changelogu. Nie usuwać ani nie renumerować etapów. Status produkcyjny wymaga niezależnych dowodów.
 
 > **ZASADA STAŁEJ ROZBUDOWY ROADMAPY:** Każdy nowy punkt infrastruktury, architektury, systemu, bezpieczeństwa, integracji lub funkcjonalności OCAF będzie dopisywany do Roadmapy jako kolejna pozycja. Istniejące pozycje i ich historia pozostają zachowane; odzyskane wymagania historyczne wracają pod pierwotne identyfikatory. Po każdym etapie aktualizowane są statusy, dowody testów i dziennik zmian.
 
-# OCAF RUNTIME — ROADMAPA CAŁEGO PROJEKTU (407 pozycji)
+# OCAF RUNTIME — ROADMAPA CAŁEGO PROJEKTU (408 pozycji)
 
 ## Pakiet agenta i rejestry dowodowe
 
@@ -35,7 +35,7 @@ Rejestry rozdzielające kod, plan i materiały opisowe: [`AGENT_REGISTRY.md`](do
 Syntetyczny stan dostawy z 33 rojami i 111 osobnymi agentami, 10 kontraktami Builderów i
 aktualnymi dowodami: [`DELIVERY_STATUS_2026-10-21.md`](docs/DELIVERY_STATUS_2026-10-21.md).
 
-**Pełny rejestr w ramce poniżej obejmuje aktualny manifest v11: 333 etapy główne, 64 podetapy techniczne i 10 produktów Agents Builder (407 pozycji). Każdy punkt ma własny numer, opis i status. [Dokument kanoniczny](ROADMAP.md) · [Rejestr zmian](docs/roadmap/STAGE_CHANGELOG.md).
+**Pełny rejestr w ramce poniżej obejmuje aktualny manifest v11: 334 etapy główne, 64 podetapy techniczne i 10 produktów Agents Builder (408 pozycji). Każdy punkt ma własny numer, opis i status. [Dokument kanoniczny](ROADMAP.md) · [Rejestr zmian](docs/roadmap/STAGE_CHANGELOG.md).
 
 ## NAWIGACJA — GDZIE SĄ POZOSTAŁE ETAPY?
 
@@ -43,13 +43,13 @@ aktualnymi dowodami: [`DELIVERY_STATUS_2026-10-21.md`](docs/DELIVERY_STATUS_2026
 
 **[OTWÓRZ PEŁNĄ KANONICZNĄ ROADMAPĘ — wszystkie etapy od początku do końca](ROADMAP.md)** · [Manifest identyfikatorów](docs/roadmap/canonical_v11_inventory.json)
 
-**Aktualny licznik manifestu v11:** 333 etapy główne + 64 techniczne + 10 produktów = **407 pozycji**. Ostatni główny etap: **333**. Następny nowy etap: **334**. Tabela poniżej obejmuje wszystkie 407 pozycji. **ZAKAZ SAMOWOLKI:** nie usuwać, nie skracać i nie renumerować.
+**Aktualny licznik manifestu v11:** 334 etapy główne + 64 techniczne + 10 produktów = **408 pozycji**. Ostatni główny etap: **333**. Następny nowy etap: **334**. Tabela poniżej obejmuje wszystkie 408 pozycji. **ZAKAZ SAMOWOLKI:** nie usuwać, nie skracać i nie renumerować.
 
-## Kanoniczny rejestr 407 pozycji
+## Kanoniczny rejestr 408 pozycji
 
 **To jest pierwsza sekcja README.md i pełna lista statusów, nie tylko odsyłacz.** Każdy numer ma status odzwierciedlający oddzielnie wykonanie, historyczne dowody i odbiór produkcyjny. `ETAP UKOŃCZONY` w punktach 0.00–0.38 oznacza zamknięcie etapów zgodnie z dyspozycją właściciela projektu (0.38: zakończony administracyjnie, przejście do 0.39), a nie niezależnie potwierdzoną gotowość produkcyjną; `ZROBIONE — ZAKRES IMPLEMENTACJI` oznacza kod i testy historyczne obecne w repo (NIE pełny odbiór ani produkcję); `ZROBIONE — TEST W OGRANICZONYM ZAKRESIE` oznacza wyłącznie potwierdzoną próbę laboratoryjną.
 
-**Zakres inwentaryzacji:** manifest v11 obejmuje **333 etapy główne**, **64 podetapy techniczne** i **10 pierwotnych produktów Agents Builder Code/NoCode**. Razem **407 pozycji w README**; produkty nie są dodatkowymi numerami etapów. Historyczna migawka 215/64/10 pozostaje w archiwum i dzienniku zmian. **33 repozytoria referencyjne nie są etapami.**
+**Zakres inwentaryzacji:** manifest v11 obejmuje **334 etapy główne**, **64 podetapy techniczne** i **10 pierwotnych produktów Agents Builder Code/NoCode**. Razem **408 pozycji w README**; produkty nie są dodatkowymi numerami etapów. Historyczna migawka 215/64/10 pozostaje w archiwum i dzienniku zmian. **33 repozytoria referencyjne nie są etapami.**
 
 **Ważne:** brak historycznych dokumentów nie oznacza niewykonania etapu; takie pozycje mają status STATUS HISTORYCZNY DO WERYFIKACJI. Prace zakończone administracyjnie, lecz niepotwierdzone technicznie, też mają status DO ZROBIENIA; opis statusu źródłowego wyjaśnia zakres. Nie uznajemy nieprzetestowanej funkcji za ukończoną. Dane aktualnego manifestu v11 obejmują etapy do **333** (kolejny nowy identyfikator: **334**); wszystkie są w tabeli poniżej. Pierwotne, zagubione wymagania wracają pod starym ID.
 
@@ -456,6 +456,7 @@ aktualnymi dowodami: [`DELIVERY_STATUS_2026-10-21.md`](docs/DELIVERY_STATUS_2026
 | **331** | **TechRecon i Strategist: bezpieczny zwiad techniczny**. **Status: PLANNED.** Źródło: s.23–25, 29–30. Źródła OSINT/MCP z provenance, parsery, limity, ochrona przed prompt injection i SSRF, deduplikacja, ocena wiarygodności, propozycje roadmapy wymagające przeglądu, brak samodzielnej modyfikacji polityk. **Kryterium zakończenia:** Rzeczywista implementacja w repozytorium, testy pozytywne i negatywne, dowód CI/SHA oraz odbiór właściwego środowiska.. **Stan źródłowy:** `PLANNED`. | **DO ZROBIENIA** |
 | **332** | **AppForge 66 produktów i GameBuilder SDK**. **Status: PLANNED.** Źródło: s.18, 26–29. Zweryfikować macierz 33 aplikacji niszowych i 33 narzędzi deweloperskich; wymagania, działające artefakty i testy per produkt. GameBuilder: ECS, fizyka, rendering, zasoby, GUI i testy. Pętle generujące same nazwy manifestów nie oznaczają 66 aplikacji. **Kryterium zakończenia:** Rzeczywista implementacja w repozytorium, testy pozytywne i negatywne, dowód CI/SHA oraz odbiór właściwego środowiska.. **Stan źródłowy:** `PLANNED`. | **DO ZROBIENIA** |
 | **333** | **Audyt twierdzeń implementacyjnych z dokumentu DGM**. **Status: PLANNED.** Źródło: s.3–16, 18–31. Przykładowy kod nie zawiera rzeczywistego transportu Zenoh SHM, parsera AST/SMT, sondy eBPF, wykonywania MCP, pobierania GGUF ani commitów Git; zawiera symulowane testy, sztuczny SHA i niezweryfikowane benchmarki. Każdą deklarację PASS/produkcyjności zweryfikować niezależnym testem na main; nie nadpisywać Cargo.toml ani src/main.rs przykładami. **Kryterium zakończenia:** Rzeczywista implementacja w repozytorium, testy pozytywne i negatywne, dowód CI/SHA oraz odbiór właściwego środowiska.. **Stan źródłowy:** `PLANNED`. | **DO ZROBIENIA** |
+| **334** | **SASOS: aktywacja usług z rzeczywistymi backendami i dowodami wykonania**. **Status: PLANNED.** Źródło: PDF „Architektura OCAF: OAuth i Usługi”, s.1–28 (SHA-256 e3c74e0b5b0f68fa31f5c91ac6bb446cdf495e1b66cd724cc66953d099c1a8ee). Wpiąć katalog 555 usług do istniejącego OMAt i OcafRuntime bez drugiego jądra: wersjonowane manifesty, rzeczywiste adaptery native/WASI/Firecracker/MCP/HTTPS, podpis, powiązanie tenant–agent–zasób, granularne capability tickets z monotoniczną atenuacją, odwołanie i idempotencja, timeout/backpressure, izolacja, bezpieczne sekrety, audyt i mierzone wykonanie. Powiązania istniejące: 0.43 (OMAt), 0.44 (OAuth/OIDC/Vault), 0.07 i 1.51 (capabilities), 0.38–0.39 (WASI/Firecracker), 0.46/1.15/1.18/1.19 (Zenoh SHM/CRDT), 327/322 (Titans/pamięć), 328/326 (AST/SMT), 329 (sandbox i narzędzia). NIE renumerować istniejących 0.45–0.49; w PDF mają inne znaczenia. Nie akceptować symulacji, nieprawdziwych wskaźników pamięci między hostami, niezweryfikowanych <10us ani fikcyjnego formal proof. Wstępny prymityw biletów HMAC w src/sasos_capability.rs jest NIEPODŁĄCZONY do wykonania OMAt i nie aktywuje katalogu. **Kryterium zakończenia:** PASS dopiero po rzeczywistym procesowym E2E co najmniej jednego backendu, pozytywnych i negatywnych testach izolacji dwóch tenantów, odwołania, zawężania uprawnień, restartu, replay, timeoutu, weryfikacji efektu i metryk; każdy z 555 wpisów ma indywidualny dowód backendu przed zmianą CATALOG_ONLY. Eksperymenty Imandra/Titans/NICE/CRDT wymagają odrębnych sprawdzalnych artefaktów i benchmarków. Dowody CI i SHA, brak produkcyjnego GO bez odbioru operatora.. **Stan źródłowy:** `PLANNED`. | **DO ZROBIENIA** |
 | **AB-CLOUD-CODE** | **Agents Builder Chmurowy Code** — wymagania pierwotne etapów 0.52. Web IDE + typed graph IR + Rust backend/Axum + Git integration + isolated build/execute + deployments + versioning **Kryterium zakończenia:** Browser Code IDE edits graph DSL, compiles/simulates typed agent, persists versioned project in tenant-scoped Cloud workspace; full build log. **Stan źródłowy:** `NOT_IMPLEMENTED`. | **DO ZROBIENIA** |
 | **AB-CLOUD-NOCODE** | **Agents Builder Chmurowy NoCode** — wymagania pierwotne etapów 0.52. Browser visual drag/drop graph editor + templates, form nodes, visual tool/MCP grants and one-click preview/publish behind explicit approval **Kryterium zakończenia:** Browser NoCode canvas builds equivalent graph from nodes, round-trips graph JSON with compiled DSL for supported subset, and previews without source editing. **Stan źródłowy:** `NOT_IMPLEMENTED`. | **DO ZROBIENIA** |
 | **AB-WINDOWS-CODE** | **Agents Builder Desktopowy Windows Code** — wymagania pierwotne etapów 0.53. Native Windows desktop Code IDE (Tauri v2) with local code editor, diagnostics, dependency runner, export to local agent bundle + offline mode **Kryterium zakończenia:** Actual Windows runner builds, installs and launches signed/verified executable; Code IDE opens agent project, compiles valid Rust/DSL, persists/reopens offline. **Stan źródłowy:** `NOT_IMPLEMENTED`. | **DO ZROBIENIA** |
@@ -470,7 +471,7 @@ aktualnymi dowodami: [`DELIVERY_STATUS_2026-10-21.md`](docs/DELIVERY_STATUS_2026
 
 ### Reguła aktualizacji na zakończenie każdego etapu
 
-Przy **każdym** zakończonym etapie aktualizować w tym samym commicie: odpowiedni status pozycji powyżej, `ROADMAP.md`, jego identyczną kopię `docs/ROADMAP_FULL_ECOSYSTEM_2026.md`, maszynowy `docs/roadmap/canonical_v11_inventory.json`, `docs/roadmap/STAGE_CHANGELOG.md`, wyniki pozytywnych i negatywnych testów, commit i zakończony run GitHub Actions. Wszelkie nowe wymagania dostają wyłącznie **kolejny wolny identyfikator** (teraz 334), a odzyskane historyczne wymagania zachowują oryginalny. Lista 1–407 jest deterministycznie odtwarzana z manifestów, żeby zmiany statusów nie były ręcznie pomijane.
+Przy **każdym** zakończonym etapie aktualizować w tym samym commicie: odpowiedni status pozycji powyżej, `ROADMAP.md`, jego identyczną kopię `docs/ROADMAP_FULL_ECOSYSTEM_2026.md`, maszynowy `docs/roadmap/canonical_v11_inventory.json`, `docs/roadmap/STAGE_CHANGELOG.md`, wyniki pozytywnych i negatywnych testów, commit i zakończony run GitHub Actions. Wszelkie nowe wymagania dostają wyłącznie **kolejny wolny identyfikator** (teraz 334), a odzyskane historyczne wymagania zachowują oryginalny. Lista 1–408 jest deterministycznie odtwarzana z manifestów, żeby zmiany statusów nie były ręcznie pomijane.
 
 
 ### Uzgodnienie źródeł PDF 01–09 z jedną Roadmapą

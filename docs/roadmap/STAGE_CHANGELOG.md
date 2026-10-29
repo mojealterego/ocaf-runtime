@@ -2,6 +2,14 @@
 
 **Zasada bez wyjątków:** każdy domknięty lub zweryfikowany częściowo etap aktualizuje **tę samą** kanoniczną Roadmapę (`/ROADMAP.md`, lustrzane `docs/ROADMAP_FULL_ECOSYSTEM_2026.md`, manifest v11) i dostarcza realny raport CI. Nowe punkty dopisujemy po ostatnim numerze. Historycznie zgubionych wymagań nie przenosimy z ich miejsca.
 
+## 2026-10-29 — SOURCE_REVIEWED / PARTIAL_PRIMITIVE — PDF Drive OAuth/SASOS, etap 334
+
+- Źródło: `Architektura OCAF_ OAuth i Usługi - Google Gemini.PDF.pdf`, 28 stron, SHA-256 `e3c74e0b5b0f68fa31f5c91ac6bb446cdf495e1b66cd724cc66953d099c1a8ee`.
+- Uzgodniono numery z kanoniczną Roadmapą: 0.45=Crypto, 0.46=Transport, 0.47=Telemetry, 0.48=Data, 0.49=Economics. Numeracja PDF nie nadpisuje tych etapów; nowa bramka wykonawcza otrzymuje 334.
+- Kod: `src/sasos_capability.rs` zawiera podpisane HMAC-SHA256 bilety związane z tenantem, podmiotem i zasobem oraz monotoniczną atenuację i testy negatywne. To prymityw niepodłączony do OMAt; nie ma wykonania narzędzi ani potwierdzonego E2E.
+- Wpisy `omat/catalog/sasos_tools_001_555.json` pozostają `CATALOG_ONLY`; źródłowe stuby Firecracker/WASI/MCP/Vault i twierdzenia wydajnościowe odrzucono. Pełna mapa: `docs/DRIVE_044_049_IMPLEMENTATION_MAP.md`.
+- Status 334: `PLANNED` (częściowy kod nie spełnia bramki). `production_approved=false`. Nie deklarować CI PASS bez sprawdzenia wyników dla commitu.
+
 ## 2026-10-26 — STAGE_PARTIAL — 0.43 — dual-CA Zenoh mTLS rotation
 
 - **Zakres:** dwa niezależne zestawy CA i certyfikatów serwera/klienta, nakładający się okres zaufania, nowy listener z wyłącznie nową CA, odrzucenie wycofanych tożsamości, współdzielony SQLite WAL oraz kontrolowane wycofanie starego listenera po odebraniu odpowiedzi na żądania w toku.

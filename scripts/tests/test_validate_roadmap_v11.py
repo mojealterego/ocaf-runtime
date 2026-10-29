@@ -35,11 +35,11 @@ class RestoreOriginalBuilderTests(unittest.TestCase):
 
     def test_exact_333_64_33_no_lost_stages_and_all_original_products(self):
         result=self.verify()
-        self.assertEqual(result["main_stages"],333)
+        self.assertEqual(result["main_stages"],334)
         self.assertEqual(result["technical_substages"],64)
         self.assertEqual(result["distinct_agents_builder_products"],10)
         self.assertEqual(result["scope_gaps_audited"],24)
-        self.assertEqual(result["next_new_main_stage"],"334")
+        self.assertEqual(result["next_new_main_stage"],"335")
         self.assertTrue(result["canonical_root_roadmap_pinned"])
         self.assertFalse(result["production_approved"])
 

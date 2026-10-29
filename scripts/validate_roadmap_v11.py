@@ -63,7 +63,7 @@ def validate(v11: dict, v10_data: dict, root: str, mirror: str, readme: str,
         and v11.get("production_approved") is False
         and v11.get("canonical_roadmap") == "ROADMAP.md"
         and v11.get("docs_mirror") == "docs/ROADMAP_FULL_ECOSYSTEM_2026.md"
-        and v11.get("next_new_main_stage") == "334",
+        and v11.get("next_new_main_stage") == "335",
         "v11 provenance, canonical root path, next milestone or safety claim invalid")
     _assert(
         isinstance(v10_data,dict) and v10_data.get("version")=="v10-restored-full",
@@ -90,9 +90,9 @@ def validate(v11: dict, v10_data: dict, root: str, mirror: str, readme: str,
                     for field in ("title","scope","acceptance","source"):
                         _assert(isinstance(current.get(field),str) and bool(current[field].strip()),
                                 "revised technical substage evidence missing: "+stage_id)
-    _assert(v11.get("main_count")==333 and v11.get("technical_count")==64
+    _assert(v11.get("main_count")==334 and v11.get("technical_count")==64
             and v11.get("reference_count")==33,
-            "current 333/64/33 roadmap count changed")
+            "current 334/64/33 roadmap count changed")
     for old,new in zip(v10_data["main"],v11["main"]):
         _assert(old.get("id")==new.get("id"),"historic stage IDs reordered")
         if old["id"] in BUILDER_STAGES:
@@ -127,7 +127,7 @@ def validate(v11: dict, v10_data: dict, root: str, mirror: str, readme: str,
             and builders.get("new_main_milestones_added")==0
             and builders.get("legacy_main_milestones_preserved")==195
             and builders.get("legacy_technical_substages_preserved")==64
-            and builders.get("next_new_main_milestone")=="334",
+            and builders.get("next_new_main_milestone")=="335",
             "ten original product scope/origin/numbering absent")
     products=builders.get("products")
     _assert(isinstance(products,list) and len(products)==10,"exactly 10 original builder products required")
@@ -194,14 +194,14 @@ def validate(v11: dict, v10_data: dict, root: str, mirror: str, readme: str,
     return {
         "status":"OCAF_V11_ORIGINAL_AGENTS_BUILDER_ALL_TEN_PRODUCTS_RESTORED",
         "canonical_root_roadmap_pinned":True,
-        "main_stages":333,
+        "main_stages":334,
         "technical_substages":64,
-        "total_milestone_rows":397,
+        "total_milestone_rows":398,
         "distinct_agents_builder_products":10,
         "builder_platforms":5,
         "code_and_nocode_for_every_platform":True,
         "scope_gaps_audited":24,
-        "next_new_main_stage":"334",
+        "next_new_main_stage":"335",
         "fully_production_approved_builder_products":0,
         "production_approved":False,
     }
