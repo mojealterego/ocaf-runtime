@@ -113,7 +113,7 @@ async fn main() -> anyhow::Result<()> {
     for manifest in store.list_active(&tenant)? {
         registry.register(manifest)?;
     }
-    let admission = OmatZenohAdmission::new(
+    let mut admission = OmatZenohAdmission::new(
         HashMap::from([(principal.clone(), key)]),
         HashMap::from([(principal, tenant.clone())]),
         policies,
@@ -121,6 +121,23 @@ async fn main() -> anyhow::Result<()> {
     )?
     .with_replay_database(Path::new(&replay_path))?
     .with_tool_store(store.clone());
+
+    // Opt-in operator-owned capability key. If absent, the live ingress
+    // rejects all capability dispatches; it never falls back to legacy
+    // authorization. The private file is read with the existing O_NOFOLLOW
+    // and owner-only permissions enforcement.
+    if let Ok(key_path) = env::var("OCAF_OMAT_CAPABILITY_KEY_FILE") {
+        let path = Path::new(&key_path);
+        anyhow::ensure!(path.is_absolute(), "capability key path must be absolute");
+        let encoded = ocaf_runtime::ops::secrets::read_private_text(path, 128)?;
+        let cap_key: [u8; 32] = B64
+            .decode(encoded.trim_end_matches(['\\r', '\\n']))?
+            .try_into()
+            .map_err(|_| anyhow::anyhow!("capability authority key must be 32 bytes"))?;
+        anyhow::ensure!(cap_key != key, "capability key must differ from OMAs transport key");
+        let authority = ocaf_runtime::sasos_capability::CapabilityAuthority::new(cap_key)?;
+        admission = admission.with_capability_authority(authority);
+    }
     let session = Arc::new(
         zenoh::open(config)
             .await
