@@ -1,0 +1,34 @@
+name: OCAF 0.41 bounded telemetry backpressure lab
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - src/metrics/bounded_telemetry.rs
+      - src/metrics/mod.rs
+      - tests/stage041_telemetry_backpressure.rs
+      - .github/workflows/stage041-telemetry-backpressure.yml
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: "1-second CI check or 60-minute in-process soak"
+        type: choice
+        options: ["1", "3600"]
+        default: "1"
+
+permissions:
+  contents: read
+
+jobs:
+  backpressure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      OCAF_STAGE041_TELEMETRY_SOAK_SECONDS: ${{ inputs.duration || '1' }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+      - name: Exercise real bounded Rust telemetry queue under sink outage and recovery
+        run: cargo test --locked --no-default-features --test stage041_telemetry_backpressure -- --nocapture

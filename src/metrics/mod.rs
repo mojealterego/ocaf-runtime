@@ -1,3 +1,4 @@
+pub mod bounded_telemetry;
 pub mod trace_context;
 
 use std::sync::Arc;
