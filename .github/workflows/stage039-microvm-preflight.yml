@@ -103,7 +103,7 @@ jobs:
       - name: Kernel KVM API ioctl and real VM fd creation regression
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_kvm_ioctl.py -v
       - name: Compile Aya userspace loader and run local-policy unit tests (NO kernel attachment in CI)
-        run: cargo test --manifest-path stage039/aya-guard/Cargo.toml --verbose
+        run: cargo test --manifest-path stage039/aya-guard/Cargo.toml --locked --verbose
       - name: Verify staged jailer artifacts and no-egress Firecracker machine config
         run: python3 -m unittest discover -s scripts/tests -p test_stage039_firecracker_spec.py -v
       - name: Aya real-host negative-egress acceptance harness (mock unit contract ONLY)

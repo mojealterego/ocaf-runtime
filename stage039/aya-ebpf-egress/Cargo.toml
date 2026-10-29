@@ -9,6 +9,8 @@ license = "MIT"
 name = "ocaf-stage039-deny-egress"
 path = "src/main.rs"
 
+[workspace]
+
 [dependencies]
 aya-ebpf = "=0.2.1"
 

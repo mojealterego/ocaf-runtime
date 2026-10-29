@@ -8,6 +8,8 @@ publish = false
 name = "ocaf-guest-openat-aya"
 path = "src/main.rs"
 
+[workspace]
+
 [dependencies]
 aya = "=0.14.0"
 libc = "=0.2.177"
