@@ -23,7 +23,7 @@ class ShmProbeError(RuntimeError):
 
 
 def child(fd: int, size: int, nonce: str, digest: str) -> int:
-    if size != SIZE or len(nonce) != 16 or len(digest) != 64:
+    if size != SIZE or len(nonce) != 32 or len(digest) != 64:
         return 2
     try:
         with mmap.mmap(fd, SIZE, access=mmap.ACCESS_WRITE) as memory:
