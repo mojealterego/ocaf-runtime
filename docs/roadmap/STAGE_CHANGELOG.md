@@ -701,3 +701,11 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - [PASS Stage 334: run 40941557248](https://github.com/mojealterego/ocaf-runtime/actions/runs/40941557248) — testowany SHA `261f8ed7a268eff4a771bce77b2ef6efbc7695bc`. Wszystkie kroki: walidacja 555 deklaracji, Z3 + pozytywny SAT control, memfd, testy memory, rustfmt, cargo tests capability/adapter/OAuth, clippy. **Nie** potwierdzono zewnętrznych backendów.
 - [PASS real Zenoh 1.10.1 SHM: run 40942073444](https://github.com/mojealterego/ocaf-runtime/actions/runs/40942073444) — testowany SHA `d52c9d9f18c4363eebedf266fdee0e079578ae2a`, [artefakt 12927641458](https://github.com/mojealterego/ocaf-runtime/actions/runs/40942073444/artifacts/12927641458). Dwa oddzielne procesy, 32768 B, odbiór `ZBytes.as_shm()` i negatywna gałąź `as_shm() is None` przy wyłączeniu SHM u odbiorcy, sumy SHA-256 poprawne. **Nie** jest to uruchomienie Rust OMAt ani komunikacja między hostami.
 - Stan końcowy etapu 334 bez zmian: `IMPLEMENTED_PARTIAL`. Operator-owned IdP/Vault/KVM, Firecracker na docelowym hoście, produkcyjne backendy, formalny dowód całego runtime i trenowane modele pamięci nie mają potwierdzonego E2E; OSTc nadal odłożone na ostatnią bramkę, dotychczasowy fail-closed zachowany.
+
+- **PASS Firecracker/KVM 1.17 laboratory one-host, not operator target**:
+  [GitHub Actions 40942543567](https://github.com/mojealterego/ocaf-runtime/actions/runs/40942543567),
+  SHA `52be86f370ec0b63aa81e607623aad40683f16c7`,
+  [artifact 12928795139](https://github.com/mojealterego/ocaf-runtime/actions/runs/40942543567/artifacts/12928795139),
+  ZIP SHA-256 `2b5894f83804ad01422ef20afd050fc3ce001a983f8750dd534df70f4a6938ac`.
+  Two simultaneous jailed guests, guest WASIp1 + Wasmtime, Aya/eBPF, fault/recovery
+  and negative tests passed; does not verify target host/operator approval.
