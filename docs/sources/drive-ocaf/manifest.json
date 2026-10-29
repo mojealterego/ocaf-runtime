@@ -1,0 +1,20 @@
+[
+  {
+    "file": "agents-builder-050-055.txt",
+    "drive_id": "1Li4yPEZBtbcX7_AEOqLlCSUksqv1KbO62FWdmkYnvig",
+    "extracted_text_sha256": "ef792c57f23ef8629930907191961b1e0fa36a059196d0661a9c9713c3ea9cd2",
+    "status": "SOURCE_IMPORTED_IMPLEMENTATION_NOT_CLAIMED"
+  },
+  {
+    "file": "architecture-155-206.txt",
+    "drive_id": "1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A",
+    "extracted_text_sha256": "2f8a0ae7ea10ec11ea3e6afe4ab8454897e7ca194150a655139864c089d6988e",
+    "status": "SOURCE_IMPORTED_IMPLEMENTATION_NOT_CLAIMED"
+  },
+  {
+    "file": "roadmap-115-154.txt",
+    "drive_id": "1ezPUBRwroogi_vJg9oYc7OjlcYjPO5z3",
+    "extracted_text_sha256": "8c09fdcd3848030024efdaed310fc172b0836d2b7c9ffa59c34392a6c7f90415",
+    "status": "SOURCE_IMPORTED_IMPLEMENTATION_NOT_CLAIMED"
+  }
+]

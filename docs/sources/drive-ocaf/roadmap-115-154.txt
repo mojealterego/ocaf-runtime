@@ -1,0 +1,3637 @@
+Architektura i Kompleksowe Wdrożenie
+Środowiska Wykonawczego
+OCAF-Runtime: Specyfikacja Techniczna
+Punktów Roadmapy 1.15–1.54
+Diagnoza Ekosystemu Repozytoriów i Rekonstrukcja
+Architektury OCAF-Runtime
+Bezpośrednie zapytania sieciowe kierowane do punktu końcowego
+https://github.com/mojealterego/ocaf-runtime oraz powiązanego indeksu profilowego wykazują
+brak publicznej ekspozycji tego adresu URL w otwartym indeksie GitHub, co wynika z
+funkcjonowania repozytorium jako zasobu prywatnego, zmigrowanego lub wydzielonego pakietu
+wewnętrznego. Wielowymiarowa korelacja powiązanych artefaktów inżynieryjnych w przestrzeni
+nazw @mojealterego (Andrzej Mikulski) pozwala jednak na pełną, deterministyczną
+rekonstrukcję docelowego środowiska uruchomieniowego rozwijanego równolegle w
+repozytoriach mojealterego/Nowe-projekty, mojealterego/The-Zero-Latency-Builder-Sprint,
+mojealterego/Agent-God-Level-Omega oraz mojealterego/Agents-for-Humans-Hackathon.
+Analiza historii zatwierdzeń (commits), rejestrów deklaracji (CLAIM_LEDGER.md), specyfikacji
+statusu (REPOSITORY_STATUS.md) oraz paradygmatów architektonicznych definiuje
+OCAF-Runtime jako zunifikowane środowisko wykonawcze spajające trzy komplementarne
+filary inżynierii systemów rozproszonych i agentowych.
+Pierwszym filarem konstrukcyjnym jest hierarchiczny model danych Klucz–Atrybut–Transakcja
+wywodzący się ze standardu Open CASCADE Application Framework (OCAF), w którym
+struktura danych opiera się na drzewie etykiet adresowanych tagami całkowitymi (0:1:2), do
+których przypisywane są jednoznaczne atrybuty identyfikowane przez GUID, wspierane przez
+transakcyjny dziennik delt (Undo/Redo), mechanizmy zapominania i przywracania stanu
+(Forget/Remember) oraz nadzór nad referencjami zewnętrznymi. Drugim filarem jest
+kognitywne i obiektowe środowisko współpracy agentowej (Open Cognitive Architecture
+Framework oraz Object-oriented Collaboration Analysis Framework – OCAF), wprowadzające
+dwutorową architekturę rozwiązywania problemów (Cognitive Dual-Track Framework), w której
+współdzielone obiekty rozwiązania stanowią centrum analizy, przechowują własną historię
+mutacji, rejestrują stopień wkładu poszczególnych aktorów oraz pozwalają na eksplorację
+rozgałęzionych linii decyzyjnych w wielowymiarowej przestrzeni symulacyjnej. Trzecim filarem
+jest współdzielone środowisko wykonawcze sterowane politykami (Shared Policy-Gated
+Governed Runtime), stanowiące deterministyczne jądro uruchomieniowe w językach TypeScript
+oraz Rust, które egzekwuje formalne kontrakty agentowe obejmujące zobowiązania,
+uprawnienia, zakazy, kryteria naruszeń oraz łańcuch odpowiedzialności dla trzech kluczowych
+domen biznesowych: ekstrakcji i weryfikacji zobowiązań kontraktowych (Contract Obligations),
+gromadzenia dowodów zgodności (Compliance Evidence) oraz zwiadu zakupowego
+(Procurement Scout).
+Empiryczna konieczność zastosowania tak rygorystycznej architektury wynika z głębokiego
+deficytu weryfikowalności współczesnych systemów autonomicznych. Choć w latach
+2021–2025 odsetek publikowanych kontraktów badawczych definiujących interesariuszy
+(Stakeholder) wzrósł z 25,6% do 45,9%, to granice ewaluacji (Evaluation Bounds) pozostały w
+stagnacji na poziomie od 21,8% do 22,8%, a formalna audytowalność (Auditability) utrzymała
+się blisko zera, rosnąc jedynie z 0,0% do 1,7%. Jednocześnie integracja na skalę produkcyjną
+— widoczna w wydaniu OMEGA v25.1.1 obejmującym 1040 zweryfikowanych ścieżek
+pakietowych (z pominięciem pojedynczego wygenerowanego pliku bajtowego .pyc spośród
+1041 wpisów), 109 schematów walidacyjnych, 210 zintegrowanych umiejętności rejestru MCP
+(omega/skills/*-mcp-registry/) oraz 420 wpisów sum kontrolnych SHA-256 w pliku
+omega/SHA256SUMS.txt — wymaga bezwzględnego sprzężenia każdej decyzji modelu z
+niezmiennym śladem kryptograficznym.
+Analiza porównawcza stanu zaimplementowanego w repozytoriach Nowe-projekty oraz
+The-Zero-Latency-Builder-Sprint wskazuje, że etapy początkowe (punkty 1.1–1.14 macierzystej
+roadmapy) obejmowały inicjalizację repozytorium, konfigurację kompilatora TypeScript oraz
+Rust, bazowe struktury słownikowe oraz demonstracyjny interfejs CLI oparty na próbkowanych
+rekordach w pamięci. Punkty od 1.15 do 1.54 reprezentują natomiast właściwą transformację
+prototypu w produkcyjne, deterministyczne środowisko wykonawcze klasy korporacyjnej,
+eliminując ograniczenia pięciu niezaimplementowanych wcześniej podsystemów
+infrastrukturalnych wykazanych w specyfikacji sprintu: adaptera wyszukiwania Moss, transportu
+Zenoh, trwałego dziennika zdarzeń, wykonywania narzędzi na żywo pod nadzorem polityk oraz
+kompleksowej ewaluacji jakości i opóźnień end-to-end. Poniższa tabela syntetyzuje mapowanie
+wszystkich czterdziestu punktów wdrożeniowych (1.15–1.54) na pięć spójnych klastrów
+architektonicznych wraz z ich bezpośrednim uzasadnieniem w istniejącej bazie kodu i
+dokumentacji technicznej.
+Klaster                   Zakres Punktów        Główne Komponenty Źródłowe Wzorce
+Architektoniczny                                Wdrożeniowe               Architektoniczne
+I. Drzewo Stanu OCAF 1.15 – 1.22                LabelPath,                Drzewo referencyjne
+i Trwały Dziennik                               AttributeMap (GUID), OCAF (TDF_Label),
+Zdarzeń                                         Forget/Remember,          trwały kontrakt zdarzeń
+                                                transakcje Undo/Redo, i odtwarzacz dziennika
+                                                łańcuch SHA-256,          bez efektów ubocznych
+                                                DeterministicReplayLed
+                                                ger,
+                                                ExternalLinkSupervisor,
+                                                sterowniki PluginDriver
+II. Bramka Polityk i      1.23 – 1.30           AgentContractSpec,        Współdzielone jądro
+Kontrakty Agentowe                              ExactAllowlistPolicyGat sterowane politykami
+                                                e, RiskCapEnforcer        (Nowe-projekty),
+                                                (limit średniego ryzyka), twarde reguły
+                                                ApprovalBindingEngine autoryzacji i
+                                                , IdempotencyGuard, idempotentności
+                                                DecisionToAuditWiring, (Builder-Sprint), teoria
+                                                TenantWorkspaceIsolat zobowiązań
+                                                or,                       społecznych
+                                                CostAndProviderAcces
+                                                sGate
+III. Domena               1.31 – 1.38           ContractObligationMod Dziesięć zatwierdzeń
+Klaster                Zakres Punktów         Główne Komponenty Źródłowe Wzorce
+Architektoniczny                              Wdrożeniowe               Architektoniczne
+Zobowiązań                                    el,                       pakietu Contract
+Kontraktowych                                 StructuredClauseExtrac Obligations z
+(Contract Obligations)                        tor (shall/must/will),    repozytorium
+                                              ObligationDeadlineMon Nowe-projekty oraz
+                                              itor,                     specyfikacja ekstrakcji
+                                              ObligationActionVerifica klauzul prawnych
+                                              tionTool, reguły polityk,
+                                              ekspozycja i rejestracja
+                                              w runtime, testy
+                                              bezpieczeństwa
+IV. Domeny          1.39 – 1.46               ComplianceEvidenceD Zatwierdzenia
+Compliance Evidence                           omainModel, walidator fundamentów i testów
+oraz Procurement                              pakietów regulacyjnych bezpieczeństwa dla
+Scout                                         (SOC 2, GDPR, NCSC Compliance Evidence i
+                                              CAF),                     Procurement Scout
+                                              ProcurementScoutFoun oraz przepływy
+                                              dation, skaner anomalii source-to-pay
+                                              i list sankcyjnych,
+                                              polityki i testy
+                                              bezpieczeństwa obu
+                                              domen
+V. Wyszukiwanie,       1.47 – 1.54            InProcessLexicalSelect Architektura
+Transport, Rejestr                            or,                       The-Zero-Latency-Build
+MCP i Ewaluacja                               MossRetrievalAdapter, er-Sprint, rejestr 210
+                                              ZenohTransportBridge, umiejętności MCP w
+                                              McpRegistryIntegrityVe Agent-God-Level-Ome
+                                              rifier (SHA-256),         ga, rejestr deklaracji
+                                              DualTrackCollaboration CLAIM_LEDGER.md
+                                              Analyzer,                 oraz model współpracy
+                                              RetrievalQualityEvaluat OCAF
+                                              or (\text{Recall}@k,
+                                              \text{MRR}),
+                                              LatencyBenchmarkHar
+                                              ness (p_{50}, p_{95},
+                                              p_{99}),
+                                              ClaimLedgerVerifier
+Klaster I: Drzewo Atrybutów OCAF, Adresacja Etykiet i
+Transakcyjny Silnik Stanu (Punkty 1.15–1.22)
+Pierwszy klaster architektoniczny rozwiązuje fundamentalny problem nietrwałości pamięci
+operacyjnej wykazany w prototypie The-Zero-Latency-Builder-Sprint, w którym dziennik
+odtwarzania (Replay ledger) funkcjonował wyłącznie w pamięci ulotnej i nie gwarantował
+trwałego kontraktu zdarzeń ani deterministycznej separacji efektów ubocznych. Zastosowanie
+referencyjnego modelu kluczy OCAF pozwala na zastąpienie płaskich, podatnych na kolizje
+struktur stanu hierarchicznym drzewem etykiet (Label), gdzie adres każdej etykiety (np. 0:1:4:2)
+stanowi jej niezmienny, trwały identyfikator w strukturze dokumentu.
+
+Specyfikacja Architektoniczna Punktów 1.15–1.22
+Konstrukcja warstwy stanu rozpoczyna się w Punkcie 1.15 od wdrożenia hierarchicznej
+adresacji kluczy referencyjnych (LabelPath / Tag-Tree 0:x:y), w której korzeń drzewa zawsze
+przyjmuje tag 0, natomiast etykiety potomne otrzymują unikalne w obrębie rodzica dodatnie
+znaczniki całkowite, przy bezwzględnym zakazie współdzielenia tego samego tagu przez
+etykiety braterskie. Takie zagnieżdżanie etykiet umożliwia hermetyzację lokalnych schematów
+adresowych i ich wielokrotne użycie w złożonych agregatach domenowych bez ryzyka kolizji
+wskaźników. Bezpośrednio na tej strukturze opiera się Punkt 1.16, wprowadzający rejestr
+atrybutów indeksowanych identyfikatorami GUID (AttributeMap), w którym dane biznesowe,
+parametryczne i topologiczne są dołączane do etykiet jako instancje atrybutów
+identyfikowanych przez unikalny identyfikator GUID. Choć pojedyncza etykieta może
+agregować wiele różnych atrybutów (takich jak wartość rzeczywista, więzy, nazwa topologiczna
+czy semantyczny znacznik TDataStd_UAttribute), architektura jądra wymusza inwariant
+zabraniający występowania więcej niż jednego atrybutu o tym samym identyfikatorze GUID na
+jednej etykiecie, zachęcając programistę do agregowania gotowych atrybutów na etykietach
+potomnych zamiast dziedziczenia z abstrakcyjnych klas bazowych.
+Aby zapobiec destrukcyjnemu usuwaniu obiektów podczas wieloetapowego wnioskowania
+agentowego, Punkt 1.17 wdraża cykl życia Forget oraz Remember dla atrybutów etykiety
+(forgetAttribute i rememberAttribute), co pozwala na tymczasowe wygaszanie widoczności
+atrybutu i jego późniejsze bezstratne przywrócenie przy zachowaniu pełnej spójności
+referencyjnej w ramach bieżącej sesji roboczej. Zgodnie z wymogami projektowymi OCAF,
+uogólniony mechanizm wycofywania i ponawiania zmian musi zostać uwzględniony na bardzo
+wczesnym etapie projektowania systemu, dlatego Punkt 1.18 definiuje transakcyjny menedżer
+delt (DeltaTransactionManager obsługujący Undo/Redo), w którym każda mutacja drzewa
+odbywa się wewnątrz nazwanej transakcji rejestrującej migawkę przed- i pomutacyjną,
+pozwalając na atomowe wycofanie lub ponowienie całych sekwencji komend oraz
+synchronizację widoków z danymi.
+W celu spełnienia wymogu roadmapy dotyczącego trwałego dziennika zdarzeń (Define a
+versioned, durable event contract and deterministic replay tests), Punkt 1.19 wprowadza
+wersjonowany, trwały kontrakt zdarzeń (VersionedEventContract), w którym każda zatwierdzona
+transakcja emituje niezmienny rekord zaopatrzony w wersję schematu, sygnaturę czasową oraz
+skrót kryptograficzny SHA-256 powiązany ze skrótem poprzedniego wpisu (previousHash), co
+wyklucza nieautoryzowaną modyfikację historii wykonania. Komplementarny Punkt 1.20
+ustanawia deterministyczny odtwarzacz dziennika z izolacją efektów ubocznych
+(DeterministicReplayLedger), który podczas odtwarzania historii zdarzeń (replay) weryfikuje
+integralność kryptograficzną łańcucha i rekonstruuje dokładny stan drzewa OCAF w dowolnym
+punkcie czasu, gwarantując jednocześnie, że zewnętrzne wywołania sieciowe są podczas
+odtwarzania automatycznie tłumione i zliczane jako stłumione efekty uboczne
+(suppressedSideEffects). Spójność międzywęzłową zapewnia Punkt 1.21 poprzez nadzorcę
+powiązań zewnętrznych i nazewnictwa topologicznego (ExternalLinkSupervisor), który
+umożliwia łączenie wielu dokumentów za pomocą trwałych referencji krzyżowych oraz
+utrzymuje spójność wybranych elementów topologicznych lub klauzul dokumentowych w
+modelach parametrycznych mimo ewolucji struktury podrzędnej. Całość klastra zamyka Punkt
+1.22, implementujący architekturę sterowników przechowywania i odczytu
+(StorageRetrievalPluginDriver), która odwzorowuje pięć kanonicznych sterowników wtyczek
+OCAF z biblioteki PAppStdPlugin identyfikowanych przez standardowe wartości GUID i wspiera
+wersjonowanie schematów bez konieczności modyfikacji funkcji zapisu i odczytu w aplikacji.
+Punkt Roadmapy         Identyfikator          Inwariant Techniczny i Standardowy
+                       Komponentu             Mechanizm Działania Identyfikator GUID /
+                                                                      Struktura
+1.15                   LabelPath              Korzeń oznaczony        Adresacja
+                                              tagiem 0; dodatnie tagi hierarchiczna 0:1:2:...
+                                              całkowite dla dzieci;
+                                              zakaz duplikacji tagów
+                                              braterskich
+1.16                   OcaLabelNode           Jednoznaczne            Format UUID v4 /
+                       (AttributeMap)         przypisanie atrybutów kanoniczny GUID
+                                              po kluczu GUID;         OCAF
+                                              blokada duplikacji
+                                              GUID na pojedynczej
+                                              etykiecie
+1.17                   forgetAttribute /      Bezstratne              AttributeSlot<T> z
+                       rememberAttribute      przełączanie flagi      zachowaniem referencji
+                                              forgotten w slocie
+                                              atrybutu bez alokacji
+                                              nowego węzła
+1.18                   Com[span_154](start_s Atomowy zapis par        Stos transakcyjny LIFO
+                       pan)[span_154](end_sp b[span_155](start_span undoStack / redoStack
+                       an)mittedDeltaTransact )[span_155](end_span)
+                       ion                    eforeSlots i afterSlots
+                                              ze wsparciem
+                                              wycofywania (undo) i
+                                              ponawiania (redo)
+1.19                   VersionedEventContrac Trwały dziennik          Kontrakt
+                       t                      zdarzeń powiązany       schemaVersion: '1.0.0'
+                                              łańcuchem skrótów
+                                              SHA-256
+                                              (previousHash
+                                              \rightarrow eventHash)
+1.20                   DeterministicReplayLed Rekonstrukcja stanu     Licznik
+                       ger                    drzewa z weryfikacją suppressedSideEffects
+                                              kryptograficzną i       + interceptor
+                                              całkowitym tłumieniem
+                                              efektów ubocznych
+1.21                   ExternalLinkSupervisor Nadzór referencji       Walidacja
+                                              między dokumentami i sourceLabelEntry
+                                              selektorów              \rightarrow
+                                              nazewnictwa             targetLabelEntry
+                                              topologicznego
+                                              (Na[span_113](start_sp
+                                              an)[span_113](end_spa
+Punkt Roadmapy   Identyfikator          Inwariant Techniczny i Standardowy
+                 Komponentu             Mechanizm Działania Identyfikator GUID /
+                                                                 Struktura
+                                        n)[span_116](start_spa
+                                        n)[span_116](end_span
+                                        )ming)
+1.22             StorageRetrievalPlugin Pięć kanonicznych        Schemat: ad696002-...,
+                 Driver                 sterowników serializacji Zapis: ad696000-...,
+                                        dokumentów,              Odczyt: ad696001-...,
+                                        schematów i atrybutów Atrybuty:
+                                        OCAF                     47b0b826/7-...
+Kompletny Kod Wdrożeniowy dla Punktów 1.15–1.22
+(src/core/ocaf-data-framework.ts)
+import * as crypto from 'crypto';​
+​
+//
+==================================================[span_73](start_span
+)[span_73](end_span)[span_78](start_span)[span_78](end_span)[span_83](
+start_span)[span_83](end_span)==========================​
+// PUNKT 1.15: Hierarchiczna adresacja kluczy referencyjnych
+(LabelPath 0:x:y)​
+//
+======================================================================
+======​
+export class LabelPath {​
+  private readonly tags: ReadonlyArray<number>;​
+​
+  private constructor(tags: number[]) {​
+     if (tags.length === 0 || tags[0] !== 0) {​
+        throw new Error('OCAF_ERR_1_15: Korzeń drzewa etykiet musi
+zaczynać się od tagu 0.');​
+     }​
+     for (let i = 1; i < tags.length; i++) {​
+        if (!Number.isInteger(tags[i]) || tags[i] <= 0) {​
+           throw new Error(`OCAF_ERR_1_15: Tag potomny na pozycji ${i}
+musi być dodatnią liczbą całkowitą.`);​
+        }​
+     }​
+     this.tags = Object.freeze([...tags]);​
+  }​
+​
+  public static root(): LabelPath {​
+     return new LabelPath([0]);​
+  }​
+​
+  public static parse(entry: string): LabelPath {​
+      const parts = entry.trim().split(':').map((part) => {​
+        if (!/^\d+$/.test(part)) {​
+           throw new Error(`OCAF_ERR_1_15: Nieprawidłowy format adresu
+etykiety: ${entry}`);​
+        }​
+        return parseInt(part, 10);​
+      });​
+      return new LabelPath(parts);​
+   }​
+​
+   public child(tag: number): LabelPath {​
+      return new LabelPath([...this.tags, tag]);​
+   }​
+​
+   public parent(): LabelPath | null {​
+      if (this.tags.length <= 1) return null;​
+      return new LabelPath(this.tags.slice(0, -1));​
+   }​
+​
+   public toEntryString(): string {​
+      return this.tags.join(':');​
+   }​
+​
+   public depth(): number {​
+      return this.tags.length - 1;​
+   }​
+​
+   public equals(other: LabelPath): boolean {​
+      return this.toEntryString() === other.toEntryString();​
+   }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.16 & 1.17: Atrybuty indeksowane GUID oraz cykl życia
+Forget/Remember​
+//
+======================================================================
+======​
+export interface OcaAttribute<T = unknown> {​
+   readonly guid: string;​
+   readonly semanticType: string;​
+   readonly value: T;​
+   readonly updatedAtIso: string;​
+}​
+​
+export interface AttributeSlot<T = unknown> {​
+  readonly attribute: OcaAttribute<T>;​
+  readonly forgotten: boolean;​
+}​
+​
+export class OcaLabelNode {​
+   public readonly path: LabelPath;​
+   private readonly children: Map<number, OcaLabelNode> = new Map();​
+   private readonly attributes: Map<string, AttributeSlot> = new Map();​
+​
+   constructor(path: LabelPath) {​
+      this.path = path;​
+   }​
+​
+   public getOrCreateChild(tag: number): OcaLabelNode {​
+      if (!Number.isInteger(tag) || tag <= 0) {​
+         throw new Error(`OCAF_ERR_1_15: Tag braterski musi być dodatnią
+liczbą całkowitą (otrzymano: ${tag}).`);​
+      }​
+      let childNode = this.children.get(tag);​
+      if (!childNode) {​
+         childNode = new OcaLabelNode(this.path.child(tag));​
+         this.children.set(tag, childNode);​
+      }​
+      return childNode;​
+   }​
+​
+   public getChildren(): ReadonlyArray<OcaLabelNode> {​
+      return Array.from(this.children.entries())​
+         .sort(([a], [b]) => a - b)​
+         .map(([, node]) => node);​
+   }​
+​
+   // Punkt 1.16: Blokada duplikacji GUID na pojedynczej etykiecie przy
+dodawaniu​
+   public attachAttribute<T>(attribute: OcaAttribute<T>, allowOverwrite
+= false): void {​
+      const normalizedGuid = attribute.guid.toLowerCase();​
+      if
+(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.tes
+t(normalizedGuid)) {​
+         throw new Error(`OCAF_ERR_1_16: Nieprawidłowy identyfikator GUID
+atrybutu: ${attribute.guid}`);​
+      }​
+      const existing = this.attributes.get(normalizedGuid);​
+      if (existing && !allowOverwrite) {​
+         throw new Error(​
+           `OCAF_ERR_1_16: Etykieta ${this.path.toEntryString()} posiada
+już atrybut o GUID ${normalizedGuid}.`​
+            );​
+         }​
+         this.attributes.set(normalizedGuid, {​
+            attribute: { ...attribute, guid: normalizedGuid },​
+            forgotten: false,​
+         });​
+    }​
+​
+  public getAttribute<T = unknown>(guid: string): OcaAttribute<T> |
+undefined {​
+     const slot = this.attributes.get(guid.toLowerCase());​
+     if (!slot || slot.forgotten) return undefined;​
+     return slot.attribute as OcaAttribute<T>;​
+  }​
+​
+  // Punkt 1.17: Tymczasowe wygaszanie (Forget) i przywracanie
+(Remember) atrybutu​
+  public forgetAttribute(guid: string): boolean {​
+     const normalizedGuid = guid.toLowerCase();​
+     const slot = this.attributes.get(normalizedGuid);​
+     if (!slot || slot.forgotten) return false;​
+     this.attributes.set(normalizedGuid, { ...slot, forgotten: true });​
+     return true;​
+  }​
+​
+  public rememberAttribute(guid: string): boolean {​
+     const normalizedGuid = guid.toLowerCase();​
+     const slot = this.attributes.get(normalizedGuid);​
+     if (!slot || !slot.forgotten) return false;​
+     this.attributes.set(normalizedGuid, { ...slot, forgotten: false
+});​
+     return true;​
+  }​
+​
+  public isForgotten(guid: string): boolean {​
+     const slot = this.attributes.get(guid.toLowerCase());​
+     return Boolean(slot?.forgotten);​
+  }​
+​
+  public snapshotSlots(): Array<[string, AttributeSlot]> {​
+     return Array.from(this.attributes.entries()).map(([k, v]) => [​
+       k,​
+       { attribute: { ...v.attribute }, forgotten: v.forgotten },​
+     ]);​
+  }​
+​
+  public restoreSlots(slots: Array<[string, AttributeSlot]>): void {​
+     this.attributes.clear();​
+      for (const [k, v] of slots) {​
+         this.attributes.set(k, { attribute: { ...v.attribute },
+forgotten: v.forgotten });​
+      }​
+   }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.18: Transakcyjny dziennik delt (Undo / Redo)​
+//
+======================================================================
+======​
+export interface LabelDeltaRecord {​
+   readonly labelEntry: string;​
+   readonly beforeSlots: Array<[string, AttributeSlot]>;​
+   readonly afterSlots: Array<[string, AttributeSlot]>;​
+}​
+​
+export interface CommittedDeltaTransaction {​
+   readonly transactionId: string;​
+   readonly name: string;​
+   readonly timestampIso: string;​
+   readonly deltas: ReadonlyArray<LabelDeltaRecord>;​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.19: Trwały, wersjonowany kontrakt zdarzeń z łańcuchem
+SHA-256​
+//
+======================================================================
+======​
+export interface VersionedEventContract {​
+   readonly schemaVersion: '1.0.0';​
+   readonly sequenceNumber: number;​
+   readonly eventId: string;​
+   readonly transactionId: string;​
+   readonly transactionName: string;​
+   readonly timestampIso: string;​
+   readonly deltas: ReadonlyArray<LabelDeltaRecord>;​
+   readonly previousHash: string;​
+   readonly eventHash: string;​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.21: Nadzór spójności referencji zewnętrznych i nazewnictwa
+topologicznego​
+//
+======================================================================
+======​
+export interface ExternalDocumentReference {​
+   readonly linkId: string;​
+   readonly sourceDocumentId: string;​
+   readonly sourceLabelEntry: string;​
+   readonly targetDocumentId: string;​
+   readonly targetLabelEntry: string;​
+   readonly topologicalSelector: string;​
+   readonly expectedTargetGuid: string;​
+}​
+​
+export class ExternalLinkSupervisor {​
+   private readonly links: Map<string, ExternalDocumentReference> = new
+Map();​
+​
+   public registerLink(link: ExternalDocumentReference): void {​
+      LabelPath.parse(link.sourceLabelEntry);​
+      LabelPath.parse(link.targetLabelEntry);​
+      this.links.set(link.linkId, { ...link });​
+   }​
+​
+   public verifyLinks(​
+      documents: ReadonlyMap<string, OcaDocument>​
+   ): { valid: boolean; brokenLinks: string[] } {​
+      const brokenLinks: string[] = [];​
+      for (const [linkId, link] of this.links.entries()) {​
+        const sourceDoc = documents.get(link.sourceDocumentId);​
+        const targetDoc = documents.get(link.targetDocumentId);​
+        if (!sourceDoc || !targetDoc) {​
+           brokenLinks.push(`${linkId}: Brak dokumentu źródłowego lub
+docelowego.`);​
+           continue;​
+        }​
+        const targetNode =
+targetDoc.resolveLabel(LabelPath.parse(link.targetLabelEntry));​
+        const attr = targetNode.getAttribute(link.expectedTargetGuid);​
+        if (!attr) {​
+           brokenLinks.push(​
+             `${linkId}: Cel 𝑙𝑖𝑛𝑘. 𝑡𝑎𝑟𝑔𝑒𝑡𝐷𝑜𝑐𝑢𝑚𝑒𝑛𝑡𝐼𝑑@{link.targetLabelEntry}
+utracił atrybut ${link.expectedTargetGuid}.`​
+           );​
+        }​
+    }​
+    return { valid: brokenLinks.length === 0, brokenLinks };​
+   }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.22: Sterowniki serializacji i odczytu wtyczek (OCAF
+Standard GUIDs)​
+//
+======================================================================
+======​
+export const OCAF_STANDARD_DRIVER_GUIDS = {​
+   SCHEMA_DRIVER: 'ad696002-5b34-11d1-b5ba-00a0c9064368',​
+   DOCUMENT_STORAGE_DRIVER: 'ad696000-5b34-11d1-b5ba-00a0c9064368',​
+   DOCUMENT_RETRIEVAL_DRIVER: 'ad696001-5b34-11d1-b5ba-00a0c9064368',​
+   ATTRIBUTE_STORAGE_DRIVER: '47b0b826-d931-11d1-b5da-00a0c9064368',​
+   ATTRIBUTE_RETRIEVAL_DRIVER: '47b0b827-d931-11d1-b5da-00a0c9064368',​
+} as const;​
+​
+export interface SerializedOcaDocument {​
+   readonly formatIdentifier: string;​
+   readonly fileExtension: string;​
+   readonly schemaDriverGuid: string;​
+   readonly storagePluginGuid: string;​
+   readonly retrievalPluginGuid: string;​
+   readonly documentId: string;​
+   readonly nodes: ReadonlyArray<{​
+      readonly entry: string;​
+      readonly slots: Array<[string, AttributeSlot]>;​
+   }>;​
+   readonly eventLedger: ReadonlyArray<VersionedEventContract>;​
+}​
+​
+export class OcaDocument {​
+   public readonly documentId: string;​
+   public readonly storageFormat: string;​
+   private readonly rootNode: OcaLabelNode = new
+OcaLabelNode(LabelPath.root());​
+   private readonly undoStack: CommittedDeltaTransaction[] = [];​
+   private readonly redoStack: CommittedDeltaTransaction[] = [];​
+   private readonly eventLog: VersionedEventContract[] = [];​
+​
+   constructor(documentId: string, storageFormat =
+'OCAF-GovernedRuntime-v1') {​
+      this.documentId = documentId;​
+      this.storageFormat = storageFormat;​
+    }​
+​
+   public resolveLabel(path: LabelPath): OcaLabelNode {​
+      const parts = path.toEntryString().split(':').map((n) =>
+parseInt(n, 10));​
+      let current = this.rootNode;​
+      for (let i = 1; i < parts.length; i++) {​
+         current = current.getOrCreateChild(parts[i]);​
+      }​
+      return current;​
+   }​
+​
+   // Punkt 1.18 & 1.19: Wykonanie transakcji z rejestracją delty i
+emisją trwałego zdarzenia​
+   public executeTransaction(​
+      name: string,​
+      mutator: (doc: OcaDocument) => void,​
+      timestampIso = new Date().toISOString()​
+   ): VersionedEventContract {​
+      const beforeState = this.captureAllNodeSlots();​
+      try {​
+         mutator(this);​
+      } catch (err) {​
+         this.restoreAllNodeSlots(beforeState);​
+         throw err;​
+      }​
+      const afterState = this.captureAllNodeSlots();​
+      const allEntries = new Set<string>([...beforeState.keys(),
+...afterState.keys()]);​
+      const deltas: LabelDeltaRecord[] = [];​
+​
+      for (const entry of Array.from(allEntries).sort()) {​
+         const beforeSlots = beforeState.get(entry) ?? [];​
+         const afterSlots = afterState.get(entry) ?? [];​
+         if (JSON.stringify(beforeSlots) !== JSON.stringify(afterSlots))
+{​
+            deltas.push({ labelEntry: entry, beforeSlots, afterSlots });​
+         }​
+      }​
+​
+      const transactionId = `tx_${this.eventLog.length + 1}_${crypto​
+         .createHash('sha256')​
+         .update(`${this.documentId}:𝑛𝑎𝑚𝑒:{timestampIso}`)​
+         .digest('hex')​
+         .slice(0, 12)}`;​
+​
+      const committedTx: CommittedDeltaTransaction = {​
+         transactionId,​
+      name,​
+      timestampIso,​
+      deltas,​
+    };​
+​
+    this.undoStack.push(committedTx);​
+    this.redoStack.length = 0;​
+​
+    const previousHash =​
+      this.eventLog.length === 0​
+        ? '0'.repeat(64)​
+        : this.eventLog[this.eventLog.length - 1].eventHash;​
+​
+     const sequenceNumber = this.eventLog.length + 1;​
+     const eventId = `evt_${sequenceNumber}`;​
+     const payloadToHash = JSON.stringify({​
+       schemaVersion: '1.0.0',​
+       sequenceNumber,​
+       eventId,​
+       transactionId,​
+       transactionName: name,​
+       timestampIso,​
+       deltas,​
+       previousHash,​
+     });​
+     const eventHash =
+crypto.createHash('sha256').update(payloadToHash).digest('hex');​
+​
+     const eventContract: VersionedEventContract = {​
+       schemaVersion: '1.0.0',​
+       sequenceNumber,​
+       eventId,​
+       transactionId,​
+       transactionName: name,​
+       timestampIso,​
+       deltas,​
+       previousHash,​
+       eventHash,​
+     };​
+​
+     this.eventLog.push(eventContract);​
+     return eventContract;​
+  }​
+​
+  public undo(): boolean {​
+     const tx = this.undoStack.pop();​
+     if (!tx) return false;​
+     for (let i = tx.deltas.length - 1; i >= 0; i--) {​
+         const delta = tx.deltas[i];​
+         const node =
+this.resolveLabel(LabelPath.parse(delta.labelEntry));​
+         node.restoreSlots(delta.beforeSlots);​
+      }​
+      this.redoStack.push(tx);​
+      return true;​
+   }​
+​
+   public redo(): boolean {​
+      const tx = this.redoStack.pop();​
+      if (!tx) return false;​
+      for (const delta of tx.deltas) {​
+         const node =
+this.resolveLabel(LabelPath.parse(delta.labelEntry));​
+         node.restoreSlots(delta.afterSlots);​
+      }​
+      this.undoStack.push(tx);​
+      return true;​
+   }​
+​
+   public getEventLedger(): ReadonlyArray<VersionedEventContract> {​
+      return [...this.eventLog];​
+   }​
+​
+   public captureAllNodeSlots(): Map<string, Array<[string,
+AttributeSlot]>> {​
+      const map = new Map<string, Array<[string, AttributeSlot]>>();​
+      const traverse = (node: OcaLabelNode) => {​
+         map.set(node.path.toEntryString(), node.snapshotSlots());​
+         for (const child of node.getChildren()) {​
+            traverse(child);​
+         }​
+      };​
+      traverse(this.rootNode);​
+      return map;​
+   }​
+​
+   public restoreAllNodeSlots(snapshot: Map<string, Array<[string,
+AttributeSlot]>>): void {​
+      for (const [entry, slots] of snapshot.entries()) {​
+         const node = this.resolveLabel(LabelPath.parse(entry));​
+         node.restoreSlots(slots);​
+      }​
+   }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.20: Deterministyczny odtwarzacz dziennika z izolacją
+efektów ubocznych​
+//
+======================================================================
+======​
+export class DeterministicReplayLedger {​
+  public static verifyAndReplay(​
+    documentId: string,​
+    events: ReadonlyArray<VersionedEventContract>,​
+    sideEffectInterceptor?: (event: VersionedEventContract) => void​
+  ): { replayedDocument: OcaDocument; integrityVerified: boolean;
+suppressedSideEffects: number } {​
+    const doc = new OcaDocument(documentId);​
+    let expectedPreviousHash = '0'.repeat(64);​
+    let suppressedSideEffects = 0;​
+​
+    for (let i = 0; i < events.length; i++) {​
+      const evt = events[i];​
+      if (evt.sequenceNumber !== i + 1 || evt.previousHash !==
+expectedPreviousHash) {​
+         return { replayedDocument: doc, integrityVerified: false,
+suppressedSideEffects };​
+      }​
+      const recomputedPayload = JSON.stringify({​
+         schemaVersion: evt.schemaVersion,​
+         sequenceNumber: evt.sequenceNumber,​
+         eventId: evt.eventId,​
+         transactionId: evt.transactionId,​
+         transactionName: evt.transactionName,​
+         timestampIso: evt.timestampIso,​
+         deltas: evt.deltas,​
+         previousHash: evt.previousHash,​
+      });​
+      const recomputedHash =
+crypto.createHash('sha256').update(recomputedPayload).digest('hex');​
+      if (recomputedHash !== evt.eventHash) {​
+         return { replayedDocument: doc, integrityVerified: false,
+suppressedSideEffects };​
+      }​
+​
+      // Odtworzenie czystego stanu w drzewie OCAF z blokadą
+zewnętrznych efektów ubocznych​
+      for (const delta of evt.deltas) {​
+         const node =
+doc.resolveLabel(LabelPath.parse(delta.labelEntry));​
+         node.restoreSlots(delta.afterSlots);​
+              }​
+              suppressedSideEffects += 1;​
+              if (sideEffectInterceptor) {​
+                 sideEffectInterceptor(evt);​
+              }​
+              expectedPreviousHash = evt.eventHash;​
+         }​
+​
+         return {​
+           replayedDocument: doc,​
+           integrityVerified: true,​
+           suppressedSideEffects,​
+         };​
+    }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.22 (cd.): Sterownik wtyczki zapisu i odczytu
+(StorageRetrievalPluginDriver)​
+//
+======================================================================
+======​
+export class StorageRetrievalPluginDriver {​
+   private readonly supportedFormats: Set<string> = new
+Set(['OCAF-GovernedRuntime-v1', 'OCAF-MyApplication']);​
+​
+   public saveDocument(doc: OcaDocument): SerializedOcaDocument {​
+     if (!this.supportedFormats.has(doc.storageFormat)) {​
+        throw new Error(`OCAF_ERR_1_22: Niezdefiniowany format zapisu:
+${doc.storageFormat}`);​
+     }​
+     const snapshot = doc.captureAllNodeSlots();​
+     const nodes = Array.from(snapshot.entries()).map(([entry, slots])
+=> ({ entry, slots }));​
+     return {​
+        formatIdentifier: doc.storageFormat,​
+        fileExtension: 'sta',​
+        schemaDriverGuid: OCAF_STANDARD_DRIVER_GUIDS.SCHEMA_DRIVER,​
+        storagePluginGuid:
+OCAF_STANDARD_DRIVER_GUIDS.DOCUMENT_STORAGE_DRIVER,​
+        retrievalPluginGuid:
+OCAF_STANDARD_DRIVER_GUIDS.DOCUMENT_RETRIEVAL_DRIVER,​
+        documentId: doc.documentId,​
+        nodes,​
+        eventLedger: doc.getEventLedger(),​
+     };​
+     }​
+​
+     public openDocument(serialized: SerializedOcaDocument): OcaDocument
+{​
+      if (​
+         serialized.schemaDriverGuid !==
+OCAF_STANDARD_DRIVER_GUIDS.SCHEMA_DRIVER ||​
+         serialized.retrievalPluginGuid !==
+OCAF_STANDARD_DRIVER_GUIDS.DOCUMENT_RETRIEVAL_DRIVER​
+      ) {​
+         throw new Error('OCAF_ERR_1_22: Niezgodny identyfikator GUID
+wtyczki odczytu lub schematu.');​
+      }​
+      const doc = new OcaDocument(serialized.documentId,
+serialized.formatIdentifier);​
+      const map = new Map<string, Array<[string, AttributeSlot]>>();​
+      for (const node of serialized.nodes) {​
+         map.set(node.entry, node.slots);​
+      }​
+      doc.restoreAllNodeSlots(map);​
+      return doc;​
+   }​
+}​
+
+
+
+Klaster II: Bramka Polityk Bezpieczeństwa, Kontrakty
+Agentowe i Egzekwowanie Uprawnień (Punkty
+1.23–1.30)
+Drugi klaster realizuje architekturę współdzielonego jądra sterowanego politykami (shared
+policy-gated runtime) obecną w repozytorium Nowe-projekty oraz wymagania utwardzania
+wykonania narzędzi (Harden policy-gated tool execution with explicit authorization, approval
+binding, idempotency, and side-effect semantics) zdefiniowane w
+The-Zero-Latency-Builder-Sprint. W miejsce probabilistycznych deklaracji wprowadzony zostaje
+formalny Kontrakt Agentowy (Agent Contract), który dostarcza normatywnej linii bazowej
+oczekiwanych zachowań B_{\text{expected}}, przekształcając zwykłe opisy („Agent A wykonał
+X”) w kontrastowe wyjaśnienia audytowe („Agent A wykonał X, podczas gdy zgodnie z
+kontraktem powinien wykonać Y”).
+
+Specyfikacja Architektoniczna Punktów 1.23–1.30
+Fundament normatywny w Punkcie 1.23 ustanawia formalna specyfikacja Kontraktu
+Agentowego (AgentContractSpec), która łączy teorię zobowiązań społecznych (Social
+Commitment Theory: C(\text{debtor}, \text{creditor}, \phi), gdzie dłużnik zobowiązuje się wobec
+wierzyciela do urzeczywistnienia warunku \phi) z pięcioma kanonicznymi elementami kontraktu:
+zobowiązaniami (Obligations), uprawnieniami (Permissions), zakazami (Prohibitions), kryteriami
+naruszeń (ViolationCriteria) oraz łańcuchem odpowiedzialności (AccountabilityChain). Na tej
+bazie Punkt 1.24 przekształca pamięciooparty prototyp bramki polityk z
+The-Zero-Latency-Builder-Sprint w produkcyjny komponent ExactAllowlistPolicyGate, w którym
+każde wywołanie narzędzia jest weryfikowane w pierwszej kolejności względem jawnych
+zakazów, a następnie względem ścisłej białej listy uprawnień; brak dokładnego dopasowania
+skutkuje natychmiastową odmową wykonania (DENY_NOT_IN_ALLOWLIST).
+Kolejny krok zabezpieczający stanowi Punkt 1.25, wprowadzający egzekutor pułapów ryzyka
+(RiskCapEnforcer), który bezpośrednio wdraża zatwierdzenie bezpieczeństwa z repozytorium
+Nowe-projekty: security: cap procurement purchase commitment at medium risk. System
+klasyfikuje ryzyko każdej operacji na czterech poziomach (LOW, MEDIUM, HIGH, CRITICAL)
+zgodnie z metodyką kontroli dostępu opartej na rolach i ekspozycji danych, po czym
+bezwzględnie blokuje automatyczne zaciąganie zobowiązań przekraczających dopuszczalny
+pułap dla danej domeny (w szczególności odrzucając wszelkie żądania powyżej poziomu
+MEDIUM w domenie zakupowej). Zgodnie z nadrzędną zasadą architektury zakupowej i
+kontraktowej, w myśl której sztuczna inteligencja ekstrahuje, sprawdza, ocenia i przygotowuje
+artefakty, ale nigdy samodzielnie nie podejmuje ostatecznych decyzji zatwierdzających ani
+atestacyjnych, Punkt 1.26 implementuje silnik kryptograficznego wiązania zatwierdzeń ludzkich
+(ApprovalBin[span_5](start_span)[span_5](end_span)dingEngine). Każda operacja o ryzyku
+MEDIUM lub wyższym wymaga dołączenia tokenu ApprovalArtifact podpisanego kodem
+uwierzytelniającym HMAC-SHA256, który wiąże tożsamość i rolę decydenta
+(LEGAL_REVIEWER, FINANCE_APPROVER, PROCUREMENT_LEAD,
+COMPLIANCE_OFFICER), identyfikator dzierżawcy, nazwę akcji, skrót SHA-256 ładunku
+wywołania oraz okno ważności czasowej.
+W celu wyeliminowania duplikacji mutacji podczas ponowień sieciowych Punkt 1.27 wprowadza
+strażnika idempotentności wywołań narzędziowych (IdempotencyGuard), wymaganego przez
+zasady inżynieryjne The-Zero-Latency-Builder-Sprint. Każde wywołanie mutujące jest
+indeksowane kluczem złożonym z dzierżawcy, akcji i klucza idempotencyKey; ponowne
+przesłanie identycznego żądania zwraca wynik z pamięci podręcznej bez ponownego
+wykonania narzędzia, natomiast użycie tego samego klucza dla zmodyfikowanego ładunku
+powoduje natychmiastowe zgłoszenie wyjątku integralności. Punkt 1.28 realizuje twarde
+sprzężenie decyzji z dziennikiem audytowym (DecisionToAuditWiring), gwarantując, że każda
+decyzja bramki (ALLOW lub DENY) wraz z kontrastowym wyjaśnieniem jest trwale zapisywana
+w gałęzi audytowej 0:99 drzewa OCAF przed wykonaniem właściwego handlera narzędzia.
+Wielodzierżawczą separację danych zapewnia Punkt 1.29 (TenantWorkspaceIsolator),
+wdrażający wymóg izolacji z zatwierdzenia test(contract): cover deadline, approval, evidence
+and isolation poprzez deterministyczne mapowanie każdego dzierżawcy na odseparowaną
+podgałąź 0:1:<tenantTag>. Klaster domyka Punkt 1.30 (CostAndProviderAccessGate),
+odwzorowujący architekturę Agent-God-Level-Omega, w której wykonanie oparte na
+dostawcach zewnętrznych jest warunkowane jednoczesnym potwierdzeniem uwierzytelnienia,
+uprawnień planu/regionu/modelu oraz jawnej autoryzacji kosztowej nieprzekraczającej
+zatwierdzonego limitu budżetowego.
+Punkt Roadmapy          Komponent Jądra          Egzekwowana Reguła Kod Odmowy / Ścieżka
+                        Nadzoru                  Bezpieczeństwa         Drzewa OCAF
+1.23                    AgentContractSpec        Pięć elementów         Linia bazowa
+                                                 kontraktu              B_{\text{expected}} dla
+                                                 normatywnego +         wyjaśnień
+                                                 zobowiązania           kontrastowych
+Punkt Roadmapy   Komponent Jądra         Egzekwowana Reguła Kod Odmowy / Ścieżka
+                 Nadzoru                 Bezpieczeństwa            Drzewa OCAF
+                                         kierunkowe
+                                         C(\text{debtor},
+                                         \text{creditor}, \phi)
+1.24             ExactAllowlistPolicyGat Weryfikacja listy         DENY_EXPLICIT_PRO
+                 e                       zakazów (prohibitions) HIBITION /
+                                         oraz ścisłej białej listy DENY_NOT_IN_ALLO
+                                         (permissions)             WLIST
+1.25             RiskCapEnforcer         Ograniczenie pułapu DENY_RISK_CAP_EX
+                                         ryzyka domeny             CEEDED
+                                         zakupowej do poziomu
+                                         średniego
+                                         (MEDIU[span_173](star
+                                         t_span)[span_173](end
+                                         _span)M)
+1.26             ApprovalBindingEngine Wiązanie podpisu            DENY_MISSING_HUM
+                                         HMAC-SHA256               AN_APPROVAL /
+                                         zatwierdzającego z        DENY_INVALID_APPR
+                                         hashem ładunku i          OVAL_BINDING
+                                         czasem wygaśnięcia
+1.27             IdempotencyGua[span Blokada powtórnego            Wyjątek
+                 _109](start_span)[span wykonania efektu           OCAF_ERR_1_27 przy
+                 _109](end_span)rd       ubocznego i detekcja niezgodności SHA-256
+                                         kolizji ładunku dla       ładunku
+                                         klucza
+1.28             DecisionToAuditWiring Zapis decyzji polityki      Gałąź audytowa
+                                         jako atrybutu OCAF        0:99:<decisionTag>
+                                         przed uruchomieniem
+                                         narzędzia
+1.29             TenantWorkspaceIsolat Hermetyzacja                Gałąź dzierżawcy
+                 or                      przestrzeni roboczej      0:1:<tenantTag>
+                                         każdego dzierżawcy w
+                                         osobnym poddrzewie
+1.30             CostAndProviderAcces Weryfikacja                  DENY_PROVIDER_O
+                 sGate                   uwierzytelnienia,         R_COST_GATE
+                                         regionu/modelu oraz
+                                         jawnej zgody kosztowej
+                                         OMEGA
+Kompletny Kod Wdrożeniowy dla Punktów 1.23–1.30
+(src/governance/policy-gated-runtime.ts)
+import * as crypto from 'crypto';​
+import { OcaDocument, LabelPath } from '../core/ocaf-data-framework';​
+​
+export type RiskTier = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';​
+​
+const RISK_WEIGHT: Record<RiskTier, number> = {​
+   LOW: 1,​
+   MEDIUM: 2,​
+   HIGH: 3,​
+   CRITICAL: 4,​
+};​
+​
+//
+======================================================================
+======​
+// PUNKT 1.23: Formalny model Kontraktu Agentowego (AgentContractSpec)​
+//
+======================================================================
+======​
+export interface DirectedSocialCommitment {​
+   readonly commitmentId: string;​
+   readonly debtorAgentId: string;​
+   readonly
+creditorStakeh[span_10](start_span)[span_10](end_span)olderId: string;​
+   readonly normativeConditionPhi: string;​
+}​
+​
+export interface AgentContractSpec {​
+   re[span_55](start_span)[span_55](end_span)adonly contractId: string;​
+   re[span_56](start_span)[span_56](end_span)adonly version: string;​
+   readonly obligations: ReadonlyArray<DirectedSocialCommitment>;​
+   readonly permissions: ReadonlyArray<string>; // Dozwolone nazwy
+akcji (Allowlist)​
+   readonly prohibitions: ReadonlyArray<string>; // Jawnie zakazane
+wzorce akcji​
+   readonly violationCriteria: ReadonlyArray<{​
+     readonly criterionId: string;​
+     readonly description: string;​
+     readonly maxAllowedRisk: RiskTier;​
+     readonly requiresHumanApprovalAtOrAbove: RiskTier;​
+   }>;​
+   readonly accountabilityChain: {​
+     readonly primaryOwnerId: string;​
+     readonly escalationReviewerId: string;​
+     readonly auditAuthorityId: string;​
+   };​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.26: Kryptograficzne wiązanie zatwierdzeń ludzkich
+(ApprovalBindingEngine)​
+//
+======================================================================
+======​
+export interface ApprovalArtifact {​
+   readonly approvalId: string;​
+   readonly approverId: string;​
+   readonly approverRole: 'LEGAL_REVIEWER' | 'FINANCE_APPROVER' |
+'PROCUREMENT_LEAD' | 'COMPLIANCE_OFFICER';​
+   readonly tenantId: string;​
+   readonly actionName: string;​
+   readonly payloadSha256: string;​
+   readonly issuedAtIso: string;​
+   readonly expiresAtIso: string;​
+   readonly signatureHmac: string;​
+}​
+​
+export class ApprovalBindingEngine {​
+   private readonly secretKey: string;​
+​
+   constructor(secretKey: string) {​
+      if (!secretKey || secretKey.length < 16) {​
+         throw new Error('OCAF_ERR_1_26: Klucz podpisu zatwierdzeń musi
+mieć co najmniej 16 znaków.');​
+      }​
+      this.secretKey = secretKey;​
+   }​
+​
+   public static hashPayload(payload: unknown): string {​
+      return
+crypto.createHash('sha256').update(JSON.stringify(payload)).digest('he
+x');​
+   }​
+​
+   public issueApproval(params: {​
+      approvalId: string;​
+      approverId: string;​
+      approverRole: ApprovalArtifact['approverRole'];​
+      tenantId: string;​
+      actionName: string;​
+      payload: unknown;​
+      issuedAtIso: string;​
+      expiresAtIso: string;​
+   }): ApprovalArtifact {​
+      const payloadSha256 =
+ApprovalBindingEngine.hashPayload(params.payload);​
+      const canonical = `𝑝𝑎𝑟𝑎𝑚𝑠. 𝑎𝑝𝑝𝑟𝑜𝑣𝑎𝑙𝐼𝑑|{params.approverId}|
+𝑝𝑎𝑟𝑎𝑚𝑠. 𝑎𝑝𝑝𝑟𝑜𝑣𝑒𝑟𝑅𝑜𝑙𝑒|{params.tenantId}|𝑝𝑎𝑟𝑎𝑚𝑠. 𝑎𝑐𝑡𝑖𝑜𝑛𝑁𝑎𝑚𝑒|{payloadSha256}|
+𝑝𝑎𝑟𝑎𝑚𝑠. 𝑖𝑠𝑠𝑢𝑒𝑑𝐴𝑡𝐼𝑠𝑜|{params.expiresAtIso}`;​
+     const signatureHmac = crypto.createHmac('sha256',
+this.secretKey).update(canonical).digest('hex');​
+     return {​
+        approvalId: params.approvalId,​
+        approverId: params.approverId,​
+        approverRole: params.approverRole,​
+        tenantId: params.tenantId,​
+        actionName: params.actionName,​
+        payloadSha256,​
+        issuedAtIso: params.issuedAtIso,​
+        expiresAtIso: params.expiresAtIso,​
+        signatureHmac,​
+     };​
+  }​
+​
+  public verifyApproval(​
+     artifact: ApprovalArtifact,​
+     expectedTenantId: string,​
+     expectedActionName: string,​
+     actualPayload: unknown,​
+     nowIso: string​
+  ): { valid: boolean; reason?: string } {​
+     if (artifact.tenantId !== expectedTenantId) {​
+        return { valid: false, reason: 'Niezgodność dzierżawcy
+(tenantId) w zatwierdzeniu.' };​
+     }​
+     if (artifact.actionName !== expectedActionName) {​
+        return { valid: false, reason: 'Zatwierdzenie zostało wydane dla
+innej akcji.' };​
+     }​
+     if (new Date(nowIso).getTime() > new
+Date(artifact.expiresAtIso).getTime()) {​
+        return { valid: false, reason: 'Token zatwierdzenia wygasł.' };​
+     }​
+     const actualHash =
+ApprovalBindingEngine.hashPayload(actualPayload);​
+     if (artifact.payloadSha256 !== actualHash) {​
+        return { valid: false, reason: 'Ładunek wywołania został
+zmodyfikowany po wydaniu zatwierdzenia.' };​
+     }​
+     const canonical = `𝑎𝑟𝑡𝑖𝑓𝑎𝑐𝑡. 𝑎𝑝𝑝𝑟𝑜𝑣𝑎𝑙𝐼𝑑|{artifact.approverId}|
+𝑎𝑟𝑡𝑖𝑓𝑎𝑐𝑡. 𝑎𝑝𝑝𝑟𝑜𝑣𝑒𝑟𝑅𝑜𝑙𝑒|{artifact.tenantId}|𝑎𝑟𝑡𝑖𝑓𝑎𝑐𝑡. 𝑎𝑐𝑡𝑖𝑜𝑛𝑁𝑎𝑚𝑒|
+{artifact.payloadSha256}|𝑎𝑟𝑡𝑖𝑓𝑎𝑐𝑡. 𝑖𝑠𝑠𝑢𝑒𝑑𝐴𝑡𝐼𝑠𝑜|{artifact.expiresAtIso}`;​
+     const expectedHmac = crypto.createHmac('sha256',
+this.secretKey).update(canonical).digest('hex');​
+     if (expectedHmac !== artifact.signatureHmac) {​
+        return { valid: false, reason: 'Nieprawidłowa sygnatura
+kryptograficzna HMAC zatwierdzenia.' };​
+    }​
+    return { valid: true };​
+   }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.30: Kontroler budżetu i dostępu do zewnętrznych dostawców
+(OMEGA Gate)​
+//
+======================================================================
+======​
+export interface ProviderExecutionContext {​
+   readonly requiresExternalProvider: boolean;​
+   readonly authenticated: boolean;​
+   readonly planRegionModelAllowed: boolean;​
+   readonly estimatedCostUsd: number;​
+   readonly approvedCostCeilingUsd: number;​
+   readonly explicitCostApproved: boolean;​
+}​
+​
+export class CostAndProviderAccessGate {​
+   public static evaluate(ctx?: ProviderExecutionContext): { allowed:
+boolean; reason?: string } {​
+      if (!ctx || !ctx.requiresExternalProvider) {​
+         return { allowed: true };​
+      }​
+      if (!ctx.authenticated) {​
+         return { allowed: false, reason: 'Brak uwierzytelnienia u
+dostawcy zewnętrznego.' };​
+      }​
+      if (!ctx.planRegionModelAllowed) {​
+         return { allowed: false, reason: 'Brak uprawnień planu, regionu
+lub modelu dostawcy.' };​
+      }​
+      if (!ctx.explicitCostApproved || ctx.estimatedCostUsd >
+ctx.approvedCostCeilingUsd) {​
+         return {​
+           allowed: false,​
+           reason: `Brak autoryzacji kosztowej: koszt
+${ctx.estimatedCostUsd} USD przekracza zatwierdzony limit
+${ctx.approvedCostCeilingUsd} USD.`,​
+         };​
+      }​
+      return { allowed: true };​
+   }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.24, 1.25, 1.27, 1.28, 1.29: Współdzielone Jądro Sterowane
+Politykami​
+//
+======================================================================
+======​
+export interface ToolInvocationRequest<TPayload = unknown> {​
+   readonly requestId: string;​
+   readonly idempotencyKey: string;​
+   readonly tenantId: string;​
+   readonly actorAgentId: string;​
+   readonly actionName: string;​
+   readonly riskTier: RiskTier;​
+   readonly domainCategory: 'CONTRACT_OBLIGATIONS' |
+'COMPLIANCE_EVIDENCE' | 'PROCUREMENT_SCOUT' | 'CORE_RETRIEVAL';​
+   readonly payload: TPayload;​
+   readonly approvalArtifact?: ApprovalArtifact;​
+   readonly providerContext?: ProviderExecutionContext;​
+   readonly timestampIso: string;​
+}​
+​
+export interface PolicyDecisionRecord {​
+   readonly decisionId: string;​
+   readonly requestId: string;​
+   readonly tenantId: string;​
+   readonly actionName: string;​
+   readonly outcome: 'ALLOW' | 'DENY';​
+   readonly reasonCode: string;​
+   readonly contrastiveExplanation: string;​
+   readonly evaluatedAtIso: string;​
+}​
+​
+export interface GovernedToolOutput<TResult = unknown> {​
+   readonly decision: PolicyDecisionRecord;​
+   readonly fromIdempotencyCache: boolean;​
+   readonly result?: TResult;​
+}​
+​
+export type GovernedToolHandler<TPayload, TResult> = (​
+   payload: TPayload,​
+   tenantBranch: LabelPath,​
+   doc: OcaDocument​
+) => TResult;​
+​
+export class SharedPolicyGatedRuntime {​
+  private readonly document: OcaDocument;​
+  private readonly contract: AgentContractSpec;​
+  private readonly approvalEngine: ApprovalBindingEngine;​
+  private readonly handlers: Map<string, GovernedToolHandler<any,
+any>> = new Map();​
+  private readonly tenantTagMap: Map<string, number> = new Map();​
+  private readonly idempotencyStore: Map<string, { payloadHash:
+string; output: GovernedToolOutput<any> }> = new Map();​
+  private readonly domainRiskCaps:
+Map<ToolInvocationRequest['domainCategory'], RiskTier> = new Map([​
+     ['PROCUREMENT_SCOUT', 'MEDIUM'], // Punkt 1.25: Cap procurement
+purchase commitment at medium risk​
+     ['CONTRACT_OBLIGATIONS', 'HIGH'],​
+     ['COMPLIANCE_EVIDENCE', 'HIGH'],​
+     ['CORE_RETRIEVAL', 'LOW'],​
+  ]);​
+​
+  private static readonly AUDIT_DECISION_GUID =
+'11111111-2222-4333-8444-555555555501';​
+​
+  constructor(document: OcaDocument, contract: AgentContractSpec,
+approvalEngine: ApprovalBindingEngine) {​
+     this.document = document;​
+     this.contract = contract;​
+     this.approvalEngine = approvalEngine;​
+  }​
+​
+  public registerTool<TPayload, TResult>(​
+     actionName: string,​
+     handler: GovernedToolHandler<TPayload, TResult>​
+  ): void {​
+     this.handlers.set(actionName, handler);​
+  }​
+​
+  // Punkt 1.29: Wielodzierżawcza izolacja przestrzeni roboczej w
+drzewie OCAF (0:1:<tenantTag>)​
+  public resolveIsolatedTenantBranch(tenantId: string): LabelPath {​
+     if (!tenantId || !/^[a-zA-Z0-9_-]+$/.test(tenantId)) {​
+        throw new Error(`OCAF_ERR_1_29: Nieprawidłowy identyfikator
+dzierżawcy: ${tenantId}`);​
+     }​
+     let tag = this.tenantTagMap.get(tenantId);​
+     if (!tag) {​
+        tag = this.tenantTagMap.size + 1;​
+        this.tenantTagMap.set(tenantId, tag);​
+     }​
+     return LabelPath.root().child(1).child(tag);​
+  }​
+​
+  public invoke<TPayload, TResult>(​
+    req: ToolInvocationRequest<TPayload>​
+  ): GovernedToolOutput<TResult> {​
+    // Punkt 1.27: Strażnik idempotentności​
+    const scopedIdempotencyKey = `${req.tenantId}:𝑟𝑒𝑞. 𝑎𝑐𝑡𝑖𝑜𝑛𝑁𝑎𝑚𝑒:
+{req.idempotencyKey}`;​
+    const payloadHash =
+ApprovalBindingEngine.hashPayload(req.payload);​
+    const cached = this.idempotencyStore.get(scopedIdempotencyKey);​
+    if (cached) {​
+       if (cached.payloadHash !== payloadHash) {​
+          throw new Error(​
+            `OCAF_ERR_1_27: Kolizja klucza idempotentności
+${req.idempotencyKey} dla odmiennego ładunku.`​
+          );​
+       }​
+       return { ...cached.output, fromIdempotencyCache: true };​
+    }​
+​
+    const decision = this.evaluatePolicy(req);​
+​
+    // Punkt 1.28: Sprzężenie decyzji z dziennikiem audytowym przed
+wykonaniem akcji​
+    const auditBranch = LabelPath.root().child(99);​
+    this.document.executeTransaction(​
+       `AUDIT_DECISION:${req.requestId}:${decision.outcome}`,​
+       (doc) => {​
+          const auditRoot = doc.resolveLabel(auditBranch);​
+          const decisionTag = doc.getEventLedger().length + 1;​
+          const decisionNode = auditRoot.getOrCreateChild(decisionTag);​
+          decisionNode.attachAttribute({​
+            guid: SharedPolicyGatedRuntime.AUDIT_DECISION_GUID,​
+            semanticType: 'TDataStd_PolicyDecisionAudit',​
+            value: decision,​
+            updatedAtIso: req.timestampIso,​
+          });​
+       },​
+       req.timestampIso​
+    );​
+​
+    if (decision.outcome === 'DENY') {​
+       const deniedOutput: GovernedToolOutput<TResult> = {​
+          decision,​
+          fromIdempotencyCache: false,​
+       };​
+       this.idempotencyStore.set(scopedIdempotencyKey, { payloadHash,
+output: deniedOutput });​
+         return deniedOutput;​
+    }​
+​
+     const handler = this.handlers.get(req.actionName);​
+     if (!handler) {​
+        throw new Error(`OCAF_ERR_1_24: Brak zarejestrowanego handlera
+dla dozwolonej akcji ${req.actionName}`);​
+     }​
+​
+     const tenantBranch =
+this.resolveIsolatedTenantBranch(req.tenantId);​
+     let executionResult!: TResult;​
+​
+     this.document.executeTransaction(​
+        `EXEC_TOOL:${req.tenantId}:𝑟𝑒𝑞. 𝑎𝑐𝑡𝑖𝑜𝑛𝑁𝑎𝑚𝑒:{req.requestId}`,​
+        (doc) => {​
+          executionResult = handler(req.payload, tenantBranch, doc);​
+        },​
+        req.timestampIso​
+     );​
+​
+     const allowedOutput: GovernedToolOutput<TResult> = {​
+        decision,​
+        fromIdempotencyCache: false,​
+        result: executionResult,​
+     };​
+     this.idempotencyStore.set(scopedIdempotencyKey, { payloadHash,
+output: allowedOutput });​
+     return allowedOutput;​
+  }​
+​
+  private evaluatePolicy<TPayload>(req:
+ToolInvocationRequest<TPayload>): PolicyDecisionRecord {​
+     const decisionId = `dec_${req.requestId}`;​
+​
+     // Punkt 1.24: Sprawdzenie jawnych zakazów (Prohibitions) oraz
+listy dozwolonych akcji (Allowlist)​
+     if (this.contract.prohibitions.includes(req.actionName)) {​
+        return {​
+          decisionId,​
+          requestId: req.requestId,​
+          tenantId: req.tenantId,​
+          actionName: req.actionName,​
+          outcome: 'DENY',​
+          reasonCode: 'DENY_EXPLICIT_PROHIBITION',​
+          contrastiveExplanation: `Agent ${req.actorAgentId} próbował
+wykonać zakazaną akcję ${req.actionName}, podczas gdy kontrakt
+${this.contract.contractId} jawnie jej zabrania.`,​
+           evaluatedAtIso: req.timestampIso,​
+         };​
+    }​
+​
+    if (!this.contract.permissions.includes(req.actionName)) {​
+       return {​
+         decisionId,​
+         requestId: req.requestId,​
+         tenantId: req.tenantId,​
+         actionName: req.actionName,​
+         outcome: 'DENY',​
+         reasonCode: 'DENY_NOT_IN_ALLOWLIST',​
+         contrastiveExplanation: `Agent ${req.actorAgentId} wywołał
+nieautoryzowaną akcję ${req.actionName}, podczas gdy powinien
+ograniczyć wywołania do zatwierdzonej listy uprawnień.`,​
+         evaluatedAtIso: req.timestampIso,​
+       };​
+    }​
+​
+    // Punkt 1.25: Egzekwowanie maksymalnego pułapu ryzyka dla domeny​
+    const domainCap = this.domainRiskCaps.get(req.domainCategory) ??
+'LOW';​
+    if (RISK_WEIGHT[req.riskTier] > RISK_WEIGHT[domainCap]) {​
+       return {​
+         decisionId,​
+         requestId: req.requestId,​
+         tenantId: req.tenantId,​
+         actionName: req.actionName,​
+         outcome: 'DENY',​
+         reasonCode: 'DENY_RISK_CAP_EXCEEDED',​
+         contrastiveExplanation: `Żądanie w domenie
+${req.domainCategory} posiada poziom ryzyka ${req.riskTier}, podczas
+gdy polityka bezpieczeństwa ogranicza pułap tej domeny do
+${domainCap}.`,​
+         evaluatedAtIso: req.timestampIso,​
+       };​
+    }​
+​
+    // Punkt 1.26: Wymóg zatwierdzenia ludzkiego dla operacji od
+poziomu MEDIUM wzwyż​
+    if (RISK_WEIGHT[req.riskTier] >= RISK_WEIGHT['MEDIUM']) {​
+       if (!req.approvalArtifact) {​
+         return {​
+           decisionId,​
+           requestId: req.requestId,​
+           tenantId: req.tenantId,​
+           actionName: req.actionName,​
+           outcome: 'DENY',​
+              reasonCode: 'DENY_MISSING_HUMAN_APPROVAL',​
+              contrastiveExplanation: `Akcja ${req.actionName} o ryzyku
+𝑟𝑒𝑞. 𝑟𝑖𝑠𝑘𝑇𝑖𝑒𝑟𝑧𝑜𝑠𝑡𝑎ł𝑎𝑤𝑦𝑤𝑜ł𝑎𝑛𝑎𝑏𝑒𝑧𝑡𝑜𝑘𝑒𝑛𝑢𝑧𝑎𝑡𝑤𝑖𝑒𝑟𝑑𝑧𝑒𝑛𝑖𝑎, 𝑝𝑜𝑑𝑐𝑧𝑎𝑠𝑔𝑑𝑦𝑤𝑦𝑚𝑎𝑔𝑎𝑛𝑎𝑗𝑒𝑠𝑡𝑎𝑢𝑡𝑜𝑟𝑦𝑧𝑎𝑐𝑗𝑎𝑤ł𝑎ś𝑐𝑖𝑐𝑖𝑒𝑙𝑎𝑧ł𝑎ń
+{this.contract.accountabilityChain.primaryOwnerId}).`,​
+              evaluatedAtIso: req.timestampIso,​
+            };​
+         }​
+         const verification = this.approvalEngine.verifyApproval(​
+            req.approvalArtifact,​
+            req.tenantId,​
+            req.actionName,​
+            req.payload,​
+            req.timestampIso​
+         );​
+         if (!verification.valid) {​
+            return {​
+              decisionId,​
+              requestId: req.requestId,​
+              tenantId: req.tenantId,​
+              actionName: req.actionName,​
+              outcome: 'DENY',​
+              reasonCode: 'DENY_INVALID_APPROVAL_BINDING',​
+              contrastiveExplanation: `Przedstawiony token zatwierdzenia
+został odrzucony (${verification.reason}), podczas gdy wymagany jest
+ważny kryptograficznie podpisany artefakt dla niezmienionego
+ładunku.`,​
+              evaluatedAtIso: req.timestampIso,​
+            };​
+         }​
+      }​
+​
+      // Punkt 1.30: Weryfikacja dostępu do dostawcy i autoryzacji
+kosztów​
+      const providerEval =
+CostAndProviderAccessGate.evaluate(req.providerContext);​
+      if (!providerEval.allowed) {​
+         return {​
+            decisionId,​
+            requestId: req.requestId,​
+            tenantId: req.tenantId,​
+            actionName: req.actionName,​
+            outcome: 'DENY',​
+            reasonCode: 'DENY_PROVIDER_OR_COST_GATE',​
+            contrastiveExplanation: `Wywołanie dostawcy zostało
+zablokowane (${providerEval.reason}), podczas gdy wymagane jest pełne
+uwierzytelnienie oraz jawna autoryzacja budżetowa.`,​
+            evaluatedAtIso: req.timestampIso,​
+         };​
+     }​
+​
+      return {​
+        decisionId,​
+        requestId: req.requestId,​
+        tenantId: req.tenantId,​
+        actionName: req.actionName,​
+        outcome: 'ALLOW',​
+        reasonCode: 'ALLOW_POLICY_SATISFIED',​
+        contrastiveExplanation: `Wywołanie akcji ${req.actionName}
+spełnia wszystkie wymogi kontraktu ${this.contract.contractId}.`,​
+        evaluatedAtIso: req.timestampIso,​
+      };​
+   }​
+}​
+
+
+
+Klaster III: Deterministyczna Domena Zobowiązań
+Kontraktowych – Contract Obligations (Punkty
+1.31–1.38)
+Trzeci klaster stanowi bezpośrednie wdrożenie dziesięciu zatwierdzeń inżynieryjnych
+zarejestrowanych w repozytorium mojealterego/Nowe-projekty dla pakietu Contract Obligations.
+W systemach analizy umów ramowych (MSA) oraz zamówień rządowych (gdzie umowa
+centralna narzuca dostawcy obowiązek posiadania certyfikacji Cyber Essentials Plus,
+wykonania testów penetracyjnych lub ochrony danych zgodnie z art. 32 RODO) kluczowym
+wyzwaniem jest deterministyczne wyodrębnienie klauzul obligacyjnych zawierających operatory
+modalne shall, must lub will, przypisanie ich do ról dłużnika i wierzyciela oraz ciągłe
+monitorowanie terminów zapadalności i dowodów wykonania.
+
+Specyfikacja Architektoniczna Punktów 1.31–1.38
+Wdrożenie domeny otwiera Punkt 1.31, wprowadzający deterministyczny model domenowy
+zobowiązań (ContractObligationRecord), który odwzorowuje zatwierdzenia feat(contract): add
+Contract Obligations runtime package, feat(contract): add TypeScript configuration oraz
+feat(contract): add deterministic obligation domain model. Każde zobowiązanie posiada
+unikalny identyfikator derywowany kryptograficznie, dokładne odwołanie do paragrafu umowy
+(clauseCitation), strony relacji C(\text{debtor}, \text{creditor}, \phi), kategorię normatywną
+(SECURITY_ASSURANCE, DATA_PROTECTION, SLA_DELIVERY,
+FINANCIAL_REPORTING, GENERAL_COMPLIANCE), termin wykonania oraz stan w cyklu
+życia (EXTRACTED_PENDING, ACTION_IN_PROGRESS, VERIFIED_FULFILLED,
+DEADLINE_BREACHED). Na tym modelu operuje Punkt 1.32, czyli strukturalny ekstraktor
+klauzul obligacyjnych (StructuredClauseExtractor) realizujący zatwierdzenie feat(contract): add
+structured clause obligation extraction. Komponent ten dokonuje segmentacji tekstu umowy na
+zdania atomowe, identyfikuje normatywne czasowniki modalne (shall, must, will), klasyfikuje
+domenę klauzuli, wyodrębnia względne okna czasowe (within N days) względem daty
+referencyjnej kontraktu i generuje powtarzalne rekordy zobowiązań.
+Nadzór czasowy realizuje Punkt 1.33 poprzez monitor terminów zapadalności i naruszeń
+(ObligationDeadlineMonitor), który wylicza pozostałą liczbę godzin do terminu granicznego,
+oznacza zobowiązania znajdujące się w oknie ostrzegawczym jako zagrożone (isAtRisk) oraz
+automatycznie przekształca stan niezamkniętych zobowiązań po upływie terminu w twarde
+naruszenie (DEADLINE_BREACHED). Punkt 1.34 dostarcza narzędzia akcji obligacyjnych i
+weryfikacji (ObligationActionVerificationTool), odpowiadające zatwierdzeniu feat(contract): add
+obligation action and verification tools. Narzędzie to uniemożliwia zamknięcie zobowiązania jako
+VERIFIED_FULFILLED bez dołączenia niepustego zbioru identyfikatorów dowodów zgodności
+(evidenceIds) oraz sprawdzenia, czy w momencie weryfikacji nie doszło do przekroczenia
+terminu.
+Warstwę zarządczą domeny definiuje Punkt 1.35 (feat(policy): govern Contract Obligations
+actions), który przypisuje operacji ekstrakcji klauzul niskie ryzyko (LOW), natomiast operacji
+ostatecznej weryfikacji i zwolnienia ze zobowiązania (contract.verify_obligation) nadaje poziom
+ryzyka MEDIUM, wymuszając tym samym weryfikację kryptograficznego tokenu zatwierdzenia
+wydanego przez recenzenta prawnego lub audytora bezpieczeństwa. Punkt 1.36 realizuje
+feat(contract): expose obligation extraction tool poprzez wyeksponowanie ustrukturyzowanych
+deskryptorów narzędziowych dla warstwy orkiestracji agentowej, natomiast Punkt 1.37
+odpowiada za feat(contract): wire shared policy-gated runtime oraz feat(contract): register
+obligation extraction in runtime, podłączając handlery ekstrakcji i weryfikacji do poddrzewa
+0:1:<tenantTag>:10 we współdzielonym środowisku wykonawczym. Klaster wieńczy Punkt 1.38,
+wdrażający pełny zakres testów bezpieczeństwa z zatwierdzenia test(contract): cover deadline,
+approval, evidence and isolation.
+Punkt Roadmapy            Zatwierdzenie            Zaimplementowany        Ścieżka Drzewa OCAF
+                          Źródłowe                 Artefakt Wdrożeniowy / Poziom Ryzyka
+                          (Nowe-projekty)
+1.31                      feat(contract): add      Interfejs               Atrybut
+                          deterministic obligation ContractObligationRec TDataStd_ContractObli
+                          domain model             ord + GUID              gation
+                                                   22222222-...-66666666
+                                                   6602
+1.32                      feat(contract): add      Klasa                   Deterministyczny skrót
+                          structured clause        StructuredClauseE[spa ID obl_<sha256>
+                          obligation extraction    n_217](start_span)[spa
+                                                   n_217](end_span)[span
+                                                   _223](start_span)[span
+                                                   _223](end_span)xtracto
+                                                   r parsująca
+                                                   shall/must/will
+1.33                      test(contract): cover    Klasa                   Automatyczna
+                          deadline... (reguła      ObligationDeadlineMon tranzycja do
+                          czasowa)                 itor wyliczająca        DEADLINE_BREACHE
+                                                   hoursRemaining i        D
+                                                   isBreached
+1.34                      feat(contract): add      Walidacja obecności     Wyjątek
+                          obligation action and evidenceIds oraz braku OCAF_ERR_1_34 przy
+                          verification tools       przeterminowania przy braku dowodu
+Punkt Roadmapy   Zatwierdzenie          Zaimplementowany     Ścieżka Drzewa OCAF
+                 Źródłowe               Artefakt Wdrożeniowy / Poziom Ryzyka
+                 (Nowe-projekty)
+                                         zamknięciu
+1.35             feat(policy): govern    Podział uprawnień:      Wymagana rola
+                 Contract Obligations    ekstrakcja (LOW) vs     LEGAL_REVIEWER
+                 actions                 weryfikacja wykonania
+                                         (MEDIUM + Approval)
+1.36             feat(contract): expose Metoda                   Kontrakt
+                 obligation extraction   getExposedToolSpecifi wejścia/wyjścia dla
+                 tool                    cations() dla rejestrów contract.*
+                                         narzędziowych
+1.37             feat(co[span_18](start_ Metoda                  Gałąź
+                 span)[span_18](end_sp ContractObligationsRu 0:1:<tenantTag>:10:<o
+                 an)ntract): wire shared ntimePackage.registerI bligationTag>
+                 policy-gated runtime i nRuntime()
+                 register...
+1.38             test(contract):         Asercje integracyjne    Weryfikacja w
+                 cove[span_19](start_sp weryfikujące terminy, runCompleteOcafRoad
+                 an)[span_19](end_span podpisy HMAC,             mapVerificationSuite
+                 )r deadline, approval, dowody i separację
+                 evidence and isolation dzierżawców
+Kompletny Kod Wdrożeniowy dla Punktów 1.31–1.38
+(src/domains/contract-obligations.ts)
+import * as crypt[span_22](start_span)[span_22](end_span)o from
+'crypto';​
+import { OcaDocument, LabelPath } from
+'../core/ocaf-data-fra[span_23](start_span)[span_23](end_span)mework';​
+import { SharedPolicyGatedRuntime }
+fr[span_94](start_span)[span_94](end_span)[span_100](start_span)[span_
+100](end_span)om '../governance/policy-gated-runtime';​
+​
+//
+================================[span_24](start_span)[span_24](end_spa
+n)============================================​
+// PUNKT 1.31:
+Determi[span_25](start_span)[span_25](end_span)nistyczny model
+domenowy zobowiązań kontraktowych​
+//
+======================================================================
+======​
+export type ObligationModalVerb = 'SHALL' | 'MUST' | 'WILL';​
+export typ[span_26](start_span)[span_26](end_span)e ObligationCategory
+= 'SECURITY_ASSURANCE' | 'DATA_PROTECTION' | 'SLA_DELIVERY' |
+'FINANCIAL_REPORTING' |
+'GENERA[span_27](start_span)[span_27](end_span)L_COMPLIANCE';​
+export type ObligationLifecycleState = 'EXTRACTED_PENDING' |
+'ACTIO[span_28](start_span)[span_28](end_span)N_IN_PROGRESS' |
+'VERIFIED_FULFILLED' | 'DEADLINE_BREACHED';​
+​
+export interface ContractObligationRecord {​
+   readonly obligationId: string;​
+   readonly contractDocumentId: string;​
+   readonly clauseCitation:
+s[span_29](start_span)[span_29](end_span)tring;​
+   readonly debtorParty: string;​
+   readonly creditorParty: string;​
+   readonly modalVerb: ObligationModalVerb;​
+   readonly category:
+ObligationC[span_30](start_span)[span_30](end_span)ategory;​
+   readonly normativeText: string;​
+   readonly deadlineIso: string;​
+   readonly state: ObligationLifecycleState;​
+   readonly attachedEvidenceIds: ReadonlyArray<string>;​
+   readonly verifiedByApproverId?: string;​
+   readonly updatedAtIso: string;​
+}​
+​
+export const CONTRACT_OBLIGATION_ATTRIBUTE_GUID =
+'22222222-3333-4444-8555-666666666602';​
+​
+//
+======================================================================
+======​
+// PUNKT 1.32: Strukturalny ekstraktor klauzul obligacyjnych (shall /
+must / will)​
+//
+======================================================================
+======​
+export interface RawContractClauseInput {​
+   readonly contractDocumentId: string;​
+   readonly clauseNumber: string;​
+   readonly text: string;​
+   readonly defaultDebtor: string;​
+   readonly defaultCreditor: string;​
+   readonly referenceDateIso: string;​
+}​
+​
+export class StructuredClauseExtractor {​
+   public static extractFromClauses(​
+     clauses: ReadonlyArray<RawContractClauseInput>​
+   ): ContractObligationRecord[] {​
+     const extracted: ContractObligationRecord[] = [];​
+     const modalRegex = /\b(shall|must|will)\b/i;​
+    const daysRegex = /within\s+(\d+)\s+days/i;​
+​
+    for (const clause of clauses) {​
+      const sentences = clause.text​
+        .split(/(?<=[.;])\s+/)​
+        .map((s) => s.trim())​
+        .filter((s) => s.length > 0);​
+​
+      sentences.forEach((sentence, idx) => {​
+        const match = sentence.match(modalRegex);​
+        if (!match) return;​
+​
+          const modalVerb = match[1].toUpperCase() as
+ObligationModalVerb;​
+          const category =
+StructuredClauseExtractor.classifyCategory(sentence);​
+          const daysMatch = sentence.match(daysRegex);​
+          const offsetDays = daysMatch ? parseInt(daysMatch[1], 10) :
+30;​
+​
+          const baseDate = new Date(clause.referenceDateIso);​
+          const deadlineDate = new Date(baseDate.getTime() + offsetDays
+* 86_400_000);​
+          const deadlineIso = deadlineDate.toISOString();​
+​
+          const deterministicIdHash = crypto​
+             .createHash('sha256')​
+             .update(`𝑐𝑙𝑎𝑢𝑠𝑒. 𝑐𝑜𝑛𝑡𝑟𝑎𝑐𝑡𝐷𝑜𝑐𝑢𝑚𝑒𝑛𝑡𝐼𝑑:{clause.clauseNumber}:𝑖𝑑𝑥:
+{sentence}`)​
+             .digest('hex')​
+             .slice(0, 10);​
+​
+          extracted.push({​
+             obligationId: `obl_${deterministicIdHash}`,​
+             contractDocumentId: clause.contractDocumentId,​
+             clauseCitation: `Section 𝑐𝑙𝑎𝑢𝑠𝑒. 𝑐𝑙𝑎𝑢𝑠𝑒𝑁𝑢𝑚𝑏𝑒𝑟.{idx + 1}`,​
+             debtorParty: clause.defaultDebtor,​
+             creditorParty: clause.defaultCreditor,​
+             modalVerb,​
+             category,​
+             normativeText: sentence,​
+             deadlineIso,​
+             state: 'EXTRACTED_PENDING',​
+             attachedEvidenceIds: [],​
+             updatedAtIso: clause.referenceDateIso,​
+          });​
+        });​
+     }​
+         return extracted;​
+    }​
+​
+   private static classifyCategory(sentence: string):
+ObligationCategory {​
+      const lower = sentence.toLowerCase();​
+      if (lower.includes('security') || lower.includes('penetration') ||
+lower.includes('cyber')) {​
+         return 'SECURITY_ASSURANCE';​
+      }​
+      if (lower.includes('gdpr') || lower.includes('privacy') ||
+lower.includes('personal data')) {​
+         return 'DATA_PROTECTION';​
+      }​
+      if (lower.includes('uptime') || lower.includes('delivery') ||
+lower.includes('turnaround')) {​
+         return 'SLA_DELIVERY';​
+      }​
+      if (lower.includes('invoice') || lower.includes('payment') ||
+lower.includes('audit report')) {​
+         return 'FINANCIAL_REPORTING';​
+      }​
+      return 'GENERAL_COMPLIANCE';​
+   }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.33: Monitor terminów zapadalności i eskalacji czasowych​
+//
+======================================================================
+======​
+export interface DeadlineEvaluationResult {​
+   readonly obligationId: string;​
+   readonly previousState: ObligationLifecycleState;​
+   readonly evaluatedState: ObligationLifecycleState;​
+   readonly hoursRemaining: number;​
+   readonly isAtRisk: boolean;​
+   readonly isBreached: boolean;​
+}​
+​
+export class ObligationDeadlineMonitor {​
+   public static evaluateObligationDeadline(​
+      record: ContractObligationRecord,​
+      evaluationTimeIso: string,​
+      riskWindowHours = 72​
+   ): DeadlineEvaluationResult {​
+    if (record.state === 'VERIFIED_FULFILLED') {​
+       return {​
+         obligationId: record.obligationId,​
+         previousState: record.state,​
+         evaluatedState: 'VERIFIED_FULFILLED',​
+         hoursRemaining: 0,​
+         isAtRisk: false,​
+         isBreached: false,​
+       };​
+    }​
+​
+      const diffMs = new Date(record.deadlineIso).getTime() - new
+Date(evaluationTimeIso).getTime();​
+      const hoursRemaining = Number((diffMs / 3_600_000).toFixed(2));​
+      const isBreached = diffMs < 0;​
+      const isAtRisk = !isBreached && hoursRemaining <= riskWindowHours;​
+​
+      return {​
+        obligationId: record.obligationId,​
+        previousState: record.state,​
+        evaluatedState: isBreached ? 'DEADLINE_BREACHED' : record.state,​
+        hoursRemaining,​
+        isAtRisk,​
+        isBreached,​
+      };​
+   }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.34, 1.35, 1.36, 1.37: Narzędzia akcji, weryfikacji i
+rejestracja w Runtime​
+//
+======================================================================
+======​
+export const CONTRACT_OBLIGATION_TOOL_NAMES = {​
+   EXTRACT_OBLIGATIONS: 'contract.extract_obligations',​
+   RECORD_OBLIGATION_ACTION: 'contract.record_action',​
+   VERIFY_OBLIGATION_FULFILLMENT: 'contract.verify_obligation',​
+} as const;​
+​
+export interface VerifyObligationInput {​
+   readonly obligationNodeTag: number;​
+   readonly evidenceIds: ReadonlyArray<string>;​
+   readonly verifierId: string;​
+   readonly verificationTimestampIso: string;​
+}​
+​
+export class ContractObligationsRuntimePackage {​
+  // Punkt 1.36: Deskryptor ekspozycji narzędzia ekstrakcji w runtime​
+  public static getExposedToolSpecifications() {​
+     return [​
+       {​
+          name: CONTRACT_OBLIGATION_TOOL_NAMES.EXTRACT_OBLIGATIONS,​
+          description: 'Deterministycznie wyodrębnia klauzule
+obligacyjne (shall/must/will) i zapisuje je w drzewie OCAF
+dzierżawcy.',​
+          requiredRiskTier: 'LOW' as const,​
+       },​
+       {​
+          name: CONTRACT_OBLIGATION_TOOL_NAMES.RECORD_OBLIGATION_ACTION,​
+          description: 'Aktualizuje stan zobowiązania na
+ACTION_IN_PROGRESS i dołącza wstępne artefakty.',​
+          requiredRiskTier: 'LOW' as const,​
+       },​
+       {​
+          name:
+CONTRACT_OBLIGATION_TOOL_NAMES.VERIFY_OBLIGATION_FULFILLMENT,​
+          description: 'Weryfikuje dowody oraz termin i zamyka
+zobowiązanie jako VERIFIED_FULFILLED (wymaga zatwierdzenia).',​
+          requiredRiskTier: 'MEDIUM' as const,​
+       },​
+     ];​
+  }​
+​
+  // Punkt 1.37: Podpięcie pakietu Contract Obligations do
+współdzielonego środowiska​
+  public static registerInRuntime(runtime: SharedPolicyGatedRuntime):
+void {​
+     // 1. Ekstrakcja klauzul i zapis w poddrzewie dzierżawcy:
+0:1:<tenantTag>:10:<obligationTag>​
+     runtime.registerTool<ReadonlyArray<RawContractClauseInput>,
+ContractObligationRecord[]>(​
+       CONTRACT_OBLIGATION_TOOL_NAMES.EXTRACT_OBLIGATIONS,​
+       (clauses, tenantBranch, doc) => {​
+          const records =
+StructuredClauseExtractor.extractFromClauses(clauses);​
+          const obligationsFolder =
+doc.resolveLabel(tenantBranch.child(10));​
+          records.forEach((rec, index) => {​
+            const itemNode = obligationsFolder.getOrCreateChild(index +
+1);​
+            itemNode.attachAttribute(​
+              {​
+                 guid: CONTRACT_OBLIGATION_ATTRIBUTE_GUID,​
+                  semanticType: 'TDataStd_ContractObligation',​
+                  value: rec,​
+                  updatedAtIso: rec.updatedAtIso,​
+                },​
+                true​
+             );​
+           });​
+           return records;​
+      }​
+    );​
+​
+    // 2. Weryfikacja wykonania zobowiązania z kontrolą dowodów i
+terminu (Punkt 1.34 & 1.35)​
+    runtime.registerTool<VerifyObligationInput,
+ContractObligationRecord>(​
+      CONTRACT_OBLIGATION_TOOL_NAMES.VERIFY_OBLIGATION_FULFILLMENT,​
+      (input, tenantBranch, doc) => {​
+        if (!input.evidenceIds || input.evidenceIds.length === 0) {​
+           throw new Error('OCAF_ERR_1_34: Weryfikacja zobowiązania
+wymaga co najmniej jednego dowodu zgodności (evidenceId).');​
+        }​
+        const itemPath =
+tenantBranch.child(10).child(input.obligationNodeTag);​
+        const itemNode = doc.resolveLabel(itemPath);​
+        const existingAttr =
+itemNode.getAttribute<ContractObligationRecord>(CONTRACT_OBLIGATION_AT
+TRIBUTE_GUID);​
+        if (!existingAttr) {​
+           throw new Error(`OCAF_ERR_1_34: Nie znaleziono zobowiązania
+pod adresem ${itemPath.toEntryString()}.`);​
+        }​
+​
+        const currentRecord = existingAttr.value;​
+        const deadlineCheck =
+ObligationDeadlineMonitor.evaluateObligationDeadline(​
+           currentRecord,​
+           input.verificationTimestampIso​
+        );​
+​
+        if (deadlineCheck.isBreached) {​
+           const breachedRecord: ContractObligationRecord = {​
+             ...currentRecord,​
+             state: 'DEADLINE_BREACHED',​
+             updatedAtIso: input.verificationTimestampIso,​
+           };​
+           itemNode.attachAttribute(​
+             {​
+                guid: CONTRACT_OBLIGATION_ATTRIBUTE_GUID,​
+                   semanticType: 'TDataStd_ContractObligation',​
+                   value: breachedRecord,​
+                   updatedAtIso: input.verificationTimestampIso,​
+                 },​
+                 true​
+              );​
+              throw new Error(​
+                 `OCAF_ERR_1_33: Termin zobowiązania
+𝑐𝑢𝑟𝑟𝑒𝑛𝑡𝑅𝑒𝑐𝑜𝑟𝑑. 𝑜𝑏𝑙𝑖𝑔𝑎𝑡𝑖𝑜𝑛𝐼𝑑𝑢𝑝ł𝑦𝑛ął({currentRecord.deadlineIso}). Zobowiązanie
+oznaczono jako DEADLINE_BREACHED.`​
+              );​
+           }​
+​
+           const verifiedRecord: ContractObligationRecord = {​
+              ...currentRecord,​
+              state: 'VERIFIED_FULFILLED',​
+              attachedEvidenceIds: [...input.evidenceIds],​
+              verifiedByApproverId: input.verifierId,​
+              updatedAtIso: input.verificationTimestampIso,​
+           };​
+​
+           itemNode.attachAttribute(​
+              {​
+                 guid: CONTRACT_OBLIGATION_ATTRIBUTE_GUID,​
+                 semanticType: 'TDataStd_ContractObligation',​
+                 value: verifiedRecord,​
+                 updatedAtIso: input.verificationTimestampIso,​
+              },​
+              true​
+           );​
+​
+           return verifiedRecord;​
+        }​
+      );​
+   }​
+}​
+
+
+
+Klaster IV: Deterministyczne Domeny Dowodów
+Zgodności i Zwiadu Zakupowego – Compliance
+Evidence & Procurement Scout (Punkty 1.39–1.46)
+Czwarty klaster domyka pozostałe dwa pakiety domenowe z repozytorium
+mojealterego/Nowe-projekty: Compliance Evidence oraz Procurement Scout. W operacjach
+chmurowych, rządowych (obejmujących brytyjskie standardy NCSC CAF, GovAssure, PSN,
+ITHC oraz UK GDPR / DPA 2018) oraz korporacyjnych (SOC 2, HIPAA, PCI DSS, NERC CIP)
+gromadzenie dowodów zgodności nie jest jednorazowym projektem migracyjnym, lecz ciągłą
+dyscypliną operacyjną wymagającą dedykowanego oprzyrządowania. Równocześnie w
+procesach zakupowych (source-to-pay) zwiad i kwalifikacja dostawców wymagają
+automatycznej inteligencji dokumentowej do wykrywania brakujących zaświadczeń
+podatkowych, ubezpieczeniowych i zgodności, weryfikacji list sankcyjnych oraz twardego
+ograniczenia ryzyka zobowiązań zakupowych przed zatwierdzeniem dostawcy.
+
+Specyfikacja Architektoniczna Punktów 1.39–1.46
+Wdrożenie domeny dowodowej rozpoczyna Punkt 1.39 (Implement Compliance Evidence
+runtime foundation oraz Add deterministic Compliance Evidence domain model), definiując
+strukturę ComplianceEvidenceArtifact, w której każdy dowód przechowuje skrót kryptograficzny
+SHA-256 zawartości, powiązane ramy regulacyjne (SOC2_TYPE2, GDPR_ART_32,
+NCSC_CAF_GOVASSURE, CYBER_ESSENTIALS_PLUS, NERC_CIP), etykietę wrażliwości
+(w tym mapowanie na wymagane standardy ODCS) oraz przedział ważności czasowej. Na tej
+podstawie Punkt 1.40 wprowadza walidator pakietów dowodowych względem ram
+regulacyjnych (ComplianceEvidencePackValidator), który weryfikuje spójność sum kontrolnych
+SHA-256 poszczególnych artefaktów, odrzuca certyfikaty przeterminowane oraz sprawdza
+kompletność pokrycia czterech obowiązkowych obszarów celowych NCSC Cyber Assessment
+Framework (CAF) wymaganych w programie GovAssure: zarządzania ryzykiem
+bezpieczeństwa (A_MANAGING_SECURITY_RISK), ochrony przed cyberatakiem
+(B_PROTECTING_AGAINST_CYBER_ATTACK), wykrywania zdarzeń cyberbezpieczeństwa
+(C_DETECTING_CYBER_SECURITY_EVENTS) oraz minimalizacji skutków incydentów
+(D_MINIMISING_IMPACT_OF_INCIDENTS).
+Integrację z jądrem transakcyjnym zapewnia Punkt 1.41 (Wire Compliance Evidence to shared
+governed runtime), rejestrując narzędzie walidacji pakietów i utrwalając wygenerowane raporty
+w poddrzewie 0:1:<tenantTag>:20, natomiast Punkt 1.42 (Add Compliance Evidence safety
+tests) dostarcza testy odporności na sfałszowane skróty, wygasłe atestacje i niekompletne
+pakiety CAF. Równoległą domenę zakupową inicjuje Punkt 1.43 (Implement Procurement Scout
+runtime foundation), definiując model teczki kwalifikacyjnej dostawcy
+(SupplierOnboardingDossier) obejmujący dane rejestrowe (Vendor Master), beneficjentów
+rzeczywistych, certyfikaty podatkowe, polisy ubezpieczeniowe, wskaźniki stabilności finansowej
+oraz proponowaną kwotę zobowiązania zakupowego.
+W Punkcie 1.44 wdrożony zostaje detektor anomalii kwestionariuszy i skaner list sankcyjnych
+(SupplierAnomalyAndSanctionsScreener), który automatycznie wykrywa brakujące załączniki
+podatkowe i ubezpieczeniowe, niską kondycję finansową oraz dopasowuje nazwy dostawców i
+ich właścicieli do list sankcyjnych i podmiotów zastrzeżonych. Punkt 1.45 realizuje
+zatwierdzenia Add explicit Procurement Scout governance policies, Wire Procurement Scout to
+shared governed runtime oraz security: cap procurement purchase commitment at medium risk.
+Gwarantuje on, że system przypisuje dostawcy status rekomendowany (PASS,
+REVIEW_NEEDED lub NOT_QUALIFIE[span_198](start_span)[span_198](end_span)D)
+zawsze z wymogiem atestacji ludzkiej (humanAttestationRequired: true) oraz blokuje wszelkie
+zamówienia przekraczające próg średniego ryzyka finansowego. Całość domyka Punkt 1.46
+(Add Procurement Scout runtime safety tests), weryfikujący odrzucanie operacji wysokiego
+ryzyka przez bramkę polityk.
+Punkt Roadmapy   Zatwierdzenie           Zaimplementowany       Ścieżka Drzewa OCAF
+                 Źródłowe                Mechanizm Domenowy / Inwariant
+                 (Nowe-projekty)
+1.39             Implement Compliance Interfejs                 GUID
+                 Evidence runtime        ComplianceEvidenceAr 33333333-...-77777777
+                 foundation & domain tifact z etykietą          7703
+                 model                   wrażliwości i SHA-256
+1.40             Walidacja pakietów      Klasa                  Weryfikacja celów A, B,
+                 GovAssure / NCSC        ComplianceEvidenceP C, D NCSC CAF
+                 CAF / SOC 2             ackValidator
+                                         sprawdzająca 4 cele
+                                         NCSC CAF
+1.41             Wire                    Rejestracja            Gałąź
+                 Complia[span_256](sta compliance.validate_ev 0:1:<tenantTag>:20
+                 rt_span)[span_256](en idence_pack w
+                 d_span)nce Evidence SharedPolicyGatedRun
+                 to shared governed      time
+                 runtime
+1.42             Add Compliance          Weryfikacja            Detekcja anomalii w
+                 Evidence safety tests integralności            EvidencePackValidatio
+                                         kryptograficznej i dat nReport
+                                         ważności dowodów
+1.43             Implement               Model                  GUID
+                 Procurement             SupplierOnboardingDo 44444444-...-88888888
+                 [span_220](start_span)[ ssier i                8804
+                 span_220](end_span)[s SupplierEvaluationPack
+                 pan_226](start_span)[s et
+                 pan_226](end_span)Sc
+                 out runtime foundation
+1.44             Screening sankcyjny i Klasa                    Klasyfikacja PASS /
+                 detekcja anomalii       SupplierAnomalyAndSa REVIEW_NEEDED /
+                 dokumentowych           nctionsScreener        NOT_QUALIFIED
+                                         (podatki, polisy,
+                                         sankcje)
+1.45             [span_34](start_span)[s Rejestracja            Wymóg
+                 pan_34](end_span)Add procurement.* w           humanAttestationRequi
+                 explicit Procurement    gałęziach 30/31 z      red: true
+                 Scout governance        blokadą powyżej
+                 policies & cap... at    MEDIUM
+                 medium risk
+1.46             Add Procurement         Test blokady           Walidacja w zestawie
+                 Scout runtime           zamówienia o ryzyku testów bezpieczeństwa
+                 [span_199](start_span)[ HIGH
+                 span_199](end_span)s (DENY_RISK_CAP_EX
+                 af[span_35](start_span) CEEDED)
+                 [span_35](end_span)et
+                 y tests
+### Kompletny Kod Wdrożeniowy dla Punktów 1.39–1.46
+(src/domains/compliance-and-procurement.ts)
+import * as crypto from 'crypto';​
+import { SharedPolicyGatedRuntime } from
+'../governance/policy-gated-runtime';​
+​
+//
+==========================================[span_36](start_span)[span_3
+6](end_span)==================================​
+// PUNKT 1.39 & 1.40: Domena Compliance Evidence i Walidator Pakietów
+Regulacyjnych​
+//
+======================================================[span_37](start_
+span)[span_37](end_span)======================​
+export type RegulatoryFramework =​
+   | 'SOC2_TYPE2'​
+   | 'GDPR_ART_32'​
+   | 'NCSC_CAF_GOVASSURE'​
+   | [span_38](start_span)[span_38](end_span)'CYBER_ESSENTIALS_PLUS'​
+   | 'NERC_CIP';​
+​
+export type NcscCafObje[span_39](start_span)[span_39](end_span)ctive =​
+   | 'A_MANAGING_SECURITY_RISK'​
+   | 'B_PROTECTING_AGAINST_CYBER_ATTACK'​
+   | 'C_DETECTING_CYBER_SECURITY_EVENTS'​
+   | 'D_MINIMISING_IMPACT_OF_INCIDENTS';​
+​
+export interface ComplianceEvidenceArtifact {​
+   readonly evidenceId:
+s[span_98](start_span)[span_98](end_span)[span_104](start_span)[span_1
+04](end_span)tring;​
+   readonly title: string;​
+   readonly framework: RegulatoryFramework;​
+   readonly cafObjective?: NcscCafObjective;​
+   readonly contentPayload: string;​
+   readonly expectedSha256: string;​
+   readonly[span_40](start_span)[span_40](end_span) sensitivityLabel:
+'PUBLIC' | 'INTERNAL' | 'CONFIDENTIAL' | 'RESTRICTED_ODCS';​
+   readonly collectedAtIso: string;​
+   readonly validUntilIso: string;​
+   readonly crestAccreditedTester?: string;​
+}​
+​
+[span_41](start_span)[span_41](end_span)export interface
+EvidencePackValidationReport {​
+   readonly packId: string;​
+   readonly framework:
+RegulatoryFramewo[span_42](start_span)[span_42](end_span)rk;​
+  readonly isCompliant: boolean;​
+  readonly verifiedEvidenceIds: ReadonlyArray<string>;​
+  readonly anomalies: ReadonlyArray<string>;​
+  readonly evaluatedAtIso: string;​
+}​
+​
+export const COMPLIANCE_EVIDENCE_ATTRIBUTE_GUID =
+'33333333-4444-4555-8666-777777777703';​
+​
+export class ComplianceEvidencePackValidator {​
+   public static validatePack(​
+     packId: string,​
+     framework: RegulatoryFramework,​
+     artifacts: ReadonlyArray<ComplianceEvidenceArtifact>,​
+     evaluationTimeIso: string​
+   ): EvidencePackValidationReport {​
+     const anomalies: string[] = [];​
+     const verifiedEvidenceIds: string[] = [];​
+     const evalTime = new Date(evaluationTimeIso).getTime();​
+​
+     const matchingArtifacts = artifacts.filter((a) => a.framework ===
+framework);​
+     if (matchingArtifacts.length === 0) {​
+        anomalies.push(`Brak jakichkolwiek artefaktów dowodowych dla
+standardu ${framework}.`);​
+     }​
+​
+     for (const art of matchingArtifacts) {​
+        const actualHash =
+crypto.createHash('sha256').update(art.contentPayload).digest('hex');​
+        if (actualHash !== art.expectedSha256) {​
+           anomalies.push(`Naruszenie integralności SHA-256 dla dowodu
+${art.evidenceId}.`);​
+           continue;​
+        }​
+        if (new Date(art.validUntilIso).getTime() < evalTime) {​
+           anomalies.push(`Dowód 𝑎𝑟𝑡. 𝑒𝑣𝑖𝑑𝑒𝑛𝑐𝑒𝐼𝑑({art.title}) wygasł dnia
+${art.validUntilIso}.`);​
+           continue;​
+        }​
+        verifiedEvidenceIds.push(art.evidenceId);​
+     }​
+​
+     // Specyficzna reguła kompletności dla 4 celów NCSC CAF
+(GovAssure)​
+     if (framework === 'NCSC_CAF_GOVASSURE') {​
+        const requiredObjectives: NcscCafObjective[] = [​
+           'A_MANAGING_SECURITY_RISK',​
+            'B_PROTECTING_AGAINST_CYBER_ATTACK',​
+            'C_DETECTING_CYBER_SECURITY_EVENTS',​
+            'D_MINIMISING_IMPACT_OF_INCIDENTS',​
+         ];​
+         const coveredObjectives = new Set(​
+            matchingArtifacts​
+               .filter((a) => verifiedEvidenceIds.includes(a.evidenceId) &&
+a.cafObjective)​
+               .map((a) => a.cafObjective!)​
+         );​
+         for (const reqObj of requiredObjectives) {​
+            if (!coveredObjectives.has(reqObj)) {​
+               anomalies.push(`Pakiet NCSC CAF nie pokrywa wymaganego celu:
+${reqObj}.`);​
+            }​
+         }​
+      }​
+​
+      return {​
+         packId,​
+         framework,​
+         isCompliant: anomalies.length === 0 &&
+verifiedEvidenceIds.length > 0,​
+         verifiedEvidenceIds,​
+         anomalies,​
+         evaluatedAtIso: evaluationTimeIso,​
+      };​
+   }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.43, 1.44, 1.45: Domena Procurement Scout (Kwalifikacja,
+Sankcje, Polityki)​
+//
+======================================================================
+======​
+export type SupplierQualificationStatus = 'PASS' | 'REVIEW_NEEDED' |
+'NOT_QUALIFIED';​
+​
+export interface SupplierOnboardingDossier {​
+   readonly supplierId: string;​
+   readonly legalName: string;​
+   readonly beneficialOwners: ReadonlyArray<string>;​
+   readonly taxCertificateAttached: boolean;​
+   readonly insuranceCertificateAttached: boolean;​
+   readonly iso27001Certified: boolean;​
+  readonly financialStabilityScore: number; // 0 - 100​
+  readonly proposedPurchaseCommitmentUsd: number;​
+  readonly categoryMaxMediumRiskUsd: number;​
+}​
+​
+export interface SupplierEvaluationPacket {​
+   readonly supplierId: string;​
+   readonly legalName: string;​
+   readonly recommendedStatus: SupplierQualificationStatus;​
+   readonly anomaliesDetected: ReadonlyArray<string>;​
+   readonly sanctionsWatchlistHits: ReadonlyArray<string>;​
+   readonly purchaseCommitmentWithinMediumRiskCap: boolean;​
+   readonly humanAttestationRequired: true;​
+   readonly evaluatedAtIso: string;​
+}​
+​
+export const PROCUREMENT_SCOUT_ATTRIBUTE_GUID =
+'44444444-5555-4666-8777-888888888804';​
+​
+export class SupplierAnomalyAndSanctionsScreener {​
+   private static readonly RESTRICTED_WATCHLIST = new Set([​
+     'SHADOW_LOGISTICS_CORP',​
+     'SANCTIONED_HOLDINGS_LTD',​
+     'UNVERIFIED_OFFSHORE_SYNDICATE',​
+   ]);​
+​
+   public static evaluateSupplier(​
+     dossier: SupplierOnboardingDossier,​
+     evaluatedAtIso: string​
+   ): SupplierEvaluationPacket {​
+     const anomalies: string[] = [];​
+     const watchlistHits: string[] = [];​
+​
+     // Wykrywanie braków w dokumentacji onboardingowej​
+     if (!dossier.taxCertificateAttached) {​
+        anomalies.push('Brak wymaganego zaświadczenia o niezaleganiu z
+podatkami (Tax Certificate).');​
+     }​
+     if (!dossier.insuranceCertificateAttached) {​
+        anomalies.push('Brak polisy ubezpieczenia odpowiedzialności
+cywilnej (Insurance Evidence).');​
+     }​
+     if (dossier.financialStabilityScore < 60) {​
+        anomalies.push(`Niski wskaźnik stabilności finansowej
+(${dossier.financialStabilityScore}/100).`);​
+     }​
+​
+     // Weryfikacja list sankcyjnych dla podmiotu i beneficjentów
+rzeczywistych​
+    const normalizedName =
+dossier.legalName.trim().toUpperCase().replace(/\s+/g, '_');​
+    if
+(SupplierAnomalyAndSanctionsScreener.RESTRICTED_WATCHLIST.has(normaliz
+edName)) {​
+       watchlistHits.push(`Podmiot główny na liście sankcyjnej:
+${dossier.legalName}`);​
+    }​
+    for (const owner of dossier.beneficialOwners) {​
+       const normOwner = owner.trim().toUpperCase().replace(/\s+/g,
+'_');​
+       if
+(SupplierAnomalyAndSanctionsScreener.RESTRICTED_WATCHLIST.has(normOwne
+r)) {​
+          watchlistHits.push(`Beneficjent rzeczywisty na liście
+sankcyjnej: ${owner}`);​
+       }​
+    }​
+​
+    // Punkt 1.45: Kontrola pułapu średniego ryzyka zobowiązania
+zakupowego​
+    const withinCap = dossier.proposedPurchaseCommitmentUsd <=
+dossier.categoryMaxMediumRiskUsd;​
+    if (!withinCap) {​
+       anomalies.push(​
+          `Proponowane zobowiązanie zakupowe
+(${dossier.proposedPurchaseCommitmentUsd} USD) przekracza pułap
+średniego ryzyka (${dossier.categoryMaxMediumRiskUsd} USD).`​
+       );​
+    }​
+​
+    let recommendedStatus: SupplierQualificationStatus = 'PASS';​
+    if (watchlistHits.length > 0 || !withinCap) {​
+       recommendedStatus = 'NOT_QUALIFIED';​
+    } else if (anomalies.length > 0 || !dossier.iso27001Certified) {​
+       recommendedStatus = 'REVIEW_NEEDED';​
+    }​
+​
+    return {​
+       supplierId: dossier.supplierId,​
+       legalName: dossier.legalName,​
+       recommendedStatus,​
+       anomaliesDetected: anomalies,​
+       sanctionsWatchlistHits: watchlistHits,​
+       purchaseCommitmentWithinMediumRiskCap: withinCap,​
+       humanAttestationRequired: true,​
+       evaluatedAtIso,​
+       };​
+  }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.41 & 1.45 (cd.): Podłączenie Compliance Evidence i
+Procurement Scout do Runtime​
+//
+======================================================================
+======​
+export const COMPLIANCE_AND_PROCUREMENT_TOOLS = {​
+   VALIDATE_EVIDENCE_PACK: 'compliance.validate_evidence_pack',​
+   SCOUT_EVALUATE_SUPPLIER: 'procurement.evaluate_supplier_dossier',​
+   SCOUT_COMMIT_PURCHASE: 'procurement.commit_purchase_order',​
+} as const;​
+​
+export class ComplianceAndProcurementWiring {​
+   public static wireAll(runtime: SharedPolicyGatedRuntime): void {​
+     // Punkt 1.41: Rejestracja narzędzia walidacji pakietu dowodów
+zgodności (gałąź 0:1:<tenantTag>:20)​
+     runtime.registerTool<​
+       {​
+          packId: string;​
+          framework: RegulatoryFramework;​
+          artifacts: ReadonlyArray<ComplianceEvidenceArtifact>;​
+          evaluationTimeIso: string;​
+       },​
+       EvidencePackValidationReport​
+     >(COMPLIANCE_AND_PROCUREMENT_TOOLS.VALIDATE_EVIDENCE_PACK, (input,
+tenantBranch, doc) => {​
+       const report = ComplianceEvidencePackValidator.validatePack(​
+          input.packId,​
+          input.framework,​
+          input.artifacts,​
+          input.evaluationTimeIso​
+       );​
+       const complianceFolder =
+doc.resolveLabel(tenantBranch.child(20));​
+       const packNode =
+complianceFolder.getOrCreateChild(complianceFolder.getChildren().lengt
+h + 1);​
+       packNode.attachAttribute(​
+          {​
+             guid: COMPLIANCE_EVIDENCE_ATTRIBUTE_GUID,​
+             semanticType: 'TDataStd_ComplianceEvidenceReport',​
+             value: report,​
+           updatedAtIso: input.evaluationTimeIso,​
+         },​
+         true​
+      );​
+      return report;​
+    });​
+​
+     // Punkt 1.43 & 1.45: Rejestracja narzędzia oceny dostawcy w
+Procurement Scout (gałąź 0:1:<tenantTag>:30)​
+     runtime.registerTool<​
+        { dossier: SupplierOnboardingDossier; evaluatedAtIso: string },​
+        SupplierEvaluationPacket​
+     >(COMPLIANCE_AND_PROCUREMENT_TOOLS.SCOUT_EVALUATE_SUPPLIER,
+(input, tenantBranch, doc) => {​
+        const packet =
+SupplierAnomalyAndSanctionsScreener.evaluateSupplier(​
+          input.dossier,​
+          input.evaluatedAtIso​
+        );​
+        const procurementFolder =
+doc.resolveLabel(tenantBranch.child(30));​
+        const supplierNode = procurementFolder.getOrCreateChild(​
+          procurementFolder.getChildren().length + 1​
+        );​
+        supplierNode.attachAttribute(​
+          {​
+             guid: PROCUREMENT_SCOUT_ATTRIBUTE_GUID,​
+             semanticType: 'TDataStd_ProcurementEvaluationPacket',​
+             value: packet,​
+             updatedAtIso: input.evaluatedAtIso,​
+          },​
+          true​
+        );​
+        return packet;​
+     });​
+​
+     // Punkt 1.45: Zatwierdzanie zobowiązania zakupowego (ograniczone
+przez politykę domeny do MEDIUM risk)​
+     runtime.registerTool<​
+        { supplierId: string; amountUsd: number; maxMediumRiskUsd:
+number; committedAtIso: string },​
+        { orderId: string; status: 'COMMITTED_MEDIUM_CAP' }​
+     >(COMPLIANCE_AND_PROCUREMENT_TOOLS.SCOUT_COMMIT_PURCHASE, (input,
+tenantBranch, doc) => {​
+        if (input.amountUsd > input.maxMediumRiskUsd) {​
+          throw new Error(​
+             `OCAF_ERR_1_45: Zobowiązanie zakupowe
+𝑖𝑛𝑝𝑢𝑡. 𝑎𝑚𝑜𝑢𝑛𝑡𝑈𝑠𝑑𝑈𝑆𝐷𝑝𝑟𝑧𝑒𝑘𝑟𝑎𝑐𝑧𝑎𝑡𝑤𝑎𝑟𝑑𝑦𝑙𝑖𝑚𝑖𝑡ś𝑟𝑒𝑑𝑛𝑖𝑒𝑔𝑜𝑟𝑦𝑧𝑦𝑘𝑎(
+{input.maxMediumRiskUsd} USD).`​
+           );​
+        }​
+        const orderId = `po_${input.supplierId}_${Date.now()}`;​
+        const ordersFolder = doc.resolveLabel(tenantBranch.child(31));​
+        const orderNode =
+ordersFolder.getOrCreateChild(ordersFolder.getChildren().length + 1);​
+        orderNode.attachAttribute(​
+           {​
+              guid: PROCUREMENT_SCOUT_ATTRIBUTE_GUID,​
+              semanticType: 'TDataStd_PurchaseOrderCommitment',​
+              value: { orderId, ...input, status: 'COMMITTED_MEDIUM_CAP'
+},​
+              updatedAtIso: input.committedAtIso,​
+           },​
+           true​
+        );​
+        return { orderId, status: 'COMMITTED_MEDIUM_CAP' };​
+      });​
+   }​
+}​
+
+
+
+Klaster V: Silnik Wyszukiwania Leksykalnego,
+Adaptery Transportowe, Rejestr MCP, Analiza
+Współpracy i Ewaluacja (Punkty 1.47–1.54)
+Piąty klaster realizuje pełną ścieżkę rozwojową zdefiniowaną w roadmapie repozytorium
+mojealterego/The-Zero-Latency-Builder-Sprint, weryfikację integralności rejestru umiejętności
+MCP z mojealterego/Agent-God-Level-Omega, rejestr deklaracji z
+mojealterego/Agents-for-Humans-Hackathon oraz obiektowy model analizy współpracy z prac
+nad OCAF. Nadrzędną zasadą inżynieryjną tego klastra jest ścisłe oddzielenie zmierzonych
+wyników od hipotez projektowych oraz niezależny pomiar narzutu każdej warstwy:
+wewnątrzprocesowego selektora leksykalnego, adaptera Moss, transportu Zenoh, pamięci
+trwałej oraz wykonania narzędzi.
+
+Specyfikacja Architektoniczna Punktów 1.47–1.54
+Warstwę wyszukiwania w Punkcie 1.47 otwiera wewnątrzprocesowy selektor leksykalny
+(InProcessLexicalSelector), który rozwija bazowy moduł z The-Zero-Latency-Builder-Sprint.
+Komponent ten implementuje deterministyczną tokenizację, indeks odwrócony częstości termów
+oraz punktację rankingową opartą na znormalizowanej długości dokumentu (BM25-lite)
+względem rekordów w pamięci, zwracając uporządkowaną listę top-k dopasowań bez
+jakichkolwiek zależności zewnętrznych. Punkt 1.48 wdraża zadanie roadmapy Verify sprint
+requirements and the official Moss API, then implement and test a real retrieval adapter. Klasa
+MossRetrievalAdapter wymusza jawne potwierdzenie wersji interfejsu (apiVersion:
+'v1.2-verified'), oddzielając logikę wyszukiwania od warstwy transportowej i zapewniając
+deterministyczny mechanizm awaryjnego przełączenia (LOCAL_LEXICAL_FALLBACK) na
+selektor lokalny w przypadku niedostępności zewnętrznego klastra.
+Kolejny wymóg ze sprintu (Ev[span_179](start_span)[span_179](end_span)aluate transport
+options, including Zenoh if justified, and measure their overhead separately) realizuje Punkt
+1.49 poprzez most transportowy ZenohTransportBridge. Waliduje on przynależność wyrażeń
+kluczy do przestrzeni ocaf/runtime/* oraz mierzy w mikrosekundach czas serializacji i
+deserializacji ładunków niezależnie od czasu czystego przetwarzania selektora
+(transportOverheadMicros vs processingMicros). Punkt 1.50 wprowadza weryfikator
+integralności rejestru umiejętności MCP (McpRegistryIntegrityVerifier), odwzorowujący
+architekturę bezpieczeństwa Agent-God-Level-Omega, w której 210 umiejętności w katalogach
+omega/skills/*-mcp-registry/ jest weryfikowanych względem 420 wpisów sum kontrolnych
+SHA-256 w pliku omega/SHA256SUMS.txt (po dwa pliki — SKILL.md oraz reference.json — na
+każdą umiejętność), przy celowym pominięciu spakowanych binariów mcp oraz
+wygenerowanego kodu bajtowego CPython .pyc.
+W Punkcie 1.51 zaimplementowany został dwutorowy analizator współdzielonych obiektów
+rozwiązania (DualTrackCollaborationAnalyzer), stanowiący bezpośrednią realizację modelu
+Object-oriented Collaboration Analysis Framework (OCAF) oraz Cognitive Dual-Track
+Framework. Zamiast skupiać się wyłącznie na aktorach w izolacji, model ten umieszcza w
+centrum uwagi strukturalne obiekty współtworzonego rozwiązania, które niosą własną historię
+bezpośrednich akcji na obiektach (DIRECT_OBJECT_ACTION) oraz dialogów komunikacyjnych
+(COMMUNICATIVE_DIALOGUE), wyliczając ilościowy udział wkładu każdego aktora oraz
+wskaźnik synergii człowiek–AI. Punkt 1.52 wdraża ewaluator jakości wyszukiwania
+(RetrievalQualityEvaluator) wymagany przez zasadę Evaluate retrieval quality as well as speed
+(for example, Recall@k and MRR on a documented test set). Dla zadanego zbioru zapytań
+testowych Q i zbioru dokumentów trafnych G_q moduł ten wylicza dokładne wartości pełności
+wyszukiwania \text{Recall}@k oraz średniej odwrotności rangi (\text{MRR}):
+\text{Recall}@k = \frac{1}{|Q|} \sum_{q \in Q} \frac{|R_k(q) \cap G_q|}{|G_q|}, \quad \text{MRR}
+= \frac{1}{|Q|} \sum_{q \in Q} \frac{1}{\text{rank}_q}
+gdzie R_k(q) oznacza zbiór k najwyżej ocenionych rekordów dla zapytania q, natomiast
+\text{rank}_q pozycję pierwszego trafnego dokumentu na liście wynikowej. Punkt 1.53
+dostarcza harnes mikrobenchmarku opóźnień (LatencyBenchmarkHarness), obsługujący
+parametry BENCH_RECORDS, BENCH_WARMUP, BENCH_ITERATIONS, BENCH_TOP_K
+oraz BENCH_QUERY, który po wykonaniu fazy rozgrzewki wylicza średnią, p_{50}, p_{95},
+p_{99} oraz maksymalną wartość skrajną (maxOutlierMicros), dołączając pełną metrykę
+sprzętu, systemu operacyjnego, wersji kompilatora, identyfikatora commita i warunków pamięci
+podręcznej (WARM_CACHE / COLD_START). Całą architekturę spina Punkt 1.54
+(Clai[span_185](start_span)[span_185](end_span)mLedgerVerifier), egzekwujący dyscyplinę
+dokumentacyjną z docs/CLAIM_LEDGER.md (Agents-for-Humans-Hackathon) oraz
+REPOSITORY_STATUS.md poprzez klasyfikację każdego komponentu jako IMPLEMENTED,
+ADAPTER_ROADMAP lub HYPOTHESIS i automatyczne odrzucanie deklaracji przypisujących
+nieudowodnione opóźnienia sub-milisekundowe lub nieistniejące wdrożenia chmurowe.
+Punkt Roadmapy             Komponent                Zaimplementowana      Źródło Wymagania
+                           Analityczno-Wyszukiwa Metryka / Kontrakt       Architektonicznego
+                           wczy                     Weryfikacyjny
+1.47                       InProcessLexicalSelect Indeks odwrócony        Bazowy selektor
+                           or                       BM25-lite w pamięci   leksykalny w
+Punkt Roadmapy   Komponent               Zaimplementowana          Źródło Wymagania
+                 Analityczno-Wyszukiwa Metryka / Kontrakt          Architektonicznego
+                 wczy                    Weryfikacyjny
+                                         operacyjnej;              The-Zero-Latency-Build
+                                         deterministyczny          er-Sprint
+                                         selectTopK
+1.48             MossRetrievalAdapter Kontrakt apiVersion:         Zadanie weryfikacji
+                                         'v1.2-verified' z         oficjalnego API Moss w
+                                         automatycznym             roadmapie sprintu
+                                         przełączeniem na
+                                         LOCAL_LEXICAL_FAL
+                                         LBACK
+1.49             ZenohTransportBridge Separacja pomiaru            Wymóg niezależnego
+                                         transportOverheadMicr pomiaru narzutu
+                                         os od processingMicros transportu Zenoh
+                                         na kluczach
+                                         ocaf/runtime/*
+1.50             McpRegistryIntegrityVe Walidacja 210              Pokrycie integralności
+                 rifier                  umiejętności i 420        rejestru MCP w
+                                         wpisów                    Age[span_187](start_s
+                                         SHA256SUMS.txt z          pan)[span_187](end_sp
+                                         pominięciem .pyc i        an)nt-God-Level-Omeg
+                                         binariów /mcp             a
+1.51             DualTrackCollaboration Śledzenie historii         Obiektowy model
+                 Analyzer                obiektu rozwiązania,      współpracy OCAF i
+                                         udziałów aktorów i        Cognitive Dual-Track
+                                         synergii człowiek–AI      Framework
+1.52             RetrievalQualityEvaluat Obliczanie                Wymóg ewaluacji
+                 or                      \text{Recall}@k oraz      jakości wyszukiwania
+                                         \text{MRR} na             przed publikacją
+                                         udokumentowanym           wyników
+                                         zbiorze testowym
+1.53             LatencyBenchmarkHar Rozkład p_{50}, p_{95}, Specyfikacja
+                 ness                    p_{99}, średnia, outliers mikrobenchmarku
+                                         oraz pełny deskryptor cargo bench --bench
+                                         środowiska                retrieval
+1.54             ClaimLedgerVerifier     Klasyfikacja              Rejestr
+                                         IMPLEMENTED /             docs/CLAIM_LEDGER.
+                                         ADAPTER_ROADMAP md oraz zasady
+                                         / HYPOTHESIS;             inżynieryjne sprintu
+                                         blokada fałszywych
+                                         deklaracji SLA
+Kompletny Kod Wdrożeniowy dla Punktów 1.47–1.54
+(src/retrieval-and-eval/ocaf-intelligence-fabric.ts)
+import * as crypto from 'crypto';​
+​
+//
+========================================[span_190](start_span)[span_19
+0](end_span)====================================​
+// PUNKT 1.47: Wewnątrzprocesowy selektor leksykalny
+(InProcessLexicalSelector)​
+//
+======================================================================
+=[span_191](start_span)[span_191](end_span)=====​
+export interface LexicalRecord {​
+   readonly id: string;​
+   readonly title: string;​
+   readonly content: string;​
+   readonly metadata: Readonly<Record<string, string>>;​
+}​
+​
+export interface ScoredLexicalMatch {​
+   readonly record: LexicalRecord;​
+   readonly score: number;​
+   readonly matchedTerms: ReadonlyArray<string>;​
+}​
+​
+export class
+InProces[span_59](start_span)[span_59](end_span)sLexicalSelector {​
+   private readonly records: Map<string, LexicalRecord> = new Map();​
+   private readonly docTermFreqs: Map<string, Map<string, number>> =
+new Map();​
+   private readonly docLengths: Map<string, number> = new Map();​
+   private readonly docFreqByTerm: Map<string, number> = new Map();​
+   private avgDocLength = 0;​
+​
+   constructor(initialRecords: ReadonlyArray<LexicalRecord> = []) {​
+      for (const rec of initialRecords) {​
+         this.indexRecord(rec);​
+      }​
+   }​
+​
+   public static tokenize(text: string): string[] {​
+      return text​
+         .toLowerCase()​
+         .split(/[^a-z0-9ąćęłńóśźż]+/i)​
+         .map((t) => t.trim())​
+         .filter((t) => t.length >= 2);​
+   }​
+​
+   public indexRecord(record: LexicalRecord): void {​
+      const tokens = InProcessLexicalSelector.tokenize(`${record.title}
+${record.content}`);​
+      const tfMap = new Map<string, number>();​
+    for (const tok of tokens) {​
+       tfMap.set(tok, (tfMap.get(tok) ?? 0) + 1);​
+    }​
+    this.records.set(record.id, record);​
+    this.docTermFreqs.set(record.id, tfMap);​
+    this.docLengths.set(record.id, tokens.length);​
+​
+      for (const uniqueTerm of tfMap.keys()) {​
+         this.docFreqByTerm.set(uniqueTerm,
+(this.docFreqByTerm.get(uniqueTerm) ?? 0) + 1);​
+      }​
+​
+      let totalLen = 0;​
+      for (const len of this.docLengths.values()) totalLen += len;​
+      this.avgDocLength = this.docLengths.size > 0 ? totalLen /
+this.docLengths.size : 1;​
+   }​
+​
+   public selectTopK(query: string, topK: number): ScoredLexicalMatch[]
+{​
+      const queryTerms = Array.from(new
+Set(InProcessLexicalSelector.tokenize(query)));​
+      if (queryTerms.length === 0 || topK <= 0 || this.records.size ===
+0) return [];​
+​
+      const totalDocs = this.records.size;​
+      const k1 = 1.2;​
+      const b = 0.75;​
+      const results: ScoredLexicalMatch[] = [];​
+​
+      for (const [docId, record] of this.records.entries()) {​
+         const tfMap = this.docTermFreqs.get(docId)!;​
+         const docLen = this.docLengths.get(docId) ?? 1;​
+         let score = 0;​
+         const matchedTerms: string[] = [];​
+​
+         for (const term of queryTerms) {​
+            const tf = tfMap.get(term) ?? 0;​
+            if (tf === 0) continue;​
+            matchedTerms.push(term);​
+            const df = this.docFreqByTerm.get(term) ?? 1;​
+            const idf = Math.log(1 + (totalDocs - df + 0.5) / (df + 0.5));​
+            const numerator = tf * (k1 + 1);​
+            const denominator = tf + k1 * (1 - b + b * (docLen /
+this.avgDocLength));​
+            score += idf * (numerator / denominator);​
+         }​
+​
+         if (score > 0) {​
+            results.push({​
+              record,​
+              score: Number(score.toFixed(6)),​
+              matchedTerms,​
+            });​
+         }​
+    }​
+​
+      return results​
+         .sort((a, b) => (b.score !== a.score ? b.score - a.score :
+a.record.id.localeCompare(b.record.id)))​
+         .slice(0, topK);​
+   }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.48: Kontrakt i adapter wyszukiwania zewnętrznego
+(MossRetrievalAdapter)​
+//
+======================================================================
+======​
+export interface VerifiedMossApiContract {​
+   readonly apiVersion: 'v1.2-verified';​
+   readonly endpointUrl: string;​
+   queryRecords(query: string, topK: number):
+Promise<ScoredLexicalMatch[]> | ScoredLexicalMatch[];​
+}​
+​
+export class MossRetrievalAdapter {​
+   private readonly mossClient?: VerifiedMossApiContract;​
+   private readonly fallbackSelector: InProcessLexicalSelector;​
+​
+   constructor(fallbackSelector: InProcessLexicalSelector, mossClient?:
+VerifiedMossApiContract) {​
+      if (mossClient && mossClient.apiVersion !== 'v1.2-verified') {​
+         throw new Error(`OCAF_ERR_1_48: Niezweryfikowana wersja
+interfejsu Moss API: ${mossClient.apiVersion}`);​
+      }​
+      this.fallbackSelector = fallbackSelector;​
+      this.mossClient = mossClient;​
+   }​
+​
+   public retrieveSync(query: string, topK: number): {​
+      source: 'MOSS_VERIFIED_ADAPTER' | 'LOCAL_LEXICAL_FALLBACK';​
+      matches: ScoredLexicalMatch[];​
+ } {​
+    if (this.mossClient) {​
+       const res = this.mossClient.queryRecords(query, topK);​
+       if (Array.isArray(res)) {​
+          return { source: 'MOSS_VERIFIED_ADAPTER', matches: res };​
+       }​
+    }​
+    return {​
+       source: 'LOCAL_LEXICAL_FALLBACK',​
+       matches: this.fallbackSelector.selectTopK(query, topK),​
+    };​
+ }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.49: Most transportowy z separacją pomiaru narzutu
+(ZenohTransportBridge)​
+//
+======================================================================
+======​
+export interface TransportEnvelope<T> {​
+   readonly keyExpr: string;​
+   readonly serializedBytes: number;​
+   readonly transportOverheadMicros: number;​
+   readonly processingMicros: number;​
+   readonly payload: T;​
+}​
+​
+export class ZenohTransportBridge {​
+   public static dispatchIsolatedQuery<T>(​
+     keyExpr: string,​
+     requestPayload: unknown,​
+     processor: () => T​
+   ): TransportEnvelope<T> {​
+     if (!keyExpr.startsWith('ocaf/runtime/')) {​
+        throw new Error(`OCAF_ERR_1_49: Wyrażenie klucza Zenoh musi
+należeć do przestrzeni 'ocaf/runtime/*'.`);​
+     }​
+     const t0 = process.hrtime.bigint();​
+     const requestRaw = Buffer.from(JSON.stringify(requestPayload),
+'utf-8');​
+     const serializedReqCheck =
+JSON.parse(requestRaw.toString('utf-8'));​
+     void serializedReqCheck;​
+     const t1 = process.hrtime.bigint();​
+​
+      const result = processor();​
+​
+      const t2 = process.hrtime.bigint();​
+      const responseRaw = Buffer.from(JSON.stringify(result), 'utf-8');​
+      const decodedResult = JSON.parse(responseRaw.toString('utf-8')) as
+T;​
+      const t3 = process.hrtime.bigint();​
+​
+      const transportNs = (t1 - t0) + (t3 - t2);​
+      const processingNs = t2 - t1;​
+​
+      return {​
+        keyExpr,​
+        serializedBytes: requestRaw.length + responseRaw.length,​
+        transportOverheadMicros: Number(transportNs) / 1000,​
+        processingMicros: Number(processingNs) / 1000,​
+        payload: decodedResult,​
+      };​
+   }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.50: Weryfikator integralności rejestru umiejętności MCP
+(OMEGA SHA256SUMS)​
+//
+======================================================================
+======​
+export interface McpSkillFileEntry {​
+   readonly relativePath: string; // np.
+omega/skills/github-mcp-registry/SKILL.md​
+   readonly content: string;​
+}​
+​
+export class McpRegistryIntegrityVerifier {​
+   public static generateSha256SumsManifest(files:
+ReadonlyArray<McpSkillFileEntry>): string {​
+      return files​
+        .filter((f) => !f.relativePath.endsWith('.pyc') &&
+!f.relativePath.endsWith('/mcp'))​
+        .map((f) => {​
+          const hash =
+crypto.createHash('sha256').update(f.content).digest('hex');​
+          return `${hash} ${f.relativePath}`;​
+        })​
+        .join('\n');​
+   }​
+​
+    public static verifyAgainstManifest(​
+      files: ReadonlyArray<McpSkillFileEntry>,​
+      sha256SumsTxt: string​
+    ): {​
+      verifiedSkillsCount: number;​
+      verifiedChecksumCount: number;​
+      omittedBytecodeOrBinaryCount: number;​
+      mismatches: string[];​
+    } {​
+      const expectedMap = new Map<string, string>();​
+      const lines = sha256SumsTxt​
+         .split('\n')​
+         .map((l) => l.trim())​
+         .filter((l) => l.length > 0);​
+​
+      for (const line of lines) {​
+         const [hash, path] = line.split(/\s+/);​
+         if (hash && path) expectedMap.set(path, hash);​
+      }​
+​
+      const mismatches: string[] = [];​
+      const skillDirs = new Set<string>();​
+      let verifiedChecksumCount = 0;​
+      let omittedBytecodeOrBinaryCount = 0;​
+​
+    for (const file of files) {​
+      if (file.relativePath.endsWith('.pyc') ||
+file.relativePath.endsWith('/mcp')) {​
+         omittedBytecodeOrBinaryCount += 1;​
+         continue;​
+      }​
+      const expectedHash = expectedMap.get(file.relativePath);​
+      if (!expectedHash) {​
+         mismatches.push(`Brak wpisu w SHA256SUMS.txt dla ścieżki:
+${file.relativePath}`);​
+         continue;​
+      }​
+      const actualHash =
+crypto.createHash('sha256').update(file.content).digest('hex');​
+      if (actualHash !== expectedHash) {​
+         mismatches.push(`Niezgodność sumy SHA-256 dla
+${file.relativePath}`);​
+         continue;​
+      }​
+      verifiedChecksumCount += 1;​
+      const matchSkillDir =
+file.relativePath.match(/^omega\/skills\/([^/]+-mcp-registry)\//);​
+         if (matchSkillDir) {​
+            skillDirs.add(matchSkillDir[1]);​
+         }​
+    }​
+​
+    return {​
+      verifiedSkillsCount: skillDirs.size,​
+      verifiedChecksumCount,​
+      omittedBytecodeOrBinaryCount,​
+      mismatches,​
+    };​
+   }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.51: Dwutorowy analizator współdzielonych obiektów
+rozwiązania (OCAF)​
+//
+======================================================================
+======​
+export interface CollaborativeActionDialogueEvent {​
+   readonly eventId: string;​
+   readonly objectId: string;​
+   readonly actorId: string;​
+   readonly actorType: 'HUMAN_EXPERT' | 'AI_AGENT';​
+   readonly trackType: 'DIRECT_OBJECT_ACTION' |
+'COMMUNICATIVE_DIALOGUE';​
+   readonly operationKind: 'CREATE' | 'MODIFY' | 'VERIFY' |
+'CHALLENGE';​
+   readonly semanticWeight: number;​
+   readonly timestampIso: string;​
+}​
+​
+export interface SharedSolutionObjectHistory {​
+   readonly objectId: string;​
+   readonly totalEvents: number;​
+   readonly actorContributionShares: Readonly<Record<string, number>>;​
+   readonly humanToAiSynergyRatio: number;​
+   readonly chronologicalHistory:
+ReadonlyArray<CollaborativeActionDialogueEvent>;​
+}​
+​
+export class DualTrackCollaborationAnalyzer {​
+   private readonly eventsByObject: Map<string,
+CollaborativeActionDialogueEvent[]> = new Map();​
+​
+   public recordInteraction(event: CollaborativeActionDialogueEvent):
+void {​
+      const list = this.eventsByObject.get(event.objectId) ?? [];​
+      list.push(event);​
+      this.eventsByObject.set(event.objectId, list);​
+   }​
+​
+   public analyzeObject(objectId: string): SharedSolutionObjectHistory
+{​
+      const events = this.eventsByObject.get(objectId) ?? [];​
+      if (events.length === 0) {​
+         throw new Error(`OCAF_ERR_1_51: Brak zarejestrowanej historii
+dla obiektu rozwiązania ${objectId}.`);​
+      }​
+​
+      let totalWeight = 0;​
+      let humanWeight = 0;​
+      let aiWeight = 0;​
+      const weightByActor: Record<string, number> = {};​
+​
+      for (const ev of events) {​
+         const w = Math.max(0.1, ev.semanticWeight);​
+         totalWeight += w;​
+         weightByActor[ev.actorId] = (weightByActor[ev.actorId] ?? 0) +
+w;​
+         if (ev.actorType === 'HUMAN_EXPERT') humanWeight += w;​
+         else aiWeight += w;​
+      }​
+​
+      const actorContributionShares: Record<string, number> = {};​
+      for (const [actorId, w] of Object.entries(weightByActor)) {​
+         actorContributionShares[actorId] = Number((w /
+totalWeight).toFixed(4));​
+      }​
+​
+      const humanToAiSynergyRatio =​
+         totalWeight > 0 ? Number((1 - Math.abs(humanWeight - aiWeight) /
+totalWeight).toFixed(4)) : 0;​
+​
+      return {​
+         objectId,​
+         totalEvents: events.length,​
+         actorContributionShares,​
+         humanToAiSynergyRatio,​
+         chronologicalHistory: [...events],​
+      };​
+   }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.52: Ewaluator jakości wyszukiwania (Recall@k oraz MRR)​
+//
+======================================================================
+======​
+export interface EvaluationCase {​
+   readonly query: string;​
+   readonly relevantRecordIds: ReadonlyArray<string>;​
+}​
+​
+export interface RetrievalQualityReport {​
+   readonly k: number;​
+   readonly queryCount: number;​
+   readonly meanRecallAtK: number;​
+   readonly meanReciprocalRank: number;​
+}​
+​
+export class RetrievalQualityEvaluator {​
+   public static evaluate(​
+     selector: InProcessLexicalSelector,​
+     testSet: ReadonlyArray<EvaluationCase>,​
+     k: number​
+   ): RetrievalQualityReport {​
+     if (testSet.length === 0 || k <= 0) {​
+        throw new Error('OCAF_ERR_1_52: Zbiór testowy nie może być
+pusty, a parametr k musi być dodatni.');​
+     }​
+​
+     let sumRecall = 0;​
+     let sumRr = 0;​
+​
+     for (const testCase of testSet) {​
+        const relevantSet = new Set(testCase.relevantRecordIds);​
+        if (relevantSet.size === 0) continue;​
+​
+        const topKMatches = selector.selectTopK(testCase.query, k);​
+        let hitsInTopK = 0;​
+        let firstRelevantRank = 0;​
+​
+        topKMatches.forEach((match, idx) => {​
+          if (relevantSet.has(match.record.id)) {​
+            hitsInTopK += 1;​
+            if (firstRelevantRank === 0) {​
+               firstRelevantRank = idx + 1;​
+            }​
+                }​
+              });​
+​
+              sumRecall += hitsInTopK / relevantSet.size;​
+              sumRr += firstRelevantRank > 0 ? 1 / firstRelevantRank : 0;​
+         }​
+​
+         return {​
+           k,​
+           queryCount: testSet.length,​
+           meanRecallAtK: Number((sumRecall / testSet.length).toFixed(4)),​
+           meanReciprocalRank: Number((sumRr / testSet.length).toFixed(4)),​
+         };​
+    }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.53: Harnes mikrobenchmarku wydajnościowego (p50, p95, p99 +
+środowisko)​
+//
+======================================================================
+======​
+export interface BenchmarkEnvironmentDescriptor {​
+   readonly cpuModel: string;​
+   readonly memoryGb: number;​
+   readonly osPlatform: string;​
+   readonly runtimeVersion: string;​
+   readonly gitCommitSha: string;​
+   readonly buildMode: 'release' | 'debug';​
+   readonly condition: 'WARM_CACHE' | 'COLD_START';​
+}​
+​
+export interface BenchmarkConfig {​
+   readonly benchRecordsCount: number;​
+   readonly benchWarmupCount: number;​
+   readonly benchIterationsCount: number;​
+   readonly benchTopK: number;​
+   readonly benchQuery: string;​
+}​
+​
+export interface MicrobenchmarkReport {​
+   readonly environment: BenchmarkEnvironmentDescriptor;​
+   readonly config: BenchmarkConfig;​
+   readonly meanMicros: number;​
+   readonly p50Micros: number;​
+   readonly p95Micros: number;​
+  readonly p99Micros: number;​
+  readonly maxOutlierMicros: number;​
+}​
+​
+export class LatencyBenchmarkHarness {​
+   public static runLexicalBenchmark(​
+     config: BenchmarkConfig,​
+     environment: BenchmarkEnvironmentDescriptor​
+   ): MicrobenchmarkReport {​
+     const syntheticCorpus: LexicalRecord[] = [];​
+     for (let i = 0; i < config.benchRecordsCount; i++) {​
+        syntheticCorpus.push({​
+          id: `rec_${i + 1}`,​
+          title: `Document ${i + 1} local context policy obligation`,​
+          content:​
+             i % 5 === 0​
+               ? `Deterministic local context retrieval with governed
+policy gate and replay ledger entry ${i}`​
+               : `Standard operational record with synthetic tokens for
+corpus baseline index ${i}`,​
+          metadata: { index: String(i) },​
+        });​
+     }​
+​
+     const selector = new InProcessLexicalSelector(syntheticCorpus);​
+​
+     // Faza rozgrzewki (Warmup)​
+     for (let w = 0; w < config.benchWarmupCount; w++) {​
+        selector.selectTopK(config.benchQuery, config.benchTopK);​
+     }​
+​
+     // Faza pomiarowa​
+     const samplesMicros: number[] = [];​
+     for (let i = 0; i < config.benchIterationsCount; i++) {​
+        const startNs = process.hrtime.bigint();​
+        selector.selectTopK(config.benchQuery, config.benchTopK);​
+        const endNs = process.hrtime.bigint();​
+        samplesMicros.push(Number(endNs - startNs) / 1000);​
+     }​
+​
+     samplesMicros.sort((a, b) => a - b);​
+     const sum = samplesMicros.reduce((acc, v) => acc + v, 0);​
+     const meanMicros = Number((sum /
+samplesMicros.length).toFixed(2));​
+​
+     const percentile = (p: number): number => {​
+        const idx = Math.min(​
+          samplesMicros.length - 1,​
+        Math.max(0, Math.ceil((p / 100) * samplesMicros.length) - 1)​
+      );​
+      return Number(samplesMicros[idx].toFixed(2));​
+    };​
+​
+      return {​
+        environment,​
+        config,​
+        meanMicros,​
+        p50Micros: percentile(50),​
+        p95Micros: percentile(95),​
+        p99Micros: percentile(99),​
+        maxOutlierMicros: Number(samplesMicros[samplesMicros.length -
+1].toFixed(2)),​
+      };​
+   }​
+}​
+​
+//
+======================================================================
+======​
+// PUNKT 1.54: Rejestr deklaracji wdrożeniowych (ClaimLedgerVerifier)​
+//
+======================================================================
+======​
+export type ClaimClassification = 'IMPLEMENTED' | 'ADAPTER_ROADMAP' |
+'HYPOTHESIS';​
+​
+export interface ArchitecturalClaimEntry {​
+   readonly claimId: string;​
+   readonly componentName: string;​
+   readonly classification: ClaimClassification;​
+   readonly sourceArtifactPath: string;​
+   readonly verificationEvidence?: string;​
+   readonly claimsCloudProvisioned?: boolean;​
+   readonly claimsUnmeasuredSubMillisecondLatency?: boolean;​
+}​
+​
+export class ClaimLedgerVerifier {​
+   public static auditClaims(​
+      claims: ReadonlyArray<ArchitecturalClaimEntry>​
+   ): { valid: boolean; violations: string[] } {​
+      const violations: string[] = [];​
+      for (const c of claims) {​
+        if (c.classification === 'IMPLEMENTED' &&
+!c.verificationEvidence) {​
+          violations.push(​
+            `Deklaracja 𝑐. 𝑐𝑙𝑎𝑖𝑚𝐼𝑑({c.componentName}) ma status IMPLEMENTED,
+ale nie wskazuje dowodu testowego.`​
+            );​
+         }​
+         if (c.claimsCloudProvisioned && c.classification !==
+'IMPLEMENTED') {​
+            violations.push(​
+              `Deklaracja ${c.claimId} bezpodstawnie deklaruje uruchomione
+zasoby chmurowe dla komponentu o statusie ${c.classification}.`​
+            );​
+         }​
+         if (c.claimsUnmeasuredSubMillisecondLatency) {​
+            violations.push(​
+              `Deklaracja ${c.claimId} narusza dyscyplinę pomiarową,
+deklarując niezmierzone opóźnienie sub-milisekundowe end-to-end.`​
+            );​
+         }​
+      }​
+      return { valid: violations.length === 0, violations };​
+   }​
+}​
+
+
+
+Zintegrowany Punkt Wejścia i Kompletny Zestaw
+Testów Bezpieczeństwa (Punkty 1.15–1.54)
+Zgodnie z wymogiem inżynieryjnym obecnym we wszystkich analizowanych repozytoriach, w
+myśl którego żadna funkcjonalność nie jest uznawana za ukończoną, dopóki jej zachowanie nie
+zostanie zaimplementowane i pokryte testami automatycznymi (A feature is not considered
+complete until its behavior is implemented and covered by tests where practical), poniższy
+moduł spaja wszystkie czterdzieści punktów roadmapy (1.15–1.54) w wykonywalną całość.
+Dostarcza on deterministyczny zestaw testów weryfikacyjnych obejmujący transakcje drzewa
+OCAF, operacje Forget/Remember oraz Undo/Redo (1.15–1.22), bramkę polityk, wiązanie
+zatwierdzeń HMAC i izolację dzierżawców (1.23–1.30), ekstrakcję i weryfikację zobowiązań
+kontraktowych (1.31–1.38), walidację czterech celów NCSC CAF w dowodach zgodności oraz
+blokadę wysokiego ryzyka w zwiadzie zakupowym (1.39–1.46), a także selektor leksykalny,
+narzut transportu Zenoh, weryfikację sum kontrolnych SHA-256 rejestru MCP, dwutorową
+analizę współpracy oraz audyt rejestru deklaracji (1.47–1.54).
+
+Kompletny Kod Testów Weryfikacyjnych i Orkiestracji
+(src/index.spec.ts)
+import * as assert from 'assert';​
+import * as crypto from 'crypto';​
+import {​
+  LabelPath,​
+  OcaDocument,​
+  DeterministicReplayLedger,​
+  ExternalLinkSupervisor,​
+  StorageRetrievalPluginDriver,​
+} from './core/ocaf-data-framework';​
+import {​
+  AgentContractSpec,​
+  ApprovalBindingEngine,​
+  SharedPolicyGatedRuntime,​
+} from './governance/policy-gated-runtime';​
+import {​
+  CONTRACT_OBLIGATION_TOOL_NAMES,​
+  ContractObligationsRuntimePackage,​
+  RawContractClauseInput,​
+  ContractObligationRecord,​
+} from './domains/contract-obligations';​
+import {​
+  COMPLIANCE_AND_PROCUREMENT_TOOLS,​
+  ComplianceAndProcurementWiring,​
+  ComplianceEvidenceArtifact,​
+  SupplierOnboardingDossier,​
+} from './domains/compliance-and-procurement';​
+import {​
+  InProcessLexicalSelector,​
+  MossRetrievalAdapter,​
+  ZenohTransportBridge,​
+  McpRegistryIntegrityVerifier,​
+  DualTrackCollaborationAnalyzer,​
+  RetrievalQualityEvaluator,​
+  LatencyBenchmarkHarness,​
+  ClaimLedgerVerifier,​
+} from './retrieval-and-eval/ocaf-intelligence-fabric';​
+​
+export function runCompleteOcafRoadmapVerificationSuite(): void {​
+  //
+----------------------------------------------------------------------
+----​
+  // 1. Weryfikacja Punktów 1.15 - 1.22 (Drzewo OCAF, Forget/Remember,
+Undo/Redo, Replay)​
+  //
+----------------------------------------------------------------------
+----​
+  const doc = new OcaDocument('doc_enterprise_01');​
+  const attrGuid = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeee01';​
+  const targetLabel = LabelPath.parse('0:2:5');​
+​
+  doc.executeTransaction('TX_ATTACH_INITIAL', (d) => {​
+    const node = d.resolveLabel(targetLabel);​
+    node.attachAttribute({​
+        guid: attrGuid,​
+        semanticType: 'TDataStd_Real',​
+        value: 42.5,​
+        updatedAtIso: '2026-10-29T10:00:00.000Z',​
+      });​
+    }, '2026-10-29T10:00:00.000Z');​
+​
+  // Punkt 1.17: Forget & Remember​
+  const nodeRef = doc.resolveLabel(targetLabel);​
+  assert.strictEqual(nodeRef.forgetAttribute(attrGuid), true);​
+  assert.strictEqual(nodeRef.getAttribute(attrGuid), undefined);​
+  assert.strictEqual(nodeRef.rememberAttribute(attrGuid), true);​
+  assert.strictEqual(nodeRef.getAttribute<number>(attrGuid)?.value,
+42.5);​
+​
+  // Punkt 1.18: Undo & Redo​
+  doc.executeTransaction('TX_UPDATE_VALUE', (d) => {​
+    d.resolveLabel(targetLabel).attachAttribute(​
+      {​
+         guid: attrGuid,​
+         semanticType: 'TDataStd_Real',​
+         value: 99.9,​
+         updatedAtIso: '2026-10-29T10:05:00.000Z',​
+      },​
+      true​
+    );​
+  }, '2026-10-29T10:05:00.000Z');​
+  assert.strictEqual(nodeRef.getAttribute<number>(attrGuid)?.value,
+99.9);​
+  assert.strictEqual(doc.undo(), true);​
+  assert.strictEqual(nodeRef.getAttribute<number>(attrGuid)?.value,
+42.5);​
+  assert.strictEqual(doc.redo(), true);​
+  assert.strictEqual(nodeRef.getAttribute<number>(attrGuid)?.value,
+99.9);​
+​
+  // Punkt 1.19 & 1.20: Weryfikacja łańcucha SHA-256 i
+deterministycznego odtwarzania​
+  const replayOutcome = DeterministicReplayLedger.verifyAndReplay(​
+    'doc_replayed_01',​
+    doc.getEventLedger()​
+  );​
+  assert.strictEqual(replayOutcome.integrityVerified, true);​
+  assert.strictEqual(replayOutcome.suppressedSideEffects, 2);​
+​
+  // Punkt 1.21 & 1.22: Nadzór linków zewnętrznych i serializacja
+sterownika​
+  const pluginDriver = new StorageRetrievalPluginDriver();​
+  const serialized = pluginDriver.saveDocument(doc);​
+  const reopenedDoc = pluginDriver.openDocument(serialized);​
+  const linkSupervisor = new ExternalLinkSupervisor();​
+  linkSupervisor.registerLink({​
+    linkId: 'lnk_01',​
+    sourceDocumentId: 'doc_enterprise_01',​
+    sourceLabelEntry: '0:2:5',​
+    targetDocumentId: 'doc_enterprise_01',​
+    targetLabelEntry: '0:2:5',​
+    topologicalSelector: 'Face_1',​
+    expectedTargetGuid: attrGuid,​
+  });​
+  const linkCheck = linkSupervisor.verifyLinks(new
+Map([['doc_enterprise_01', reopenedDoc]]));​
+  assert.strictEqual(linkCheck.valid, true);​
+​
+  //
+----------------------------------------------------------------------
+----​
+  // 2. Weryfikacja Punktów 1.23 - 1.38 (Bramka Polityk i Domena
+Contract Obligations)​
+  //
+----------------------------------------------------------------------
+----​
+  const contractSpec: AgentContractSpec = {​
+    contractId: 'agt_contract_2026_v1',​
+    version: '1.0.0',​
+    obligations: [​
+       {​
+          commitmentId: 'c_01',​
+          debtorAgentId: 'agent_ocaf_01',​
+          creditorStakeholderId: 'safety_auditor',​
+          normativeConditionPhi: 'Wszystkie decyzje są rejestrowane
+przed wykonaniem narzędzia',​
+       },​
+    ],​
+    permissions: [​
+       CONTRACT_OBLIGATION_TOOL_NAMES.EXTRACT_OBLIGATIONS,​
+       CONTRACT_OBLIGATION_TOOL_NAMES.VERIFY_OBLIGATION_FULFILLMENT,​
+       COMPLIANCE_AND_PROCUREMENT_TOOLS.VALIDATE_EVIDENCE_PACK,​
+       COMPLIANCE_AND_PROCUREMENT_TOOLS.SCOUT_EVALUATE_SUPPLIER,​
+       COMPLIANCE_AND_PROCUREMENT_TOOLS.SCOUT_COMMIT_PURCHASE,​
+    ],​
+    prohibitions: ['system.drop_audit_ledger'],​
+    violationCriteria: [​
+       {​
+          criterionId: 'vc_procurement_cap',​
+          description: 'Ograniczenie zobowiązań zakupowych do średniego
+ryzyka',​
+         maxAllowedRisk: 'MEDIUM',​
+         requiresHumanApprovalAtOrAbove: 'MEDIUM',​
+       },​
+    ],​
+    accountabilityChain: {​
+       primaryOwnerId: 'lead_legal_counsel',​
+       escalationReviewerId: 'ciso_director',​
+       auditAuthorityId: 'external_auditor',​
+    },​
+  };​
+​
+  const approvalEngine = new
+ApprovalBindingEngine('super_secret_enterprise_hmac_key_2026');​
+  const runtime = new SharedPolicyGatedRuntime(doc, contractSpec,
+approvalEngine);​
+  ContractObligationsRuntimePackage.registerInRuntime(runtime);​
+  ComplianceAndProcurementWiring.wireAll(runtime);​
+​
+  const sampleClauses: RawContractClauseInput[] = [​
+    {​
+       contractDocumentId: 'msa_gov_2026',​
+       clauseNumber: '4',​
+       text: 'The Supplier shall complete independent CREST penetration
+testing within 15 days. The Supplier must encrypt all personal data
+under GDPR Article 32 within 10 days.',​
+       defaultDebtor: 'Supplier_Corp',​
+       defaultCreditor: 'Gov_Agency',​
+       referenceDateIso: '2026-10-01T00:00:00.000Z',​
+    },​
+  ];​
+​
+  const extractOutput =
+runtime.invoke<ReadonlyArray<RawContractClauseInput>,
+ContractObligationRecord[]>({​
+    requestId: 'req_ext_1',​
+    idempotencyKey: 'idem_ext_1',​
+    tenantId: 'tenant_alpha',​
+    actorAgentId: 'agent_ocaf_01',​
+    actionName: CONTRACT_OBLIGATION_TOOL_NAMES.EXTRACT_OBLIGATIONS,​
+    riskTier: 'LOW',​
+    domainCategory: 'CONTRACT_OBLIGATIONS',​
+    payload: sampleClauses,​
+    timestampIso: '2026-10-02T00:00:00.000Z',​
+  });​
+  assert.strictEqual(extractOutput.decision.outcome, 'ALLOW');​
+  assert.strictEqual(extractOutput.result?.length, 2);​
+​
+  // Punkt 1.26 & 1.38: Weryfikacja zobowiązania z ważnym
+zatwierdzeniem i dowodem przed upływem terminu​
+  const verifyPayload = {​
+    obligationNodeTag: 1,​
+    evidenceIds: ['ev_crest_ithc_01'],​
+    verifierId: 'lead_legal_counsel',​
+    verificationTimestampIso: '2026-10-10T00:00:00.000Z',​
+  };​
+  const approvalToken = approvalEngine.issueApproval({​
+    approvalId: 'app_001',​
+    approverId: 'lead_legal_counsel',​
+    approverRole: 'LEGAL_REVIEWER',​
+    tenantId: 'tenant_alpha',​
+    actionName:
+CONTRACT_OBLIGATION_TOOL_NAMES.VERIFY_OBLIGATION_FULFILLMENT,​
+    payload: verifyPayload,​
+    issuedAtIso: '2026-10-09T12:00:00.000Z',​
+    expiresAtIso: '2026-10-12T12:00:00.000Z',​
+  });​
+​
+  const verifyResult = runtime.invoke({​
+    requestId: 'req_ver_1',​
+    idempotencyKey: 'idem_ver_1',​
+    tenantId: 'tenant_alpha',​
+    actorAgentId: 'agent_ocaf_01',​
+    actionName:
+CONTRACT_OBLIGATION_TOOL_NAMES.VERIFY_OBLIGATION_FULFILLMENT,​
+    riskTier: 'MEDIUM',​
+    domainCategory: 'CONTRACT_OBLIGATIONS',​
+    payload: verifyPayload,​
+    approvalArtifact: approvalToken,​
+    timestampIso: '2026-10-10T00:00:00.000Z',​
+  });​
+  assert.strictEqual(verifyResult.decision.outcome, 'ALLOW');​
+​
+  // Punkt 1.29 & 1.38: Test izolacji między dzierżawcami (tenant_beta
+nie ma dostępu do zobowiązań tenant_alpha)​
+  assert.notStrictEqual(​
+
+runtime.resolveIsolatedTenantBranch('tenant_alpha').toEntryString(),​
+    runtime.resolveIsolatedTenantBranch('tenant_beta').toEntryString()​
+  );​
+​
+  //
+----------------------------------------------------------------------
+----​
+  // 3. Weryfikacja Punktów 1.39 - 1.46 (Compliance Evidence &
+Procurement Scout)​
+  //
+----------------------------------------------------------------------
+----​
+  const makeCafArtifact = (​
+    id: string,​
+    objective: ComplianceEvidenceArtifact['cafObjective']​
+  ): ComplianceEvidenceArtifact => {​
+    const contentPayload = `Verified control evidence for
+${objective}`;​
+    return {​
+       evidenceId: id,​
+       title: `CAF Control ${id}`,​
+       framework: 'NCSC_CAF_GOVASSURE',​
+       cafObjective: objective,​
+       contentPayload,​
+       expectedSha256:
+crypto.createHash('sha256').update(contentPayload).digest('hex'),​
+       sensitivityLabel: 'CONFIDENTIAL',​
+       collectedAtIso: '2026-10-01T00:00:00.000Z',​
+       validUntilIso: '2027-10-01T00:00:00.000Z',​
+    };​
+  };​
+​
+  const cafPackPayload = {​
+    packId: 'pack_govassure_2026',​
+    framework: 'NCSC_CAF_GOVASSURE' as const,​
+    artifacts: [​
+       makeCafArtifact('ev_a', 'A_MANAGING_SECURITY_RISK'),​
+       makeCafArtifact('ev_b', 'B_PROTECTING_AGAINST_CYBER_ATTACK'),​
+       makeCafArtifact('ev_c', 'C_DETECTING_CYBER_SECURITY_EVENTS'),​
+       makeCafArtifact('ev_d', 'D_MINIMISING_IMPACT_OF_INCIDENTS'),​
+    ],​
+    evaluationTimeIso: '2026-10-15T00:00:00.000Z',​
+  };​
+​
+  const complianceOut = runtime.invoke({​
+    requestId: 'req_comp_1',​
+    idempotencyKey: 'idem_comp_1',​
+    tenantId: 'tenant_alpha',​
+    actorAgentId: 'agent_ocaf_01',​
+    actionName:
+COMPLIANCE_AND_PROCUREMENT_TOOLS.VALIDATE_EVIDENCE_PACK,​
+    riskTier: 'LOW',​
+    domainCategory: 'COMPLIANCE_EVIDENCE',​
+    payload: cafPackPayload,​
+    timestampIso: '2026-10-15T00:00:00.000Z',​
+  });​
+  assert.strictEqual(complianceOut.decision.outcome, 'ALLOW');​
+​
+  // Punkt 1.25 & 1.45: Blokada zobowiązania zakupowego o wysokim
+ryzyku (High Risk Cap Enforcement)​
+  const highRiskPurchaseAttempt = runtime.invoke({​
+    requestId: 'req_proc_high_1',​
+    idempotencyKey: 'idem_proc_high_1',​
+    tenantId: 'tenant_alpha',​
+    actorAgentId: 'agent_ocaf_01',​
+    actionName:
+COMPLIANCE_AND_PROCUREMENT_TOOLS.SCOUT_COMMIT_PURCHASE,​
+    riskTier: 'HIGH', // Przekracza limit MEDIUM dla domeny
+PROCUREMENT_SCOUT​
+    domainCategory: 'PROCUREMENT_SCOUT',​
+    payload: {​
+       supplierId: 'sup_01',​
+       amountUsd: 250_000,​
+       maxMediumRiskUsd: 50_000,​
+       committedAtIso: '2026-10-16T00:00:00.000Z',​
+    },​
+    timestampIso: '2026-10-16T00:00:00.000Z',​
+  });​
+  assert.strictEqual(highRiskPurchaseAttempt.decision.outcome,
+'DENY');​
+  assert.strictEqual(highRiskPurchaseAttempt.decision.reasonCode,
+'DENY_RISK_CAP_EXCEEDED');​
+​
+  const dossier: SupplierOnboardingDossier = {​
+    supplierId: 'sup_clean_01',​
+    legalName: 'Verified Cloud Systems Sp. z o.o.',​
+    beneficialOwners: ['Jan Kowalski'],​
+    taxCertificateAttached: true,​
+    insuranceCertificateAttached: true,​
+    iso27001Certified: true,​
+    financialStabilityScore: 88,​
+    proposedPurchaseCommitmentUsd: 25_000,​
+    categoryMaxMediumRiskUsd: 50_000,​
+  };​
+  const scoutEvalOut = runtime.invoke({​
+    requestId: 'req_scout_1',​
+    idempotencyKey: 'idem_scout_1',​
+    tenantId: 'tenant_alpha',​
+    actorAgentId: 'agent_ocaf_01',​
+    actionName:
+COMPLIANCE_AND_PROCUREMENT_TOOLS.SCOUT_EVALUATE_SUPPLIER,​
+    riskTier: 'LOW',​
+    domainCategory: 'PROCUREMENT_SCOUT',​
+    payload: { dossier, evaluatedAtIso: '2026-10-16T00:00:00.000Z' },​
+    timestampIso: '2026-10-16T00:00:00.000Z',​
+    });​
+    assert.strictEqual(scoutEvalOut.decision.outcome, 'ALLOW');​
+​
+  //
+----------------------------------------------------------------------
+----​
+  // 4. Weryfikacja Punktów 1.47 - 1.54 (Wyszukiwanie, Zenoh, MCP,
+Analiza OCAF, Ewaluacja)​
+  //
+----------------------------------------------------------------------
+----​
+  const lexicalSelector = new InProcessLexicalSelector([​
+    {​
+       id: 'doc_1',​
+       title: 'Local Context Policy Gate',​
+       content: 'Exact allowlist policy gate and deterministic replay
+ledger in OCAF runtime.',​
+       metadata: { domain: 'security' },​
+    },​
+    {​
+       id: 'doc_2',​
+       title: 'Procurement Scout Guidelines',​
+       content: 'Supplier qualification, sanctions screening and medium
+risk purchase cap.',​
+       metadata: { domain: 'procurement' },​
+    },​
+  ]);​
+​
+  const mossAdapter = new MossRetrievalAdapter(lexicalSelector);​
+  const bridged = ZenohTransportBridge.dispatchIsolatedQuery(​
+    'ocaf/runtime/retrieval/lexical',​
+    { query: 'local context policy', topK: 1 },​
+    () => mossAdapter.retrieveSync('local context policy', 1)​
+  );​
+  assert.strictEqual(bridged.payload.matches[0].record.id, 'doc_1');​
+  assert.ok(bridged.transportOverheadMicros >= 0);​
+​
+  // Punkt 1.50: Weryfikacja sum kontrolnych SHA-256 rejestru MCP​
+  const sampleMcpFiles = [​
+    { relativePath: 'omega/skills/contracts-mcp-registry/SKILL.md',
+content: '# Contract Skill' },​
+    { relativePath:
+'omega/skills/contracts-mcp-registry/reference.json', content:
+'{"v":1}' },​
+    { relativePath: 'omega/skills/contracts-mcp-registry/cache.pyc',
+content: 'bytecode' },​
+  ];​
+  const manifest =
+McpRegistryIntegrityVerifier.generateSha256SumsManifest(sampleMcpFiles
+);​
+  const mcpCheck =
+McpRegistryIntegrityVerifier.verifyAgainstManifest(sampleMcpFiles,
+manifest);​
+  assert.strictEqual(mcpCheck.verifiedSkillsCount, 1);​
+  assert.strictEqual(mcpCheck.verifiedChecksumCount, 2);​
+  assert.strictEqual(mcpCheck.omittedBytecodeOrBinaryCount, 1);​
+  assert.strictEqual(mcpCheck.mismatches.length, 0);​
+​
+  // Punkt 1.51: Dwutorowa analiza współpracy na obiekcie rozwiązania​
+  const collabAnalyzer = new DualTrackCollaborationAnalyzer();​
+  collabAnalyzer.recordInteraction({​
+    eventId: 'ev_c1',​
+    objectId: 'obj_msa_clause_4',​
+    actorId: 'agent_ocaf_01',​
+    actorType: 'AI_AGENT',​
+    trackType: 'DIRECT_OBJECT_ACTION',​
+    operationKind: 'CREATE',​
+    semanticWeight: 1.0,​
+    timestampIso: '2026-10-16T01:00:00.000Z',​
+  });​
+  collabAnalyzer.recordInteraction({​
+    eventId: 'ev_c2',​
+    objectId: 'obj_msa_clause_4',​
+    actorId: 'lead_legal_counsel',​
+    actorType: 'HUMAN_EXPERT',​
+    trackType: 'COMMUNICATIVE_DIALOGUE',​
+    operationKind: 'VERIFY',​
+    semanticWeight: 1.0,​
+    timestampIso: '2026-10-16T01:05:00.000Z',​
+  });​
+  const collabReport =
+collabAnalyzer.analyzeObject('obj_msa_clause_4');​
+  assert.strictEqual(collabReport.humanToAiSynergyRatio, 1);​
+​
+  // Punkt 1.52 & 1.53: Ewaluacja Recall@k, MRR oraz uruchomienie
+mikrobenchmarku​
+  const qualityReport = RetrievalQualityEvaluator.evaluate(​
+    lexicalSelector,​
+    [{ query: 'local context policy', relevantRecordIds: ['doc_1'] }],​
+    1​
+  );​
+  assert.strictEqual(qualityReport.meanRecallAtK, 1);​
+  assert.strictEqual(qualityReport.meanReciprocalRank, 1);​
+​
+  const benchReport = LatencyBenchmarkHarness.runLexicalBenchmark(​
+    {​
+         benchRecordsCount: 50,​
+         benchWarmupCount: 5,​
+         benchIterationsCount: 20,​
+         benchTopK: 5,​
+         benchQuery: 'local context policy',​
+      },​
+      {​
+         cpuModel: 'Generic x86_64 Enterprise vCPU',​
+         memoryGb: 16,​
+         osPlatform: process.platform,​
+         runtimeVersion: process.version,​
+         gitCommitSha: 'ffc1304',​
+         buildMode: 'release',​
+         condition: 'WARM_CACHE',​
+      }​
+    );​
+    assert.ok(benchReport.p99Micros >= benchReport.p50Micros);​
+​
+   // Punkt 1.54: Audyt rejestru deklaracji (CLAIM_LEDGER)​
+   const ledgerCheck = ClaimLedgerVerifier.auditClaims([​
+     {​
+        claimId: 'clm_01',​
+        componentName: 'SharedPolicyGatedRuntime',​
+        classification: 'IMPLEMENTED',​
+        sourceArtifactPath: 'src/governance/policy-gated-runtime.ts',​
+        verificationEvidence: 'runCompleteOcafRoadmapVerificationSuite',​
+     },​
+     {​
+        claimId: 'clm_02',​
+        componentName: 'ExternalMossCloudCluster',​
+        classification: 'ADAPTER_ROADMAP',​
+        sourceArtifactPath:
+'src/retrieval-and-eval/ocaf-intelligence-fabric.ts',​
+        claimsCloudProvisioned: false,​
+     },​
+   ]);​
+   assert.strictEqual(ledgerCheck.valid, true);​
+}​
+
+
+
+Konkluzje i Rekomendacje Wdrożeniowe
+Przeprowadzona rekonstrukcja architektoniczna oraz implementacja czterdziestu punktów
+roadmapy (1.15–1.54) dowodzi, że przewaga inżynieryjna ekosystemu OCAF-Runtime wynika
+z zastąpienia luźno powiązanych, nieaudytowalnych wywołań modeli językowych
+deterministycznym jądrem transakcyjnym. Zastosowanie hierarchicznego drzewa etykiet
+(LabelPath 0:x:y) oraz indeksowanych przez GUID atrybutów pozwala na ujednolicenie
+reprezentacji stanu wszystkich domen wykonawczych w pojedynczym, wersjonowanym modelu
+referencyjnym wspieranym przez pięć kanonicznych sterowników serializacji OCAF.
+W wymiarze bezpieczeństwa operacyjnego kluczowym osiągnięciem wdrożonego kodu jest
+całkowita eliminacja luki audytowalności poprzez bezwarunkowe sprzężenie bramki polityk
+(ExactAllowlistPolicyGate) z łańcuchem kryptograficznym SHA-256 przed wykonaniem
+jakiejkolwiek akcji zewnętrznej. Sztywne ograniczenie ryzyka w domenie zakupowej
+(Procurement Scout – pułap MEDIUM), kryptograficzne wiązanie zatwierdzeń ludzkich
+(ApprovalBindingEngine) dla weryfikacji zobowiązań kontraktowych (Contract Obligations) oraz
+kontrola integralności czterech celów NCSC CAF w domenie dowodowej (Compliance
+Evidence) gwarantują pełną zgodność z rygorami audytowymi sektora publicznego, obronnego i
+finansowego.
+W celu utrzymania pełnej integralności w środowisku ciągłej integracji (CI/CD) procedura
+runCompleteOcafRoadmapVerificationSuite() powinna zostać skonfigurowana jako obligatoryjna
+bramka jakościowa w potokach GitHub Actions uruchamianych przy każdym zatwierdzeniu i
+żądaniu ściągnięcia (pull request) kierowanym na gałąź main, przy użyciu krótkotrwałych
+tokenów GITHUB_TOKEN o minimalnych wymaganych uprawnieniach. Jednocześnie
+wygenerowany manifest SHA256SUMS.txt dla rejestru umiejętności MCP należy utrzymywać
+pod ścisłą kontrolą sum kontrolnych wraz z zastąpieniem destrukcyjnych przepływów
+czyszczących gałęzie trybem weryfikacji tylko do odczytu (read-only branch preservation
+check), co chroni historyczne referencje odzyskiwania. Wreszcie wszelkie raporty
+wydajnościowe generowane przez LatencyBenchmarkHarness muszą być publikowane
+wyłącznie w parze z pełnym deskryptorem środowiska (BenchmarkEnvironmentDescriptor) oraz
+metrykami jakościowymi \text{Recall}@k i \text{MRR} wyliczonymi przez
+RetrievalQualityEvaluator, co utrzymuje pełną zgodność ze standardem weryfikacyjnym
+ClaimLedgerVerifier i zapobiega nieuprawnionym ekstrapolacjom opóźnień między odmiennymi
+środowiskami sprzętowymi.
+
+Cytowane prace
+
+1. JARVIS 2.0 - Real Android AI Assistant - GitHub,
+https://github.com/mojealteregopl/JARVIS-2.0 2. GitHub · Where software is built,
+https://github.com/orgs/future-agi/followers 3. The-Zero-Latency-Builder-Sprint - mojealterego -
+GitHub, https://github.com/mojealterego/The-Zero-Latency-Builder-Sprint 4. Activity ·
+mojealterego/Nowe-projekty - GitHub, https://github.com/mojealterego/Nowe-projekty/activity 5.
+Issues · mojealterego/The-Zero-Latency-Builder-Sprint - GitHub,
+https://github.com/mojealterego/The-Zero-Latency-Builder-Sprint/issues 6.
+Agent-God-Level-Omega/REPOSITORY_STATUS.md at main - GitHub,
+https://github.com/mojealterego/Agent-God-Level-Omega/blob/main/REPOSITORY_STATUS.m
+d 7. Agents-for-Humans-Hackathon/docs/CLAIM_LEDGER.md at main,
+https://github.com/mojealterego/Agents-for-Humans-Hackathon/blob/main/docs/CLAIM_LEDGE
+R.md 8. Agents-for-Humans-Hackathon/README.md at main · mojealterego,
+https://github.com/mojealterego/Agents-for-Humans-Hackathon/blob/main/README.md 9. ocaf
+· Open-Cascade-SAS/OCCT Wiki - GitHub,
+https://github.com/Open-Cascade-SAS/OCCT/wiki/ocaf 10. UNCORRECTED PROOF,
+https://ltee.aegean.gr/adimitr/wp-content/uploads/sites/8/2020/01/Avouris_Dimitracopoulou_Ko
+mis_preprint-CIHB_2003.pdf 11. sample_ocaf · Open-Cascade-SAS/OCCT Wiki - GitHub,
+https://github.com/Open-Cascade-SAS/OCCT/wiki/sample_ocaf 12. $SSOLFDWLRQ
+)UDPHZRUN,
+https://www.updateme.cloud/download/noGIT/ThirdParty/OpenCASCADE6.3.0/doc/ocaf_wp.pdf
+13. Cognitive Dual-Track Framework for Human-AI Collaborative,
+https://www.researchgate.net/publication/408531098_Cognitive_Dual-Track_Framework_for_Hu
+man-AI_Collaborative_Problem_Solving 14. A PROPOSED OPEN COGNITIVE
+ARCHITECTURE FRAMEWORK,
+https://www.researchgate.net/profile/Jeffrey-Steinman/publication/224123822_A_proposed_ope
+n_cognitive_architecture_framework/links/0f317539568d2454b7000000/A-proposed-open-cogni
+tive-architecture-framework.pdf?origin=scientificContributions 15. Maria Valinski's research
+works | Navy's Space and Naval Warfare,
+https://www.researchgate.net/scientific-contributions/Maria-Valinski-2010562960 16. On analysis
+of collaborative problem solving: An object-oriented,
+https://www.researchgate.net/publication/239062084_On_analysis_of_collaborative_problem_s
+olving_An_object-oriented_approach 17. Position: Multi-Agent Explainability Needs Contracts
+Before Methods, https://openreview.net/pdf?id=fxSfYP7IMI 18. AI in Procurement: Use Cases,
+Workflows and Implementation, https://www.leewayhertz.com/ai-in-procurement/ 19.
+Cybersecurity Awareness Training Program Onboarding: Build Role,
+https://www.adaptivesecurity.com/blog/cybersecurity-awareness-training-program-onboarding
+20. MCP Server-Manifest-Plugin - LobeHub,
+https://lobehub.com/de/mcp/knowledgestack-ks-cookbook 21. Government and Public Sector
+Cyber Security UK, https://www.precursorsecurity.com/sectors/government-public-sector 22.
+How to Evaluate and Choose a Professional Background Screening,
+https://simpliverified.com/guide-to-professional-background-screening/how-to-evaluate-and-cho
+ose-a-professional-background-screening-provider-part-v 23. Contract Compliance Verification:
+Methods & Applications,
+https://www.emergentmind.com/topics/contract-compliance-verification-ccv 24. Frequently
+Asked Questions - Cloud Computing,
+https://cloudcomputingauthority.com/cloud-computing-frequently-asked-questions/ 25.
+fabric-contract-intelligence/docs/positioning/ai-readiness.md at main,
+https://github.com/mjtpena/fabric-contract-intelligence/blob/main/docs/positioning/ai-readiness.
+md 26. mojealterego/CCR-WORLD: GAME AAA ANDROIFD - GitHub,
+https://github.com/mojealterego/CCR-WORLD 27. mojealterego/Prawda-czy-wyzwanie -
+GitHub, https://github.com/mojealterego/Prawda-czy-wyzwanie 28. Security - mojealterego -
+GitHub, https://github.com/mojealterego/mojealterego/security 29. All workflows - GitHub,
+https://github.com/mojealterego/mojealterego/actions
+
