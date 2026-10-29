@@ -142,3 +142,23 @@ ręczny, realny IdP/Vault/KVM ioctl na hoście operatora.
   poświadczenia realnego IdP/Vault, operator-owned Firecracker,
   komplet 555 providerów, pełny Titans/NICE, formalny dowód programu,
   produkcyjny OMAt SHM i operator acceptance. Brak PASS dla tych obszarów.
+
+## Firecracker 1.17.0 — rzeczywisty KVM, ograniczenie do laboratorium
+
+[GitHub Actions run 40942543567 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/40942543567),
+testowany commit `52be86f370ec0b63aa81e607623aad40683f16c7`.
+[Artefakt 12928795139](https://github.com/mojealterego/ocaf-runtime/actions/runs/40942543567/artifacts/12928795139),
+SHA-256 archiwum `2b5894f83804ad01422ef20afd050fc3ce001a983f8750dd534df70f4a6938ac`.
+
+CI rzeczywiście wykonało Linux guest boot przez jailed Firecracker/KVM;
+dwa równoczesne jailed guests, testy awarii izolacji tenantów,
+virtio-net/TAP + nft DROP/recovery, signed guest WASIp1 z Wasmtime
+w gościu, weryfikację broker/guest receipts, negatywne testy
+tamper, vsock broker SIGKILL oraz Aya/eBPF fail-closed.
+Wszystkie kroki tego joba miały wynik `success`.
+
+**Zakres dowodu:** efemeryczny runner GitHub Actions, jeden
+host/kernel z dwoma VM. Nie jest to zweryfikowany docelowy
+host operatora ani niezależna infrastruktura produkcyjna;
+brak zatwierdzenia bramki 334 i brak aktywacji usług katalogu 555.
+OSTc nadal odłożone, fail-closed bez zmian.
