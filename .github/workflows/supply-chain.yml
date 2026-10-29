@@ -22,6 +22,7 @@ jobs:
           python3 -m unittest discover -s scripts/tests -p test_supply_chain.py -v
           python3 -m unittest discover -s scripts/tests -p test_sbom_workflow.py -v
           python3 -m unittest discover -s scripts/tests -p test_verify_workspace_sbom.py -v
+          python3 -m unittest discover -s scripts/tests -p test_assemble_workspace_sbom.py -v
           python3 -m unittest discover -s scripts/tests -p test_release_bundle.py -v
           python3 -m unittest discover -s scripts/tests -p test_release_readiness.py -v
           python3 scripts/supply_chain.py --repo .
@@ -81,6 +82,7 @@ jobs:
           cargo cyclonedx --format json --all-features --target all --all \
             --spec-version 1.5 --override-filename bom
           test -s bom.json
+          python3 -m scripts.assemble_workspace_sbom --repo .
           python3 -m scripts.verify_workspace_sbom --repo .
           python3 -c 'import json; b=json.load(open("bom.json", encoding="utf-8")); assert b.get("bomFormat") == "CycloneDX" and b.get("specVersion") == "1.5" and b.get("components"), "invalid or empty CycloneDX 1.5 SBOM"'
           mv bom.json dist/ocaf_runtime.cdx.json
