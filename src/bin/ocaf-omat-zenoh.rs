@@ -134,7 +134,10 @@ async fn main() -> anyhow::Result<()> {
             .decode(encoded.trim_end_matches(['\r', '\n']))?
             .try_into()
             .map_err(|_| anyhow::anyhow!("capability authority key must be 32 bytes"))?;
-        anyhow::ensure!(cap_key != key, "capability key must differ from OMAs transport key");
+        anyhow::ensure!(
+            cap_key != key,
+            "capability key must differ from OMAs transport key"
+        );
         let authority = ocaf_runtime::sasos_capability::CapabilityAuthority::new(cap_key)?;
         admission = admission.with_capability_authority(authority);
     }
