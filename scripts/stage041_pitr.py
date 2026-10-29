@@ -225,6 +225,7 @@ def execute(pg_bin:Path, report_path:Path, *,
               seconds=25,reason="target WAL segment never archived")
         archived_segments=len([x for x in archive.iterdir() if WALNAME.fullmatch(x.name)])
         if archived_segments<1:raise PITRError("no actual PG WAL segments archived")
+        outage_started=time.monotonic()
         crash=_run([bin("pg_ctl"),"-D",str(data),
              "-m","immediate","-w","stop"],timeout=30)
         primary_started=False
@@ -259,6 +260,7 @@ def execute(pg_bin:Path, report_path:Path, *,
         recovered_digest=hashlib.sha256(after.encode()).hexdigest()
         if count!=35 or excluded!=0 or recovered_digest!=target_digest:
             raise PITRError("real WAL PITR target mismatch or post-target transaction replayed")
+        measured_rto_ms=int((time.monotonic()-outage_started)*1000)
         proof={
             "schema_version":1,
             "status":"POSTGRES_REAL_WAL_POINT_IN_TIME_RECOVERY_PASSED",
@@ -285,6 +287,12 @@ def execute(pg_bin:Path, report_path:Path, *,
             "last_backup_recovery_mode_exited":True,
             "basebackup_duration_ms":basebackup_ms,
             "pitr_restart_duration_ms":elapsed,
+            "crash_to_verified_restore_ms":measured_rto_ms,
+            "rto_scope":"immediate_stop_request_through_target_checksum_verification",
+            "missing_target_rows":35-count,
+            "deliberately_excluded_post_target_rows":5,
+            "rpo_seconds":None,
+            "rpo_scope":"exact_selected_lsn_not_latest_pre_crash_commit",
             "same_kernel":True,
             "physical_host_crash_tested":False,
             "offsite_wal_archive_tested":False,

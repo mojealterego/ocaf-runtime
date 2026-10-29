@@ -1,0 +1,57 @@
+name: OCAF 0.41 repeated local PITR 30-60-120 minute measurement
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recovery-soak:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        seconds: [1800, 3600, 7200]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Validate recovery measurement contracts
+        run: python3 -m unittest discover -s scripts/tests -p 'test_stage041_pitr*.py' -v
+      - name: Install PostgreSQL 16
+        run: |
+          set -euo pipefail
+          if ! test -x /usr/lib/postgresql/16/bin/pg_basebackup; then
+            sudo -n apt-get update -qq
+            sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16
+          fi
+      - name: Repeated real local PostgreSQL crash and selected-LSN recovery
+        env:
+          SOAK_SECONDS: ${{ matrix.seconds }}
+        run: |
+          set -euo pipefail
+          LAB="${RUNNER_TEMP}/stage041-pitr-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          sudo -n install -d -o postgres -g postgres -m 0700 "$LAB"
+          sudo -n install -o postgres -g postgres -m 0500 scripts/stage041_pitr.py scripts/stage041_pitr_soak.py "$LAB/"
+          sudo -n -u postgres python3 "$LAB/stage041_pitr_soak.py" \
+            --pg-bin-dir /usr/lib/postgresql/16/bin \
+            --output "$LAB/evidence" --seconds "$SOAK_SECONDS" \
+            --ack-ephemeral-postgres-pitr-crash-lab
+      - name: Collect completed cycles and failure diagnostics
+        if: always()
+        run: |
+          set -euo pipefail
+          LAB="${RUNNER_TEMP}/stage041-pitr-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          if sudo -n test -d "$LAB/evidence"; then
+            sudo -n cp -r "$LAB/evidence" stage041-duration-evidence
+            sudo -n chown -R "$(id -u):$(id -g)" stage041-duration-evidence
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: stage041-local-pitr-${{ matrix.seconds }}s-not-integrated-dr
+          path: stage041-duration-evidence/
+          retention-days: 30
+          if-no-files-found: warn
