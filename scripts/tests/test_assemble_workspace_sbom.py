@@ -1,10 +1,13 @@
 import json
-from test_verify_workspace_sbom import WorkspaceSbomTests
+import unittest
+import test_verify_workspace_sbom as fixture
 from scripts.assemble_workspace_sbom import assemble
 from scripts.verify_workspace_sbom import SbomError
 
 
-class Assemble(WorkspaceSbomTests):
+class Assemble(unittest.TestCase):
+    setUp = fixture.WorkspaceSbomTests.setUp
+    add_g01 = fixture.WorkspaceSbomTests.add_g01
     def test_standalone_inventory_keeps_graph_separate(self):
         member=self.add_g01()
         root_path=self.root/'bom.json'
