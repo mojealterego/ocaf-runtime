@@ -1,0 +1,100 @@
+# release-evidence-scope: ephemeral_lab
+name: Stage 0.42 actual runtime migration and snapshot rollback
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - src/cluster/jobs.rs
+      - tests/stage042_stateful_rollback.rs
+      - .github/workflows/stage042-stateful-migration-rollback.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  actual-runtime-rollback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
+        env:
+          POSTGRES_USER: ocaf
+          POSTGRES_PASSWORD: stage042_disposable_old
+          POSTGRES_DB: ocaf_stage042_rollback
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ocaf -d ocaf_stage042_rollback"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      OCAF_REQUIRE_STAGE042_TEST: '1'
+      OCAF_STAGE042_DSN: host=127.0.0.1 port=5432 user=ocaf password=stage042_disposable_old dbname=ocaf_stage042_rollback sslmode=disable
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_TEST_DEBUG: '0'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+      - name: Compile current runtime and create legacy schema with pending job
+        env:
+          OCAF_STAGE042_PHASE: prepare
+        run: cargo test --locked --no-default-features --test stage042_stateful_rollback -- --nocapture
+      - name: Snapshot legacy schema and state before actual runtime migrations
+        run: |
+          set -euo pipefail
+          container="${{ job.services.postgres.id }}"
+          docker exec "$container" pg_dump -U ocaf -d ocaf_stage042_rollback -Fc -f /tmp/prior.dump
+      - name: Run actual PgJobQueue migrations and persist completed runtime job
+        env:
+          OCAF_STAGE042_PHASE: migrate
+        run: cargo test --locked --no-default-features --test stage042_stateful_rollback -- --nocapture
+      - name: Restore original schema and data snapshot
+        run: |
+          set -euo pipefail
+          container="${{ job.services.postgres.id }}"
+          docker exec "$container" psql -v ON_ERROR_STOP=1 -U ocaf -d ocaf_stage042_rollback -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
+          docker exec "$container" pg_restore -U ocaf -d ocaf_stage042_rollback --exit-on-error /tmp/prior.dump
+      - name: Verify original pending state, remigrate and execute through runtime
+        env:
+          OCAF_STAGE042_PHASE: restored
+        run: cargo test --locked --no-default-features --test stage042_stateful_rollback -- --nocapture
+      - name: Rotate disposable DB credential after rollback
+        run: |
+          set -euo pipefail
+          docker exec "${{ job.services.postgres.id }}" psql -v ON_ERROR_STOP=1 -U ocaf -d ocaf_stage042_rollback -c "ALTER ROLE ocaf PASSWORD 'stage042_disposable_new'"
+      - name: Deny old credential and read persisted state with rotated credential
+        env:
+          OCAF_STAGE042_PHASE: revoked
+          OCAF_STAGE042_FRESH_DSN: host=127.0.0.1 port=5432 user=ocaf password=stage042_disposable_new dbname=ocaf_stage042_rollback sslmode=disable
+        run: cargo test --locked --no-default-features --test stage042_stateful_rollback -- --nocapture
+      - name: Record exact source and bounded evidence scope
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path('stage042-stateful.json').write_text(json.dumps({
+              'status':'EPHEMERAL_RUNTIME_MIGRATION_SNAPSHOT_ROLLBACK_PASS',
+              'source_commit':os.environ['GITHUB_SHA'],
+              'run_id':os.environ['GITHUB_RUN_ID'],
+              'run_attempt':os.environ['GITHUB_RUN_ATTEMPT'],
+              'actual_runtime_migrations_tested':['leader_epoch','cluster_id'],
+              'legacy_schema_restored':True, 'pending_job_restored':True,
+              'completed_job_survives_reconnect':True,
+              'revoked_database_password_denied':True,
+              'rotated_database_password_accepted':True,
+              'prior_signed_binary_tested':False,
+              'distributed_runtime_rollback_tested':False,
+              'kms_or_other_secrets_tested':False,
+              'stage_042_complete':False, 'production_approved':False
+          },indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage042-runtime-migration-rollback-${{ github.sha }}
+          path: stage042-stateful.json
+          if-no-files-found: error
+          retention-days: 30
