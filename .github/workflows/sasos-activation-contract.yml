@@ -10,6 +10,16 @@ on:
       - "src/stage044_omat_authz.rs"
       - "src/bin/ocaf-omat-zenoh.rs"
       - "src/bin/ocaf-omas-zenoh-client.rs"
+      - "src/sasos_service_adapters.rs"
+      - "tests/sasos_service_adapters.rs"
+      - "scripts/sasos_memory_models.py"
+      - "scripts/sasos_solver_evidence.py"
+      - "scripts/sasos_shm_probe.py"
+      - "scripts/tests/test_sasos_memory_models.py"
+      - "scripts/tests/test_sasos_solver_evidence.py"
+      - "scripts/tests/test_sasos_shm_probe.py"
+      - "verification/sasos334/**"
+      - "deploy/stage334/**"
       - "tests/sasos_omat_capability.rs"
       - "tests/stage044_integration.rs"
       - "scripts/sasos_activation_gate.py"
@@ -42,6 +52,37 @@ jobs:
           assert report["status"]=="CATALOG_AUDITED_NOT_ACTIVATED"
           print("SASOS_CATALOG_INTEGRITY_PASS_NO_BACKENDS_ACTIVATED")
           PY
+      - name: Install real Z3 solver (no mocked proof)
+        run: |
+          sudo -n apt-get update -qq
+          sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends z3
+          z3 -version
+      - name: Run real solver, memory and Linux SHM contract checks
+        run: |
+          python3 -m unittest discover -s scripts/tests -p 'test_sasos_*.py' -v
+          python3 scripts/sasos_solver_evidence.py --report sasos334-solver-evidence.json
+          python3 scripts/sasos_shm_probe.py --report sasos334-shm-evidence.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          solver=json.loads(Path("sasos334-solver-evidence.json").read_text())
+          shm=json.loads(Path("sasos334-shm-evidence.json").read_text())
+          assert [c["result"] for c in solver["cases"]]==["unsat","unsat","unsat","sat"]
+          assert solver["rust_implementation_formally_verified"] is False
+          assert shm["separate_process_verified"] is True
+          assert shm["zenoh_shm_e2e_verified"] is False
+          print("SASOS334_BOUNDED_EVIDENCE_PASS_NOT_PRODUCTION")
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: sasos334-bounded-evidence
+          path: |
+            sasos-catalog-audit.json
+            sasos334-solver-evidence.json
+            sasos334-shm-evidence.json
+          retention-days: 30
+          if-no-files-found: warn
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
         with:
           toolchain: "1.99.0"
@@ -50,6 +91,8 @@ jobs:
         run: cargo fmt --all -- --check
       - name: Capability and live Zenoh ingress negative tests
         run: cargo test --locked --test sasos_omat_capability -- --nocapture
+      - name: Operator-bound real Vault HTTPS adapter contracts
+        run: cargo test --locked --no-default-features --test sasos_service_adapters -- --nocapture
       - name: OAuth and capability composition tests
         run: cargo test --locked --no-default-features --test stage044_integration -- --nocapture
       - name: Core capability and OMAt policy tests
