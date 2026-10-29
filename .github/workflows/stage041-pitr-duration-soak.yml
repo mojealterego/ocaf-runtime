@@ -2,6 +2,12 @@ name: OCAF 0.41 repeated local PITR 30-60-120 minute measurement
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "30-second diagnostic or complete 30/60/120-minute trials"
+        type: choice
+        options: ["diagnostic", "complete"]
+        default: "complete"
 
 permissions:
   contents: read
@@ -13,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        seconds: [1800, 3600, 7200]
+        seconds: ${{ fromJSON(inputs.mode == 'diagnostic' && '[30]' || '[1800,3600,7200]') }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:

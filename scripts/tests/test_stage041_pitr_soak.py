@@ -20,6 +20,9 @@ class Soak(unittest.TestCase):
         self.assertIsNone(result['rpo_seconds'])
         self.assertFalse(result['stage_041_complete'])
 
+    def test_diagnostic_is_not_soak_acceptance(self):
+        self.assertEqual(summarize([cycle()],30,30)['status'],'LOCAL_PITR_SMOKE_PASS')
+
     def test_reject_short_empty_and_invalid_duration(self):
         for cycles,elapsed,requested in (([],1800,1800),([cycle()],1799,1800),
                 ([cycle()],float('nan'),1800),([cycle()],7200,120)):

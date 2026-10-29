@@ -9,7 +9,7 @@ from stage041_pitr import execute, validate_pitr
 
 
 def summarize(cycles, elapsed, requested):
-    if type(requested) is not int or requested not in (1800, 3600, 7200):
+    if type(requested) is not int or requested not in (30, 1800, 3600, 7200):
         raise ValueError('expected 30, 60 or 120 minutes')
     if not isinstance(elapsed, (int, float)) or isinstance(elapsed, bool) or not math.isfinite(elapsed) or elapsed < requested:
         raise ValueError('requested wall-clock duration not reached')
@@ -28,7 +28,8 @@ def summarize(cycles, elapsed, requested):
             raise ValueError('invalid target-loss or time-based RPO claim')
         timings.append(value)
     timings.sort()
-    return dict(schema_version=1, status='LOCAL_REPEATED_PITR_SOAK_PASS',
+    return dict(schema_version=1, status=('LOCAL_PITR_SMOKE_PASS' if requested==30
+                                         else 'LOCAL_REPEATED_PITR_SOAK_PASS'),
                 requested_seconds=requested, measured_elapsed_seconds=elapsed,
                 completed_cycles=len(cycles),
                 rto_p50_ms=timings[math.ceil(len(timings)*.50)-1],
@@ -47,7 +48,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--pg-bin-dir', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--seconds', type=int, choices=(1800,3600,7200), required=True)
+    parser.add_argument('--seconds', type=int, choices=(30,1800,3600,7200), required=True)
     parser.add_argument('--ack-ephemeral-postgres-pitr-crash-lab', action='store_true')
     args = parser.parse_args()
     if not args.ack_ephemeral_postgres_pitr_crash_lab:
@@ -64,11 +65,13 @@ def main():
             print(json.dumps({'completed_cycles':len(cycles),
                               'elapsed_seconds':int(time.monotonic()-start)}), flush=True)
         report = summarize(cycles, time.monotonic()-start, args.seconds)
-    except Exception:
+    except Exception as error:
         (args.output/'failure.json').write_text(json.dumps(dict(
+            error_type=type(error).__name__, error_message=str(error)[:300],
             status='FAILED', completed_cycles=len(cycles),
             measured_elapsed_seconds=time.monotonic()-start,
             stage_041_complete=False, production_approved=False)))
+        print(f'PITR SOAK FAILED: {type(error).__name__}: {str(error)[:300]}', flush=True)
         raise
     with (args.output/'summary.json').open('x') as out:
         json.dump(report, out, indent=2)
