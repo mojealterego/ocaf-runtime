@@ -67,3 +67,5 @@ pub mod stage044_vault_broker;
 pub mod stage044_provider_refresh;
 
 pub mod sasos_capability;
+
+pub mod sasos_service_adapters;
