@@ -171,7 +171,7 @@ def execute(pg_bin:Path, report_path:Path, *,
         c.write_text(c.read_text()+
              "\nwal_level = replica\nmax_wal_senders = 8\n"
              "archive_mode = on\n"
-             "archive_command = 'test ! -f "+str(archive)+"/%f && cp %p "+str(archive)+"/%f'\n"
+             "archive_command = 'test ! -f "+str(archive)+"/%f && cp %p "+str(archive)+"/%f.partial && mv "+str(archive)+"/%f.partial "+str(archive)+"/%f'\n"
              "full_page_writes = on\nfsync = on\n")
         _run([bin("pg_ctl"),"-D",str(data),
               "-o",f"-p {primary_port} -h 127.0.0.1",
@@ -223,8 +223,10 @@ def execute(pg_bin:Path, report_path:Path, *,
         query(primary_port,"SELECT pg_switch_wal()")
         _wait(lambda:(archive/target_wal).is_file(),
               seconds=25,reason="target WAL segment never archived")
-        archived_segments=len([x for x in archive.iterdir() if WALNAME.fullmatch(x.name)])
-        if archived_segments<1:raise PITRError("no actual PG WAL segments archived")
+        archived_files=[x for x in archive.iterdir() if WALNAME.fullmatch(x.name)]
+        archived_segments=len(archived_files)
+        if archived_segments<1 or any(x.stat().st_size!=16*1024*1024 for x in archived_files):
+            raise PITRError("missing or truncated archived PostgreSQL WAL segment")
         outage_started=time.monotonic()
         crash=_run([bin("pg_ctl"),"-D",str(data),
              "-m","immediate","-w","stop"],timeout=30)
