@@ -23,3 +23,13 @@ przeciążenia telemetrii, kwarantanny gościa, niezależnego KMS lub offsite
 Object Lock. Każdy raport utrzymuje `stage_041_complete=false` oraz
 `production_approved=false`. Testy jednostkowe nie są dowodem ukończenia
 przebiegu 30/60/120 minut. Wyniki wykonania należy pobrać z artefaktów CI.
+
+## Decyzja właściciela — 2026-10-29
+
+Właściciel zaakceptował laboratoria i symulację jako podstawę odbioru
+projektowego 0.41 z jawnymi ograniczeniami. Status odbioru pozostaje
+SIMULATION_ACCEPTANCE_PENDING_RESULTS. Zgoda nie jest wynikiem testu
+ani potwierdzeniem rzeczywistego S3/KMS lub zintegrowanego DR.
+Pierwszy przebieg 40827723998 zakończył się błędem uprawnień przed
+uruchomieniem PostgreSQL; nie stanowi wykonanej próby czasowej.
+Poprawka przenosi prywatny katalog użytkownika postgres do /tmp.

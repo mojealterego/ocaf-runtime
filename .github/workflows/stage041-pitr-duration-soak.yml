@@ -32,7 +32,7 @@ jobs:
           SOAK_SECONDS: ${{ matrix.seconds }}
         run: |
           set -euo pipefail
-          LAB="${RUNNER_TEMP}/stage041-pitr-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          LAB="/tmp/stage041-pitr-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           sudo -n install -d -o postgres -g postgres -m 0700 "$LAB"
           sudo -n install -o postgres -g postgres -m 0500 scripts/stage041_pitr.py scripts/stage041_pitr_soak.py "$LAB/"
           sudo -n -u postgres python3 "$LAB/stage041_pitr_soak.py" \
@@ -43,7 +43,7 @@ jobs:
         if: always()
         run: |
           set -euo pipefail
-          LAB="${RUNNER_TEMP}/stage041-pitr-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          LAB="/tmp/stage041-pitr-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           if sudo -n test -d "$LAB/evidence"; then
             sudo -n cp -r "$LAB/evidence" stage041-duration-evidence
             sudo -n chown -R "$(id -u):$(id -g)" stage041-duration-evidence
