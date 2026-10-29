@@ -10,6 +10,7 @@ on:
       - src/transport_policy.rs
       - crates/ocaf-stage-ledger/**
       - crates/ocaf-transport-crdt/**
+      - swarms/g01/**
       - tests/stage042_workspace_compat.rs
       - tests/stage042_transport_workspace_compat.rs
       - .github/workflows/stage042-workspace-compat.yml
@@ -21,6 +22,7 @@ on:
       - src/transport_policy.rs
       - crates/ocaf-stage-ledger/**
       - crates/ocaf-transport-crdt/**
+      - swarms/g01/**
       - tests/stage042_workspace_compat.rs
       - tests/stage042_transport_workspace_compat.rs
       - .github/workflows/stage042-workspace-compat.yml
@@ -49,7 +51,8 @@ jobs:
           data=json.loads(Path('metadata.json').read_text())
           members=set(data['workspace_members'])
           by_name={p['name']:p for p in data['packages'] if p['id'] in members}
-          if set(by_name) != {'ocaf_runtime','ocaf_stage_ledger','ocaf-transport-crdt'}:
+          if len(by_name) != len(members) or set(by_name) != {
+                  'ocaf_runtime','ocaf_stage_ledger','ocaf-transport-crdt','ocaf-g01-swarm'}:
               raise SystemExit('workspace membership changed unexpectedly')
           root=by_name['ocaf_runtime']
           bins={t['name'] for t in root['targets'] if 'bin' in t['kind']}
@@ -59,9 +62,13 @@ jobs:
                     'ocaf-omas-zenoh-client'}
           if not required <= bins:
               raise SystemExit(f'public CLI targets missing: {sorted(required-bins)}')
+          swarm_bins={t['name'] for t in by_name['ocaf-g01-swarm']['targets']
+                      if 'bin' in t['kind']}
+          if swarm_bins != {'ocaf-g01-swarm'}:
+              raise SystemExit(f'G01 executable targets changed: {sorted(swarm_bins)}')
           PY
           git diff --exit-code -- Cargo.lock
-      - name: Format and test both real workspace members
+      - name: Format and test reviewed workspace members
         run: |
           set -euo pipefail
           cargo fmt --all -- --check
