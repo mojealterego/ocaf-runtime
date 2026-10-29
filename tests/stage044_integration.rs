@@ -4,7 +4,12 @@ use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use ocaf_runtime::omat_server::{
     ExecutorKind, OmatPolicy, OmatRegistry, ToolCall, ToolManifest, ToolRisk,
 };
-use ocaf_runtime::stage043_omat_route::{AuthenticatedPeer, OmatRouteGuard};
+use ocaf_runtime::stage043_omat_route::{
+    omat_resource_id, AuthenticatedPeer, DispatchError, OmatRouteGuard,
+};
+use ocaf_runtime::sasos_capability::{
+    CapabilityAuthority, CapabilityCaveat, CapabilityError, CapabilityVerbs,
+};
 use ocaf_runtime::stage044_oauth::{
     AuthenticatedSubject, AuthorizationRequest, CodeExchange, OAuthClient, OAuthService,
 };
@@ -207,4 +212,100 @@ fn valid_oauth_never_bypasses_omat_execution_and_ostc() {
         result.is_err(),
         "OAuth cannot grant OSTc source access or a missing sandbox executor"
     );
+}
+
+#[test]
+fn oauth_and_capability_are_both_required_before_omat_execution() {
+    let dir = tempfile::tempdir().unwrap();
+    #[cfg(unix)]
+    std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+    let path = dir.path().join("oauth-capability.sqlite");
+    Connection::open(&path).unwrap();
+    #[cfg(unix)]
+    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+    let oauth = OAuthService::open(&path, vec![client("tenant-a")]).unwrap();
+    let access = token(&oauth, "tenant-a", "alice");
+    let peer = AuthenticatedPeer {
+        principal: "agent-a".into(),
+        tenant: "tenant-a".into(),
+    };
+    let call = call("tenant-a", "agent-a");
+    let authority = CapabilityAuthority::new([23; 32]).unwrap();
+    let ticket = authority.mint(
+        &peer,
+        &omat_resource_id(&call),
+        CapabilityCaveat {
+            max_bytes: 1024,
+            expires_at_unix: 4_000_000_000,
+            verbs: CapabilityVerbs::EXECUTE,
+        },
+    ).unwrap();
+    let mut route = OmatRouteGuard::new(
+        HashMap::from([("agent-a".into(), "tenant-a".into())])
+    ).unwrap();
+    route.set_transport_connected(true);
+    let policy = OmatPolicy {
+        tenant_id: "tenant-a".into(),
+        allowed_tools: ["echo".into()].into_iter().collect(),
+        allowed_capabilities: scopes(),
+        max_timeout_ms: 1000,
+        max_output_bytes: 4096,
+        allow_external_side_effects: false,
+    };
+    let mut registry = OmatRegistry::default();
+    registry.register(ToolManifest {
+        tenant_id: "tenant-a".into(),
+        tool_id: "echo".into(),
+        version: "1".into(),
+        description: "bounded echo".into(),
+        input_schema: json!({"type":"object"}),
+        output_schema: json!({"type":"object"}),
+        capabilities: scopes(),
+        risk: ToolRisk::ReadOnly,
+        executor: ExecutorKind::Wasi,
+        timeout_ms: 500,
+        max_output_bytes: 1024,
+        enabled: true,
+    }).unwrap();
+    let context = || OmatDispatchContext {
+        route: &route,
+        policy: &policy,
+        registry: &registry,
+    };
+    let topic = "ocaf/omat/tenant-a/requests/req-1";
+    let result = gate().dispatch_with_capability(
+        &oauth, &access, &peer, topic, &call, context(), &authority, &ticket,
+    );
+    assert!(matches!(
+        result,
+        Err(ocaf_runtime::stage044_omat_authz::GateError::Dispatch(
+            DispatchError::Tool(ocaf_runtime::omat_server::OmatError::SourceAccessDenied)
+        ))
+    ));
+    let mut altered = call.clone();
+    altered.agent_id = "agent-b".into();
+    assert!(gate().dispatch_with_capability(
+        &oauth, &access, &peer, topic, &altered, context(), &authority, &ticket,
+    ).is_err());
+    let bad = authority.mint(&peer, &omat_resource_id(&call),
+        CapabilityCaveat {
+            max_bytes: 1024, expires_at_unix: 4_000_000_000,
+            verbs: CapabilityVerbs::READ,
+        }
+    ).unwrap();
+    assert!(matches!(
+        gate().dispatch_with_capability(
+            &oauth, &access, &peer, topic, &call, context(), &authority, &bad,
+        ),
+        Err(ocaf_runtime::stage044_omat_authz::GateError::Dispatch(
+            DispatchError::Capability(CapabilityError::Denied)
+        ))
+    ));
+    oauth.revoke_user("tenant-a", "alice").unwrap();
+    assert!(matches!(
+        gate().dispatch_with_capability(
+            &oauth, &access, &peer, topic, &call, context(), &authority, &ticket,
+        ),
+        Err(ocaf_runtime::stage044_omat_authz::GateError::OAuth(_))
+    ));
 }
