@@ -140,8 +140,10 @@ impl CapabilityAuthority {
         resource_id: &str,
         caveat: CapabilityCaveat,
     ) -> Result<CapabilityTicket, CapabilityError> {
-        if !valid_id(&peer.tenant) || !valid_id(&peer.principal)
-            || !valid_resource(resource_id) || !caveat.valid()
+        if !valid_id(&peer.tenant)
+            || !valid_id(&peer.principal)
+            || !valid_resource(resource_id)
+            || !caveat.valid()
         {
             return Err(CapabilityError::Invalid);
         }
@@ -224,13 +226,20 @@ impl CapabilityAuthority {
     }
 
     fn base_signature(&self, ticket: &CapabilityTicket) -> Result<[u8; 32], CapabilityError> {
-        if !valid_id(&ticket.id) || !valid_id(&ticket.tenant_id)
-            || !valid_id(&ticket.subject_id) || !valid_resource(&ticket.resource_id)
+        if !valid_id(&ticket.id)
+            || !valid_id(&ticket.tenant_id)
+            || !valid_id(&ticket.subject_id)
+            || !valid_resource(&ticket.resource_id)
         {
             return Err(CapabilityError::Invalid);
         }
         let mut bytes = b"ocaf.sasos.capability.v1".to_vec();
-        for field in [&ticket.id, &ticket.tenant_id, &ticket.subject_id, &ticket.resource_id] {
+        for field in [
+            &ticket.id,
+            &ticket.tenant_id,
+            &ticket.subject_id,
+            &ticket.resource_id,
+        ] {
             bytes.extend_from_slice(&(field.len() as u16).to_be_bytes());
             bytes.extend_from_slice(field.as_bytes());
         }
@@ -247,10 +256,12 @@ impl CapabilityAuthority {
             if !caveat.valid() || previous.is_some_and(|p| !caveat.attenuates(p)) {
                 return Err(CapabilityError::Invalid);
             }
-            let mut mac = HmacSha256::new_from_slice(&signature).map_err(|_| CapabilityError::Invalid)?;
+            let mut mac =
+                HmacSha256::new_from_slice(&signature).map_err(|_| CapabilityError::Invalid)?;
             mac.update(&caveat.bytes());
             if index + 1 == ticket.caveats.len() {
-                mac.verify_slice(&ticket.signature).map_err(|_| CapabilityError::Signature)?;
+                mac.verify_slice(&ticket.signature)
+                    .map_err(|_| CapabilityError::Signature)?;
             } else {
                 signature = mac.finalize().into_bytes().into();
             }
@@ -261,14 +272,20 @@ impl CapabilityAuthority {
 }
 
 fn valid_id(value: &str) -> bool {
-    !value.is_empty() && value.len() <= MAX_IDENTIFIER_BYTES
-        && value.bytes().all(|b| b.is_ascii_alphanumeric() || b"._-".contains(&b))
+    !value.is_empty()
+        && value.len() <= MAX_IDENTIFIER_BYTES
+        && value
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"._-".contains(&b))
 }
 
 fn valid_resource(value: &str) -> bool {
-    !value.is_empty() && value.len() <= MAX_IDENTIFIER_BYTES
+    !value.is_empty()
+        && value.len() <= MAX_IDENTIFIER_BYTES
         && !value.contains("..")
-        && value.bytes().all(|b| b.is_ascii_alphanumeric() || b"._:/-".contains(&b))
+        && value
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"._:/-".contains(&b))
 }
 
 fn hmac(key: &[u8], data: &[u8]) -> Result<[u8; 32], CapabilityError> {
@@ -282,7 +299,10 @@ mod tests {
     use super::*;
 
     fn peer(tenant: &str, principal: &str) -> AuthenticatedPeer {
-        AuthenticatedPeer { tenant: tenant.into(), principal: principal.into() }
+        AuthenticatedPeer {
+            tenant: tenant.into(),
+            principal: principal.into(),
+        }
     }
 
     fn caveat() -> CapabilityCaveat {
@@ -297,72 +317,183 @@ mod tests {
     fn authorized_read_and_monotonic_delegation() {
         let authority = CapabilityAuthority::new([17; 32]).unwrap();
         let identity = peer("tenant_a", "agent_a");
-        let root = authority.mint(&identity, "sasos://object-a", caveat()).unwrap();
-        let child = authority.attenuate(&root, CapabilityCaveat {
-            max_bytes: 512, expires_at_unix: 1_900_000_000, verbs: CapabilityVerbs::READ,
-        }).unwrap();
-        assert!(authority.authorize_at(&child, &identity, "sasos://object-a",
-            CapabilityAction::Read, 512, 1_800_000_000).is_ok());
-        assert_eq!(authority.authorize_at(&child, &identity, "sasos://object-a",
-            CapabilityAction::Write, 1, 1_800_000_000), Err(CapabilityError::Denied));
-        assert_eq!(authority.authorize_at(&child, &identity, "sasos://object-a",
-            CapabilityAction::Read, 513, 1_800_000_000), Err(CapabilityError::Denied));
+        let root = authority
+            .mint(&identity, "sasos://object-a", caveat())
+            .unwrap();
+        let child = authority
+            .attenuate(
+                &root,
+                CapabilityCaveat {
+                    max_bytes: 512,
+                    expires_at_unix: 1_900_000_000,
+                    verbs: CapabilityVerbs::READ,
+                },
+            )
+            .unwrap();
+        assert!(authority
+            .authorize_at(
+                &child,
+                &identity,
+                "sasos://object-a",
+                CapabilityAction::Read,
+                512,
+                1_800_000_000
+            )
+            .is_ok());
+        assert_eq!(
+            authority.authorize_at(
+                &child,
+                &identity,
+                "sasos://object-a",
+                CapabilityAction::Write,
+                1,
+                1_800_000_000
+            ),
+            Err(CapabilityError::Denied)
+        );
+        assert_eq!(
+            authority.authorize_at(
+                &child,
+                &identity,
+                "sasos://object-a",
+                CapabilityAction::Read,
+                513,
+                1_800_000_000
+            ),
+            Err(CapabilityError::Denied)
+        );
     }
 
     #[test]
     fn rejects_privilege_expansion_in_every_dimension() {
         let authority = CapabilityAuthority::new([17; 32]).unwrap();
-        let root = authority.mint(&peer("t", "a"), "resource", caveat()).unwrap();
+        let root = authority
+            .mint(&peer("t", "a"), "resource", caveat())
+            .unwrap();
         for widened in [
-            CapabilityCaveat { max_bytes: 1025, ..caveat() },
-            CapabilityCaveat { expires_at_unix: 2_000_000_001, ..caveat() },
-            CapabilityCaveat { verbs: caveat().verbs.union(CapabilityVerbs::EXECUTE), ..caveat() },
+            CapabilityCaveat {
+                max_bytes: 1025,
+                ..caveat()
+            },
+            CapabilityCaveat {
+                expires_at_unix: 2_000_000_001,
+                ..caveat()
+            },
+            CapabilityCaveat {
+                verbs: caveat().verbs.union(CapabilityVerbs::EXECUTE),
+                ..caveat()
+            },
         ] {
-            assert!(matches!(authority.attenuate(&root, widened), Err(CapabilityError::Escalation)));
+            assert!(matches!(
+                authority.attenuate(&root, widened),
+                Err(CapabilityError::Escalation)
+            ));
         }
     }
 
     #[test]
     fn rejects_cross_tenant_subject_resource_and_expiry() {
         let authority = CapabilityAuthority::new([17; 32]).unwrap();
-        let root = authority.mint(&peer("t", "a"), "resource", caveat()).unwrap();
+        let root = authority
+            .mint(&peer("t", "a"), "resource", caveat())
+            .unwrap();
         for (identity, resource) in [
             (peer("other", "a"), "resource"),
             (peer("t", "other"), "resource"),
             (peer("t", "a"), "other"),
         ] {
-            assert_eq!(authority.authorize_at(&root, &identity, resource,
-                CapabilityAction::Read, 1, 1_800_000_000), Err(CapabilityError::Denied));
+            assert_eq!(
+                authority.authorize_at(
+                    &root,
+                    &identity,
+                    resource,
+                    CapabilityAction::Read,
+                    1,
+                    1_800_000_000
+                ),
+                Err(CapabilityError::Denied)
+            );
         }
-        assert_eq!(authority.authorize_at(&root, &peer("t", "a"), "resource",
-            CapabilityAction::Read, 1, 2_000_000_000), Err(CapabilityError::Denied));
+        assert_eq!(
+            authority.authorize_at(
+                &root,
+                &peer("t", "a"),
+                "resource",
+                CapabilityAction::Read,
+                1,
+                2_000_000_000
+            ),
+            Err(CapabilityError::Denied)
+        );
     }
 
     #[test]
     fn rejects_tampering_and_different_signing_key() {
         let authority = CapabilityAuthority::new([17; 32]).unwrap();
-        let root = authority.mint(&peer("t", "a"), "resource", caveat()).unwrap();
+        let root = authority
+            .mint(&peer("t", "a"), "resource", caveat())
+            .unwrap();
         let mut tampered = root.clone();
         tampered.resource_id = "other".into();
-        assert_eq!(authority.authorize_at(&tampered, &peer("t", "a"), "other",
-            CapabilityAction::Read, 1, 1_800_000_000), Err(CapabilityError::Signature));
+        assert_eq!(
+            authority.authorize_at(
+                &tampered,
+                &peer("t", "a"),
+                "other",
+                CapabilityAction::Read,
+                1,
+                1_800_000_000
+            ),
+            Err(CapabilityError::Signature)
+        );
         let mut tampered = root.clone();
         tampered.caveats[0].max_bytes = 2048;
-        assert_eq!(authority.authorize_at(&tampered, &peer("t", "a"), "resource",
-            CapabilityAction::Read, 1, 1_800_000_000), Err(CapabilityError::Signature));
+        assert_eq!(
+            authority.authorize_at(
+                &tampered,
+                &peer("t", "a"),
+                "resource",
+                CapabilityAction::Read,
+                1,
+                1_800_000_000
+            ),
+            Err(CapabilityError::Signature)
+        );
         let other = CapabilityAuthority::new([18; 32]).unwrap();
-        assert_eq!(other.authorize_at(&root, &peer("t", "a"), "resource",
-            CapabilityAction::Read, 1, 1_800_000_000), Err(CapabilityError::Signature));
+        assert_eq!(
+            other.authorize_at(
+                &root,
+                &peer("t", "a"),
+                "resource",
+                CapabilityAction::Read,
+                1,
+                1_800_000_000
+            ),
+            Err(CapabilityError::Signature)
+        );
     }
 
     #[test]
     fn rejects_invalid_keys_and_caveats() {
-        assert!(matches!(CapabilityAuthority::new([0; 32]), Err(CapabilityError::Invalid)));
+        assert!(matches!(
+            CapabilityAuthority::new([0; 32]),
+            Err(CapabilityError::Invalid)
+        ));
         let authority = CapabilityAuthority::new([17; 32]).unwrap();
-        assert!(matches!(authority.mint(&peer("t", "a"), "resource", CapabilityCaveat {
-            max_bytes: 0, ..caveat()
-        }), Err(CapabilityError::Invalid)));
-        assert!(matches!(authority.mint(&peer("t", "a"), "../resource", caveat()),
-            Err(CapabilityError::Invalid)));
+        assert!(matches!(
+            authority.mint(
+                &peer("t", "a"),
+                "resource",
+                CapabilityCaveat {
+                    max_bytes: 0,
+                    ..caveat()
+                }
+            ),
+            Err(CapabilityError::Invalid)
+        ));
+        assert!(matches!(
+            authority.mint(&peer("t", "a"), "../resource", caveat()),
+            Err(CapabilityError::Invalid)
+        ));
     }
 }
