@@ -64,6 +64,16 @@ fn no_ring0_kernel_backend_without_ostc() {
         }],
     );
     assert!(matches!(r, Err(SasosAdapterError::PrivilegedTool)));
+    let supervisor = SasosAdapterBindings::new(
+        &catalog(),
+        vec![SasosServiceBinding {
+            sasos_tool_id: "SASOS_TOOL_001_OPENAI_GPT4O".into(),
+            route_id: "provider".into(),
+            broker_tool_id: "model".into(),
+            max_body_bytes: 4096,
+        }],
+    );
+    assert!(matches!(supervisor, Err(SasosAdapterError::PrivilegedTool)));
     let r = SasosAdapterBindings::new(
         &catalog(),
         vec![SasosServiceBinding {
