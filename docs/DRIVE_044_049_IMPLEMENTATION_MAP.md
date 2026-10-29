@@ -57,6 +57,13 @@ klucza, różnego od klucza HMAC OMAs. Brak pliku oznacza **DENY**,
 nie automatyczne wystawianie biletów. Wystawienie biletu jest operacją
 uprawnionego operatora, nie funkcją dostępną modelowi.
 
+**Klient OMAs:** `src/bin/ocaf-omas-zenoh-client.rs` może odczytać
+wystawiony przez operatora bilet z prywatnego pliku
+`OCAF_OMAT_CAPABILITY_TICKET_FILE` i podpisać ramkę wraz z biletem.
+Bez tego pliku klient zachowuje protokół historyczny, ale OMAt
+odmawia jego wykonania. Test podpisanej ramki nie jest dowodem
+aktywacji executora.
+
 **Kompozycja OAuth:** `src/stage044_omat_authz.rs` udostępnia
 `dispatch_with_capability`, który wymaga jednocześnie ważnego
 OAuth grant, zaufanej tożsamości peera, biletu OCAP, polityki OMAt
