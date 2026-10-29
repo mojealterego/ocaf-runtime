@@ -4,7 +4,7 @@
 //! module executes only explicitly bound services through the existing
 //! OAuth-authorized, Vault-backed, TLS-verified outbound broker. It does not
 //! modify OMAt's fail-closed OSTc or WASI/Firecracker execution boundaries.
-//! Ring0 tools are forbidden here pending separate sandbox admission.
+//! Ring0 and Ring1 tools are forbidden pending separate sandbox admission.
 use crate::stage044_oauth::AuthorizedGrant;
 use crate::stage044_secret_broker::BrokerResponse;
 use crate::stage044_vault_broker::VaultSecretBroker;
