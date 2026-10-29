@@ -22,3 +22,21 @@ podpisem właściciela wymaganym w [formalnym dossier](STAGE039_OWNER_SIGNOFF.md
 Zadania techniczne można uzupełnić po uzyskaniu trwałych hostów. Ich brak nie
 blokuje odtąd prac projektowych nad 0.40; także w 0.40 wyniki laboratoryjne
 muszą być odróżniane od rzeczywistej replikacji WAL między hostami.
+
+## 2026-10-29 — regresja kompilacji Aya usunięta
+
+Commit `90a29bb62e614d17a5639af6a995ccfb4a86f7af` wydziela cztery
+pomocnicze pakiety Aya jako samodzielne workspace Cargo: hostowy loader,
+hostowy program eBPF, program eBPF gościa i loader gościa. Usuwa to błąd
+przypadkowego dziedziczenia głównego workspace. Test loadera w CI używa
+`--locked`, zachowując zatwierdzone zależności.
+
+Potwierdzone dla tego commita:
+
+- [Admission CI 40826747974](https://github.com/mojealterego/ocaf-runtime/actions/runs/40826747974): **PASS**, w tym kompilacja i testy loadera Aya oraz testy odmowy nieautoryzowanych operacji.
+- [eBPF cross-compile 40826748036](https://github.com/mojealterego/ocaf-runtime/actions/runs/40826748036): **PASS**, rzeczywisty ELF BPF z kontrolą nagłówka i sekcji `cgroup_skb/egress`.
+- Lokalnie `cargo test --manifest-path stage039/aya-guard/Cargo.toml --locked`: **4/4 PASS**.
+
+Regresja kompilacji jest zamknięta. Powyższe przebiegi nie dowodzą próby
+na dwóch trwałych hostach ani załadowania skompilowanego ELF do jądra.
+Status administracyjny i ograniczenia odbioru opisane wyżej pozostają aktualne.
