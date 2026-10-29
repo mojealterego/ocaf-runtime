@@ -27,7 +27,7 @@ class NetnsPgbenchChaos(unittest.TestCase):
                "standby_c_healthy":2456,"standby_b_healed":2456,
                "caught_up_c_after_promote":2456}
         failures=[
-            {"clients":1},{"seconds":1},{"actual_transactions":0},
+            {"clients":1},{"seconds":1},{"seconds":3601},{"seconds":True},{"actual_transactions":0},
             {"before":20},{"primary":2455},{"standby_b_isolated":2456},
             {"standby_c_healthy":0},{"standby_b_healed":0},
             {"caught_up_c_after_promote":0},{"actual_transactions":True},
@@ -36,3 +36,14 @@ class NetnsPgbenchChaos(unittest.TestCase):
             with self.subTest(change=change),self.assertRaises(pg.NetnsPGError):
                 pg.validate_pgbench_partition(**{**valid,**change})
 
+
+    def test_hour_partition_still_requires_replica_parity(self):
+        fields=dict(clients=8,seconds=3600,actual_transactions=360000,
+                    before=0,primary=360000,standby_b_isolated=0,
+                    standby_c_healthy=360000,standby_b_healed=360000,
+                    caught_up_c_after_promote=360000)
+        result=pg.validate_pgbench_partition(**fields)
+        self.assertEqual(result["duration_seconds"],3600)
+        self.assertFalse(result["production_approved"])
+        with self.assertRaises(pg.NetnsPGError):
+            pg.validate_pgbench_partition(**{**fields,"standby_b_healed":359999})

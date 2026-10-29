@@ -132,7 +132,7 @@ def pg_basebackup_command(binary:str,port:int,destination:Path)->list[str]:
 
 def validate_pgbench_load(output:str,seconds:int,clients:int)->dict:
     if (not isinstance(output,str) or len(output)>100000 or
-        type(seconds) is not int or not 15<=seconds<=120 or
+        type(seconds) is not int or not 15<=seconds<=3600 or
         type(clients) is not int or not 2<=clients<=16):
         raise PostgresHAError("bounded real pgbench stress required")
     counts=re.findall(r"number of transactions actually processed:\s*([0-9]+)",output)

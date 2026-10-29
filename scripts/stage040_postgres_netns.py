@@ -62,7 +62,7 @@ def validate_pgbench_partition(*,clients:int,seconds:int,
             standby_b_isolated,standby_c_healthy,standby_b_healed,
             caught_up_c_after_promote)
     if (any(type(n) is not int for n in values)
-        or clients!=8 or not 20<=seconds<=120
+        or clients!=8 or not 20<=seconds<=3600
         or actual_transactions<100 or before!=0
         or primary!=actual_transactions
         or standby_b_isolated!=before
@@ -105,8 +105,8 @@ def run_lab(*,pg_bin:Path,report:Path,soak_seconds:int=0)->dict:
         or not report.is_absolute() or report.exists() or report.is_symlink()
         or not report.parent.is_dir()):
         raise NetnsPGError("privileged disposable Linux network namespace experiment only")
-    if type(soak_seconds) is not int or (soak_seconds and not 20<=soak_seconds<=120):
-        raise NetnsPGError("real bounded 20..120 second netns WAL soak only")
+    if type(soak_seconds) is not int or (soak_seconds and not 20<=soak_seconds<=3600):
+        raise NetnsPGError("real bounded 20..3600 second netns WAL soak only")
     for name in ("initdb","pg_ctl","pg_basebackup","psql")+(("pgbench",) if soak_seconds else ()):
         if not (pg_bin/name).is_file():
             raise NetnsPGError("real PostgreSQL 16 server package unavailable: "+name)
@@ -241,6 +241,7 @@ def run_lab(*,pg_bin:Path,report:Path,soak_seconds:int=0)->dict:
         if soak_seconds:
             raw=pgcmd("a",[exe("pgbench"),"-c","8","-j","2",
                             "-T",str(soak_seconds),"-r",
+                            *(["--rate=100"] if soak_seconds>120 else []),
                             "-h",ip["a"],"-p",str(port),
                             "-U","postgres","postgres"],
                         timeout=soak_seconds+50)

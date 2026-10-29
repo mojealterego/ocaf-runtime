@@ -9,6 +9,12 @@ on:
       - scripts/tests/test_stage040_postgres_netns.py
       - scripts/tests/test_stage040_postgres_netns_soak.py
   workflow_dispatch:
+    inputs:
+      soak_seconds:
+        description: "Duration of one-kernel PostgreSQL partition load (seconds)"
+        type: choice
+        options: ["20", "3600"]
+        default: "20"
 
 permissions:
   contents: read
@@ -17,7 +23,9 @@ jobs:
   actual-postgres-tcp-netns:
     name: Real 3 netns isolated TCP PostgreSQL clusters / B partition / C promotion following
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 80
+    env:
+      SOAK_SECONDS: ${{ inputs.soak_seconds || '20' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -47,12 +55,12 @@ jobs:
           mkdir -p stage040-netns-evidence
           sudo -n python3 scripts/stage040_postgres_netns.py \
             --pg-bin-dir /usr/lib/postgresql/16/bin \
-            --soak-seconds 20 \
+            --soak-seconds "$SOAK_SECONDS" \
             --report "$GITHUB_WORKSPACE/stage040-netns-evidence/actual-tcp-wal-netns.json" \
             --ack-privileged-isolated-netns-postgres-fault-lab
           sudo -n chown "$(id -u):$(id -g)" stage040-netns-evidence/actual-tcp-wal-netns.json
           python3 - <<'PY'
-          import json
+          import json, os
           from pathlib import Path
           r=json.loads(Path("stage040-netns-evidence/actual-tcp-wal-netns.json").read_text())
           assert r["status"]=="POSTGRES_THREE_NETNS_TCP_STREAM_PARTITION_RECOVERY_PASSED"
@@ -68,7 +76,7 @@ jobs:
           assert r["production_approved"] is False
           soak=r["pgbench_chaos_soak"]
           assert soak["real_pgbench_completed"] is True
-          assert soak["clients"]==8 and soak["duration_seconds"]==20
+          assert soak["clients"]==8 and soak["duration_seconds"]==int(os.environ["SOAK_SECONDS"])
           assert soak["actual_committed_transactions"]>=100
           assert soak["both_replica_tcp_streams_replayed_commits"] is True
           assert soak["bidirectional_kernel_route_blackhole_verified"] is True
@@ -76,7 +84,7 @@ jobs:
           assert len(soak["account_balances_md5"])==32
           assert soak["actual_pgbench_tps"]>0
           assert soak["inter_kernel_streaming_proved"] is False
-          print("STAGE041_REAL_8CLIENT_20SEC_TCP_PARTITION_PGBENCH_STANDBY_PARITY_PROVED")
+          print("STAGE040_REAL_8CLIENT_TCP_PARTITION_PGBENCH_STANDBY_PARITY_PROVED")
           print("STAGE040_ACTUAL_THREE_POSTGRESQL_KERNEL_NETNS_TCP_WAL_PARTITION_PROMOTION_PROVED")
           PY
       - name: Preserve real Linux kernel TCP PostgreSQL WAL fault and recovery report
