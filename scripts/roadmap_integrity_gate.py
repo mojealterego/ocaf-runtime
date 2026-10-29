@@ -21,10 +21,10 @@ def main() -> int:
     repo = args.repo
     manifest = json.loads((repo / "docs/roadmap/canonical_v11_inventory.json").read_text())
     detailed = manifest.get("main", [])
-    assert manifest.get("main_count") == 333
+    assert manifest.get("main_count") == 334
     assert manifest.get("technical_count") == 64
     assert manifest.get("reference_count") == 33
-    assert len(detailed) == 333
+    assert len(detailed) == 334
     ids = [str(x.get("id")) for x in detailed]
     assert len(ids) == len(set(ids)), "duplicate roadmap IDs"
     assert ids == sorted(ids, key=lambda x: tuple(int(y) if y.isdigit() else y for y in x.split(".")))
@@ -42,8 +42,8 @@ def main() -> int:
             assert sha256(current) == digest, f"snapshot mismatch: {name}"
     result = {
         "status": "PASS",
-        "declared_main": 333,
-        "detailed_main": 333,
+        "declared_main": 334,
+        "detailed_main": 334,
         "technical": 64,
         "reference": 33,
         "append_only": True,

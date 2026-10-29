@@ -71,7 +71,7 @@ def main() -> None:
         fail("manifest counts mismatch")
     if inventory.get("production_approved") is not False:
         fail("production_approved cannot be true without independent evidence")
-    if ids[-1] != "333" or inventory.get("next_new_main_stage") != "334" or len(ids) != 333:
+    if ids[-1] != "334" or inventory.get("next_new_main_stage") != "335" or len(ids) != 334:
         fail("unexpected last/next main-stage ID")
     for sid, keyword in REQUIRED.items():
         stage = next((s for s in main_stages if s["id"] == sid), None)
@@ -93,7 +93,7 @@ def main() -> None:
     readme = README.read_text(encoding="utf-8")
     row_re = re.compile(r"^[|] [*][*]((?:[0-2][.][0-9]{2}|[1-9][0-9]{2}))[*][*] [|]", re.M)
     # The historical execution table contains 207 original main stages plus
-    # the separate 64 technical rows. Stages 208..333 are rendered in README
+    # the separate 64 technical rows. Stages 208..334 are rendered in README
     # and later roadmap chapters rather than retroactively renumbering it.
     if list(_execution_rows(canonical))[:207] != ids[:207]:
         fail("ROADMAP: historical stage rows missing or reordered")
@@ -104,8 +104,8 @@ def main() -> None:
         for sid in REQUIRED:
             if sid not in rows:
                 fail(f"{name}: missing PDF-recovered stage {sid}")
-    if "407" not in readme or "333" not in readme:
-        fail("README total does not reflect 333+64+10=407")
+    if "408" not in readme or "334" not in readme:
+        fail("README total does not reflect 334+64+10=408")
     audit = AUDIT.read_text(encoding="utf-8")
     if len(SOURCE_PDFS) != 20 or len(set(SOURCE_PDFS)) != 20:
         fail("source PDF inventory must contain 20 distinct filenames")
@@ -117,7 +117,7 @@ def main() -> None:
     for sid in REQUIRED:
         if sid not in audit:
             fail(f"audit missing trace for {sid}")
-    print("PASS: 333 main stages, 64 technical, 10 builder products; 12 PDF-recovered stages traced")
+    print("PASS: 334 main stages, 64 technical, 10 builder products; 12 PDF-recovered stages traced")
     print("NOTE: static roadmap consistency only; not code/CI/production certification")
 
 if __name__ == "__main__":

@@ -24,15 +24,15 @@ def check() -> None:
     inventory = json.loads(MANIFEST.read_text(encoding="utf-8"))
     main = inventory["main"]
     ids = [stage["id"] for stage in main]
-    assert len(ids) == len(set(ids)) == inventory["main_count"] == 333, "main IDs/count mismatch"
+    assert len(ids) == len(set(ids)) == inventory["main_count"] == 334, "main IDs/count mismatch"
     assert len(inventory["technical"]) == inventory["technical_count"] == 64, "technical count mismatch"
-    assert inventory["next_new_main_stage"] == "334", "next stage changed unexpectedly"
+    assert inventory["next_new_main_stage"] == "335", "next stage changed unexpectedly"
     assert inventory["production_approved"] is False, "unapproved production gate bypass"
     roadmap = ROADMAP.read_text(encoding="utf-8")
     assert _execution_rows(roadmap) == _execution_rows(MIRROR.read_text(encoding="utf-8")), "roadmap mirror diverged"
     assert list(_execution_rows(roadmap))[:207] == ids[:207], "roadmap historical stage IDs diverged"
     assert MAIN_RE.findall(README.read_text(encoding="utf-8"))[:len(ids)] == ids, "README stage IDs diverged"
-    assert "407" in roadmap and "333" in roadmap, "stale roadmap counts"
+    assert "408" in roadmap and "334" in roadmap, "stale roadmap counts"
     audit = AUDIT.read_text(encoding="utf-8")
     for token in ("30", "535", "26", "532", "205", "NIEZAMKNIĘTY"):
         assert token in audit, f"missing audit provenance/status: {token}"
