@@ -2,11 +2,11 @@
 //! mTLS peer identity is resolved by stage043_mtls_admission before this call;
 //! a request's user, tenant or agent fields cannot select an OAuth principal.
 use crate::omat_server::{OmatPolicy, OmatRegistry, ToolCall, ToolReceipt};
+use crate::sasos_capability::{CapabilityAuthority, CapabilityTicket};
 use crate::stage043_omat_route::{
     dispatch_tool_call, dispatch_tool_call_with_capability, AuthenticatedPeer, DispatchError,
     OmatRouteGuard,
 };
-use crate::sasos_capability::{CapabilityAuthority, CapabilityTicket};
 use crate::stage044_oauth::{AuthorizedGrant, OAuthError, OAuthService};
 use std::collections::{BTreeSet, HashMap};
 
@@ -155,8 +155,14 @@ impl OAuthOmatGate {
     ) -> Result<ToolReceipt, GateError> {
         self.authorize(oauth, token, peer, call)?;
         dispatch_tool_call_with_capability(
-            context.route, peer, topic, call, context.policy, context.registry,
-            authority, ticket,
+            context.route,
+            peer,
+            topic,
+            call,
+            context.policy,
+            context.registry,
+            authority,
+            ticket,
         )
         .map_err(GateError::Dispatch)
     }
