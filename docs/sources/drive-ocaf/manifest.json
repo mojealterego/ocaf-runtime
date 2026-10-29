@@ -16,5 +16,14 @@
     "drive_id": "1ezPUBRwroogi_vJg9oYc7OjlcYjPO5z3",
     "extracted_text_sha256": "8c09fdcd3848030024efdaed310fc172b0836d2b7c9ffa59c34392a6c7f90415",
     "status": "SOURCE_IMPORTED_IMPLEMENTATION_NOT_CLAIMED"
+  },
+  {
+    "file": "argon-roadmap-snapshot.txt",
+    "drive_id": "1JQ-puwrgu_bS4_qb4jY3XvezssJLhSRW",
+    "pdf_sha256": "acfb1767bb4f14a449012dd6d11e19d6e0e9bc71664c40f5e94d930feffd6748",
+    "extracted_text_sha256": "c2067db42ad3de652d98f14318d7c1ccefec56172267bdf8e0a46d983b1a0399",
+    "displayed_commit": "5a6ebf0c227978d40a14b02232e9f0379df1c82d",
+    "pages": 78,
+    "status": "HISTORICAL_CANONICAL_ROADMAP_SNAPSHOT"
   }
 ]

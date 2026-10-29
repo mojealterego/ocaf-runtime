@@ -1143,3 +1143,5 @@ pozostaje `ACTIVE_TECHNICAL_OPEN`.
 [Mapa wymagań, statusy i lista pozostałych prac](../docs/roadmap/DRIVE_IMPLEMENTATION_BACKLOG.md) obejmuje 45 grup wymagań i produktów. Powiązania zapisano też w polu `drive_requirements` kanonicznego inwentarza v11.
 
 Numery w PDF-ach 0.45–0.49 i 1.15–2.06 kolidują z kanonicznymi definicjami. Powiązania PROPOSED wymagają uzgodnienia; UNMAPPED pozostają jawnie nieprzypisane. Statusy istniejących etapów nie zostały podniesione na podstawie samych dokumentów.
+
+Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): [porównanie i pochodzenie](roadmap/ARGON_ROADMAP_RECONCILIATION.md).
