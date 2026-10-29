@@ -129,3 +129,18 @@ fn operator_bindings_require_private_file_and_reject_symlink() {
         Err(SasosAdapterError::InvalidConfiguration)
     ));
 }
+
+#[test]
+fn catalog_clearance_cannot_be_downgraded_by_untrusted_json() {
+    let raw = include_str!("../omat/catalog/sasos_tools_001_555.json");
+    let tampered = raw.replacen(
+        "\"declared_clearance\": \"Ring0Kernel\"",
+        "\"declared_clearance\": \"Ring1Supervisor\"",
+        1,
+    );
+    assert_ne!(tampered, raw);
+    assert!(matches!(
+        SasosCatalog::from_json(&tampered),
+        Err(SasosAdapterError::InvalidConfiguration)
+    ));
+}
