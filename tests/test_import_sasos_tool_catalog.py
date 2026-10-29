@@ -1,5 +1,6 @@
 import sys
 import unittest
+import json
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
@@ -29,6 +30,18 @@ tools.insert("SASOS_TOOL_002_SAMPLE", Box::new(SasosTool002));
 
 
 class CatalogImportTests(unittest.TestCase):
+    def test_committed_catalog_cannot_claim_execution(self):
+        catalog_path = Path(__file__).resolve().parents[1] / "omat/catalog/sasos_tools_001_555.json"
+        entries = json.loads(catalog_path.read_text(encoding="utf-8"))
+        self.assertEqual([entry["number"] for entry in entries], list(range(1, 556)))
+        self.assertEqual(len({entry["tool_id"] for entry in entries}), 555)
+        for entry in entries:
+            self.assertEqual(entry["status"], "CATALOG_ONLY")
+            self.assertIs(entry["executable"], False)
+            self.assertIs(entry["imandra_verified"], False)
+            self.assertIs(entry["zero_copy_verified"], False)
+            self.assertIsNone(entry["measured_latency_microseconds"])
+
     def test_catalog_is_inert(self):
         entries = parse_catalog(source(), expected_count=2)
         self.assertEqual([entry["number"] for entry in entries], [1, 2])
