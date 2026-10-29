@@ -116,6 +116,11 @@ pub fn omat_resource_id(call: &ToolCall) -> String {
 /// A capability is a *mandatory additional* check, not a replacement for
 /// transport authentication, tenant policy, OSTc or the executor boundary.
 /// Never call this with an identity taken from the tool request body.
+pub struct CapabilityGrant<'a> {
+    pub authority: &'a CapabilityAuthority,
+    pub ticket: &'a CapabilityTicket,
+}
+
 pub fn dispatch_tool_call_with_capability(
     guard: &OmatRouteGuard,
     peer: &AuthenticatedPeer,
@@ -123,8 +128,7 @@ pub fn dispatch_tool_call_with_capability(
     call: &ToolCall,
     policy: &OmatPolicy,
     registry: &OmatRegistry,
-    authority: &CapabilityAuthority,
-    ticket: &CapabilityTicket,
+    capability: CapabilityGrant<'_>,
 ) -> Result<ToolReceipt, DispatchError> {
     guard.authorize(peer, topic).map_err(DispatchError::Route)?;
     if call.tenant_id != peer.tenant || policy.tenant_id != peer.tenant {
@@ -138,9 +142,10 @@ pub fn dispatch_tool_call_with_capability(
         .map_err(|_| DispatchError::Capability(CapabilityError::Invalid))?;
     let size = u64::try_from(bytes.len())
         .map_err(|_| DispatchError::Capability(CapabilityError::Denied))?;
-    authority
+    capability
+        .authority
         .authorize(
-            ticket,
+            capability.ticket,
             peer,
             &omat_resource_id(call),
             CapabilityAction::Execute,
