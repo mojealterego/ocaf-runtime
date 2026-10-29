@@ -417,6 +417,36 @@ pub fn sign_omas_request(
     })?)
 }
 
+/// Bind an existing capability to the exact signed OMAs request. The
+/// capability authority key is separate from this transport HMAC key.
+pub fn sign_omas_request_with_capability(
+    principal: &str,
+    topic: &str,
+    nonce: &str,
+    call: ToolCall,
+    capability: CapabilityTicket,
+    key: &[u8; 32],
+) -> anyhow::Result<Vec<u8>> {
+    anyhow::ensure!(*key != [0; 32], "zero HMAC key");
+    let canonical = serde_json::to_vec(&(principal, topic, nonce, &call, &capability))?;
+    let mut mac = HmacSha256::new_from_slice(key).map_err(|_| anyhow::anyhow!("invalid key"))?;
+    mac.update(&canonical);
+    let mac_hex: String = mac
+        .finalize()
+        .into_bytes()
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect();
+    Ok(serde_json::to_vec(&SignedOmatRequest {
+        principal: principal.to_owned(),
+        topic: topic.to_owned(),
+        nonce: nonce.to_owned(),
+        call,
+        capability: Some(capability),
+        mac_hex,
+    })?)
+}
+
 /// OMAs sends a signed request to the configured OMAt queryable.
 /// A rejected tool call is returned as an error, never as successful execution.
 pub async fn request_omat_zenoh(
