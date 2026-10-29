@@ -33,3 +33,53 @@ Numery **0.45–0.49 z PDF nie odpowiadają numerom kanonicznej Roadmapy**. Zach
 - **Nowy kod:** `src/sasos_capability.rs`, testy w module (podpis, cross-tenant, eskalacja, expiry, tampering). Do czasu wyniku CI: IMPLEMENTED_UNVERIFIED.
 - **Brak:** aktywnych backendów 555, podłączenia capability do OMAt, realnego E2E z IdP/Vault/KVM, niezależnych benchmarków, produkcyjnego odbioru.
 - **Bramka:** nie zmieniać `CATALOG_ONLY` ani `production_approved=false` bez weryfikowalnego dowodu rzeczywistego wykonania i decyzji operatora.
+
+## Dalsza integracja etapu 334 — bramka capability / OMAt (2026-10-29)
+
+**Kod dodany:** `src/stage043_omat_route.rs` udostępnia
+`omat_resource_id(call)` (SHA-256 z rozdzielonymi identyfikatorami
+tenantu, agenta i narzędzia) oraz `dispatch_tool_call_with_capability`.
+Weryfikacja biletu obejmuje podmiot uwierzytelniony przez transport,
+tożsamość zasobu, prawo `Execute`, limit bajtów argumentów i czas
+ważności ustalany przez zegar serwera. Dopiero potem wywoływana jest
+dotychczasowa polityka OMAt i bramka OSTc. Brak biletu nie powoduje
+przejścia na starszy, mniej restrykcyjny dyspozytor.
+
+**Żywy ingress:** `src/stage043_omat_zenoh.rs` obsługuje podpisane
+ramki zawierające opcjonalny bilet, ale **odrzuca ramki bez biletu**.
+MAC ramki obejmuje również cały bilet. Trwały rejestr nonce SQLite
+pozostaje wymaganym mechanizmem ochrony przed powtórzeniem. Sam bilet
+nie jest tokenem jednorazowym ani substytutem mTLS. Serwer
+`src/bin/ocaf-omat-zenoh.rs` może załadować osobny klucz urzędu
+capability z pliku wskazanego przez `OCAF_OMAT_CAPABILITY_KEY_FILE`.
+Plik musi być prywatny i zawierać Base64 z dokładnie 32 bajtami
+klucza, różnego od klucza HMAC OMAs. Brak pliku oznacza **DENY**,
+nie automatyczne wystawianie biletów. Wystawienie biletu jest operacją
+uprawnionego operatora, nie funkcją dostępną modelowi.
+
+**Kompozycja OAuth:** `src/stage044_omat_authz.rs` udostępnia
+`dispatch_with_capability`, który wymaga jednocześnie ważnego
+OAuth grant, zaufanej tożsamości peera, biletu OCAP, polityki OMAt
+oraz niezależnej bramki wykonania. Testy w
+`tests/stage044_integration.rs` obejmują odwołanie tokenu OAuth,
+nieprawidłowy bilet i brak atestacji OSTc.
+`tests/sasos_omat_capability.rs` obejmuje zmianę agenta, narzędzia,
+tenantu, limitu bajtów, brak uprawnień, modyfikację podpisanej ramki
+i powtórzenie nonce.
+
+**Katalog 555:** `scripts/sasos_activation_gate.py` sprawdza
+kompletność identyfikatorów 001–555, unikalność, deklaracje runtime,
+schematy pól i niezmienniki `CATALOG_ONLY`. Odrzuca fałszywe
+`executable=true`, `imandra_verified=true`, `zero_copy_verified=true`
+i wymyślone pomiary latencji. Testy negatywne:
+`scripts/tests/test_sasos_activation_gate.py`.
+CI: `.github/workflows/sasos-activation-contract.yml`.
+Ten gate **nie uruchamia** 555 usług i nie stanowi dowodu istnienia
+backendów.
+
+**Nie zamknięto**: podłączenia rzeczywistych executorów OSTc
+z podpisanymi manifestami i potwierdzonymi efektami, pełnych
+backendów 555 usług, realnych testów z zewnętrznym IdP/Vault,
+docelowego Firecracker KVM, Zenoh SHM (tylko ten sam host),
+certyfikatów formalnego solvera i walidacji modelu Titans/NICE.
+Brak dowodów oznacza status PLANNED / NOT_VERIFIED, nie PASS.
