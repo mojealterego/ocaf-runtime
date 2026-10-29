@@ -67,11 +67,11 @@ def main():
         report = summarize(cycles, time.monotonic()-start, args.seconds)
     except Exception as error:
         (args.output/'failure.json').write_text(json.dumps(dict(
-            error_type=type(error).__name__, error_message=str(error)[:300],
+            error_type=type(error).__name__, error_message=str(error)[-1800:],
             status='FAILED', completed_cycles=len(cycles),
             measured_elapsed_seconds=time.monotonic()-start,
             stage_041_complete=False, production_approved=False)))
-        print(f'PITR SOAK FAILED: {type(error).__name__}: {str(error)[:300]}', flush=True)
+        print(f'PITR SOAK FAILED: {type(error).__name__}: {str(error)[-1800:]}', flush=True)
         raise
     with (args.output/'summary.json').open('x') as out:
         json.dump(report, out, indent=2)

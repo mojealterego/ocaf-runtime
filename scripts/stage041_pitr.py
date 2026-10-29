@@ -245,9 +245,14 @@ def execute(pg_bin:Path, report_path:Path, *,
             "recovery_target_inclusive = on\n"
             "recovery_target_action = promote\n")
         start=time.monotonic()
-        _run([bin("pg_ctl"),"-D",str(dest),
-              "-o",f"-p {recovery_port} -h 127.0.0.1",
-              "-l",str(work/"restore.log"),"-w","start"],timeout=50)
+        try:
+            _run([bin("pg_ctl"),"-D",str(dest),
+                  "-o",f"-p {recovery_port} -h 127.0.0.1",
+                  "-l",str(work/"restore.log"),"-w","start"],timeout=50)
+        except PITRError as exc:
+            log=work/"restore.log"
+            detail=log.read_text(errors="replace")[-1800:] if log.is_file() else "no PostgreSQL restore log"
+            raise PITRError("PostgreSQL PITR start failed: "+detail) from exc
         recovery_started=True
         _wait(lambda:query(recovery_port,"SELECT pg_is_in_recovery()")=="f",
               seconds=25,reason="PITR did not exit recovery at target LSN")
