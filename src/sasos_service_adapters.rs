@@ -168,7 +168,9 @@ impl SasosAdapterBindings {
                 .get(&binding.sasos_tool_id)
                 .ok_or(SasosAdapterError::InvalidConfiguration)?;
             // No arbitrary native/kernel privilege is granted by a broker.
-            if declared.declared_clearance == "Ring0Kernel" {
+            // Without OSTc, only low-privilege Ring2 workers can use the
+            // separately authorized HTTPS broker. Ring0 and Ring1 are denied.
+            if declared.declared_clearance != "Ring2Worker" {
                 return Err(SasosAdapterError::PrivilegedTool);
             }
             if entries
