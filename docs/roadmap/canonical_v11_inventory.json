@@ -6889,5 +6889,34 @@
       "No verified 15 MCP tools and 606 integrated repos",
       "No verified multi-host isolation, CI or operator acceptance"
     ]
+  },
+  "stage334_progress_20261029": {
+    "status": "IMPLEMENTED_PARTIAL_EXTERNAL_E2E_NOT_VERIFIED",
+    "stage": "334",
+    "ostc": "DEFERRED_BY_OPERATOR_WITH_FAIL_CLOSED_PRESERVED",
+    "catalog_entries": 555,
+    "catalog_backends_verified": 0,
+    "rust_modules": [
+      "src/sasos_capability.rs",
+      "src/sasos_service_adapters.rs",
+      "src/stage043_omat_zenoh.rs",
+      "src/stage044_omat_authz.rs"
+    ],
+    "operator_bound_external_adapter": "VaultSecretBroker HTTPS; requires real operator provisioned Vault and provider",
+    "evidence_artifacts": [
+      "verification/sasos334/*.smt2",
+      "scripts/sasos_solver_evidence.py",
+      "scripts/sasos_shm_probe.py",
+      "scripts/sasos_memory_models.py"
+    ],
+    "ci": [
+      ".github/workflows/sasos-activation-contract.yml",
+      ".github/workflows/sasos334-external-acceptance.yml"
+    ],
+    "external_idp_vault_kvm_e2e": "NOT_VERIFIED",
+    "zenoh_shm_e2e": "NOT_VERIFIED",
+    "titans_nice_full_models": "NOT_IMPLEMENTED",
+    "imandra_proof": "NOT_VERIFIED",
+    "production_approved": false
   }
 }
