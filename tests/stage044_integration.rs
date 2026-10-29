@@ -14,7 +14,8 @@ use ocaf_runtime::stage044_oauth::{
     AuthenticatedSubject, AuthorizationRequest, CodeExchange, OAuthClient, OAuthService,
 };
 use ocaf_runtime::stage044_omat_authz::{
-    BoundAgent, OAuthOmatGate, OmatCapabilityDispatchContext, OmatDispatchContext, ToolAuthorization,
+    BoundAgent, OAuthOmatGate, OmatCapabilityDispatchContext, OmatDispatchContext,
+    ToolAuthorization,
 };
 use rusqlite::Connection;
 use serde_json::json;
