@@ -102,7 +102,11 @@ impl Change {
                 guid: guid(id)?,
                 payload: payload.clone(),
             },
-            Self::Update { label, guid: id, payload } => Mutation::Update {
+            Self::Update {
+                label,
+                guid: id,
+                payload,
+            } => Mutation::Update {
                 label: LabelPath::parse(label)?,
                 guid: guid(id)?,
                 payload: payload.clone(),
