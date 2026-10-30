@@ -255,6 +255,25 @@ class DockerIntegration(Stage056PipelineTests):
         finally:
             journal.db.close()
 
+    def test_real_docker_denies_egress_and_writes_to_source(self):
+        if not shutil.which("docker"):
+            self.skipTest("Docker required for sandbox-denial CI")
+        info = self.journal.submit(self.repo, self.repair)
+        code = (
+            "from pathlib import Path;import socket\n"
+            "try:\n Path('src/worker.py').write_text('corrupted')\n"
+            "except OSError:\n pass\nelse:\n raise AssertionError('source writable')\n"
+            "s=socket.socket();s.settimeout(1)\n"
+            "try:\n s.connect(('1.1.1.1', 80))\n"
+            "except OSError:\n pass\nelse:\n raise AssertionError('network egress')\n"
+            "finally:\n s.close()\n"
+        )
+        command = ("python3", "-c", code)
+        token = self.token(info, command)
+        result = self.journal.execute(self.repo, "tenantA", "task01", token,
+                                      command, DockerExecutor())
+        self.assertEqual(result["status"], "TESTED_PASS", result)
+
     def test_real_docker_executes_patched_program_in_no_network_sandbox(self):
         if not shutil.which("docker"):
             self.skipTest("Docker unavailable; must run on dedicated CI")
