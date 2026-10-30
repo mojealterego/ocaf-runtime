@@ -1,5 +1,15 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-10-30 — STAGE_PARTIAL_VERIFIED — 0.56 — OmniDev typed DAG test evidence
+
+- **Code SHA:** `8193c3a82f7ce6e2f23e77d803d4f1331d7ccc01`; **GitHub Actions:** https://github.com/mojealterego/ocaf-runtime/actions/runs/41004115804 — `conclusion=success`.
+- **Job:** `123894993712`; rzeczywiste `cargo test --locked --no-default-features --test omnidev_workflow`: **12 passed, 0 failed, 0 ignored**. `cargo fmt --all -- --check`: PASS. `cargo clippy --locked --no-default-features --test omnidev_workflow -- -D warnings`: PASS.
+- Dowód potwierdza tylko **in-memory scheduler Rust** (isolation, DAG, bounded retries, lease/epoch, overflow, timeout reconciliation); nie dowodzi uwierzytelnionego ingress, wielohostowego fencing, podpisanych dowodów ani wykonania Firecracker.
+- **Status 0.56:** `PLANNED_OR_UNVERIFIED` na poziomie całego etapu, częściowo `IMPLEMENTED/TESTED` na poziomie prymitywu; `production_approved=false`.
+- **Artifact SHA-256:** `NOT_AVAILABLE` (brak podpisanego artefaktu wydania); `independent_hosts=0` dla tego testu; `real_execution_backend=false`.
+- Osobna bramka artefaktów 33 rojów OCAF pozostaje **FAILURE**; brak kompletu katalogów G02–G33 nie jest rozwiązany przez te testy.
+
+
 
 ## 2026-10-30 — STAGE_PARTIAL — 0.56 — dedykowana bramka kontraktowa Rust
 

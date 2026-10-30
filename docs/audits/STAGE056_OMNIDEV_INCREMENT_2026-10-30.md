@@ -43,3 +43,10 @@ Historyczny etap 0.56: OmniDev Architect (Tree-sitter CST, repo graph), OmniDev 
 ## 2026-10-30 — osobna kontrola 0.56 w GitHub Actions
 
 `.github/workflows/omnidev-stage056.yml` uruchamia bezpośrednio testy integracyjne sterownika Rust, Clippy i rustfmt bez zależności na długiej bramce Wasmtime. Wymagana jest weryfikacja zakończonego przebiegu na SHA tego commitu; brak automatycznego sign-off całego etapu.
+
+## Potwierdzony wynik CI 0.56 (commit 8193c3a8)
+
+- Run: https://github.com/mojealterego/ocaf-runtime/actions/runs/41004115804 — zakończony `SUCCESS`, job `123894993712`.
+- `cargo test --locked --no-default-features --test omnidev_workflow`: **12/12 PASS** (0 failed, 0 ignored).
+- `cargo fmt --all -- --check`: **PASS**; `cargo clippy --locked --no-default-features --test omnidev_workflow -- -D warnings`: **PASS**.
+- Zakres: rzeczywiste testy logiki Rust wewnątrz pojedynczego runnera. Brak realnego sandbox, Zenoh agent E2E, trwałej bazy i niezależnych hostów. Wszystkie kryteria etapowe OmniDev pozostają otwarte do momentu faktycznego wdrożenia i potwierdzenia.
