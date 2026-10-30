@@ -55,7 +55,9 @@ fn skill_path(path: &str) -> Option<(&str, bool)> {
         || skill.len() > 96
         || stem.starts_with('-')
         || stem.ends_with('-')
-        || !stem.bytes().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == b'-')
+        || !stem
+            .bytes()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == b'-')
     {
         return None;
     }
@@ -141,11 +143,15 @@ pub fn verify_registry(
         if file.content.is_empty() || file.content.len() > MAX_FILE_SIZE {
             return Err(RegistryError::Limit);
         }
-        total = total.checked_add(file.content.len()).ok_or(RegistryError::Limit)?;
+        total = total
+            .checked_add(file.content.len())
+            .ok_or(RegistryError::Limit)?;
         if total > MAX_TOTAL_SIZE {
             return Err(RegistryError::Limit);
         }
-        let expected_hash = expected.get(file.path).ok_or(RegistryError::InvalidInventory)?;
+        let expected_hash = expected
+            .get(file.path)
+            .ok_or(RegistryError::InvalidInventory)?;
         let actual_hash: [u8; 32] = Sha256::digest(file.content).into();
         if &actual_hash != expected_hash {
             return Err(RegistryError::HashMismatch);
@@ -173,12 +179,28 @@ mod tests {
 
     fn fixture() -> (String, Vec<RegistryFile<'static>>) {
         let files = vec![
-            RegistryFile { path: "skills/a-mcp-registry/SKILL.md", content: b"a skill" },
-            RegistryFile { path: "skills/a-mcp-registry/references/registry.md", content: b"a reference" },
-            RegistryFile { path: "skills/b-mcp-registry/SKILL.md", content: b"b skill" },
-            RegistryFile { path: "skills/b-mcp-registry/references/registry.md", content: b"b reference" },
+            RegistryFile {
+                path: "skills/a-mcp-registry/SKILL.md",
+                content: b"a skill",
+            },
+            RegistryFile {
+                path: "skills/a-mcp-registry/references/registry.md",
+                content: b"a reference",
+            },
+            RegistryFile {
+                path: "skills/b-mcp-registry/SKILL.md",
+                content: b"b skill",
+            },
+            RegistryFile {
+                path: "skills/b-mcp-registry/references/registry.md",
+                content: b"b reference",
+            },
         ];
-        let manifest = files.iter().map(|f| format!("{:x}  {}", Sha256::digest(f.content), f.path)).collect::<Vec<_>>().join("\n");
+        let manifest = files
+            .iter()
+            .map(|f| format!("{:x}  {}", Sha256::digest(f.content), f.path))
+            .collect::<Vec<_>>()
+            .join("\n");
         (manifest, files)
     }
 
@@ -199,51 +221,86 @@ mod tests {
         let (manifest, files) = fixture();
         let mut altered = manifest.clone();
         altered.push('\n');
-        assert_eq!(verify_registry(&altered, pin(&manifest), &files, 2).unwrap_err(), RegistryError::InvalidManifestPin);
+        assert_eq!(
+            verify_registry(&altered, pin(&manifest), &files, 2).unwrap_err(),
+            RegistryError::InvalidManifestPin
+        );
     }
 
     #[test]
     fn rejects_tampered_skill_content() {
         let (manifest, mut files) = fixture();
         files[0].content = b"evil skill";
-        assert_eq!(verify_registry(&manifest, pin(&manifest), &files, 2).unwrap_err(), RegistryError::HashMismatch);
+        assert_eq!(
+            verify_registry(&manifest, pin(&manifest), &files, 2).unwrap_err(),
+            RegistryError::HashMismatch
+        );
     }
 
     #[test]
     fn rejects_missing_registry_file() {
         let (manifest, files) = fixture();
-        assert_eq!(verify_registry(&manifest, pin(&manifest), &files[..3], 2).unwrap_err(), RegistryError::InvalidInventory);
+        assert_eq!(
+            verify_registry(&manifest, pin(&manifest), &files[..3], 2).unwrap_err(),
+            RegistryError::InvalidInventory
+        );
     }
 
     #[test]
     fn rejects_duplicate_and_traversal_paths_even_if_rehashed() {
         let (manifest, files) = fixture();
-        let duplicate = manifest.replace("skills/b-mcp-registry/SKILL.md", "skills/a-mcp-registry/SKILL.md");
-        assert_eq!(verify_registry(&duplicate, pin(&duplicate), &files, 2).unwrap_err(), RegistryError::InvalidRegistryPairs);
-        let traversal = manifest.replace("skills/b-mcp-registry/SKILL.md", "skills/../b-mcp-registry/SKILL.md");
-        assert_eq!(verify_registry(&traversal, pin(&traversal), &files, 2).unwrap_err(), RegistryError::MalformedManifest);
+        let duplicate = manifest.replace(
+            "skills/b-mcp-registry/SKILL.md",
+            "skills/a-mcp-registry/SKILL.md",
+        );
+        assert_eq!(
+            verify_registry(&duplicate, pin(&duplicate), &files, 2).unwrap_err(),
+            RegistryError::InvalidRegistryPairs
+        );
+        let traversal = manifest.replace(
+            "skills/b-mcp-registry/SKILL.md",
+            "skills/../b-mcp-registry/SKILL.md",
+        );
+        assert_eq!(
+            verify_registry(&traversal, pin(&traversal), &files, 2).unwrap_err(),
+            RegistryError::MalformedManifest
+        );
     }
 
     #[test]
     fn rejects_legacy_reference_json_and_python_bytecode_entries() {
         let (manifest, files) = fixture();
-        for bad in ["skills/b-mcp-registry/reference.json", "skills/b-mcp-registry/__pycache__/run.pyc"] {
+        for bad in [
+            "skills/b-mcp-registry/reference.json",
+            "skills/b-mcp-registry/__pycache__/run.pyc",
+        ] {
             let modified = manifest.replace("skills/b-mcp-registry/references/registry.md", bad);
-            assert_eq!(verify_registry(&modified, pin(&modified), &files, 2).unwrap_err(), RegistryError::MalformedManifest);
+            assert_eq!(
+                verify_registry(&modified, pin(&modified), &files, 2).unwrap_err(),
+                RegistryError::MalformedManifest
+            );
         }
     }
 
     #[test]
     fn checks_exact_expected_skill_count() {
         let (manifest, files) = fixture();
-        assert_eq!(verify_upstream_registry(&manifest, pin(&manifest), &files).unwrap_err(), RegistryError::InvalidRegistryPairs);
+        assert_eq!(
+            verify_upstream_registry(&manifest, pin(&manifest), &files).unwrap_err(),
+            RegistryError::InvalidRegistryPairs
+        );
     }
 
     #[test]
     fn unrelated_manifest_entries_may_coexist_but_registry_paths_cannot_escape() {
         let (manifest, files) = fixture();
         let larger = format!("{manifest}\n{:x}  README.md", Sha256::digest(b"other"));
-        assert_eq!(verify_registry(&larger, pin(&larger), &files, 2).unwrap().files_verified, 4);
+        assert_eq!(
+            verify_registry(&larger, pin(&larger), &files, 2)
+                .unwrap()
+                .files_verified,
+            4
+        );
         assert!(skill_path("skills/a-mcp-registry/../SKILL.md").is_none());
     }
 }
