@@ -165,6 +165,48 @@ class Stage056PipelineTests(unittest.TestCase):
 
 
 class DockerIntegration(Stage056PipelineTests):
+
+    def test_real_rust_candidate_is_compiled_and_tested_in_isolated_guest(self):
+        if not shutil.which("docker"):
+            self.skipTest("Docker required for genuine sandbox compilation CI")
+        rustrepo = self.root / "rustrepo"
+        rustrepo.mkdir()
+        git(rustrepo, "init", "-q")
+        git(rustrepo, "config", "user.email", "test@example.invalid")
+        git(rustrepo, "config", "user.name", "OCAF Rust Fixture")
+        (rustrepo / "src").mkdir()
+        (rustrepo / "src" / "worker.rs").write_text(
+            "pub fn value() -> u32 { 1 }\n"
+            "#[cfg(test)] mod tests { #[test] fn check() { "
+            "assert_eq!(super::value(), 2); } }\n")
+        (rustrepo / "Cargo.toml").write_text(
+            "[package]\nname = \"ocaf_sandbox_fixture\"\n"
+            "version = \"0.1.0\"\nedition = \"2021\"\n"
+            "[lib]\npath = \"src/worker.rs\"\n")
+        (rustrepo / "Cargo.lock").write_text(
+            "version = 4\n\n[[package]]\nname = \"ocaf_sandbox_fixture\"\n"
+            "version = \"0.1.0\"\n")
+        git(rustrepo, "add", ".")
+        git(rustrepo, "commit", "-qm", "base")
+        base = git(rustrepo, "rev-parse", "HEAD")
+        journal = Stage056(self.root / "rust.db", self.key)
+        try:
+            request = Repair("tenantA", "rust01", base, "src/worker.rs",
+                             "pub fn value() -> u32 { 1 }",
+                             "pub fn value() -> u32 { 2 }")
+            item = journal.submit(rustrepo, request)
+            command = ("cargo", "test", "--locked", "--offline", "--quiet")
+            image = "rust:1.99-slim"
+            token = journal.token("tenantA", "rust01", base,
+                                  item["patch_sha256"], command, image)
+            result = journal.execute(rustrepo, "tenantA", "rust01", token,
+                                     command, DockerExecutor(image))
+            self.assertEqual(result["status"], "TESTED_PASS", result)
+            self.assertEqual(result["result"]["exit_code"], 0)
+            self.assertEqual(git(rustrepo, "status", "--porcelain"), "")
+        finally:
+            journal.db.close()
+
     def test_real_docker_executes_patched_program_in_no_network_sandbox(self):
         if not shutil.which("docker"):
             self.skipTest("Docker unavailable; must run on dedicated CI")

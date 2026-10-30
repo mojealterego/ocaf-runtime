@@ -153,9 +153,12 @@ class DockerExecutor:
                 "--security-opt", "no-new-privileges",
                 "--pids-limit", "128", "--memory", "512m", "--cpus", "1",
                 "--read-only", "--tmpfs", "/tmp:rw,noexec,nosuid,size=64m",
+                "--tmpfs", "/build:rw,exec,nosuid,size=512m",
                 "--user", "65534:65534",
                 "--mount", "type=bind,src=" + str(workspace) + ",dst=/workspace,readonly",
                 "--workdir", "/workspace", "-e", "PYTHONDONTWRITEBYTECODE=1",
+                "-e", "CARGO_TARGET_DIR=/build/target",
+                "-e", "CARGO_HOME=/build/cargo", "-e", "CARGO_NET_OFFLINE=true",
                 self.image, *command]
 
     def run(self, repo: Path, base: str, patch: bytes, command: tuple[str, ...]) -> dict:
