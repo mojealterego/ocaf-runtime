@@ -1220,3 +1220,9 @@ Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): 
 **PDF-1.54 — nowy moduł kontroli deklaracji:** `src/claim_ledger_verifier.rs` z kontrolą dowodów CI, wiązaniem SHA, klasyfikacją i blokadą niezmierzonych twierdzeń. Status `IMPLEMENTED_CI_PENDING` do potwierdzonego CI; nie zastępuje prawdziwych dowodów operatora i E2E. Nie zmieniono statusów kanonicznych etapów.
 
 **PDF-1.54 lokalne testy PASS** — [CI 41017904577](https://github.com/mojealterego/ocaf-runtime/actions/runs/41017904577), SHA `d86387580a2e4801d09f8b007e85fed7eb03dd65`: walidator deklaracji/commit/evidence przetestowany w zakresie preflight; nie uwierzytelnia niezależnie pochodzenia receipts i nie zamyka kanonicznych etapów 0.42 / 1.99.
+
+## Uzgodnienie Argon 1.55–2.06 z aktualną ROADMAPĄ (30.10.2026)
+
+Źródło: `Dokument bez nazwy(8).PDF`, ID Google Drive `1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A`; punktacja źródłowa 1.55–2.06 nie jest kanoniczna. Nie zmieniać historycznych etapów 1.55–2.06.
+
+**Dokładny rejestr 20 grup i przypisania do etapów:** [ARGON_155_206_RECONCILIATION_2026-10-30.md](audits/ARGON_155_206_RECONCILIATION_2026-10-30.md). Rust Document Function DAG (źr. 1.57) i Model Router (źr. 1.75) zapisano w kodzie, ale status wymaga zielonego CI. Pozostałe grupy mają jawne PARTIAL/OPEN/RESEARCH. Globalnie `production_approved=false`, liczba historycznych etapów bez zmian (334+64+10).
