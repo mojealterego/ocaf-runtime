@@ -28,3 +28,14 @@ Dokument Drive `1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A` opisuje inne funkcje niż akt
 | 2.06 | Release Guardian | PARTIAL: `scripts/release_readiness.py`, brak pełnego E2E |
 
 **Ograniczenie źródła:** PDF zawiera przykładowy TypeScript z artefaktami `[span_...]`; nie jest dowodem kompilacji, pomiaru wydajności, uruchomienia Moss ani realnego Zenoh. Nie kopiować TypeScript jako drugiego jądra Rust. Statusy dotyczą wymagań, nie ukończenia kanonicznych etapów.
+
+## Bramki odbioru brakujących funkcji
+
+- **DAG dokumentu (źr. 1.57):** topologiczne sortowanie, wykrywanie cykli i duplikatów GUID, dirty propagation, typowane wejścia, overflow, atomowy commit/undo, SQLite restart/replay, odrzucenie stale head i testy dwóch tenantów. Nie zastępować go DAG orkiestracji agentów.
+- **Compound reasoning / routing / DSL (źr. 1.70–1.80):** zaufana allowlista modeli, prywatność per tenant, jawny koszt i p95, bounded fan-out, cancellation, retry/backpressure, schemat wyników, test prompt injection i test rzeczywistego adaptera modelu. Self-consistency nie jest dowodem prawdziwości.
+- **GEM i pakiety domenowe (źr. 1.85–1.90):** wersjonowane kontrakty i policy gate, jawne decyzje człowieka dla działań wysokiego ryzyka, negatywne testy zakupów i braku dowodów, brak deklaracji AGI.
+- **Zenoh / kolaboracja (źr. 2.01–2.02):** transport między realnymi procesami, trwała identyfikacja obiektu/aktora, monotoniczna wersja i fencing, izolacja tenantów, test reorder/duplicate/reconnect i pomiar na rzeczywistym sprzęcie.
+- **Voice firewall (źr. 2.03):** narracja bez możliwości zmiany RNG/ekonomii, jawna zgoda na mikrofon, walidacja zdarzeń, odmowa nieautoryzowanych mutacji, test prompt/tool-output injection.
+- **Benchmark / release (źr. 2.04–2.06):** pin SHA/CPU/OS/Rust, korpus warm/cold, raw p50/p95/p99, CI pozytywne i negatywne, SBOM, rollback, niezależna kontrola danych, jawny wynik GO/NO-GO; brak automatycznego oznaczenia produkcyjnego PASS.
+
+**Stan wdrożenia po audycie:** brak nowej zweryfikowanej implementacji z tego PDF. Wymagania są zmapowane, ale nie należy podnosić statusu kanonicznej Roadmapy bez kodu i dowodów CI.
