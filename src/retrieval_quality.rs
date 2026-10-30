@@ -72,7 +72,8 @@ impl LexicalIndex {
         if documents.len() > MAX_DOCUMENTS {
             return Err(RetrievalError::Limit);
         }
-        let mut groups: BTreeMap<String, Vec<(IndexedDocument, BTreeMap<String, usize>)>> = BTreeMap::new();
+        let mut groups: BTreeMap<String, Vec<(IndexedDocument, BTreeMap<String, usize>)>> =
+            BTreeMap::new();
         let mut unique = BTreeSet::new();
         for doc in documents {
             if !valid_id(&doc.tenant) || !valid_id(&doc.source_id) {
@@ -311,7 +312,7 @@ mod tests {
 
     #[test]
     fn postings_are_independent_of_document_insertion_order() {
-        let mut docs = vec![
+        let docs = vec![
             SourceDocument {
                 tenant: "tenant_a".into(),
                 source_id: "aaa".into(),
@@ -323,11 +324,11 @@ mod tests {
                 body: "alpha beta".into(),
             },
         ];
-        let first = LexicalIndex::build(docs.drain(..).collect())
+        let first = LexicalIndex::build(docs)
             .unwrap()
             .search("tenant_a", "alpha", 10)
             .unwrap();
-        docs = vec![
+        let docs = vec![
             SourceDocument {
                 tenant: "tenant_a".into(),
                 source_id: "bbb".into(),
