@@ -1301,3 +1301,55 @@ pozostaje `ACTIVE_TECHNICAL_OPEN`.
 Numery w PDF-ach 0.45–0.49 i 1.15–2.06 kolidują z kanonicznymi definicjami. Powiązania PROPOSED wymagają uzgodnienia; UNMAPPED pozostają jawnie nieprzypisane. Statusy istniejących etapów nie zostały podniesione na podstawie samych dokumentów.
 
 Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): [porównanie i pochodzenie](docs/roadmap/ARGON_ROADMAP_RECONCILIATION.md).
+
+<!-- ARGON_PDF_115_154_SOURCE_MATRIX -->
+## Argon — źródłowe punkty PDF-1.15–PDF-1.54 (40/40; 2026-10-30)
+
+**Zakres:** `PDF-1.xx` nie jest kanonicznym `1.xx` w Apex Tier-0. Powiązania etapów poniżej są **SEMANTIC_PROPOSED**, a nie dowodem realizacji kanonicznych etapów. Oryginalna numeracja 334 etapów, 64 podetapów i 10 produktów pozostaje niezmieniona. Brak binariów i pakietowania zgodnie z kolejnością prac. `production_approved=false`.
+
+| ID w PDF | Wymaganie Argona | Kandydaci kanoniczni | Status weryfikacji źródła | Kod w repo | 
+|---|---|---|---|---|
+| PDF-1.15 | Hierarchiczne LabelPath | UNMAPPED | **PARTIAL_EXISTING** · etap pełny NIE | `src/document_state.rs` |
+| PDF-1.16 | AttributeMap z unikalnym GUID | UNMAPPED | **PARTIAL_EXISTING** · etap pełny NIE | `src/document_state.rs` |
+| PDF-1.17 | Forget/Remember | UNMAPPED | **PARTIAL_EXISTING** · etap pełny NIE | `src/document_state.rs` |
+| PDF-1.18 | Atomowe transakcje i Undo/Redo | UNMAPPED | **PARTIAL_EXISTING** · etap pełny NIE | `src/document_state.rs` |
+| PDF-1.19 | Wersjonowany, trwały dziennik SHA-256 | UNMAPPED | **PARTIAL_EXISTING** · etap pełny NIE | `src/document_store.rs` |
+| PDF-1.20 | Deterministyczny replay bez efektów | UNMAPPED | **PARTIAL_EXISTING** · etap pełny NIE | `src/document_store.rs` |
+| PDF-1.21 | ExternalLinkSupervisor | UNMAPPED | **PARTIAL_EXISTING** · etap pełny NIE | `src/document_store.rs` |
+| PDF-1.22 | StorageRetrievalPluginDriver | UNMAPPED | **PARTIAL_EXISTING** · etap pełny NIE | `src/document_store.rs` |
+| PDF-1.23 | AgentContractSpec | 0.44, 0.64, 1.46 | **PREFLIGHT_ONLY** · etap pełny NIE | `src/governance_contract.rs` |
+| PDF-1.24 | ExactAllowlistPolicyGate | 0.44, 1.46 | **PREFLIGHT_ONLY** · etap pełny NIE | `src/governance_contract.rs` |
+| PDF-1.25 | RiskCapEnforcer | 0.64, 1.47 | **PREFLIGHT_ONLY** · etap pełny NIE | `src/governance_contract.rs` |
+| PDF-1.26 | ApprovalBindingEngine | 0.44, 1.46 | **PREFLIGHT_ONLY** · etap pełny NIE | `src/governance_contract.rs` |
+| PDF-1.27 | IdempotencyGuard | 0.44, 1.46 | **IMPLEMENTED_CI_PENDING** · etap pełny NIE | `src/governance_journal.rs` |
+| PDF-1.28 | DecisionToAuditWiring | 0.64, 1.46 | **IMPLEMENTED_CI_PENDING** · etap pełny NIE | `src/governance_journal.rs` |
+| PDF-1.29 | TenantWorkspaceIsolator | 0.26, 0.44 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.30 | CostAndProviderAccessGate | 0.64, 1.47 | **PREFLIGHT_ONLY** · etap pełny NIE | `src/governance_contract.rs` |
+| PDF-1.31 | ContractObligationRecord | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.32 | StructuredClauseExtractor | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.33 | ObligationDeadlineMonitor | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.34 | ObligationActionVerification | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.35 | Contract Obligations policy | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.36 | Contract Obligations tool exposure | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.37 | Contract Obligations governed runtime | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.38 | Contract Obligations safety E2E | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.39 | ComplianceEvidenceArtifact | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.40 | GovAssure / NCSC CAF / SOC 2 validator | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.41 | Compliance Evidence governed runtime | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.42 | Compliance Evidence safety tests | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.43 | ProcurementScout foundation | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.44 | Sanctions / supplier anomaly screening | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.45 | Procurement governance | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.46 | Procurement safety tests | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.47 | InProcessLexicalSelector | 1.65 | **IMPLEMENTED_CI_PENDING** · etap pełny NIE | `src/retrieval_quality.rs` |
+| PDF-1.48 | MossRetrievalAdapter | 1.65 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.49 | ZenohTransportBridge | 0.46, 1.15, 1.55 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.50 | McpRegistryIntegrityVerifier | 0.43 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.51 | DualTrackCollaborationAnalyzer | 1.92, 1.94 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.52 | RetrievalQualityEvaluator | 1.65, 1.99 | **IMPLEMENTED_CI_PENDING** · etap pełny NIE | `src/retrieval_quality.rs` |
+| PDF-1.53 | LatencyBenchmarkHarness | 1.55, 1.99 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.54 | ClaimLedgerVerifier | 1.99, 0.42 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+
+**Ukończone w zakresie kodowym** nie oznacza ukończonego etapu: brak pełnego E2E i dowodów akceptacyjnych. `IMPLEMENTED_CI_PENDING` oznacza wytworzony kod ze zgłoszoną bramką testową, ale **niepotwierdzone jeszcze** zakończenie CI. `PARTIAL_EXISTING` oznacza istniejący składnik, `PREFLIGHT_ONLY` nie daje prawa do wykonania, `OPEN` wymaga implementacji. Sąsiednie referencyjne repozytoria nie są zintegrowanym adapterem.
+
+[Manifest źródłowy](docs/roadmap/argon_pdf_115_154_manifest.json) · [audyt](docs/audits/ARGON_115_154_RECONCILIATION_2026-10-30.md).

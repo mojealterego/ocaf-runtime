@@ -22,8 +22,8 @@ Status `PARTIAL` oznacza wykryty, ograniczony kod w repozytorium, nie pełne kry
 | PDF-1.24 | ExactAllowlistPolicyGate | PREFLIGHT | `src/governance_contract.rs`; osobna bramka, nie zamiennik istniejącego Auth |
 | PDF-1.25 | RiskCapEnforcer | PREFLIGHT | `src/governance_contract.rs`; procurement > MEDIUM odrzucane |
 | PDF-1.26 | ApprovalBindingEngine | PREFLIGHT | HMAC verifier; wymagane zaufane IdP, wydawca i durable nonce consumption |
-| PDF-1.27 | IdempotencyGuard | OPEN | Wymagany trwały atomowy klucz (tenant, akcja, nonce, hash) i recovery |
-| PDF-1.28 | DecisionToAuditWiring | OPEN | Wymagany trwały zapis ALLOW/DENY **przed** handlerem i fail-closed |
+| PDF-1.27 | IdempotencyGuard | IMPLEMENTED_CI_PENDING | `src/governance_journal.rs` — implementacja lokalna, testy CI weryfikowane osobno; pełny E2E otwarty. |
+| PDF-1.28 | DecisionToAuditWiring | IMPLEMENTED_CI_PENDING | `src/governance_journal.rs` — implementacja lokalna, testy CI weryfikowane osobno; pełny E2E otwarty. |
 | PDF-1.29 | TenantWorkspaceIsolator | OPEN | Wymagane mapowanie autorytatywnej tożsamości, trwałość i izolacja |
 | PDF-1.30 | CostAndProviderAccessGate | PREFLIGHT | `src/governance_contract.rs`; wymagana integracja z rzeczywistym billingiem |
 | PDF-1.31 | ContractObligationRecord | OPEN | Typowana domena i walidacja kontraktów |
@@ -42,12 +42,12 @@ Status `PARTIAL` oznacza wykryty, ograniczony kod w repozytorium, nie pełne kry
 | PDF-1.44 | Sanctions / supplier anomaly screening | OPEN | Aktualne źródła list, dopasowanie i false positives |
 | PDF-1.45 | Procurement governance | OPEN | Risk cap, zgoda, segregacja obowiązków |
 | PDF-1.46 | Procurement safety tests | OPEN | Brak płatności/zakupów bez zgody, retry |
-| PDF-1.47 | InProcessLexicalSelector | OPEN | BM25-lite, korpus, testy relevance |
+| PDF-1.47 | InProcessLexicalSelector | IMPLEMENTED_CI_PENDING | `src/retrieval_quality.rs` — implementacja lokalna, testy CI weryfikowane osobno; pełny E2E otwarty. |
 | PDF-1.48 | MossRetrievalAdapter | OPEN | Zewnętrzny interfejs dopiero po zweryfikowaniu dostawcy; local fallback |
 | PDF-1.49 | ZenohTransportBridge | OPEN | Istnieje transport Zenoh, brak E2E tego konkretnego mostu i benchmarku |
 | PDF-1.50 | McpRegistryIntegrityVerifier | OPEN | Nie potwierdzono deklarowanych 210 skilli / 420 sum |
 | PDF-1.51 | DualTrackCollaborationAnalyzer | OPEN | Historia zmian obiektu i atrybucja aktorów |
-| PDF-1.52 | RetrievalQualityEvaluator | OPEN | Ground-truth, Recall@k i MRR |
+| PDF-1.52 | RetrievalQualityEvaluator | IMPLEMENTED_CI_PENDING | `src/retrieval_quality.rs` — implementacja lokalna, testy CI weryfikowane osobno; pełny E2E otwarty. |
 | PDF-1.53 | LatencyBenchmarkHarness | OPEN | Realne p50/p95/p99, hardware i surowe próbki |
 | PDF-1.54 | ClaimLedgerVerifier | OPEN | Dowody commit/test/artefakt; oddzielić hipotezy i implementacje |
 
@@ -65,3 +65,9 @@ Status `PARTIAL` oznacza wykryty, ograniczony kod w repozytorium, nie pełne kry
 `src/governance_contract.rs` ma testy jednostkowe: exact allowlist/prohibition, cross-tenant/actor, risk cap, human approval role/HMAC/expiry/payload/request binding, provider cost gate, invalid configuration. Uruchomienie: `cargo test --locked --no-default-features --lib governance_contract::tests`. Dopóki CI dla konkretnego SHA nie zakończy się sukcesem, status `PREFLIGHT` nie oznacza `TESTED` ani `INTEGRATED`. Pełna bramka `cargo fmt --all -- --check`, `cargo clippy --locked --all-targets --no-default-features -- -D warnings`, `cargo test --locked --no-default-features`.
 
 Następny techniczny zakres: durable audit + idempotency 1.27–1.29, następnie integracja preflight z istniejącym OMAt bez ścieżki bypass, po czym domeny 1.31–1.46 i retrieval 1.47–1.54.
+
+## Uzgodnienie wszystkich 40 identyfikatorów źródłowych (2026-10-30)
+
+[Manifest 40/40](../roadmap/argon_pdf_115_154_manifest.json) wiąże każdy `PDF-1.xx` z kandydatami kanonicznych etapów bez nadpisywania Apex 1.15–1.54. Mapowanie SEMANTIC_PROPOSED nie daje ukończenia etapu; UNMAPPED wymaga decyzji semantycznej.
+
+Źródła domen 1.31–1.46 mają analogi w `mojealterego/Nowe-projekty` (agent-contract-obligations, agent-compliance-evidence, agent-procurement-scout), lecz nie potwierdzono ich integracji z Rust OMAt. Zewnętrzny `The-Zero-Latency-Builder-Sprint/docs/MOSS_ADAPTER_GATE.md` oznacza adapter Moss jako zablokowany do weryfikacji API. Nowe moduły `governance_journal.rs` i `retrieval_quality.rs` nie stanowią dowodu produkcyjnego E2E. `production_approved=false`.

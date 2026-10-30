@@ -715,3 +715,9 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - Source: `docs/sources/drive-ocaf/roadmap-115-154.txt` (Drive PDF ID `1ezPUBRwroogi_vJg9oYc7OjlcYjPO5z3`); 40/40 source requirements indexed in `docs/audits/ARGON_115_154_RECONCILIATION_2026-10-30.md`. PDF numbering **collides** with canonical v11 Apex 1.15–1.54 and does not replace it.
 - Existing `document_state` and `document_store` remain partial coverage of PDF-1.15–1.22. Added Rust `governance_contract` preflight for PDF-1.23–1.26 and 1.30, with negative unit tests. Preflight is **not** execution authorization, approval issuance, durable idempotency, or audit.
 - PDF-1.27–1.29 and PDF-1.31–1.54 remain open for independent integration/acceptance. No canonical status promotion or binary/release packaging. CI outcome must be tied to the resulting SHA; production_approved=false.
+
+### 2026-10-30 — audyt i powiązanie 40 wymagań Argona z główną mapą
+
+- `docs/roadmap/argon_pdf_115_154_manifest.json`: pełna lista 40/40 wymagań źródłowych, typowane statusy, ścieżki kodu i kandydaci kanonicznych etapów (SEMANTIC_PROPOSED/UNMAPPED); brak renumeracji i zacierania historii.
+- `src/retrieval_quality.rs`: ograniczony lokalny BM25 + Recall@k/MRR; `src/governance_journal.rs`: SQLite intent/idempotency/replay audit. Stan implementacji: częściowy; kod i testy wymagają potwierdzenia w CI na bieżącym SHA. Jest to rozszerzenie, nie zamiana polityki OMAt/mTLS/OSTc.
+- Zapisano statusy w `/ROADMAP.md`, `docs/ROADMAP_FULL_ECOSYSTEM_2026.md`, kanonicznym JSON (referencja do dodatkowego manifestu), README i rejestrze braków Drive. Nie oznaczono żadnego kanonicznego milestone jako produkcyjnie ukończony; binaria i release pozostają na końcu.

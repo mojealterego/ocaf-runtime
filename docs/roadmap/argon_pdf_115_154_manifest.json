@@ -1,0 +1,581 @@
+{
+  "schema_version": 1,
+  "source_pdf_drive_id": "1ezPUBRwroogi_vJg9oYc7OjlcYjPO5z3",
+  "source_transcript": "docs/sources/drive-ocaf/roadmap-115-154.txt",
+  "canonical_stage_ids_unchanged": true,
+  "source_requirements_count": 40,
+  "source_id_prefix": "PDF-1.",
+  "state": "AUDITED_PARTIAL_NOT_ACCEPTED",
+  "production_approved": false,
+  "requirements": [
+    {
+      "source_id": "PDF-1.15",
+      "source_requirement": "Hierarchiczne LabelPath",
+      "canonical_candidates": [],
+      "mapping": "UNMAPPED",
+      "status": "PARTIAL_EXISTING",
+      "code_paths": [
+        "src/document_state.rs"
+      ],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.16",
+      "source_requirement": "AttributeMap z unikalnym GUID",
+      "canonical_candidates": [],
+      "mapping": "UNMAPPED",
+      "status": "PARTIAL_EXISTING",
+      "code_paths": [
+        "src/document_state.rs"
+      ],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.17",
+      "source_requirement": "Forget/Remember",
+      "canonical_candidates": [],
+      "mapping": "UNMAPPED",
+      "status": "PARTIAL_EXISTING",
+      "code_paths": [
+        "src/document_state.rs"
+      ],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.18",
+      "source_requirement": "Atomowe transakcje i Undo/Redo",
+      "canonical_candidates": [],
+      "mapping": "UNMAPPED",
+      "status": "PARTIAL_EXISTING",
+      "code_paths": [
+        "src/document_state.rs"
+      ],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.19",
+      "source_requirement": "Wersjonowany, trwały dziennik SHA-256",
+      "canonical_candidates": [],
+      "mapping": "UNMAPPED",
+      "status": "PARTIAL_EXISTING",
+      "code_paths": [
+        "src/document_store.rs"
+      ],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.20",
+      "source_requirement": "Deterministyczny replay bez efektów",
+      "canonical_candidates": [],
+      "mapping": "UNMAPPED",
+      "status": "PARTIAL_EXISTING",
+      "code_paths": [
+        "src/document_store.rs"
+      ],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.21",
+      "source_requirement": "ExternalLinkSupervisor",
+      "canonical_candidates": [],
+      "mapping": "UNMAPPED",
+      "status": "PARTIAL_EXISTING",
+      "code_paths": [
+        "src/document_store.rs"
+      ],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.22",
+      "source_requirement": "StorageRetrievalPluginDriver",
+      "canonical_candidates": [],
+      "mapping": "UNMAPPED",
+      "status": "PARTIAL_EXISTING",
+      "code_paths": [
+        "src/document_store.rs"
+      ],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.23",
+      "source_requirement": "AgentContractSpec",
+      "canonical_candidates": [
+        "0.44",
+        "0.64",
+        "1.46"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "PREFLIGHT_ONLY",
+      "code_paths": [
+        "src/governance_contract.rs"
+      ],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.24",
+      "source_requirement": "ExactAllowlistPolicyGate",
+      "canonical_candidates": [
+        "0.44",
+        "1.46"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "PREFLIGHT_ONLY",
+      "code_paths": [
+        "src/governance_contract.rs"
+      ],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.25",
+      "source_requirement": "RiskCapEnforcer",
+      "canonical_candidates": [
+        "0.64",
+        "1.47"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "PREFLIGHT_ONLY",
+      "code_paths": [
+        "src/governance_contract.rs"
+      ],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.26",
+      "source_requirement": "ApprovalBindingEngine",
+      "canonical_candidates": [
+        "0.44",
+        "1.46"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "PREFLIGHT_ONLY",
+      "code_paths": [
+        "src/governance_contract.rs"
+      ],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.27",
+      "source_requirement": "IdempotencyGuard",
+      "canonical_candidates": [
+        "0.44",
+        "1.46"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "IMPLEMENTED_CI_PENDING",
+      "code_paths": [
+        "src/governance_journal.rs"
+      ],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.28",
+      "source_requirement": "DecisionToAuditWiring",
+      "canonical_candidates": [
+        "0.64",
+        "1.46"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "IMPLEMENTED_CI_PENDING",
+      "code_paths": [
+        "src/governance_journal.rs"
+      ],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.29",
+      "source_requirement": "TenantWorkspaceIsolator",
+      "canonical_candidates": [
+        "0.26",
+        "0.44"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.30",
+      "source_requirement": "CostAndProviderAccessGate",
+      "canonical_candidates": [
+        "0.64",
+        "1.47"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "PREFLIGHT_ONLY",
+      "code_paths": [
+        "src/governance_contract.rs"
+      ],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.31",
+      "source_requirement": "ContractObligationRecord",
+      "canonical_candidates": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.32",
+      "source_requirement": "StructuredClauseExtractor",
+      "canonical_candidates": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.33",
+      "source_requirement": "ObligationDeadlineMonitor",
+      "canonical_candidates": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.34",
+      "source_requirement": "ObligationActionVerification",
+      "canonical_candidates": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.35",
+      "source_requirement": "Contract Obligations policy",
+      "canonical_candidates": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.36",
+      "source_requirement": "Contract Obligations tool exposure",
+      "canonical_candidates": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.37",
+      "source_requirement": "Contract Obligations governed runtime",
+      "canonical_candidates": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.38",
+      "source_requirement": "Contract Obligations safety E2E",
+      "canonical_candidates": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.39",
+      "source_requirement": "ComplianceEvidenceArtifact",
+      "canonical_candidates": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.40",
+      "source_requirement": "GovAssure / NCSC CAF / SOC 2 validator",
+      "canonical_candidates": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.41",
+      "source_requirement": "Compliance Evidence governed runtime",
+      "canonical_candidates": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.42",
+      "source_requirement": "Compliance Evidence safety tests",
+      "canonical_candidates": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.43",
+      "source_requirement": "ProcurementScout foundation",
+      "canonical_candidates": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.44",
+      "source_requirement": "Sanctions / supplier anomaly screening",
+      "canonical_candidates": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.45",
+      "source_requirement": "Procurement governance",
+      "canonical_candidates": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.46",
+      "source_requirement": "Procurement safety tests",
+      "canonical_candidates": [
+        "1.92",
+        "1.93"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.47",
+      "source_requirement": "InProcessLexicalSelector",
+      "canonical_candidates": [
+        "1.65"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "IMPLEMENTED_CI_PENDING",
+      "code_paths": [
+        "src/retrieval_quality.rs"
+      ],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.48",
+      "source_requirement": "MossRetrievalAdapter",
+      "canonical_candidates": [
+        "1.65"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.49",
+      "source_requirement": "ZenohTransportBridge",
+      "canonical_candidates": [
+        "0.46",
+        "1.15",
+        "1.55"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.50",
+      "source_requirement": "McpRegistryIntegrityVerifier",
+      "canonical_candidates": [
+        "0.43"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.51",
+      "source_requirement": "DualTrackCollaborationAnalyzer",
+      "canonical_candidates": [
+        "1.92",
+        "1.94"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.52",
+      "source_requirement": "RetrievalQualityEvaluator",
+      "canonical_candidates": [
+        "1.65",
+        "1.99"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "IMPLEMENTED_CI_PENDING",
+      "code_paths": [
+        "src/retrieval_quality.rs"
+      ],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.53",
+      "source_requirement": "LatencyBenchmarkHarness",
+      "canonical_candidates": [
+        "1.55",
+        "1.99"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    },
+    {
+      "source_id": "PDF-1.54",
+      "source_requirement": "ClaimLedgerVerifier",
+      "canonical_candidates": [
+        "1.99",
+        "0.42"
+      ],
+      "mapping": "SEMANTIC_PROPOSED",
+      "status": "OPEN",
+      "code_paths": [],
+      "verified_ci": [],
+      "complete": false,
+      "production_approved": false
+    }
+  ]
+}

@@ -28,11 +28,11 @@ Odniesienie: `0ab23d5`. Statusy oznaczają stan wymagania, nie zamknięcie całe
 | DRIVE-012 builder: 0.54 | Android/iOS Code i NoCode | 0.54 | NOT_IMPLEMENTED / EXACT | Cztery aplikacje, buildy platformowe i testy na urządzeniach/symulatorach |
 | DRIVE-013 builder: 0.55 | Pakowanie i weryfikacja builderów | 0.55 | NOT_IMPLEMENTED / EXACT | Manifesty, sandbox preview, podpisy, kontrola uprawnień i wydania |
 | DRIVE-014 builder: design/i18n | Atelier Sovereign i polski język kanoniczny | 0.51, 0.52, 0.53, 0.54 | NOT_IMPLEMENTED / SEMANTIC | Design tokens, katalog PL, fallback locale, dostępność i testy UI |
-| DRIVE-015 roadmap115: 1.15–1.22 | Referencje Label/GUID, transakcje, replay, persistence | do ustalenia | PARTIAL / UNMAPPED | Biblioteka 1.15–1.18 oraz dziennik/replay SQLite i walidacja linków: 6 testów PASS. Pozostają trwałe linki/topologiczne selektory 1.21, pełne role driverów i migracje 1.22, integracja auth, crash tests i kompakcja. Binarki na koniec. |
-| DRIVE-016 roadmap115: 1.23–1.30 | Policy, approval, idempotency, tenant, koszty | 0.44, 1.46, 1.47 | REQUIRES_VERIFICATION / PROPOSED | Porównać każdy kontrakt z OMAs/OMAt; approval binding i audyt, limity kosztów |
+| DRIVE-015 roadmap115: 1.15–1.22 | Referencje Label/GUID, transakcje, replay, persistence | do ustalenia | PARTIAL / UNMAPPED | Biblioteka dokumentów i dziennik SQLite istnieją; bieżące CI oraz pełne warunki E2E wymagają sprawdzenia. Pozostają trwałe linki/topologiczne selektory 1.21, pełne role driverów i migracje 1.22, integracja auth, crash tests i kompakcja. Binarki na koniec. |
+| DRIVE-016 roadmap115: 1.23–1.30 | Policy, approval, idempotency, tenant, koszty | 0.44, 1.46, 1.47 | REQUIRES_VERIFICATION / PROPOSED | Dodany preflight HMAC/koszt i durable SQLite audit/idempotency: bez atomowej integracji OMAt + rzeczywistego narzędzia, operatorowego wystawcy approvals i zewnętrznych receipts |
 | DRIVE-017 roadmap115: 1.31–1.38 | ContractObligations | 1.92, 1.93 | REQUIRES_VERIFICATION / PROPOSED | Ekstrakcja zobowiązań, terminy, evidence, role i interfejsy domenowe |
 | DRIVE-018 roadmap115: 1.39–1.46 | ComplianceEvidence i SupplierDueDiligence | 1.92, 1.93 | REQUIRES_VERIFICATION / PROPOSED | Łańcuch dowodów, screening, limity zakupowe, autoryzacja i testy domenowe |
-| DRIVE-019 roadmap115: 1.47–1.54 | Wyszukiwanie, orchestration, UX | 1.65, 1.94 | REQUIRES_VERIFICATION / PROPOSED | Porównać retrieval/router/UX z istniejącym runtime; rzeczywiste dane i ewaluacja |
+| DRIVE-019 roadmap115: 1.47–1.54 | Wyszukiwanie, orchestration, UX | 1.65, 1.94 | REQUIRES_VERIFICATION / PROPOSED | Dodanego baseline BM25 i lokalnych Recall@k/MRR nie uznawać za Moss/Zenoh E2E; konieczne: korpus realny, mierniki p50/p95/p99, dowody CI |
 | DRIVE-020 architecture155: 1.55–1.57 | Drzewo Label/GUID, undo/redo, recomputation | do ustalenia | DECISION_REQUIRED / UNMAPPED | Rozstrzygnąć zakres Open CASCADE i wspólne IR zamiast nadpisania etapów transportu |
 | DRIVE-021 architecture155: 1.58–1.60 | Policy, event store i sterowniki persistence | 0.44, 1.46 | REQUIRES_VERIFICATION / PROPOSED | Sprawdzić atomowość i idempotencję, kontrakty approval oraz migracje danych |
 | DRIVE-022 architecture155: 1.61–1.65 | Retrieval lexical/vector | 1.65 | REQUIRES_VERIFICATION / PROPOSED | Realne adaptery i ocena retrieval na korpusie |
@@ -61,3 +61,7 @@ Odniesienie: `0ab23d5`. Statusy oznaczają stan wymagania, nie zamknięcie całe
 | DRIVE-045 builder: AB-IOS-NOCODE | Agents Builder iOS NoCode | 0.54 | NOT_IMPLEMENTED / EXACT | Actual iOS simulator UI builds multi-node NoCode workflow, round-trips supported IR with Code view, persists offline and respects app life-cycle |
 
 Ścieżki dowodów i źródeł są zapisane w `drive_requirements_reconciliation.json`. Wyniki CI SASOS, SHM i Firecracker są opisane w `../DRIVE_044_049_IMPLEMENTATION_MAP.md`. Obecność demonstracyjnego kodu w PDF nie jest dowodem implementacji w repozytorium.
+
+### Kontrola integralności wymagań źródłowych 1.15–1.54
+
+Źródło i stan każdego z 40 punktów: [manifest](argon_pdf_115_154_manifest.json), [główna Roadmapa](../../ROADMAP.md), [audyt](../audits/ARGON_115_154_RECONCILIATION_2026-10-30.md). Numery w PDF nie zastępują kanonicznych etapów Apex; kandydujące powiązania są semantyczne i wymagają odbioru. Binariów na tym etapie nie pakowano.

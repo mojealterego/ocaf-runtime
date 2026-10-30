@@ -1813,3 +1813,8 @@ Ponownie przesłane materiały: **48 = Notes_261014_204557.pdf (127 stron)**, **
 - Katalog 555 pozostaje `CATALOG_ONLY`; **0 potwierdzonych aktywnych backendów**. Operator-owned IdP/Vault, docelowy Firecracker i pełny runtime E2E niezatwierdzone. OSTc odłożone zgodnie z decyzją operatora, bez zmiany dotychczasowego fail-closed.
 
 Szczegóły: [deploy/stage334/README.md](deploy/stage334/README.md).
+
+### Argon PDF-1.15–PDF-1.54 (40 wymagań) — macierz z 2026-10-30
+
+- [Tabela 40/40 w głównej Roadmapie](ROADMAP.md#argon--źródłowe-punkty-pdf-115pdf-154-4040-2026-10-30), [manifest powiązań z etapami](docs/roadmap/argon_pdf_115_154_manifest.json), [audyt i braki](docs/audits/ARGON_115_154_RECONCILIATION_2026-10-30.md).
+- `src/governance_journal.rs`: trwała idempotencja i audit; `src/retrieval_quality.rs`: leksykalny BM25 i Recall@k/MRR. **Status: implementacja częściowa; CI i E2E należy zweryfikować.** Binariów nie pakowano. Nie zmieniono statusów kanonicznych etapów bez dowodów.

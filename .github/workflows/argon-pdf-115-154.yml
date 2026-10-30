@@ -1,0 +1,48 @@
+name: Argon PDF 1.15-1.54 source verification
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/retrieval_quality.rs'
+      - 'src/governance_journal.rs'
+      - 'src/governance_contract.rs'
+      - 'src/document_state.rs'
+      - 'src/document_store.rs'
+      - 'src/lib.rs'
+      - 'ROADMAP.md'
+      - 'README.md'
+      - 'docs/ROADMAP_FULL_ECOSYSTEM_2026.md'
+      - 'docs/roadmap/argon_pdf_115_154_manifest.json'
+      - 'docs/roadmap/canonical_v11_inventory.json'
+      - 'scripts/validate_argon_pdf_115_154.py'
+      - '.github/workflows/argon-pdf-115-154.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Validate all 40 source IDs and no fabricated completion
+        run: python3 scripts/validate_argon_pdf_115_154.py .
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          components: rustfmt, clippy
+      - name: Rustfmt
+        run: cargo fmt --all -- --check
+      - name: Durable SQLite policy journal unit tests
+        run: cargo test --locked --no-default-features --lib governance_journal::tests
+      - name: Agent governance HMAC and risk tests
+        run: cargo test --locked --no-default-features --lib governance_contract::tests
+      - name: Tenant-scoped retrieval and Recall MRR tests
+        run: cargo test --locked --no-default-features --lib retrieval_quality::tests
+      - name: Event document lifecycle and SQLite replay
+        run: |
+          cargo test --locked --no-default-features --lib document_state::tests
+          cargo test --locked --no-default-features --lib document_store::tests
+      - name: Clippy bounded core
+        run: cargo clippy --locked --all-targets --no-default-features -- -D warnings
