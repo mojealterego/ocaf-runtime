@@ -26,18 +26,18 @@ Status `PARTIAL` oznacza wykryty, ograniczony kod w repozytorium, nie pełne kry
 | PDF-1.28 | DecisionToAuditWiring | TESTED_LOCAL_PARTIAL | `src/governance_journal.rs` — implementacja lokalna, testy CI weryfikowane osobno; pełny E2E otwarty. |
 | PDF-1.29 | TenantWorkspaceIsolator | OPEN | Wymagane mapowanie autorytatywnej tożsamości, trwałość i izolacja |
 | PDF-1.30 | CostAndProviderAccessGate | TESTED_PREFLIGHT_ONLY | `src/governance_contract.rs`; wymagana integracja z rzeczywistym billingiem |
-| PDF-1.31 | ContractObligationRecord | IMPLEMENTED_CI_PENDING | `src/contract_obligations.rs` — Model zobowiązania SHA-256; trwałość i OMAt otwarte |
-| PDF-1.32 | StructuredClauseExtractor | IMPLEMENTED_CI_PENDING | `src/contract_obligations.rs` — Ekstraktor wąskiej gramatyki (shall/must/will, within N days) |
-| PDF-1.33 | ObligationDeadlineMonitor | IMPLEMENTED_CI_PENDING | `src/contract_obligations.rs` — Lokalna ewaluacja terminów; scheduler/alerty E2E otwarte |
+| PDF-1.31 | ContractObligationRecord | TESTED_LOCAL_PARTIAL | `src/contract_obligations.rs` — Model zobowiązania SHA-256; trwałość i OMAt otwarte |
+| PDF-1.32 | StructuredClauseExtractor | TESTED_LOCAL_PARTIAL | `src/contract_obligations.rs` — Ekstraktor wąskiej gramatyki (shall/must/will, within N days) |
+| PDF-1.33 | ObligationDeadlineMonitor | TESTED_LOCAL_PARTIAL | `src/contract_obligations.rs` — Lokalna ewaluacja terminów; scheduler/alerty E2E otwarte |
 | PDF-1.34 | ObligationActionVerification | OPEN | Sprawdzenie dowodów i stanu działania |
 | PDF-1.35 | Contract Obligations policy | OPEN | Egzekwowanie LOW/MEDIUM i human approval |
 | PDF-1.36 | Contract Obligations tool exposure | OPEN | Schemat narzędzia, walidacja I/O |
 | PDF-1.37 | Contract Obligations governed runtime | OPEN | Rzeczywiste spięcie z istniejącym OMAt |
 | PDF-1.38 | Contract Obligations safety E2E | OPEN | Terminy, dowody, zgody i cross-tenant negative |
-| PDF-1.39 | ComplianceEvidenceArtifact | IMPLEMENTED_CI_PENDING | `src/compliance_evidence.rs` — Modele dowodowe i integralność SHA-256; brak niezależnego trust anchor |
-| PDF-1.40 | GovAssure / NCSC CAF / SOC 2 validator | IMPLEMENTED_CI_PENDING | `src/compliance_evidence.rs` — NCSC CAF A-D oraz okres ważności; brak certyfikacji GovAssure |
+| PDF-1.39 | ComplianceEvidenceArtifact | TESTED_LOCAL_PARTIAL | `src/compliance_evidence.rs` — Modele dowodowe i integralność SHA-256; brak niezależnego trust anchor |
+| PDF-1.40 | GovAssure / NCSC CAF / SOC 2 validator | TESTED_LOCAL_PARTIAL | `src/compliance_evidence.rs` — NCSC CAF A-D oraz okres ważności; brak certyfikacji GovAssure |
 | PDF-1.41 | Compliance Evidence governed runtime | OPEN | Rejestracja, audyt i polityka wykonania |
-| PDF-1.42 | Compliance Evidence safety tests | IMPLEMENTED_CI_PENDING | `src/compliance_evidence.rs` — 9 testów w tym tenant, expiry, tampering; brak safety E2E |
+| PDF-1.42 | Compliance Evidence safety tests | TESTED_LOCAL_PARTIAL | `src/compliance_evidence.rs` — 9 testów w tym tenant, expiry, tampering; brak safety E2E |
 | PDF-1.43 | ProcurementScout foundation | OPEN | Typowane zapytania, dostawcy, dane źródłowe |
 | PDF-1.44 | Sanctions / supplier anomaly screening | OPEN | Aktualne źródła list, dopasowanie i false positives |
 | PDF-1.45 | Procurement governance | OPEN | Risk cap, zgoda, segregacja obowiązków |
@@ -83,3 +83,7 @@ Następny techniczny zakres: durable audit + idempotency 1.27–1.29, następnie
 ## Rozszerzenie implementacji PDF-1.31–33, PDF-1.39–40/42 — 2026-10-30
 
 `src/contract_obligations.rs` zawiera deterministyczny model, parser ograniczony do klauzuli jawnie opatrzonej cytowaniem i `within N days`, SHA ID i monitor terminów. `src/compliance_evidence.rs` zawiera model dowodowy, SHA-256, expiry, izolację tenantów, NCSC CAF A–D i testy negatywne. Status **IMPLEMENTED_CI_PENDING**, brak prawdziwego scheduler/OMAt E2E, niezależnej atestacji, podpisu zgodności i produkcyjnego odbioru. Nie zamykać kanonicznych etapów.
+
+### 2026-10-30 — CI PASS: Contract Obligations / Compliance Evidence
+
+[Run 41010321126 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126), SHA `767230ec2a16ddbbb185c5df703cffe6256cf338`: weryfikacja Rustfmt, Clippy, testów kontraktów, dowodów SHA-256, NCSC CAF i pozostałych modułów Argona. PDF-1.31–1.33, PDF-1.39–1.40 i PDF-1.42 są **TESTED_LOCAL_PARTIAL**; brak produkcyjnej autoryzacji, rzeczywistej integracji z OMAt, zewnętrznego trust anchor, formalnych atestacji, schedulera i pełnych E2E. Kanoniczne etapy nie są oznaczone jako zakończone. `production_approved=false`.
