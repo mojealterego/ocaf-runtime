@@ -54,12 +54,18 @@ impl FunctionGraph {
         for (i, spec) in specs.iter().enumerate() {
             if spec.id.is_empty()
                 || spec.id.len() > 128
-                || !spec.id.bytes().all(|b| b.is_ascii_alphanumeric() || b"_-".contains(&b))
+                || !spec
+                    .id
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b"_-".contains(&b))
                 || !ids.insert(spec.id.clone())
                 || spec.output.guid.is_nil()
                 || spec.inputs.is_empty()
                 || spec.inputs.len() > 16
-                || spec.inputs.iter().any(|x| x.guid.is_nil() || x == &spec.output)
+                || spec
+                    .inputs
+                    .iter()
+                    .any(|x| x.guid.is_nil() || x == &spec.output)
                 || spec.inputs.iter().collect::<BTreeSet<_>>().len() != spec.inputs.len()
                 || (spec.driver == Driver::Copy && spec.inputs.len() != 1)
                 || (spec.driver == Driver::CheckedAddI64 && spec.inputs.len() != 2)
@@ -80,7 +86,9 @@ impl FunctionGraph {
         }
         let mut ready = BTreeSet::new();
         for (index, &degree) in indegree.iter().enumerate() {
-            if degree == 0 { ready.insert(index); }
+            if degree == 0 {
+                ready.insert(index);
+            }
         }
         let mut ordered = Vec::with_capacity(specs.len());
         while let Some(&index) = ready.first() {
@@ -88,7 +96,9 @@ impl FunctionGraph {
             ordered.push(specs[index].clone());
             for &child in &children[index] {
                 indegree[child] -= 1;
-                if indegree[child] == 0 { ready.insert(child); }
+                if indegree[child] == 0 {
+                    ready.insert(child);
+                }
             }
         }
         if ordered.len() != specs.len() {
@@ -104,14 +114,14 @@ impl FunctionGraph {
         document: &DocumentState,
         dirty: &BTreeSet<AttributeKey>,
     ) -> Result<Vec<Change>, FunctionError> {
-        if dirty.len() > 256 { return Err(FunctionError::Limit); }
+        if dirty.len() > 256 {
+            return Err(FunctionError::Limit);
+        }
         let mut changed = dirty.clone();
         let mut overlay: BTreeMap<AttributeKey, Vec<u8>> = BTreeMap::new();
         let mut changes = Vec::new();
         for spec in &self.ordered {
-            if !changed.contains(&spec.output)
-                && !spec.inputs.iter().any(|x| changed.contains(x))
-            {
+            if !changed.contains(&spec.output) && !spec.inputs.iter().any(|x| changed.contains(x)) {
                 continue;
             }
             if !document.contains_label(&spec.output.label) {
@@ -119,7 +129,9 @@ impl FunctionGraph {
             }
             let mut values = Vec::new();
             for key in &spec.inputs {
-                let bytes = overlay.get(key).map(Vec::as_slice)
+                let bytes = overlay
+                    .get(key)
+                    .map(Vec::as_slice)
                     .or_else(|| document.attribute(&key.label, key.guid))
                     .ok_or(FunctionError::Missing)?;
                 values.push(bytes);
@@ -129,19 +141,35 @@ impl FunctionGraph {
                 Driver::CheckedAddI64 => {
                     let a: [u8; 8] = values[0].try_into().map_err(|_| FunctionError::Value)?;
                     let b: [u8; 8] = values[1].try_into().map_err(|_| FunctionError::Value)?;
-                    i64::from_le_bytes(a).checked_add(i64::from_le_bytes(b))
-                        .ok_or(FunctionError::Value)?.to_le_bytes().to_vec()
+                    i64::from_le_bytes(a)
+                        .checked_add(i64::from_le_bytes(b))
+                        .ok_or(FunctionError::Value)?
+                        .to_le_bytes()
+                        .to_vec()
                 }
             };
-            if result.len() > 4096 { return Err(FunctionError::Limit); }
+            if result.len() > 4096 {
+                return Err(FunctionError::Limit);
+            }
             let label = spec.output.label.entry();
             let guid = spec.output.guid.to_string();
-            let change = if document.attribute(&spec.output.label, spec.output.guid).is_some() {
-                Change::Update { label, guid, payload: result.clone() }
+            let change = if document
+                .attribute(&spec.output.label, spec.output.guid)
+                .is_some()
+            {
+                Change::Update {
+                    label,
+                    guid,
+                    payload: result.clone(),
+                }
             } else if document.attribute_exists(&spec.output.label, spec.output.guid) {
                 return Err(FunctionError::Value);
             } else {
-                Change::Attach { label, guid, payload: result.clone() }
+                Change::Attach {
+                    label,
+                    guid,
+                    payload: result.clone(),
+                }
             };
             overlay.insert(spec.output.clone(), result);
             changed.insert(spec.output.clone());
