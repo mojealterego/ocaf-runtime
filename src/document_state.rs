@@ -62,6 +62,11 @@ pub enum Mutation {
         guid: Uuid,
         payload: Vec<u8>,
     },
+    Update {
+        label: LabelPath,
+        guid: Uuid,
+        payload: Vec<u8>,
+    },
     Forget {
         label: LabelPath,
         guid: Uuid,
@@ -143,6 +148,9 @@ impl DocumentState {
     pub fn contains_label(&self, label: &LabelPath) -> bool {
         self.state.nodes.contains_key(label)
     }
+    pub fn attribute_exists(&self, label: &LabelPath, guid: Uuid) -> bool {
+        self.state.nodes.get(label).is_some_and(|attrs| attrs.contains_key(&guid))
+    }
     pub fn undo(&mut self) -> Result<String, StateError> {
         let tx = self.undo.pop().ok_or(StateError::NoHistory)?;
         self.state = tx.before.clone();
@@ -213,6 +221,20 @@ impl Snapshot {
                         forgotten: false,
                     },
                 );
+            }
+            Mutation::Update { label, guid, payload } => {
+                if guid.is_nil() { return Err(StateError::Invalid); }
+                if payload.len() > MAX_PAYLOAD { return Err(StateError::Limit); }
+                let old = self.nodes.get(label).and_then(|attrs| attrs.get(guid))
+                    .ok_or(StateError::Missing)?;
+                if old.forgotten { return Err(StateError::Invalid); }
+                let current_bytes: usize = self.nodes.values().flat_map(|a| a.values())
+                    .map(|a| a.payload.len()).sum();
+                if current_bytes - old.payload.len() + payload.len() > MAX_DOCUMENT_BYTES {
+                    return Err(StateError::Limit);
+                }
+                self.nodes.get_mut(label).ok_or(StateError::Missing)?
+                    .get_mut(guid).ok_or(StateError::Missing)?.payload = payload.clone();
             }
             Mutation::Forget { label, guid } | Mutation::Remember { label, guid } => {
                 let attr = self
