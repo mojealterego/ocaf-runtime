@@ -5,7 +5,7 @@
   "canonical_stage_ids_unchanged": true,
   "source_requirements_count": 40,
   "source_id_prefix": "PDF-1.",
-  "state": "PARTIAL_WITH_ADDITIONAL_IMPLEMENTATIONS_PENDING_CI",
+  "state": "PARTIAL_WITH_TESTED_LOCAL_CONTRACT_AND_COMPLIANCE_COMPONENTS",
   "production_approved": false,
   "requirements": [
     {
@@ -382,14 +382,22 @@
         "1.93"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "IMPLEMENTED_CI_PENDING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/contract_obligations.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 41010321126,
+          "head_sha": "767230ec2a16ddbbb185c5df703cffe6256cf338",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126",
+          "scope": "Typed contract record and deterministic ID"
+        }
+      ],
       "complete": false,
       "production_approved": false,
-      "scoped_completion": "PENDING_CI_AND_INTEGRATION",
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED",
       "implementation_note": "Model zobowiązania SHA-256; trwałość i OMAt otwarte"
     },
     {
@@ -400,14 +408,22 @@
         "1.93"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "IMPLEMENTED_CI_PENDING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/contract_obligations.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 41010321126,
+          "head_sha": "767230ec2a16ddbbb185c5df703cffe6256cf338",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126",
+          "scope": "Bounded cited-clause parsing"
+        }
+      ],
       "complete": false,
       "production_approved": false,
-      "scoped_completion": "PENDING_CI_AND_INTEGRATION",
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED",
       "implementation_note": "Ekstraktor wąskiej gramatyki (shall/must/will, within N days)"
     },
     {
@@ -418,14 +434,22 @@
         "1.93"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "IMPLEMENTED_CI_PENDING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/contract_obligations.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 41010321126,
+          "head_sha": "767230ec2a16ddbbb185c5df703cffe6256cf338",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126",
+          "scope": "Deadline evaluator and breach state"
+        }
+      ],
       "complete": false,
       "production_approved": false,
-      "scoped_completion": "PENDING_CI_AND_INTEGRATION",
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED",
       "implementation_note": "Lokalna ewaluacja terminów; scheduler/alerty E2E otwarte"
     },
     {
@@ -506,14 +530,22 @@
         "1.93"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "IMPLEMENTED_CI_PENDING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/compliance_evidence.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 41010321126,
+          "head_sha": "767230ec2a16ddbbb185c5df703cffe6256cf338",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126",
+          "scope": "SHA-256 evidence and tenant validation"
+        }
+      ],
       "complete": false,
       "production_approved": false,
-      "scoped_completion": "PENDING_CI_AND_INTEGRATION",
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED",
       "implementation_note": "Modele dowodowe i integralność SHA-256; brak niezależnego trust anchor"
     },
     {
@@ -524,14 +556,22 @@
         "1.93"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "IMPLEMENTED_CI_PENDING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/compliance_evidence.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 41010321126,
+          "head_sha": "767230ec2a16ddbbb185c5df703cffe6256cf338",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126",
+          "scope": "NCSC CAF A-D coverage, expiry and no self-certification"
+        }
+      ],
       "complete": false,
       "production_approved": false,
-      "scoped_completion": "PENDING_CI_AND_INTEGRATION",
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED",
       "implementation_note": "NCSC CAF A-D oraz okres ważności; brak certyfikacji GovAssure"
     },
     {
@@ -556,14 +596,22 @@
         "1.93"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "IMPLEMENTED_CI_PENDING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/compliance_evidence.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 41010321126,
+          "head_sha": "767230ec2a16ddbbb185c5df703cffe6256cf338",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126",
+          "scope": "Local negative security regression; no E2E"
+        }
+      ],
       "complete": false,
       "production_approved": false,
-      "scoped_completion": "PENDING_CI_AND_INTEGRATION",
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED",
       "implementation_note": "9 testów w tym tenant, expiry, tampering; brak safety E2E"
     },
     {
@@ -761,5 +809,11 @@
     "conclusion": "success",
     "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40990353117"
   },
-  "latest_development_sha": "34ade93a25a72bb2aeca1236ea99dfe85135b2ce"
+  "latest_development_sha": "34ade93a25a72bb2aeca1236ea99dfe85135b2ce",
+  "last_verified_partial_ci": {
+    "run_id": 41010321126,
+    "head_sha": "767230ec2a16ddbbb185c5df703cffe6256cf338",
+    "conclusion": "success",
+    "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126"
+  }
 }
