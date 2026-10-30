@@ -472,7 +472,7 @@ mod tests {
             c.evaluate(&r, None, 150),
             PreflightDecision::Deny(DenyReason::ProviderNotAuthorized)
         );
-        let mut provider = ProviderAccess {
+        let provider = ProviderAccess {
             authenticated: true,
             region_model_authorized: true,
             explicit_cost_approved: true,
@@ -484,8 +484,11 @@ mod tests {
             c.evaluate(&r, None, 150),
             PreflightDecision::Deny(DenyReason::ProviderNotAuthorized)
         );
-        provider.estimated_cost_micros = 100;
-        r.provider = Some(&provider);
+        let approved_provider = ProviderAccess {
+            estimated_cost_micros: 100,
+            ..provider
+        };
+        r.provider = Some(&approved_provider);
         assert_eq!(c.evaluate(&r, None, 150), PreflightDecision::Continue);
     }
 
