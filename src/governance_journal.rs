@@ -7,7 +7,9 @@
 use crate::governance_contract::{
     ActionRequest, AgentContract, ApprovalAuthority, DenyReason, PreflightDecision, RiskTier,
 };
-use rusqlite::{params, Connection, OpenFlags, OptionalExtension, Transaction, TransactionBehavior};
+use rusqlite::{
+    params, Connection, OpenFlags, OptionalExtension, Transaction, TransactionBehavior,
+};
 use sha2::{Digest, Sha256};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -111,7 +113,11 @@ impl GovernanceJournal {
     pub fn open_existing(path: &Path) -> Result<Self, JournalError> {
         if !path.is_absolute()
             || !path.is_file()
-            || path.symlink_metadata().map_err(|_| JournalError::Invalid)?.file_type().is_symlink()
+            || path
+                .symlink_metadata()
+                .map_err(|_| JournalError::Invalid)?
+                .file_type()
+                .is_symlink()
         {
             return Err(JournalError::Invalid);
         }
@@ -214,23 +220,41 @@ impl GovernanceJournal {
             PreflightDecision::Deny(DenyReason::IdentityMismatch)
         };
         if let PreflightDecision::Deny(reason) = decision {
-            append_audit(&tx, &head, trusted_tenant, trusted_actor, request,
-                "DENY", &format!("{reason:?}"))?;
+            append_audit(
+                &tx,
+                &head,
+                trusted_tenant,
+                trusted_actor,
+                request,
+                "DENY",
+                &format!("{reason:?}"),
+            )?;
             db(tx.commit())?;
             return Ok(Admission::Denied(reason));
         }
-        let prior: Option<(String, String, Vec<u8>, String)> = db(tx.query_row(
-            "SELECT actor,request_id,payload_sha256,status
+        let prior: Option<(String, String, Vec<u8>, String)> = db(tx
+            .query_row(
+                "SELECT actor,request_id,payload_sha256,status
              FROM governance_intents_v1
              WHERE tenant=?1 AND action=?2 AND idem=?3",
-            params![trusted_tenant, request.action, idempotency_key],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
-        ).optional())?;
+                params![trusted_tenant, request.action, idempotency_key],
+                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
+            )
+            .optional())?;
         if let Some((actor, request_id, hash, status)) = prior {
-            if actor != trusted_actor || request_id != request.request_id
-                || hash.as_slice() != request.payload_sha256 {
-                append_audit(&tx, &head, trusted_tenant, trusted_actor, request,
-                    "DENY", "IDEMPOTENCY_COLLISION")?;
+            if actor != trusted_actor
+                || request_id != request.request_id
+                || hash.as_slice() != request.payload_sha256.as_slice()
+            {
+                append_audit(
+                    &tx,
+                    &head,
+                    trusted_tenant,
+                    trusted_actor,
+                    request,
+                    "DENY",
+                    "IDEMPOTENCY_COLLISION",
+                )?;
                 db(tx.commit())?;
                 return Ok(Admission::DeniedIdempotencyCollision);
             }
@@ -239,22 +263,38 @@ impl GovernanceJournal {
                 "COMMITTED" => Admission::ReplayCommitted,
                 _ => return Err(JournalError::Integrity),
             };
-            append_audit(&tx, &head, trusted_tenant, trusted_actor, request,
-                "REPLAY", &format!("{outcome:?}"))?;
+            append_audit(
+                &tx,
+                &head,
+                trusted_tenant,
+                trusted_actor,
+                request,
+                "REPLAY",
+                &format!("{outcome:?}"),
+            )?;
             db(tx.commit())?;
             return Ok(outcome);
         }
         if request.risk >= RiskTier::Medium {
             let approval = request.approval.ok_or(JournalError::Integrity)?;
-            let prior_approval: Option<String> = db(tx.query_row(
-                "SELECT request_id FROM governance_approvals_v1
+            let prior_approval: Option<String> = db(tx
+                .query_row(
+                    "SELECT request_id FROM governance_approvals_v1
                  WHERE tenant=?1 AND approval_id=?2",
-                params![trusted_tenant, approval.approval_id],
-                |row| row.get(0),
-            ).optional())?;
+                    params![trusted_tenant, approval.approval_id],
+                    |row| row.get(0),
+                )
+                .optional())?;
             if prior_approval.is_some() {
-                append_audit(&tx, &head, trusted_tenant, trusted_actor, request,
-                    "DENY", "APPROVAL_ALREADY_CONSUMED")?;
+                append_audit(
+                    &tx,
+                    &head,
+                    trusted_tenant,
+                    trusted_actor,
+                    request,
+                    "DENY",
+                    "APPROVAL_ALREADY_CONSUMED",
+                )?;
                 db(tx.commit())?;
                 return Ok(Admission::DeniedApprovalReplay);
             }
@@ -267,11 +307,24 @@ impl GovernanceJournal {
             "INSERT INTO governance_intents_v1
              (tenant,action,idem,actor,request_id,payload_sha256,status,outcome_sha256)
              VALUES (?1,?2,?3,?4,?5,?6,'PENDING',NULL)",
-            params![trusted_tenant, request.action, idempotency_key,
-                    trusted_actor, request.request_id, request.payload_sha256.as_slice()],
+            params![
+                trusted_tenant,
+                request.action,
+                idempotency_key,
+                trusted_actor,
+                request.request_id,
+                request.payload_sha256.as_slice()
+            ],
         ))?;
-        append_audit(&tx, &head, trusted_tenant, trusted_actor, request,
-            "ALLOW_INTENT", "PENDING_EXTERNAL_GATE")?;
+        append_audit(
+            &tx,
+            &head,
+            trusted_tenant,
+            trusted_actor,
+            request,
+            "ALLOW_INTENT",
+            "PENDING_EXTERNAL_GATE",
+        )?;
         db(tx.commit())?;
         Ok(Admission::FreshPending)
     }
@@ -300,19 +353,29 @@ impl GovernanceJournal {
         if head.sequence >= MAX_TENANT_AUDIT_ROWS {
             return Err(JournalError::Limit);
         }
-        let existing: Option<(String, String, Vec<u8>, String, Option<Vec<u8>>)> = db(tx.query_row(
-            "SELECT actor,request_id,payload_sha256,status,outcome_sha256
+        let existing: Option<(String, String, Vec<u8>, String, Option<Vec<u8>>)> = db(tx
+            .query_row(
+                "SELECT actor,request_id,payload_sha256,status,outcome_sha256
              FROM governance_intents_v1
              WHERE tenant=?1 AND action=?2 AND idem=?3",
-            params![trusted_tenant, request.action, idempotency_key],
-            |row| Ok((row.get(0)?,row.get(1)?,row.get(2)?,row.get(3)?,row.get(4)?)),
-        ).optional())?;
+                params![trusted_tenant, request.action, idempotency_key],
+                |row| {
+                    Ok((
+                        row.get(0)?,
+                        row.get(1)?,
+                        row.get(2)?,
+                        row.get(3)?,
+                        row.get(4)?,
+                    ))
+                },
+            )
+            .optional())?;
         let Some((actor, request_id, hash, phase, existing_outcome)) = existing else {
             return Err(JournalError::Conflict);
         };
         if actor != trusted_actor
             || request_id != request.request_id
-            || hash.as_slice() != request.payload_sha256
+            || hash.as_slice() != request.payload_sha256.as_slice()
         {
             return Err(JournalError::Conflict);
         }
@@ -329,10 +392,22 @@ impl GovernanceJournal {
             "UPDATE governance_intents_v1
              SET status='COMMITTED', outcome_sha256=?4
              WHERE tenant=?1 AND action=?2 AND idem=?3 AND status='PENDING'",
-            params![trusted_tenant, request.action, idempotency_key, outcome_sha256.as_slice()],
+            params![
+                trusted_tenant,
+                request.action,
+                idempotency_key,
+                outcome_sha256.as_slice()
+            ],
         ))?;
-        append_audit(&tx, &head, trusted_tenant, trusted_actor, request,
-            "OUTCOME_RECEIPT", "EXTERNALLY_VERIFIED_BY_CALLER")?;
+        append_audit(
+            &tx,
+            &head,
+            trusted_tenant,
+            trusted_actor,
+            request,
+            "OUTCOME_RECEIPT",
+            "EXTERNALLY_VERIFIED_BY_CALLER",
+        )?;
         db(tx.commit())?;
         Ok(true)
     }
@@ -341,7 +416,7 @@ impl GovernanceJournal {
 fn scan_audit(tx: &Transaction<'_>, tenant: &str) -> Result<AuditHead, JournalError> {
     let mut stmt = db(tx.prepare(
         "SELECT seq,actor,action,request_id,decision,reason,payload_sha256,previous,digest
-         FROM governance_audit_v1 WHERE tenant=?1 ORDER BY seq"
+         FROM governance_audit_v1 WHERE tenant=?1 ORDER BY seq",
     ))?;
     let mut rows = db(stmt.query(params![tenant]))?;
     let mut head = AuditHead::default();
@@ -359,12 +434,17 @@ fn scan_audit(tx: &Transaction<'_>, tenant: &str) -> Result<AuditHead, JournalEr
             || seq > MAX_TENANT_AUDIT_ROWS
             || payload.len() != 32
             || previous != head.digest
-            || hash != hash_row(tenant, seq, &actor, &action, &request,
-                &decision, &reason, &payload, &previous)
+            || hash
+                != hash_row(
+                    tenant, seq, &actor, &action, &request, &decision, &reason, &payload, &previous,
+                )
         {
             return Err(JournalError::Integrity);
         }
-        head = AuditHead { sequence: seq, digest: hash };
+        head = AuditHead {
+            sequence: seq,
+            digest: hash,
+        };
     }
     Ok(head)
 }
@@ -382,14 +462,33 @@ fn append_audit(
     if seq > MAX_TENANT_AUDIT_ROWS {
         return Err(JournalError::Limit);
     }
-    let hash = hash_row(tenant, seq, actor, request.action, request.request_id,
-        decision, reason, &request.payload_sha256, &head.digest);
+    let hash = hash_row(
+        tenant,
+        seq,
+        actor,
+        request.action,
+        request.request_id,
+        decision,
+        reason,
+        &request.payload_sha256,
+        &head.digest,
+    );
     db(tx.execute(
         "INSERT INTO governance_audit_v1
          (tenant,seq,actor,action,request_id,decision,reason,payload_sha256,previous,digest)
          VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)",
-        params![tenant,seq,actor,request.action,request.request_id,decision,
-            reason,request.payload_sha256.as_slice(),head.digest,hash],
+        params![
+            tenant,
+            seq,
+            actor,
+            request.action,
+            request.request_id,
+            decision,
+            reason,
+            request.payload_sha256.as_slice(),
+            head.digest,
+            hash
+        ],
     ))?;
     Ok(())
 }
@@ -398,7 +497,7 @@ fn append_audit(
 mod tests {
     use super::*;
     use crate::governance_contract::{
-        Accountability, Domain, ProviderAccess, SocialCommitment, payload_sha256,
+        payload_sha256, Accountability, Domain, ProviderAccess, SocialCommitment,
     };
     use std::collections::BTreeSet;
 
@@ -409,7 +508,9 @@ mod tests {
             tenant: "tenant_a".into(),
             actor: "agent_a".into(),
             obligations: vec![SocialCommitment {
-                debtor: "agent_a".into(), creditor: "user".into(), condition: "Verify".into(),
+                debtor: "agent_a".into(),
+                creditor: "user".into(),
+                condition: "Verify".into(),
             }],
             permissions: BTreeSet::from(["read".into()]),
             prohibitions: BTreeSet::new(),
@@ -449,13 +550,17 @@ mod tests {
         let mut r = request();
         r.action = "missing";
         assert_eq!(
-            journal.begin(&c, &r, None, "tenant_a", "agent_a", 170, "key_1").unwrap(),
+            journal
+                .begin(&c, &r, None, "tenant_a", "agent_a", 170, "key_1")
+                .unwrap(),
             Admission::Denied(DenyReason::NotAllowlisted)
         );
         assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 1);
         r.action = "read";
         assert_eq!(
-            journal.begin(&c, &r, None, "tenant_a", "agent_a", 170, "key_1").unwrap(),
+            journal
+                .begin(&c, &r, None, "tenant_a", "agent_a", 170, "key_1")
+                .unwrap(),
             Admission::FreshPending
         );
     }
@@ -465,15 +570,22 @@ mod tests {
         let (file, journal) = setup();
         let c = contract();
         let r = request();
-        let first = journal.begin(&c, &r, None, "tenant_a", "agent_a", 170, "idem").unwrap();
+        let first = journal
+            .begin(&c, &r, None, "tenant_a", "agent_a", 170, "idem")
+            .unwrap();
         assert_eq!(first, Admission::FreshPending);
         let head = journal.inspect("tenant_a", None).unwrap();
         let reopened = GovernanceJournal::open_existing(file.path()).unwrap();
         assert_eq!(
-            reopened.begin(&c, &r, None, "tenant_a", "agent_a", 170, "idem").unwrap(),
+            reopened
+                .begin(&c, &r, None, "tenant_a", "agent_a", 170, "idem")
+                .unwrap(),
             Admission::ReplayPending
         );
-        assert!(matches!(reopened.inspect("tenant_a", Some(&head)), Err(JournalError::Integrity)));
+        assert!(matches!(
+            reopened.inspect("tenant_a", Some(&head)),
+            Err(JournalError::Integrity)
+        ));
         assert_eq!(reopened.inspect("tenant_a", None).unwrap().sequence, 2);
     }
 
@@ -482,15 +594,21 @@ mod tests {
         let (_file, journal) = setup();
         let c = contract();
         let mut r = request();
-        journal.begin(&c, &r, None, "tenant_a", "agent_a", 170, "idem").unwrap();
+        journal
+            .begin(&c, &r, None, "tenant_a", "agent_a", 170, "idem")
+            .unwrap();
         r.payload_sha256 = payload_sha256(b"different");
         assert_eq!(
-            journal.begin(&c, &r, None, "tenant_a", "agent_a", 170, "idem").unwrap(),
+            journal
+                .begin(&c, &r, None, "tenant_a", "agent_a", 170, "idem")
+                .unwrap(),
             Admission::DeniedIdempotencyCollision
         );
         r.payload_sha256 = payload_sha256(b"payload");
         assert_eq!(
-            journal.begin(&c, &r, None, "tenant_a", "agent_a", 170, "idem").unwrap(),
+            journal
+                .begin(&c, &r, None, "tenant_a", "agent_a", 170, "idem")
+                .unwrap(),
             Admission::ReplayPending
         );
     }
@@ -500,20 +618,40 @@ mod tests {
         let (_file, journal) = setup();
         let c = contract();
         let r = request();
-        journal.begin(&c, &r, None, "tenant_a", "agent_a", 170, "k").unwrap();
+        journal
+            .begin(&c, &r, None, "tenant_a", "agent_a", 170, "k")
+            .unwrap();
         let digest = payload_sha256(b"external receipt");
         assert!(matches!(
-            journal.record_verified_outcome("tenant_b","agent_a",&r,"k",digest),
+            journal.record_verified_outcome("tenant_b", "agent_a", &r, "k", digest),
             Err(JournalError::Invalid)
         ));
-        assert_eq!(journal.record_verified_outcome("tenant_a","agent_a",&r,"k",digest).unwrap(),true);
-        assert_eq!(journal.record_verified_outcome("tenant_a","agent_a",&r,"k",digest).unwrap(),false);
         assert_eq!(
-            journal.begin(&c,&r,None,"tenant_a","agent_a",170,"k").unwrap(),
+            journal
+                .record_verified_outcome("tenant_a", "agent_a", &r, "k", digest)
+                .unwrap(),
+            true
+        );
+        assert_eq!(
+            journal
+                .record_verified_outcome("tenant_a", "agent_a", &r, "k", digest)
+                .unwrap(),
+            false
+        );
+        assert_eq!(
+            journal
+                .begin(&c, &r, None, "tenant_a", "agent_a", 170, "k")
+                .unwrap(),
             Admission::ReplayCommitted
         );
         assert!(matches!(
-            journal.record_verified_outcome("tenant_a","agent_a",&r,"k",payload_sha256(b"other")),
+            journal.record_verified_outcome(
+                "tenant_a",
+                "agent_a",
+                &r,
+                "k",
+                payload_sha256(b"other")
+            ),
             Err(JournalError::Conflict)
         ));
     }
@@ -523,29 +661,40 @@ mod tests {
         let (file, journal) = setup();
         let c = contract();
         let r = request();
-        journal.begin(&c, &r, None, "tenant_a", "agent_a", 170, "k").unwrap();
+        journal
+            .begin(&c, &r, None, "tenant_a", "agent_a", 170, "k")
+            .unwrap();
         let trusted_head = journal.inspect("tenant_a", None).unwrap();
         let conn = Connection::open(file.path()).unwrap();
-        conn.execute("UPDATE governance_audit_v1 SET reason='tampered'", []).unwrap();
-        assert!(matches!(journal.inspect("tenant_a",None), Err(JournalError::Integrity)));
+        conn.execute("UPDATE governance_audit_v1 SET reason='tampered'", [])
+            .unwrap();
         assert!(matches!(
-            journal.begin(&c,&r,None,"tenant_a","agent_a",170,"k"),
+            journal.inspect("tenant_a", None),
+            Err(JournalError::Integrity)
+        ));
+        assert!(matches!(
+            journal.begin(&c, &r, None, "tenant_a", "agent_a", 170, "k"),
             Err(JournalError::Integrity)
         ));
         conn.execute("DELETE FROM governance_audit_v1", []).unwrap();
-        assert!(matches!(journal.inspect("tenant_a",Some(&trusted_head)), Err(JournalError::Integrity)));
+        assert!(matches!(
+            journal.inspect("tenant_a", Some(&trusted_head)),
+            Err(JournalError::Integrity)
+        ));
     }
 
     #[test]
     fn peer_is_derived_from_trusted_context_not_requested_identity() {
-        let (_file,journal) = setup();
+        let (_file, journal) = setup();
         let c = contract();
         let r = request();
         assert_eq!(
-            journal.begin(&c,&r,None,"tenant_b","agent_a",170,"k").unwrap(),
+            journal
+                .begin(&c, &r, None, "tenant_b", "agent_a", 170, "k")
+                .unwrap(),
             Admission::Denied(DenyReason::IdentityMismatch)
         );
-        assert_eq!(journal.inspect("tenant_a",None).unwrap().sequence,0);
-        assert_eq!(journal.inspect("tenant_b",None).unwrap().sequence,1);
+        assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 0);
+        assert_eq!(journal.inspect("tenant_b", None).unwrap().sequence, 1);
     }
 }
