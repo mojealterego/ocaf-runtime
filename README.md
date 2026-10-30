@@ -493,7 +493,7 @@ Rejestr źródłowy (nie oznacza zakończenia implementacji):
 **Reguła źródłowa:** pliki PDF 01–09 są uwzględnione jako źródła wymagań; nie jest to certyfikacja kompletności semantycznej wszystkich stron. Nie przenosić tej tabeli ani głównej Roadmapy poza początek README. Dalsze odkryte luki dodawać bez usuwania historycznych wpisów.
 
 
-**ARGON SOURCE 1.55–2.06 / kanoniczne mapowanie (2026-10-30):** [20 grup źródłowych, powiązania z etapami, luki i statusy CI](docs/audits/ARGON_155_206_RECONCILIATION_2026-10-30.md). Historyczne etapy 1.55–2.06 pozostają bez renumeracji. NOWY KOD: Rust Document DAG, schema migration SQLite, model routing, bounded compound reasoning, voice firewall, collaborative object tracker, prompt DSL oraz pomiary subprocess p50/p95/p99 (CI do sprawdzenia), inne źródłowe wymagania nadal PARTIAL/OPEN; brak globalnego produkcyjnego PASS.
+**ARGON SOURCE 1.55–2.06 / kanoniczne mapowanie (2026-10-30):** [20 grup źródłowych, powiązania z etapami, luki i statusy CI](docs/audits/ARGON_155_206_RECONCILIATION_2026-10-30.md). Historyczne etapy 1.55–2.06 pozostają bez renumeracji. NOWY KOD: Rust Document DAG, schema migration SQLite, model routing, bounded compound reasoning, voice firewall, collaborative object tracker with SQLite persistence, prompt DSL oraz pomiary subprocess p50/p95/p99 (CI do sprawdzenia), inne źródłowe wymagania nadal PARTIAL/OPEN; brak globalnego produkcyjnego PASS.
 
 <!-- OCAF_README_ROADMAP_END -->
 
