@@ -24,7 +24,7 @@ Dokument Drive `1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A` opisuje inne funkcje niż akt
 | 2.02 | Collaborative Object Tracker | IMPLEMENTED_SCOPE_CI_PENDING: `src/collaboration_tracker.rs`; durable multi-host E2E OPEN |
 | 2.03 | Voice Narrative Firewall | IMPLEMENTED_SCOPE_CI_PENDING: `src/voice_narrative_firewall.rs`, tenant binding i kontrola zgody mikrofonu; realny audio/game engine E2E OPEN |
 | 2.04 | Rust Hot Path | PARTIAL: Rust obecny; brak zweryfikowanego benchmarku |
-| 2.05 | Benchmark Harness | PARTIAL: skrypty i CI, brak jednolitego korpusu |
+| 2.05 | Benchmark Harness | PARTIAL_CI_PENDING: `scripts/argon_bench.py`, `scripts/tests/test_argon_bench.py`; rzeczywiste subprocess p50/p95/p99, SHA i CPU/OS; in-process Rust hot-path/multi-host corpus OPEN |
 | 2.06 | Release Guardian | PARTIAL: `scripts/release_readiness.py`, brak pełnego E2E |
 
 **Ograniczenie źródła:** PDF zawiera przykładowy TypeScript z artefaktami `[span_...]`; nie jest dowodem kompilacji, pomiaru wydajności, uruchomienia Moss ani realnego Zenoh. Nie kopiować TypeScript jako drugiego jądra Rust. Statusy dotyczą wymagań, nie ukończenia kanonicznych etapów.
@@ -64,7 +64,7 @@ Dokument Drive `1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A` opisuje inne funkcje niż akt
 | 2.02 | 0.67, 1.65, 322 | IMPLEMENTED_SCOPE_CI_PENDING: `src/collaboration_tracker.rs`; trwały backend/provenance podpisy OPEN |
 | 2.03 | 0.99, 1.11, 276 | IMPLEMENTED_SCOPE_CI_PENDING: `src/voice_narrative_firewall.rs`; rzeczywisty game/audio E2E OPEN |
 | 2.04 | 1.90, 264 | PARTIAL — Rust hot path istnieje, brak pomiarów efektu |
-| 2.05 | 0.42, 1.64, 264 | PARTIAL — brak wspólnego pełnego benchmark harness |
+| 2.05 | 0.42, 1.64, 264 | PARTIAL_CI_PENDING: `scripts/argon_bench.py` i testy; brak pełnego in-process/cluster harness |
 | 2.06 | 0.42, 1.94, 333 | PARTIAL — release precheck, brak kompletnego GO/NO-GO E2E |
 
 **Zmiany kodu do weryfikacji CI:** `src/document_state.rs` (Update), `src/document_store.rs` (replay Update), `src/document_function_dag.rs`, `tests/document_function_dag.rs`, `src/model_router.rs`, `src/lib.rs`. Nowych liczb etapów nie dopisano i nie zmieniono historycznych statusów. Pełna integracja wymaga dalszej implementacji.
