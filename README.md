@@ -492,6 +492,9 @@ Rejestr źródłowy (nie oznacza zakończenia implementacji):
 
 **Reguła źródłowa:** pliki PDF 01–09 są uwzględnione jako źródła wymagań; nie jest to certyfikacja kompletności semantycznej wszystkich stron. Nie przenosić tej tabeli ani głównej Roadmapy poza początek README. Dalsze odkryte luki dodawać bez usuwania historycznych wpisów.
 
+
+**ARGON SOURCE 1.55–2.06 / kanoniczne mapowanie (2026-10-30):** [20 grup źródłowych, powiązania z etapami, luki i statusy CI](docs/audits/ARGON_155_206_RECONCILIATION_2026-10-30.md). Historyczne etapy 1.55–2.06 pozostają bez renumeracji. NOWY KOD: DAG dokumentu Rust oraz model routing (CI do sprawdzenia), inne źródłowe wymagania nadal PARTIAL/OPEN; brak globalnego produkcyjnego PASS.
+
 <!-- OCAF_README_ROADMAP_END -->
 
 > **📌 [PEŁNA ROADMAPA OCAF OD SAMEGO POCZĄTKU — ROADMAP.md](ROADMAP.md)** · [Etapy 0.00–1.94 i statusy wykonania](ROADMAP.md#statystyka-wykonania-i-uczciwe-oznaczenia) · [10 pierwotnych Agents Builder Code / NoCode](docs/AGENTS_BUILDER_CODE_NOCODE_5_PLATFORMS.md) · [inwentaryzacja braków](docs/INVENTORY_LOST_REQUIREMENTS_2026-10-15.md) · [dziennik zmian po każdym etapie](docs/roadmap/STAGE_CHANGELOG.md)  
