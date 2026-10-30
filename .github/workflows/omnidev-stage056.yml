@@ -7,6 +7,8 @@ on:
       - "src/lib.rs"
       - "scripts/omnidev_tree_sitter.py"
       - "scripts/tests/test_omnidev_tree_sitter.py"
+      - "scripts/omnidev_pipeline.py"
+      - "scripts/tests/test_omnidev_pipeline.py"
       - "tests/omnidev_workflow.rs"
       - "Cargo.toml"
       - "Cargo.lock"
@@ -17,6 +19,8 @@ on:
       - "src/lib.rs"
       - "scripts/omnidev_tree_sitter.py"
       - "scripts/tests/test_omnidev_tree_sitter.py"
+      - "scripts/omnidev_pipeline.py"
+      - "scripts/tests/test_omnidev_pipeline.py"
       - "tests/omnidev_workflow.rs"
       - "Cargo.toml"
       - "Cargo.lock"
@@ -40,6 +44,8 @@ jobs:
         run: python3 -m pip install --disable-pip-version-check tree-sitter==0.25.2 tree-sitter-rust==0.24.0
       - name: Real Rust CST parser and impact tests
         run: python3 -m unittest discover -s scripts/tests -p test_omnidev_tree_sitter.py -v
+      - name: Test complete OmniDev patch pipeline and recovery
+        run: python3 -m unittest discover -s scripts/tests -p test_omnidev_pipeline.py -v
       - name: Formatting
         run: cargo fmt --all -- --check
       - name: Typed DAG role, tenant, lease, replay and cost tests
