@@ -1376,3 +1376,11 @@ Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): 
 **PDF-1.54 — nowy moduł kontroli deklaracji:** `src/claim_ledger_verifier.rs` z kontrolą dowodów CI, wiązaniem SHA, klasyfikacją i blokadą niezmierzonych twierdzeń. Status `IMPLEMENTED_CI_PENDING` do potwierdzonego CI; nie zastępuje prawdziwych dowodów operatora i E2E. Nie zmieniono statusów kanonicznych etapów.
 
 **PDF-1.54 lokalne testy PASS** — [CI 41017904577](https://github.com/mojealterego/ocaf-runtime/actions/runs/41017904577), SHA `d86387580a2e4801d09f8b007e85fed7eb03dd65`: walidator deklaracji/commit/evidence przetestowany w zakresie preflight; nie uwierzytelnia niezależnie pochodzenia receipts i nie zamyka kanonicznych etapów 0.42 / 1.99.
+
+## Uzgodnienie Argon 1.55–2.06 z aktualną ROADMAPĄ (30.10.2026)
+
+**Zapis źródłowy (nie kanoniczna numeracja):** Google Drive `1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A`. W dokumencie Argona punkty 1.55–2.06 mają inne znaczenie niż istniejące etapy 1.55–2.06, dlatego oryginalnych nazw, numerów, wymagań, zależności ani statusów nie zmieniono.
+
+**Weryfikacja 20 grup wymagań i ich powiązanie semantyczne ze starymi numerami:** [AUDYT ARGON 1.55–2.06](docs/audits/ARGON_155_206_RECONCILIATION_2026-10-30.md). Zawiera każdą grupę, kanoniczne identyfikatory, ścieżki kodu, status PARTIAL/OPEN/IMPLEMENTED_SCOPE_CI_PENDING i negatywne testy. W szczególności źródłowe 1.57 (Document Function DAG) oraz 1.75 (Model Router) mają nowy kod Rust; zamknięcie zakresu wymaga zielonego CI. Pozostałych braków nie oznaczono jako ukończone.
+
+**Nie oznacza pełnego DONE:** ClaimLedger i PolicyGate są dodatkową kontrolą przed wykonawcą, a nie niezależną autoryzacją; TypeScript z PDF nie jest modułem Rust ani dowodem wdrożenia; nie zastępować istniejącego runtime. Zapis zachowuje 334 etapy główne, 64 podetapy oraz 10 produktów. Globalne `production_approved=false`.
