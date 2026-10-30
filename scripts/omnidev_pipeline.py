@@ -324,3 +324,40 @@ class Stage056:
             self.db.execute("ROLLBACK")
             raise
         return self.status(tenant, task)
+
+    def reconcile(self, tenant: str, task: str, evidence_sha256: str,
+                  decision: str, approval: str) -> dict:
+        """Terminal operator reconciliation only; does NOT launch another attempt.
+
+        Evidence SHA is a reference supplied by the operator, not independent
+        cryptographic proof. Reconciliation must be verified externally.
+        """
+        if not self.verify() or not re.fullmatch(r"[0-9a-f]{64}", evidence_sha256):
+            raise OmniDevError("invalid recovery evidence or audit")
+        if decision not in ("NO_EFFECT_DECLARED", "EFFECT_DECLARED", "UNKNOWN"):
+            raise OmniDevError("invalid recovery decision")
+        self.db.execute("BEGIN IMMEDIATE")
+        try:
+            row = self.db.execute(
+                "SELECT base,sha,status FROM jobs WHERE tenant=? AND task=?",
+                (tenant, task)).fetchone()
+            if row is None:
+                raise OmniDevError("unknown tenant-scoped recovery")
+            base, sha, status = row
+            token = self.token(tenant, task, base, sha,
+                               ("RECONCILE", decision, evidence_sha256), "operator")
+            if not hmac.compare_digest(token, approval):
+                raise OmniDevError("unauthorized recovery")
+            if status not in ("RUNNING", "UNCERTAIN"):
+                raise OmniDevError("recovery requires an unresolved attempt")
+            terminal = "RECONCILED_" + decision
+            self.db.execute("UPDATE jobs SET status=?,result=? WHERE tenant=? AND task=?",
+                            (terminal, json.dumps({"evidence_sha256": evidence_sha256,
+                                                   "operator_decision": decision}),
+                             tenant, task))
+            self._event(tenant, task, terminal + ":" + evidence_sha256)
+            self.db.execute("COMMIT")
+        except BaseException:
+            self.db.execute("ROLLBACK")
+            raise
+        return self.status(tenant, task)

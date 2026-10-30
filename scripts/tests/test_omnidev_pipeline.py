@@ -129,6 +129,29 @@ class Stage056PipelineTests(unittest.TestCase):
             self.journal.execute(self.repo, "tenantA", "task01",
                                  self.token(info), self.command, DockerExecutor())
 
+    def test_recovery_needs_evidence_bound_operator_signature_and_remains_terminal(self):
+        info = self.journal.submit(self.repo, self.repair)
+        class Uncertain:
+            image = "python:3.13-slim"
+            def run(self, *args):
+                raise TimeoutError("uncertain state")
+        self.journal.execute(self.repo, "tenantA", "task01", self.token(info),
+                             self.command, Uncertain())
+        evidence = "f" * 64
+        recovery_token = self.journal.token(
+            "tenantA", "task01", self.base, info["patch_sha256"],
+            ("RECONCILE", "NO_EFFECT_DECLARED", evidence), "operator")
+        with self.assertRaises(OmniDevError):
+            self.journal.reconcile("tenantA", "task01", evidence,
+                                   "EFFECT_DECLARED", recovery_token)
+        self.assertEqual(self.journal.reconcile(
+            "tenantA", "task01", evidence, "NO_EFFECT_DECLARED",
+            recovery_token)["status"], "RECONCILED_NO_EFFECT_DECLARED")
+        with self.assertRaises(OmniDevError):
+            self.journal.execute(self.repo, "tenantA", "task01", self.token(info),
+                                 self.command, DockerExecutor())
+        self.assertTrue(self.journal.verify())
+
     def test_tamper_detection_and_docker_restrictions(self):
         self.journal.submit(self.repo, self.repair)
         self.journal.db.execute("UPDATE events SET event='forged' WHERE serial=1")
