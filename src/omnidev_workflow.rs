@@ -359,6 +359,11 @@ impl OmniDevWorkflow {
             .ok_or(WorkflowError::Denied)?;
         let state = self.nodes.get(id).ok_or(WorkflowError::Denied)?;
         if state.last_receipt.as_ref() == Some(&receipt) {
+            if let StepStatus::Leased(active) = &state.status {
+                if active.epoch != receipt.epoch || active.attempt_id != receipt.attempt_id {
+                    return Err(WorkflowError::Fenced);
+                }
+            }
             return Ok(Completion::Replay);
         }
         let StepStatus::Leased(claim) = &state.status else {

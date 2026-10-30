@@ -399,3 +399,33 @@ fn tenant_scoping_covers_status_cost_and_audit_metadata() {
     assert_eq!(workflow.audit_head("tenantB"), Err(WorkflowError::Denied));
     assert_eq!(workflow.budget_state("tenantA"), Ok((0, 0)));
 }
+
+#[test]
+fn prior_failed_receipt_is_fenced_after_a_new_attempt_has_claimed_the_step() {
+    let mut workflow = OmniDevWorkflow::new(spec()).unwrap();
+    workflow
+        .claim("tenantA", Role::Architect, "architect", 1, "old", 10)
+        .unwrap();
+    let first = receipt(1, "old", Outcome::Failed, 5);
+    assert_eq!(
+        workflow.complete("tenantA", Role::Architect, "architect", first.clone(), 11),
+        Ok(Completion::Recorded)
+    );
+    workflow
+        .claim("tenantA", Role::Architect, "architect", 2, "new", 12)
+        .unwrap();
+    assert_eq!(
+        workflow.complete("tenantA", Role::Architect, "architect", first, 13),
+        Err(WorkflowError::Fenced)
+    );
+    assert_eq!(
+        workflow.complete(
+            "tenantA",
+            Role::Architect,
+            "architect",
+            receipt(2, "new", Outcome::Passed, 5),
+            14
+        ),
+        Ok(Completion::Recorded)
+    );
+}
