@@ -26,3 +26,13 @@ Data: 2026-10-30. Zakres: odrębny produkt OmniDev, nie dziesięć produktów Ag
 Operator wymaga odbioru produkcyjnego **wariantu symulacyjnego** bez obcych hostów, KVM, HSM i zewnętrznego audytu. Kryterium nie uprawnia do twierdzenia, że istnieje sprzętowa izolacja, fizyczne HA czy usługa wdrożona w środowisku produkcyjnym.
 
 **Przed końcowym zamknięciem 0.56** sprawdzić wynik dedykowanego CI dla kompilacji Rust patcha, terminal recovery oraz ochrony przed stale receipt; wtedy dopiero zmienić `main[].status` na `PRODUCTION_ACCEPTED_SIMULATION`, podając SHA i ograniczenia.
+
+## Weryfikacja odbioru symulacyjnego, rozszerzona o rzeczywisty Rust guest
+
+Zweryfikowany [run #41011058519](https://github.com/mojealterego/ocaf-runtime/actions/runs/41011058519) (`SUCCESS`, commit `dce17cb110869f7a2fd3c492d4afb40d9b23fc8a`):
+- 4 testy prawdziwego parsera Rust Tree-sitter.
+- 22 testy Python pipeline: operator CLI token związany z hashem patcha, zgoda człowieka, SQLite HMAC chain, izolacja tenantów, replay, awarie/recovery, **genuine Docker patch test for Python and Rust** (Rust `cargo test --locked --offline` z poprawką).
+- 3 testy Python AST / Rust CST semantycznego Security Critic.
+- 13 testów kontraktów Rust (DAG, koszt, tenant, lease, epoch, stale replay), `cargo fmt` i `cargo clippy -D warnings`: PASS.
+
+Status: **`PRODUCTION_ACCEPTED_SIMULATION`** — kompletny **ograniczony wariant symulacyjny**, zatwierdzony dyrektywą operatora bez zewnętrznej infrastruktury. Brak dowodu pełnej autonomicznej generacji kodu i pełnej semantyki Rust/type-checker, fizycznego KVM, rzeczywistych podpisów HSM oraz wdrożenia produkcyjnego. Nowy test negatywny sieci/read-only i poprawka długości komendy jeszcze bez zielonego wyniku w chwili wpisu. `production_approved=false`.

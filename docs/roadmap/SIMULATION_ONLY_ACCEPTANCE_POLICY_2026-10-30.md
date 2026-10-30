@@ -28,3 +28,9 @@ Operator zaakceptował w rozmowie 2026-10-30 stosowanie odbioru produkcyjnego dl
 **Cały etap 0.56 nie jest jeszcze zakończony**: brakuje realnej implementacji generatora patchy, Tree-sitter CST/AST, pełnego Security Critic, sandbox/Firecracker simulator i E2E przepływu. Odbiór symulacyjnego prymitywu nie może potwierdzać tych nieistniejących komponentów.
 
 `deployment_type=simulation_only`; `production_approved=false` dla pełnego runtime; brak zewnętrznych hostów i zewnętrznego audytu nie blokuje kolejnych prac.
+
+## 2026-10-30 — rozszerzenie odbioru na cały sprawdzony wariant symulacyjny 0.56
+
+Powyższy zapis o odbiorze wyłącznie Rust DAG jest **historyczny i zastąpiony** nowym wykonanym zakresem. `0.56=PRODUCTION_ACCEPTED_SIMULATION` w zakresie: Tree-sitter Rust CST, Cargo graph, generator jednoznacznych patchy Rust/Python, weryfikacja AST/CST i Git, izolowany Docker z rzeczywistym Rust/Python compile/test, operator HMAC/CLI, lokalne SQLite recovery i kontrakty Rust DAG. Testy potwierdzone na `dce17cb110869f7a2fd3c492d4afb40d9b23fc8a` w [CI #41011058519](https://github.com/mojealterego/ocaf-runtime/actions/runs/41011058519).
+
+Granica odbioru jest jawna: to nie jest dowód arbitralnej autonomicznej generacji kodu z języka naturalnego, pełnego typowanego code graph, kryptograficznie podpisanych artefaktów HSM ani wykonania w Firecracker/KVM. Te niefizyczne braki pozostają opisane jako ograniczenia, zamiast być nazywanymi wykonaniem. Nowy test odmowy egress/zapisu wymaga osobnego wyniku po poprawce długości komendy. `deployment_type=simulation_only`; globalne `production_approved=false`.

@@ -854,10 +854,21 @@
       "acceptance": "Compilable patches, tests, human-gated protected updates Compile and run tests on generated patch; deny unsafe code and unapproved protected-branch writes.",
       "negative": "Ograniczenia testów i negatywne przypadki zgodnie z dokumentacją źródłową.",
       "dependencies": [],
-      "status": "PLANNED_OR_UNVERIFIED",
+      "status": "PRODUCTION_ACCEPTED_SIMULATION",
       "historical_status": "P1",
       "source": "docs/ROADMAP_FULL_ECOSYSTEM_2026.md",
-      "source_class": "MATRIX_ORIGINAL"
+      "source_class": "MATRIX_ORIGINAL",
+      "simulation_acceptance": {
+        "status": "PRODUCTION_ACCEPTED_SIMULATION",
+        "scope": "bounded Rust CST/Cargo graph, exact-anchor Rust/Python codegen, AST/CST security, real Docker isolated Rust/Python build/test, operator HMAC/CLI, SQLite recovery, Rust DAG tenant/lease/fencing",
+        "ci_code_sha": "dce17cb110869f7a2fd3c492d4afb40d9b23fc8a",
+        "ci_run": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41011058519",
+        "ci_conclusion": "success",
+        "tests": {"tree_sitter": 4, "pipeline": 22, "semantic": 3, "rust": 13},
+        "deployment_type": "simulation_only",
+        "limitations": "no general natural-language autonomous codegen, no fully typed Rust impact graph, no Firecracker/KVM, no externally signed artifacts, no real deployment",
+        "newer_isolation_negative_test_ci": "pending"
+      }
     },
     {
       "id": "0.57",
@@ -7399,15 +7410,28 @@
   },
   "operator_simulation_acceptance_20261030": {
     "policy": "docs/roadmap/SIMULATION_ONLY_ACCEPTANCE_POLICY_2026-10-30.md",
-    "directive": "No additional infrastructure. Hardware/multihost acceptance is replaced by deterministic simulation and negative tests.",
-    "accepted_scope": "0.56 / src/omnidev_workflow.rs — in-memory DAG scheduler only",
+    "directive": "No other physical infrastructure, approve production simulation based on tested bounded functionality.",
+    "accepted_scope": "0.56 / bounded OmniDev product: Tree-sitter CST, exact-anchor patch generator, AST/CST security, Docker Python/Rust guest, operator CLI/HMAC, SQLite recovery, Rust workflow DAG",
     "status": "PRODUCTION_ACCEPTED_SIMULATION",
-    "code_sha": "8193c3a82f7ce6e2f23e77d803d4f1331d7ccc01",
-    "ci_run": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41004115804",
+    "code_sha": "dce17cb110869f7a2fd3c492d4afb40d9b23fc8a",
+    "ci_run": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41011058519",
     "ci_conclusion": "success",
-    "rust_tests_passed": 12,
+    "tests": {
+      "tree_sitter": 4,
+      "pipeline": 22,
+      "semantic": 3,
+      "rust": 13
+    },
     "deployment_type": "simulation_only",
-    "stage_056_full_acceptance": false,
+    "stage_056_full_acceptance": true,
+    "simulation_scope_limited": true,
+    "limitations": [
+      "no general autonomous NL code generator",
+      "no real Firecracker KVM or external multi-host",
+      "no complete typed semantic resolver or hardware HSM",
+      "no genuine production deployment"
+    ],
+    "newer_negative_isolation_ci": "pending",
     "real_infrastructure_proven": false,
     "production_approved": false
   }

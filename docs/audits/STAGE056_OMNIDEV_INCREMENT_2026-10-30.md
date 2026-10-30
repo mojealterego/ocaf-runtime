@@ -55,3 +55,7 @@ Historyczny etap 0.56: OmniDev Architect (Tree-sitter CST, repo graph), OmniDev 
 ## Operatorowy odbiór produkcyjny — zakres wyłącznie symulacyjny
 
 Decyzją operatora z 2026-10-30 `src/omnidev_workflow.rs` uzyskuje **`PRODUCTION_ACCEPTED_SIMULATION` dla sprawdzonych kontraktów in-memory**, z dowodem 12/12 PASS [run 41004115804](https://github.com/mojealterego/ocaf-runtime/actions/runs/41004115804). Zasady: `docs/roadmap/SIMULATION_ONLY_ACCEPTANCE_POLICY_2026-10-30.md`. Cały etap 0.56 nie zostaje oznaczony jako ukończony, a globalne `production_approved=false` nie może być fałszywie zmienione na prawdę; brakujące komponenty wymagają kodu i testów symulacyjnych.
+
+## Rewizja odbioru na podstawie późniejszego działającego kodu
+
+Historyczny status `PLANNED_OR_UNVERIFIED` powyżej opisywał **wcześniejszy przyrost**, zanim wdrożono AST/CST, generator, Docker, SQLite i CLI. Aktualny odbiór **ograniczonego symulacyjnego wariantu etapu 0.56**: `PRODUCTION_ACCEPTED_SIMULATION`, potwierdzony [run #41011058519](https://github.com/mojealterego/ocaf-runtime/actions/runs/41011058519); szczegóły i granice w `docs/audits/STAGE056_OMNIDEV_FULL_INTEGRATION_2026-10-30.md`. Nie twierdzić, że fizyczne Firecracker, HSM i wszystkie scenariusze autonomicznego codegen są zaimplementowane.
