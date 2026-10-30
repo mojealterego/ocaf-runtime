@@ -1,6 +1,14 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
 
+## 2026-10-30 — STAGE_PARTIAL — 0.56 — checked budget arithmetic i tenant metadata isolation
+
+- Moduł `src/omnidev_workflow.rs`: odmowa przy overflow `u64` zamiast saturating arithmetic; wymuszenie tenant-scoped odczytu statusów, budżetu i hash-chain.
+- Testy regresyjne `tests/omnidev_workflow.rs`: 2 nowe przypadki negatywne (overflow, nieautoryzowany tenant); dowód `cargo fmt/clippy/test` wymaga osobnego wyniku GitHub Actions na bieżącym SHA.
+- Roadmapa bez zmiany identyfikatorów/statusów: 0.56 wciąż `PLANNED_OR_UNVERIFIED`; brak trwałości, Firecracker/WASI i wiązania ról z mTLS; `production_approved=false`.
+
+
+
 ## 2026-10-30 — STAGE_PARTIAL — 0.56 — typed Rust DAG scheduler, lease fencing i bounded recovery
 
 - Zaimplementowany moduł `src/omnidev_workflow.rs` (nie stub): role, wejście kontraktowe, walidacja DAG/cykli, limit prób i budżetu, rezerwacje, monotoniczny epoch, lease, idempotentne receipts, rozdzielenie tenantów i łańcuch skrótów audytowych.

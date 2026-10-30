@@ -310,12 +310,13 @@ impl OmniDevWorkflow {
         if !matches!(state.status, StepStatus::Ready) || state.attempts >= step.max_attempts {
             return Err(WorkflowError::BusyOrTerminal);
         }
-        if self
-            .cost_spent_minor
-            .saturating_add(self.cost_reserved_minor)
-            .saturating_add(step.max_cost_minor)
-            > self.contract.max_cost_minor
-        {
+        let available = self
+            .contract
+            .max_cost_minor
+            .checked_sub(self.cost_spent_minor)
+            .and_then(|remaining| remaining.checked_sub(self.cost_reserved_minor))
+            .ok_or(WorkflowError::BudgetOrDeadline)?;
+        if step.max_cost_minor > available {
             return Err(WorkflowError::BudgetOrDeadline);
         }
         let expires_at = now_unix
@@ -439,18 +440,28 @@ impl OmniDevWorkflow {
             .ok_or(WorkflowError::Denied)
     }
 
-    pub fn is_completed(&self) -> bool {
-        self.nodes
+    pub fn is_completed(&self, trusted_tenant: &str) -> Result<bool, WorkflowError> {
+        if trusted_tenant != self.contract.tenant {
+            return Err(WorkflowError::Denied);
+        }
+        Ok(self
+            .nodes
             .values()
-            .all(|n| matches!(n.status, StepStatus::Passed { .. }))
+            .all(|n| matches!(n.status, StepStatus::Passed { .. })))
     }
 
-    pub fn budget_state(&self) -> (u64, u64) {
-        (self.cost_spent_minor, self.cost_reserved_minor)
+    pub fn budget_state(&self, trusted_tenant: &str) -> Result<(u64, u64), WorkflowError> {
+        if trusted_tenant != self.contract.tenant {
+            return Err(WorkflowError::Denied);
+        }
+        Ok((self.cost_spent_minor, self.cost_reserved_minor))
     }
 
     /// Tamper-evident only when the returned head is pinned externally.
-    pub fn audit_head(&self) -> (u64, &str) {
-        (self.audit_count, &self.audit_chain)
+    pub fn audit_head(&self, trusted_tenant: &str) -> Result<(u64, &str), WorkflowError> {
+        if trusted_tenant != self.contract.tenant {
+            return Err(WorkflowError::Denied);
+        }
+        Ok((self.audit_count, &self.audit_chain))
     }
 }

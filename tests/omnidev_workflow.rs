@@ -64,7 +64,7 @@ fn valid_dependency_chain_needs_independent_roles() {
         ),
         Ok(Completion::Recorded)
     );
-    assert_eq!(w.budget_state(), (10, 0));
+    assert_eq!(w.budget_state("tenantA").unwrap(), (10, 0));
     w.claim("tenantA", Role::SecurityCritic, "critic", 2, "r2", 12)
         .unwrap();
     w.complete(
@@ -75,8 +75,8 @@ fn valid_dependency_chain_needs_independent_roles() {
         13,
     )
     .unwrap();
-    assert!(w.is_completed());
-    assert_eq!(w.audit_head().0, 4);
+    assert!(w.is_completed("tenantA").unwrap());
+    assert_eq!(w.audit_head("tenantA").unwrap().0, 4);
 }
 
 #[test]
@@ -129,7 +129,7 @@ fn replay_receipt_is_idempotent_but_conflict_is_denied() {
         w.complete("tenantA", Role::Architect, "architect", r, 12),
         Ok(Completion::Replay)
     );
-    assert_eq!(w.budget_state(), (10, 0));
+    assert_eq!(w.budget_state("tenantA").unwrap(), (10, 0));
     assert_eq!(
         w.complete(
             "tenantA",
@@ -264,7 +264,7 @@ fn failed_attempt_is_bounded_and_cost_reservations_are_enforced() {
     let mut w = OmniDevWorkflow::new(spec()).unwrap();
     w.claim("tenantA", Role::Architect, "architect", 1, "x", 10)
         .unwrap();
-    assert_eq!(w.budget_state(), (0, 30));
+    assert_eq!(w.budget_state("tenantA").unwrap(), (0, 30));
     assert_eq!(
         w.claim("tenantA", Role::Architect, "architect", 2, "y", 11),
         Err(WorkflowError::BusyOrTerminal)
@@ -300,10 +300,10 @@ fn budget_does_not_double_reserve_parallel_jobs() {
     let mut w = OmniDevWorkflow::new(s).unwrap();
     w.claim("tenantA", Role::Architect, "architect", 1, "x", 10)
         .unwrap();
-    assert_eq!(w.budget_state(), (0, 30));
+    assert_eq!(w.budget_state("tenantA").unwrap(), (0, 30));
     w.claim("tenantA", Role::SecurityCritic, "critic", 2, "y", 11)
         .unwrap();
-    assert_eq!(w.budget_state(), (0, 50));
+    assert_eq!(w.budget_state("tenantA").unwrap(), (0, 50));
     assert_eq!(
         w.complete(
             "tenantA",
@@ -363,4 +363,39 @@ fn deadline_and_lease_expiration_are_enforced() {
         ),
         Err(WorkflowError::Unresolved)
     );
+}
+
+#[test]
+fn budget_arithmetic_cannot_overflow_a_u64_maximum() {
+    let mut contract = spec();
+    contract.max_cost_minor = u64::MAX;
+    contract.steps[0].max_cost_minor = u64::MAX;
+    contract.steps[1].max_cost_minor = u64::MAX;
+    contract.steps[1].prerequisites.clear();
+    let mut workflow = OmniDevWorkflow::new(contract).unwrap();
+    workflow
+        .claim("tenantA", Role::Architect, "architect", 1, "first", 10)
+        .unwrap();
+    workflow
+        .complete(
+            "tenantA",
+            Role::Architect,
+            "architect",
+            receipt(1, "first", Outcome::Passed, u64::MAX),
+            11,
+        )
+        .unwrap();
+    assert_eq!(
+        workflow.claim("tenantA", Role::SecurityCritic, "critic", 2, "second", 12),
+        Err(WorkflowError::BudgetOrDeadline)
+    );
+}
+
+#[test]
+fn tenant_scoping_covers_status_cost_and_audit_metadata() {
+    let workflow = OmniDevWorkflow::new(spec()).unwrap();
+    assert_eq!(workflow.is_completed("tenantB"), Err(WorkflowError::Denied));
+    assert_eq!(workflow.budget_state("tenantB"), Err(WorkflowError::Denied));
+    assert_eq!(workflow.audit_head("tenantB"), Err(WorkflowError::Denied));
+    assert_eq!(workflow.budget_state("tenantA"), Ok((0, 0)));
 }

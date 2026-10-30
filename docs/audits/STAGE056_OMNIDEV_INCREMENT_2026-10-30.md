@@ -33,3 +33,9 @@ Historyczny etap 0.56: OmniDev Architect (Tree-sitter CST, repo graph), OmniDev 
 - **Testy:** 10 scenariuszy kontraktowych, w tym powtarzanie poprawki, inny tenant, inna rola, stale epoch, fail closed timeout, dzienny budżet, cykl DAG.
 - **Otwarte:** brak trwałości i koordynacji wielohostowej, podpisanych receiptów, powiązania mTLS z rolami i uruchamiania Firecracker/WASI. Nie jest jeszcze technicznie zakończonym etapem 0.56; `production_approved=false`.
 - **CI:** wyniki potrzebują zatwierdzenia po zakończonym workflow dla aktualnego SHA.
+
+## 2026-10-30 — uzupełnienie granic budżetu i izolacji metadanych
+
+- Arytmetyka dostępnego budżetu używa `checked_sub` i odrzuca przypadki przekroczenia `u64::MAX`; wcześniejsze `saturating_add` mogło błędnie zaakceptować koszt przy maksymalnym budżecie.
+- Metody odczytu zakończenia, rezerwacji oraz głowy audytu przyjmują zaufany identyfikator tenanta i odrzucają niezgodność.
+- Dodano 2 testy regresyjne Rust (przepełnienie oraz izolacja metadanych). Cały etap 0.56 nadal `PLANNED_OR_UNVERIFIED`; `production_approved=false`.
