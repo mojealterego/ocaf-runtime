@@ -87,3 +87,7 @@ Następny techniczny zakres: durable audit + idempotency 1.27–1.29, następnie
 ### 2026-10-30 — CI PASS: Contract Obligations / Compliance Evidence
 
 [Run 41010321126 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126), SHA `767230ec2a16ddbbb185c5df703cffe6256cf338`: weryfikacja Rustfmt, Clippy, testów kontraktów, dowodów SHA-256, NCSC CAF i pozostałych modułów Argona. PDF-1.31–1.33, PDF-1.39–1.40 i PDF-1.42 są **TESTED_LOCAL_PARTIAL**; brak produkcyjnej autoryzacji, rzeczywistej integracji z OMAt, zewnętrznego trust anchor, formalnych atestacji, schedulera i pełnych E2E. Kanoniczne etapy nie są oznaczone jako zakończone. `production_approved=false`.
+
+### Dodatkowa weryfikacja PDF-1.50 — upstream MCP Registry
+
+W rzeczywistym `mojealterego/Agent-God-Level-Omega/omega/SHA256SUMS.txt` odnaleziono 1100 linii SHA, w tym **420** wpisów w **210** katalogach `skills/*-mcp-registry`: dokładnie jeden `SKILL.md` i jeden `references/registry.md` na katalog. Dokument Argona błędnie wskazuje `reference.json` oraz ścieżkę z prefiksem `omega/` w samym SHA256SUMS (manifest ma ścieżki względne względem katalogu `omega`). To **kontrola kompletności nazw manifestu, NIE przeliczenie hashów 420 plików ani sprawdzenie live MCP**. PDF-1.50 pozostaje `OPEN` do czasu implementacji weryfikatora z zaufanym pinem, odczytu wszystkich plików, testów negatywnych i E2E. Żadnych binariów nie uruchamiano.
