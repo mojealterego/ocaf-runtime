@@ -230,6 +230,13 @@ class Stage056:
             name.write_bytes(patch)
             admission = inspect_patch(repo, name, repair.base)
         critic = criticize_patch(patch, admission["paths"])
+        from omnidev_semantic_critic import review_source
+        original = call(["git", "-C", str(repo), "show",
+                         repair.base + ":" + repair.path]).decode("utf-8")
+        revised = original.replace(repair.old, repair.new, 1)
+        semantic = review_source(repair.path, revised.encode("utf-8"))
+        if semantic["findings"]:
+            raise OmniDevError("semantic security critic rejects candidate")
         if critic["patch_sha256"] != admission["patch_sha256"] or critic["findings"]:
             raise OmniDevError("security critic rejects candidate")
         self.db.execute("BEGIN IMMEDIATE")
