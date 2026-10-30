@@ -182,7 +182,7 @@ mod tests {
         fs::write(path, value).unwrap();
     }
     fn basic(root: &Path, with_zenoh: bool) {
-        write(root, "ocaf-components.tsv", &format!("G01\tagents/G01\tagent\t{}\n", with_zenoh));
+        write(root, "ocaf-components.tsv", &format!("G01\tagents/G01\tagent\t{}\tIMPLEMENTED\n", with_zenoh));
         write(root, "agents/G01/component.toml", &format!(
             "id = \"G01\"\nkind = \"agent\"\nzenoh_required = {}\nstatus = \"IN_DEVELOPMENT\"\n", with_zenoh));
         write(root, "agents/G01/Cargo.toml", "[package]\nname = \"ocaf-g01\"\nversion = \"0.1.0\"\nedition = \"2021\"\n[dependencies]\nzenoh = \"1.10\"\n");
@@ -199,7 +199,7 @@ mod tests {
     #[test]
     fn rejects_markdown_only_agents() {
         let root = fixture();
-        write(&root, "ocaf-components.tsv", "G01\tagents/G01\tagent\tfalse\n");
+        write(&root, "ocaf-components.tsv", "G01\tagents/G01\tagent\tfalse\tIMPLEMENTED\n");
         write(&root, "agents/G01/docs/ARCHITECTURE.md", "A page of markdown without any implementation, tests, or executable Rust code should always be rejected.");
         let (_, errors) = audit(&root, false);
         assert!(errors.iter().any(|e| e.contains("Rust implementation")));
@@ -226,7 +226,7 @@ mod tests {
     fn duplicate_registration_is_rejected() {
         let root = fixture();
         basic(&root, false);
-        write(&root, "ocaf-components.tsv", "G01\tagents/G01\tagent\tfalse\nG01\tagents/G01\tagent\tfalse\n");
+        write(&root, "ocaf-components.tsv", "G01\tagents/G01\tagent\tfalse\tIMPLEMENTED\nG01\tagents/G01\tagent\tfalse\tIMPLEMENTED\n");
         assert!(audit(&root, false).1.iter().any(|e| e.contains("Duplicate")));
         fs::remove_dir_all(root).unwrap();
     }
@@ -235,4 +235,62 @@ mod tests {
         assert!(!legal_component_path(Path::new("../outside")));
         assert!(!legal_component_path(Path::new("/tmp/external")));
     }
+
+    #[test]
+    fn planned_missing_packages_are_visible_without_fake_implementation() {
+        let root = fixture();
+        basic(&root, false);
+        write(
+            &root,
+            "ocaf-components.tsv",
+            "G01\\tagents/G01\\tagent\\tfalse\\tIMPLEMENTED\\nG02\\tagents/engineering/G02\\tagent\\ttrue\\tPLANNED\\n",
+        );
+        let (count, errors) = audit(&root, false);
+        assert_eq!(count, 2);
+        assert!(errors.is_empty(), "{errors:?}");
+        let (_, release_errors) = audit(&root, true);
+        assert!(release_errors.iter().any(|issue| issue.contains("G02") && issue.contains("NOT CERTIFIED")));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn false_implemented_status_is_rejected() {
+        let root = fixture();
+        write(
+            &root,
+            "ocaf-components.tsv",
+            "G02\\tagents/engineering/G02\\tagent\\ttrue\\tIMPLEMENTED\\n",
+        );
+        let (_, errors) = audit(&root, false);
+        assert!(errors.iter().any(|issue| issue.contains("G02") && issue.contains("MISSING")));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn unknown_lifecycle_status_is_denied() {
+        let root = fixture();
+        write(
+            &root,
+            "ocaf-components.tsv",
+            "G02\\tagents/engineering/G02\\tagent\\ttrue\\tCERTIFIED\\n",
+        );
+        let (_, errors) = audit(&root, false);
+        assert!(errors.iter().any(|issue| issue.contains("status")));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn unreviewed_planned_source_is_not_silently_accepted() {
+        let root = fixture();
+        write(
+            &root,
+            "ocaf-components.tsv",
+            "G02\\tagents/engineering/G02\\tagent\\ttrue\\tPLANNED\\n",
+        );
+        write(&root, "agents/engineering/G02/src/lib.rs", "pub fn leaked() {}");
+        let (_, errors) = audit(&root, false);
+        assert!(errors.iter().any(|issue| issue.contains("G02") && issue.contains("unreviewed")));
+        fs::remove_dir_all(root).unwrap();
+    }
+
 }
