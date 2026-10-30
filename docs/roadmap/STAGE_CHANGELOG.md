@@ -1,6 +1,16 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
 
+## 2026-10-30 — STAGE_PARTIAL — 0.56 — typed Rust DAG scheduler, lease fencing i bounded recovery
+
+- Zaimplementowany moduł `src/omnidev_workflow.rs` (nie stub): role, wejście kontraktowe, walidacja DAG/cykli, limit prób i budżetu, rezerwacje, monotoniczny epoch, lease, idempotentne receipts, rozdzielenie tenantów i łańcuch skrótów audytowych.
+- Timeout jest `UNRESOLVED`; nie ma automatycznego retry przed wyraźną rekoncyliacją. `UNKNOWN` zatrzymuje pracę; `NO_EFFECT_CONFIRMED` może wznowić tylko zewnętrznie zweryfikowany Verifier.
+- Testy `tests/omnidev_workflow.rs`: 10 scenariuszy sukcesu/odmowy/expired lease/replay/budżetu/cykli. Realne `cargo fmt/clippy/test` uruchamia GitHub Actions; dowód wymaga sprawdzenia zakończonego workflow na SHA commit.
+- **Granica:** logika działa wyłącznie w pamięci jednego procesu i nie wykonuje żadnych narzędzi. Brak trwałego fenced checkpoint store, integracji z OMAs/OMAt, autentykacji zewnętrznej, Firecracker, kompilacji w sandbox i podpisów. **Status kanoniczny 0.56 bez zmiany: `PLANNED_OR_UNVERIFIED`; `production_approved=false`.**
+- Szczegóły: `docs/audits/STAGE056_OMNIDEV_INCREMENT_2026-10-30.md`. Numery etapów historycznych zachowane.
+
+
+
 ## 2026-10-30 — STAGE_PARTIAL — 0.56 — OmniDev Cargo graph i Security Critic
 
 - Nowy kod: `scripts/omnidev_workspace_graph.py` (realny zablokowany i offline Cargo metadata package DAG) oraz `scripts/omnidev_security_critic.py` (powiązana z sha diff, fail-closed heurystyczna analiza ryzyk).

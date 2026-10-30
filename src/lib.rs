@@ -81,3 +81,5 @@ pub mod retrieval_quality;
 pub mod governance_journal;
 
 pub mod finops_ledger;
+
+pub mod omnidev_workflow;

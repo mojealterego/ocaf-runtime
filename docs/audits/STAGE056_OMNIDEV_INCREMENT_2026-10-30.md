@@ -22,3 +22,14 @@ Historyczny etap 0.56: OmniDev Architect (Tree-sitter CST, repo graph), OmniDev 
 - Formalna kontrola aktualizacji chronionego `main` i testy E2E bez deklarowania fikcyjnego operator acceptance.
 
 **Status kanoniczny: `PLANNED_OR_UNVERIFIED` (udokumentowany częściowy przyrost `IMPLEMENTED / LOCAL_TESTED`, pełne kryteria otwarte).** `production_approved=false`. Nie modyfikować statusu całego etapu na COMPLETE ani statusów 0.57–1.14.
+
+## 2026-10-30 — typed Rust DAG, fencing i bounded recovery (kolejny przyrost)
+
+- **Kod:** `src/omnidev_workflow.rs` załączony do `src/lib.rs`; `tests/omnidev_workflow.rs`.
+- **Typowane role:** Planner, Architect, Coder, SecurityCritic, Tester, Verifier, Recovery; kontrakty wejściowe i wyjściowe, izolacja tenantów i ograniczenia liczbowe.
+- **Graf i harmonogram:** sprawdzenie zależności/cykli, tylko ukończone prerequisites odblokowują kolejną rolę; maksymalnie 32 węzły, 8 prób/etap, leasing <=300 sekund, limit kosztów i termin.
+- **Fencing:** wymagany monotoniczny epoch od zaufanego koordynatora, powiązanie leased attempt z wynikiem, brak auto-retry po timeout, rozliczenie jawne przez rolę Verifier.
+- **Audyt:** lokalny sha256 hash-chain z licznikiem. Wymaga zewnętrznego przypięcia head; nie jest zewnętrznym niepodrabialnym podpisem.
+- **Testy:** 10 scenariuszy kontraktowych, w tym powtarzanie poprawki, inny tenant, inna rola, stale epoch, fail closed timeout, dzienny budżet, cykl DAG.
+- **Otwarte:** brak trwałości i koordynacji wielohostowej, podpisanych receiptów, powiązania mTLS z rolami i uruchamiania Firecracker/WASI. Nie jest jeszcze technicznie zakończonym etapem 0.56; `production_approved=false`.
+- **CI:** wyniki potrzebują zatwierdzenia po zakończonym workflow dla aktualnego SHA.
