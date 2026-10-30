@@ -77,3 +77,5 @@ pub mod document_store;
 pub mod governance_contract;
 
 pub mod retrieval_quality;
+
+pub mod governance_journal;
