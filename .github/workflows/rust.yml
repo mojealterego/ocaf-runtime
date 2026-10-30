@@ -53,6 +53,15 @@ jobs:
         run: cargo clippy --locked --all-targets --no-default-features -- -D warnings
       - name: OmniDev 0.56 Cargo workspace graph (locked offline, no candidate execution)
         run: python3 scripts/omnidev_workspace_graph.py --repo .
+      - name: Argon document DAG and SQLite replay acceptance (early deterministic gate)
+        run: |
+          cargo test --locked --no-default-features --test document_function_dag
+          cargo test --locked --no-default-features --lib document_store
+          cargo test --locked --no-default-features --lib model_router
+          cargo test --locked --no-default-features --lib compound_reasoning
+          cargo test --locked --no-default-features --lib agentic_prompt_dsl
+          cargo test --locked --no-default-features --lib collaboration_tracker
+          cargo test --locked --no-default-features --lib voice_narrative_firewall
       - name: Pinned Wasmtime 49.0.2 real WASI command acceptance
         run: bash scripts/wasmtime_acceptance.sh
       - name: Upload reproducible WASI host resource evidence
