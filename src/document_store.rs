@@ -173,11 +173,40 @@ impl SqliteDocumentDriver {
             return Err(StoreError::Database);
         }
         let driver = Self { path: path.into() };
-        driver.connection()?.execute_batch("CREATE TABLE IF NOT EXISTS document_events_v1 (
+        let mut c = driver.connection()?;
+        let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)
+            .map_err(|_| StoreError::Database)?;
+        tx.execute_batch("CREATE TABLE IF NOT EXISTS document_events_v1 (
             tenant TEXT NOT NULL, document TEXT NOT NULL, revision INTEGER NOT NULL,
             version INTEGER NOT NULL, previous TEXT NOT NULL, digest TEXT NOT NULL, payload BLOB NOT NULL,
-            PRIMARY KEY(tenant, document, revision));").map_err(|_| StoreError::Database)?;
+            PRIMARY KEY(tenant, document, revision));
+            CREATE TABLE IF NOT EXISTS ocaf_document_schema (
+                subsystem TEXT PRIMARY KEY, version INTEGER NOT NULL);
+            INSERT OR IGNORE INTO ocaf_document_schema(subsystem,version)
+            VALUES ('document_events',1);")
+            .map_err(|_| StoreError::Database)?;
+        let version: i64 = tx.query_row(
+            "SELECT version FROM ocaf_document_schema WHERE subsystem='document_events'",
+            [], |row| row.get(0))
+            .map_err(|_| StoreError::Integrity)?;
+        if version != 1 { return Err(StoreError::Integrity); }
+        tx.commit().map_err(|_| StoreError::Database)?;
         Ok(driver)
+    }
+    pub fn schema_version(&self) -> Result<i64, StoreError> {
+        self.connection()?.query_row(
+            "SELECT version FROM ocaf_document_schema WHERE subsystem='document_events'",
+            [], |row| row.get(0))
+            .map_err(|_| StoreError::Integrity)
+    }
+    fn checked_connection(&self) -> Result<Connection, StoreError> {
+        let c = self.connection()?;
+        let version: i64 = c.query_row(
+            "SELECT version FROM ocaf_document_schema WHERE subsystem='document_events'",
+            [], |row| row.get(0))
+            .map_err(|_| StoreError::Integrity)?;
+        if version != 1 { return Err(StoreError::Integrity); }
+        Ok(c)
     }
     fn connection(&self) -> Result<Connection, StoreError> {
         let c = Connection::open_with_flags(
@@ -247,7 +276,7 @@ impl DocumentDriver for SqliteDocumentDriver {
         key: &DocumentKey,
         expected: Option<&Head>,
     ) -> Result<(DocumentState, Head), StoreError> {
-        let mut c = self.connection()?;
+        let mut c = self.checked_connection()?;
         let tx = c.transaction().map_err(|_| StoreError::Database)?;
         let (state, head, _) = replay(&tx, key)?;
         if expected.is_some_and(|h| h != &head) {
@@ -265,7 +294,7 @@ impl DocumentDriver for SqliteDocumentDriver {
         if payload.len() > MAX_EVENT_BYTES {
             return Err(StoreError::Limit);
         }
-        let mut c = self.connection()?;
+        let mut c = self.checked_connection()?;
         let tx = c
             .transaction_with_behavior(TransactionBehavior::Immediate)
             .map_err(|_| StoreError::Database)?;
@@ -333,6 +362,31 @@ mod tests {
                 label: "0:1".into(),
             }],
         }
+    }
+    #[test]
+    fn existing_v1_database_migrates_without_loss_and_future_version_is_denied() {
+        let file = tempfile::NamedTempFile::new().unwrap();
+        let old = Connection::open(file.path()).unwrap();
+        old.execute_batch("CREATE TABLE document_events_v1 (
+            tenant TEXT NOT NULL, document TEXT NOT NULL, revision INTEGER NOT NULL,
+            version INTEGER NOT NULL, previous TEXT NOT NULL, digest TEXT NOT NULL, payload BLOB NOT NULL,
+            PRIMARY KEY(tenant, document, revision));").unwrap();
+        drop(old);
+        let driver = SqliteDocumentDriver::open_existing(file.path()).unwrap();
+        assert_eq!(driver.schema_version().unwrap(), 1);
+        let key = DocumentKey::new("tenant", "legacy").unwrap();
+        let first = driver.append(&key, &Head::default(), &create()).unwrap();
+        let connection = Connection::open(file.path()).unwrap();
+        connection.execute(
+            "UPDATE ocaf_document_schema SET version=99 WHERE subsystem='document_events'",
+            []).unwrap();
+        assert!(matches!(SqliteDocumentDriver::open_existing(file.path()),
+            Err(StoreError::Integrity)));
+        assert!(matches!(driver.load(&key, Some(&first)), Err(StoreError::Integrity)));
+        connection.execute(
+            "UPDATE ocaf_document_schema SET version=1 WHERE subsystem='document_events'",
+            []).unwrap();
+        assert_eq!(driver.load(&key, Some(&first)).unwrap().1, first);
     }
     #[test]
     fn restart_undo_redo_and_stale_writer() {
