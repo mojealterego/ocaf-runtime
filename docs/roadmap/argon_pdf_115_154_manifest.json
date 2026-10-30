@@ -733,7 +733,22 @@
       "code_paths": [],
       "verified_ci": [],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "upstream_registry_audit": {
+        "repository": "mojealterego/Agent-God-Level-Omega",
+        "manifest_path": "omega/SHA256SUMS.txt",
+        "sha256sum_manifest_lines_observed": 1100,
+        "registry_skill_directories_observed": 210,
+        "registry_sha256_entries_observed": 420,
+        "registry_pair_paths": [
+          "skills/<slug>-mcp-registry/SKILL.md",
+          "skills/<slug>-mcp-registry/references/registry.md"
+        ],
+        "source_document_incorrect_reference_json": true,
+        "content_hashes_independently_recomputed": false,
+        "end_to_end_adapter_verified": false,
+        "status": "STRUCTURE_VERIFIED_CONTENT_NOT_VERIFIED"
+      }
     },
     {
       "source_id": "PDF-1.51",
