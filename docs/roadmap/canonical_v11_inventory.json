@@ -7471,7 +7471,8 @@
       "src/collaboration_tracker.rs",
       "src/agentic_prompt_dsl.rs",
       "src/compound_reasoning.rs",
-      "scripts/argon_bench.py"
+      "scripts/argon_bench.py",
+      "src/collaboration_store.rs"
     ],
     "modified_code": [
       "src/document_state.rs",
@@ -7482,7 +7483,8 @@
       "tests/document_function_dag.rs",
       "src/model_router.rs",
       "src/compound_reasoning.rs",
-      "scripts/tests/test_argon_bench.py"
+      "scripts/tests/test_argon_bench.py",
+      "src/collaboration_store.rs"
     ],
     "no_historical_ids_modified": true,
     "production_approved": false
