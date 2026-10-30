@@ -61,6 +61,7 @@ jobs:
           cargo test --locked --no-default-features --lib compound_reasoning
           cargo test --locked --no-default-features --lib agentic_prompt_dsl
           cargo test --locked --no-default-features --lib collaboration_tracker
+          cargo test --locked --no-default-features --lib collaboration_store
           cargo test --locked --no-default-features --lib voice_narrative_firewall
       - name: Pinned Wasmtime 49.0.2 real WASI command acceptance
         run: bash scripts/wasmtime_acceptance.sh
