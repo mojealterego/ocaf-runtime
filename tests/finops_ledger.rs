@@ -139,7 +139,10 @@ fn state_survives_reopen_and_two_connections_cannot_double_spend() {
     let outcomes: Vec<_> = handles.into_iter().map(|h| h.join().unwrap()).collect();
     assert_eq!(outcomes.iter().filter(|r| r.is_ok()).count(), 1);
     assert_eq!(
-        outcomes.iter().filter(|r| matches!(r, Err(FinOpsError::BudgetExceeded))).count(),
+        outcomes
+            .iter()
+            .filter(|r| matches!(r, Err(FinOpsError::BudgetExceeded)))
+            .count(),
         1
     );
     let reopened = FinOpsLedger::open(&db).unwrap();

@@ -116,7 +116,9 @@ impl FinOpsLedger {
         let mut conn = self.conn.lock().map_err(|_| FinOpsError::LockPoisoned)?;
         let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
         let (reserved, committed) = usage(&tx, tenant_id, agent_id)?;
-        let used = reserved.checked_add(committed).ok_or(FinOpsError::Overflow)?;
+        let used = reserved
+            .checked_add(committed)
+            .ok_or(FinOpsError::Overflow)?;
         if used > limit {
             return Err(FinOpsError::BudgetBelowUsage);
         }
@@ -272,9 +274,9 @@ impl FinOpsLedger {
 fn validate_id(value: &str, field: &'static str) -> Result<(), FinOpsError> {
     if value.is_empty()
         || value.len() > 128
-        || !value.bytes().all(|b| {
-            b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b'.' | b':')
-        })
+        || !value
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b'.' | b':'))
     {
         return Err(FinOpsError::InvalidIdentifier(field));
     }
@@ -298,7 +300,9 @@ fn usage(tx: &Transaction<'_>, tenant_id: &str, agent_id: &str) -> Result<(i64, 
 }
 
 fn snapshot(limit: i64, reserved: i64, committed: i64) -> Result<BudgetSnapshot, FinOpsError> {
-    let used = reserved.checked_add(committed).ok_or(FinOpsError::Overflow)?;
+    let used = reserved
+        .checked_add(committed)
+        .ok_or(FinOpsError::Overflow)?;
     let available = limit.checked_sub(used).ok_or(FinOpsError::BudgetExceeded)?;
     Ok(BudgetSnapshot {
         limit_minor: u64::try_from(limit).map_err(|_| FinOpsError::Overflow)?,
