@@ -1,35 +1,35 @@
-# ID	repository_relative_folder	kind	zenoh_required
+# ID	repository_relative_folder	kind	zenoh_required	implementation_state
 
-G01	swarms/g01	swarm	true
-G02	agents/engineering/G02	agent	true
-G03	agents/engineering/G03	agent	true
-G04	agents/engineering/G04	agent	true
-G05	agents/engineering/G05	agent	true
-G06	agents/engineering/G06	agent	true
-G07	agents/engineering/G07	agent	true
-G08	agents/engineering/G08	agent	true
-G09	agents/engineering/G09	agent	true
-G10	agents/engineering/G10	agent	true
-G11	agents/engineering/G11	agent	true
-G12	agents/engineering/G12	agent	true
-G13	agents/engineering/G13	agent	true
-G14	agents/engineering/G14	agent	true
-G15	agents/engineering/G15	agent	true
-G16	agents/engineering/G16	agent	true
-G17	agents/engineering/G17	agent	true
-G18	agents/engineering/G18	agent	true
-G19	agents/engineering/G19	agent	true
-G20	agents/engineering/G20	agent	true
-G21	agents/engineering/G21	agent	true
-G22	agents/engineering/G22	agent	true
-G23	agents/engineering/G23	agent	true
-G24	agents/engineering/G24	agent	true
-G25	agents/engineering/G25	agent	true
-G26	agents/engineering/G26	agent	true
-G27	agents/engineering/G27	agent	true
-G28	agents/engineering/G28	agent	true
-G29	agents/engineering/G29	agent	true
-G30	agents/engineering/G30	agent	true
-G31	agents/engineering/G31	agent	true
-G32	agents/engineering/G32	agent	true
-G33	agents/engineering/G33	agent	true
+G01	swarms/g01	swarm	true	IMPLEMENTED
+G02	agents/engineering/G02	agent	true	PLANNED
+G03	agents/engineering/G03	agent	true	PLANNED
+G04	agents/engineering/G04	agent	true	PLANNED
+G05	agents/engineering/G05	agent	true	PLANNED
+G06	agents/engineering/G06	agent	true	PLANNED
+G07	agents/engineering/G07	agent	true	PLANNED
+G08	agents/engineering/G08	agent	true	PLANNED
+G09	agents/engineering/G09	agent	true	PLANNED
+G10	agents/engineering/G10	agent	true	PLANNED
+G11	agents/engineering/G11	agent	true	PLANNED
+G12	agents/engineering/G12	agent	true	PLANNED
+G13	agents/engineering/G13	agent	true	PLANNED
+G14	agents/engineering/G14	agent	true	PLANNED
+G15	agents/engineering/G15	agent	true	PLANNED
+G16	agents/engineering/G16	agent	true	PLANNED
+G17	agents/engineering/G17	agent	true	PLANNED
+G18	agents/engineering/G18	agent	true	PLANNED
+G19	agents/engineering/G19	agent	true	PLANNED
+G20	agents/engineering/G20	agent	true	PLANNED
+G21	agents/engineering/G21	agent	true	PLANNED
+G22	agents/engineering/G22	agent	true	PLANNED
+G23	agents/engineering/G23	agent	true	PLANNED
+G24	agents/engineering/G24	agent	true	PLANNED
+G25	agents/engineering/G25	agent	true	PLANNED
+G26	agents/engineering/G26	agent	true	PLANNED
+G27	agents/engineering/G27	agent	true	PLANNED
+G28	agents/engineering/G28	agent	true	PLANNED
+G29	agents/engineering/G29	agent	true	PLANNED
+G30	agents/engineering/G30	agent	true	PLANNED
+G31	agents/engineering/G31	agent	true	PLANNED
+G32	agents/engineering/G32	agent	true	PLANNED
+G33	agents/engineering/G33	agent	true	PLANNED

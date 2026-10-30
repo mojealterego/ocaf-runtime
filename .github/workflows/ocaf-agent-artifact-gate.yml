@@ -25,5 +25,15 @@ jobs:
           rustc --edition=2021 --test scripts/ocaf_agent_artifact_gate.rs -o /tmp/ocaf-artifact-gate-tests
           /tmp/ocaf-artifact-gate-tests
           rustc --edition=2021 scripts/ocaf_agent_artifact_gate.rs -o /tmp/ocaf-artifact-gate
-      - name: Reject undeveloped agent/source directories
+      - name: Gate implemented components and report planned sources without certification
         run: /tmp/ocaf-artifact-gate .
+      - name: Ensure planned agents cannot pass release certification
+        shell: bash
+        run: |
+          set -euo pipefail
+          if /tmp/ocaf-artifact-gate . --release > "$RUNNER_TEMP/ocaf-release-denied.log" 2>&1; then
+            echo "Unsafe: release gate accepted planned/unverified sources" >&2
+            exit 1
+          fi
+          grep -q "NOT CERTIFIED" "$RUNNER_TEMP/ocaf-release-denied.log"
+          echo "Release gate correctly rejected incomplete agent fleet"

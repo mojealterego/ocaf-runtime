@@ -68,11 +68,11 @@ fn audit(root: &Path, release: bool) -> (usize, Vec<String>) {
             continue;
         }
         let fields: Vec<_> = line.split('\t').collect();
-        if fields.len() != 4 {
-            errors.push(format!("Registry line {} must contain 4 TAB-separated fields", index + 1));
+        if fields.len() != 5 {
+            errors.push(format!("Registry line {} must contain 5 TAB-separated fields", index + 1));
             continue;
         }
-        let (id, rel, kind, zenoh) = (fields[0], fields[1], fields[2], fields[3]);
+        let (id, rel, kind, zenoh, implementation) = (fields[0], fields[1], fields[2], fields[3], fields[4]);
         count += 1;
         if !seen_ids.insert(id.to_owned()) || !seen_paths.insert(rel.to_owned()) {
             errors.push(format!("Duplicate component id/path: {id} / {rel}"));
@@ -96,6 +96,26 @@ fn audit(root: &Path, release: bool) -> (usize, Vec<String>) {
             continue;
         }
         let dir = root.join(relative);
+        if !matches!(implementation, "IMPLEMENTED" | "PLANNED") {
+            errors.push(format!("{id}: invalid implementation status {implementation}"));
+            continue;
+        }
+        if implementation == "PLANNED" {
+            // A planned manifest is not an executable artifact. It may not
+            // satisfy the structural gate and can never satisfy release.
+            if fs::symlink_metadata(&dir).is_ok() {
+                errors.push(format!(
+                    "{id}: unreviewed planned source directory {}; promote only after code/tests/documentation meet the gate",
+                    dir.display()
+                ));
+            }
+            if release {
+                errors.push(format!(
+                    "{id}: NOT CERTIFIED — implementation is PLANNED, no source/evidence"
+                ));
+            }
+            continue;
+        }
         if !dir.is_dir() || dir.is_symlink() {
             errors.push(format!("{id}: MISSING dedicated source folder {}", dir.display()));
             continue;
@@ -243,7 +263,7 @@ mod tests {
         write(
             &root,
             "ocaf-components.tsv",
-            "G01\\tagents/G01\\tagent\\tfalse\\tIMPLEMENTED\\nG02\\tagents/engineering/G02\\tagent\\ttrue\\tPLANNED\\n",
+            "G01\tagents/G01\tagent\tfalse\tIMPLEMENTED\nG02\tagents/engineering/G02\tagent\ttrue\tPLANNED\n",
         );
         let (count, errors) = audit(&root, false);
         assert_eq!(count, 2);
@@ -259,7 +279,7 @@ mod tests {
         write(
             &root,
             "ocaf-components.tsv",
-            "G02\\tagents/engineering/G02\\tagent\\ttrue\\tIMPLEMENTED\\n",
+            "G02\tagents/engineering/G02\tagent\ttrue\tIMPLEMENTED\n",
         );
         let (_, errors) = audit(&root, false);
         assert!(errors.iter().any(|issue| issue.contains("G02") && issue.contains("MISSING")));
@@ -272,7 +292,7 @@ mod tests {
         write(
             &root,
             "ocaf-components.tsv",
-            "G02\\tagents/engineering/G02\\tagent\\ttrue\\tCERTIFIED\\n",
+            "G02\tagents/engineering/G02\tagent\ttrue\tCERTIFIED\n",
         );
         let (_, errors) = audit(&root, false);
         assert!(errors.iter().any(|issue| issue.contains("status")));
@@ -285,7 +305,7 @@ mod tests {
         write(
             &root,
             "ocaf-components.tsv",
-            "G02\\tagents/engineering/G02\\tagent\\ttrue\\tPLANNED\\n",
+            "G02\tagents/engineering/G02\tagent\ttrue\tPLANNED\n",
         );
         write(&root, "agents/engineering/G02/src/lib.rs", "pub fn leaked() {}");
         let (_, errors) = audit(&root, false);
