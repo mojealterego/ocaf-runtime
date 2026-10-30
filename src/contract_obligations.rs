@@ -140,7 +140,7 @@ pub fn extract_cited_obligation(
     let positions: Vec<usize> = words
         .iter()
         .enumerate()
-        .filter(|(_, word)| word == &"within")
+        .filter(|(_, word)| word.as_str() == "within")
         .map(|(index, _)| index)
         .collect();
     if positions.len() != 1 {
@@ -358,8 +358,10 @@ mod tests {
             ClauseError::InvalidWarning
         );
         let too_long = "x".repeat(MAX_CLAUSE_BYTES + 1);
-        let mut clause = cited("shall within 1 days");
-        clause.text = &too_long;
+        let clause = CitedClause {
+            text: &too_long,
+            ..cited("shall within 1 days")
+        };
         assert_eq!(
             extract_cited_obligation(clause).unwrap_err(),
             ClauseError::InvalidSource
