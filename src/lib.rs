@@ -71,3 +71,5 @@ pub mod sasos_capability;
 pub mod sasos_service_adapters;
 
 pub mod document_state;
+
+pub mod document_store;

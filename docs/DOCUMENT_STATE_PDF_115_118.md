@@ -14,3 +14,17 @@ Limity: głębokość 32, 1024 etykiety, 64 atrybuty na etykietę, 4 KiB na payl
 Testy biblioteki: 3 PASS (ścieżki i aliasy, atomowość/kolizje/lifecycle/branching, limity i brak rodzica). Komenda: `cargo test --locked --no-default-features --lib document_state::tests`.
 
 Następne zadania: 1.19 trwały kontrakt zdarzeń z SHA-256; 1.20 deterministyczny replay; 1.21 external links; 1.22 persistence. Warstwa nie jest jeszcze podłączona do OMAt ani buildera. Binarki wydaniowe i pakowanie odłożone zgodnie z poleceniem użytkownika.
+
+## Przyrost 1.19–1.22 (2026-10-30)
+
+`src/document_store.rs` dodaje wersjonowany dziennik SQLite oraz interfejs `DocumentDriver` (load/append). Każdy event wiąże tenant, dokument, rewizję, poprzedni SHA-256 i payload. Append stosuje transakcję IMMEDIATE, oczekiwaną rewizję/hash i synchronous=FULL. Błędna mutacja nie zapisuje zdarzenia. Replay odbudowuje wyłącznie lokalny stan; nie posiada callbacków wykonujących efekty zewnętrzne. Undo/Redo i czyszczenie historii są również zdarzeniami.
+
+Limity: 4096 zdarzeń, 5 MiB na kodowane zdarzenie, 32 MiB na dziennik dokumentu. Brak automatycznej kompakcji. Baza musi istnieć w prywatnym katalogu operatora; NOFOLLOW chroni ostatni komponent ścieżki, a prawa katalogów i SQLite sidecars pozostają obowiązkiem aplikacji.
+
+Łańcuch hash nie jest podpisem: podmiot z pełnym prawem zapisu bazy może go przeliczyć. Wykrywanie obcięcia końca wymaga przechowywania oczekiwanego Head poza tym dziennikiem. Load bez Head dopuszcza aktualny stan bazy. Pusty dokument jest stanem genesis.
+
+`resolve_link` sprawdza ten sam tenant, obecność etykiet i przypięty Head celu. Nie zapisuje relacji, nie implementuje topologicznych selektorów Open CASCADE i nie zapewnia atomowego snapshotu wielu dokumentów. Klucze dokumentów muszą pochodzić z uwierzytelnionego mapowania aplikacji.
+
+Wynik: 6 testów biblioteki PASS. Nowe przypadki: ponowne otwarcie bazy i Undo/Redo, stale writer, nieudany batch bez nowego eventu, manipulacja digestem, truncation z Head, cross-tenant link, brak etykiety i nieaktualna wersja celu.
+
+Pozostaje: trwały rejestr linków i selektory 1.21; pozostałe role sterowników schematów/atrybutów i migracje z PDF 1.22; integracja z projektami i autoryzacją; testy awarii procesu/zasilania i kompakcja. Nie deklarujemy pełnego ukończenia 1.19–1.22 ani produkcyjnego wdrożenia. Binarki wydaniowe pozostają odłożone.

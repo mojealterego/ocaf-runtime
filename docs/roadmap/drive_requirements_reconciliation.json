@@ -247,9 +247,11 @@
       "mapping": "UNMAPPED",
       "status": "PARTIAL",
       "evidence": [
-        "src/document_state.rs"
+        "src/document_state.rs",
+        "src/document_store.rs",
+        "docs/DOCUMENT_STATE_PDF_115_118.md"
       ],
-      "remaining": "PDF 1.15–1.18: lokalna biblioteka i 3 testy PASS. Pozostają 1.19 trwały hash-chain zdarzeń, 1.20 replay, 1.21 external links, 1.22 sterowniki persistence oraz integracja z projektem/tenantem. Brak binarek wydaniowych.",
+      "remaining": "Biblioteka 1.15–1.18 oraz dziennik/replay SQLite i walidacja linków: 6 testów PASS. Pozostają trwałe linki/topologiczne selektory 1.21, pełne role driverów i migracje 1.22, integracja auth, crash tests i kompakcja. Binarki na koniec.",
       "id": "DRIVE-015"
     },
     {
