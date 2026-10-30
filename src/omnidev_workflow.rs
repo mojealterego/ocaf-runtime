@@ -90,6 +90,15 @@ pub enum TimeoutResolution {
     UnknownOutcome,
 }
 
+/// Explicit reconciler evidence. A hash alone is not an attestation; caller must verify it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct TimeoutReconciliation<'a> {
+    pub epoch: u64,
+    pub resolution: TimeoutResolution,
+    pub evidence_sha256: &'a str,
+    pub now_unix: u64,
+}
+
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum WorkflowError {
     #[error("invalid workflow contract")]
@@ -385,22 +394,19 @@ impl OmniDevWorkflow {
         trusted_tenant: &str,
         trusted_role: Role,
         id: &str,
-        epoch: u64,
-        resolution: TimeoutResolution,
-        evidence_sha256: &str,
-        now_unix: u64,
+        evidence: TimeoutReconciliation<'_>,
     ) -> Result<(), WorkflowError> {
         if trusted_tenant != self.contract.tenant || trusted_role != Role::Verifier {
             return Err(WorkflowError::Denied);
         }
-        if !valid_sha(evidence_sha256) {
+        if !valid_sha(evidence.evidence_sha256) {
             return Err(WorkflowError::ReceiptConflict);
         }
         let state = self.nodes.get(id).ok_or(WorkflowError::Denied)?;
         let StepStatus::Leased(claim) = &state.status else {
             return Err(WorkflowError::BusyOrTerminal);
         };
-        if epoch != claim.epoch || now_unix < claim.expires_at {
+        if evidence.epoch != claim.epoch || evidence.now_unix < claim.expires_at {
             return Err(WorkflowError::Fenced);
         }
         let step = self
@@ -413,13 +419,13 @@ impl OmniDevWorkflow {
         let reserved = step.max_cost_minor;
         self.cost_reserved_minor -= reserved;
         let state = self.nodes.get_mut(id).ok_or(WorkflowError::Denied)?;
-        state.status = match resolution {
+        state.status = match evidence.resolution {
             TimeoutResolution::NoEffectConfirmed if state.attempts < max_attempts => {
                 StepStatus::Ready
             }
             _ => StepStatus::Halted,
         };
-        self.append_audit("RECONCILE", id, epoch, evidence_sha256);
+        self.append_audit("RECONCILE", id, evidence.epoch, evidence.evidence_sha256);
         Ok(())
     }
 

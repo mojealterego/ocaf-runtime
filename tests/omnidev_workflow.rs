@@ -1,6 +1,6 @@
 use ocaf_runtime::omnidev_workflow::{
     Completion, OmniDevWorkflow, Outcome, Receipt, Role, StepContract, StepStatus,
-    TimeoutResolution, WorkflowContract, WorkflowError,
+    TimeoutReconciliation, TimeoutResolution, WorkflowContract, WorkflowError,
 };
 
 fn digest() -> String {
@@ -194,24 +194,28 @@ fn expired_effect_never_automatically_retries() {
     );
     assert_eq!(
         w.reconcile_timeout(
-            "tenantA",
-            Role::Coder,
-            "architect",
-            1,
-            TimeoutResolution::NoEffectConfirmed,
-            &digest(),
-            20
-        ),
+        "tenantA",
+        Role::Coder,
+        "architect",
+        TimeoutReconciliation {
+            epoch: 1,
+            resolution: TimeoutResolution::NoEffectConfirmed,
+            evidence_sha256: &digest(),
+            now_unix: 20,
+        },
+    ),
         Err(WorkflowError::Denied)
     );
     w.reconcile_timeout(
         "tenantA",
         Role::Verifier,
         "architect",
-        1,
-        TimeoutResolution::NoEffectConfirmed,
-        &digest(),
-        20,
+        TimeoutReconciliation {
+            epoch: 1,
+            resolution: TimeoutResolution::NoEffectConfirmed,
+            evidence_sha256: &digest(),
+            now_unix: 20,
+        },
     )
     .unwrap();
     w.claim("tenantA", Role::Architect, "architect", 2, "y", 21)
@@ -237,10 +241,12 @@ fn unresolved_timeout_halts_and_is_not_readmitted() {
         "tenantA",
         Role::Verifier,
         "architect",
-        1,
-        TimeoutResolution::UnknownOutcome,
-        &digest(),
-        20,
+        TimeoutReconciliation {
+            epoch: 1,
+            resolution: TimeoutResolution::UnknownOutcome,
+            evidence_sha256: &digest(),
+            now_unix: 20,
+        },
     )
     .unwrap();
     assert!(matches!(
