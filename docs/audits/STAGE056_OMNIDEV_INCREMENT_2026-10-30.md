@@ -39,3 +39,7 @@ Historyczny etap 0.56: OmniDev Architect (Tree-sitter CST, repo graph), OmniDev 
 - Arytmetyka dostępnego budżetu używa `checked_sub` i odrzuca przypadki przekroczenia `u64::MAX`; wcześniejsze `saturating_add` mogło błędnie zaakceptować koszt przy maksymalnym budżecie.
 - Metody odczytu zakończenia, rezerwacji oraz głowy audytu przyjmują zaufany identyfikator tenanta i odrzucają niezgodność.
 - Dodano 2 testy regresyjne Rust (przepełnienie oraz izolacja metadanych). Cały etap 0.56 nadal `PLANNED_OR_UNVERIFIED`; `production_approved=false`.
+
+## 2026-10-30 — osobna kontrola 0.56 w GitHub Actions
+
+`.github/workflows/omnidev-stage056.yml` uruchamia bezpośrednio testy integracyjne sterownika Rust, Clippy i rustfmt bez zależności na długiej bramce Wasmtime. Wymagana jest weryfikacja zakończonego przebiegu na SHA tego commitu; brak automatycznego sign-off całego etapu.

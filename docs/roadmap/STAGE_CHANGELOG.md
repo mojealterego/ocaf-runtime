@@ -1,6 +1,14 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
 
+## 2026-10-30 — STAGE_PARTIAL — 0.56 — dedykowana bramka kontraktowa Rust
+
+- Plik `.github/workflows/omnidev-stage056.yml`: niezależne `cargo fmt --all -- --check`, `cargo test --locked --no-default-features --test omnidev_workflow` i `cargo clippy --locked --no-default-features --test omnidev_workflow -- -D warnings`.
+- Workflow jest izolowany od długich testów Wasmtime/P0 (nie zastępuje ich). Po zakończeniu należy przypiąć dokładny wynik Actions do SHA.
+- 0.56 nadal `PLANNED_OR_UNVERIFIED`, bez deklaracji E2E/produkcji. `production_approved=false`.
+
+
+
 ## 2026-10-30 — STAGE_PARTIAL — 0.56 — checked budget arithmetic i tenant metadata isolation
 
 - Moduł `src/omnidev_workflow.rs`: odmowa przy overflow `u64` zamiast saturating arithmetic; wymuszenie tenant-scoped odczytu statusów, budżetu i hash-chain.

@@ -1,0 +1,40 @@
+name: OCAF 0.56 OmniDev typed Rust DAG contract
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "src/omnidev_workflow.rs"
+      - "src/lib.rs"
+      - "tests/omnidev_workflow.rs"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/omnidev-stage056.yml"
+  pull_request:
+    paths:
+      - "src/omnidev_workflow.rs"
+      - "src/lib.rs"
+      - "tests/omnidev_workflow.rs"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/omnidev-stage056.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          components: rustfmt, clippy
+      - name: Formatting
+        run: cargo fmt --all -- --check
+      - name: Typed DAG role, tenant, lease, replay and cost tests
+        run: cargo test --locked --no-default-features --test omnidev_workflow
+      - name: Strict Clippy for OmniDev contract
+        run: cargo clippy --locked --no-default-features --test omnidev_workflow -- -D warnings
