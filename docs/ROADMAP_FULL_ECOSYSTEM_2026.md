@@ -1173,18 +1173,18 @@ Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): 
 | PDF-1.28 | DecisionToAuditWiring | 0.64, 1.46 | **TESTED_LOCAL_PARTIAL** · etap pełny NIE | `src/governance_journal.rs` |
 | PDF-1.29 | TenantWorkspaceIsolator | 0.26, 0.44 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.30 | CostAndProviderAccessGate | 0.64, 1.47 | **TESTED_PREFLIGHT_ONLY** · etap pełny NIE | `src/governance_contract.rs` |
-| PDF-1.31 | ContractObligationRecord | 1.92, 1.93 | **IMPLEMENTED_CI_PENDING — KOD CZĘŚCIOWY** · etap pełny NIE | `src/contract_obligations.rs` |
-| PDF-1.32 | StructuredClauseExtractor | 1.92, 1.93 | **IMPLEMENTED_CI_PENDING — KOD CZĘŚCIOWY** · etap pełny NIE | `src/contract_obligations.rs` |
-| PDF-1.33 | ObligationDeadlineMonitor | 1.92, 1.93 | **IMPLEMENTED_CI_PENDING — KOD CZĘŚCIOWY** · etap pełny NIE | `src/contract_obligations.rs` |
+| PDF-1.31 | ContractObligationRecord | 1.92, 1.93 | **TESTED_LOCAL_PARTIAL — TESTY LOKALNE PASS** · etap pełny NIE | `src/contract_obligations.rs` |
+| PDF-1.32 | StructuredClauseExtractor | 1.92, 1.93 | **TESTED_LOCAL_PARTIAL — TESTY LOKALNE PASS** · etap pełny NIE | `src/contract_obligations.rs` |
+| PDF-1.33 | ObligationDeadlineMonitor | 1.92, 1.93 | **TESTED_LOCAL_PARTIAL — TESTY LOKALNE PASS** · etap pełny NIE | `src/contract_obligations.rs` |
 | PDF-1.34 | ObligationActionVerification | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.35 | Contract Obligations policy | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.36 | Contract Obligations tool exposure | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.37 | Contract Obligations governed runtime | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.38 | Contract Obligations safety E2E | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
-| PDF-1.39 | ComplianceEvidenceArtifact | 1.92, 1.93 | **IMPLEMENTED_CI_PENDING — KOD CZĘŚCIOWY** · etap pełny NIE | `src/compliance_evidence.rs` |
-| PDF-1.40 | GovAssure / NCSC CAF / SOC 2 validator | 1.92, 1.93 | **IMPLEMENTED_CI_PENDING — KOD CZĘŚCIOWY** · etap pełny NIE | `src/compliance_evidence.rs` |
+| PDF-1.39 | ComplianceEvidenceArtifact | 1.92, 1.93 | **TESTED_LOCAL_PARTIAL — TESTY LOKALNE PASS** · etap pełny NIE | `src/compliance_evidence.rs` |
+| PDF-1.40 | GovAssure / NCSC CAF / SOC 2 validator | 1.92, 1.93 | **TESTED_LOCAL_PARTIAL — TESTY LOKALNE PASS** · etap pełny NIE | `src/compliance_evidence.rs` |
 | PDF-1.41 | Compliance Evidence governed runtime | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
-| PDF-1.42 | Compliance Evidence safety tests | 1.92, 1.93 | **IMPLEMENTED_CI_PENDING — KOD CZĘŚCIOWY** · etap pełny NIE | `src/compliance_evidence.rs` |
+| PDF-1.42 | Compliance Evidence safety tests | 1.92, 1.93 | **TESTED_LOCAL_PARTIAL — TESTY LOKALNE PASS** · etap pełny NIE | `src/compliance_evidence.rs` |
 | PDF-1.43 | ProcurementScout foundation | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.44 | Sanctions / supplier anomaly screening | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.45 | Procurement governance | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
@@ -1208,3 +1208,5 @@ Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): 
 **Korekta komponentów lokalnych — CI 40990353117:** PDF-1.47 (BM25, odwrócony indeks per tenant) oraz PDF-1.52 (Recall@k/MRR) = **ZROBIONE wyłącznie w zakresie testowanej biblioteki**, SHA `f618310d01543ce5475866f51263782f06c47810`, [dowód CI](https://github.com/mojealterego/ocaf-runtime/actions/runs/40990353117). Pełne etapy, Moss, produkcyjny retrieval i integracja OMAt pozostają NIEUKOŃCZONE.
 
 **Uzgodnienie Argon (30.10.2026):** PDF-1.31–1.33, PDF-1.39–1.40 i częściowo PDF-1.42 zawierają implementacje lokalne w Rust wraz z testami. Oczekują na dowód CI (`IMPLEMENTED_CI_PENDING`). Brak OMAt E2E, zewnętrznego trust anchor i niezależnego potwierdzenia zgodności; pełny etap nadal NIEUKOŃCZONY.
+
+**Zweryfikowany zakres Contract Obligations / Compliance Evidence, 2026-10-30:** PDF-1.31–1.33, PDF-1.39–1.40 i PDF-1.42 mają status `TESTED_LOCAL_PARTIAL`, [CI 41010321126 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126), SHA `767230ec2a16ddbbb185c5df703cffe6256cf338`. Zakres obejmuje testowany Rust, nie pełny OMAt E2E, formalny audyt zgodności, independent attestation ani produkcyjną akceptację. Etapy kanoniczne nadal nieukończone.
