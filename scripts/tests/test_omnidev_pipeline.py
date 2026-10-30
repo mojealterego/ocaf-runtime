@@ -261,12 +261,13 @@ class DockerIntegration(Stage056PipelineTests):
         info = self.journal.submit(self.repo, self.repair)
         code = (
             "from pathlib import Path;import socket\n"
-            "try:\n Path('src/worker.py').write_text('corrupted')\n"
-            "except OSError:\n pass\nelse:\n raise AssertionError('source writable')\n"
-            "s=socket.socket();s.settimeout(1)\n"
-            "try:\n s.connect(('1.1.1.1', 80))\n"
-            "except OSError:\n pass\nelse:\n raise AssertionError('network egress')\n"
-            "finally:\n s.close()\n"
+            "try: Path('src/worker.py').write_text('x')\n"
+            "except OSError: pass\n"
+            "else: raise AssertionError('write')\n"
+            "s=socket.socket()\n"
+            "try: s.connect(('1.1.1.1',80))\n"
+            "except OSError: pass\n"
+            "else: raise AssertionError('egress')\n"
         )
         command = ("python3", "-c", code)
         token = self.token(info, command)
