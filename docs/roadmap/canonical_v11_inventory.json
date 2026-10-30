@@ -7466,7 +7466,10 @@
     "status": "IMPLEMENTATION_PARTIAL_CI_PENDING",
     "new_code": [
       "src/document_function_dag.rs",
-      "src/model_router.rs"
+      "src/model_router.rs",
+      "src/voice_narrative_firewall.rs",
+      "src/collaboration_tracker.rs",
+      "src/agentic_prompt_dsl.rs"
     ],
     "modified_code": [
       "src/document_state.rs",
