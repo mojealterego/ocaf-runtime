@@ -60,7 +60,7 @@ def parse_rust(data: bytes) -> dict:
     except UnicodeDecodeError as exc:
         raise SyntaxIndexError("non UTF-8 Rust source") from exc
     tree = _parser().parse(data)
-    if tree.root_node.has_error or tree.root_node.has_missing:
+    if tree.root_node.has_error:
         raise SyntaxIndexError("Rust syntax contains ERROR or MISSING")
     symbols = []
     references = set()

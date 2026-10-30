@@ -4,7 +4,9 @@ on:
     branches: ["main"]
     paths:
       - "src/omnidev_workflow.rs"
-      - "src/lib.rs"\n      - "scripts/omnidev_tree_sitter.py"\n      - "scripts/tests/test_omnidev_tree_sitter.py"
+      - "src/lib.rs"
+      - "scripts/omnidev_tree_sitter.py"
+      - "scripts/tests/test_omnidev_tree_sitter.py"
       - "tests/omnidev_workflow.rs"
       - "Cargo.toml"
       - "Cargo.lock"
@@ -12,7 +14,9 @@ on:
   pull_request:
     paths:
       - "src/omnidev_workflow.rs"
-      - "src/lib.rs"\n      - "scripts/omnidev_tree_sitter.py"\n      - "scripts/tests/test_omnidev_tree_sitter.py"
+      - "src/lib.rs"
+      - "scripts/omnidev_tree_sitter.py"
+      - "scripts/tests/test_omnidev_tree_sitter.py"
       - "tests/omnidev_workflow.rs"
       - "Cargo.toml"
       - "Cargo.lock"
@@ -32,7 +36,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
         with:
           components: rustfmt, clippy
-      - name: Install pinned Rust Tree-sitter grammar\n        run: python3 -m pip install --disable-pip-version-check tree-sitter==0.25.2 tree-sitter-rust==0.24.0\n      - name: Real Rust CST parser and impact tests\n        run: python3 -m unittest discover -s scripts/tests -p test_omnidev_tree_sitter.py -v\n      - name: Formatting
+      - name: Install pinned Rust Tree-sitter grammar
+        run: python3 -m pip install --disable-pip-version-check tree-sitter==0.25.2 tree-sitter-rust==0.24.0
+      - name: Real Rust CST parser and impact tests
+        run: python3 -m unittest discover -s scripts/tests -p test_omnidev_tree_sitter.py -v
+      - name: Formatting
         run: cargo fmt --all -- --check
       - name: Typed DAG role, tenant, lease, replay and cost tests
         run: cargo test --locked --no-default-features --test omnidev_workflow
