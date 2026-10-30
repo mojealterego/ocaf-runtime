@@ -48,6 +48,11 @@ struct IndexedDocument {
     len: usize,
 }
 
+struct PendingDocument {
+    doc: IndexedDocument,
+    term_counts: BTreeMap<String, usize>,
+}
+
 struct TenantIndex {
     documents: Vec<IndexedDocument>,
     // Each term resolves only matching documents; never scan cross-tenant text.
@@ -72,8 +77,7 @@ impl LexicalIndex {
         if documents.len() > MAX_DOCUMENTS {
             return Err(RetrievalError::Limit);
         }
-        let mut groups: BTreeMap<String, Vec<(IndexedDocument, BTreeMap<String, usize>)>> =
-            BTreeMap::new();
+        let mut groups: BTreeMap<String, Vec<PendingDocument>> = BTreeMap::new();
         let mut unique = BTreeSet::new();
         for doc in documents {
             if !valid_id(&doc.tenant) || !valid_id(&doc.source_id) {
@@ -93,25 +97,25 @@ impl LexicalIndex {
             for word in &tokens {
                 *frequencies.entry(word.clone()).or_insert(0) += 1;
             }
-            groups.entry(doc.tenant).or_default().push((
-                IndexedDocument {
+            groups.entry(doc.tenant).or_default().push(PendingDocument {
+                doc: IndexedDocument {
                     source_id: doc.source_id,
                     len: tokens.len(),
                 },
-                frequencies,
-            ));
+                term_counts: frequencies,
+            });
         }
         let mut tenants = BTreeMap::new();
         for (tenant, entries) in groups {
             let mut postings: BTreeMap<String, Vec<(usize, usize)>> = BTreeMap::new();
-            let total: usize = entries.iter().map(|(doc, _)| doc.len).sum();
+            let total: usize = entries.iter().map(|entry| entry.doc.len).sum();
             let average_length = total as f64 / entries.len() as f64;
             let mut documents = Vec::with_capacity(entries.len());
-            for (index, (doc, frequencies)) in entries.into_iter().enumerate() {
-                for (term, count) in frequencies {
+            for (index, entry) in entries.into_iter().enumerate() {
+                for (term, count) in entry.term_counts {
                     postings.entry(term).or_default().push((index, count));
                 }
-                documents.push(doc);
+                documents.push(entry.doc);
             }
             tenants.insert(
                 tenant,
