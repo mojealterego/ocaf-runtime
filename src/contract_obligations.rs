@@ -86,13 +86,27 @@ fn canonical_hash(fields: &[&[u8]]) -> String {
 }
 
 fn classify(words: &[String]) -> ObligationCategory {
-    if words.iter().any(|w| matches!(w.as_str(), "certificate" | "security" | "penetration" | "cyber")) {
+    if words.iter().any(|w| {
+        matches!(
+            w.as_str(),
+            "certificate" | "security" | "penetration" | "cyber"
+        )
+    }) {
         ObligationCategory::SecurityAssurance
-    } else if words.iter().any(|w| matches!(w.as_str(), "data" | "gdpr" | "privacy")) {
+    } else if words
+        .iter()
+        .any(|w| matches!(w.as_str(), "data" | "gdpr" | "privacy"))
+    {
         ObligationCategory::DataProtection
-    } else if words.iter().any(|w| matches!(w.as_str(), "delivery" | "service" | "sla")) {
+    } else if words
+        .iter()
+        .any(|w| matches!(w.as_str(), "delivery" | "service" | "sla"))
+    {
         ObligationCategory::SlaDelivery
-    } else if words.iter().any(|w| matches!(w.as_str(), "finance" | "financial" | "audit")) {
+    } else if words
+        .iter()
+        .any(|w| matches!(w.as_str(), "finance" | "financial" | "audit"))
+    {
         ObligationCategory::FinancialReporting
     } else {
         ObligationCategory::GeneralCompliance
@@ -133,7 +147,9 @@ pub fn extract_cited_obligation(
         return Ok(None);
     }
     if norm_positions.len() != 1
-        || words.get(norm_positions[0] + 1).is_some_and(|word| word == "not")
+        || words
+            .get(norm_positions[0] + 1)
+            .is_some_and(|word| word == "not")
     {
         return Err(ClauseError::UnsupportedGrammar);
     }
@@ -158,7 +174,10 @@ pub fn extract_cited_obligation(
     }
     let due_at_unix = clause
         .reference_unix
-        .checked_add(days.checked_mul(86400).ok_or(ClauseError::InvalidDeadline)?)
+        .checked_add(
+            days.checked_mul(86400)
+                .ok_or(ClauseError::InvalidDeadline)?,
+        )
         .ok_or(ClauseError::InvalidDeadline)?;
     let obligation_id = canonical_hash(&[
         clause.tenant_id.as_bytes(),
@@ -336,14 +355,21 @@ mod tests {
         assert_eq!(warning.hours_remaining, 1);
         let expired = evaluate_deadline(&record, record.due_at_unix, 3 * 86400).unwrap();
         assert!(expired.is_breached);
-        assert_eq!(expired.evaluated_state, ObligationLifecycle::DeadlineBreached);
+        assert_eq!(
+            expired.evaluated_state,
+            ObligationLifecycle::DeadlineBreached
+        );
     }
 
     #[test]
     fn verified_and_breached_lifecycle_states_are_monotonic() {
         let mut obligation = extracted();
         obligation.state = ObligationLifecycle::DeadlineBreached;
-        assert!(evaluate_deadline(&obligation, REF, 86400).unwrap().is_breached);
+        assert!(
+            evaluate_deadline(&obligation, REF, 86400)
+                .unwrap()
+                .is_breached
+        );
         obligation.state = ObligationLifecycle::VerifiedFulfilled;
         let result = evaluate_deadline(&obligation, obligation.due_at_unix + 10, 86400).unwrap();
         assert!(!result.is_breached);
