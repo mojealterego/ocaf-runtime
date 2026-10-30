@@ -7469,7 +7469,9 @@
       "src/model_router.rs",
       "src/voice_narrative_firewall.rs",
       "src/collaboration_tracker.rs",
-      "src/agentic_prompt_dsl.rs"
+      "src/agentic_prompt_dsl.rs",
+      "src/compound_reasoning.rs",
+      "scripts/argon_bench.py"
     ],
     "modified_code": [
       "src/document_state.rs",
@@ -7478,7 +7480,9 @@
     ],
     "tests": [
       "tests/document_function_dag.rs",
-      "src/model_router.rs"
+      "src/model_router.rs",
+      "src/compound_reasoning.rs",
+      "scripts/tests/test_argon_bench.py"
     ],
     "no_historical_ids_modified": true,
     "production_approved": false
