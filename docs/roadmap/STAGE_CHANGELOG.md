@@ -1,5 +1,12 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-10-30 — ARGON SOURCE 1.55–2.06 / kanoniczne mapowanie
+
+- Źródło: Google Drive `1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A`, PDF Argon 1.55–2.06; wykryto kolizję z kanonicznymi etapami 1.55–2.06. [Rejestr 20 grup](../audits/ARGON_155_206_RECONCILIATION_2026-10-30.md).
+- Rust: `src/document_function_dag.rs`, `src/model_router.rs`, rozszerzenie `src/document_state.rs` i `src/document_store.rs`, testy `tests/document_function_dag.rs`; status zmiany `IMPLEMENTED_CI_PENDING` do zielonego workflow.
+- Brak renumeracji, brak podwyższenia statusów historycznych etapów, `production_approved=false`. Pozostałe wymagania źródłowe `PARTIAL/OPEN`.
+
+
 ## 2026-10-30 — CI PASS — 0.56 OmniDev / pełna bramka symulacyjna
 
 - **SHA zakresu potwierdzonego:** `edce06e5ca69a798cca4f8c45a3fbfea2368de9e`; **GitHub Actions:** https://github.com/mojealterego/ocaf-runtime/actions/runs/41033640572 — `completed/success`.
