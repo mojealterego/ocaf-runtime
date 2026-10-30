@@ -19,9 +19,18 @@ def validate(repo: Path) -> dict[str, object]:
     assert canonical["argon_pdf_115_154_reconciliation"]["source_requirements_count"] == 40
     stages = {item["id"] for item in canonical["main"]}
     for row in rows:
-        assert row["status"] in {"PARTIAL_EXISTING", "PREFLIGHT_ONLY", "IMPLEMENTED_CI_PENDING", "OPEN"}
+        assert row["status"] in {"PARTIAL_EXISTING", "PREFLIGHT_ONLY", "IMPLEMENTED_CI_PENDING", "OPEN", "TESTED_LOCAL_PARTIAL", "TESTED_PREFLIGHT_ONLY", "TESTED_LOCAL_COMPONENT"}
         assert row["complete"] is False and row["production_approved"] is False
-        assert row["verified_ci"] == [], "Claimed CI must be separately checked and bound to commit SHA"
+        if row["status"].startswith("TESTED_"):
+            assert row["verified_ci"], "Tested source item lacks CI evidence"
+            for receipt in row["verified_ci"]:
+                assert receipt["conclusion"] == "success"
+                assert re.fullmatch(r"[0-9a-f]{40}", receipt["head_sha"])
+                assert receipt["run_id"] > 0 and receipt["url"].startswith("https://github.com/mojealterego/ocaf-runtime/actions/runs/")
+        else:
+            assert not row["verified_ci"], "No test evidence is attached to this source item"
+        if row.get("scoped_completion") == "ZROBIONE_KOD_TEST_LOKALNY":
+            assert row["source_id"] == "PDF-1.52" and row["status"] == "TESTED_LOCAL_COMPONENT"
         assert set(row["canonical_candidates"]).issubset(stages)
         assert row["mapping"] == ("SEMANTIC_PROPOSED" if row["canonical_candidates"] else "UNMAPPED")
         for code in row["code_paths"]:

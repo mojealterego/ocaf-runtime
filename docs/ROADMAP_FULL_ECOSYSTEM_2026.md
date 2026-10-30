@@ -1153,22 +1153,22 @@ Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): 
 
 | ID w PDF | Wymaganie Argona | Kandydaci kanoniczni | Status weryfikacji źródła | Kod w repo | 
 |---|---|---|---|---|
-| PDF-1.15 | Hierarchiczne LabelPath | UNMAPPED | **PARTIAL_EXISTING** · etap pełny NIE | `src/document_state.rs` |
-| PDF-1.16 | AttributeMap z unikalnym GUID | UNMAPPED | **PARTIAL_EXISTING** · etap pełny NIE | `src/document_state.rs` |
-| PDF-1.17 | Forget/Remember | UNMAPPED | **PARTIAL_EXISTING** · etap pełny NIE | `src/document_state.rs` |
-| PDF-1.18 | Atomowe transakcje i Undo/Redo | UNMAPPED | **PARTIAL_EXISTING** · etap pełny NIE | `src/document_state.rs` |
-| PDF-1.19 | Wersjonowany, trwały dziennik SHA-256 | UNMAPPED | **PARTIAL_EXISTING** · etap pełny NIE | `src/document_store.rs` |
-| PDF-1.20 | Deterministyczny replay bez efektów | UNMAPPED | **PARTIAL_EXISTING** · etap pełny NIE | `src/document_store.rs` |
-| PDF-1.21 | ExternalLinkSupervisor | UNMAPPED | **PARTIAL_EXISTING** · etap pełny NIE | `src/document_store.rs` |
-| PDF-1.22 | StorageRetrievalPluginDriver | UNMAPPED | **PARTIAL_EXISTING** · etap pełny NIE | `src/document_store.rs` |
-| PDF-1.23 | AgentContractSpec | 0.44, 0.64, 1.46 | **PREFLIGHT_ONLY** · etap pełny NIE | `src/governance_contract.rs` |
-| PDF-1.24 | ExactAllowlistPolicyGate | 0.44, 1.46 | **PREFLIGHT_ONLY** · etap pełny NIE | `src/governance_contract.rs` |
-| PDF-1.25 | RiskCapEnforcer | 0.64, 1.47 | **PREFLIGHT_ONLY** · etap pełny NIE | `src/governance_contract.rs` |
-| PDF-1.26 | ApprovalBindingEngine | 0.44, 1.46 | **PREFLIGHT_ONLY** · etap pełny NIE | `src/governance_contract.rs` |
-| PDF-1.27 | IdempotencyGuard | 0.44, 1.46 | **IMPLEMENTED_CI_PENDING** · etap pełny NIE | `src/governance_journal.rs` |
-| PDF-1.28 | DecisionToAuditWiring | 0.64, 1.46 | **IMPLEMENTED_CI_PENDING** · etap pełny NIE | `src/governance_journal.rs` |
+| PDF-1.15 | Hierarchiczne LabelPath | UNMAPPED | **TESTED_LOCAL_PARTIAL** · etap pełny NIE | `src/document_state.rs` |
+| PDF-1.16 | AttributeMap z unikalnym GUID | UNMAPPED | **TESTED_LOCAL_PARTIAL** · etap pełny NIE | `src/document_state.rs` |
+| PDF-1.17 | Forget/Remember | UNMAPPED | **TESTED_LOCAL_PARTIAL** · etap pełny NIE | `src/document_state.rs` |
+| PDF-1.18 | Atomowe transakcje i Undo/Redo | UNMAPPED | **TESTED_LOCAL_PARTIAL** · etap pełny NIE | `src/document_state.rs` |
+| PDF-1.19 | Wersjonowany, trwały dziennik SHA-256 | UNMAPPED | **TESTED_LOCAL_PARTIAL** · etap pełny NIE | `src/document_store.rs` |
+| PDF-1.20 | Deterministyczny replay bez efektów | UNMAPPED | **TESTED_LOCAL_PARTIAL** · etap pełny NIE | `src/document_store.rs` |
+| PDF-1.21 | ExternalLinkSupervisor | UNMAPPED | **TESTED_LOCAL_PARTIAL** · etap pełny NIE | `src/document_store.rs` |
+| PDF-1.22 | StorageRetrievalPluginDriver | UNMAPPED | **TESTED_LOCAL_PARTIAL** · etap pełny NIE | `src/document_store.rs` |
+| PDF-1.23 | AgentContractSpec | 0.44, 0.64, 1.46 | **TESTED_PREFLIGHT_ONLY** · etap pełny NIE | `src/governance_contract.rs` |
+| PDF-1.24 | ExactAllowlistPolicyGate | 0.44, 1.46 | **TESTED_PREFLIGHT_ONLY** · etap pełny NIE | `src/governance_contract.rs` |
+| PDF-1.25 | RiskCapEnforcer | 0.64, 1.47 | **TESTED_PREFLIGHT_ONLY** · etap pełny NIE | `src/governance_contract.rs` |
+| PDF-1.26 | ApprovalBindingEngine | 0.44, 1.46 | **TESTED_PREFLIGHT_ONLY** · etap pełny NIE | `src/governance_contract.rs` |
+| PDF-1.27 | IdempotencyGuard | 0.44, 1.46 | **TESTED_LOCAL_PARTIAL** · etap pełny NIE | `src/governance_journal.rs` |
+| PDF-1.28 | DecisionToAuditWiring | 0.64, 1.46 | **TESTED_LOCAL_PARTIAL** · etap pełny NIE | `src/governance_journal.rs` |
 | PDF-1.29 | TenantWorkspaceIsolator | 0.26, 0.44 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
-| PDF-1.30 | CostAndProviderAccessGate | 0.64, 1.47 | **PREFLIGHT_ONLY** · etap pełny NIE | `src/governance_contract.rs` |
+| PDF-1.30 | CostAndProviderAccessGate | 0.64, 1.47 | **TESTED_PREFLIGHT_ONLY** · etap pełny NIE | `src/governance_contract.rs` |
 | PDF-1.31 | ContractObligationRecord | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.32 | StructuredClauseExtractor | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.33 | ObligationDeadlineMonitor | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
@@ -1185,15 +1185,18 @@ Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): 
 | PDF-1.44 | Sanctions / supplier anomaly screening | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.45 | Procurement governance | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.46 | Procurement safety tests | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
-| PDF-1.47 | InProcessLexicalSelector | 1.65 | **IMPLEMENTED_CI_PENDING** · etap pełny NIE | `src/retrieval_quality.rs` |
+| PDF-1.47 | InProcessLexicalSelector | 1.65 | **TESTED_LOCAL_PARTIAL** · etap pełny NIE | `src/retrieval_quality.rs` |
 | PDF-1.48 | MossRetrievalAdapter | 1.65 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.49 | ZenohTransportBridge | 0.46, 1.15, 1.55 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.50 | McpRegistryIntegrityVerifier | 0.43 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.51 | DualTrackCollaborationAnalyzer | 1.92, 1.94 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
-| PDF-1.52 | RetrievalQualityEvaluator | 1.65, 1.99 | **IMPLEMENTED_CI_PENDING** · etap pełny NIE | `src/retrieval_quality.rs` |
+| PDF-1.52 | RetrievalQualityEvaluator | 1.65, 1.99 | **ZROBIONE — MODUŁ LOKALNY / TESTED** · etap pełny NIE | `src/retrieval_quality.rs` |
 | PDF-1.53 | LatencyBenchmarkHarness | 1.55, 1.99 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.54 | ClaimLedgerVerifier | 1.99, 0.42 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 
 **Ukończone w zakresie kodowym** nie oznacza ukończonego etapu: brak pełnego E2E i dowodów akceptacyjnych. `IMPLEMENTED_CI_PENDING` oznacza wytworzony kod ze zgłoszoną bramką testową, ale **niepotwierdzone jeszcze** zakończenie CI. `PARTIAL_EXISTING` oznacza istniejący składnik, `PREFLIGHT_ONLY` nie daje prawa do wykonania, `OPEN` wymaga implementacji. Sąsiednie referencyjne repozytoria nie są zintegrowanym adapterem.
 
 [Manifest źródłowy](roadmap/argon_pdf_115_154_manifest.json) · [audyt](audits/ARGON_115_154_RECONCILIATION_2026-10-30.md).
+
+
+**Zweryfikowane testy lokalne:** [CI 40989435834 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834), commit `3b3fe1329390f52dbde09a6babd9b637395163ac`. `PDF-1.52` oznaczono **ZROBIONE w ograniczonym zakresie lokalnego ewaluatora Recall@k/MRR**. Pozostałe testowane elementy nadal mają zakres PARTIAL/PREFLIGHT. Żaden etap kanoniczny ani zewnętrzne E2E nie uzyskały zakończenia; `production_approved=false`.

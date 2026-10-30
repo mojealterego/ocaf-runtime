@@ -721,3 +721,9 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - `docs/roadmap/argon_pdf_115_154_manifest.json`: pełna lista 40/40 wymagań źródłowych, typowane statusy, ścieżki kodu i kandydaci kanonicznych etapów (SEMANTIC_PROPOSED/UNMAPPED); brak renumeracji i zacierania historii.
 - `src/retrieval_quality.rs`: ograniczony lokalny BM25 + Recall@k/MRR; `src/governance_journal.rs`: SQLite intent/idempotency/replay audit. Stan implementacji: częściowy; kod i testy wymagają potwierdzenia w CI na bieżącym SHA. Jest to rozszerzenie, nie zamiana polityki OMAt/mTLS/OSTc.
 - Zapisano statusy w `/ROADMAP.md`, `docs/ROADMAP_FULL_ECOSYSTEM_2026.md`, kanonicznym JSON (referencja do dodatkowego manifestu), README i rejestrze braków Drive. Nie oznaczono żadnego kanonicznego milestone jako produkcyjnie ukończony; binaria i release pozostają na końcu.
+
+### 2026-10-30 — zakończona bramka Argon PDF, SHA 3b3fe132
+
+- [Run 40989435834](https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834): **SUCCESS** dla SHA `3b3fe1329390f52dbde09a6babd9b637395163ac`; 40/40 source ID validation, rustfmt, SQLite governance journal, preflight HMAC, BM25/Recall/MRR, dokumenty/replay i Clippy core.
+- **PDF-1.52: ZROBIONE — wyłącznie lokalny komponent obliczania jakości Recall@k/MRR i negatywna walidacja wejścia**. Source 1.15–1.28, 1.30 i 1.47: wykonany/testowany odpowiedni zakres częściowy; 1.29, 1.31–1.46, 1.48–1.51, 1.53–1.54 nadal otwarte w kryteriach pełnego odbioru.
+- 334 kanoniczne etapy zachowują swoje historyczne definicje i statusy; oznaczenie lokalnego komponentu nie stanowi finalnej akceptacji etapu ani włączenia produkcyjnego. Binaria wydaniowe nadal na koniec.

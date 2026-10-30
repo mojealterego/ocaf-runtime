@@ -7367,7 +7367,14 @@
     "source_requirements_count": 40,
     "source_ids_are_not_canonical": true,
     "canonical_stages_changed": false,
-    "status": "AUDITED_PARTIAL",
-    "production_approved": false
+    "status": "PARTIAL_WITH_VERIFIED_LOCAL_COMPONENTS",
+    "production_approved": false,
+    "ci": {
+      "run_id": 40989435834,
+      "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+      "conclusion": "success",
+      "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+      "scope": "source matrix validator and focused Rust unit tests"
+    }
   }
 }

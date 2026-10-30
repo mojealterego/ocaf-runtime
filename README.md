@@ -1817,4 +1817,4 @@ Szczegóły: [deploy/stage334/README.md](deploy/stage334/README.md).
 ### Argon PDF-1.15–PDF-1.54 (40 wymagań) — macierz z 2026-10-30
 
 - [Tabela 40/40 w głównej Roadmapie](ROADMAP.md#argon--źródłowe-punkty-pdf-115pdf-154-4040-2026-10-30), [manifest powiązań z etapami](docs/roadmap/argon_pdf_115_154_manifest.json), [audyt i braki](docs/audits/ARGON_115_154_RECONCILIATION_2026-10-30.md).
-- `src/governance_journal.rs`: trwała idempotencja i audit; `src/retrieval_quality.rs`: leksykalny BM25 i Recall@k/MRR. **Status: implementacja częściowa; CI i E2E należy zweryfikować.** Binariów nie pakowano. Nie zmieniono statusów kanonicznych etapów bez dowodów.
+- `src/governance_journal.rs`: trwała idempotencja i audit; `src/retrieval_quality.rs`: leksykalny BM25 i Recall@k/MRR. **Status: [CI testów lokalnych — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834), E2E nadal otwarte.** Binariów nie pakowano. PDF-1.52 ma oznaczenie **ZROBIONE — lokalny ewaluator jakości** (testy Recall@k/MRR), ale nie oznacza gotowości pełnego systemu retrieval. Nie zmieniono statusów kanonicznych etapów bez dowodów.

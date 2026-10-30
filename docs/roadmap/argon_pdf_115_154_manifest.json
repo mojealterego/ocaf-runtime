@@ -5,7 +5,7 @@
   "canonical_stage_ids_unchanged": true,
   "source_requirements_count": 40,
   "source_id_prefix": "PDF-1.",
-  "state": "AUDITED_PARTIAL_NOT_ACCEPTED",
+  "state": "PARTIAL_WITH_VERIFIED_LOCAL_COMPONENTS",
   "production_approved": false,
   "requirements": [
     {
@@ -13,104 +13,176 @@
       "source_requirement": "Hierarchiczne LabelPath",
       "canonical_candidates": [],
       "mapping": "UNMAPPED",
-      "status": "PARTIAL_EXISTING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/document_state.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 40989435834,
+          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+          "scope": "document state, durable replay and negative tests"
+        }
+      ],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED"
     },
     {
       "source_id": "PDF-1.16",
       "source_requirement": "AttributeMap z unikalnym GUID",
       "canonical_candidates": [],
       "mapping": "UNMAPPED",
-      "status": "PARTIAL_EXISTING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/document_state.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 40989435834,
+          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+          "scope": "document state, durable replay and negative tests"
+        }
+      ],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED"
     },
     {
       "source_id": "PDF-1.17",
       "source_requirement": "Forget/Remember",
       "canonical_candidates": [],
       "mapping": "UNMAPPED",
-      "status": "PARTIAL_EXISTING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/document_state.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 40989435834,
+          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+          "scope": "document state, durable replay and negative tests"
+        }
+      ],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED"
     },
     {
       "source_id": "PDF-1.18",
       "source_requirement": "Atomowe transakcje i Undo/Redo",
       "canonical_candidates": [],
       "mapping": "UNMAPPED",
-      "status": "PARTIAL_EXISTING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/document_state.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 40989435834,
+          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+          "scope": "document state, durable replay and negative tests"
+        }
+      ],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED"
     },
     {
       "source_id": "PDF-1.19",
       "source_requirement": "Wersjonowany, trwały dziennik SHA-256",
       "canonical_candidates": [],
       "mapping": "UNMAPPED",
-      "status": "PARTIAL_EXISTING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/document_store.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 40989435834,
+          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+          "scope": "document state, durable replay and negative tests"
+        }
+      ],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED"
     },
     {
       "source_id": "PDF-1.20",
       "source_requirement": "Deterministyczny replay bez efektów",
       "canonical_candidates": [],
       "mapping": "UNMAPPED",
-      "status": "PARTIAL_EXISTING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/document_store.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 40989435834,
+          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+          "scope": "document state, durable replay and negative tests"
+        }
+      ],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED"
     },
     {
       "source_id": "PDF-1.21",
       "source_requirement": "ExternalLinkSupervisor",
       "canonical_candidates": [],
       "mapping": "UNMAPPED",
-      "status": "PARTIAL_EXISTING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/document_store.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 40989435834,
+          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+          "scope": "document state, durable replay and negative tests"
+        }
+      ],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED"
     },
     {
       "source_id": "PDF-1.22",
       "source_requirement": "StorageRetrievalPluginDriver",
       "canonical_candidates": [],
       "mapping": "UNMAPPED",
-      "status": "PARTIAL_EXISTING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/document_store.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 40989435834,
+          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+          "scope": "document state, durable replay and negative tests"
+        }
+      ],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED"
     },
     {
       "source_id": "PDF-1.23",
@@ -121,13 +193,22 @@
         "1.46"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "PREFLIGHT_ONLY",
+      "status": "TESTED_PREFLIGHT_ONLY",
       "code_paths": [
         "src/governance_contract.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 40989435834,
+          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+          "scope": "governance preflight and HMAC tests"
+        }
+      ],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED"
     },
     {
       "source_id": "PDF-1.24",
@@ -137,13 +218,22 @@
         "1.46"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "PREFLIGHT_ONLY",
+      "status": "TESTED_PREFLIGHT_ONLY",
       "code_paths": [
         "src/governance_contract.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 40989435834,
+          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+          "scope": "governance preflight and HMAC tests"
+        }
+      ],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED"
     },
     {
       "source_id": "PDF-1.25",
@@ -153,13 +243,22 @@
         "1.47"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "PREFLIGHT_ONLY",
+      "status": "TESTED_PREFLIGHT_ONLY",
       "code_paths": [
         "src/governance_contract.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 40989435834,
+          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+          "scope": "governance preflight and HMAC tests"
+        }
+      ],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED"
     },
     {
       "source_id": "PDF-1.26",
@@ -169,13 +268,22 @@
         "1.46"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "PREFLIGHT_ONLY",
+      "status": "TESTED_PREFLIGHT_ONLY",
       "code_paths": [
         "src/governance_contract.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 40989435834,
+          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+          "scope": "governance preflight and HMAC tests"
+        }
+      ],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED"
     },
     {
       "source_id": "PDF-1.27",
@@ -185,13 +293,22 @@
         "1.46"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "IMPLEMENTED_CI_PENDING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/governance_journal.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 40989435834,
+          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+          "scope": "real SQLite idempotency, audit chaining, negative tests"
+        }
+      ],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED"
     },
     {
       "source_id": "PDF-1.28",
@@ -201,13 +318,22 @@
         "1.46"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "IMPLEMENTED_CI_PENDING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/governance_journal.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 40989435834,
+          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+          "scope": "real SQLite idempotency, audit chaining, negative tests"
+        }
+      ],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED"
     },
     {
       "source_id": "PDF-1.29",
@@ -231,13 +357,22 @@
         "1.47"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "PREFLIGHT_ONLY",
+      "status": "TESTED_PREFLIGHT_ONLY",
       "code_paths": [
         "src/governance_contract.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 40989435834,
+          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+          "scope": "governance preflight and HMAC tests"
+        }
+      ],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED"
     },
     {
       "source_id": "PDF-1.31",
@@ -470,13 +605,22 @@
         "1.65"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "IMPLEMENTED_CI_PENDING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/retrieval_quality.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 40989435834,
+          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+          "scope": "BM25 lexical and tenant-isolation regression"
+        }
+      ],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PARTIAL_NOT_ACCEPTED"
     },
     {
       "source_id": "PDF-1.48",
@@ -541,13 +685,22 @@
         "1.99"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "IMPLEMENTED_CI_PENDING",
+      "status": "TESTED_LOCAL_COMPONENT",
       "code_paths": [
         "src/retrieval_quality.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 40989435834,
+          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
+          "scope": "Recall@k and MRR on deterministic ground-truth test corpus"
+        }
+      ],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "ZROBIONE_KOD_TEST_LOKALNY"
     },
     {
       "source_id": "PDF-1.53",
@@ -577,5 +730,11 @@
       "complete": false,
       "production_approved": false
     }
-  ]
+  ],
+  "last_verified_ci": {
+    "run_id": 40989435834,
+    "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+    "conclusion": "success",
+    "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834"
+  }
 }
