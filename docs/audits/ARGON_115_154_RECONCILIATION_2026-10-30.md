@@ -45,7 +45,7 @@ Status `PARTIAL` oznacza wykryty, ograniczony kod w repozytorium, nie pełne kry
 | PDF-1.47 | InProcessLexicalSelector | TESTED_LOCAL_COMPONENT | `src/retrieval_quality.rs` — implementacja lokalna, testy CI weryfikowane osobno; pełny E2E otwarty. |
 | PDF-1.48 | MossRetrievalAdapter | OPEN | Zewnętrzny interfejs dopiero po zweryfikowaniu dostawcy; local fallback |
 | PDF-1.49 | ZenohTransportBridge | OPEN | Istnieje transport Zenoh, brak E2E tego konkretnego mostu i benchmarku |
-| PDF-1.50 | McpRegistryIntegrityVerifier | IMPLEMENTED_CI_PENDING | `src/mcp_registry_integrity.rs` — pinned SHA256SUMS verifier (fixture-only); brak realnych 420 hashów i MCP E2E |
+| PDF-1.50 | McpRegistryIntegrityVerifier | TESTED_LOCAL_PARTIAL | `src/mcp_registry_integrity.rs` — pinned SHA256SUMS verifier (fixture-only); brak realnych 420 hashów i MCP E2E |
 | PDF-1.51 | DualTrackCollaborationAnalyzer | OPEN | Historia zmian obiektu i atrybucja aktorów |
 | PDF-1.52 | RetrievalQualityEvaluator | TESTED_LOCAL_COMPONENT | `src/retrieval_quality.rs` — implementacja lokalna, testy CI weryfikowane osobno; pełny E2E otwarty. |
 | PDF-1.53 | LatencyBenchmarkHarness | OPEN | Realne p50/p95/p99, hardware i surowe próbki |
@@ -95,3 +95,7 @@ W rzeczywistym `mojealterego/Agent-God-Level-Omega/omega/SHA256SUMS.txt` odnalez
 ### 2026-10-30 — PDF-1.50: weryfikator Rust (testy CI w toku)
 
 Dostarczono `src/mcp_registry_integrity.rs`: weryfikacja manifestu SHA256SUMS z niezależnie dostarczonym operacyjnym pinem SHA-256, dokładnie dwoma ścieżkami na skill, ograniczeniem rozmiaru, fail-closed przed błędnymi/duplikowanymi ścieżkami i różnicą zawartości plików. Testy negatywne pod `mcp_registry_integrity::tests`. **IMPLEMENTED_CI_PENDING**: do wyniku CI; nie pobrano 420 rzeczywistych plików, nie zakotwiczono operatorowego pinu, nie zintegrowano OMAt MCP E2E. Bez aktywacji binariów, bez zamknięcia etapu kanonicznego 0.43.
+
+### PDF-1.50 — lokalne CI PASS, 2026-10-30
+
+[Argon CI 41017007500 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/41017007500), commit `46522c5c506ddb634aa929260002c6e8494a7583`. Przeprowadzono testy weryfikacji integralności, odrzucenia nieprawidłowej pinu SHA-256, naruszeń SHA pliku, niepełnych/duplikowanych par i niebezpiecznych ścieżek. **TESTED_LOCAL_PARTIAL**: brak niezależnie operatorowo zakotwiczonego pinu prawdziwego upstream, brak ponownego przeliczenia wszystkich 420 realnych plików oraz uruchomienia MCP E2E. Kanoniczny etap 0.43 nadal niezamknięty.

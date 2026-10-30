@@ -5,7 +5,7 @@
   "canonical_stage_ids_unchanged": true,
   "source_requirements_count": 40,
   "source_id_prefix": "PDF-1.",
-  "state": "PARTIAL_WITH_MCP_REGISTRY_LOCAL_VERIFIER_PENDING_CI",
+  "state": "PARTIAL_WITH_TESTED_MCP_REGISTRY_INTEGRITY",
   "production_approved": false,
   "requirements": [
     {
@@ -729,11 +729,19 @@
         "0.43"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "IMPLEMENTED_CI_PENDING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/mcp_registry_integrity.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 41017007500,
+          "head_sha": "46522c5c506ddb634aa929260002c6e8494a7583",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41017007500",
+          "scope": "local pinned SHA256SUMS verifier, 8 fixture regression tests, rustfmt and Clippy; no upstream 420-file content run or MCP E2E"
+        }
+      ],
       "complete": false,
       "production_approved": false,
       "upstream_registry_audit": {
@@ -749,10 +757,11 @@
         "source_document_incorrect_reference_json": true,
         "content_hashes_independently_recomputed": false,
         "end_to_end_adapter_verified": false,
-        "status": "LOCAL_VERIFIER_CI_PENDING_NO_REAL_CONTENT_CHECK",
+        "status": "LOCAL_SHA_VERIFIER_TESTED_REAL_420_UNVERIFIED",
         "in_process_verifier_present": true
       },
-      "implementation_note": "Lokalny weryfikator SHA256SUMS z niezależnym pinem, testy negatywne; brak odczytu wszystkich 420 realnych plików, trust-store pin i MCP E2E"
+      "implementation_note": "Lokalny weryfikator SHA256SUMS z niezależnym pinem, testy negatywne; brak odczytu wszystkich 420 realnych plików, trust-store pin i MCP E2E",
+      "scoped_completion": "LOCAL_REGISTRY_VERIFIER_TESTED_NOT_ACCEPTED"
     },
     {
       "source_id": "PDF-1.51",
@@ -834,5 +843,12 @@
     "head_sha": "767230ec2a16ddbbb185c5df703cffe6256cf338",
     "conclusion": "success",
     "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126"
+  },
+  "last_verified_mcp_ci": {
+    "run_id": 41017007500,
+    "head_sha": "46522c5c506ddb634aa929260002c6e8494a7583",
+    "conclusion": "success",
+    "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41017007500",
+    "scope": "local pinned SHA256SUMS verifier, 8 fixture regression tests, rustfmt and Clippy; no upstream 420-file content run or MCP E2E"
   }
 }

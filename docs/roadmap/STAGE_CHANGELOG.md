@@ -829,3 +829,8 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 
 - `src/mcp_registry_integrity.rs`: fail-closed inventory, SHA256SUMS pin, SHA-256 content check, 210 x 2 invariant, bounded input, negative tests; scope lokalny `IMPLEMENTED_CI_PENDING`.
 - Zaktualizowano główną i lustrzaną Roadmapę, 40/40 manifest, README i audyt źródła; nadal brak rzeczywistego 420-file hash verification, zaufanego operator pin, integracji OMAt i produkcyjnego E2E. Etapy kanoniczne bez zmian.
+
+### 2026-10-30 — PDF-1.50 — PASS lokalnego weryfikatora SHA256SUMS
+
+- CI [41017007500](https://github.com/mojealterego/ocaf-runtime/actions/runs/41017007500), SHA `46522c5c506ddb634aa929260002c6e8494a7583`: Rustfmt, Clippy, 8 testów fixture integralności rejestru i reszta bramki Argona — sukces.
+- Ograniczony status `TESTED_LOCAL_PARTIAL`; nie oznacza weryfikacji wszystkich rzeczywistych plików upstream, trust anchor, MCP E2E, kanonicznego zakończenia etapu 0.43 ani produkcji.
