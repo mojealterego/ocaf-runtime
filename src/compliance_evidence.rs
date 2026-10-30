@@ -126,8 +126,7 @@ pub fn inspect_evidence(
             || !valid_id(artifact.source_id)
             || !valid_id(artifact.evidence_id)
             || artifact.framework != framework
-            || (framework == RegulatoryFramework::NcscCafGovAssure)
-                != artifact.objective.is_some()
+            || (framework == RegulatoryFramework::NcscCafGovAssure) != artifact.objective.is_some()
         {
             return Err(EvidenceError::InvalidBinding);
         }
@@ -239,7 +238,10 @@ mod tests {
             NOW,
         )
         .unwrap();
-        assert_eq!(result.state, EvidenceAssessmentState::CafObjectivesPresentUnattested);
+        assert_eq!(
+            result.state,
+            EvidenceAssessmentState::CafObjectivesPresentUnattested
+        );
         assert_eq!(result.checked_evidence_ids.len(), 4);
         assert!(result.missing_caf_objectives.is_empty());
         assert!(!result.independently_attested);
@@ -267,7 +269,8 @@ mod tests {
         let mut pack = complete_pack();
         pack[0].content = b"altered content";
         assert_eq!(
-            inspect_evidence(TENANT, RegulatoryFramework::NcscCafGovAssure, &pack, NOW).unwrap_err(),
+            inspect_evidence(TENANT, RegulatoryFramework::NcscCafGovAssure, &pack, NOW)
+                .unwrap_err(),
             EvidenceError::ChecksumMismatch
         );
     }
@@ -276,13 +279,8 @@ mod tests {
     fn expired_evidence_is_not_accepted_as_caf_coverage() {
         let mut pack = complete_pack();
         pack[0].valid_until_unix = NOW;
-        let result = inspect_evidence(
-            TENANT,
-            RegulatoryFramework::NcscCafGovAssure,
-            &pack,
-            NOW,
-        )
-        .unwrap();
+        let result =
+            inspect_evidence(TENANT, RegulatoryFramework::NcscCafGovAssure, &pack, NOW).unwrap();
         assert_eq!(result.state, EvidenceAssessmentState::InsufficientEvidence);
         assert_eq!(result.expired_evidence_ids, vec!["ev_a"]);
         assert!(result
@@ -295,13 +293,15 @@ mod tests {
         let mut pack = complete_pack();
         pack[1].tenant_id = "tenant_two";
         assert_eq!(
-            inspect_evidence(TENANT, RegulatoryFramework::NcscCafGovAssure, &pack, NOW).unwrap_err(),
+            inspect_evidence(TENANT, RegulatoryFramework::NcscCafGovAssure, &pack, NOW)
+                .unwrap_err(),
             EvidenceError::InvalidBinding
         );
         pack[1].tenant_id = TENANT;
         pack[1].framework = RegulatoryFramework::Soc2Type2;
         assert_eq!(
-            inspect_evidence(TENANT, RegulatoryFramework::NcscCafGovAssure, &pack, NOW).unwrap_err(),
+            inspect_evidence(TENANT, RegulatoryFramework::NcscCafGovAssure, &pack, NOW)
+                .unwrap_err(),
             EvidenceError::InvalidBinding
         );
     }
@@ -311,13 +311,15 @@ mod tests {
         let mut pack = complete_pack();
         pack[1].evidence_id = "ev_a";
         assert_eq!(
-            inspect_evidence(TENANT, RegulatoryFramework::NcscCafGovAssure, &pack, NOW).unwrap_err(),
+            inspect_evidence(TENANT, RegulatoryFramework::NcscCafGovAssure, &pack, NOW)
+                .unwrap_err(),
             EvidenceError::DuplicateEvidence
         );
         pack[1].evidence_id = "ev_b";
         pack[1].collected_at_unix = NOW + 10;
         assert_eq!(
-            inspect_evidence(TENANT, RegulatoryFramework::NcscCafGovAssure, &pack, NOW).unwrap_err(),
+            inspect_evidence(TENANT, RegulatoryFramework::NcscCafGovAssure, &pack, NOW)
+                .unwrap_err(),
             EvidenceError::InvalidInterval
         );
     }
@@ -327,26 +329,16 @@ mod tests {
         let mut evidence = artifact("soc2_control_1", CafObjective::ManagingSecurityRisk);
         evidence.framework = RegulatoryFramework::Soc2Type2;
         evidence.objective = None;
-        let result = inspect_evidence(
-            TENANT,
-            RegulatoryFramework::Soc2Type2,
-            &[evidence],
-            NOW,
-        )
-        .unwrap();
+        let result =
+            inspect_evidence(TENANT, RegulatoryFramework::Soc2Type2, &[evidence], NOW).unwrap();
         assert_eq!(result.state, EvidenceAssessmentState::IntegrityCheckedOnly);
         assert!(!result.certified_compliant);
     }
 
     #[test]
     fn no_artifacts_never_passes() {
-        let result = inspect_evidence(
-            TENANT,
-            RegulatoryFramework::NcscCafGovAssure,
-            &[],
-            NOW,
-        )
-        .unwrap();
+        let result =
+            inspect_evidence(TENANT, RegulatoryFramework::NcscCafGovAssure, &[], NOW).unwrap();
         assert_eq!(result.state, EvidenceAssessmentState::InsufficientEvidence);
         assert_eq!(result.missing_caf_objectives.len(), 4);
     }
