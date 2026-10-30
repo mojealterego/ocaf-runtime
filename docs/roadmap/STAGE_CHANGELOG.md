@@ -738,3 +738,11 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - Dodano `src/finops_ledger.rs` i `tests/finops_ledger.rs`: izolacja tenant/agent, atomowe rezerwacje SQLite, idempotencja, nieodwracalny commit, ochrona przed przekroczeniem budżetu i test dwóch połączeń.
 - **IMPLEMENTED_PARTIAL / CI PENDING**: brak połączenia z OMAt, polityką autoryzacji administratora, rzeczywistym providerem płatności i odbioru produkcyjnego. Kanoniczny etap 0.65 pozostaje `PLANNED_OR_UNVERIFIED`.
 - Szczegóły: `docs/audits/STAGE_065_FINOPS_LEDGER_2026-10-30.md`.
+
+## 2026-10-30 — STAGE_PARTIAL — 0.56 + baseline 0.56–1.14
+
+- Historyczny PDF: `ocaf-runtime_ROADMAP(1).PDF`, 78 stron, SHA-256 `acfb1767bb4f14a449012dd6d11e19d6e0e9bc71664c40f5e94d930feffd6748`.
+- Uzgodniono 59 etapów: 44 `PLANNED_OR_UNVERIFIED`, 15 `PLANNED`; statusy w manifeście pozostają bez zmian.
+- Nowy, read-only patch admission 0.56: `scripts/omnidev_patch_gate.py`; testy `scripts/tests/test_omnidev_patch_gate.py` (10 lokalnie PASS; GitHub CI wymaga osobnego odczytu).
+- Macierz: `docs/audits/STAGES_056_114_BASELINE_2026-10-30.md`. Nie ma zatwierdzenia żadnego pełnego etapu ani produkcji.
+- Ograniczenia: brak Firecracker executor, AST/CST, semantic security review, human-gated protected update i pełnego E2E. `production_approved=false`.
