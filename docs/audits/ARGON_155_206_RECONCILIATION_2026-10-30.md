@@ -21,7 +21,7 @@ Dokument Drive `1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A` opisuje inne funkcje niż akt
 | 1.95 | ClaimLedger/SHA256SUMS | PARTIAL: `src/claim_ledger_verifier.rs`, `src/mcp_registry_integrity.rs` |
 | 2.00 | Unified Kernel | PARTIAL: istniejący Rust runtime, nie tworzyć drugiego rdzenia |
 | 2.01 | Zenoh pub/sub | PARTIAL: `src/transport/`; brak E2E delt dokumentu |
-| 2.02 | Collaborative Object Tracker | IMPLEMENTED_SCOPE_CI_PENDING: `src/collaboration_tracker.rs`; durable multi-host E2E OPEN |
+| 2.02 | Collaborative Object Tracker | IMPLEMENTED_SCOPE_CI_PENDING: `src/collaboration_tracker.rs`, `src/collaboration_store.rs`; SQLite persisted CAS/hash-chain/restart/tenant isolation; authenticated signed actor and multi-host E2E OPEN |
 | 2.03 | Voice Narrative Firewall | IMPLEMENTED_SCOPE_CI_PENDING: `src/voice_narrative_firewall.rs`, tenant binding i kontrola zgody mikrofonu; realny audio/game engine E2E OPEN |
 | 2.04 | Rust Hot Path | PARTIAL: Rust obecny; brak zweryfikowanego benchmarku |
 | 2.05 | Benchmark Harness | PARTIAL_CI_PENDING: `scripts/argon_bench.py`, `scripts/tests/test_argon_bench.py`; rzeczywiste subprocess p50/p95/p99, SHA i CPU/OS; in-process Rust hot-path/multi-host corpus OPEN |
@@ -61,7 +61,7 @@ Dokument Drive `1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A` opisuje inne funkcje niż akt
 | 1.95 | 0.42, 0.43, 280, 333 | PARTIAL — ClaimLedger/MCP integrity, niezależne receipt E2E OPEN |
 | 2.00 | 1.94, 334 | PARTIAL — istniejący jedyny runtime, bez drugiego jądra |
 | 2.01 | 0.46, 1.55–1.59 | PARTIAL — Zenoh w runtime, delty dokumentu E2E OPEN |
-| 2.02 | 0.67, 1.65, 322 | IMPLEMENTED_SCOPE_CI_PENDING: `src/collaboration_tracker.rs`; trwały backend/provenance podpisy OPEN |
+| 2.02 | 0.67, 1.65, 322 | IMPLEMENTED_SCOPE_CI_PENDING: `src/collaboration_tracker.rs`, `src/collaboration_store.rs`; SQLite durable scope, podpisany aktor / multi-host OPEN |
 | 2.03 | 0.99, 1.11, 276 | IMPLEMENTED_SCOPE_CI_PENDING: `src/voice_narrative_firewall.rs`; rzeczywisty game/audio E2E OPEN |
 | 2.04 | 1.90, 264 | PARTIAL — Rust hot path istnieje, brak pomiarów efektu |
 | 2.05 | 0.42, 1.64, 264 | PARTIAL_CI_PENDING: `scripts/argon_bench.py` i testy; brak pełnego in-process/cluster harness |
