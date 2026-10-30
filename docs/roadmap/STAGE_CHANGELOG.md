@@ -709,3 +709,9 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
   ZIP SHA-256 `2b5894f83804ad01422ef20afd050fc3ce001a983f8750dd534df70f4a6938ac`.
   Two simultaneous jailed guests, guest WASIp1 + Wasmtime, Aya/eBPF, fault/recovery
   and negative tests passed; does not verify target host/operator approval.
+
+### 2026-10-30 — Argon PDF-1.15–1.54: source-ID reconciliation and policy preflight
+
+- Source: `docs/sources/drive-ocaf/roadmap-115-154.txt` (Drive PDF ID `1ezPUBRwroogi_vJg9oYc7OjlcYjPO5z3`); 40/40 source requirements indexed in `docs/audits/ARGON_115_154_RECONCILIATION_2026-10-30.md`. PDF numbering **collides** with canonical v11 Apex 1.15–1.54 and does not replace it.
+- Existing `document_state` and `document_store` remain partial coverage of PDF-1.15–1.22. Added Rust `governance_contract` preflight for PDF-1.23–1.26 and 1.30, with negative unit tests. Preflight is **not** execution authorization, approval issuance, durable idempotency, or audit.
+- PDF-1.27–1.29 and PDF-1.31–1.54 remain open for independent integration/acceptance. No canonical status promotion or binary/release packaging. CI outcome must be tied to the resulting SHA; production_approved=false.
