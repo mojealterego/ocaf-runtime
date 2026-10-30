@@ -22,7 +22,7 @@ Dokument Drive `1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A` opisuje inne funkcje niż akt
 | 2.00 | Unified Kernel | PARTIAL: istniejący Rust runtime, nie tworzyć drugiego rdzenia |
 | 2.01 | Zenoh pub/sub | PARTIAL: `src/transport/`; brak E2E delt dokumentu |
 | 2.02 | Collaborative Object Tracker | GAP: brak potwierdzonego modułu |
-| 2.03 | Voice Narrative Firewall | GAP: brak potwierdzonego modułu |
+| 2.03 | Voice Narrative Firewall | IMPLEMENTED_SCOPE_CI_PENDING: `src/voice_narrative_firewall.rs`, tenant binding i kontrola zgody mikrofonu; realny audio/game engine E2E OPEN |
 | 2.04 | Rust Hot Path | PARTIAL: Rust obecny; brak zweryfikowanego benchmarku |
 | 2.05 | Benchmark Harness | PARTIAL: skrypty i CI, brak jednolitego korpusu |
 | 2.06 | Release Guardian | PARTIAL: `scripts/release_readiness.py`, brak pełnego E2E |
@@ -62,7 +62,7 @@ Dokument Drive `1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A` opisuje inne funkcje niż akt
 | 2.00 | 1.94, 334 | PARTIAL — istniejący jedyny runtime, bez drugiego jądra |
 | 2.01 | 0.46, 1.55–1.59 | PARTIAL — Zenoh w runtime, delty dokumentu E2E OPEN |
 | 2.02 | 0.67, 1.65, 322 | OPEN — collaborative object tracker i provenance |
-| 2.03 | 0.99, 1.11, 276 | OPEN — zapora narracji i autorytatywnego stanu gry |
+| 2.03 | 0.99, 1.11, 276 | IMPLEMENTED_SCOPE_CI_PENDING: `src/voice_narrative_firewall.rs`; rzeczywisty game/audio E2E OPEN |
 | 2.04 | 1.90, 264 | PARTIAL — Rust hot path istnieje, brak pomiarów efektu |
 | 2.05 | 0.42, 1.64, 264 | PARTIAL — brak wspólnego pełnego benchmark harness |
 | 2.06 | 0.42, 1.94, 333 | PARTIAL — release precheck, brak kompletnego GO/NO-GO E2E |
