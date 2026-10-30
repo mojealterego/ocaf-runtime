@@ -7367,7 +7367,7 @@
     "source_requirements_count": 40,
     "source_ids_are_not_canonical": true,
     "canonical_stages_changed": false,
-    "status": "PARTIAL_WITH_TWO_SCOPED_LOCAL_COMPONENTS_TESTED",
+    "status": "PARTIAL_WITH_CONTRACT_COMPLIANCE_TESTS_PASS",
     "production_approved": false,
     "ci": {
       "run_id": 40990353117,
@@ -7389,7 +7389,13 @@
       "PDF-1.40",
       "PDF-1.42"
     ],
-    "latest_unverified_status": "IMPLEMENTED_CI_PENDING"
+    "latest_unverified_status": null,
+    "last_verified_partial_ci": {
+      "run_id": 41010321126,
+      "head_sha": "767230ec2a16ddbbb185c5df703cffe6256cf338",
+      "conclusion": "success",
+      "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126"
+    }
   },
   "operator_simulation_acceptance_20261030": {
     "policy": "docs/roadmap/SIMULATION_ONLY_ACCEPTANCE_POLICY_2026-10-30.md",
