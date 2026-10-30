@@ -224,7 +224,10 @@ mod tests {
     #[test]
     fn implemented_without_test_evidence_is_rejected() {
         let result = check(&[claim()], &[]);
-        assert_eq!(result.violations[0].kind, ViolationKind::MissingImplementationEvidence);
+        assert_eq!(
+            result.violations[0].kind,
+            ViolationKind::MissingImplementationEvidence
+        );
         assert!(!result.valid);
     }
 
@@ -232,17 +235,26 @@ mod tests {
     fn incorrect_revision_and_claim_binding_are_rejected() {
         let mut stale = receipt();
         stale.verified_commit_sha = OTHER_SHA;
-        assert_eq!(check(&[claim()], &[stale]).violations[0].kind, ViolationKind::IncompatibleEvidence);
+        assert_eq!(
+            check(&[claim()], &[stale]).violations[0].kind,
+            ViolationKind::IncompatibleEvidence
+        );
         let mut foreign = receipt();
         foreign.claim_id = "claim_2";
-        assert_eq!(check(&[claim()], &[foreign]).violations[0].kind, ViolationKind::IncompatibleEvidence);
+        assert_eq!(
+            check(&[claim()], &[foreign]).violations[0].kind,
+            ViolationKind::IncompatibleEvidence
+        );
     }
 
     #[test]
     fn failed_ci_does_not_qualify_as_implementation() {
         let mut failed = receipt();
         failed.tests_passed = false;
-        assert_eq!(check(&[claim()], &[failed]).violations[0].kind, ViolationKind::UnverifiedImplementation);
+        assert_eq!(
+            check(&[claim()], &[failed]).violations[0].kind,
+            ViolationKind::UnverifiedImplementation
+        );
     }
 
     #[test]
@@ -250,33 +262,50 @@ mod tests {
         let mut c = claim();
         c.claims_cloud_provisioned = true;
         assert!(check(&[c.clone()], &[receipt()])
-            .violations.iter().any(|v| v.kind == ViolationKind::UnverifiedDeployment));
+            .violations
+            .iter()
+            .any(|v| v.kind == ViolationKind::UnverifiedDeployment));
         let mut r = receipt();
         r.deployment_health_checked = true;
         assert!(check(&[c.clone()], &[r]).valid);
         c.classification = Classification::Hypothesis;
-        assert_eq!(check(&[c], &[receipt()]).violations[0].kind, ViolationKind::UnverifiedDeployment);
+        assert_eq!(
+            check(&[c], &[receipt()]).violations[0].kind,
+            ViolationKind::UnverifiedDeployment
+        );
     }
 
     #[test]
     fn unmeasured_latency_claim_is_never_accepted() {
         let mut c = claim();
         c.claims_unmeasured_submillisecond = true;
-        assert_eq!(check(&[c], &[receipt()]).violations[0].kind, ViolationKind::UnmeasuredLatencyAssertion);
+        assert_eq!(
+            check(&[c], &[receipt()]).violations[0].kind,
+            ViolationKind::UnmeasuredLatencyAssertion
+        );
     }
 
     #[test]
     fn duplicate_claim_ids_and_evidence_ids_are_rejected() {
         let c = claim();
-        assert_eq!(check(&[c.clone(), c], &[receipt()]).violations[0].kind, ViolationKind::DuplicateClaim);
-        assert_eq!(audit_claims(&[], &[receipt(), receipt()], SHA).unwrap_err(), ClaimAuditError::InvalidEvidence);
+        assert_eq!(
+            check(&[c.clone(), c], &[receipt()]).violations[0].kind,
+            ViolationKind::DuplicateClaim
+        );
+        assert_eq!(
+            audit_claims(&[], &[receipt(), receipt()], SHA).unwrap_err(),
+            ClaimAuditError::InvalidEvidence
+        );
     }
 
     #[test]
     fn absolute_and_traversal_artifact_paths_are_rejected() {
         let mut c = claim();
         c.source_artifact_path = "../src/mcp_registry_integrity.rs";
-        assert_eq!(check(&[c], &[receipt()]).violations[0].kind, ViolationKind::InvalidClaim);
+        assert_eq!(
+            check(&[c], &[receipt()]).violations[0].kind,
+            ViolationKind::InvalidClaim
+        );
     }
 
     #[test]
@@ -289,6 +318,9 @@ mod tests {
 
     #[test]
     fn invalid_expected_revision_is_rejected() {
-        assert_eq!(audit_claims(&[], &[], "HEAD").unwrap_err(), ClaimAuditError::InvalidRevision);
+        assert_eq!(
+            audit_claims(&[], &[], "HEAD").unwrap_err(),
+            ClaimAuditError::InvalidRevision
+        );
     }
 }
