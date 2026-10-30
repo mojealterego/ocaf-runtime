@@ -263,9 +263,10 @@ impl SqliteCollaborationStore {
             let objects: i64 = tx
                 .query_row(
                     "SELECT count(*) FROM (
-                        SELECT 1 FROM ocaf_collaboration_v1 GROUP BY tenant, object
+                        SELECT 1 FROM ocaf_collaboration_v1
+                        WHERE tenant=?1 GROUP BY object
                      )",
-                    [],
+                    params![identity.tenant],
                     |row| row.get(0),
                 )
                 .map_err(|_| CollaborationStoreError::Database)?;
