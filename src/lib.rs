@@ -89,3 +89,5 @@ pub mod compliance_evidence;
 pub mod contract_obligations;
 
 pub mod mcp_registry_integrity;
+
+pub mod claim_ledger_verifier;
