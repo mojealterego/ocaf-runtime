@@ -1829,3 +1829,5 @@ Szczegóły: [deploy/stage334/README.md](deploy/stage334/README.md).
 
 
 **Argon — potwierdzone CI dla 6 kolejnych wymagań źródłowych:** [run 41010321126 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126), SHA `767230ec2a16ddbbb185c5df703cffe6256cf338`. PDF-1.31–1.33, PDF-1.39–1.40 i PDF-1.42: `TESTED_LOCAL_PARTIAL`. Pełne etapy kanoniczne i OMAt E2E pozostają otwarte; binaria na końcu.
+
+**PDF-1.50 — MCP integrity:** `src/mcp_registry_integrity.rs` obsługuje pełną lokalną walidację par `SKILL.md` / `references/registry.md` względem niezależnego SHA256SUMS pin. Osiem regresji negatywnych/pozytywnych dodano do [CI Argona](.github/workflows/argon-pdf-115-154.yml). Status `IMPLEMENTED_CI_PENDING`; brak niezależnego pinu rzeczywistego rejestru, 420 odczytów i E2E.

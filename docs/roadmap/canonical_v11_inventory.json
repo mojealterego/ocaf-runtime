@@ -864,7 +864,12 @@
         "ci_code_sha": "dce17cb110869f7a2fd3c492d4afb40d9b23fc8a",
         "ci_run": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41011058519",
         "ci_conclusion": "success",
-        "tests": {"tree_sitter": 4, "pipeline": 22, "semantic": 3, "rust": 13},
+        "tests": {
+          "tree_sitter": 4,
+          "pipeline": 22,
+          "semantic": 3,
+          "rust": 13
+        },
         "deployment_type": "simulation_only",
         "limitations": "no general natural-language autonomous codegen, no fully typed Rust impact graph, no Firecracker/KVM, no externally signed artifacts, no real deployment",
         "newer_isolation_negative_test_ci": "pending"
@@ -7400,13 +7405,16 @@
       "PDF-1.40",
       "PDF-1.42"
     ],
-    "latest_unverified_status": null,
+    "latest_unverified_status": "IMPLEMENTED_CI_PENDING",
     "last_verified_partial_ci": {
       "run_id": 41010321126,
       "head_sha": "767230ec2a16ddbbb185c5df703cffe6256cf338",
       "conclusion": "success",
       "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126"
-    }
+    },
+    "additional_pending_source_ids": [
+      "PDF-1.50"
+    ]
   },
   "operator_simulation_acceptance_20261030": {
     "policy": "docs/roadmap/SIMULATION_ONLY_ACCEPTANCE_POLICY_2026-10-30.md",

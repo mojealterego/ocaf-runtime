@@ -824,3 +824,8 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 
 - W rzeczywistym `Agent-God-Level-Omega/omega/SHA256SUMS.txt` znajduje się 1100 wpisów; potwierdzono strukturę 210 katalogów x 2 wpisy = 420 SHA256 dla `skills/*-mcp-registry/{SKILL.md,references/registry.md}`.
 - Poprawiono błąd źródłowego PDF mówiący o `reference.json`; aktualizacja w rejestrze 40/40, audycie i głównej Roadmapie/lustrze. Brak pełnej weryfikacji treści względem zaufanego pinu; PDF-1.50 pozostaje OPEN; bez aktywacji binariów MCP.
+
+### 2026-10-30 — PDF-1.50 — weryfikator integralności rejestru MCP
+
+- `src/mcp_registry_integrity.rs`: fail-closed inventory, SHA256SUMS pin, SHA-256 content check, 210 x 2 invariant, bounded input, negative tests; scope lokalny `IMPLEMENTED_CI_PENDING`.
+- Zaktualizowano główną i lustrzaną Roadmapę, 40/40 manifest, README i audyt źródła; nadal brak rzeczywistego 420-file hash verification, zaufanego operator pin, integracji OMAt i produkcyjnego E2E. Etapy kanoniczne bez zmian.

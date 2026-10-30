@@ -1348,7 +1348,7 @@ Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): 
 | PDF-1.47 | InProcessLexicalSelector | 1.65 | **ZROBIONE — MODUŁ LOKALNY / TESTED** · etap pełny NIE | `src/retrieval_quality.rs` |
 | PDF-1.48 | MossRetrievalAdapter | 1.65 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.49 | ZenohTransportBridge | 0.46, 1.15, 1.55 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
-| PDF-1.50 | McpRegistryIntegrityVerifier | 0.43 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.50 | McpRegistryIntegrityVerifier | 0.43 | **IMPLEMENTED_CI_PENDING** · etap pełny NIE | `src/mcp_registry_integrity.rs`: lokalny weryfikator i testy; brak realnych 420 odczytów i E2E |
 | PDF-1.51 | DualTrackCollaborationAnalyzer | 1.92, 1.94 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.52 | RetrievalQualityEvaluator | 1.65, 1.99 | **ZROBIONE — MODUŁ LOKALNY / TESTED** · etap pełny NIE | `src/retrieval_quality.rs` |
 | PDF-1.53 | LatencyBenchmarkHarness | 1.55, 1.99 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
@@ -1368,3 +1368,5 @@ Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): 
 **Zweryfikowany zakres Contract Obligations / Compliance Evidence, 2026-10-30:** PDF-1.31–1.33, PDF-1.39–1.40 i PDF-1.42 mają status `TESTED_LOCAL_PARTIAL`, [CI 41010321126 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126), SHA `767230ec2a16ddbbb185c5df703cffe6256cf338`. Zakres obejmuje testowany Rust, nie pełny OMAt E2E, formalny audyt zgodności, independent attestation ani produkcyjną akceptację. Etapy kanoniczne nadal nieukończone.
 
 **PDF-1.50 — zweryfikowany stan rejestru referencyjnego (30.10.2026):** `Agent-God-Level-Omega/omega/SHA256SUMS.txt` ma 1100 wpisów, z czego 420 stanowi dokładnie 210 par `skills/*-mcp-registry/SKILL.md` + `skills/*-mcp-registry/references/registry.md` (ścieżki względne katalogu `omega`). W PDF Argona nazwa `reference.json` jest niezgodna z rzeczywistym repozytorium. **Status OPEN**: nie przeliczono zawartości 420 plików względem zaufanego pinu i nie potwierdzono działania narzędzi MCP E2E. [Audyt szczegółowy](docs/audits/ARGON_115_154_RECONCILIATION_2026-10-30.md).
+
+**PDF-1.50 / aktualizacja po audycie rejestru:** dodano lokalny weryfikator `src/mcp_registry_integrity.rs` z pinem SHA256SUMS, walidacją dokładnie dwóch plików na skill, kontrolą sum SHA-256 i przypadkami negatywnymi. `IMPLEMENTED_CI_PENDING` — oczekuje na uruchomiony test CI, nie weryfikuje jeszcze 420 rzeczywistych plików upstream ani live MCP. Kanoniczny 0.43 i produkcja NIEUKOŃCZONE.

@@ -45,7 +45,7 @@ Status `PARTIAL` oznacza wykryty, ograniczony kod w repozytorium, nie pełne kry
 | PDF-1.47 | InProcessLexicalSelector | TESTED_LOCAL_COMPONENT | `src/retrieval_quality.rs` — implementacja lokalna, testy CI weryfikowane osobno; pełny E2E otwarty. |
 | PDF-1.48 | MossRetrievalAdapter | OPEN | Zewnętrzny interfejs dopiero po zweryfikowaniu dostawcy; local fallback |
 | PDF-1.49 | ZenohTransportBridge | OPEN | Istnieje transport Zenoh, brak E2E tego konkretnego mostu i benchmarku |
-| PDF-1.50 | McpRegistryIntegrityVerifier | OPEN | Nie potwierdzono deklarowanych 210 skilli / 420 sum |
+| PDF-1.50 | McpRegistryIntegrityVerifier | IMPLEMENTED_CI_PENDING | `src/mcp_registry_integrity.rs` — pinned SHA256SUMS verifier (fixture-only); brak realnych 420 hashów i MCP E2E |
 | PDF-1.51 | DualTrackCollaborationAnalyzer | OPEN | Historia zmian obiektu i atrybucja aktorów |
 | PDF-1.52 | RetrievalQualityEvaluator | TESTED_LOCAL_COMPONENT | `src/retrieval_quality.rs` — implementacja lokalna, testy CI weryfikowane osobno; pełny E2E otwarty. |
 | PDF-1.53 | LatencyBenchmarkHarness | OPEN | Realne p50/p95/p99, hardware i surowe próbki |
@@ -91,3 +91,7 @@ Następny techniczny zakres: durable audit + idempotency 1.27–1.29, następnie
 ### Dodatkowa weryfikacja PDF-1.50 — upstream MCP Registry
 
 W rzeczywistym `mojealterego/Agent-God-Level-Omega/omega/SHA256SUMS.txt` odnaleziono 1100 linii SHA, w tym **420** wpisów w **210** katalogach `skills/*-mcp-registry`: dokładnie jeden `SKILL.md` i jeden `references/registry.md` na katalog. Dokument Argona błędnie wskazuje `reference.json` oraz ścieżkę z prefiksem `omega/` w samym SHA256SUMS (manifest ma ścieżki względne względem katalogu `omega`). To **kontrola kompletności nazw manifestu, NIE przeliczenie hashów 420 plików ani sprawdzenie live MCP**. PDF-1.50 pozostaje `OPEN` do czasu implementacji weryfikatora z zaufanym pinem, odczytu wszystkich plików, testów negatywnych i E2E. Żadnych binariów nie uruchamiano.
+
+### 2026-10-30 — PDF-1.50: weryfikator Rust (testy CI w toku)
+
+Dostarczono `src/mcp_registry_integrity.rs`: weryfikacja manifestu SHA256SUMS z niezależnie dostarczonym operacyjnym pinem SHA-256, dokładnie dwoma ścieżkami na skill, ograniczeniem rozmiaru, fail-closed przed błędnymi/duplikowanymi ścieżkami i różnicą zawartości plików. Testy negatywne pod `mcp_registry_integrity::tests`. **IMPLEMENTED_CI_PENDING**: do wyniku CI; nie pobrano 420 rzeczywistych plików, nie zakotwiczono operatorowego pinu, nie zintegrowano OMAt MCP E2E. Bez aktywacji binariów, bez zamknięcia etapu kanonicznego 0.43.

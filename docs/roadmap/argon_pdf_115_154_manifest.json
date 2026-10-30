@@ -5,7 +5,7 @@
   "canonical_stage_ids_unchanged": true,
   "source_requirements_count": 40,
   "source_id_prefix": "PDF-1.",
-  "state": "PARTIAL_WITH_TESTED_LOCAL_CONTRACT_AND_COMPLIANCE_COMPONENTS",
+  "state": "PARTIAL_WITH_MCP_REGISTRY_LOCAL_VERIFIER_PENDING_CI",
   "production_approved": false,
   "requirements": [
     {
@@ -729,8 +729,10 @@
         "0.43"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "OPEN",
-      "code_paths": [],
+      "status": "IMPLEMENTED_CI_PENDING",
+      "code_paths": [
+        "src/mcp_registry_integrity.rs"
+      ],
       "verified_ci": [],
       "complete": false,
       "production_approved": false,
@@ -747,8 +749,10 @@
         "source_document_incorrect_reference_json": true,
         "content_hashes_independently_recomputed": false,
         "end_to_end_adapter_verified": false,
-        "status": "STRUCTURE_VERIFIED_CONTENT_NOT_VERIFIED"
-      }
+        "status": "LOCAL_VERIFIER_CI_PENDING_NO_REAL_CONTENT_CHECK",
+        "in_process_verifier_present": true
+      },
+      "implementation_note": "Lokalny weryfikator SHA256SUMS z niezależnym pinem, testy negatywne; brak odczytu wszystkich 420 realnych plików, trust-store pin i MCP E2E"
     },
     {
       "source_id": "PDF-1.51",
