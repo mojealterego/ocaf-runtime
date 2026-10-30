@@ -1826,3 +1826,6 @@ Szczegóły: [deploy/stage334/README.md](deploy/stage334/README.md).
 - PDF-1.31–1.33: `src/contract_obligations.rs` (typowane zobowiązania, ograniczona ekstrakcja, deadline monitoring).
 - PDF-1.39–1.40/1.42: `src/compliance_evidence.rs` (SHA-256, ważność, pokrycie celów NCSC CAF, testy negatywne).
 - **Status IMPLEMENTED_CI_PENDING**; to nie jest pełny runtime ani certyfikacja GovAssure/SOC 2. Wyniki i braki w [macierzy wymagań](docs/roadmap/argon_pdf_115_154_manifest.json).
+
+
+**Argon — potwierdzone CI dla 6 kolejnych wymagań źródłowych:** [run 41010321126 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126), SHA `767230ec2a16ddbbb185c5df703cffe6256cf338`. PDF-1.31–1.33, PDF-1.39–1.40 i PDF-1.42: `TESTED_LOCAL_PARTIAL`. Pełne etapy kanoniczne i OMAt E2E pozostają otwarte; binaria na końcu.
