@@ -21,10 +21,10 @@ jobs:
       SANDBOX_TOKEN: ${{ secrets.OCAF_SANDBOX_TOKEN }}
       SANDBOX_API_URL: ${{ secrets.OCAF_SANDBOX_API_URL }}
       SANDBOX_API_FALLBACK: ${{ secrets.OCAF_SANDBOX_API }}
-      KUBECONFIG: ${{ runner.temp }}/omega-kubeconfig
+      KUBECONFIG: /tmp/omega-kubeconfig
       NS: mojealterego-dev
       OPENSHIFT_API: https://api.rm3.7wse.p1.openshiftapps.com:6443
-      REPORT_FILE: ${{ runner.temp }}/omega-staging-evidence.json
+      REPORT_FILE: /tmp/omega-staging-evidence.json
     steps:
       - name: Checkout OCAF main without persisted credentials
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -214,7 +214,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: omega-imandrax-redhat-sandbox-staging-evidence
-          path: ${{ runner.temp }}/omega-staging-evidence.json
+          path: /tmp/omega-staging-evidence.json
           if-no-files-found: warn
           retention-days: 14
       - name: Erase ephemeral runner tokens and Kubernetes context
