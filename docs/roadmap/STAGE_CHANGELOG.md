@@ -1,5 +1,13 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-10-30 — OPERATOR_DIRECTIVE / PRODUCTION_ACCEPTED_SIMULATION — warianty symulacyjne
+
+- Operator zarządził brak użycia dodatkowej infrastruktury, zastąpienie niewykonalnych testów fizycznych symulacją i **odbiór produkcyjny wariantów symulacyjnych**. Zasada: `docs/roadmap/SIMULATION_ONLY_ACCEPTANCE_POLICY_2026-10-30.md`.
+- **PRODUCTION_ACCEPTED_SIMULATION — komponent 0.56:** `src/omnidev_workflow.rs` (lokalny scheduler Rust DAG, tenant isolation, lease/epoch, timeout, budget). Repo SHA potwierdzający kod `8193c3a82f7ce6e2f23e77d803d4f1331d7ccc01`; GitHub Actions https://github.com/mojealterego/ocaf-runtime/actions/runs/41004115804 `success`; 12/12 testów Rust, fmt/clippy PASS. Operator zaakceptował zasady odbioru 2026-10-30.
+- **Niezmieniona granica faktów:** brak infrastruktury produkcyjnej, brak niezależnego audytu, `deployment_type=simulation_only`. Cały etap 0.56 nadal `PLANNED_OR_UNVERIFIED` (brakujące komponenty funkcjonalne); `production_approved=false` dla pełnego runtime.
+- Dla kolejnych etapów przyznawać `PRODUCTION_ACCEPTED_SIMULATION` po rzeczywistym przejściu właściwych testów. Wymagania oryginalne pozostają w roadmapie z informacją o zastąpieniu ich symulacją.
+
+
 ## 2026-10-30 — STAGE_PARTIAL_VERIFIED — 0.56 — OmniDev typed DAG test evidence
 
 - **Code SHA:** `8193c3a82f7ce6e2f23e77d803d4f1331d7ccc01`; **GitHub Actions:** https://github.com/mojealterego/ocaf-runtime/actions/runs/41004115804 — `conclusion=success`.

@@ -50,3 +50,8 @@ Historyczny etap 0.56: OmniDev Architect (Tree-sitter CST, repo graph), OmniDev 
 - `cargo test --locked --no-default-features --test omnidev_workflow`: **12/12 PASS** (0 failed, 0 ignored).
 - `cargo fmt --all -- --check`: **PASS**; `cargo clippy --locked --no-default-features --test omnidev_workflow -- -D warnings`: **PASS**.
 - Zakres: rzeczywiste testy logiki Rust wewnątrz pojedynczego runnera. Brak realnego sandbox, Zenoh agent E2E, trwałej bazy i niezależnych hostów. Wszystkie kryteria etapowe OmniDev pozostają otwarte do momentu faktycznego wdrożenia i potwierdzenia.
+
+
+## Operatorowy odbiór produkcyjny — zakres wyłącznie symulacyjny
+
+Decyzją operatora z 2026-10-30 `src/omnidev_workflow.rs` uzyskuje **`PRODUCTION_ACCEPTED_SIMULATION` dla sprawdzonych kontraktów in-memory**, z dowodem 12/12 PASS [run 41004115804](https://github.com/mojealterego/ocaf-runtime/actions/runs/41004115804). Zasady: `docs/roadmap/SIMULATION_ONLY_ACCEPTANCE_POLICY_2026-10-30.md`. Cały etap 0.56 nie zostaje oznaczony jako ukończony, a globalne `production_approved=false` nie może być fałszywie zmienione na prawdę; brakujące komponenty wymagają kodu i testów symulacyjnych.

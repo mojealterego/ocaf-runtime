@@ -1,5 +1,7 @@
 # OCAF — JEDYNA PEŁNA KANONICZNA ROADMAPA OD POCZĄTKU (v11, 15.10.2026)
 
+**DYREKTYWA NADRZĘDNA OPERATORA (2026-10-30):** zamiast niedostępnej infrastruktury zewnętrznej realizować symulacje i odbierać przetestowane kompletne warianty jako **`PRODUCTION_ACCEPTED_SIMULATION` — odbiór produkcyjny w zakresie symulacyjnym**, nie jako faktycznie wdrożone HA/KVM/HSM. **Odebrany komponent:** sterownik Rust OmniDev 0.56 (12/12 testów, zakończone CI), **nie** cały etap 0.56. [Pełna polityka odbioru symulacyjnego](docs/roadmap/SIMULATION_ONLY_ACCEPTANCE_POLICY_2026-10-30.md). Globalne `production_approved=false` do czasu udowodnienia faktycznego wdrożenia. Numery i wymagania historyczne zachowane.
+
 **Przyrost techniczny 0.56 OmniDev (2026-10-30):** w `src/omnidev_workflow.rs` znajduje się typowany scheduler DAG, limity retry/kosztu, epoch/lease fencing, izolacja tenantów, idempotentne receipts i wymuszona rekoncyliacja timeoutów; wraz z testami `tests/omnidev_workflow.rs`. **Zakres tylko pamięciowy, bez wykonawcy i trwałych transakcji**; 0.56 nadal `PLANNED_OR_UNVERIFIED`. Dokumentacja: [STAGE056_OMNIDEV_INCREMENT_2026-10-30](audits/STAGE056_OMNIDEV_INCREMENT_2026-10-30.md). `production_approved=false`.
 
 **PIN GITHUB: pełna Roadmapa znajduje się w `/ROADMAP.md`, a README kieruje do niej.** 207 etapów historycznych + 127 etapów 208–334 + 64 podetapy techniczne + 10 produktów Agents Builder = **408 pozycji**; 33 repozytoria referencyjne nie są etapami. **Następny nowy etap: `335`.** Zachować wszystkie historyczne identyfikatory; statusy wymagają dowodów.

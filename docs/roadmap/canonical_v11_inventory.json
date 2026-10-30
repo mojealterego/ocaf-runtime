@@ -7380,5 +7380,19 @@
       "PDF-1.47",
       "PDF-1.52"
     ]
+  },
+  "operator_simulation_acceptance_20261030": {
+    "policy": "docs/roadmap/SIMULATION_ONLY_ACCEPTANCE_POLICY_2026-10-30.md",
+    "directive": "No additional infrastructure. Hardware/multihost acceptance is replaced by deterministic simulation and negative tests.",
+    "accepted_scope": "0.56 / src/omnidev_workflow.rs — in-memory DAG scheduler only",
+    "status": "PRODUCTION_ACCEPTED_SIMULATION",
+    "code_sha": "8193c3a82f7ce6e2f23e77d803d4f1331d7ccc01",
+    "ci_run": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41004115804",
+    "ci_conclusion": "success",
+    "rust_tests_passed": 12,
+    "deployment_type": "simulation_only",
+    "stage_056_full_acceptance": false,
+    "real_infrastructure_proven": false,
+    "production_approved": false
   }
 }
