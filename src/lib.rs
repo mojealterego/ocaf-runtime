@@ -83,3 +83,5 @@ pub mod governance_journal;
 pub mod finops_ledger;
 
 pub mod omnidev_workflow;
+
+pub mod compliance_evidence;

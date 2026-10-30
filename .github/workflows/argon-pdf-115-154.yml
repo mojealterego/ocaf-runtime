@@ -9,6 +9,7 @@ on:
       - 'src/document_state.rs'
       - 'src/document_store.rs'
       - 'src/lib.rs'
+      - 'src/compliance_evidence.rs'
       - 'ROADMAP.md'
       - 'README.md'
       - 'docs/ROADMAP_FULL_ECOSYSTEM_2026.md'
@@ -44,5 +45,7 @@ jobs:
         run: |
           cargo test --locked --no-default-features --lib document_state::tests
           cargo test --locked --no-default-features --lib document_store::tests
+      - name: Compliance evidence pack SHA-256 and CAF objective tests
+        run: cargo test --locked --no-default-features --lib compliance_evidence::tests
       - name: Clippy bounded core
         run: cargo clippy --locked --all-targets --no-default-features -- -D warnings
