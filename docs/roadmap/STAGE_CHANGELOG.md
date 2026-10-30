@@ -1,5 +1,13 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-10-30 — FIXED CI / OCAF agent artifact contract (oddzielenie implementacji od planu)
+
+- **Diagnoza:** run #41058312131: `32 artifact contract violations` — G02–G33 nie mają zadeklarowanych katalogów źródłowych; G01 posiada rzeczywistą strukturę. Jednocześnie rejestr `ocaf-components.tsv` nie rozróżniał stanu implementacji.
+- **Poprawka:** jawne piąte pole `implementation_state` = `IMPLEMENTED` albo `PLANNED`. Dla `IMPLEMENTED` Rust walidator nadal weryfikuje kod, Rust testy, manifest, dokumentację i kontrakt Zenoh; brak elementów powoduje FAIL. `PLANNED` wymaga braku nierozliczonego katalogu źródłowego i nie daje uprawnień ani certyfikacji.
+- **Brama wydania:** `--release` odrzuca każdy niezaimplementowany komponent. CI zawiera negatywny test tej blokady. Nie dodano pustych agentów ani nie zmieniono ich statusu na ACTIVE.
+- **Dowody:** [run #41094841701](https://github.com/mojealterego/ocaf-runtime/actions/runs/41094841701) RED dla nowych testów przed implementacją; [run #41095114134](https://github.com/mojealterego/ocaf-runtime/actions/runs/41095114134) SUCCESS — 9/9 testów Rust walidatora, strukturalny gate PASS, nieuprawniona certyfikacja nadal DENY; SHA `0e4e806ee4a4b929f14db3d66773883467e1f09b`.
+- **Rzeczywisty stan:** 33 wpisy, 1 strukturalnie zaimplementowany (G01), 32 planowane (G02–G33). To nie jest odbiór 32 agentów. Status etapu 0.56 OmniDev i globalne `production_approved=false` niezmienione. [Pełny raport](../audits/AGENT_ARTIFACT_CONTRACT_GATE_2026-10-30.md).
+
 ## 2026-10-30 — ARGON SOURCE 1.55–2.06 / kanoniczne mapowanie
 
 - Źródło: Google Drive `1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A`, PDF Argon 1.55–2.06; wykryto kolizję z kanonicznymi etapami 1.55–2.06. [Rejestr 20 grup](../audits/ARGON_155_206_RECONCILIATION_2026-10-30.md).
