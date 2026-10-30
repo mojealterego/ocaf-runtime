@@ -120,6 +120,15 @@ class Stage056PipelineTests(unittest.TestCase):
             self.journal.execute(self.repo, "tenantA", "task01", self.token(info),
                                  self.command, Executor())
 
+    def test_corrupt_candidate_bytes_cannot_use_previous_approval(self):
+        info = self.journal.submit(self.repo, self.repair)
+        self.journal.db.execute(
+            "UPDATE jobs SET patch=? WHERE tenant='tenantA' AND task='task01'",
+            (b"malicious altered candidate",))
+        with self.assertRaisesRegex(OmniDevError, "fingerprint"):
+            self.journal.execute(self.repo, "tenantA", "task01",
+                                 self.token(info), self.command, DockerExecutor())
+
     def test_tamper_detection_and_docker_restrictions(self):
         self.journal.submit(self.repo, self.repair)
         self.journal.db.execute("UPDATE events SET event='forged' WHERE serial=1")

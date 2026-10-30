@@ -281,6 +281,8 @@ class Stage056:
             if row is None:
                 raise OmniDevError("no authorized tenant task")
             base, patch, sha, current = row
+            if digest(patch) != sha:
+                raise OmniDevError("stored patch fingerprint mismatch")
             valid = self.token(tenant, task, base, sha, command, executor.image)
             if not hmac.compare_digest(approval, valid):
                 raise OmniDevError("operator approval mismatch")

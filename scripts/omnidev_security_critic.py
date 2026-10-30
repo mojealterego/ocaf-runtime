@@ -23,7 +23,9 @@ RULES: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("SHELL_EXECUTION", re.compile(
         r"\b(?:os\.system|subprocess\.(?:run|Popen|call|check_call|check_output)|"
         r"std::process::Command::new|Command::new)\s*\(", re.I)),
-    ("DYNAMIC_CODE", re.compile(r"\b(?:eval|exec)\s*\(", re.I)),
+    ("DYNAMIC_CODE", re.compile(
+        r"\b(?:eval|exec|__import__|getattr)\s*\(|"
+        r"\bimportlib\.import_module\s*\(", re.I)),
     ("POTENTIAL_SECRET", re.compile(
         r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|"
         r"\b(?:API_KEY|SECRET_KEY|ACCESS_TOKEN)\s*=\s*['\"][^'\"]{8,}", re.I)),
