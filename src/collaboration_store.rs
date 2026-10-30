@@ -68,9 +68,7 @@ fn parse_operation(input: &str) -> Result<CognitiveOperation, CollaborationStore
     }
 }
 
-fn digest(
-    tenant: &str, object: &str, event: &CollaborationEvent, previous: &str,
-) -> String {
+fn digest(tenant: &str, object: &str, event: &CollaborationEvent, previous: &str) -> String {
     let mut sha = Sha256::new();
     sha.update(b"OCAF-COLLABORATION-EVENT-v1");
     let revision = event.revision.to_be_bytes();
@@ -127,8 +125,7 @@ impl SqliteCollaborationStore {
         if version != 1 {
             return Err(CollaborationStoreError::Integrity);
         }
-        tx.commit()
-            .map_err(|_| CollaborationStoreError::Database)?;
+        tx.commit().map_err(|_| CollaborationStoreError::Database)?;
         Ok(store)
     }
 
@@ -162,10 +159,15 @@ impl SqliteCollaborationStore {
 
     /// The caller MUST authenticate the tenant before providing this identity.
     pub fn load(
-        &self, tenant: &str, object: &str, expected: Option<&CollaborationHead>,
+        &self,
+        tenant: &str,
+        object: &str,
+        expected: Option<&CollaborationHead>,
     ) -> Result<(Vec<CollaborationEvent>, CollaborationHead), CollaborationStoreError> {
         let mut conn = self.checked_connection()?;
-        let tx = conn.transaction().map_err(|_| CollaborationStoreError::Database)?;
+        let tx = conn
+            .transaction()
+            .map_err(|_| CollaborationStoreError::Database)?;
         let (events, head) = Self::replay(&tx, tenant, object)?;
         if expected.is_some_and(|pin| pin != &head) {
             return Err(CollaborationStoreError::Conflict);
@@ -174,7 +176,9 @@ impl SqliteCollaborationStore {
     }
 
     fn replay(
-        conn: &Connection, tenant: &str, object: &str,
+        conn: &Connection,
+        tenant: &str,
+        object: &str,
     ) -> Result<(Vec<CollaborationEvent>, CollaborationHead), CollaborationStoreError> {
         let mut tracker = CollaborationTracker::default();
         tracker.history(tenant, object)?;
@@ -191,7 +195,8 @@ impl SqliteCollaborationStore {
         let mut head = CollaborationHead::default();
         while let Some(row) = rows.next().map_err(|_| CollaborationStoreError::Database)? {
             let revision: i64 = row.get(0).map_err(|_| CollaborationStoreError::Integrity)?;
-            let revision = u64::try_from(revision).map_err(|_| CollaborationStoreError::Integrity)?;
+            let revision =
+                u64::try_from(revision).map_err(|_| CollaborationStoreError::Integrity)?;
             let actor: String = row.get(1).map_err(|_| CollaborationStoreError::Integrity)?;
             let operation: String = row.get(2).map_err(|_| CollaborationStoreError::Integrity)?;
             let focus: String = row.get(3).map_err(|_| CollaborationStoreError::Integrity)?;
@@ -205,7 +210,8 @@ impl SqliteCollaborationStore {
                 focus,
                 artifact_sha256: artifact,
             };
-            if revision != head.revision + 1 || previous != head.sha256
+            if revision != head.revision + 1
+                || previous != head.sha256
                 || digest(tenant, object, &event, &previous) != hash
             {
                 return Err(CollaborationStoreError::Integrity);
@@ -216,22 +222,34 @@ impl SqliteCollaborationStore {
             };
             let observed = tracker
                 .append(
-                    &identity, object, head.revision, event.operation,
-                    &event.focus, &event.artifact_sha256,
+                    &identity,
+                    object,
+                    head.revision,
+                    event.operation,
+                    &event.focus,
+                    &event.artifact_sha256,
                 )
                 .map_err(|_| CollaborationStoreError::Integrity)?;
             if observed != revision {
                 return Err(CollaborationStoreError::Integrity);
             }
-            head = CollaborationHead { revision, sha256: hash };
+            head = CollaborationHead {
+                revision,
+                sha256: hash,
+            };
         }
         Ok((tracker.history(tenant, object)?, head))
     }
 
     /// Atomic compare-and-append with replay validation and monotonically fenced revision.
     pub fn append(
-        &self, identity: &TrustedActor, object: &str, expected: &CollaborationHead,
-        operation: CognitiveOperation, focus: &str, artifact_sha256: &str,
+        &self,
+        identity: &TrustedActor,
+        object: &str,
+        expected: &CollaborationHead,
+        operation: CognitiveOperation,
+        focus: &str,
+        artifact_sha256: &str,
     ) -> Result<CollaborationHead, CollaborationStoreError> {
         let mut conn = self.checked_connection()?;
         let tx = conn
@@ -247,7 +265,8 @@ impl SqliteCollaborationStore {
                     "SELECT count(*) FROM (
                         SELECT 1 FROM ocaf_collaboration_v1 GROUP BY tenant, object
                      )",
-                    [], |row| row.get(0),
+                    [],
+                    |row| row.get(0),
                 )
                 .map_err(|_| CollaborationStoreError::Database)?;
             if objects >= MAX_OBJECTS {
@@ -260,29 +279,52 @@ impl SqliteCollaborationStore {
                 tenant: identity.tenant.clone(),
                 actor: saved.actor.clone(),
             };
-            state.append(
-                &saved_identity, object, saved.revision - 1, saved.operation,
-                &saved.focus, &saved.artifact_sha256,
-            ).map_err(|_| CollaborationStoreError::Integrity)?;
+            state
+                .append(
+                    &saved_identity,
+                    object,
+                    saved.revision - 1,
+                    saved.operation,
+                    &saved.focus,
+                    &saved.artifact_sha256,
+                )
+                .map_err(|_| CollaborationStoreError::Integrity)?;
         }
         let revision = state.append(
-            identity, object, head.revision, operation, focus, artifact_sha256,
+            identity,
+            object,
+            head.revision,
+            operation,
+            focus,
+            artifact_sha256,
         )?;
-        let event = state.history(&identity.tenant, object)?
-            .pop().ok_or(CollaborationStoreError::Integrity)?;
+        let event = state
+            .history(&identity.tenant, object)?
+            .pop()
+            .ok_or(CollaborationStoreError::Integrity)?;
         let hash = digest(&identity.tenant, object, &event, &head.sha256);
         tx.execute(
             "INSERT INTO ocaf_collaboration_v1
              (tenant,object,revision,actor,operation,focus,artifact_sha256,previous,digest)
              VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)",
             params![
-                identity.tenant, object, revision, event.actor, wire(event.operation),
-                event.focus, event.artifact_sha256, head.sha256, hash,
+                identity.tenant,
+                object,
+                revision,
+                event.actor,
+                wire(event.operation),
+                event.focus,
+                event.artifact_sha256,
+                head.sha256,
+                hash,
             ],
         )
         .map_err(|_| CollaborationStoreError::Database)?;
         tx.commit().map_err(|_| CollaborationStoreError::Database)?;
-        Ok(CollaborationHead { revision, sha256: hash })
+        Ok(CollaborationHead {
+            revision,
+            sha256: hash,
+        })
     }
 }
 
@@ -291,7 +333,10 @@ mod tests {
     use super::*;
 
     fn actor(tenant: &str) -> TrustedActor {
-        TrustedActor { tenant: tenant.into(), actor: "agent1".into() }
+        TrustedActor {
+            tenant: tenant.into(),
+            actor: "agent1".into(),
+        }
     }
 
     #[test]
@@ -299,45 +344,94 @@ mod tests {
         let file = tempfile::NamedTempFile::new().unwrap();
         let store = SqliteCollaborationStore::open_existing(file.path()).unwrap();
         let hash = "a".repeat(64);
-        let head1 = store.append(
-            &actor("tenant-a"), "object1", &CollaborationHead::default(),
-            CognitiveOperation::Propose, "design", &hash,
-        ).unwrap();
+        let head1 = store
+            .append(
+                &actor("tenant-a"),
+                "object1",
+                &CollaborationHead::default(),
+                CognitiveOperation::Propose,
+                "design",
+                &hash,
+            )
+            .unwrap();
         assert_eq!(head1.revision, 1);
         let reopened = SqliteCollaborationStore::open_existing(file.path()).unwrap();
-        assert_eq!(reopened.load("tenant-a", "object1", Some(&head1)).unwrap().0.len(), 1);
-        assert!(reopened.load("tenant-b", "object1", None).unwrap().0.is_empty());
-        assert!(matches!(reopened.append(
-            &actor("tenant-a"), "object1", &CollaborationHead::default(),
-            CognitiveOperation::Modify, "design", &hash,
-        ), Err(CollaborationStoreError::Conflict)));
-        let head2 = reopened.append(
-            &actor("tenant-a"), "object1", &head1,
-            CognitiveOperation::Validate, "check", &hash,
-        ).unwrap();
-        assert_eq!(reopened.load("tenant-a", "object1", Some(&head2)).unwrap().0.len(), 2);
-        assert!(matches!(reopened.load("tenant-b", "object1", Some(&head2)),
-            Err(CollaborationStoreError::Conflict)));
+        assert_eq!(
+            reopened
+                .load("tenant-a", "object1", Some(&head1))
+                .unwrap()
+                .0
+                .len(),
+            1
+        );
+        assert!(reopened
+            .load("tenant-b", "object1", None)
+            .unwrap()
+            .0
+            .is_empty());
+        assert!(matches!(
+            reopened.append(
+                &actor("tenant-a"),
+                "object1",
+                &CollaborationHead::default(),
+                CognitiveOperation::Modify,
+                "design",
+                &hash,
+            ),
+            Err(CollaborationStoreError::Conflict)
+        ));
+        let head2 = reopened
+            .append(
+                &actor("tenant-a"),
+                "object1",
+                &head1,
+                CognitiveOperation::Validate,
+                "check",
+                &hash,
+            )
+            .unwrap();
+        assert_eq!(
+            reopened
+                .load("tenant-a", "object1", Some(&head2))
+                .unwrap()
+                .0
+                .len(),
+            2
+        );
+        assert!(matches!(
+            reopened.load("tenant-b", "object1", Some(&head2)),
+            Err(CollaborationStoreError::Conflict)
+        ));
     }
 
     #[test]
     fn tampering_and_truncation_fail_closed() {
         let file = tempfile::NamedTempFile::new().unwrap();
         let store = SqliteCollaborationStore::open_existing(file.path()).unwrap();
-        let head = store.append(
-            &actor("tenant-a"), "object1", &CollaborationHead::default(),
-            CognitiveOperation::Challenge, "focus", &"b".repeat(64),
-        ).unwrap();
+        let head = store
+            .append(
+                &actor("tenant-a"),
+                "object1",
+                &CollaborationHead::default(),
+                CognitiveOperation::Challenge,
+                "focus",
+                &"b".repeat(64),
+            )
+            .unwrap();
         let connection = Connection::open(file.path()).unwrap();
-        connection.execute(
-            "UPDATE ocaf_collaboration_v1 SET focus='forged'", [],
-        ).unwrap();
-        assert!(matches!(store.load("tenant-a", "object1", None),
-            Err(CollaborationStoreError::Integrity)));
-        connection.execute(
-            "DELETE FROM ocaf_collaboration_v1", [],
-        ).unwrap();
-        assert!(matches!(store.load("tenant-a", "object1", Some(&head)),
-            Err(CollaborationStoreError::Conflict)));
+        connection
+            .execute("UPDATE ocaf_collaboration_v1 SET focus='forged'", [])
+            .unwrap();
+        assert!(matches!(
+            store.load("tenant-a", "object1", None),
+            Err(CollaborationStoreError::Integrity)
+        ));
+        connection
+            .execute("DELETE FROM ocaf_collaboration_v1", [])
+            .unwrap();
+        assert!(matches!(
+            store.load("tenant-a", "object1", Some(&head)),
+            Err(CollaborationStoreError::Conflict)
+        ));
     }
 }
