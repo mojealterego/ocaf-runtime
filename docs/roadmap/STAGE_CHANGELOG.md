@@ -811,3 +811,8 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 
 - [CI 41010321126 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126), SHA `767230ec2a16ddbbb185c5df703cffe6256cf338`: Rustfmt, Clippy, Contract Obligations 1.31–33 i Compliance Evidence 1.39–40, 1.42 oraz regresje.
 - Wymagania PDF-1.31–33 i PDF-1.39–40, 1.42 posiadają ścieżki kodu i zakończone testy lokalne; brak pełnego runtime OMAt, niezależnego atestowania dowodów i produkcyjnego E2E. Status etapów kanonicznych pozostaje bez zmian, `production_approved=false`.
+
+### 2026-10-30 — Argon PDF-1.50: korekta źródła MCP
+
+- W rzeczywistym `Agent-God-Level-Omega/omega/SHA256SUMS.txt` znajduje się 1100 wpisów; potwierdzono strukturę 210 katalogów x 2 wpisy = 420 SHA256 dla `skills/*-mcp-registry/{SKILL.md,references/registry.md}`.
+- Poprawiono błąd źródłowego PDF mówiący o `reference.json`; aktualizacja w rejestrze 40/40, audycie i głównej Roadmapie/lustrze. Brak pełnej weryfikacji treści względem zaufanego pinu; PDF-1.50 pozostaje OPEN; bez aktywacji binariów MCP.
