@@ -7456,5 +7456,28 @@
     "newer_negative_isolation_ci": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41033640572",
     "real_infrastructure_proven": false,
     "production_approved": false
+  },
+  "argon_pdf_155_206_reconciliation": {
+    "source_file_id": "1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A",
+    "source_file_name": "Dokument bez nazwy(8).PDF",
+    "source_numbering_not_canonical": true,
+    "source_groups": 20,
+    "canonical_reconciliation": "docs/audits/ARGON_155_206_RECONCILIATION_2026-10-30.md",
+    "status": "IMPLEMENTATION_PARTIAL_CI_PENDING",
+    "new_code": [
+      "src/document_function_dag.rs",
+      "src/model_router.rs"
+    ],
+    "modified_code": [
+      "src/document_state.rs",
+      "src/document_store.rs",
+      "src/lib.rs"
+    ],
+    "tests": [
+      "tests/document_function_dag.rs",
+      "src/model_router.rs"
+    ],
+    "no_historical_ids_modified": true,
+    "production_approved": false
   }
 }
