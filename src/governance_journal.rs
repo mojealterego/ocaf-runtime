@@ -76,35 +76,39 @@ fn valid_id(value: &str) -> bool {
             .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b'.' | b':'))
 }
 
-fn hash_row(
-    tenant: &str,
+struct AuditDigest<'a> {
+    tenant: &'a str,
     sequence: u64,
-    actor: &str,
-    action: &str,
-    request: &str,
-    decision: &str,
-    reason: &str,
-    payload_sha256: &[u8],
-    previous: &str,
-) -> String {
+    actor: &'a str,
+    action: &'a str,
+    request: &'a str,
+    decision: &'a str,
+    reason: &'a str,
+    payload_sha256: &'a [u8],
+    previous: &'a str,
+}
+
+fn hash_row(row: AuditDigest<'_>) -> String {
     let mut h = Sha256::new();
     h.update(b"OCAF-POLICY-AUDIT-v1");
     for field in [
-        tenant.as_bytes(),
-        &sequence.to_be_bytes(),
-        actor.as_bytes(),
-        action.as_bytes(),
-        request.as_bytes(),
-        decision.as_bytes(),
-        reason.as_bytes(),
-        payload_sha256,
-        previous.as_bytes(),
+        row.tenant.as_bytes(),
+        &row.sequence.to_be_bytes(),
+        row.actor.as_bytes(),
+        row.action.as_bytes(),
+        row.request.as_bytes(),
+        row.decision.as_bytes(),
+        row.reason.as_bytes(),
+        row.payload_sha256,
+        row.previous.as_bytes(),
     ] {
         h.update((field.len() as u64).to_be_bytes());
         h.update(field);
     }
     format!("{:x}", h.finalize())
 }
+
+type StoredOutcome = (String, String, Vec<u8>, String, Option<Vec<u8>>);
 
 impl GovernanceJournal {
     /// Database must be created by the operator under a private trusted
@@ -195,11 +199,11 @@ impl GovernanceJournal {
         contract: &AgentContract,
         request: &ActionRequest<'_>,
         approval_authority: Option<&ApprovalAuthority>,
-        trusted_tenant: &str,
-        trusted_actor: &str,
+        trusted_peer: (&str, &str),
         now_unix: u64,
         idempotency_key: &str,
     ) -> Result<Admission, JournalError> {
+        let (trusted_tenant, trusted_actor) = trusted_peer;
         if !valid_id(trusted_tenant)
             || !valid_id(trusted_actor)
             || !valid_id(idempotency_key)
@@ -353,7 +357,7 @@ impl GovernanceJournal {
         if head.sequence >= MAX_TENANT_AUDIT_ROWS {
             return Err(JournalError::Limit);
         }
-        let existing: Option<(String, String, Vec<u8>, String, Option<Vec<u8>>)> = db(tx
+        let existing: Option<StoredOutcome> = db(tx
             .query_row(
                 "SELECT actor,request_id,payload_sha256,status,outcome_sha256
              FROM governance_intents_v1
@@ -435,9 +439,17 @@ fn scan_audit(tx: &Transaction<'_>, tenant: &str) -> Result<AuditHead, JournalEr
             || payload.len() != 32
             || previous != head.digest
             || hash
-                != hash_row(
-                    tenant, seq, &actor, &action, &request, &decision, &reason, &payload, &previous,
-                )
+                != hash_row(AuditDigest {
+                    tenant,
+                    sequence: seq,
+                    actor: &actor,
+                    action: &action,
+                    request: &request,
+                    decision: &decision,
+                    reason: &reason,
+                    payload_sha256: &payload,
+                    previous: &previous,
+                })
         {
             return Err(JournalError::Integrity);
         }
@@ -462,17 +474,17 @@ fn append_audit(
     if seq > MAX_TENANT_AUDIT_ROWS {
         return Err(JournalError::Limit);
     }
-    let hash = hash_row(
+    let hash = hash_row(AuditDigest {
         tenant,
-        seq,
+        sequence: seq,
         actor,
-        request.action,
-        request.request_id,
+        action: request.action,
+        request: request.request_id,
         decision,
         reason,
-        &request.payload_sha256,
-        &head.digest,
-    );
+        payload_sha256: &request.payload_sha256,
+        previous: &head.digest,
+    });
     db(tx.execute(
         "INSERT INTO governance_audit_v1
          (tenant,seq,actor,action,request_id,decision,reason,payload_sha256,previous,digest)
@@ -551,7 +563,7 @@ mod tests {
         r.action = "missing";
         assert_eq!(
             journal
-                .begin(&c, &r, None, "tenant_a", "agent_a", 170, "key_1")
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "key_1")
                 .unwrap(),
             Admission::Denied(DenyReason::NotAllowlisted)
         );
@@ -559,7 +571,7 @@ mod tests {
         r.action = "read";
         assert_eq!(
             journal
-                .begin(&c, &r, None, "tenant_a", "agent_a", 170, "key_1")
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "key_1")
                 .unwrap(),
             Admission::FreshPending
         );
@@ -571,14 +583,14 @@ mod tests {
         let c = contract();
         let r = request();
         let first = journal
-            .begin(&c, &r, None, "tenant_a", "agent_a", 170, "idem")
+            .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "idem")
             .unwrap();
         assert_eq!(first, Admission::FreshPending);
         let head = journal.inspect("tenant_a", None).unwrap();
         let reopened = GovernanceJournal::open_existing(file.path()).unwrap();
         assert_eq!(
             reopened
-                .begin(&c, &r, None, "tenant_a", "agent_a", 170, "idem")
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "idem")
                 .unwrap(),
             Admission::ReplayPending
         );
@@ -595,19 +607,19 @@ mod tests {
         let c = contract();
         let mut r = request();
         journal
-            .begin(&c, &r, None, "tenant_a", "agent_a", 170, "idem")
+            .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "idem")
             .unwrap();
         r.payload_sha256 = payload_sha256(b"different");
         assert_eq!(
             journal
-                .begin(&c, &r, None, "tenant_a", "agent_a", 170, "idem")
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "idem")
                 .unwrap(),
             Admission::DeniedIdempotencyCollision
         );
         r.payload_sha256 = payload_sha256(b"payload");
         assert_eq!(
             journal
-                .begin(&c, &r, None, "tenant_a", "agent_a", 170, "idem")
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "idem")
                 .unwrap(),
             Admission::ReplayPending
         );
@@ -619,28 +631,22 @@ mod tests {
         let c = contract();
         let r = request();
         journal
-            .begin(&c, &r, None, "tenant_a", "agent_a", 170, "k")
+            .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "k")
             .unwrap();
         let digest = payload_sha256(b"external receipt");
         assert!(matches!(
             journal.record_verified_outcome("tenant_b", "agent_a", &r, "k", digest),
             Err(JournalError::Invalid)
         ));
+        assert!(journal
+            .record_verified_outcome("tenant_a", "agent_a", &r, "k", digest)
+            .unwrap());
+        assert!(!journal
+            .record_verified_outcome("tenant_a", "agent_a", &r, "k", digest)
+            .unwrap());
         assert_eq!(
             journal
-                .record_verified_outcome("tenant_a", "agent_a", &r, "k", digest)
-                .unwrap(),
-            true
-        );
-        assert_eq!(
-            journal
-                .record_verified_outcome("tenant_a", "agent_a", &r, "k", digest)
-                .unwrap(),
-            false
-        );
-        assert_eq!(
-            journal
-                .begin(&c, &r, None, "tenant_a", "agent_a", 170, "k")
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "k")
                 .unwrap(),
             Admission::ReplayCommitted
         );
@@ -662,7 +668,7 @@ mod tests {
         let c = contract();
         let r = request();
         journal
-            .begin(&c, &r, None, "tenant_a", "agent_a", 170, "k")
+            .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "k")
             .unwrap();
         let trusted_head = journal.inspect("tenant_a", None).unwrap();
         let conn = Connection::open(file.path()).unwrap();
@@ -673,7 +679,7 @@ mod tests {
             Err(JournalError::Integrity)
         ));
         assert!(matches!(
-            journal.begin(&c, &r, None, "tenant_a", "agent_a", 170, "k"),
+            journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "k"),
             Err(JournalError::Integrity)
         ));
         conn.execute("DELETE FROM governance_audit_v1", []).unwrap();
@@ -690,7 +696,7 @@ mod tests {
         let r = request();
         assert_eq!(
             journal
-                .begin(&c, &r, None, "tenant_b", "agent_a", 170, "k")
+                .begin(&c, &r, None, ("tenant_b", "agent_a"), 170, "k")
                 .unwrap(),
             Admission::Denied(DenyReason::IdentityMismatch)
         );
