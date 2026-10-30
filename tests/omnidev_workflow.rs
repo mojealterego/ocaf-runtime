@@ -194,16 +194,16 @@ fn expired_effect_never_automatically_retries() {
     );
     assert_eq!(
         w.reconcile_timeout(
-        "tenantA",
-        Role::Coder,
-        "architect",
-        TimeoutReconciliation {
-            epoch: 1,
-            resolution: TimeoutResolution::NoEffectConfirmed,
-            evidence_sha256: &digest(),
-            now_unix: 20,
-        },
-    ),
+            "tenantA",
+            Role::Coder,
+            "architect",
+            TimeoutReconciliation {
+                epoch: 1,
+                resolution: TimeoutResolution::NoEffectConfirmed,
+                evidence_sha256: &digest(),
+                now_unix: 20,
+            },
+        ),
         Err(WorkflowError::Denied)
     );
     w.reconcile_timeout(
