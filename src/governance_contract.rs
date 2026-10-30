@@ -94,9 +94,9 @@ pub enum PreflightDecision {
 fn valid_id(value: &str) -> bool {
     !value.is_empty()
         && value.len() <= 128
-        && value.bytes().all(|b| {
-            b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b'.' | b':')
-        })
+        && value
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b'.' | b':'))
 }
 
 impl AgentContract {
@@ -443,7 +443,10 @@ mod tests {
         let mut r = request();
         let approval = signed_approval(&r, ApproverRole::FinanceApprover);
         r.approval = Some(&approval);
-        assert_eq!(c.evaluate(&r, Some(&authority), 150), PreflightDecision::Continue);
+        assert_eq!(
+            c.evaluate(&r, Some(&authority), 150),
+            PreflightDecision::Continue
+        );
         r.payload_sha256 = payload_sha256(b"tampered");
         assert_eq!(
             c.evaluate(&r, Some(&authority), 150),
