@@ -49,7 +49,7 @@ Status `PARTIAL` oznacza wykryty, ograniczony kod w repozytorium, nie pełne kry
 | PDF-1.51 | DualTrackCollaborationAnalyzer | OPEN | Historia zmian obiektu i atrybucja aktorów |
 | PDF-1.52 | RetrievalQualityEvaluator | TESTED_LOCAL_COMPONENT | `src/retrieval_quality.rs` — implementacja lokalna, testy CI weryfikowane osobno; pełny E2E otwarty. |
 | PDF-1.53 | LatencyBenchmarkHarness | OPEN | Realne p50/p95/p99, hardware i surowe próbki |
-| PDF-1.54 | ClaimLedgerVerifier | OPEN | Dowody commit/test/artefakt; oddzielić hipotezy i implementacje |
+| PDF-1.54 | ClaimLedgerVerifier | IMPLEMENTED_CI_PENDING | `src/claim_ledger_verifier.rs` — klasyfikacja, wiązanie evidence↔commit i kontrola nadużyć. Brak niezależnej walidacji źródłowego CI i deployment E2E |
 
 ## Bezpieczeństwo i spójność architektury
 
@@ -99,3 +99,7 @@ Dostarczono `src/mcp_registry_integrity.rs`: weryfikacja manifestu SHA256SUMS z 
 ### PDF-1.50 — lokalne CI PASS, 2026-10-30
 
 [Argon CI 41017007500 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/41017007500), commit `46522c5c506ddb634aa929260002c6e8494a7583`. Przeprowadzono testy weryfikacji integralności, odrzucenia nieprawidłowej pinu SHA-256, naruszeń SHA pliku, niepełnych/duplikowanych par i niebezpiecznych ścieżek. **TESTED_LOCAL_PARTIAL**: brak niezależnie operatorowo zakotwiczonego pinu prawdziwego upstream, brak ponownego przeliczenia wszystkich 420 realnych plików oraz uruchomienia MCP E2E. Kanoniczny etap 0.43 nadal niezamknięty.
+
+### 2026-10-30 — PDF-1.54: claim ledger preflight
+
+Dostarczono `src/claim_ledger_verifier.rs`: typowane deklaracje `IMPLEMENTED`/`ADAPTER_ROADMAP`/`HYPOTHESIS`, dopasowanie identyfikatorów dowodów i SHA commita, wymóg testów PASS przy deklaracji implementacji, dodatkowy dowód health-check przy deklaracji zasobów chmurowych, zakaz deklaracji niemierzonych opóźnień sub-ms. `IMPLEMENTED_CI_PENDING`. Zewnętrznie uwierzytelnione receipts, rzeczywiste CI, live health E2E oraz propagacja statusów z rejestru etapów nadal otwarte. Nie nazywać niezależną atestacją.

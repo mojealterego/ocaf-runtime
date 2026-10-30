@@ -834,3 +834,8 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 
 - CI [41017007500](https://github.com/mojealterego/ocaf-runtime/actions/runs/41017007500), SHA `46522c5c506ddb634aa929260002c6e8494a7583`: Rustfmt, Clippy, 8 testów fixture integralności rejestru i reszta bramki Argona — sukces.
 - Ograniczony status `TESTED_LOCAL_PARTIAL`; nie oznacza weryfikacji wszystkich rzeczywistych plików upstream, trust anchor, MCP E2E, kanonicznego zakończenia etapu 0.43 ani produkcji.
+
+### 2026-10-30 — Argon PDF-1.54 ClaimLedgerVerifier
+
+- `src/claim_ledger_verifier.rs` — kontrola roszczeń IMPLEMENTED/ADAPTER_ROADMAP/HYPOTHESIS i wiązania źródła, evidence, SHA, test PASS oraz health. Dziesięć przypadków testowych.
+- `IMPLEMENTED_CI_PENDING`; brak kryptograficznego provenance źródłowych dowodów i produkcyjnej automatyzacji pełnej ścieżki. Kanoniczne etapy nie zostały zamknięte.

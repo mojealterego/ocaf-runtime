@@ -7406,14 +7406,16 @@
       "PDF-1.42",
       "PDF-1.50"
     ],
-    "latest_unverified_status": null,
+    "latest_unverified_status": "IMPLEMENTED_CI_PENDING",
     "last_verified_partial_ci": {
       "run_id": 41010321126,
       "head_sha": "767230ec2a16ddbbb185c5df703cffe6256cf338",
       "conclusion": "success",
       "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41010321126"
     },
-    "additional_pending_source_ids": [],
+    "additional_pending_source_ids": [
+      "PDF-1.54"
+    ],
     "last_verified_mcp_ci": {
       "run_id": 41017007500,
       "head_sha": "46522c5c506ddb634aa929260002c6e8494a7583",

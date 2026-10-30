@@ -1196,7 +1196,7 @@ Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): 
 | PDF-1.51 | DualTrackCollaborationAnalyzer | 1.92, 1.94 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.52 | RetrievalQualityEvaluator | 1.65, 1.99 | **ZROBIONE — MODUŁ LOKALNY / TESTED** · etap pełny NIE | `src/retrieval_quality.rs` |
 | PDF-1.53 | LatencyBenchmarkHarness | 1.55, 1.99 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
-| PDF-1.54 | ClaimLedgerVerifier | 1.99, 0.42 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.54 | ClaimLedgerVerifier | 1.99, 0.42 | **IMPLEMENTED_CI_PENDING** · etap pełny NIE | `src/claim_ledger_verifier.rs`: lokalne claim/evidence gate; bez niezależnego CI provenance i E2E |
 
 **Ukończone w zakresie kodowym** nie oznacza ukończonego etapu: brak pełnego E2E i dowodów akceptacyjnych. `IMPLEMENTED_CI_PENDING` oznacza wytworzony kod ze zgłoszoną bramką testową, ale **niepotwierdzone jeszcze** zakończenie CI. `PARTIAL_EXISTING` oznacza istniejący składnik, `PREFLIGHT_ONLY` nie daje prawa do wykonania, `OPEN` wymaga implementacji. Sąsiednie referencyjne repozytoria nie są zintegrowanym adapterem.
 
@@ -1216,3 +1216,5 @@ Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): 
 **PDF-1.50 / aktualizacja po audycie rejestru:** dodano lokalny weryfikator `src/mcp_registry_integrity.rs` z pinem SHA256SUMS, walidacją dokładnie dwóch plików na skill, kontrolą sum SHA-256 i przypadkami negatywnymi. `IMPLEMENTED_CI_PENDING` — oczekuje na uruchomiony test CI, nie weryfikuje jeszcze 420 rzeczywistych plików upstream ani live MCP. Kanoniczny 0.43 i produkcja NIEUKOŃCZONE.
 
 **PDF-1.50 lokalne testy: PASS** — [GitHub Actions 41017007500](https://github.com/mojealterego/ocaf-runtime/actions/runs/41017007500), SHA `46522c5c506ddb634aa929260002c6e8494a7583`. Weryfikator `src/mcp_registry_integrity.rs` przetestowany na ograniczonych fixture. Nadal brak rzeczywistego odczytu 420 plików upstream z niezależnie zatwierdzonym pinem, OMAt E2E i odbioru etapu kanonicznego.
+
+**PDF-1.54 — nowy moduł kontroli deklaracji:** `src/claim_ledger_verifier.rs` z kontrolą dowodów CI, wiązaniem SHA, klasyfikacją i blokadą niezmierzonych twierdzeń. Status `IMPLEMENTED_CI_PENDING` do potwierdzonego CI; nie zastępuje prawdziwych dowodów operatora i E2E. Nie zmieniono statusów kanonicznych etapów.

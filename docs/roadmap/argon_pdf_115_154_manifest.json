@@ -5,7 +5,7 @@
   "canonical_stage_ids_unchanged": true,
   "source_requirements_count": 40,
   "source_id_prefix": "PDF-1.",
-  "state": "PARTIAL_WITH_TESTED_MCP_REGISTRY_INTEGRITY",
+  "state": "PARTIAL_WITH_CLAIM_LEDGER_PENDING_CI",
   "production_approved": false,
   "requirements": [
     {
@@ -824,11 +824,14 @@
         "0.42"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "OPEN",
-      "code_paths": [],
+      "status": "IMPLEMENTED_CI_PENDING",
+      "code_paths": [
+        "src/claim_ledger_verifier.rs"
+      ],
       "verified_ci": [],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "implementation_note": "Typowany walidator claim↔evidence↔commit, CI success and deployment-health declarations. Lokalny preflight, nie weryfikuje podpisów źródłowego potwierdzenia, realnego CI ani zdrowia wdrożenia."
     }
   ],
   "last_verified_ci": {
