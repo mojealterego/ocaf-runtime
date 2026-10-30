@@ -91,3 +91,5 @@ pub mod contract_obligations;
 pub mod mcp_registry_integrity;
 
 pub mod claim_ledger_verifier;
+
+pub mod document_function_dag;
