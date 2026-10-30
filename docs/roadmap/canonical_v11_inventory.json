@@ -7379,7 +7379,17 @@
     "scoped_local_components_completed": [
       "PDF-1.47",
       "PDF-1.52"
-    ]
+    ],
+    "latest_development_sha": "34ade93a25a72bb2aeca1236ea99dfe85135b2ce",
+    "additional_partial_source_ids": [
+      "PDF-1.31",
+      "PDF-1.32",
+      "PDF-1.33",
+      "PDF-1.39",
+      "PDF-1.40",
+      "PDF-1.42"
+    ],
+    "latest_unverified_status": "IMPLEMENTED_CI_PENDING"
   },
   "operator_simulation_acceptance_20261030": {
     "policy": "docs/roadmap/SIMULATION_ONLY_ACCEPTANCE_POLICY_2026-10-30.md",

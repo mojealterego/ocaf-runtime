@@ -800,3 +800,9 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - Nowy, read-only patch admission 0.56: `scripts/omnidev_patch_gate.py`; testy `scripts/tests/test_omnidev_patch_gate.py` (10 lokalnie PASS; GitHub CI wymaga osobnego odczytu).
 - Macierz: `docs/audits/STAGES_056_114_BASELINE_2026-10-30.md`. Nie ma zatwierdzenia żadnego pełnego etapu ani produkcji.
 - Ograniczenia: brak Firecracker executor, AST/CST, semantic security review, human-gated protected update i pełnego E2E. `production_approved=false`.
+
+### 2026-10-30 — Argon: nowe moduły Contract Obligations i Compliance Evidence
+
+- Dodano `src/contract_obligations.rs` i `src/compliance_evidence.rs`, negatywne testy oraz dedykowany zakres `.github/workflows/argon-pdf-115-154.yml`.
+- Source PDF-1.31–33, PDF-1.39–40 oraz PDF-1.42 uzyskały ścieżki dowodowe w manifeście 40/40 i lustrzanych Roadmapach; status implementacji `IMPLEMENTED_CI_PENDING` do czasu ukończenia CI.
+- Brak produkcyjnego OMAt, workflow certyfikacji i atestacji; bez zatwierdzenia pełnych kanonicznych etapów i bez pakowania binariów.

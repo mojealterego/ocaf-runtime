@@ -1820,3 +1820,9 @@ Szczegóły: [deploy/stage334/README.md](deploy/stage334/README.md).
 - `src/governance_journal.rs`: trwała idempotencja i audit; `src/retrieval_quality.rs`: leksykalny BM25 i Recall@k/MRR. **Status: [CI testów lokalnych — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834), E2E nadal otwarte.** Binariów nie pakowano. PDF-1.52 ma oznaczenie **ZROBIONE — lokalny ewaluator jakości** (testy Recall@k/MRR), ale nie oznacza gotowości pełnego systemu retrieval. Nie zmieniono statusów kanonicznych etapów bez dowodów.
 
 **Weryfikacja indeksu odwróconego:** [CI 40990353117 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/40990353117), SHA `f618310d01543ce5475866f51263782f06c47810`. Źródłowe punkty **PDF-1.47 i PDF-1.52: ZROBIONE w testowanym zakresie lokalnych komponentów**; pozostałe 38 nie otrzymują pełnego zakończenia. Kanoniczne etapy i produkcja bez zmiany statusu.
+
+### Kolejne implementacje PDF Argona — 2026-10-30
+
+- PDF-1.31–1.33: `src/contract_obligations.rs` (typowane zobowiązania, ograniczona ekstrakcja, deadline monitoring).
+- PDF-1.39–1.40/1.42: `src/compliance_evidence.rs` (SHA-256, ważność, pokrycie celów NCSC CAF, testy negatywne).
+- **Status IMPLEMENTED_CI_PENDING**; to nie jest pełny runtime ani certyfikacja GovAssure/SOC 2. Wyniki i braki w [macierzy wymagań](docs/roadmap/argon_pdf_115_154_manifest.json).

@@ -5,7 +5,7 @@
   "canonical_stage_ids_unchanged": true,
   "source_requirements_count": 40,
   "source_id_prefix": "PDF-1.",
-  "state": "PARTIAL_WITH_VERIFIED_LOCAL_COMPONENTS",
+  "state": "PARTIAL_WITH_ADDITIONAL_IMPLEMENTATIONS_PENDING_CI",
   "production_approved": false,
   "requirements": [
     {
@@ -382,11 +382,15 @@
         "1.93"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "OPEN",
-      "code_paths": [],
+      "status": "IMPLEMENTED_CI_PENDING",
+      "code_paths": [
+        "src/contract_obligations.rs"
+      ],
       "verified_ci": [],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PENDING_CI_AND_INTEGRATION",
+      "implementation_note": "Model zobowiązania SHA-256; trwałość i OMAt otwarte"
     },
     {
       "source_id": "PDF-1.32",
@@ -396,11 +400,15 @@
         "1.93"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "OPEN",
-      "code_paths": [],
+      "status": "IMPLEMENTED_CI_PENDING",
+      "code_paths": [
+        "src/contract_obligations.rs"
+      ],
       "verified_ci": [],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PENDING_CI_AND_INTEGRATION",
+      "implementation_note": "Ekstraktor wąskiej gramatyki (shall/must/will, within N days)"
     },
     {
       "source_id": "PDF-1.33",
@@ -410,11 +418,15 @@
         "1.93"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "OPEN",
-      "code_paths": [],
+      "status": "IMPLEMENTED_CI_PENDING",
+      "code_paths": [
+        "src/contract_obligations.rs"
+      ],
       "verified_ci": [],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PENDING_CI_AND_INTEGRATION",
+      "implementation_note": "Lokalna ewaluacja terminów; scheduler/alerty E2E otwarte"
     },
     {
       "source_id": "PDF-1.34",
@@ -494,11 +506,15 @@
         "1.93"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "OPEN",
-      "code_paths": [],
+      "status": "IMPLEMENTED_CI_PENDING",
+      "code_paths": [
+        "src/compliance_evidence.rs"
+      ],
       "verified_ci": [],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PENDING_CI_AND_INTEGRATION",
+      "implementation_note": "Modele dowodowe i integralność SHA-256; brak niezależnego trust anchor"
     },
     {
       "source_id": "PDF-1.40",
@@ -508,11 +524,15 @@
         "1.93"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "OPEN",
-      "code_paths": [],
+      "status": "IMPLEMENTED_CI_PENDING",
+      "code_paths": [
+        "src/compliance_evidence.rs"
+      ],
       "verified_ci": [],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PENDING_CI_AND_INTEGRATION",
+      "implementation_note": "NCSC CAF A-D oraz okres ważności; brak certyfikacji GovAssure"
     },
     {
       "source_id": "PDF-1.41",
@@ -536,11 +556,15 @@
         "1.93"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "OPEN",
-      "code_paths": [],
+      "status": "IMPLEMENTED_CI_PENDING",
+      "code_paths": [
+        "src/compliance_evidence.rs"
+      ],
       "verified_ci": [],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "PENDING_CI_AND_INTEGRATION",
+      "implementation_note": "9 testów w tym tenant, expiry, tampering; brak safety E2E"
     },
     {
       "source_id": "PDF-1.43",
@@ -736,5 +760,6 @@
     "head_sha": "f618310d01543ce5475866f51263782f06c47810",
     "conclusion": "success",
     "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40990353117"
-  }
+  },
+  "latest_development_sha": "34ade93a25a72bb2aeca1236ea99dfe85135b2ce"
 }
