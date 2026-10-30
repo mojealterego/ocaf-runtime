@@ -8,20 +8,20 @@ Dokument Drive `1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A` opisuje inne funkcje niż akt
 |---|---|---|
 | 1.55 | Label/Tag/GUID | PARTIAL: `src/document_state.rs`; brak pełnej semantyki Open CASCADE |
 | 1.56 | Undo/Redo | IMPLEMENTED_SCOPE: `src/document_state.rs`; snapshoty, atomowe transakcje |
-| 1.57 | DAG funkcji dokumentu | GAP: `src/omnidev_workflow.rs` to inny DAG |
+| 1.57 | DAG funkcji dokumentu | IMPLEMENTED_SCOPE_CI_PENDING: `src/document_function_dag.rs`, `tests/document_function_dag.rs`; runtime E2E OPEN |
 | 1.58 | PolicyGate | PARTIAL: `src/governance_contract.rs`, `src/governance_journal.rs` |
 | 1.59 | ReplayLedger | PARTIAL: `src/document_store.rs`, `src/governance_journal.rs` |
 | 1.60 | Persystencja i migracje | PARTIAL: SQLite driver; brak wieloformatowych migracji |
 | 1.65 | BM25/Moss/Recall@k/MRR | PARTIAL: `src/retrieval_quality.rs`; brak Moss E2E |
 | 1.70 | Compound reasoning | GAP: brak kompletnego backendu i kontrolowanego fan-out |
-| 1.75 | Adaptive Model Router | GAP: brak kompletnego modelowego routera |
-| 1.80 | Prompt DSL | GAP: brak kompilatora i walidacji DSL |
+| 1.75 | Adaptive Model Router | IMPLEMENTED_SCOPE_CI_PENDING: `src/model_router.rs`; realne provider E2E OPEN |
+| 1.80 | Prompt DSL | IMPLEMENTED_SCOPE_CI_PENDING: `src/agentic_prompt_dsl.rs`; realne model output validation E2E OPEN |
 | 1.85 | GEM/OODA/H-MoE | RESEARCH: brak sprawdzonej integracji |
 | 1.90 | Kontrakty/compliance/procurement | PARTIAL: `src/contract_obligations.rs`, `src/compliance_evidence.rs` |
 | 1.95 | ClaimLedger/SHA256SUMS | PARTIAL: `src/claim_ledger_verifier.rs`, `src/mcp_registry_integrity.rs` |
 | 2.00 | Unified Kernel | PARTIAL: istniejący Rust runtime, nie tworzyć drugiego rdzenia |
 | 2.01 | Zenoh pub/sub | PARTIAL: `src/transport/`; brak E2E delt dokumentu |
-| 2.02 | Collaborative Object Tracker | GAP: brak potwierdzonego modułu |
+| 2.02 | Collaborative Object Tracker | IMPLEMENTED_SCOPE_CI_PENDING: `src/collaboration_tracker.rs`; durable multi-host E2E OPEN |
 | 2.03 | Voice Narrative Firewall | IMPLEMENTED_SCOPE_CI_PENDING: `src/voice_narrative_firewall.rs`, tenant binding i kontrola zgody mikrofonu; realny audio/game engine E2E OPEN |
 | 2.04 | Rust Hot Path | PARTIAL: Rust obecny; brak zweryfikowanego benchmarku |
 | 2.05 | Benchmark Harness | PARTIAL: skrypty i CI, brak jednolitego korpusu |
@@ -55,13 +55,13 @@ Dokument Drive `1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A` opisuje inne funkcje niż akt
 | 1.65 | 0.67, 0.95, 322 | PARTIAL — BM25/metrics lokalnie, Moss OPEN |
 | 1.70 | 0.95, 1.69, 1.94 | OPEN — realny LLM fan-out/cache/consensus |
 | 1.75 | 224, 1.94; router ogólny odrębny od audio 1.05/307 | IMPLEMENTED_SCOPE_CI_PENDING: `src/model_router.rs`; rzeczywisty provider E2E OPEN |
-| 1.80 | 1.06, 227, 309 | OPEN — DSL, typowane koperty i walidacja |
+| 1.80 | 1.06, 227, 309 | IMPLEMENTED_SCOPE_CI_PENDING: `src/agentic_prompt_dsl.rs`; typowana walidacja odpowiedzi modelu E2E OPEN |
 | 1.85 | 0.67, 1.95 | RESEARCH_OPEN — H-MoE/OODA/GEM bez AGI claims |
 | 1.90 | 0.64, 241, 280 | PARTIAL — bounded compliance/contract; realne działania OPEN |
 | 1.95 | 0.42, 0.43, 280, 333 | PARTIAL — ClaimLedger/MCP integrity, niezależne receipt E2E OPEN |
 | 2.00 | 1.94, 334 | PARTIAL — istniejący jedyny runtime, bez drugiego jądra |
 | 2.01 | 0.46, 1.55–1.59 | PARTIAL — Zenoh w runtime, delty dokumentu E2E OPEN |
-| 2.02 | 0.67, 1.65, 322 | OPEN — collaborative object tracker i provenance |
+| 2.02 | 0.67, 1.65, 322 | IMPLEMENTED_SCOPE_CI_PENDING: `src/collaboration_tracker.rs`; trwały backend/provenance podpisy OPEN |
 | 2.03 | 0.99, 1.11, 276 | IMPLEMENTED_SCOPE_CI_PENDING: `src/voice_narrative_firewall.rs`; rzeczywisty game/audio E2E OPEN |
 | 2.04 | 1.90, 264 | PARTIAL — Rust hot path istnieje, brak pomiarów efektu |
 | 2.05 | 0.42, 1.64, 264 | PARTIAL — brak wspólnego pełnego benchmark harness |
