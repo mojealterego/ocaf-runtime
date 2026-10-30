@@ -21,7 +21,9 @@ pub struct PromptEnvelope {
 }
 
 impl PromptEnvelope {
-    pub fn content(&self) -> &str { &self.content }
+    pub fn content(&self) -> &str {
+        &self.content
+    }
 }
 
 #[derive(Debug, Error, PartialEq, Eq)]
@@ -40,35 +42,50 @@ fn valid_variable(name: &str) -> bool {
 
 impl PromptProgram {
     pub fn compile(source: &str) -> Result<Self, PromptError> {
-        if source.is_empty() || source.len() > 8192 { return Err(PromptError::Limit); }
-        if source.chars().any(|c| c == '\0') { return Err(PromptError::Invalid); }
+        if source.is_empty() || source.len() > 8192 {
+            return Err(PromptError::Limit);
+        }
+        if source.chars().any(|c| c == '\0') {
+            return Err(PromptError::Invalid);
+        }
         let mut remaining = source;
         let mut fragments = Vec::new();
         let mut variables = BTreeSet::new();
         loop {
             if let Some(start) = remaining.find("{{") {
                 let literal = &remaining[..start];
-                if literal.contains("}}") { return Err(PromptError::Invalid); }
+                if literal.contains("}}") {
+                    return Err(PromptError::Invalid);
+                }
                 if !literal.is_empty() {
                     fragments.push(Fragment::Literal(literal.to_string()));
                 }
                 let rest = &remaining[start + 2..];
                 let end = rest.find("}}").ok_or(PromptError::Invalid)?;
                 let name = &rest[..end];
-                if !valid_variable(name) { return Err(PromptError::Invalid); }
+                if !valid_variable(name) {
+                    return Err(PromptError::Invalid);
+                }
                 variables.insert(name.to_string());
                 fragments.push(Fragment::Variable(name.to_string()));
                 remaining = &rest[end + 2..];
             } else {
-                if remaining.contains("}}") { return Err(PromptError::Invalid); }
+                if remaining.contains("}}") {
+                    return Err(PromptError::Invalid);
+                }
                 if !remaining.is_empty() {
                     fragments.push(Fragment::Literal(remaining.to_string()));
                 }
                 break;
             }
-            if fragments.len() > 64 { return Err(PromptError::Limit); }
+            if fragments.len() > 64 {
+                return Err(PromptError::Limit);
+            }
         }
-        Ok(Self { fragments, variables })
+        Ok(Self {
+            fragments,
+            variables,
+        })
     }
 
     /// Exact argument matching prevents accidental metadata injection.
@@ -89,7 +106,9 @@ impl PromptProgram {
                     out.push_str(value);
                 }
             }
-            if out.len() > 16384 { return Err(PromptError::Limit); }
+            if out.len() > 16384 {
+                return Err(PromptError::Limit);
+            }
         }
         Ok(PromptEnvelope { content: out })
     }
@@ -101,14 +120,18 @@ mod tests {
 
     #[test]
     fn stable_rendering_and_exact_args() {
-        let program = PromptProgram::compile("Question: {{question}}; Context: {{context}}").unwrap();
+        let program =
+            PromptProgram::compile("Question: {{question}}; Context: {{context}}").unwrap();
         let args = BTreeMap::from([
             ("question".into(), "why".into()),
             ("context".into(), "because".into()),
         ]);
         let rendered = program.render(&args).unwrap();
         assert_eq!(rendered.content(), "Question: why; Context: because");
-        assert_eq!(program.render(&BTreeMap::new()), Err(PromptError::Arguments));
+        assert_eq!(
+            program.render(&BTreeMap::new()),
+            Err(PromptError::Arguments)
+        );
     }
 
     #[test]
@@ -122,6 +145,9 @@ mod tests {
     fn arbitrary_result_text_remains_inert_data() {
         let program = PromptProgram::compile("{{question}}").unwrap();
         let args = BTreeMap::from([("question".into(), "{\"action\":\"purchase\"}".into())]);
-        assert_eq!(program.render(&args).unwrap().content(), "{\"action\":\"purchase\"}");
+        assert_eq!(
+            program.render(&args).unwrap().content(),
+            "{\"action\":\"purchase\"}"
+        );
     }
 }
