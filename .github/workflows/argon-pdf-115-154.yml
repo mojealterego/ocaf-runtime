@@ -10,6 +10,7 @@ on:
       - 'src/document_store.rs'
       - 'src/lib.rs'
       - 'src/compliance_evidence.rs'
+      - 'src/contract_obligations.rs'
       - 'ROADMAP.md'
       - 'README.md'
       - 'docs/ROADMAP_FULL_ECOSYSTEM_2026.md'
@@ -47,5 +48,7 @@ jobs:
           cargo test --locked --no-default-features --lib document_store::tests
       - name: Compliance evidence pack SHA-256 and CAF objective tests
         run: cargo test --locked --no-default-features --lib compliance_evidence::tests
+      - name: Contract obligation extraction and deadline tests
+        run: cargo test --locked --no-default-features --lib contract_obligations::tests
       - name: Clippy bounded core
         run: cargo clippy --locked --all-targets --no-default-features -- -D warnings

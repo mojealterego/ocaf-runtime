@@ -85,3 +85,5 @@ pub mod finops_ledger;
 pub mod omnidev_workflow;
 
 pub mod compliance_evidence;
+
+pub mod contract_obligations;
