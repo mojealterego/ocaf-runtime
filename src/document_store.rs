@@ -174,7 +174,8 @@ impl SqliteDocumentDriver {
         }
         let driver = Self { path: path.into() };
         let mut c = driver.connection()?;
-        let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)
+        let tx = c
+            .transaction_with_behavior(TransactionBehavior::Immediate)
             .map_err(|_| StoreError::Database)?;
         tx.execute_batch("CREATE TABLE IF NOT EXISTS document_events_v1 (
             tenant TEXT NOT NULL, document TEXT NOT NULL, revision INTEGER NOT NULL,
@@ -185,27 +186,40 @@ impl SqliteDocumentDriver {
             INSERT OR IGNORE INTO ocaf_document_schema(subsystem,version)
             VALUES ('document_events',1);")
             .map_err(|_| StoreError::Database)?;
-        let version: i64 = tx.query_row(
-            "SELECT version FROM ocaf_document_schema WHERE subsystem='document_events'",
-            [], |row| row.get(0))
+        let version: i64 = tx
+            .query_row(
+                "SELECT version FROM ocaf_document_schema WHERE subsystem='document_events'",
+                [],
+                |row| row.get(0),
+            )
             .map_err(|_| StoreError::Integrity)?;
-        if version != 1 { return Err(StoreError::Integrity); }
+        if version != 1 {
+            return Err(StoreError::Integrity);
+        }
         tx.commit().map_err(|_| StoreError::Database)?;
         Ok(driver)
     }
     pub fn schema_version(&self) -> Result<i64, StoreError> {
-        self.connection()?.query_row(
-            "SELECT version FROM ocaf_document_schema WHERE subsystem='document_events'",
-            [], |row| row.get(0))
+        self.connection()?
+            .query_row(
+                "SELECT version FROM ocaf_document_schema WHERE subsystem='document_events'",
+                [],
+                |row| row.get(0),
+            )
             .map_err(|_| StoreError::Integrity)
     }
     fn checked_connection(&self) -> Result<Connection, StoreError> {
         let c = self.connection()?;
-        let version: i64 = c.query_row(
-            "SELECT version FROM ocaf_document_schema WHERE subsystem='document_events'",
-            [], |row| row.get(0))
+        let version: i64 = c
+            .query_row(
+                "SELECT version FROM ocaf_document_schema WHERE subsystem='document_events'",
+                [],
+                |row| row.get(0),
+            )
             .map_err(|_| StoreError::Integrity)?;
-        if version != 1 { return Err(StoreError::Integrity); }
+        if version != 1 {
+            return Err(StoreError::Integrity);
+        }
         Ok(c)
     }
     fn connection(&self) -> Result<Connection, StoreError> {
@@ -377,15 +391,26 @@ mod tests {
         let key = DocumentKey::new("tenant", "legacy").unwrap();
         let first = driver.append(&key, &Head::default(), &create()).unwrap();
         let connection = Connection::open(file.path()).unwrap();
-        connection.execute(
-            "UPDATE ocaf_document_schema SET version=99 WHERE subsystem='document_events'",
-            []).unwrap();
-        assert!(matches!(SqliteDocumentDriver::open_existing(file.path()),
-            Err(StoreError::Integrity)));
-        assert!(matches!(driver.load(&key, Some(&first)), Err(StoreError::Integrity)));
-        connection.execute(
-            "UPDATE ocaf_document_schema SET version=1 WHERE subsystem='document_events'",
-            []).unwrap();
+        connection
+            .execute(
+                "UPDATE ocaf_document_schema SET version=99 WHERE subsystem='document_events'",
+                [],
+            )
+            .unwrap();
+        assert!(matches!(
+            SqliteDocumentDriver::open_existing(file.path()),
+            Err(StoreError::Integrity)
+        ));
+        assert!(matches!(
+            driver.load(&key, Some(&first)),
+            Err(StoreError::Integrity)
+        ));
+        connection
+            .execute(
+                "UPDATE ocaf_document_schema SET version=1 WHERE subsystem='document_events'",
+                [],
+            )
+            .unwrap();
         assert_eq!(driver.load(&key, Some(&first)).unwrap().1, first);
     }
     #[test]
