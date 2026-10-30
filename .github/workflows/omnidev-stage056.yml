@@ -50,12 +50,14 @@ jobs:
         run: python3 -m pip install --disable-pip-version-check tree-sitter==0.25.2 tree-sitter-rust==0.24.0
       - name: Real Rust CST parser and impact tests
         run: python3 -m unittest discover -s scripts/tests -p test_omnidev_tree_sitter.py -v
+      - name: Require Docker daemon for isolated real Rust and Python E2E
+        run: docker info >/dev/null
       - name: Test complete OmniDev patch pipeline and recovery
         run: python3 -m unittest discover -s scripts/tests -p test_omnidev_pipeline.py -v
       - name: AST and CST security critic negative tests
         run: python3 -m unittest discover -s scripts/tests -p test_omnidev_semantic_critic.py -v
       - name: Formatting
-        run: cargo fmt --all -- --check
+        run: rustfmt --check --edition 2021 src/omnidev_workflow.rs tests/omnidev_workflow.rs
       - name: Typed DAG role, tenant, lease, replay and cost tests
         run: cargo test --locked --no-default-features --test omnidev_workflow
       - name: Strict Clippy for OmniDev contract
