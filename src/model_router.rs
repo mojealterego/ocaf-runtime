@@ -109,7 +109,11 @@ pub fn select(
                 .checked_mul(request.tokens)?
                 .checked_add(999)?
                 / 1000;
-            (cost <= request.max_total_cost_micro).then_some((cost, model.p95_latency_ms, &model.id))
+            (cost <= request.max_total_cost_micro).then_some((
+                cost,
+                model.p95_latency_ms,
+                &model.id,
+            ))
         })
         .min()
         .map(|(estimated_cost_micro, _, profile_id)| Selection {
