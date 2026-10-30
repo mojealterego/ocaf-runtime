@@ -346,8 +346,10 @@ mod tests {
     #[test]
     fn oversized_artifact_does_not_get_hashed_or_accepted() {
         let body = vec![0u8; MAX_ARTIFACT_BYTES + 1];
-        let mut evidence = artifact("oversized", CafObjective::ManagingSecurityRisk);
-        evidence.content = &body;
+        let evidence = ComplianceEvidenceArtifact {
+            content: &body,
+            ..artifact("oversized", CafObjective::ManagingSecurityRisk)
+        };
         let result = inspect_evidence(
             TENANT,
             RegulatoryFramework::NcscCafGovAssure,
