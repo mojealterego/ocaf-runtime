@@ -732,3 +732,9 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 
 - [CI 40990353117 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/40990353117), SHA `f618310d01543ce5475866f51263782f06c47810`: potwierdzony typowany BM25 inverted postings per tenant, deterministyczny wynik, lokalna ewaluacja Recall@k/MRR, testy negatywne, rustfmt i Clippy.
 - Komponenty źródłowe `PDF-1.47`, `PDF-1.52`: **ZROBIONE_KOD_TEST_LOKALNY**. Brak realnego Moss, Zenoh bridge, E2E providerów, pełnego runtime, wydajności na produkcyjnym korpusie; kanoniczne etapy pozostają niezamknięte. Bez binariów/release i bez produkcyjnego GO.
+
+### 2026-10-30 — 0.65 OmniFin: trwały ledger budżetowy (częściowa implementacja)
+
+- Dodano `src/finops_ledger.rs` i `tests/finops_ledger.rs`: izolacja tenant/agent, atomowe rezerwacje SQLite, idempotencja, nieodwracalny commit, ochrona przed przekroczeniem budżetu i test dwóch połączeń.
+- **IMPLEMENTED_PARTIAL / CI PENDING**: brak połączenia z OMAt, polityką autoryzacji administratora, rzeczywistym providerem płatności i odbioru produkcyjnego. Kanoniczny etap 0.65 pozostaje `PLANNED_OR_UNVERIFIED`.
+- Szczegóły: `docs/audits/STAGE_065_FINOPS_LEDGER_2026-10-30.md`.
