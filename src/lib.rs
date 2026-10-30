@@ -99,3 +99,5 @@ pub mod model_router;
 pub mod voice_narrative_firewall;
 
 pub mod collaboration_tracker;
+
+pub mod agentic_prompt_dsl;
