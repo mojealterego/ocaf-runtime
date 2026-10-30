@@ -1,0 +1,225 @@
+name: OMEGA ImandraX Red Hat Sandbox staging via existing OCAF connection
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/omega-imandrax-redhat-staging.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-imandrax-redhat-staging
+  cancel-in-progress: false
+
+jobs:
+  isolated-staging:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      SANDBOX_TOKEN: ${{ secrets.OCAF_SANDBOX_TOKEN }}
+      SANDBOX_API_URL: ${{ secrets.OCAF_SANDBOX_API_URL }}
+      SANDBOX_API_FALLBACK: ${{ secrets.OCAF_SANDBOX_API }}
+      KUBECONFIG: ${{ runner.temp }}/omega-kubeconfig
+      NS: mojealterego-dev
+      OPENSHIFT_API: https://api.rm3.7wse.p1.openshiftapps.com:6443
+      REPORT_FILE: ${{ runner.temp }}/omega-staging-evidence.json
+    steps:
+      - name: Checkout OCAF main without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Checkout reviewed ImandraX source revision (no dynamic branch)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          repository: mojealterego/ImandraX-DGM-
+          ref: ad775bb70ff70a116123475af19765045ab08e5b
+          path: omega-source
+      - name: Initialize sanitized evidence (always retained)
+        shell: bash
+        run: |
+          umask 077
+          python3 - <<'PY'
+          import json,os
+          data={"schema_version":1,"status":"BLOCKED_UNVERIFIED",
+                "environment":"RED_HAT_SHARED_DEVELOPER_SANDBOX_STAGING_ONLY",
+                "namespace":"mojealterego-dev",
+                "source_sha":"ad775bb70ff70a116123475af19765045ab08e5b",
+                "owner_private_key_used":False,
+                "production_approved":False,
+                "hsm_kms_or_worm_verified":False,
+                "real_multihost_dr_verified":False}
+          with open(os.environ["REPORT_FILE"],"w") as f:
+              json.dump(data,f,sort_keys=True,indent=2)
+          PY
+      - name: Validate existing OCAF OpenShift connection without leaking token
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          python3 - <<'PY'
+          import os,sys
+          from urllib.parse import urlparse
+          token=os.environ.get("SANDBOX_TOKEN","")
+          a=os.environ.get("SANDBOX_API_URL","")
+          b=os.environ.get("SANDBOX_API_FALLBACK","")
+          if len(token)<20 or not (a or b):
+              sys.exit("OCAF_SANDBOX_CONNECTION_NOT_CONFIGURED")
+          # The bearer credential is ONLY ever sent to the pinned API endpoint.
+          expected="api.rm3.7wse.p1.openshiftapps.com"
+          # Older secret may be a console address; accept it only as a
+          # presence marker, NEVER as the network destination for the token.
+          parsed=urlparse("https://"+expected+":6443")
+          assert parsed.hostname==expected
+          PY
+          curl -fsS --max-time 15 "$OPENSHIFT_API/version" >/dev/null
+          command -v kubectl >/dev/null
+          kubectl config set-cluster redhat --server="$OPENSHIFT_API" >/dev/null
+          kubectl config set-credentials omega-ocaf --token="$SANDBOX_TOKEN" >/dev/null
+          kubectl config set-context omega --cluster=redhat --user=omega-ocaf --namespace="$NS" >/dev/null
+          kubectl config use-context omega >/dev/null
+          kubectl get namespace "$NS" -o name >/dev/null
+          for resource in buildconfigs.build.openshift.io imagestreams.image.openshift.io deployments.apps services secrets configmaps persistentvolumeclaims networkpolicies.networking.k8s.io; do
+            allowed="$(kubectl auth can-i create "$resource" -n "$NS")"
+            echo "RBAC create $resource: $allowed"
+            test "$allowed" = yes
+          done
+      - name: Install trusted OpenShift CLI for BuildConfig start
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          curl -fsSL --retry 2 --connect-timeout 20 --max-time 180 \
+            https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz \
+            -o "$RUNNER_TEMP/openshift-cli.tgz"
+          tar -tzf "$RUNNER_TEMP/openshift-cli.tgz" | grep -qx 'oc'
+          tar -xzf "$RUNNER_TEMP/openshift-cli.tgz" -C "$RUNNER_TEMP" oc
+          chmod 700 "$RUNNER_TEMP/oc"
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/oc" version --client
+      - name: Build verified source on authorized OpenShift namespace
+        shell: bash
+        run: |
+          set -euo pipefail
+          oc -n "$NS" apply -f omega-source/deploy/openshift-sandbox/build.yaml
+          oc -n "$NS" start-build omega-imandrax-authority --wait --follow --build-loglevel=0
+          digest="$(oc -n "$NS" get imagestreamtag omega-imandrax-authority:staging -o jsonpath='{.image.metadata.name}')"
+          echo "$digest" | grep -Eq '^sha256:[a-f0-9]{64}$'
+          image="image-registry.openshift-image-registry.svc:5000/$NS/omega-imandrax-authority@$digest"
+          echo "OMEGA_IMAGE=$image" >> "$GITHUB_ENV"
+          echo "OMEGA_IMAGE_DIGEST=$digest" >> "$GITHUB_ENV"
+      - name: Provision disposable staging-only test identities and TLS
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          python3 -m pip -q install 'cryptography>=41'
+          mkdir -p "$RUNNER_TEMP/omega-test-secrets"
+          python3 - <<'PY'
+          import json,os,secrets
+          from pathlib import Path
+          from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+          from cryptography.hazmat.primitives import serialization
+          p=Path(os.environ["RUNNER_TEMP"])/"omega-test-secrets"
+          pub=lambda sk:sk.public_key().public_bytes(
+              serialization.Encoding.Raw,serialization.PublicFormat.Raw).hex()
+          runner=pub(Ed25519PrivateKey.generate())
+          reviewer=pub(Ed25519PrivateKey.generate())
+          (p/"trust.json").write_text(json.dumps({"runners":{"stage-runner":runner},
+                    "reviewers":{"stage-owner-test-only":reviewer}}))
+          for name in ("proposer","runner","reviewer"):
+              (p/(name+"_token")).write_text(secrets.token_urlsafe(48))
+          PY
+          openssl req -x509 -nodes -newkey rsa:2048 -sha256 -days 1 \
+            -keyout "$RUNNER_TEMP/omega-test-secrets/tls.key" \
+            -out "$RUNNER_TEMP/omega-test-secrets/tls.crt" \
+            -subj "/CN=omega-staging-authority.$NS.svc" \
+            -addext "subjectAltName=DNS:omega-staging-authority.$NS.svc,DNS:omega-staging-authority.$NS.svc.cluster.local" \
+            >/dev/null 2>&1
+          oc -n "$NS" create configmap omega-staging-trust \
+            --from-file=trust.json="$RUNNER_TEMP/omega-test-secrets/trust.json" \
+            --dry-run=client -o yaml | oc -n "$NS" apply -f -
+          oc -n "$NS" create secret generic omega-staging-tokens \
+            --from-file=proposer_token="$RUNNER_TEMP/omega-test-secrets/proposer_token" \
+            --from-file=runner_token="$RUNNER_TEMP/omega-test-secrets/runner_token" \
+            --from-file=reviewer_token="$RUNNER_TEMP/omega-test-secrets/reviewer_token" \
+            --dry-run=client -o yaml | oc -n "$NS" apply -f -
+          oc -n "$NS" create secret tls omega-staging-tls \
+            --cert="$RUNNER_TEMP/omega-test-secrets/tls.crt" \
+            --key="$RUNNER_TEMP/omega-test-secrets/tls.key" \
+            --dry-run=client -o yaml | oc -n "$NS" apply -f -
+      - name: Deploy private OpenShift staging service pinned to built image
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os,re
+          from pathlib import Path
+          image=os.environ["OMEGA_IMAGE"]
+          if not re.fullmatch(r"image-registry\.openshift-image-registry\.svc:5000/mojealterego-dev/omega-imandrax-authority@sha256:[0-9a-f]{64}",image):
+              raise SystemExit("UNTRUSTED_BUILT_IMAGE")
+          src=Path("omega-source/deploy/openshift-sandbox/staging.yaml").read_text()
+          placeholder="quay.io/REPLACE_ME/omega-authority@sha256:REPLACE_WITH_64_HEX_DIGEST"
+          if src.count(placeholder)!=1:
+              raise SystemExit("UNEXPECTED_STAGING_IMAGE_TEMPLATE")
+          out=Path(os.environ["RUNNER_TEMP"])/"omega-private-deployment.yaml"
+          out.write_text(src.replace(placeholder,image))
+          PY
+          oc -n "$NS" apply -f "$RUNNER_TEMP/omega-private-deployment.yaml"
+          oc -n "$NS" rollout status deployment/omega-staging-authority --timeout=300s
+      - name: Validate actual TLS endpoint and unauthorized request rejection
+        shell: bash
+        run: |
+          set -euo pipefail
+          name="omega-authority-probe-$GITHUB_RUN_ID"
+          oc -n "$NS" run "$name" --restart=Never \
+            --image=curlimages/curl:8.12.1 \
+            --labels='omega-authority-client=true' \
+            --command -- sh -ec '
+              base=https://omega-staging-authority:9443
+              code=$(curl -ksS -o /dev/null -w "%{http_code}" --max-time 15 "$base/healthz")
+              test "$code" = 200
+              denial=$(curl -ksS -o /dev/null -w "%{http_code}" --max-time 15 "$base/v1/proposals/unknown")
+              test "$denial" = 401
+              echo TLS_STAGING_HEALTH_AND_UNAUTHORIZED_GATE_PASS'
+          state=PENDING
+          for i in $(seq 1 60); do
+            state="$(oc -n "$NS" get pod "$name" -o jsonpath='{.status.phase}' 2>/dev/null || true)"
+            if [ "$state" = Succeeded ] || [ "$state" = Failed ]; then break; fi
+            sleep 3
+          done
+          oc -n "$NS" logs "$name" || true
+          oc -n "$NS" delete pod "$name" --ignore-not-found=true --wait=false >/dev/null
+          test "$state" = Succeeded
+      - name: Save sanitized observed staging evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,os
+          p=os.environ["REPORT_FILE"]
+          d=json.load(open(p))
+          d.update({"status":"OPENSHIFT_STAGING_DEPLOYED_AND_NEGATIVE_TLS_TEST_PASS",
+                    "staging_image_digest":os.environ["OMEGA_IMAGE_DIGEST"],
+                    "cluster":"api.rm3.7wse.p1.openshiftapps.com",
+                    "private_clusterip_only":True,
+                    "production_approved":False,
+                    "owner_private_key_used":False})
+          with open(p,"w") as f: json.dump(d,f,sort_keys=True,indent=2)
+          PY
+      - name: Upload staging audit (success or blocked) without secrets
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: omega-imandrax-redhat-sandbox-staging-evidence
+          path: ${{ runner.temp }}/omega-staging-evidence.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Erase ephemeral runner tokens and Kubernetes context
+        if: always()
+        shell: bash
+        run: |
+          rm -rf -- "$KUBECONFIG" "$RUNNER_TEMP/omega-test-secrets" \
+            "$RUNNER_TEMP/openshift-cli.tgz" "$RUNNER_TEMP/omega-private-deployment.yaml"
