@@ -36,3 +36,10 @@ Zweryfikowany [run #41011058519](https://github.com/mojealterego/ocaf-runtime/ac
 - 13 testów kontraktów Rust (DAG, koszt, tenant, lease, epoch, stale replay), `cargo fmt` i `cargo clippy -D warnings`: PASS.
 
 Status: **`PRODUCTION_ACCEPTED_SIMULATION`** — kompletny **ograniczony wariant symulacyjny**, zatwierdzony dyrektywą operatora bez zewnętrznej infrastruktury. Brak dowodu pełnej autonomicznej generacji kodu i pełnej semantyki Rust/type-checker, fizycznego KVM, rzeczywistych podpisów HSM oraz wdrożenia produkcyjnego. Nowy test negatywny sieci/read-only i poprawka długości komendy jeszcze bez zielonego wyniku w chwili wpisu. `production_approved=false`.
+
+## Końcowa powtórna weryfikacja — PASS na SHA `edce06e5ca69a798cca4f8c45a3fbfea2368de9e`
+
+- Dedykowane [GitHub Actions #41033640572](https://github.com/mojealterego/ocaf-runtime/actions/runs/41033640572) zakończone `SUCCESS`.
+- Tree-sitter **4/4**; pipeline **23/23** (rzeczywiste Docker Rust/Python compile/test, test odmowy dostępu do sieci i modyfikowania źródeł, operator CLI i HMAC, SQLite recovery); kontrola semantyczna AST/CST **3/3**; Rust DAG **13/13**; `rustfmt` oraz strict Clippy **PASS**.
+- Ograniczony status całego etapu: `PRODUCTION_ACCEPTED_SIMULATION`. Nie potwierdza autonomicznego generatora dowolnych patchy, pełnego symbol resolver, fizycznego KVM, zewnętrznego audytu ani rzeczywistego wdrożenia produkcyjnego.
+- Zastępuje wcześniejsze informacje o oczekiwaniu na CI i pierwotnym odbiorze tylko sterownika pamięciowego. Wszystkie oryginalne wymagania historyczne zachowano.

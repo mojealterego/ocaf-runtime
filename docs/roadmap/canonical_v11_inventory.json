@@ -861,18 +861,18 @@
       "simulation_acceptance": {
         "status": "PRODUCTION_ACCEPTED_SIMULATION",
         "scope": "bounded Rust CST/Cargo graph, exact-anchor Rust/Python codegen, AST/CST security, real Docker isolated Rust/Python build/test, operator HMAC/CLI, SQLite recovery, Rust DAG tenant/lease/fencing",
-        "ci_code_sha": "dce17cb110869f7a2fd3c492d4afb40d9b23fc8a",
-        "ci_run": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41011058519",
+        "ci_code_sha": "edce06e5ca69a798cca4f8c45a3fbfea2368de9e",
+        "ci_run": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41033640572",
         "ci_conclusion": "success",
         "tests": {
           "tree_sitter": 4,
-          "pipeline": 22,
+          "pipeline": 23,
           "semantic": 3,
           "rust": 13
         },
         "deployment_type": "simulation_only",
         "limitations": "no general natural-language autonomous codegen, no fully typed Rust impact graph, no Firecracker/KVM, no externally signed artifacts, no real deployment",
-        "newer_isolation_negative_test_ci": "pending"
+        "newer_isolation_negative_test_ci": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41033640572"
       }
     },
     {
@@ -7435,12 +7435,12 @@
     "directive": "No other physical infrastructure, approve production simulation based on tested bounded functionality.",
     "accepted_scope": "0.56 / bounded OmniDev product: Tree-sitter CST, exact-anchor patch generator, AST/CST security, Docker Python/Rust guest, operator CLI/HMAC, SQLite recovery, Rust workflow DAG",
     "status": "PRODUCTION_ACCEPTED_SIMULATION",
-    "code_sha": "dce17cb110869f7a2fd3c492d4afb40d9b23fc8a",
-    "ci_run": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41011058519",
+    "code_sha": "edce06e5ca69a798cca4f8c45a3fbfea2368de9e",
+    "ci_run": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41033640572",
     "ci_conclusion": "success",
     "tests": {
       "tree_sitter": 4,
-      "pipeline": 22,
+      "pipeline": 23,
       "semantic": 3,
       "rust": 13
     },
@@ -7453,7 +7453,7 @@
       "no complete typed semantic resolver or hardware HSM",
       "no genuine production deployment"
     ],
-    "newer_negative_isolation_ci": "pending",
+    "newer_negative_isolation_ci": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41033640572",
     "real_infrastructure_proven": false,
     "production_approved": false
   }

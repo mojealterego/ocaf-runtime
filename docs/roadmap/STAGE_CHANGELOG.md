@@ -1,5 +1,12 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-10-30 — CI PASS — 0.56 OmniDev / pełna bramka symulacyjna
+
+- **SHA zakresu potwierdzonego:** `edce06e5ca69a798cca4f8c45a3fbfea2368de9e`; **GitHub Actions:** https://github.com/mojealterego/ocaf-runtime/actions/runs/41033640572 — `completed/success`.
+- **Realnie wykonane:** 4/4 Tree-sitter, 23/23 pipeline (Docker Python i Rust, odmowa egress i zmiany źródła, podpis operatora HMAC, SQLite recovery), 3/3 security AST/CST, 13/13 Rust DAG; scoped rustfmt i strict Clippy PASS.
+- Zmiana dedykowanej bramki: Docker daemon jest warunkiem E2E, formatowanie ograniczono do plików Rust etapu 0.56 (pełny rustfmt i pozostałe testy pozostają w `Rust CI`).
+- **Status pozostaje:** `PRODUCTION_ACCEPTED_SIMULATION` w ograniczonym zakresie, nie `DEPLOYED` ani realny Firecracker/KVM; globalne `production_approved=false`. Odrębna bramka `OCAF agent artifact contract` nadal miała `FAIL` na poprzednim HEAD — nie jest częścią odbioru 0.56.
+
 ## 2026-10-30 — PRODUCTION_ACCEPTED_SIMULATION — 0.56 OmniDev bounded implementation
 
 - **Odbiór operatora produkcyjny w zakresie symulacyjnym:** zgodnie z polityką `docs/roadmap/SIMULATION_ONLY_ACCEPTANCE_POLICY_2026-10-30.md`; nie oznacza rzeczywistego DEPLOYED/Firecracker/KVM ani zewnętrznego audytu.

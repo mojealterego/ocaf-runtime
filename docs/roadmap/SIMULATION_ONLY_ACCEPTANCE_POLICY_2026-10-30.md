@@ -34,3 +34,7 @@ Operator zaakceptował w rozmowie 2026-10-30 stosowanie odbioru produkcyjnego dl
 Powyższy zapis o odbiorze wyłącznie Rust DAG jest **historyczny i zastąpiony** nowym wykonanym zakresem. `0.56=PRODUCTION_ACCEPTED_SIMULATION` w zakresie: Tree-sitter Rust CST, Cargo graph, generator jednoznacznych patchy Rust/Python, weryfikacja AST/CST i Git, izolowany Docker z rzeczywistym Rust/Python compile/test, operator HMAC/CLI, lokalne SQLite recovery i kontrakty Rust DAG. Testy potwierdzone na `dce17cb110869f7a2fd3c492d4afb40d9b23fc8a` w [CI #41011058519](https://github.com/mojealterego/ocaf-runtime/actions/runs/41011058519).
 
 Granica odbioru jest jawna: to nie jest dowód arbitralnej autonomicznej generacji kodu z języka naturalnego, pełnego typowanego code graph, kryptograficznie podpisanych artefaktów HSM ani wykonania w Firecracker/KVM. Te niefizyczne braki pozostają opisane jako ograniczenia, zamiast być nazywanymi wykonaniem. Nowy test odmowy egress/zapisu wymaga osobnego wyniku po poprawce długości komendy. `deployment_type=simulation_only`; globalne `production_approved=false`.
+
+## Końcowy dowód przejścia bramki 0.56 (2026-10-30)
+
+[CI #41033640572](https://github.com/mojealterego/ocaf-runtime/actions/runs/41033640572) na `edce06e5ca69a798cca4f8c45a3fbfea2368de9e`: **PASS** — 4 testy Tree-sitter, 23 testy pipeline Docker, 3 testy semantyczne i 13 testów Rust, plus rustfmt/Clippy. Status `PRODUCTION_ACCEPTED_SIMULATION` obejmuje wyłącznie jawnie ograniczoną implementację symulacyjną z manifestu v11. `production_approved=false` dla realnego deploymentu.
