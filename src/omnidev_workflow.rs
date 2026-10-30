@@ -133,15 +133,20 @@ pub struct OmniDevWorkflow {
 fn valid_id(s: &str) -> bool {
     !s.is_empty()
         && s.len() <= 128
-        && s.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b'.' | b':'))
+        && s.bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b'.' | b':'))
 }
 
 fn valid_git_sha(s: &str) -> bool {
-    s.len() == 40 && s.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
+    s.len() == 40
+        && s.bytes()
+            .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
 }
 
 fn valid_sha(s: &str) -> bool {
-    s.len() == 64 && s.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
+    s.len() == 64
+        && s.bytes()
+            .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
 }
 
 fn visit(
@@ -202,13 +207,19 @@ impl OmniDevWorkflow {
         for id in map.keys() {
             visit(id, &map, &mut BTreeSet::new(), &mut visited)?;
         }
-        let nodes = map.keys().map(|id| {
-            (id.clone(), StepRuntime {
-                status: StepStatus::Ready,
-                attempts: 0,
-                last_receipt: None,
+        let nodes = map
+            .keys()
+            .map(|id| {
+                (
+                    id.clone(),
+                    StepRuntime {
+                        status: StepStatus::Ready,
+                        attempts: 0,
+                        last_receipt: None,
+                    },
+                )
             })
-        }).collect();
+            .collect();
         Ok(Self {
             contract,
             nodes,
@@ -267,9 +278,17 @@ impl OmniDevWorkflow {
         if now_unix >= self.contract.deadline_unix {
             return Err(WorkflowError::BudgetOrDeadline);
         }
-        let step = self.contract.steps.iter().find(|s| s.id == id).ok_or(WorkflowError::Denied)?;
+        let step = self
+            .contract
+            .steps
+            .iter()
+            .find(|s| s.id == id)
+            .ok_or(WorkflowError::Denied)?;
         for prerequisite in &step.prerequisites {
-            if !matches!(self.nodes.get(prerequisite).map(|n| &n.status), Some(StepStatus::Passed { .. })) {
+            if !matches!(
+                self.nodes.get(prerequisite).map(|n| &n.status),
+                Some(StepStatus::Passed { .. })
+            ) {
                 return Err(WorkflowError::NotReady);
             }
         }
@@ -282,12 +301,16 @@ impl OmniDevWorkflow {
         if !matches!(state.status, StepStatus::Ready) || state.attempts >= step.max_attempts {
             return Err(WorkflowError::BusyOrTerminal);
         }
-        if self.cost_spent_minor.saturating_add(self.cost_reserved_minor)
-            .saturating_add(step.max_cost_minor) > self.contract.max_cost_minor
+        if self
+            .cost_spent_minor
+            .saturating_add(self.cost_reserved_minor)
+            .saturating_add(step.max_cost_minor)
+            > self.contract.max_cost_minor
         {
             return Err(WorkflowError::BudgetOrDeadline);
         }
-        let expires_at = now_unix.checked_add(step.lease_seconds)
+        let expires_at = now_unix
+            .checked_add(step.lease_seconds)
             .ok_or(WorkflowError::BudgetOrDeadline)?;
         let expires_at = expires_at.min(self.contract.deadline_unix);
         let claim = Claim {
@@ -318,7 +341,12 @@ impl OmniDevWorkflow {
         if !valid_sha(&receipt.evidence_sha256) || !valid_id(&receipt.attempt_id) {
             return Err(WorkflowError::ReceiptConflict);
         }
-        let step = self.contract.steps.iter().find(|s| s.id == id).ok_or(WorkflowError::Denied)?;
+        let step = self
+            .contract
+            .steps
+            .iter()
+            .find(|s| s.id == id)
+            .ok_or(WorkflowError::Denied)?;
         let state = self.nodes.get(id).ok_or(WorkflowError::Denied)?;
         if state.last_receipt.as_ref() == Some(&receipt) {
             return Ok(Completion::Replay);
@@ -339,7 +367,9 @@ impl OmniDevWorkflow {
         self.cost_spent_minor += receipt.actual_cost_minor;
         let state = self.nodes.get_mut(id).ok_or(WorkflowError::Denied)?;
         state.status = match receipt.outcome {
-            Outcome::Passed => StepStatus::Passed { evidence_sha256: receipt.evidence_sha256.clone() },
+            Outcome::Passed => StepStatus::Passed {
+                evidence_sha256: receipt.evidence_sha256.clone(),
+            },
             Outcome::Failed if state.attempts < step.max_attempts => StepStatus::Ready,
             Outcome::Failed => StepStatus::Halted,
         };
@@ -373,13 +403,20 @@ impl OmniDevWorkflow {
         if epoch != claim.epoch || now_unix < claim.expires_at {
             return Err(WorkflowError::Fenced);
         }
-        let step = self.contract.steps.iter().find(|s| s.id == id).ok_or(WorkflowError::Denied)?;
+        let step = self
+            .contract
+            .steps
+            .iter()
+            .find(|s| s.id == id)
+            .ok_or(WorkflowError::Denied)?;
         let max_attempts = step.max_attempts;
         let reserved = step.max_cost_minor;
         self.cost_reserved_minor -= reserved;
         let state = self.nodes.get_mut(id).ok_or(WorkflowError::Denied)?;
         state.status = match resolution {
-            TimeoutResolution::NoEffectConfirmed if state.attempts < max_attempts => StepStatus::Ready,
+            TimeoutResolution::NoEffectConfirmed if state.attempts < max_attempts => {
+                StepStatus::Ready
+            }
             _ => StepStatus::Halted,
         };
         self.append_audit("RECONCILE", id, epoch, evidence_sha256);
@@ -390,11 +427,16 @@ impl OmniDevWorkflow {
         if self.contract.tenant != trusted_tenant {
             return Err(WorkflowError::Denied);
         }
-        self.nodes.get(id).map(|n| &n.status).ok_or(WorkflowError::Denied)
+        self.nodes
+            .get(id)
+            .map(|n| &n.status)
+            .ok_or(WorkflowError::Denied)
     }
 
     pub fn is_completed(&self) -> bool {
-        self.nodes.values().all(|n| matches!(n.status, StepStatus::Passed { .. }))
+        self.nodes
+            .values()
+            .all(|n| matches!(n.status, StepStatus::Passed { .. }))
     }
 
     pub fn budget_state(&self) -> (u64, u64) {
