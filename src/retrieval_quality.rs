@@ -46,12 +46,12 @@ pub struct SourceDocument {
 struct IndexedDocument {
     source_id: String,
     len: usize,
-    frequencies: BTreeMap<String, usize>,
 }
 
 struct TenantIndex {
     documents: Vec<IndexedDocument>,
-    frequencies: BTreeMap<String, usize>,
+    // Each term resolves only matching documents; never scan cross-tenant text.
+    postings: BTreeMap<String, Vec<(usize, usize)>>,
     average_length: f64,
 }
 
@@ -72,7 +72,7 @@ impl LexicalIndex {
         if documents.len() > MAX_DOCUMENTS {
             return Err(RetrievalError::Limit);
         }
-        let mut groups: BTreeMap<String, Vec<IndexedDocument>> = BTreeMap::new();
+        let mut groups: BTreeMap<String, Vec<(IndexedDocument, BTreeMap<String, usize>)>> = BTreeMap::new();
         let mut unique = BTreeSet::new();
         for doc in documents {
             if !valid_id(&doc.tenant) || !valid_id(&doc.source_id) {
@@ -92,27 +92,31 @@ impl LexicalIndex {
             for word in &tokens {
                 *frequencies.entry(word.clone()).or_insert(0) += 1;
             }
-            groups.entry(doc.tenant).or_default().push(IndexedDocument {
-                source_id: doc.source_id,
-                len: tokens.len(),
+            groups.entry(doc.tenant).or_default().push((
+                IndexedDocument {
+                    source_id: doc.source_id,
+                    len: tokens.len(),
+                },
                 frequencies,
-            });
+            ));
         }
         let mut tenants = BTreeMap::new();
         for (tenant, entries) in groups {
-            let mut df = BTreeMap::new();
-            let total: usize = entries.iter().map(|doc| doc.len).sum();
-            for entry in &entries {
-                for word in entry.frequencies.keys() {
-                    *df.entry(word.clone()).or_insert(0) += 1;
-                }
-            }
+            let mut postings: BTreeMap<String, Vec<(usize, usize)>> = BTreeMap::new();
+            let total: usize = entries.iter().map(|(doc, _)| doc.len).sum();
             let average_length = total as f64 / entries.len() as f64;
+            let mut documents = Vec::with_capacity(entries.len());
+            for (index, (doc, frequencies)) in entries.into_iter().enumerate() {
+                for (term, count) in frequencies {
+                    postings.entry(term).or_default().push((index, count));
+                }
+                documents.push(doc);
+            }
             tenants.insert(
                 tenant,
                 TenantIndex {
-                    documents: entries,
-                    frequencies: df,
+                    documents,
+                    postings,
                     average_length,
                 },
             );
@@ -144,30 +148,33 @@ impl LexicalIndex {
         };
         let unique: BTreeSet<String> = tokens.into_iter().collect();
         let n = index.documents.len() as f64;
-        let mut hits = Vec::new();
-        for doc in &index.documents {
-            let mut score = 0.0;
-            for term in &unique {
-                let Some(&frequency) = doc.frequencies.get(term) else {
-                    continue;
-                };
-                let df = *index.frequencies.get(term).unwrap_or(&0) as f64;
-                let idf = ((n - df + 0.5) / (df + 0.5) + 1.0).ln();
+        let mut scores: BTreeMap<usize, f64> = BTreeMap::new();
+        for term in &unique {
+            let Some(postings) = index.postings.get(term) else {
+                continue;
+            };
+            let df = postings.len() as f64;
+            let idf = ((n - df + 0.5) / (df + 0.5) + 1.0).ln();
+            for &(doc_index, frequency) in postings {
+                let doc = &index.documents[doc_index];
                 let length_factor = if index.average_length == 0.0 {
                     1.0
                 } else {
                     0.25 + 0.75 * (doc.len as f64 / index.average_length)
                 };
                 let tf = frequency as f64;
-                score += idf * (tf * 2.2) / (tf + 1.2 * length_factor);
-            }
-            if score > 0.0 && score.is_finite() {
-                hits.push(SearchHit {
-                    source_id: doc.source_id.clone(),
-                    bm25_score: score,
-                });
+                *scores.entry(doc_index).or_insert(0.0) +=
+                    idf * (tf * 2.2) / (tf + 1.2 * length_factor);
             }
         }
+        let mut hits: Vec<SearchHit> = scores
+            .into_iter()
+            .filter(|(_, score)| *score > 0.0 && score.is_finite())
+            .map(|(index_in_tenant, bm25_score)| SearchHit {
+                source_id: index.documents[index_in_tenant].source_id.clone(),
+                bm25_score,
+            })
+            .collect();
         hits.sort_by(|a, b| {
             b.bm25_score
                 .total_cmp(&a.bm25_score)
@@ -300,6 +307,44 @@ mod tests {
             index.search("a", "żółć", 1).unwrap(),
             index.search("a", "ŻÓŁĆ ŻÓŁĆ", 1).unwrap()
         );
+    }
+
+    #[test]
+    fn postings_are_independent_of_document_insertion_order() {
+        let mut docs = vec![
+            SourceDocument {
+                tenant: "tenant_a".into(),
+                source_id: "aaa".into(),
+                body: "alpha beta".into(),
+            },
+            SourceDocument {
+                tenant: "tenant_a".into(),
+                source_id: "bbb".into(),
+                body: "alpha beta".into(),
+            },
+        ];
+        let first = LexicalIndex::build(docs.drain(..).collect())
+            .unwrap()
+            .search("tenant_a", "alpha", 10)
+            .unwrap();
+        docs = vec![
+            SourceDocument {
+                tenant: "tenant_a".into(),
+                source_id: "bbb".into(),
+                body: "alpha beta".into(),
+            },
+            SourceDocument {
+                tenant: "tenant_a".into(),
+                source_id: "aaa".into(),
+                body: "alpha beta".into(),
+            },
+        ];
+        let second = LexicalIndex::build(docs)
+            .unwrap()
+            .search("tenant_a", "alpha", 10)
+            .unwrap();
+        assert_eq!(first, second);
+        assert_eq!(first[0].source_id, "aaa");
     }
 
     #[test]
