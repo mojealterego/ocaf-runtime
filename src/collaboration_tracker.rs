@@ -46,7 +46,8 @@ pub struct CollaborationTracker {
 fn valid_id(s: &str) -> bool {
     !s.is_empty()
         && s.len() <= 128
-        && s.bytes().all(|b| b.is_ascii_alphanumeric() || b"_-.:".contains(&b))
+        && s.bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"_-.:".contains(&b))
 }
 
 impl CollaborationTracker {
@@ -76,9 +77,7 @@ impl CollaborationTracker {
         if next_revision != expected_revision {
             return Err(TrackerError::Conflict);
         }
-        if !self.objects.contains_key(&key) && self.objects.len() >= 1024
-            || next_revision >= 256
-        {
+        if !self.objects.contains_key(&key) && self.objects.len() >= 1024 || next_revision >= 256 {
             return Err(TrackerError::Limit);
         }
         let event = CollaborationEvent {
@@ -93,7 +92,11 @@ impl CollaborationTracker {
     }
 
     /// The trusted caller supplies tenant identity, never a model output.
-    pub fn history(&self, tenant: &str, object: &str) -> Result<Vec<CollaborationEvent>, TrackerError> {
+    pub fn history(
+        &self,
+        tenant: &str,
+        object: &str,
+    ) -> Result<Vec<CollaborationEvent>, TrackerError> {
         if !valid_id(tenant) || !valid_id(object) {
             return Err(TrackerError::Invalid);
         }
@@ -110,20 +113,50 @@ mod tests {
     use super::*;
 
     fn actor(tenant: &str) -> TrustedActor {
-        TrustedActor { tenant: tenant.into(), actor: "agent-1".into() }
+        TrustedActor {
+            tenant: tenant.into(),
+            actor: "agent-1".into(),
+        }
     }
 
     #[test]
     fn immutable_actor_history_isolated_by_tenant_and_fenced() {
         let mut tracker = CollaborationTracker::default();
         let digest = "a".repeat(64);
-        assert_eq!(tracker.append(&actor("tenant-a"), "object1", 0,
-            CognitiveOperation::Propose, "design", &digest), Ok(1));
-        assert_eq!(tracker.append(&actor("tenant-a"), "object1", 0,
-            CognitiveOperation::Modify, "design", &digest), Err(TrackerError::Conflict));
+        assert_eq!(
+            tracker.append(
+                &actor("tenant-a"),
+                "object1",
+                0,
+                CognitiveOperation::Propose,
+                "design",
+                &digest
+            ),
+            Ok(1)
+        );
+        assert_eq!(
+            tracker.append(
+                &actor("tenant-a"),
+                "object1",
+                0,
+                CognitiveOperation::Modify,
+                "design",
+                &digest
+            ),
+            Err(TrackerError::Conflict)
+        );
         assert!(tracker.history("tenant-b", "object1").unwrap().is_empty());
-        assert_eq!(tracker.append(&actor("tenant-b"), "object1", 0,
-            CognitiveOperation::Challenge, "design", &digest), Ok(1));
+        assert_eq!(
+            tracker.append(
+                &actor("tenant-b"),
+                "object1",
+                0,
+                CognitiveOperation::Challenge,
+                "design",
+                &digest
+            ),
+            Ok(1)
+        );
         assert_eq!(tracker.history("tenant-a", "object1").unwrap().len(), 1);
         assert_eq!(tracker.history("tenant-b", "object1").unwrap().len(), 1);
     }
@@ -131,19 +164,51 @@ mod tests {
     #[test]
     fn malformed_and_unbounded_events_are_denied() {
         let mut tracker = CollaborationTracker::default();
-        assert_eq!(tracker.append(&actor("tenant-a"), "object1", 0,
-            CognitiveOperation::Validate, "focus", "fake"),
-            Err(TrackerError::Invalid));
+        assert_eq!(
+            tracker.append(
+                &actor("tenant-a"),
+                "object1",
+                0,
+                CognitiveOperation::Validate,
+                "focus",
+                "fake"
+            ),
+            Err(TrackerError::Invalid)
+        );
         let digest = "1".repeat(64);
-        assert_eq!(tracker.append(&actor("tenant-a"), "../", 0,
-            CognitiveOperation::Synthesize, "focus", &digest),
-            Err(TrackerError::Invalid));
+        assert_eq!(
+            tracker.append(
+                &actor("tenant-a"),
+                "../",
+                0,
+                CognitiveOperation::Synthesize,
+                "focus",
+                &digest
+            ),
+            Err(TrackerError::Invalid)
+        );
         for revision in 0..256 {
-            tracker.append(&actor("tenant-a"), "object1", revision,
-                CognitiveOperation::Validate, "focus", &digest).unwrap();
+            tracker
+                .append(
+                    &actor("tenant-a"),
+                    "object1",
+                    revision,
+                    CognitiveOperation::Validate,
+                    "focus",
+                    &digest,
+                )
+                .unwrap();
         }
-        assert_eq!(tracker.append(&actor("tenant-a"), "object1", 256,
-            CognitiveOperation::Validate, "focus", &digest),
-            Err(TrackerError::Limit));
+        assert_eq!(
+            tracker.append(
+                &actor("tenant-a"),
+                "object1",
+                256,
+                CognitiveOperation::Validate,
+                "focus",
+                &digest
+            ),
+            Err(TrackerError::Limit)
+        );
     }
 }
