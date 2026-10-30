@@ -42,7 +42,7 @@ Status `PARTIAL` oznacza wykryty, ograniczony kod w repozytorium, nie pełne kry
 | PDF-1.44 | Sanctions / supplier anomaly screening | OPEN | Aktualne źródła list, dopasowanie i false positives |
 | PDF-1.45 | Procurement governance | OPEN | Risk cap, zgoda, segregacja obowiązków |
 | PDF-1.46 | Procurement safety tests | OPEN | Brak płatności/zakupów bez zgody, retry |
-| PDF-1.47 | InProcessLexicalSelector | TESTED_LOCAL_PARTIAL | `src/retrieval_quality.rs` — implementacja lokalna, testy CI weryfikowane osobno; pełny E2E otwarty. |
+| PDF-1.47 | InProcessLexicalSelector | TESTED_LOCAL_COMPONENT | `src/retrieval_quality.rs` — implementacja lokalna, testy CI weryfikowane osobno; pełny E2E otwarty. |
 | PDF-1.48 | MossRetrievalAdapter | OPEN | Zewnętrzny interfejs dopiero po zweryfikowaniu dostawcy; local fallback |
 | PDF-1.49 | ZenohTransportBridge | OPEN | Istnieje transport Zenoh, brak E2E tego konkretnego mostu i benchmarku |
 | PDF-1.50 | McpRegistryIntegrityVerifier | OPEN | Nie potwierdzono deklarowanych 210 skilli / 420 sum |
@@ -75,3 +75,7 @@ Następny techniczny zakres: durable audit + idempotency 1.27–1.29, następnie
 ## Dowody CI po korekcie Clippy i ograniczony zakres ukończenia
 
 [GitHub Actions 40989435834 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834), SHA `3b3fe1329390f52dbde09a6babd9b637395163ac`: walidacja 40/40, rustfmt, testy SQLite journal, preflight/HMAC, BM25, Recall@k/MRR i dokument/replay, Clippy core. **PDF-1.52: ZROBIONE — testowany lokalnie komponent obliczania Recall@k/MRR.** Nie oznacza całej funkcji retrieval, kryteriów E2E ani kanonicznych etapów 1.65/1.99 jako ukończonych. Pozostałe testowane komponenty są PARTIAL lub PREFLIGHT, nie COMPLETE.
+
+## Zakończenie lokalnych komponentów retrieval — odczyt CI 40990353117
+
+[Run 40990353117](https://github.com/mojealterego/ocaf-runtime/actions/runs/40990353117) dla SHA `f618310d01543ce5475866f51263782f06c47810` zakończył się `success`: zweryfikowano formatowanie, Clippy, testy typowanego indeksu odwróconego BM25, izolacji tenantów, deterministycznych wyników, Recall@k/MRR i negatywnych przypadków. **PDF-1.47 i PDF-1.52: ZROBIONE tylko jako lokalne, testowane komponenty.** Brak potwierdzenia integracji z Zenoh/Moss, trwałego indeksu, rzeczywistego korpusu i wyników wydajnościowych. To nie jest odbiór całych etapów kanonicznych.

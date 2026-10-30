@@ -605,22 +605,22 @@
         "1.65"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "TESTED_LOCAL_PARTIAL",
+      "status": "TESTED_LOCAL_COMPONENT",
       "code_paths": [
         "src/retrieval_quality.rs"
       ],
       "verified_ci": [
         {
-          "run_id": 40989435834,
-          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "run_id": 40990353117,
+          "head_sha": "f618310d01543ce5475866f51263782f06c47810",
           "conclusion": "success",
-          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
-          "scope": "BM25 lexical and tenant-isolation regression"
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40990353117",
+          "scope": "Tenant-local inverted BM25 index, deterministic ranking, bounded and negative tests"
         }
       ],
       "complete": false,
       "production_approved": false,
-      "scoped_completion": "PARTIAL_NOT_ACCEPTED"
+      "scoped_completion": "ZROBIONE_KOD_TEST_LOKALNY"
     },
     {
       "source_id": "PDF-1.48",
@@ -691,11 +691,11 @@
       ],
       "verified_ci": [
         {
-          "run_id": 40989435834,
-          "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+          "run_id": 40990353117,
+          "head_sha": "f618310d01543ce5475866f51263782f06c47810",
           "conclusion": "success",
-          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834",
-          "scope": "Recall@k and MRR on deterministic ground-truth test corpus"
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40990353117",
+          "scope": "Ground-truth Recall@k and MRR, negative tests"
         }
       ],
       "complete": false,
@@ -732,9 +732,9 @@
     }
   ],
   "last_verified_ci": {
-    "run_id": 40989435834,
-    "head_sha": "3b3fe1329390f52dbde09a6babd9b637395163ac",
+    "run_id": 40990353117,
+    "head_sha": "f618310d01543ce5475866f51263782f06c47810",
     "conclusion": "success",
-    "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834"
+    "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/40990353117"
   }
 }

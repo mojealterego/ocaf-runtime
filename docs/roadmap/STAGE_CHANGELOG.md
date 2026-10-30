@@ -727,3 +727,8 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - [Run 40989435834](https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834): **SUCCESS** dla SHA `3b3fe1329390f52dbde09a6babd9b637395163ac`; 40/40 source ID validation, rustfmt, SQLite governance journal, preflight HMAC, BM25/Recall/MRR, dokumenty/replay i Clippy core.
 - **PDF-1.52: ZROBIONE — wyłącznie lokalny komponent obliczania jakości Recall@k/MRR i negatywna walidacja wejścia**. Source 1.15–1.28, 1.30 i 1.47: wykonany/testowany odpowiedni zakres częściowy; 1.29, 1.31–1.46, 1.48–1.51, 1.53–1.54 nadal otwarte w kryteriach pełnego odbioru.
 - 334 kanoniczne etapy zachowują swoje historyczne definicje i statusy; oznaczenie lokalnego komponentu nie stanowi finalnej akceptacji etapu ani włączenia produkcyjnego. Binaria wydaniowe nadal na koniec.
+
+### 2026-10-30 — PDF-1.47 i PDF-1.52: ukończone tylko lokalne komponenty
+
+- [CI 40990353117 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/40990353117), SHA `f618310d01543ce5475866f51263782f06c47810`: potwierdzony typowany BM25 inverted postings per tenant, deterministyczny wynik, lokalna ewaluacja Recall@k/MRR, testy negatywne, rustfmt i Clippy.
+- Komponenty źródłowe `PDF-1.47`, `PDF-1.52`: **ZROBIONE_KOD_TEST_LOKALNY**. Brak realnego Moss, Zenoh bridge, E2E providerów, pełnego runtime, wydajności na produkcyjnym korpusie; kanoniczne etapy pozostają niezamknięte. Bez binariów/release i bez produkcyjnego GO.

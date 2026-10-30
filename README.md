@@ -1818,3 +1818,5 @@ Szczegóły: [deploy/stage334/README.md](deploy/stage334/README.md).
 
 - [Tabela 40/40 w głównej Roadmapie](ROADMAP.md#argon--źródłowe-punkty-pdf-115pdf-154-4040-2026-10-30), [manifest powiązań z etapami](docs/roadmap/argon_pdf_115_154_manifest.json), [audyt i braki](docs/audits/ARGON_115_154_RECONCILIATION_2026-10-30.md).
 - `src/governance_journal.rs`: trwała idempotencja i audit; `src/retrieval_quality.rs`: leksykalny BM25 i Recall@k/MRR. **Status: [CI testów lokalnych — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834), E2E nadal otwarte.** Binariów nie pakowano. PDF-1.52 ma oznaczenie **ZROBIONE — lokalny ewaluator jakości** (testy Recall@k/MRR), ale nie oznacza gotowości pełnego systemu retrieval. Nie zmieniono statusów kanonicznych etapów bez dowodów.
+
+**Weryfikacja indeksu odwróconego:** [CI 40990353117 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/40990353117), SHA `f618310d01543ce5475866f51263782f06c47810`. Źródłowe punkty **PDF-1.47 i PDF-1.52: ZROBIONE w testowanym zakresie lokalnych komponentów**; pozostałe 38 nie otrzymują pełnego zakończenia. Kanoniczne etapy i produkcja bez zmiany statusu.

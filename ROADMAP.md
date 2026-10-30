@@ -1341,7 +1341,7 @@ Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): 
 | PDF-1.44 | Sanctions / supplier anomaly screening | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.45 | Procurement governance | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.46 | Procurement safety tests | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
-| PDF-1.47 | InProcessLexicalSelector | 1.65 | **TESTED_LOCAL_PARTIAL** · etap pełny NIE | `src/retrieval_quality.rs` |
+| PDF-1.47 | InProcessLexicalSelector | 1.65 | **ZROBIONE — MODUŁ LOKALNY / TESTED** · etap pełny NIE | `src/retrieval_quality.rs` |
 | PDF-1.48 | MossRetrievalAdapter | 1.65 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.49 | ZenohTransportBridge | 0.46, 1.15, 1.55 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.50 | McpRegistryIntegrityVerifier | 0.43 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
@@ -1356,3 +1356,5 @@ Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): 
 
 
 **Zweryfikowane testy lokalne:** [CI 40989435834 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/40989435834), commit `3b3fe1329390f52dbde09a6babd9b637395163ac`. `PDF-1.52` oznaczono **ZROBIONE w ograniczonym zakresie lokalnego ewaluatora Recall@k/MRR**. Pozostałe testowane elementy nadal mają zakres PARTIAL/PREFLIGHT. Żaden etap kanoniczny ani zewnętrzne E2E nie uzyskały zakończenia; `production_approved=false`.
+
+**Korekta komponentów lokalnych — CI 40990353117:** PDF-1.47 (BM25, odwrócony indeks per tenant) oraz PDF-1.52 (Recall@k/MRR) = **ZROBIONE wyłącznie w zakresie testowanej biblioteki**, SHA `f618310d01543ce5475866f51263782f06c47810`, [dowód CI](https://github.com/mojealterego/ocaf-runtime/actions/runs/40990353117). Pełne etapy, Moss, produkcyjny retrieval i integracja OMAt pozostają NIEUKOŃCZONE.

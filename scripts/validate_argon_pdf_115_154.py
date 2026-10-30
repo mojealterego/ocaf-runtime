@@ -30,7 +30,7 @@ def validate(repo: Path) -> dict[str, object]:
         else:
             assert not row["verified_ci"], "No test evidence is attached to this source item"
         if row.get("scoped_completion") == "ZROBIONE_KOD_TEST_LOKALNY":
-            assert row["source_id"] == "PDF-1.52" and row["status"] == "TESTED_LOCAL_COMPONENT"
+            assert row["source_id"] in {"PDF-1.47", "PDF-1.52"} and row["status"] == "TESTED_LOCAL_COMPONENT"
         assert set(row["canonical_candidates"]).issubset(stages)
         assert row["mapping"] == ("SEMANTIC_PROPOSED" if row["canonical_candidates"] else "UNMAPPED")
         for code in row["code_paths"]:
