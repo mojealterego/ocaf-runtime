@@ -1,12 +1,15 @@
 """0.56 — real patch static risk inspection, always requires independent review."""
+import contextlib
+import io
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from omnidev_security_critic import inspect_added_lines, criticize_patch, review_candidate
+from omnidev_security_critic import inspect_added_lines, criticize_patch, review_candidate, main
 
 
 class CriticTests(unittest.TestCase):
@@ -82,6 +85,19 @@ class CriticTests(unittest.TestCase):
             self.assertEqual(result["base_sha"], base)
             self.assertEqual(git("status", "--porcelain"), b"")
             self.assertIn("{ 1 }", f.read_text())
+
+    def test_cli_returns_nonzero_until_independent_review(self):
+        args = ["critic.py", "--repo", "/repo", "--patch", "/patch", "--base", "a" * 40]
+        with mock.patch("sys.argv", args), mock.patch(
+            "omnidev_security_critic.review_candidate",
+            return_value={"status": "SECURITY_REVIEW_REQUIRED", "findings": []},
+        ), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(main(), 4)
+        with mock.patch("sys.argv", args), mock.patch(
+            "omnidev_security_critic.review_candidate",
+            return_value={"status": "DENIED_FOR_AUTOMATION", "findings": [{"rule": "UNSAFE_RUST"}]},
+        ), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(main(), 3)
 
     def test_critic_refuses_mismatch_file_list(self):
         p = self.head + b"@@ -1 +1 @@\n-a\n+b\n"

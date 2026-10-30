@@ -107,7 +107,7 @@ def main() -> int:
     try:
         result = review_candidate(args.repo, args.patch, args.base)
         print(json.dumps(result, sort_keys=True))
-        return 0 if result["status"] == "SECURITY_REVIEW_REQUIRED" else 3
+        return 4 if result["status"] == "SECURITY_REVIEW_REQUIRED" else 3
     except (GateError, OSError, UnicodeError) as exc:
         print(json.dumps({"status": "DENIED", "reason": str(exc)}, sort_keys=True))
         return 2
