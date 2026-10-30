@@ -1352,7 +1352,7 @@ Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): 
 | PDF-1.51 | DualTrackCollaborationAnalyzer | 1.92, 1.94 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.52 | RetrievalQualityEvaluator | 1.65, 1.99 | **ZROBIONE — MODUŁ LOKALNY / TESTED** · etap pełny NIE | `src/retrieval_quality.rs` |
 | PDF-1.53 | LatencyBenchmarkHarness | 1.55, 1.99 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
-| PDF-1.54 | ClaimLedgerVerifier | 1.99, 0.42 | **IMPLEMENTED_CI_PENDING** · etap pełny NIE | `src/claim_ledger_verifier.rs`: lokalne claim/evidence gate; bez niezależnego CI provenance i E2E |
+| PDF-1.54 | ClaimLedgerVerifier | 1.99, 0.42 | **TESTED_LOCAL_PARTIAL — TESTY LOKALNE PASS** · etap pełny NIE | `src/claim_ledger_verifier.rs`: lokalne claim/evidence gate; bez niezależnego CI provenance i E2E |
 
 **Ukończone w zakresie kodowym** nie oznacza ukończonego etapu: brak pełnego E2E i dowodów akceptacyjnych. `IMPLEMENTED_CI_PENDING` oznacza wytworzony kod ze zgłoszoną bramką testową, ale **niepotwierdzone jeszcze** zakończenie CI. `PARTIAL_EXISTING` oznacza istniejący składnik, `PREFLIGHT_ONLY` nie daje prawa do wykonania, `OPEN` wymaga implementacji. Sąsiednie referencyjne repozytoria nie są zintegrowanym adapterem.
 
@@ -1374,3 +1374,5 @@ Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): 
 **PDF-1.50 lokalne testy: PASS** — [GitHub Actions 41017007500](https://github.com/mojealterego/ocaf-runtime/actions/runs/41017007500), SHA `46522c5c506ddb634aa929260002c6e8494a7583`. Weryfikator `src/mcp_registry_integrity.rs` przetestowany na ograniczonych fixture. Nadal brak rzeczywistego odczytu 420 plików upstream z niezależnie zatwierdzonym pinem, OMAt E2E i odbioru etapu kanonicznego.
 
 **PDF-1.54 — nowy moduł kontroli deklaracji:** `src/claim_ledger_verifier.rs` z kontrolą dowodów CI, wiązaniem SHA, klasyfikacją i blokadą niezmierzonych twierdzeń. Status `IMPLEMENTED_CI_PENDING` do potwierdzonego CI; nie zastępuje prawdziwych dowodów operatora i E2E. Nie zmieniono statusów kanonicznych etapów.
+
+**PDF-1.54 lokalne testy PASS** — [CI 41017904577](https://github.com/mojealterego/ocaf-runtime/actions/runs/41017904577), SHA `d86387580a2e4801d09f8b007e85fed7eb03dd65`: walidator deklaracji/commit/evidence przetestowany w zakresie preflight; nie uwierzytelnia niezależnie pochodzenia receipts i nie zamyka kanonicznych etapów 0.42 / 1.99.

@@ -1835,3 +1835,5 @@ Szczegóły: [deploy/stage334/README.md](deploy/stage334/README.md).
 **PDF-1.50 — lokalny SHA256SUMS validator TESTED_LOCAL_PARTIAL:** [CI 41017007500 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/41017007500), SHA `46522c5c506ddb634aa929260002c6e8494a7583`. Lokalne testy rejestru MCP są zielone; niezależna atestacja wszystkich 420 plików i integracja OMAt E2E pozostają do wykonania.
 
 **Argon PDF-1.54 ClaimLedgerVerifier** — `src/claim_ledger_verifier.rs`: lokalny fail-closed preflight implementacji, dowodów PASS, SHA i deklaracji cloud/sub-ms; bez niezależnej weryfikacji dostarczanych receipts. Dziesięć testów dodanych do `.github/workflows/argon-pdf-115-154.yml`, status `IMPLEMENTED_CI_PENDING`.
+
+**PDF-1.54 — TESTED_LOCAL_PARTIAL:** [CI 41017904577 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/41017904577), SHA `d86387580a2e4801d09f8b007e85fed7eb03dd65`; testy claim/evidence/commit SHA oraz reguły zakazujące fałszywych deklaracji cloud/sub-ms. Lokalna walidacja nie jest dowodem zewnętrznym ani formalnym GO.

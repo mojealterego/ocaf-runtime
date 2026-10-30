@@ -49,7 +49,7 @@ Status `PARTIAL` oznacza wykryty, ograniczony kod w repozytorium, nie pełne kry
 | PDF-1.51 | DualTrackCollaborationAnalyzer | OPEN | Historia zmian obiektu i atrybucja aktorów |
 | PDF-1.52 | RetrievalQualityEvaluator | TESTED_LOCAL_COMPONENT | `src/retrieval_quality.rs` — implementacja lokalna, testy CI weryfikowane osobno; pełny E2E otwarty. |
 | PDF-1.53 | LatencyBenchmarkHarness | OPEN | Realne p50/p95/p99, hardware i surowe próbki |
-| PDF-1.54 | ClaimLedgerVerifier | IMPLEMENTED_CI_PENDING | `src/claim_ledger_verifier.rs` — klasyfikacja, wiązanie evidence↔commit i kontrola nadużyć. Brak niezależnej walidacji źródłowego CI i deployment E2E |
+| PDF-1.54 | ClaimLedgerVerifier | TESTED_LOCAL_PARTIAL | `src/claim_ledger_verifier.rs` — klasyfikacja, wiązanie evidence↔commit i kontrola nadużyć. Brak niezależnej walidacji źródłowego CI i deployment E2E |
 
 ## Bezpieczeństwo i spójność architektury
 
@@ -103,3 +103,7 @@ Dostarczono `src/mcp_registry_integrity.rs`: weryfikacja manifestu SHA256SUMS z 
 ### 2026-10-30 — PDF-1.54: claim ledger preflight
 
 Dostarczono `src/claim_ledger_verifier.rs`: typowane deklaracje `IMPLEMENTED`/`ADAPTER_ROADMAP`/`HYPOTHESIS`, dopasowanie identyfikatorów dowodów i SHA commita, wymóg testów PASS przy deklaracji implementacji, dodatkowy dowód health-check przy deklaracji zasobów chmurowych, zakaz deklaracji niemierzonych opóźnień sub-ms. `IMPLEMENTED_CI_PENDING`. Zewnętrznie uwierzytelnione receipts, rzeczywiste CI, live health E2E oraz propagacja statusów z rejestru etapów nadal otwarte. Nie nazywać niezależną atestacją.
+
+### 2026-10-30 — Claim Ledger CI PASS
+
+[Argon CI 41017904577 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/41017904577), SHA `d86387580a2e4801d09f8b007e85fed7eb03dd65`. Zaliczone testy kontraktów `ClaimLedgerVerifier`: brak dowodów, obcy/stary SHA, błędne wiązanie claim/evidence, fail CI, niepotwierdzony cloud, zakaz niemierzonych sub-ms, zdublowane identyfikatory i path traversal. **TESTED_LOCAL_PARTIAL**; same receipts są wejściem lokalnego walidatora, a nie niezależnie uwierzytelnionym dowodem. Wymagany realny verifier/provenance oraz operational E2E. Brak produkcyjnej zgody.

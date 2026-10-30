@@ -839,3 +839,8 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 
 - `src/claim_ledger_verifier.rs` — kontrola roszczeń IMPLEMENTED/ADAPTER_ROADMAP/HYPOTHESIS i wiązania źródła, evidence, SHA, test PASS oraz health. Dziesięć przypadków testowych.
 - `IMPLEMENTED_CI_PENDING`; brak kryptograficznego provenance źródłowych dowodów i produkcyjnej automatyzacji pełnej ścieżki. Kanoniczne etapy nie zostały zamknięte.
+
+### 2026-10-30 — PDF-1.54 CI PASS
+
+- [Run 41017904577 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/41017904577), SHA `d86387580a2e4801d09f8b007e85fed7eb03dd65`; testy 10 przypadków ClaimLedgerVerifier, pozostałych lokalnych modułów Argona, Clippy i format.
+- Źródło PDF-1.54 = `TESTED_LOCAL_PARTIAL`, bez zaakceptowanego zewnętrznego evidence provenance, operational integration, production signoff. Kanoniczne numery etapów bez zmian.

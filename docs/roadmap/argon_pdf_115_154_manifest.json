@@ -5,7 +5,7 @@
   "canonical_stage_ids_unchanged": true,
   "source_requirements_count": 40,
   "source_id_prefix": "PDF-1.",
-  "state": "PARTIAL_WITH_CLAIM_LEDGER_PENDING_CI",
+  "state": "PARTIAL_WITH_TESTED_MCP_AND_CLAIM_GATES",
   "production_approved": false,
   "requirements": [
     {
@@ -824,14 +824,23 @@
         "0.42"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "IMPLEMENTED_CI_PENDING",
+      "status": "TESTED_LOCAL_PARTIAL",
       "code_paths": [
         "src/claim_ledger_verifier.rs"
       ],
-      "verified_ci": [],
+      "verified_ci": [
+        {
+          "run_id": 41017904577,
+          "head_sha": "d86387580a2e4801d09f8b007e85fed7eb03dd65",
+          "conclusion": "success",
+          "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41017904577",
+          "scope": "10 bounded local claim/evidence and deployment exaggeration tests; rustfmt, Clippy, Argon regression; no authenticated external evidence or deployed E2E"
+        }
+      ],
       "complete": false,
       "production_approved": false,
-      "implementation_note": "Typowany walidator claim↔evidence↔commit, CI success and deployment-health declarations. Lokalny preflight, nie weryfikuje podpisów źródłowego potwierdzenia, realnego CI ani zdrowia wdrożenia."
+      "implementation_note": "Typowany walidator claim↔evidence↔commit, CI success and deployment-health declarations. Lokalny preflight, nie weryfikuje podpisów źródłowego potwierdzenia, realnego CI ani zdrowia wdrożenia.",
+      "scoped_completion": "LOCAL_CLAIM_GUARD_TESTED_NOT_OPERATOR_ACCEPTED"
     }
   ],
   "last_verified_ci": {
@@ -853,5 +862,12 @@
     "conclusion": "success",
     "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41017007500",
     "scope": "local pinned SHA256SUMS verifier, 8 fixture regression tests, rustfmt and Clippy; no upstream 420-file content run or MCP E2E"
+  },
+  "last_verified_claim_ci": {
+    "run_id": 41017904577,
+    "head_sha": "d86387580a2e4801d09f8b007e85fed7eb03dd65",
+    "conclusion": "success",
+    "url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41017904577",
+    "scope": "10 bounded local claim/evidence and deployment exaggeration tests; rustfmt, Clippy, Argon regression; no authenticated external evidence or deployed E2E"
   }
 }
