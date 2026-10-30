@@ -152,6 +152,54 @@ class Stage056PipelineTests(unittest.TestCase):
                                  self.command, DockerExecutor())
         self.assertTrue(self.journal.verify())
 
+    def test_cli_requires_explicit_patch_sha_review_and_scoped_token(self):
+        import dataclasses
+        import json
+        import os
+        repair_file = self.root / "repair.json"
+        repair_file.write_text(json.dumps(dataclasses.asdict(self.repair)))
+        cli = Path(__file__).resolve().parents[1] / "omnidev_cli.py"
+        db = self.root / "operator.sqlite"
+        key_env = dict(os.environ, OCAF_OMNIDEV_OPERATOR_KEY_HEX=self.key.hex())
+        common = [sys.executable, str(cli), "--repo", str(self.repo),
+                  "--db", str(db)]
+        def cli_run(*parts):
+            done = subprocess.run([*common, *parts], env=key_env,
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                  timeout=20, check=False, text=True)
+            self.assertTrue(done.stdout, done.stderr)
+            return done.returncode, json.loads(done.stdout)
+        rc, sub = cli_run("submit", "--repair-json", str(repair_file))
+        self.assertEqual(rc, 0)
+        self.assertEqual(sub["status"], "REVIEW_REQUIRED")
+        rc, denial = cli_run("approve", "--tenant", "tenantA", "--task", "task01",
+                             "--reviewed-sha", "0" * 64,
+                             "--command-json", json.dumps(list(self.command)))
+        self.assertEqual(rc, 2)
+        self.assertEqual(denial["status"], "DENIED")
+        rc, approval = cli_run("approve", "--tenant", "tenantA", "--task", "task01",
+                               "--reviewed-sha", sub["patch_sha256"],
+                               "--command-json", json.dumps(list(self.command)))
+        self.assertEqual(rc, 0)
+        self.assertEqual(len(approval["approval"]), 64)
+        rc, status = cli_run("status", "--tenant", "tenantA", "--task", "task01")
+        self.assertEqual(rc, 0)
+        self.assertEqual(status["status"], "REVIEW_REQUIRED")
+
+    def test_nonzero_test_exit_is_terminal_and_cannot_be_marked_success(self):
+        item = self.journal.submit(self.repo, self.repair)
+        class FailedExecutor:
+            image = "python:3.13-slim"
+            def run(self, *args):
+                return {"exit_code": 5, "sandbox": "SIMULATED_FAILED_TEST"}
+        token = self.token(item)
+        self.assertEqual(self.journal.execute(
+            self.repo, "tenantA", "task01", token,
+            self.command, FailedExecutor())["status"], "TESTED_FAIL")
+        with self.assertRaisesRegex(OmniDevError, "retry"):
+            self.journal.execute(self.repo, "tenantA", "task01", token,
+                                 self.command, FailedExecutor())
+
     def test_tamper_detection_and_docker_restrictions(self):
         self.journal.submit(self.repo, self.repair)
         self.journal.db.execute("UPDATE events SET event='forged' WHERE serial=1")
