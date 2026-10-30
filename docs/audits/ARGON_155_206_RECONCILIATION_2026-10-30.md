@@ -11,7 +11,7 @@ Dokument Drive `1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A` opisuje inne funkcje niż akt
 | 1.57 | DAG funkcji dokumentu | IMPLEMENTED_SCOPE_CI_PENDING: `src/document_function_dag.rs`, `tests/document_function_dag.rs`; runtime E2E OPEN |
 | 1.58 | PolicyGate | PARTIAL: `src/governance_contract.rs`, `src/governance_journal.rs` |
 | 1.59 | ReplayLedger | PARTIAL: `src/document_store.rs`, `src/governance_journal.rs` |
-| 1.60 | Persystencja i migracje | PARTIAL: SQLite driver; brak wieloformatowych migracji |
+| 1.60 | Persystencja i migracje | PARTIAL_CI_PENDING: `src/document_store.rs` atomowa inicjalizacja i wersjonowanie schematu SQLite v1, odmowa nieobsługiwanych wersji i testy replay; backend pluginy/migracje v2+ OPEN |
 | 1.65 | BM25/Moss/Recall@k/MRR | PARTIAL: `src/retrieval_quality.rs`; brak Moss E2E |
 | 1.70 | Compound reasoning | IMPLEMENTED_SCOPE_CI_PENDING: `src/compound_reasoning.rs` bounded async fan-out, quorum, deadlines; external LLM adapter E2E OPEN |
 | 1.75 | Adaptive Model Router | IMPLEMENTED_SCOPE_CI_PENDING: `src/model_router.rs`; realne provider E2E OPEN |
