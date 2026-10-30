@@ -1,5 +1,15 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+
+## 2026-10-30 — STAGE_PARTIAL — 0.56 — OmniDev Cargo graph i Security Critic
+
+- Nowy kod: `scripts/omnidev_workspace_graph.py` (realny zablokowany i offline Cargo metadata package DAG) oraz `scripts/omnidev_security_critic.py` (powiązana z sha diff, fail-closed heurystyczna analiza ryzyk).
+- Testy: 17 nowych przypadków pozytywnych i negatywnych, razem 27 testów związanych z 0.56; lokalny `python -m unittest discover -s scripts/tests -p 'test_omnidev_*.py'` PASS. Brak lokalnego `cargo`; sprawdzenie na rzeczywistym Cargo workspace uruchamiane w Rust CI.
+- Stary gate z poprzedniego commitu `19ae98952fae4a6438426efa46a4c185a618097a` zachowany; statyczne findings nie są pozwoleniem na wykonanie ani wdrożenie.
+- Dokument: `docs/audits/STAGE056_OMNIDEV_INCREMENT_2026-10-30.md`. Pełny etap nadal `PLANNED_OR_UNVERIFIED`; bez podpisanych patchy i Firecracker, bez Tree-sitter AST/CST, bez E2E, `production_approved=false`.
+- CI run SHA tego commitu wymaga weryfikacji po zapisie. Manifest/root/mirror status i numeracja bez zmian — brak zamknięcia etapu.
+
+
 **Zasada bez wyjątków:** każdy domknięty lub zweryfikowany częściowo etap aktualizuje **tę samą** kanoniczną Roadmapę (`/ROADMAP.md`, lustrzane `docs/ROADMAP_FULL_ECOSYSTEM_2026.md`, manifest v11) i dostarcza realny raport CI. Nowe punkty dopisujemy po ostatnim numerze. Historycznie zgubionych wymagań nie przenosimy z ich miejsca.
 
 ## 2026-10-29 — SOURCE_REVIEWED / PARTIAL_PRIMITIVE — PDF Drive OAuth/SASOS, etap 334

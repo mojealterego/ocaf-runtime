@@ -49,6 +49,8 @@ jobs:
         run: cargo fmt --all -- --check
       - name: Clippy (core only)
         run: cargo clippy --locked --all-targets --no-default-features -- -D warnings
+      - name: OmniDev 0.56 Cargo workspace graph (locked offline, no candidate execution)
+        run: python3 scripts/omnidev_workspace_graph.py --repo .
       - name: Pinned Wasmtime 49.0.2 real WASI command acceptance
         run: bash scripts/wasmtime_acceptance.sh
       - name: Upload reproducible WASI host resource evidence
