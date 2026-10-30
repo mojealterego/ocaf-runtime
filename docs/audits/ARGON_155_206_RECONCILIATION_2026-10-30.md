@@ -13,7 +13,7 @@ Dokument Drive `1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A` opisuje inne funkcje niż akt
 | 1.59 | ReplayLedger | PARTIAL: `src/document_store.rs`, `src/governance_journal.rs` |
 | 1.60 | Persystencja i migracje | PARTIAL: SQLite driver; brak wieloformatowych migracji |
 | 1.65 | BM25/Moss/Recall@k/MRR | PARTIAL: `src/retrieval_quality.rs`; brak Moss E2E |
-| 1.70 | Compound reasoning | GAP: brak kompletnego backendu i kontrolowanego fan-out |
+| 1.70 | Compound reasoning | IMPLEMENTED_SCOPE_CI_PENDING: `src/compound_reasoning.rs` bounded async fan-out, quorum, deadlines; external LLM adapter E2E OPEN |
 | 1.75 | Adaptive Model Router | IMPLEMENTED_SCOPE_CI_PENDING: `src/model_router.rs`; realne provider E2E OPEN |
 | 1.80 | Prompt DSL | IMPLEMENTED_SCOPE_CI_PENDING: `src/agentic_prompt_dsl.rs`; realne model output validation E2E OPEN |
 | 1.85 | GEM/OODA/H-MoE | RESEARCH: brak sprawdzonej integracji |
@@ -53,7 +53,7 @@ Dokument Drive `1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A` opisuje inne funkcje niż akt
 | 1.59 | 0.12, 0.19, 0.42 | PARTIAL — trwały replay i hash chain, potrzebny niezależny pin |
 | 1.60 | 0.67, 1.90 | PARTIAL — SQLite storage, migracje i pluginy OPEN |
 | 1.65 | 0.67, 0.95, 322 | PARTIAL — BM25/metrics lokalnie, Moss OPEN |
-| 1.70 | 0.95, 1.69, 1.94 | OPEN — realny LLM fan-out/cache/consensus |
+| 1.70 | 0.95, 1.69, 1.94 | IMPLEMENTED_SCOPE_CI_PENDING: `src/compound_reasoning.rs`, bounded quorum fan-out; cache/real provider E2E OPEN |
 | 1.75 | 224, 1.94; router ogólny odrębny od audio 1.05/307 | IMPLEMENTED_SCOPE_CI_PENDING: `src/model_router.rs`; rzeczywisty provider E2E OPEN |
 | 1.80 | 1.06, 227, 309 | IMPLEMENTED_SCOPE_CI_PENDING: `src/agentic_prompt_dsl.rs`; typowana walidacja odpowiedzi modelu E2E OPEN |
 | 1.85 | 0.67, 1.95 | RESEARCH_OPEN — H-MoE/OODA/GEM bez AGI claims |
