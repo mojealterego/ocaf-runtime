@@ -108,11 +108,14 @@ impl LexicalIndex {
                 }
             }
             let average_length = total as f64 / entries.len() as f64;
-            tenants.insert(tenant, TenantIndex {
-                documents: entries,
-                frequencies: df,
-                average_length,
-            });
+            tenants.insert(
+                tenant,
+                TenantIndex {
+                    documents: entries,
+                    frequencies: df,
+                    average_length,
+                },
+            );
         }
         Ok(Self { tenants })
     }
@@ -190,10 +193,7 @@ pub struct QualityReport {
     pub mean_reciprocal_rank: f64,
 }
 
-pub fn evaluate_quality(
-    corpus: &[JudgedQuery],
-    k: usize,
-) -> Result<QualityReport, RetrievalError> {
+pub fn evaluate_quality(corpus: &[JudgedQuery], k: usize) -> Result<QualityReport, RetrievalError> {
     if corpus.is_empty() {
         return Err(RetrievalError::Invalid);
     }
@@ -213,10 +213,16 @@ pub fn evaluate_quality(
         {
             return Err(RetrievalError::Invalid);
         }
-        let relevant: BTreeSet<&str> =
-            entry.relevant_source_ids.iter().map(String::as_str).collect();
-        let returned: BTreeSet<&str> =
-            entry.returned_source_ids.iter().map(String::as_str).collect();
+        let relevant: BTreeSet<&str> = entry
+            .relevant_source_ids
+            .iter()
+            .map(String::as_str)
+            .collect();
+        let returned: BTreeSet<&str> = entry
+            .returned_source_ids
+            .iter()
+            .map(String::as_str)
+            .collect();
         if relevant.len() != entry.relevant_source_ids.len()
             || returned.len() != entry.returned_source_ids.len()
             || !relevant.iter().all(|id| valid_id(id))
@@ -288,7 +294,8 @@ mod tests {
             tenant: "a".into(),
             source_id: "s".into(),
             body: "ŻÓŁĆ matematyka".into(),
-        }]).unwrap();
+        }])
+        .unwrap();
         assert_eq!(
             index.search("a", "żółć", 1).unwrap(),
             index.search("a", "ŻÓŁĆ ŻÓŁĆ", 1).unwrap()
@@ -298,15 +305,34 @@ mod tests {
     #[test]
     fn duplicate_sources_and_bounded_input_are_rejected() {
         let duplicate = vec![
-            SourceDocument { tenant: "a".into(), source_id: "id".into(), body: "a".into() },
-            SourceDocument { tenant: "a".into(), source_id: "id".into(), body: "b".into() },
+            SourceDocument {
+                tenant: "a".into(),
+                source_id: "id".into(),
+                body: "a".into(),
+            },
+            SourceDocument {
+                tenant: "a".into(),
+                source_id: "id".into(),
+                body: "b".into(),
+            },
         ];
-        assert!(matches!(LexicalIndex::build(duplicate), Err(RetrievalError::Duplicate)));
-        assert!(matches!(fixture().search("tenant_a", "!!!", 10), Err(RetrievalError::Invalid)));
-        assert!(matches!(fixture().search("tenant_a", "query", 0), Err(RetrievalError::Limit)));
+        assert!(matches!(
+            LexicalIndex::build(duplicate),
+            Err(RetrievalError::Duplicate)
+        ));
+        assert!(matches!(
+            fixture().search("tenant_a", "!!!", 10),
+            Err(RetrievalError::Invalid)
+        ));
+        assert!(matches!(
+            fixture().search("tenant_a", "query", 0),
+            Err(RetrievalError::Limit)
+        ));
         assert!(matches!(
             LexicalIndex::build(vec![SourceDocument {
-                tenant: "a".into(), source_id: "b".into(), body: "x".repeat(MAX_BODY_BYTES + 1)
+                tenant: "a".into(),
+                source_id: "b".into(),
+                body: "x".repeat(MAX_BODY_BYTES + 1)
             }]),
             Err(RetrievalError::Limit)
         ));
@@ -339,7 +365,13 @@ mod tests {
             relevant_source_ids: vec!["s".into()],
             returned_source_ids: vec!["s".into(), "s".into()],
         }];
-        assert!(matches!(evaluate_quality(&duplicate, 1), Err(RetrievalError::Invalid)));
-        assert!(matches!(evaluate_quality(&[], 1), Err(RetrievalError::Invalid)));
+        assert!(matches!(
+            evaluate_quality(&duplicate, 1),
+            Err(RetrievalError::Invalid)
+        ));
+        assert!(matches!(
+            evaluate_quality(&[], 1),
+            Err(RetrievalError::Invalid)
+        ));
     }
 }

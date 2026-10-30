@@ -150,7 +150,7 @@ impl DurableDiscovery {
 fn decode_hex(value: &str) -> anyhow::Result<Vec<u8>> {
     anyhow::ensure!(value.len() == 64, "invalid MAC length");
     let mut bytes = Vec::with_capacity(32);
-    for pair in value.as_bytes().chunks_exact(2) {
+    for pair in value.as_bytes().as_chunks::<2>().0 {
         let s = std::str::from_utf8(pair)?;
         bytes.push(u8::from_str_radix(s, 16)?);
     }
