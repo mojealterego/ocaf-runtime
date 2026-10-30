@@ -74,6 +74,11 @@ pub enum Change {
         guid: String,
         payload: Vec<u8>,
     },
+    Update {
+        label: String,
+        guid: String,
+        payload: Vec<u8>,
+    },
     Forget {
         label: String,
         guid: String,
@@ -93,6 +98,11 @@ impl Change {
                 guid: id,
                 payload,
             } => Mutation::Attach {
+                label: LabelPath::parse(label)?,
+                guid: guid(id)?,
+                payload: payload.clone(),
+            },
+            Self::Update { label, guid: id, payload } => Mutation::Update {
                 label: LabelPath::parse(label)?,
                 guid: guid(id)?,
                 payload: payload.clone(),
