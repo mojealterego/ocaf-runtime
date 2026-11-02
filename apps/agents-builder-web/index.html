@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0e14">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./style.css">
+  <title>OCAF Agents Builder — Code / NoCode</title>
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="brand-mark">Ω</span><div><strong>OCAF Agents Builder</strong><small>Code / NoCode · Offline workspace</small></div></div>
+  <div class="build-status">Local editor · No deployment</div>
+</header>
+<main class="shell">
+  <section class="intro"><div><p class="eyebrow">AGENT DESIGN WORKSPACE / 0.51</p><h1>Build an agent graph.</h1><p>One typed project. Two editable views. No implicit tool execution.</p></div><div class="project-meta"><span id="project-title">demo</span><span id="revision-label">r1</span></div></section>
+  <section class="toolbar" aria-label="Project management">
+    <label>Project ID <input id="project-id" value="demo" maxlength="64" autocomplete="off" spellcheck="false"></label>
+    <button id="new-project" type="button" class="secondary">New</button>
+    <button id="open-project" type="button" class="secondary">Open</button>
+    <label class="import-label">Import JSON<input id="import" type="file" accept=".json,application/json"></label>
+    <button id="export" type="button" class="secondary">Export JSON</button>
+    <label>History <select id="revision" aria-label="Saved revisions"></select></label>
+    <button id="restore" type="button" class="secondary">Restore</button>
+  </section>
+  <section class="workspace">
+    <div class="workspace-header"><div class="mode-switch" role="group" aria-label="Editor mode"><button id="mode-nocode" type="button" aria-pressed="true">NoCode graph</button><button id="mode-code" type="button" aria-pressed="false">Code DSL</button></div><button id="preview" type="button" class="primary">Validate / Dry run</button></div>
+    <div id="nocode-view" class="editor-grid">
+      <aside class="panel">
+        <h2>Node palette</h2><p class="muted">Tap to insert or drag onto the canvas. Select a connection to choose the insertion point.</p>
+        <label>New node ID <input id="node-id" placeholder="e.g. analyze" maxlength="64" spellcheck="false"></label>
+        <button id="add-transform" data-palette="transform" type="button" class="palette-item">＋ Transform <small>Typed data mapping</small></button>
+        <div class="subpanel"><label>Tool grant <input id="tool-name" placeholder="tool_search" maxlength="64" spellcheck="false"></label><label>Maximum tool cost <input id="tool-cost" type="number" min="1" max="1000000000000" step="1" value="10"></label><button id="add-tool" data-palette="tool" type="button" class="palette-item">＋ Tool <small>Permission required</small></button></div>
+        <div class="subpanel"><label>Project budget <input id="cost-budget" type="number" min="0" max="1000000000000" step="1"></label><button id="set-budget" type="button" class="secondary">Update budget</button></div>
+        <p class="muted">Declared grants</p><output id="grant-list">No tool grants</output>
+      </aside>
+      <section class="panel canvas-panel" aria-label="NoCode graph editor">
+        <div class="panel-heading"><div><h2>Graph canvas</h2><p class="muted">Select a node or connection to edit.</p></div><span class="small-pill">DAG</span></div>
+        <div id="graph" class="graph-canvas" aria-label="Editable graph nodes"></div>
+        <h3>Typed connections</h3><div id="edges" class="edge-list" aria-label="Graph edges"></div>
+        <div class="node-actions"><button id="remove-node" type="button" class="danger" disabled>Remove selected node</button>
+          <div id="node-settings" hidden><h3>Selected tool</h3><label>Tool name <input id="tool-edit-name" maxlength="64" spellcheck="false"></label><label>Max cost <input id="tool-edit-cost" type="number" min="1" step="1"></label><button id="update-tool" type="button" class="secondary">Update tool</button></div>
+        </div>
+      </section>
+    </div>
+    <section id="code-view" class="panel code-panel" hidden><h2>Typed JSON Code DSL</h2><p class="muted">Only the supported schema is accepted. Arbitrary Rust and executable imports are rejected. Apply validates and saves a new revision.</p><label for="dsl" class="sr-only">Code DSL editor</label><textarea id="dsl" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="JSON Code DSL"></textarea><button id="apply-code" type="button" class="primary">Validate and apply Code</button></section>
+  </section>
+  <section class="bottom-grid"><div class="panel"><h2>Validation and preview</h2><pre id="preview-output" aria-live="polite">Select Validate / Dry run to inspect the inert compilation plan.</pre></div><div class="panel security"><h2>Execution boundary</h2><p>This is an offline browser workspace. No backend identity, sandbox execution, signed export, remote deployment or production authorization is connected.</p><p>Browser storage is local to this origin and is not an authenticated multi-tenant database. Exported files are unsigned.</p></div></section>
+  <p id="message" role="status" aria-live="polite"></p>
+</main>
+<footer>OCAF / Agents Builder · Stage 0.51 partial · Restricted typed DSL · No automatic publishing</footer>
+</body>
+</html>
