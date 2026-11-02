@@ -1842,3 +1842,12 @@ Szczegóły: [deploy/stage334/README.md](deploy/stage334/README.md).
 **Argon PDF-1.54 ClaimLedgerVerifier** — `src/claim_ledger_verifier.rs`: lokalny fail-closed preflight implementacji, dowodów PASS, SHA i deklaracji cloud/sub-ms; bez niezależnej weryfikacji dostarczanych receipts. Dziesięć testów dodanych do `.github/workflows/argon-pdf-115-154.yml`, status `IMPLEMENTED_CI_PENDING`.
 
 **PDF-1.54 — TESTED_LOCAL_PARTIAL:** [CI 41017904577 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/41017904577), SHA `d86387580a2e4801d09f8b007e85fed7eb03dd65`; testy claim/evidence/commit SHA oraz reguły zakazujące fałszywych deklaracji cloud/sub-ms. Lokalna walidacja nie jest dowodem zewnętrznym ani formalnym GO.
+
+## 2026-11-02 — Agents Builder 0.50: sprawdzony przyrost, nie gotowy produkt
+
+src/builder_core.rs udostępnia bezefektowy kompilator ograniczonego typed graph IR i kanonicznego JSON Code DSL. Odrzuca błędne typy portów, cykle, niepodłączone wymagane porty, niejawne granty narzędzi, przekroczenie budżetu, błędne tenant ID i nieobsługiwane schematy.
+
+**Dowód:** [GitHub Actions #41507192748](https://github.com/mojealterego/ocaf-runtime/actions/runs/41507192748) na SHA ffc9f899094e344936748024b402549c3af3b55f — 13/13 testów, fmt i strict Clippy PASS. [Audyt zakresu](docs/audits/STAGE050_BUILDER_CORE_INCREMENT_2026-11-02.md).
+
+Status TESTED_LOCAL_PARTIAL wyłącznie dla komponentu, nie całego etapu. Wszystkie 10 produktów nadal NOT_IMPLEMENTED; production_approved=false.
+

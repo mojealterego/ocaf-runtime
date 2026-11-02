@@ -432,5 +432,31 @@
       "332"
     ],
     "note": "10 Builder products remain distinct; registry labels do not prove implementation"
+  },
+  "stage050_partial_evidence_20261102": {
+    "status": "TESTED_LOCAL_PARTIAL",
+    "code_sha": "ffc9f899094e344936748024b402549c3af3b55f",
+    "ci_url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41507192748",
+    "tests_passed": 13,
+    "tests_failed": 0,
+    "checks": [
+      "cargo fmt --all -- --check",
+      "cargo clippy --locked --no-default-features --test builder_core -- -D warnings",
+      "cargo test --locked --no-default-features --test builder_core"
+    ],
+    "code_paths": [
+      "src/builder_core.rs",
+      "tests/builder_core.rs",
+      "src/lib.rs"
+    ],
+    "scope": "Inert typed DAG IR and deterministic JSON Code DSL with fail-closed validation",
+    "missing": [
+      "durable project store",
+      "Code/NoCode interactive editors",
+      "platform GUI/E2E for 10 products",
+      "sandbox execution",
+      "signed publish"
+    ],
+    "production_approved": false
   }
 }

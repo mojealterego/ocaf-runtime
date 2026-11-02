@@ -866,3 +866,11 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 
 - [Run 41017904577 — PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/41017904577), SHA `d86387580a2e4801d09f8b007e85fed7eb03dd65`; testy 10 przypadków ClaimLedgerVerifier, pozostałych lokalnych modułów Argona, Clippy i format.
 - Źródło PDF-1.54 = `TESTED_LOCAL_PARTIAL`, bez zaakceptowanego zewnętrznego evidence provenance, operational integration, production signoff. Kanoniczne numery etapów bez zmian.
+
+### 2026-11-02 — STAGE_PARTIAL_VERIFIED — 0.50 Agents Builder typed IR
+
+- **Kod:** src/builder_core.rs, tests/builder_core.rs, src/lib.rs; ograniczony typed DAG/IR, kanoniczny JSON Code DSL round-trip, topological ordering, SHA-256, tenant check, allowlist narzędzi, hard limits i testy negatywne.
+- **Dowód:** [GitHub Actions #41507192748](https://github.com/mojealterego/ocaf-runtime/actions/runs/41507192748), SHA ffc9f899094e344936748024b402549c3af3b55f, SUCCESS: **13/13** Rust integration tests, cargo fmt --all -- --check i cargo clippy --locked --no-default-features --test builder_core -- -D warnings.
+- **Granice:** brak trwałego project store, migracji wersji schematu, edytorów Code/NoCode, GUI Cloud/Windows/macOS/Android/iOS, sandbox runner, podpisywania i autoryzowanej publikacji. Brak platform E2E, niezależnego audytu i deploymentu.
+- **Status:** TESTED_LOCAL_PARTIAL tylko dla komponentu. 0.50–0.55 nadal PLANNED_OR_UNVERIFIED, 10 produktów NOT_IMPLEMENTED, production_approved=false. [Audyt](../audits/STAGE050_BUILDER_CORE_INCREMENT_2026-11-02.md).
+
