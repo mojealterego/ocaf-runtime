@@ -197,3 +197,10 @@ fn project_revision_and_identifiers_are_validated() {
     p.project_id = "../escape".into();
     assert_eq!(compile(&p, "tenant_a"), Err(BuilderError::Invalid));
 }
+
+#[test]
+fn every_required_input_port_must_be_connected() {
+    let mut p = project();
+    p.nodes[1].inputs.push(port("unbound", PortType::Text));
+    assert_eq!(compile(&p, "tenant_a"), Err(BuilderError::Graph));
+}
