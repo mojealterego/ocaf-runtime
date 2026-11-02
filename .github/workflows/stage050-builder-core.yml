@@ -7,6 +7,8 @@ on:
       - src/builder_core.rs
       - src/lib.rs
       - tests/builder_core.rs
+      - src/builder_store.rs
+      - tests/builder_store.rs
       - .github/workflows/stage050-builder-core.yml
   workflow_dispatch:
 
@@ -30,3 +32,7 @@ jobs:
         run: cargo clippy --locked --no-default-features --test builder_core -- -D warnings
       - name: Builder IR positive and negative acceptance
         run: cargo test --locked --no-default-features --test builder_core
+      - name: Builder SQLite store strict Clippy
+        run: cargo clippy --locked --no-default-features --test builder_store -- -D warnings
+      - name: Builder SQLite revision acceptance
+        run: cargo test --locked --no-default-features --test builder_store
