@@ -54,3 +54,10 @@ Platformy Cloud, Windows, macOS, Android i iOS muszą mieć swoje realne buildy 
 ## Raportowanie po zakończeniu KAŻDEGO etapu
 
 W tym repo na zakończenie etapu aktualizuje się główny `ROADMAP.md`, jego lustrzany plik `docs/ROADMAP_FULL_ECOSYSTEM_2026.md`, maszynowy rejestr `docs/roadmap/canonical_v11_inventory.json`, tę macierz produktów, `docs/roadmap/STAGE_CHANGELOG.md` oraz manifest dowodów konkretnego milestone (commit, run CI, SHA256 artefaktów, realność backendu, liczbę hostów, falsyfikowalne ograniczenia). Jeżeli produkt nadal nie istnieje: pozostaje **NOT_IMPLEMENTED**, bez dopowiadania pass.
+
+
+### 2026-11-02 — dowód CI etapu 0.52 (ograniczony zakres)
+
+- **Przypięty SHA:** `0be306742f7444b4c9719fba282ba4b14682430d`; **GitHub Actions:** [OCAF 0.52 Builder Cloud OAuth admission](https://github.com/mojealterego/ocaf-runtime/actions/runs/41536940370) — `completed/success`.
+- **Potwierdzone:** Rust formatting PASS; 4/4 testy integracyjne OAuth / tenant / CAS / scopes / revocation PASS; Clippy `--locked --no-default-features --test builder_cloud -- -D warnings` PASS.
+- **Zakres:** jedynie `src/builder_cloud.rs`, `tests/builder_cloud.rs`, istniejące OAuth/SQLite/typed IR. Status komponentu `TESTED_LOCAL_PARTIAL`; brak HTTP ingress, wdrożenia Cloud, sandbox execution i platform E2E. Żaden z 10 produktów nie został odebrany; `production_approved=false`.

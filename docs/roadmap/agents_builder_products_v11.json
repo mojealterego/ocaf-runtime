@@ -481,8 +481,8 @@
     "production_approved": false
   },
   "stage052_cloud_partial_evidence_20261102": {
-    "status": "IMPLEMENTED_CI_PENDING",
-    "code_sha": "ffbadc716847f95461ae38b34a0fff5b72b4e100",
+    "status": "TESTED_LOCAL_PARTIAL",
+    "code_sha": "0be306742f7444b4c9719fba282ba4b14682430d",
     "first_ci_url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41536438406",
     "first_ci_result": "FAIL_FORMATTING",
     "code_paths": [
@@ -498,6 +498,15 @@
       "signed export/publish",
       "platform E2E"
     ],
-    "production_approved": false
+    "production_approved": false,
+    "ci_url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41536940370",
+    "ci_result": "SUCCESS",
+    "tests_passed": 4,
+    "tests_failed": 0,
+    "checks": [
+      "cargo fmt --all -- --check",
+      "cargo test --locked --no-default-features --test builder_cloud",
+      "cargo clippy --locked --no-default-features --test builder_cloud -- -D warnings"
+    ]
   }
 }

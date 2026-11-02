@@ -1865,3 +1865,10 @@ Dowód i ograniczenia: docs/audits/STAGE051_BUILDER_WEB_INCREMENT_2026-11-02.md.
 - Commit implementacji: `ffbadc716847f95461ae38b34a0fff5b72b4e100`. Pierwsza bramka CI [#41536438406](https://github.com/mojealterego/ocaf-runtime/actions/runs/41536438406) zakończyła się FAIL na rustfmt; poprawka formatowania w kolejnym commicie, testy Rust nadal niepotwierdzone.
 - Status: `IMPLEMENTED_CI_PENDING`, nie `TESTED`, nie `DEPLOYED`. Brakuje HTTP/Axum, uwierzytelnionego ingress i CSRF, Cloud GUI, sandboxa, podpisanych artefaktów, realnego Cloud E2E. Produkty `AB-CLOUD-CODE` i `AB-CLOUD-NOCODE` nadal `NOT_IMPLEMENTED`; wszystkie 10 produktów bez odbioru. `production_approved=false`.
 - Audyt: `docs/audits/STAGE052_BUILDER_CLOUD_OAUTH_INCREMENT_2026-11-02.md`; CI: `.github/workflows/stage052-builder-cloud.yml`. Liczba i numeracja etapów bez zmian.
+
+
+### 2026-11-02 — dowód CI etapu 0.52 (ograniczony zakres)
+
+- **Przypięty SHA:** `0be306742f7444b4c9719fba282ba4b14682430d`; **GitHub Actions:** [OCAF 0.52 Builder Cloud OAuth admission](https://github.com/mojealterego/ocaf-runtime/actions/runs/41536940370) — `completed/success`.
+- **Potwierdzone:** Rust formatting PASS; 4/4 testy integracyjne OAuth / tenant / CAS / scopes / revocation PASS; Clippy `--locked --no-default-features --test builder_cloud -- -D warnings` PASS.
+- **Zakres:** jedynie `src/builder_cloud.rs`, `tests/builder_cloud.rs`, istniejące OAuth/SQLite/typed IR. Status komponentu `TESTED_LOCAL_PARTIAL`; brak HTTP ingress, wdrożenia Cloud, sandbox execution i platform E2E. Żaden z 10 produktów nie został odebrany; `production_approved=false`.

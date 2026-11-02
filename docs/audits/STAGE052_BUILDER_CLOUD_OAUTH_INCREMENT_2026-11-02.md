@@ -20,3 +20,10 @@ The operator must provision the OAuth database, protected Builder SQLite databas
 ## CI regression and remediation
 
 - Commit `bbbd530c73ac55c638893f27cdb95282debe33b6`, run [#41536595192](https://github.com/mojealterego/ocaf-runtime/actions/runs/41536595192): Rust formatting PASS, 4/4 integration tests FAIL at OAuth fixture initialization (`Configuration`), before any service assertions. Root cause under investigation; fixture now explicitly provisions private 0700 parent directory as required by `private_database`. No test is claimed green until a later run confirms it.
+
+
+### 2026-11-02 — dowód CI etapu 0.52 (ograniczony zakres)
+
+- **Przypięty SHA:** `0be306742f7444b4c9719fba282ba4b14682430d`; **GitHub Actions:** [OCAF 0.52 Builder Cloud OAuth admission](https://github.com/mojealterego/ocaf-runtime/actions/runs/41536940370) — `completed/success`.
+- **Potwierdzone:** Rust formatting PASS; 4/4 testy integracyjne OAuth / tenant / CAS / scopes / revocation PASS; Clippy `--locked --no-default-features --test builder_cloud -- -D warnings` PASS.
+- **Zakres:** jedynie `src/builder_cloud.rs`, `tests/builder_cloud.rs`, istniejące OAuth/SQLite/typed IR. Status komponentu `TESTED_LOCAL_PARTIAL`; brak HTTP ingress, wdrożenia Cloud, sandbox execution i platform E2E. Żaden z 10 produktów nie został odebrany; `production_approved=false`.
