@@ -232,8 +232,7 @@ fn validate(
 
     let mut edges = BTreeSet::new();
     let mut incoming = BTreeSet::new();
-    let mut degrees: BTreeMap<String, usize> =
-        nodes.keys().map(|id| (id.clone(), 0)).collect();
+    let mut degrees: BTreeMap<String, usize> = nodes.keys().map(|id| (id.clone(), 0)).collect();
     let mut children: BTreeMap<String, Vec<String>> = BTreeMap::new();
     let mut parents: BTreeMap<String, Vec<String>> = BTreeMap::new();
 
