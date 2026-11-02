@@ -1,8 +1,6 @@
 <!-- OCAF_README_ROADMAP_BEGIN -->
 **AKTUALNY STAN (2026-10-16): 334 etapy główne, 64 podetapy techniczne, 10 produktów Agents Builder; razem 408 pozycji. Następny etap: 335. Audyt 606 repozytoriów: planowany, bez dowodów integracji.**
 
-**AKTUALIZACJA 2026-11-03 / 0.50 — SQLITE TENANT QUOTA (TESTED_LOCAL_PARTIAL):** `src/builder_store.rs` ogranicza tworzenie nowych projektów do 64 na uwierzytelniony tenant. Limit sprawdzany jest atomowo w tej samej transakcji SQLite `IMMEDIATE` co zapis; kolejne rewizje istniejących projektów i inne tenanty pozostają niezależne. Negatywny test: `tests/builder_store.rs::tenant_project_quota_is_atomic_and_does_not_block_other_tenants_or_revisions`. Kod: `a04e66dafede5c1aee3d22efec45a95a5ca7bddc`; [CI #41544887845](https://github.com/mojealterego/ocaf-runtime/actions/runs/41544887845) `completed/success`: rustfmt, Clippy, 13 testów Builder IR i 6 testów SQLite PASS. [RED #41544812685](https://github.com/mojealterego/ocaf-runtime/actions/runs/41544812685): 5 testów SQLite PASS, 1 test quota FAIL przed poprawką. To ograniczenie zużycia zasobów, nie HTTP ingress, nie produkt Cloud ani odbiór 0.50–0.55. Wszystkie 10 produktów nadal `NOT_IMPLEMENTED`, `production_approved=false`.
-
 **Stan bramki artefaktów agentów (2026-10-30):** [CI #41095114134](https://github.com/mojealterego/ocaf-runtime/actions/runs/41095114134) — walidacja struktury **SUCCESS**; G01 zaimplementowany strukturalnie, G02–G33 nadal `PLANNED`, odbiór `--release` nadal odmawiany. [Szczegółowy audyt](docs/audits/AGENT_ARTIFACT_CONTRACT_GATE_2026-10-30.md).
 
 
@@ -11,6 +9,8 @@
 [![UWAGA CZYTAĆ — ZAKAZ SAMOWOLKI](https://img.shields.io/badge/UWAGA%20CZYTA%C4%86-ZAKAZ%20SAMOWOLKI-ff0000?style=for-the-badge&labelColor=8b0000)](ROADMAP.md)
 
 # 🔴 UWAGA CZYTAĆ — ZABRONIONA JEST SAMOWOLKA 🔴
+
+**AKTUALIZACJA 2026-11-03 / 0.50 — SQLITE TENANT QUOTA (TESTED_LOCAL_PARTIAL):** `src/builder_store.rs` ogranicza tworzenie nowych projektów do 64 na uwierzytelniony tenant. Limit sprawdzany jest atomowo w tej samej transakcji SQLite `IMMEDIATE` co zapis; kolejne rewizje istniejących projektów i inne tenanty pozostają niezależne. Negatywny test: `tests/builder_store.rs::tenant_project_quota_is_atomic_and_does_not_block_other_tenants_or_revisions`. Kod: `a04e66dafede5c1aee3d22efec45a95a5ca7bddc`; [CI #41544887845](https://github.com/mojealterego/ocaf-runtime/actions/runs/41544887845) `completed/success`: rustfmt, Clippy, 13 testów Builder IR i 6 testów SQLite PASS. [RED #41544812685](https://github.com/mojealterego/ocaf-runtime/actions/runs/41544812685): 5 testów SQLite PASS, 1 test quota FAIL przed poprawką. To ograniczenie zużycia zasobów, nie HTTP ingress, nie produkt Cloud ani odbiór 0.50–0.55. Wszystkie 10 produktów nadal `NOT_IMPLEMENTED`, `production_approved=false`.
 
 > **BEZWZGLĘDNY ZAKAZ SAMOWOLKI:** Nie wolno samodzielnie przenosić, usuwać, skracać, zastępować ani renumerować historycznych pozycji ROADMAPY; nie wolno zmieniać jej położenia na początku `README.md`, ukrywać braków, dopisywać nieuzgodnionych funkcjonalności ani oznaczać nieprzetestowanych etapów jako ukończonych. Odzyskane wymagania historyczne pozostają pod oryginalnymi identyfikatorami; nowe wymagania dopisuje się po ostatnim numerze, zgodnie z poleceniem właściciela projektu. Każda zmiana wymaga zachowania historii, aktualizacji manifestu, obu roadmap, README i dziennika zmian oraz rzeczywistych dowodów testów. **ZAKAZ SAMOWOLKI dotyczy także automatycznych generatorów i agentów AI.**
 
