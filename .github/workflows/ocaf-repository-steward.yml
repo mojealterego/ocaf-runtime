@@ -1,0 +1,76 @@
+name: OCAF Repository Steward — read-only governance gates
+on:
+  push:
+    branches: [main]
+    paths:
+      - AGENTS.md
+      - README.md
+      - ocaf-components.tsv
+      - docs/AGENT_ARTIFACT_CONTRACT.md
+      - docs/roadmap/canonical_v11_inventory.json
+      - docs/roadmap/agents_builder_products_v11.json
+      - .github/workflows/ocaf-repository-steward.yml
+  pull_request:
+    paths:
+      - AGENTS.md
+      - README.md
+      - ocaf-components.tsv
+      - docs/AGENT_ARTIFACT_CONTRACT.md
+      - docs/roadmap/canonical_v11_inventory.json
+      - docs/roadmap/agents_builder_products_v11.json
+      - .github/workflows/ocaf-repository-steward.yml
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ocaf-repository-steward-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  governance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Ensure repository instruction contract is present
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s AGENTS.md
+          grep -Fq 'Agent Foundry' AGENTS.md
+          grep -Fq 'Tool Foundry' AGENTS.md
+          grep -Fq 'main' AGENTS.md
+          sha256sum AGENTS.md
+      - name: Validate canonical inventory without rewriting history
+        run: python3 scripts/roadmap_integrity_gate.py --repo .
+      - name: Validate existing 111 draft packages and 33 swarm manifests
+        run: |
+          python3 -m unittest scripts.tests.test_agent_fleet_supervisor -v
+          python3 scripts/ocaf_agent_fleet_supervisor.py --log "$RUNNER_TEMP/ocaf-steward-fleet.jsonl"
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          toolchain: "1.99.0"
+      - name: Test and execute fail-closed Rust artifact gate (non-release)
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustc --edition=2021 --test scripts/ocaf_agent_artifact_gate.rs -o "$RUNNER_TEMP/ocaf-artifact-gate-test"
+          "$RUNNER_TEMP/ocaf-artifact-gate-test"
+          rustc --edition=2021 scripts/ocaf_agent_artifact_gate.rs -o "$RUNNER_TEMP/ocaf-artifact-gate"
+          "$RUNNER_TEMP/ocaf-artifact-gate" .
+      - name: Reject any false certification of planned components
+        shell: bash
+        run: |
+          set -euo pipefail
+          if "$RUNNER_TEMP/ocaf-artifact-gate" . --release > "$RUNNER_TEMP/release-denied.log" 2>&1; then
+            echo 'SECURITY FAILURE: missing artifacts passed release gate' >&2
+            exit 1
+          fi
+          grep -q 'NOT CERTIFIED' "$RUNNER_TEMP/release-denied.log"
+          echo 'Release remains denied for unverified agent components'

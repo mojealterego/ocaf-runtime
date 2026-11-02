@@ -1,5 +1,12 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-03 — Repository Steward / AGENTS.md (governance, bez nadania statusów)
+
+- Dodano główny kontrakt `AGENTS.md` dla bezpiecznych, ograniczonych agentów inżynieryjnych: weryfikacja `main` i CI, TDD, evidence-by-SHA, zakaz fałszywej certyfikacji, polityka tworzenia przyszłych agentów OCAF i narzędzi OMAt, rozdzielenie dziesięciu produktów Builders od agentów.
+- Dodano harmonogramowaną bramkę `.github/workflows/ocaf-repository-steward.yml`: read-only roadmap inventory, nadzór rejestrów floty, testy Rust validatora, odmowa certyfikacji niegotowych artefaktów. CI monitoruje naruszenia, **nie modyfikuje kodu autonomicznie**.
+- To jest zmiana instrukcji i weryfikacji repozytorium, **nie nowy numer etapu, nie implementacja nowych agentów, nie dowód produkcyjnej aktywacji**. Statusy i liczniki roadmapy bez zmian. Ukończenie workflow wymaga oddzielnego potwierdzenia na SHA commita.
+
+
 ## 2026-10-30 — FIXED CI / OCAF agent artifact contract (oddzielenie implementacji od planu)
 
 - **Diagnoza:** run #41058312131: `32 artifact contract violations` — G02–G33 nie mają zadeklarowanych katalogów źródłowych; G01 posiada rzeczywistą strukturę. Jednocześnie rejestr `ocaf-components.tsv` nie rozróżniał stanu implementacji.
