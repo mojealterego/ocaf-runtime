@@ -143,8 +143,8 @@ export function canonicalProject(project, trustedTenant) {
   const result = clone(project), ranks = new Map(order.map((name, index) => [name,index]));
   result.nodes.sort((a,b) => ranks.get(a.id) - ranks.get(b.id));
   for (const node of result.nodes) {
-    node.inputs.sort((a,b) => a.name.localeCompare(b.name, 'en'));
-    node.outputs.sort((a,b) => a.name.localeCompare(b.name, 'en'));
+    node.inputs.sort((a,b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+    node.outputs.sort((a,b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
   }
   result.edges.sort((a,b) => {
     for (const key of KEYS.edge) {
