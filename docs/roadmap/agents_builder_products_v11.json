@@ -520,9 +520,11 @@
         "src/builder_store.rs",
         "tests/builder_store.rs"
       ],
-      "status": "IMPLEMENTED_CI_PENDING",
-      "ci_run_url": null,
-      "acceptance": "64 projects permitted; 65th rejected with Limit; existing revisions and separate tenant remain writable"
+      "status": "TESTED_LOCAL_PARTIAL",
+      "ci_run_url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41544887845",
+      "acceptance": "64 projects permitted; 65th rejected with Limit; existing revisions and separate tenant remain writable",
+      "red_run_url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41544812685",
+      "verified_source_sha": "a04e66dafede5c1aee3d22efec45a95a5ca7bddc"
     }
   ]
 }
