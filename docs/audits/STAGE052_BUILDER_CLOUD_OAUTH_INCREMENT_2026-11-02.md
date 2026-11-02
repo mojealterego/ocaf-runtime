@@ -16,3 +16,7 @@ Status: **IMPLEMENTED_UNVERIFIED** until dedicated GitHub Actions CI confirms bu
 - No independent production security audit. \`production_approved=false\`.
 
 The operator must provision the OAuth database, protected Builder SQLite database, registered OAuth clients and verified ingress identity. Do not derive the subject from JSON payload, URL path, arbitrary request headers or agent-generated content.
+
+## CI regression and remediation
+
+- Commit `bbbd530c73ac55c638893f27cdb95282debe33b6`, run [#41536595192](https://github.com/mojealterego/ocaf-runtime/actions/runs/41536595192): Rust formatting PASS, 4/4 integration tests FAIL at OAuth fixture initialization (`Configuration`), before any service assertions. Root cause under investigation; fixture now explicitly provisions private 0700 parent directory as required by `private_database`. No test is claimed green until a later run confirms it.

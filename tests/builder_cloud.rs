@@ -19,6 +19,11 @@ fn scope(names: &[&str]) -> BTreeSet<String> {
 
 fn fixture() -> (TempDir, OAuthService, SqliteBuilderStore) {
     let dir = tempfile::tempdir().unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+    }
     let oauth_path = dir.path().join("oauth.sqlite");
     let builder_path = dir.path().join("builder.sqlite");
     File::create(&oauth_path).unwrap();
