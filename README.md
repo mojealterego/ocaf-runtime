@@ -1,6 +1,8 @@
 <!-- OCAF_README_ROADMAP_BEGIN -->
 **AKTUALNY STAN (2026-10-16): 334 etapy główne, 64 podetapy techniczne, 10 produktów Agents Builder; razem 408 pozycji. Następny etap: 335. Audyt 606 repozytoriów: planowany, bez dowodów integracji.**
 
+**AKTUALIZACJA 2026-11-03 / 0.50 — SQLITE TENANT QUOTA (IMPLEMENTED_CI_PENDING):** `src/builder_store.rs` ogranicza tworzenie nowych projektów do 64 na uwierzytelniony tenant. Limit sprawdzany jest atomowo w tej samej transakcji SQLite `IMMEDIATE` co zapis; kolejne rewizje istniejących projektów i inne tenanty pozostają niezależne. Negatywny test: `tests/builder_store.rs::tenant_project_quota_is_atomic_and_does_not_block_other_tenants_or_revisions`. Kod: `a04e66dafede5c1aee3d22efec45a95a5ca7bddc`; CI oczekuje potwierdzenia. To ograniczenie zużycia zasobów, nie HTTP ingress, nie produkt Cloud ani odbiór 0.50–0.55. Wszystkie 10 produktów nadal `NOT_IMPLEMENTED`, `production_approved=false`.
+
 **Stan bramki artefaktów agentów (2026-10-30):** [CI #41095114134](https://github.com/mojealterego/ocaf-runtime/actions/runs/41095114134) — walidacja struktury **SUCCESS**; G01 zaimplementowany strukturalnie, G02–G33 nadal `PLANNED`, odbiór `--release` nadal odmawiany. [Szczegółowy audyt](docs/audits/AGENT_ARTIFACT_CONTRACT_GATE_2026-10-30.md).
 
 

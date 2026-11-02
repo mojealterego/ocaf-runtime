@@ -1,5 +1,9 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-03 — Stage 0.50 Builder SQLite tenant resource quota (CI pending)
+
+**AKTUALIZACJA 2026-11-03 / 0.50 — SQLITE TENANT QUOTA (IMPLEMENTED_CI_PENDING):** `src/builder_store.rs` ogranicza tworzenie nowych projektów do 64 na uwierzytelniony tenant. Limit sprawdzany jest atomowo w tej samej transakcji SQLite `IMMEDIATE` co zapis; kolejne rewizje istniejących projektów i inne tenanty pozostają niezależne. Negatywny test: `tests/builder_store.rs::tenant_project_quota_is_atomic_and_does_not_block_other_tenants_or_revisions`. Kod: `a04e66dafede5c1aee3d22efec45a95a5ca7bddc`; CI oczekuje potwierdzenia. To ograniczenie zużycia zasobów, nie HTTP ingress, nie produkt Cloud ani odbiór 0.50–0.55. Wszystkie 10 produktów nadal `NOT_IMPLEMENTED`, `production_approved=false`.
+
 ## 2026-11-03 — Repository Steward / AGENTS.md (governance, bez nadania statusów)
 
 - Dodano główny kontrakt `AGENTS.md` dla bezpiecznych, ograniczonych agentów inżynieryjnych: weryfikacja `main` i CI, TDD, evidence-by-SHA, zakaz fałszywej certyfikacji, polityka tworzenia przyszłych agentów OCAF i narzędzi OMAt, rozdzielenie dziesięciu produktów Builders od agentów.

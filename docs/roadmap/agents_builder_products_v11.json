@@ -508,5 +508,21 @@
       "cargo test --locked --no-default-features --test builder_cloud",
       "cargo clippy --locked --no-default-features --test builder_cloud -- -D warnings"
     ]
-  }
+  },
+  "engineering_increments": [
+    {
+      "id": "BUILDER-STORE-TENANT-QUOTA",
+      "parent_stage": "0.50",
+      "kind": "resource_exhaustion_guard",
+      "scope": "Tenant-scoped SQLite Builder project creation capped at 64 projects per tenant, atomically under IMMEDIATE transaction; existing revisions and other tenants unaffected",
+      "source_sha": "a04e66dafede5c1aee3d22efec45a95a5ca7bddc",
+      "source_paths": [
+        "src/builder_store.rs",
+        "tests/builder_store.rs"
+      ],
+      "status": "IMPLEMENTED_CI_PENDING",
+      "ci_run_url": null,
+      "acceptance": "64 projects permitted; 65th rejected with Limit; existing revisions and separate tenant remain writable"
+    }
+  ]
 }

@@ -35,3 +35,9 @@ Funkcja compile() wytwarza wyłącznie nieaktywny plan i hash. Nie wykonuje tool
 - BUILDER-CORE-IR: pełne wymaganie nadal NOT_IMPLEMENTED; przyrost TESTED_LOCAL_PARTIAL.
 - Dziesięć produktów: NOT_IMPLEMENTED.
 - production_approved=false; deployment_type=not_deployed.
+
+## 2026-11-03 — Tenant-wide quota / dowód w toku
+
+**AKTUALIZACJA 2026-11-03 / 0.50 — SQLITE TENANT QUOTA (IMPLEMENTED_CI_PENDING):** `src/builder_store.rs` ogranicza tworzenie nowych projektów do 64 na uwierzytelniony tenant. Limit sprawdzany jest atomowo w tej samej transakcji SQLite `IMMEDIATE` co zapis; kolejne rewizje istniejących projektów i inne tenanty pozostają niezależne. Negatywny test: `tests/builder_store.rs::tenant_project_quota_is_atomic_and_does_not_block_other_tenants_or_revisions`. Kod: `a04e66dafede5c1aee3d22efec45a95a5ca7bddc`; CI oczekuje potwierdzenia. To ograniczenie zużycia zasobów, nie HTTP ingress, nie produkt Cloud ani odbiór 0.50–0.55. Wszystkie 10 produktów nadal `NOT_IMPLEMENTED`, `production_approved=false`.
+
+**RED:** test-only commit `cb49325629533f7383d631f35fff1a6620612e3a`, workflow [#41544812685](https://github.com/mojealterego/ocaf-runtime/actions/runs/41544812685); wynik semantyczny jeszcze niepotwierdzony w chwili zapisu. **GREEN:** oczekuje na workflow dla `a04e66dafede5c1aee3d22efec45a95a5ca7bddc`. Odróżniać błąd formatowania pierwszego przebiegu `87d8d0c` od rzeczywistego negatywnego testu quota. Statusy produktów bez zmian.
