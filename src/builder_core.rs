@@ -270,6 +270,14 @@ fn validate(
             .push(edge.from_node.clone());
     }
 
+    for node in &project.nodes {
+        for port in &node.inputs {
+            if !incoming.contains(&(node.id.clone(), port.name.clone())) {
+                return Err(BuilderError::Graph);
+            }
+        }
+    }
+
     let mut ready: BTreeSet<String> = degrees
         .iter()
         .filter(|(_, degree)| **degree == 0)
