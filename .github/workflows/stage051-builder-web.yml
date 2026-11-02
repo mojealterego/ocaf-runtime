@@ -30,6 +30,10 @@ jobs:
           node --check apps/agents-builder-web/app.mjs
       - name: Web editor model contract
         run: node --test apps/agents-builder-web/tests/editor.test.mjs
+      - name: Chromium GUI end-to-end smoke
+        run: |
+          command -v google-chrome
+          node apps/agents-builder-web/tests/browser-smoke.mjs
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
         with:
           components: rustfmt, clippy
