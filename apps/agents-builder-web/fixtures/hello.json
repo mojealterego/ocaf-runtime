@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "tenant_id": "local",
+  "project_id": "hello",
+  "revision": 1,
+  "max_cost_minor": 100,
+  "grants": [],
+  "nodes": [
+    {
+      "id": "input",
+      "kind": "input",
+      "inputs": [],
+      "outputs": [{"name": "out", "kind": "text"}],
+      "tool_name": null,
+      "max_cost_minor": 0
+    },
+    {
+      "id": "output",
+      "kind": "output",
+      "inputs": [{"name": "in", "kind": "text"}],
+      "outputs": [],
+      "tool_name": null,
+      "max_cost_minor": 0
+    }
+  ],
+  "edges": [{"from_node": "input", "from_port": "out", "to_node": "output", "to_port": "in"}]
+}

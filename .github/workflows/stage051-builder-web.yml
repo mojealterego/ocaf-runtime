@@ -1,0 +1,37 @@
+name: OCAF 0.51 Agents Builder web Code and NoCode
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/agents-builder-web/**
+      - tests/builder_web_contract.rs
+      - src/builder_core.rs
+      - .github/workflows/stage051-builder-web.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  web-code-nocode:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Web editor syntax
+        run: |
+          node --check apps/agents-builder-web/editor.mjs
+          node --check apps/agents-builder-web/app.mjs
+      - name: Web editor model contract
+        run: node --test apps/agents-builder-web/tests/editor.test.mjs
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          components: rustfmt, clippy
+      - name: Rust and web shared fixture
+        run: cargo test --locked --no-default-features --test builder_web_contract
