@@ -1,4 +1,5 @@
 pub mod auth;
+pub mod builder_cloud;
 pub mod builder_core;
 pub mod builder_store;
 pub mod cluster;

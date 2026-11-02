@@ -1,0 +1,40 @@
+name: OCAF 0.52 Builder Cloud OAuth admission
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "src/builder_cloud.rs"
+      - "src/builder_store.rs"
+      - "src/builder_core.rs"
+      - "src/stage044_oauth.rs"
+      - "tests/builder_cloud.rs"
+      - "src/lib.rs"
+      - ".github/workflows/stage052-builder-cloud.yml"
+  pull_request:
+    paths:
+      - "src/builder_cloud.rs"
+      - "src/builder_store.rs"
+      - "src/builder_core.rs"
+      - "src/stage044_oauth.rs"
+      - "tests/builder_cloud.rs"
+      - "src/lib.rs"
+      - ".github/workflows/stage052-builder-cloud.yml"
+permissions:
+  contents: read
+jobs:
+  oauth-builder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          components: rustfmt, clippy
+      - name: Rust formatting
+        run: cargo fmt --all -- --check
+      - name: Cloud OAuth tenant and CAS tests
+        run: cargo test --locked --no-default-features --test builder_cloud
+      - name: Cloud admission Clippy
+        run: cargo clippy --locked --no-default-features --test builder_cloud -- -D warnings
