@@ -106,3 +106,12 @@ test('Rust fixture is accepted by the web Code/NoCode converter', async () => {
   const fixture = await fs.readFile(new URL('../fixtures/hello.json', import.meta.url), 'utf8');
   assert.deepEqual(validateProject(decodeDsl(fixture, 'local'), 'local').order, ['input', 'output']);
 });
+
+test('Code DSL canonical port ordering matches Rust ASCII identifier ordering', () => {
+  const project = newProject('local', 'sort');
+  project.nodes[0].outputs.push(
+    {name:'Z',kind:'text'}, {name:'a',kind:'text'}, {name:'_',kind:'text'}
+  );
+  const encoded = JSON.parse(encodeDsl(project, 'local'));
+  assert.deepEqual(encoded.nodes[0].outputs.map(port => port.name), ['Z','_','a','out']);
+});
