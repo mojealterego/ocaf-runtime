@@ -1,0 +1,32 @@
+name: OCAF 0.50 Agents Builder typed IR contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - src/builder_core.rs
+      - src/lib.rs
+      - tests/builder_core.rs
+      - .github/workflows/stage050-builder-core.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  builder-core:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          components: rustfmt, clippy
+      - name: Rust formatting
+        run: cargo fmt --all -- --check
+      - name: Builder IR strict Clippy
+        run: cargo clippy --locked --no-default-features --test builder_core -- -D warnings
+      - name: Builder IR positive and negative acceptance
+        run: cargo test --locked --no-default-features --test builder_core
