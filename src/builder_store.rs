@@ -14,6 +14,7 @@ const GENESIS: &str = "OCAF-BUILDER-GENESIS-v1";
 const MAX_REVISIONS: usize = 128;
 const MAX_PAYLOAD_BYTES: usize = 128 * 1024;
 const MAX_TOTAL_BYTES: usize = MAX_REVISIONS * MAX_PAYLOAD_BYTES;
+const MAX_PROJECTS_PER_TENANT: i64 = 64;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BuilderHead {
@@ -257,6 +258,22 @@ impl SqliteBuilderStore {
             } else {
                 BuilderStoreError::Conflict
             });
+        }
+        // Tenant-wide quota is checked in the same IMMEDIATE transaction as
+        // the insert. Concurrent writers cannot both pass the final slot.
+        // Existing projects remain writable when the tenant is at capacity.
+        if current.is_none() {
+            let projects: i64 = tx
+                .query_row(
+                    "SELECT COUNT(*) FROM ocaf_builder_revisions_v1
+                     WHERE tenant=?1 AND revision=1",
+                    params![trusted_tenant],
+                    |row| row.get(0),
+                )
+                .map_err(|_| BuilderStoreError::Database)?;
+            if projects >= MAX_PROJECTS_PER_TENANT {
+                return Err(BuilderStoreError::Limit);
+            }
         }
         let previous = current.map_or(GENESIS, |head| head.sha256.as_str());
         let head = BuilderHead {
