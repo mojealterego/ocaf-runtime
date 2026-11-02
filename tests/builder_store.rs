@@ -141,14 +141,11 @@ fn tenant_project_quota_is_atomic_and_does_not_block_other_tenants_or_revisions(
 
     let mut existing = fixture();
     existing.project_id = "project_0".into();
-    let head = store
-        .load("local", "project_0", None)
-        .unwrap()
-        .unwrap()
-        .1;
+    let head = store.load("local", "project_0", None).unwrap().unwrap().1;
     existing.revision = 2;
     assert_eq!(
-        store.save(&existing, "local", Some(&head))
+        store
+            .save(&existing, "local", Some(&head))
             .unwrap()
             .revision,
         2
