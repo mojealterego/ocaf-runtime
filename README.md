@@ -1857,3 +1857,11 @@ Status TESTED_LOCAL_PARTIAL wyłącznie dla komponentu, nie całego etapu. Wszys
 **AKTUALIZACJA 2026-11-02 / 0.51 — WEB EDITOR TESTED_LOCAL_PARTIAL:** apps/agents-builder-web zawiera interaktywne przeglądarkowe Code JSON DSL i NoCode DAG GUI, edycję węzłów/grantów/budżetu, offline localStorage (rewizje/revert), import/eksport i dry-run bez efektów. CI #41526215520 na SHA 7f578d8c617cdeadc2472628ba34decd55c18839: Node model, Rust fixture i rzeczywisty Chromium GUI E2E PASS. To nie jest autoryzowana usługa Cloud ani natywne produkty Windows/macOS/Android/iOS. src/builder_store.rs to nowy SQLite ledger, weryfikacja CI jeszcze trwa. Wszystkie 10 produktów nadal NOT_IMPLEMENTED, 0.50–0.55 bez odbioru; production_approved=false.
 
 Dowód i ograniczenia: docs/audits/STAGE051_BUILDER_WEB_INCREMENT_2026-11-02.md. Źródła: apps/agents-builder-web/; CI #41526215520. Wspólny magazyn Rust src/builder_store.rs wymaga jeszcze potwierdzenia testów. Nie ma produkcyjnego Cloud API, natywnych aplikacji ani podpisanej publikacji.
+
+
+## 2026-11-02 — Etap 0.52: OAuth-scoped Builder Cloud service (częściowy przyrost)
+
+- Kod: `src/builder_cloud.rs` i `tests/builder_cloud.rs`; serwis wymaga tokenu OAuth sprawdzonego względem tożsamości ingress, odbiorcy i zakresów `builder:read`/`builder:write`; tenant-scoped SQLite CAS i statyczny preview bez efektów.
+- Commit implementacji: `ffbadc716847f95461ae38b34a0fff5b72b4e100`. Pierwsza bramka CI [#41536438406](https://github.com/mojealterego/ocaf-runtime/actions/runs/41536438406) zakończyła się FAIL na rustfmt; poprawka formatowania w kolejnym commicie, testy Rust nadal niepotwierdzone.
+- Status: `IMPLEMENTED_CI_PENDING`, nie `TESTED`, nie `DEPLOYED`. Brakuje HTTP/Axum, uwierzytelnionego ingress i CSRF, Cloud GUI, sandboxa, podpisanych artefaktów, realnego Cloud E2E. Produkty `AB-CLOUD-CODE` i `AB-CLOUD-NOCODE` nadal `NOT_IMPLEMENTED`; wszystkie 10 produktów bez odbioru. `production_approved=false`.
+- Audyt: `docs/audits/STAGE052_BUILDER_CLOUD_OAUTH_INCREMENT_2026-11-02.md`; CI: `.github/workflows/stage052-builder-cloud.yml`. Liczba i numeracja etapów bez zmian.

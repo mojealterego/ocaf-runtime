@@ -1231,3 +1231,11 @@ Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): 
 Źródło: `Dokument bez nazwy(8).PDF`, ID Google Drive `1gyLwD4LMaUarwUCpl6I4_TNxAr2F-P6A`; punktacja źródłowa 1.55–2.06 nie jest kanoniczna. Nie zmieniać historycznych etapów 1.55–2.06.
 
 **Dokładny rejestr 20 grup i przypisania do etapów:** [ARGON_155_206_RECONCILIATION_2026-10-30.md](audits/ARGON_155_206_RECONCILIATION_2026-10-30.md). Rust Document Function DAG (źr. 1.57), migracje schematu SQLite v1 (źr. 1.60), bounded compound reasoning (źr. 1.70), Model Router (źr. 1.75), Prompt DSL (źr. 1.80), Collaborative Tracker i trwały SQLite Store (źr. 2.02), Voice Firewall (źr. 2.03) oraz benchmark subprocess (źr. 2.05) zapisano w kodzie, ale status wymaga zielonego CI. Pozostałe grupy mają jawne PARTIAL/OPEN/RESEARCH. Globalnie `production_approved=false`, liczba historycznych etapów bez zmian (334+64+10).
+
+
+## 2026-11-02 — Etap 0.52: OAuth-scoped Builder Cloud service (częściowy przyrost)
+
+- Kod: `src/builder_cloud.rs` i `tests/builder_cloud.rs`; serwis wymaga tokenu OAuth sprawdzonego względem tożsamości ingress, odbiorcy i zakresów `builder:read`/`builder:write`; tenant-scoped SQLite CAS i statyczny preview bez efektów.
+- Commit implementacji: `ffbadc716847f95461ae38b34a0fff5b72b4e100`. Pierwsza bramka CI [#41536438406](https://github.com/mojealterego/ocaf-runtime/actions/runs/41536438406) zakończyła się FAIL na rustfmt; poprawka formatowania w kolejnym commicie, testy Rust nadal niepotwierdzone.
+- Status: `IMPLEMENTED_CI_PENDING`, nie `TESTED`, nie `DEPLOYED`. Brakuje HTTP/Axum, uwierzytelnionego ingress i CSRF, Cloud GUI, sandboxa, podpisanych artefaktów, realnego Cloud E2E. Produkty `AB-CLOUD-CODE` i `AB-CLOUD-NOCODE` nadal `NOT_IMPLEMENTED`; wszystkie 10 produktów bez odbioru. `production_approved=false`.
+- Audyt: `docs/audits/STAGE052_BUILDER_CLOUD_OAUTH_INCREMENT_2026-11-02.md`; CI: `.github/workflows/stage052-builder-cloud.yml`. Liczba i numeracja etapów bez zmian.

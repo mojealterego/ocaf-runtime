@@ -1389,3 +1389,11 @@ Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): 
 **Weryfikacja 20 grup wymagań i ich powiązanie semantyczne ze starymi numerami:** [AUDYT ARGON 1.55–2.06](docs/audits/ARGON_155_206_RECONCILIATION_2026-10-30.md). Zawiera każdą grupę, kanoniczne identyfikatory, ścieżki kodu, status PARTIAL/OPEN/IMPLEMENTED_SCOPE_CI_PENDING i negatywne testy. W szczególności źródłowe 1.57 (Document Function DAG), 1.75 (Model Router), 1.80 (Prompt DSL), 2.02 (Collaborative Object Tracker) i 2.03 (Voice Narrative Firewall) mają nowe moduły Rust; kod nie oznacza pełnego E2E, a zamknięcie testowanego zakresu wymaga zielonego CI. Pozostałych braków nie oznaczono jako ukończone.
 
 **Nie oznacza pełnego DONE:** ClaimLedger i PolicyGate są dodatkową kontrolą przed wykonawcą, a nie niezależną autoryzacją; TypeScript z PDF nie jest modułem Rust ani dowodem wdrożenia; nie zastępować istniejącego runtime. Zapis zachowuje 334 etapy główne, 64 podetapy oraz 10 produktów. Globalne `production_approved=false`.
+
+
+## 2026-11-02 — Etap 0.52: OAuth-scoped Builder Cloud service (częściowy przyrost)
+
+- Kod: `src/builder_cloud.rs` i `tests/builder_cloud.rs`; serwis wymaga tokenu OAuth sprawdzonego względem tożsamości ingress, odbiorcy i zakresów `builder:read`/`builder:write`; tenant-scoped SQLite CAS i statyczny preview bez efektów.
+- Commit implementacji: `ffbadc716847f95461ae38b34a0fff5b72b4e100`. Pierwsza bramka CI [#41536438406](https://github.com/mojealterego/ocaf-runtime/actions/runs/41536438406) zakończyła się FAIL na rustfmt; poprawka formatowania w kolejnym commicie, testy Rust nadal niepotwierdzone.
+- Status: `IMPLEMENTED_CI_PENDING`, nie `TESTED`, nie `DEPLOYED`. Brakuje HTTP/Axum, uwierzytelnionego ingress i CSRF, Cloud GUI, sandboxa, podpisanych artefaktów, realnego Cloud E2E. Produkty `AB-CLOUD-CODE` i `AB-CLOUD-NOCODE` nadal `NOT_IMPLEMENTED`; wszystkie 10 produktów bez odbioru. `production_approved=false`.
+- Audyt: `docs/audits/STAGE052_BUILDER_CLOUD_OAUTH_INCREMENT_2026-11-02.md`; CI: `.github/workflows/stage052-builder-cloud.yml`. Liczba i numeracja etapów bez zmian.

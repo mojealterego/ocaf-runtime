@@ -40,8 +40,14 @@ impl<'a> BuilderCloudService<'a> {
     ) -> Result<Self, BuilderCloudError> {
         if !audience.starts_with("https://")
             || audience.len() > 2048
-            || audience.bytes().any(|byte| byte <= 32 || byte == b'\\' || byte == b'#')
-            || audience[8..].split(['/', '?']).next().unwrap_or("").is_empty()
+            || audience
+                .bytes()
+                .any(|byte| byte <= 32 || byte == b'\\' || byte == b'#')
+            || audience[8..]
+                .split(['/', '?'])
+                .next()
+                .unwrap_or("")
+                .is_empty()
         {
             return Err(BuilderCloudError::Configuration);
         }
@@ -90,7 +96,9 @@ impl<'a> BuilderCloudService<'a> {
         expected: Option<&BuilderHead>,
     ) -> Result<BuilderHead, BuilderCloudError> {
         self.authorize(token, trusted_subject, WRITE_SCOPE)?;
-        Ok(self.store.save(project, &trusted_subject.tenant, expected)?)
+        Ok(self
+            .store
+            .save(project, &trusted_subject.tenant, expected)?)
     }
 
     /// Read a fully verified project chain with optional externally pinned head.

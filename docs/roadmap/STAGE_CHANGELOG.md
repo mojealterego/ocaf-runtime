@@ -882,3 +882,11 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - Nowy magazyn src/builder_store.rs i tests/builder_store.rs: implementacja zapisana, CI w toku — nie potwierdzono TESTED.
 - Braki: backend Cloud, trwały uwierzytelniony tenant store, sandbox, podpisy, rzeczywiste produkty desktop/mobile i ich E2E.
 - Statusy etapów 0.50–0.55 i 10 produktów bez zmian. Audyt: docs/audits/STAGE051_BUILDER_WEB_INCREMENT_2026-11-02.md.
+
+
+## 2026-11-02 — Etap 0.52: OAuth-scoped Builder Cloud service (częściowy przyrost)
+
+- Kod: `src/builder_cloud.rs` i `tests/builder_cloud.rs`; serwis wymaga tokenu OAuth sprawdzonego względem tożsamości ingress, odbiorcy i zakresów `builder:read`/`builder:write`; tenant-scoped SQLite CAS i statyczny preview bez efektów.
+- Commit implementacji: `ffbadc716847f95461ae38b34a0fff5b72b4e100`. Pierwsza bramka CI [#41536438406](https://github.com/mojealterego/ocaf-runtime/actions/runs/41536438406) zakończyła się FAIL na rustfmt; poprawka formatowania w kolejnym commicie, testy Rust nadal niepotwierdzone.
+- Status: `IMPLEMENTED_CI_PENDING`, nie `TESTED`, nie `DEPLOYED`. Brakuje HTTP/Axum, uwierzytelnionego ingress i CSRF, Cloud GUI, sandboxa, podpisanych artefaktów, realnego Cloud E2E. Produkty `AB-CLOUD-CODE` i `AB-CLOUD-NOCODE` nadal `NOT_IMPLEMENTED`; wszystkie 10 produktów bez odbioru. `production_approved=false`.
+- Audyt: `docs/audits/STAGE052_BUILDER_CLOUD_OAUTH_INCREMENT_2026-11-02.md`; CI: `.github/workflows/stage052-builder-cloud.yml`. Liczba i numeracja etapów bez zmian.
