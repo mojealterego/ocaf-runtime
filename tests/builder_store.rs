@@ -4,7 +4,11 @@ use rusqlite::Connection;
 use tempfile::NamedTempFile;
 
 fn fixture() -> BuilderProject {
-    from_dsl(include_str!("../apps/agents-builder-web/fixtures/hello.json"), "local").unwrap()
+    from_dsl(
+        include_str!("../apps/agents-builder-web/fixtures/hello.json"),
+        "local",
+    )
+    .unwrap()
 }
 
 fn setup() -> (NamedTempFile, SqliteBuilderStore) {
@@ -51,7 +55,10 @@ fn revision_cas_prevents_lost_updates_and_replay() {
         store.load("local", "hello", Some(&first)).unwrap_err(),
         BuilderStoreError::Conflict
     );
-    assert_eq!(store.history("local", "hello").unwrap(), vec![first, second]);
+    assert_eq!(
+        store.history("local", "hello").unwrap(),
+        vec![first, second]
+    );
 }
 
 #[test]
@@ -80,7 +87,8 @@ fn rejects_tampered_payload_and_missing_pinned_history() {
     conn.execute(
         "UPDATE ocaf_builder_revisions_v1 SET payload=?1 WHERE tenant='local' AND project='hello' AND revision=2",
         [b"{}".as_slice()],
-    ).unwrap();
+    )
+    .unwrap();
     assert_eq!(
         store.load("local", "hello", None).unwrap_err(),
         BuilderStoreError::Integrity
@@ -106,7 +114,10 @@ fn rejects_schema_downgrade_and_nonexistent_database() {
         [],
     )
     .unwrap();
-    assert_eq!(store.load("local", "hello", None).unwrap_err(), BuilderStoreError::Integrity);
+    assert_eq!(
+        store.load("local", "hello", None).unwrap_err(),
+        BuilderStoreError::Integrity
+    );
     let absent = file.path().with_extension("not-there");
     assert!(SqliteBuilderStore::open_existing(&absent).is_err());
 }

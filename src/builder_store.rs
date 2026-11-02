@@ -174,7 +174,9 @@ impl SqliteBuilderStore {
             if result.len() >= MAX_REVISIONS || payload.len() > MAX_PAYLOAD_BYTES {
                 return Err(BuilderStoreError::Limit);
             }
-            total = total.checked_add(payload.len()).ok_or(BuilderStoreError::Limit)?;
+            total = total
+                .checked_add(payload.len())
+                .ok_or(BuilderStoreError::Limit)?;
             if total > MAX_TOTAL_BYTES {
                 return Err(BuilderStoreError::Limit);
             }

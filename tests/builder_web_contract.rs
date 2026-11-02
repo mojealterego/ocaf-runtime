@@ -8,5 +8,8 @@ fn browser_project_fixture_compiles_and_roundtrips_in_rust() {
     let plan = compile(&project, "local").expect("fixture compiles without effects");
     assert_eq!(plan.ordered_nodes, vec!["input", "output"]);
     assert!(plan.requested_tools.is_empty());
-    assert_eq!(from_dsl(&to_dsl(&project, "local").unwrap(), "local").unwrap(), project);
+    assert_eq!(
+        from_dsl(&to_dsl(&project, "local").unwrap(), "local").unwrap(),
+        project
+    );
 }
