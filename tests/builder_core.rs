@@ -99,7 +99,10 @@ fn unsupported_schema_and_unknown_json_fields_are_rejected() {
     assert_eq!(compile(&p, "tenant_a"), Err(BuilderError::Invalid));
     let dsl = to_dsl(&project(), "tenant_a").unwrap();
     let changed = dsl.replacen("\"revision\": 1", "\"revision\": 1, \"unsafe\": true", 1);
-    assert_eq!(from_dsl(&changed, "tenant_a"), Err(BuilderError::Serialization));
+    assert_eq!(
+        from_dsl(&changed, "tenant_a"),
+        Err(BuilderError::Serialization)
+    );
 }
 
 #[test]
