@@ -1,0 +1,10 @@
+{
+  "name": "OCAF Agents Builder — Offline Code and NoCode",
+  "short_name": "OCAF Builder",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0e14",
+  "theme_color": "#0b0e14",
+  "description": "Offline typed agent graph Code/NoCode editor. No remote execution or deployment."
+}
