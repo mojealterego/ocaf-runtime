@@ -874,3 +874,11 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - **Granice:** brak trwałego project store, migracji wersji schematu, edytorów Code/NoCode, GUI Cloud/Windows/macOS/Android/iOS, sandbox runner, podpisywania i autoryzowanej publikacji. Brak platform E2E, niezależnego audytu i deploymentu.
 - **Status:** TESTED_LOCAL_PARTIAL tylko dla komponentu. 0.50–0.55 nadal PLANNED_OR_UNVERIFIED, 10 produktów NOT_IMPLEMENTED, production_approved=false. [Audyt](../audits/STAGE050_BUILDER_CORE_INCREMENT_2026-11-02.md).
 
+
+### 2026-11-02 — STAGE_PARTIAL_VERIFIED — 0.51 web Code/NoCode GUI
+
+- Kod: apps/agents-builder-web/ (edytor Code JSON DSL, interaktywny NoCode, rewizje offline, import/eksport, PWA, dry-run), tests/builder_web_contract.rs.
+- Dowód: CI #41526215520, SHA 7f578d8c617cdeadc2472628ba34decd55c18839, Chromium GUI E2E, Node model i Rust fixture PASS.
+- Nowy magazyn src/builder_store.rs i tests/builder_store.rs: implementacja zapisana, CI w toku — nie potwierdzono TESTED.
+- Braki: backend Cloud, trwały uwierzytelniony tenant store, sandbox, podpisy, rzeczywiste produkty desktop/mobile i ich E2E.
+- Statusy etapów 0.50–0.55 i 10 produktów bez zmian. Audyt: docs/audits/STAGE051_BUILDER_WEB_INCREMENT_2026-11-02.md.

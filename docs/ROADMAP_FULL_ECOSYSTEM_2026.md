@@ -1,5 +1,8 @@
 # OCAF — JEDYNA PEŁNA KANONICZNA ROADMAPA OD POCZĄTKU (v11, 15.10.2026)
 
+**AKTUALIZACJA 2026-11-02 / 0.51 — WEB EDITOR TESTED_LOCAL_PARTIAL:** apps/agents-builder-web zawiera interaktywne przeglądarkowe Code JSON DSL i NoCode DAG GUI, edycję węzłów/grantów/budżetu, offline localStorage (rewizje/revert), import/eksport i dry-run bez efektów. CI #41526215520 na SHA 7f578d8c617cdeadc2472628ba34decd55c18839: Node model, Rust fixture i rzeczywisty Chromium GUI E2E PASS. To nie jest autoryzowana usługa Cloud ani natywne produkty Windows/macOS/Android/iOS. src/builder_store.rs to nowy SQLite ledger, weryfikacja CI jeszcze trwa. Wszystkie 10 produktów nadal NOT_IMPLEMENTED, 0.50–0.55 bez odbioru; production_approved=false.
+
+
 **AKTUALIZACJA 2026-11-02 / 0.50 — TESTED_LOCAL_PARTIAL:** src/builder_core.rs: ograniczony typowany DAG/IR, kanoniczny JSON Code DSL, tenant isolation, permission/cost guards, cycles, typed ports. CI #41507192748 na SHA ffc9f899094e344936748024b402549c3af3b55f: 13/13 testów, rustfmt i Clippy PASS. Brak trwałego Builder project store, Code/NoCode GUI, 10 aplikacji, podpisanej publikacji i platform E2E. Status 0.50–0.55 i dziesięciu produktów bez zmian; production_approved=false.
 
 **DYREKTYWA NADRZĘDNA OPERATORA (2026-10-30):** symulować niedostępne warunki infrastrukturalne; po potwierdzonych testach zamykać w `PRODUCTION_ACCEPTED_SIMULATION` — **odbiór produkcyjny wyłącznie wariantu symulacyjnego**. Etap **0.56** ma taki odbiór dla zakresu ograniczonego, z pełnymi granicami dowodów i funkcji. [Zasada operatora](roadmap/SIMULATION_ONLY_ACCEPTANCE_POLICY_2026-10-30.md). `production_approved=false` dla rzeczywistego wdrożenia. Historyczne wymagania i numery bez zmian.

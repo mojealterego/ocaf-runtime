@@ -458,5 +458,26 @@
       "signed publish"
     ],
     "production_approved": false
+  },
+  "stage051_web_partial_evidence_20261102": {
+    "status": "TESTED_LOCAL_PARTIAL",
+    "code_sha": "7f578d8c617cdeadc2472628ba34decd55c18839",
+    "ci_url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41526215520",
+    "checks": [
+      "Node model contract",
+      "Chromium GUI end-to-end smoke",
+      "Rust/browser fixture"
+    ],
+    "code_paths": [
+      "apps/agents-builder-web/editor.mjs",
+      "apps/agents-builder-web/app.mjs",
+      "apps/agents-builder-web/index.html",
+      "apps/agents-builder-web/tests/editor.test.mjs",
+      "apps/agents-builder-web/tests/browser-smoke.mjs",
+      "tests/builder_web_contract.rs"
+    ],
+    "scope": "Offline browser Code/NoCode GUI only; not cloud or native platform products",
+    "store_status": "IMPLEMENTED_UNVERIFIED",
+    "production_approved": false
   }
 }

@@ -1,5 +1,8 @@
 # OCAF — Agents Builder Code / NoCode — przywrócenie pierwotnego zakresu (v11)
 
+**AKTUALIZACJA 2026-11-02 / 0.51 — WEB EDITOR TESTED_LOCAL_PARTIAL:** apps/agents-builder-web zawiera interaktywne przeglądarkowe Code JSON DSL i NoCode DAG GUI, edycję węzłów/grantów/budżetu, offline localStorage (rewizje/revert), import/eksport i dry-run bez efektów. CI #41526215520 na SHA 7f578d8c617cdeadc2472628ba34decd55c18839: Node model, Rust fixture i rzeczywisty Chromium GUI E2E PASS. To nie jest autoryzowana usługa Cloud ani natywne produkty Windows/macOS/Android/iOS. src/builder_store.rs to nowy SQLite ledger, weryfikacja CI jeszcze trwa. Wszystkie 10 produktów nadal NOT_IMPLEMENTED, 0.50–0.55 bez odbioru; production_approved=false.
+
+
 **To są dziesięć produktów do projektowania, budowania, testowania i publikowania agentów (Agents Builder), NIE dziesięć gotowych agentów AI.** Przypadkowe sprowadzenie tej pozycji do samych „agentów”, „roju agentów” albo pojedynczego generowania skryptu jest błędem inwentaryzacyjnym.
 
 **Pochodzenie:** pierwotna architektura `docs/MASTER_ARCHITECTURE_26_PDFS.md` opisuje `ocaf-builder-core`, Code↔No-Code, Cloud/Axum, Desktop/Tauri i Mobile/UniFFI. Operator potwierdził wymagane, osobne produkty **Cloud / Windows / macOS / Android / iOS**, każdy w dwóch wariantach **Code** oraz **NoCode**. Odróżnienie Windows/macOS i Android/iOS pochodzi z tego doprecyzowania pierwotnego zakresu. Nie należy dopisywać go jako nowej koncepcji pod ostatnim etapem.
