@@ -1,4 +1,5 @@
 pub mod auth;
+pub mod builder_core;
 pub mod cluster;
 pub mod coordinator;
 pub mod executor;
