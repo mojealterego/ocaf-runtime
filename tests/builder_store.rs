@@ -121,3 +121,41 @@ fn rejects_schema_downgrade_and_nonexistent_database() {
     let absent = file.path().with_extension("not-there");
     assert!(SqliteBuilderStore::open_existing(&absent).is_err());
 }
+
+#[test]
+fn tenant_project_quota_is_atomic_and_does_not_block_other_tenants_or_revisions() {
+    let (_file, store) = setup();
+    for index in 0..64 {
+        let mut project = fixture();
+        project.project_id = format!("project_{index}");
+        store.save(&project, "local", None).unwrap();
+    }
+
+    let mut overflow = fixture();
+    overflow.project_id = "overflow".into();
+    assert_eq!(
+        store.save(&overflow, "local", None).unwrap_err(),
+        BuilderStoreError::Limit
+    );
+    assert!(store.load("local", "overflow", None).unwrap().is_none());
+
+    let mut existing = fixture();
+    existing.project_id = "project_0".into();
+    let head = store
+        .load("local", "project_0", None)
+        .unwrap()
+        .unwrap()
+        .1;
+    existing.revision = 2;
+    assert_eq!(
+        store.save(&existing, "local", Some(&head))
+            .unwrap()
+            .revision,
+        2
+    );
+
+    let mut other = fixture();
+    other.tenant_id = "another".into();
+    other.project_id = "overflow".into();
+    assert_eq!(store.save(&other, "another", None).unwrap().revision, 1);
+}
