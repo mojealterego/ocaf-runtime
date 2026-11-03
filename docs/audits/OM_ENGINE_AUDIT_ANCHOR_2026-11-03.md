@@ -12,4 +12,4 @@ Lokalny journal SHA-256 nie broni przed administratorem bazy: można usunąć su
 
 ## Testy
 RED: commit `dd1a6b7135290a5b7abb7855abbbea56389677c9`, GitHub Actions OM Engine #41585640213 `failure` przed implementacją.
-GREEN: oczekuje na sprawdzony przebieg właściwego commita. Nie deklarować PASS do otrzymania wyniku.
+GREEN: [GitHub Actions OM Engine #41586244060](https://github.com/mojealterego/ocaf-runtime/actions/runs/41586244060), `completed/success` na `c62e0f013cb355bb02dca6ac90b16e71e3e56088` — 6/6 testów Rust PASS, rustfmt PASS i Clippy PASS. To nie jest odbiór produkcyjny. Równoległy workflow Rust CI #41586244041 zakończył się `failure` na kroku `Offline release precheck unit tests`, przed kompilacją Rust.

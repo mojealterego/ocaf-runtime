@@ -1,10 +1,10 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
-## 2026-11-03 — OM Engine: zewnętrzny high-water mark dla journalu (IMPLEMENTED_CI_PENDING)
+## 2026-11-03 — OM Engine: zewnętrzny high-water mark dla journalu (TESTED_CI_PARTIAL)
 
 - `AuditHead` wiąże tenant/workflow z dwoma hashami audytu i serializuje kontrakt dowodowy do JSON.
 - `verify_audit_anchor` odrzuca rozbieżność między bieżącym replay SQLite a zewnętrznie przypiętym checkpointem, również przy usunięciu końcowych zdarzeń; nie nadano nowych uprawnień ani funkcji wykonywania narzędzi.
-- TDD RED: [commit dd1a6b7](https://github.com/mojealterego/ocaf-runtime/commit/dd1a6b7135290a5b7abb7855abbbea56389677c9), dedykowana bramka OM Engine FAIL przed implementacją. GREEN i wyniki CI wymagają osobnej weryfikacji.
+- **RED:** [commit dd1a6b7](https://github.com/mojealterego/ocaf-runtime/commit/dd1a6b7135290a5b7abb7855abbbea56389677c9), [CI #41585640213](https://github.com/mojealterego/ocaf-runtime/actions/runs/41585640213) `failure` przed implementacją. **GREEN:** [CI OM Engine #41586244060](https://github.com/mojealterego/ocaf-runtime/actions/runs/41586244060) `completed/success` na SHA `c62e0f013cb355bb02dca6ac90b16e71e3e56088`: 6/6 testów Rust, `cargo fmt`, `cargo clippy -D warnings` PASS. Globalny Rust CI #41586244041 jest `failure` na wcześniejszym kroku Python precheck i nie stanowi PASS całego repo.
 - Weryfikacja tylko odczytowa; zewnętrzne przechowywanie podpisanych pinów, ochrona TOCTOU podczas mutacji, produkcyjne połączenie Digital-Life i HA pozostają otwarte. Status 0.56 i `production_approved=false` bez zmian.
 
 ## 2026-11-03 — Agents Builder 0.51–0.52: języki, klucze sesyjne API i GGUF (TESTED_LOCAL_PARTIAL)
