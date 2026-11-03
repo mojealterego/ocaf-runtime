@@ -5,13 +5,14 @@
  */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
+import {createHash} from 'node:crypto';
 import {spawn} from 'node:child_process';
 import {mkdtemp, readFile, rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 
 const ROOT = new URL('../', import.meta.url);
-const ALLOWED = new Set(['/index.html','/app.mjs','/editor.mjs','/style.css','/manifest.webmanifest','/sw.js']);
+const ALLOWED = new Set(['/index.html','/app.mjs','/editor.mjs','/cloud.mjs','/style.css','/manifest.webmanifest','/sw.js']);
 const MIME = {'.html':'text/html','.mjs':'text/javascript','.css':'text/css','.webmanifest':'application/manifest+json','.js':'text/javascript'};
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function until(fn, description, maxMs = 20000) {
@@ -24,10 +25,50 @@ async function until(fn, description, maxMs = 20000) {
   throw new Error('Timed out: ' + description + (lastError ? ' (' + lastError.message + ')' : ''));
 }
 
+const cloudProjects = new Map();
 const server = createServer(async (request, response) => {
   try {
     const pathname = new URL(request.url, 'http://localhost').pathname;
     const file = pathname === '/' ? '/index.html' : pathname;
+    if (file.startsWith('/v1/projects/')) {
+      const send = (status, value) => {
+        response.writeHead(status, {'Content-Type':'application/json','Cache-Control':'no-store'});
+        response.end(JSON.stringify(value));
+      };
+      if (request.headers.authorization !== 'Bearer test-token') { send(403,{error:'http_403'}); return; }
+      const payload = request.method === 'GET' ? '' : await new Promise((resolve,reject) => {
+        let body = '';
+        request.on('data', chunk => { body += chunk; if (body.length > 128*1024) reject(new Error('limit')); });
+        request.on('end', () => resolve(body));
+        request.on('error', reject);
+      });
+      if (file === '/v1/projects/preview' && request.method === 'POST') {
+        const project = JSON.parse(payload);
+        send(200,{ordered_nodes:project.nodes.map(node=>node.id),requested_tools:[],max_cost_minor:project.max_cost_minor,project_sha256:createHash('sha256').update(payload).digest('hex')});
+        return;
+      }
+      const id = file.slice('/v1/projects/'.length);
+      if (!/^[A-Za-z0-9_.-]{1,64}$/.test(id)) {send(404,{error:'http_404'});return;}
+      if (request.method === 'GET') {
+        const record = cloudProjects.get(id);
+        send(record ? 200 : 404,record ?? {error:'http_404'});
+        return;
+      }
+      if (request.method === 'PUT') {
+        const {project,expected} = JSON.parse(payload);
+        const previous = cloudProjects.get(id);
+        if (project.tenant_id !== 'tenant-a' || project.project_id !== id) {send(403,{error:'http_403'});return;}
+        if (JSON.stringify(previous?.head ?? null) !== JSON.stringify(expected) ||
+            project.revision !== (previous?.head.revision ?? 0) + 1) {
+          send(409,{error:'http_409'});return;
+        }
+        const head = {revision:project.revision,sha256:createHash('sha256').update(JSON.stringify(project)).digest('hex')};
+        cloudProjects.set(id,{project,head});
+        send(200,head);
+        return;
+      }
+      send(405,{error:'http_405'});return;
+    }
     if (request.method !== 'GET' || !ALLOWED.has(file)) {
       response.writeHead(404); response.end('Not found'); return;
     }
@@ -112,8 +153,29 @@ try {
   await cmd('Page.reload', {ignoreCache:true});
   await until(async () => await evaluate('document.querySelectorAll(".node-card").length') === 3, 'offline persistence after reload');
   assert.equal(await evaluate('document.getElementById("revision-label").textContent'), 'r3');
+  await evaluate('document.getElementById("workspace-cloud").click()');
+  assert.equal(await evaluate('document.getElementById("cloud-controls").hidden'), false);
+  assert.equal(await evaluate('document.getElementById("cloud-save").disabled'), true);
+  await evaluate('document.getElementById("cloud-tenant").value="tenant-a";document.getElementById("cloud-token").value="test-token";document.getElementById("cloud-connect").click()');
+  assert.equal(await evaluate('document.getElementById("cloud-token").value'), '', 'token cleared from input');
+  await evaluate('document.getElementById("project-id").value="cloud-demo";document.getElementById("cloud-new").click()');
+  await until(async () => await evaluate('document.getElementById("cloud-save").disabled') === false, 'new cloud draft');
+  await evaluate('document.getElementById("cloud-save").click()');
+  await until(async () => await evaluate('document.getElementById("cloud-save").disabled') === true, 'first CAS cloud save');
+  assert.equal(cloudProjects.get('cloud-demo').head.revision,1);
+  await evaluate('document.getElementById("mode-nocode").click();document.getElementById("node-id").value="remote-step";document.getElementById("add-transform").click()');
+  await until(async () => await evaluate('document.getElementById("cloud-save").disabled') === false, 'cloud edit pending');
+  await evaluate('document.getElementById("cloud-save").click()');
+  await until(async () => await evaluate('document.getElementById("cloud-save").disabled') === true, 'second CAS cloud save');
+  assert.equal(cloudProjects.get('cloud-demo').head.revision,2);
+  await evaluate('document.getElementById("workspace-local").click()');
+  assert.equal(await evaluate('document.getElementById("revision-label").textContent'),'r3');
+  await evaluate('document.getElementById("workspace-cloud").click()');
+  assert.equal(await evaluate('document.getElementById("revision-label").textContent'),'r2');
+  await evaluate('document.getElementById("cloud-open").click()');
+  await until(async () => await evaluate('document.getElementById("project-title").textContent') === 'cloud-demo', 'authenticated cloud reopen');
   assert.deepEqual(exceptions, [], 'no uncaught browser exceptions');
-  process.stdout.write('PASS: Chrome Code/NoCode GUI, Code apply, invalid DSL denial, local persistence, dry run\n');
+  process.stdout.write('PASS: Chrome Code/NoCode GUI, local persistence, authenticated Cloud transport mock, CAS and workspace switch\n');
 } finally {
   if (ws) ws.close();
   chrome.kill('SIGKILL');

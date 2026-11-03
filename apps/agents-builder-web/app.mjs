@@ -2,10 +2,17 @@ import {
   newProject, insertNode, removeNode, setTool, validateProject,
   encodeDsl, decodeDsl, saveProject, loadProject, listRevisions, restoreRevision
 } from './editor.mjs';
+import {CloudWorkspaceClient, CloudApiError} from './cloud.mjs';
 
 const TENANT = 'local';
 const el = id => document.getElementById(id);
-const state = {project:null, saved:0, mode:'nocode', selectedNode:null, selectedEdge:0, dirty:false};
+const state = {
+  project:null, saved:0, mode:'nocode', selectedNode:null, selectedEdge:0, dirty:false,
+  workspace:'local', localSnapshot:null, cloudSnapshot:null,
+  cloud:{tenant:null, head:null, pending:false}
+};
+let cloudClient = null;
+const currentTenant = () => state.workspace === 'cloud' ? state.cloud.tenant : TENANT;
 const fail = error => {
   el('message').textContent = error instanceof Error ? error.message : String(error);
   el('message').dataset.level = 'error';
@@ -22,18 +29,31 @@ const setMode = mode => {
 };
 const currentId = () => state.project?.project_id ?? 'demo';
 const safe = task => {
-  try { task(); } catch (error) { fail(error); }
+  try { Promise.resolve(task()).catch(fail); } catch (error) { fail(error); }
 };
 function persist(next) {
-  if (next.project_id !== currentId() || next.tenant_id !== TENANT) throw new Error('tenant: project identity cannot be changed');
-  saveProject(localStorage, next, state.saved);
-  state.project = next;
-  state.saved = next.revision;
-  state.dirty = false;
-  notice('Saved offline revision ' + next.revision + '. No tools were executed.');
+  if (!state.project || next.project_id !== currentId() || next.tenant_id !== currentTenant()) {
+    throw new Error('tenant: project identity cannot be changed');
+  }
+  if (state.workspace === 'cloud') {
+    next.revision = (state.cloud.head?.revision ?? 0) + 1;
+    validateProject(next, currentTenant());
+    state.project = next;
+    state.saved = next.revision;
+    state.cloud.pending = true;
+    state.dirty = false;
+    notice('Szkic chmurowy nie został zapisany. Użyj „Zapisz w chmurze”.');
+  } else {
+    saveProject(localStorage, next, state.saved);
+    state.project = next;
+    state.saved = next.revision;
+    state.dirty = false;
+    notice('Saved offline revision ' + next.revision + '. No tools were executed.');
+  }
   render();
 }
 function openProject(projectId) {
+  if (state.workspace !== 'local') throw new Error('workspace: use cloud open');
   const existing = loadProject(localStorage, TENANT, projectId);
   if (!existing) throw new Error('Project not found in this browser. Use New to create it.');
   state.project = existing;
@@ -45,6 +65,7 @@ function openProject(projectId) {
   render();
 }
 function makeProject(projectId) {
+  if (state.workspace !== 'local') throw new Error('workspace: use cloud new');
   const next = newProject(TENANT, projectId);
   if (loadProject(localStorage, TENANT, projectId)) throw new Error('Project already exists; open it instead.');
   saveProject(localStorage, next, 0);
@@ -119,25 +140,45 @@ function renderGraph() {
 function renderHistory() {
   const select = el('revision');
   select.replaceChildren();
-  for (const revision of listRevisions(localStorage, TENANT, currentId())) {
+  if (!state.project) return;
+  const revisions = state.workspace === 'local'
+    ? listRevisions(localStorage, TENANT, currentId())
+    : [state.cloud.head?.revision].filter(Boolean);
+  for (const revision of revisions) {
     const option = document.createElement('option');
     option.value = String(revision);
     option.textContent = 'Revision ' + revision;
     select.append(option);
   }
-  select.value = String(state.saved);
+  select.value = String(state.workspace === 'cloud' ? (state.cloud.head?.revision ?? 0) : state.saved);
 }
 function render() {
-  if (!state.project) return;
-  el('project-title').textContent = state.project.project_id;
-  el('revision-label').textContent = 'r' + state.saved;
+  const hasProject = Boolean(state.project);
+  el('project-title').textContent = hasProject ? currentId() : 'Brak projektu';
+  el('revision-label').textContent = hasProject ? 'r' + state.saved + (state.cloud.pending && state.workspace === 'cloud' ? ' (szkic)' : '') : '—';
+  el('workspace-local').setAttribute('aria-pressed', String(state.workspace === 'local'));
+  el('workspace-cloud').setAttribute('aria-pressed', String(state.workspace === 'cloud'));
+  el('cloud-controls').hidden = state.workspace !== 'cloud';
+  el('cloud-status').textContent = cloudClient && state.cloud.tenant
+    ? 'OAuth: sesja w pamięci · tenant ' + state.cloud.tenant + (state.cloud.pending ? ' · niezapisany szkic' : '')
+    : 'Brak połączenia z uwierzytelnionym gateway. Żadne żądania nie są wysyłane.';
+  el('cloud-open').disabled = !cloudClient;
+  el('cloud-new').disabled = !cloudClient;
+  el('cloud-save').disabled = !cloudClient || !hasProject || !state.cloud.pending;
+  el('new-project').disabled = state.workspace !== 'local';
+  el('open-project').disabled = state.workspace !== 'local';
+  el('import').disabled = state.workspace !== 'local';
+  for (const id of ['mode-nocode','mode-code','preview','export','add-transform','add-tool','remove-node','update-tool','set-budget','apply-code']) {
+    el(id).disabled = !hasProject;
+  }
+  el('restore').disabled = !hasProject || state.workspace !== 'local';
   el('mode-nocode').setAttribute('aria-pressed', String(state.mode === 'nocode'));
   el('mode-code').setAttribute('aria-pressed', String(state.mode === 'code'));
   el('nocode-view').hidden = state.mode !== 'nocode';
   el('code-view').hidden = state.mode !== 'code';
-  el('dsl').value = encodeDsl(state.project, TENANT);
-  el('cost-budget').value = String(state.project.max_cost_minor);
-  el('grant-list').textContent = state.project.grants.length ? state.project.grants.join(', ') : 'No tool grants';
+  el('dsl').value = hasProject ? encodeDsl(state.project, currentTenant()) : '';
+  el('cost-budget').value = hasProject ? String(state.project.max_cost_minor) : '';
+  el('grant-list').textContent = hasProject && state.project.grants.length ? state.project.grants.join(', ') : 'No tool grants';
   renderGraph();
   renderHistory();
 }
@@ -154,7 +195,21 @@ function add(kind) {
   el('node-id').value = '';
   renderGraph();
 }
-function preview() {
+async function preview() {
+  if (!state.project) throw new Error('workspace: select a project');
+  if (state.workspace === 'cloud') {
+    if (!cloudClient) throw new Error('oauth: connect first');
+    const plan = await cloudClient.preview(currentTenant(), state.project);
+    el('preview-output').textContent = [
+      'CLOUD VALIDATION — authenticated Rust plan only; no tool execution.',
+      'Graph: ' + plan.ordered_nodes.join(' → '),
+      'Requested tools: ' + (plan.requested_tools.join(', ') || 'none'),
+      'Maximum declared cost: ' + plan.max_cost_minor,
+      'SHA-256: ' + plan.project_sha256
+    ].join('\n');
+    notice('Chmurowa walidacja zakończona. Nie uruchomiono agenta ani publikacji.');
+    return;
+  }
   const plan = validateProject(state.project, TENANT);
   const steps = plan.order.map((id,index) => String(index + 1) + '. ' + id);
   el('preview-output').textContent = [
@@ -164,10 +219,10 @@ function preview() {
     'Declared cost: ' + plan.cost + ' / ' + state.project.max_cost_minor,
     'Project: ' + currentId() + ' r' + state.saved
   ].join('\n');
-  notice('Graph validated locally. Cloud admission and sandbox execution are not connected.');
+  notice('Graph validated locally. No tools were executed.');
 }
 function download() {
-  const text = encodeDsl(state.project, TENANT);
+  const text = encodeDsl(state.project, currentTenant());
   const blob = new Blob([text], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -178,6 +233,7 @@ function download() {
   notice('Exported bounded JSON DSL. Export is not signed or published.');
 }
 function importFile(file) {
+  if (state.workspace !== 'local') throw new Error('workspace: import locally first');
   if (!file) return;
   if (file.size > 128 * 1024) throw new Error('limit: import exceeds 128 KiB');
   file.text().then(source => safe(() => {
@@ -193,7 +249,112 @@ function importFile(file) {
     render();
   })).catch(fail);
 }
+function setWorkspace(workspace) {
+  if (workspace === state.workspace) return;
+  if (state.dirty && !window.confirm('Odrzucić niezastosowane zmiany Code DSL?')) return;
+  if (state.workspace === 'local') {
+    state.localSnapshot = {project:state.project, saved:state.saved};
+    state.workspace = 'cloud';
+    state.project = state.cloudSnapshot?.project ?? null;
+    state.saved = state.cloudSnapshot?.saved ?? 0;
+    state.cloud.head = state.cloudSnapshot?.head ?? null;
+    state.cloud.pending = state.cloudSnapshot?.pending ?? false;
+  } else {
+    state.cloudSnapshot = {project:state.project, saved:state.saved, head:state.cloud.head, pending:state.cloud.pending};
+    state.workspace = 'local';
+    state.project = state.localSnapshot.project;
+    state.saved = state.localSnapshot.saved;
+  }
+  state.selectedNode = null;
+  state.selectedEdge = 0;
+  state.dirty = false;
+  el('preview-output').textContent = 'Wybierz „Weryfikuj” po otwarciu projektu.';
+  render();
+  notice(workspace === 'cloud' ? 'Tryb Cloud. Wymagane OAuth i uwierzytelniony gateway TLS.' : 'Tryb lokalny. Żadne dane nie są automatycznie synchronizowane.');
+}
+function requireCloud() {
+  if (state.workspace !== 'cloud' || !cloudClient || !state.cloud.tenant) {
+    throw new Error('oauth: połącz z chmurą przed operacją');
+  }
+}
+function connectCloud() {
+  if (state.cloud.pending && !window.confirm('Odrzucić niezapisany szkic chmurowy?')) return;
+  const token = el('cloud-token').value.trim();
+  const tenant = el('cloud-tenant').value.trim();
+  const client = new CloudWorkspaceClient({token, origin:location.origin});
+  // The tenant field is only a local expectation. The server must bind token
+  // to a trusted TLS subject and reject cross-tenant requests.
+  validateProject(newProject(tenant, 'connection-check'), tenant);
+  cloudClient = client;
+  state.cloud = {tenant, head:null, pending:false};
+  state.cloudSnapshot = null;
+  state.project = null;
+  state.saved = 0;
+  el('cloud-token').value = '';
+  render();
+  notice('Token OAuth przechowywany wyłącznie w pamięci. Otwórz projekt, aby zweryfikować dostęp na serwerze.');
+}
+function disconnectCloud() {
+  if (state.cloud.pending && !window.confirm('Odrzucić niezapisany szkic chmurowy?')) return;
+  cloudClient = null;
+  state.cloud = {tenant:null, head:null, pending:false};
+  state.cloudSnapshot = null;
+  state.project = null;
+  state.saved = 0;
+  el('cloud-token').value = '';
+  render();
+  notice('Rozłączono chmurę. Lokalna przestrzeń robocza pozostaje bez zmian.');
+}
+async function openCloudProject() {
+  requireCloud();
+  if (state.cloud.pending && !window.confirm('Odrzucić niezapisany szkic chmurowy?')) return;
+  const {project,head} = await cloudClient.load(state.cloud.tenant, el('project-id').value.trim());
+  state.project = project;
+  state.cloud.head = head;
+  state.cloud.pending = false;
+  state.saved = project.revision;
+  state.selectedNode = null;
+  state.selectedEdge = 0;
+  render();
+  notice('Otworzono uwierzytelniony projekt chmurowy r' + head.revision + '.');
+}
+async function newCloudProject() {
+  requireCloud();
+  if (state.cloud.pending && !window.confirm('Odrzucić niezapisany szkic chmurowy?')) return;
+  const project = newProject(state.cloud.tenant, el('project-id').value.trim());
+  try {
+    await cloudClient.load(state.cloud.tenant, project.project_id);
+    throw new Error('conflict: projekt już istnieje w chmurze; użyj Otwórz');
+  } catch (error) {
+    if (!(error instanceof CloudApiError && error.status === 404)) throw error;
+  }
+  state.project = project;
+  state.saved = 1;
+  state.cloud.head = null;
+  state.cloud.pending = true;
+  state.selectedNode = null;
+  state.selectedEdge = 0;
+  render();
+  notice('Nowy szkic w pamięci. Projekt nie istnieje jeszcze na serwerze — użyj Zapisz w chmurze.');
+}
+async function saveCloudProject() {
+  requireCloud();
+  if (!state.project || !state.cloud.pending) throw new Error('workspace: brak zmian do zapisania');
+  const head = await cloudClient.save(state.cloud.tenant, state.project, state.cloud.head);
+  state.cloud.head = head;
+  state.cloud.pending = false;
+  state.saved = head.revision;
+  render();
+  notice('Serwer potwierdził zapis CAS r' + head.revision + '. SHA-256: ' + head.sha256);
+}
 function init() {
+  el('workspace-local').addEventListener('click', () => safe(() => setWorkspace('local')));
+  el('workspace-cloud').addEventListener('click', () => safe(() => setWorkspace('cloud')));
+  el('cloud-connect').addEventListener('click', () => safe(connectCloud));
+  el('cloud-disconnect').addEventListener('click', () => safe(disconnectCloud));
+  el('cloud-open').addEventListener('click', () => safe(openCloudProject));
+  el('cloud-new').addEventListener('click', () => safe(newCloudProject));
+  el('cloud-save').addEventListener('click', () => safe(saveCloudProject));
   el('mode-code').addEventListener('click', () => setMode('code'));
   el('mode-nocode').addEventListener('click', () => setMode('nocode'));
   el('new-project').addEventListener('click', () => safe(() => makeProject(el('project-id').value.trim())));
@@ -219,15 +380,16 @@ function init() {
     const raw = el('dsl').value;
     if (new TextEncoder().encode(raw).length > 128 * 1024) throw new Error('limit: DSL too large');
     const parsed = JSON.parse(raw);
-    if (parsed.project_id !== currentId() || parsed.tenant_id !== TENANT) throw new Error('tenant: project identity cannot change');
+    if (parsed.project_id !== currentId() || parsed.tenant_id !== currentTenant()) throw new Error('tenant: project identity cannot change');
     parsed.revision = state.saved + 1;
-    const next = decodeDsl(JSON.stringify(parsed), TENANT);
+    const next = decodeDsl(JSON.stringify(parsed), currentTenant());
     persist(next);
   }));
   el('preview').addEventListener('click', () => safe(preview));
   el('export').addEventListener('click', () => safe(download));
   el('import').addEventListener('change', event => safe(() => importFile(event.target.files[0])));
   el('restore').addEventListener('click', () => safe(() => {
+    if (state.workspace !== 'local') throw new Error('workspace: remote history restore not available');
     const revision = Number(el('revision').value);
     if (!window.confirm('Restore revision ' + revision + ' as a new revision?')) return;
     const restored = restoreRevision(localStorage, TENANT, currentId(), revision);

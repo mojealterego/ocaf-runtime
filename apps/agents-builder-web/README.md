@@ -1,4 +1,4 @@
-# OCAF Agents Builder — browser Code/NoCode (stage 0.51 partial)
+# OCAF Agents Builder — shared Code/NoCode UI (stages 0.51–0.52 partial)
 
 This is a working, dependency-free **offline web editor**, not a cloud service
 or native Windows/macOS/Android/iOS application. It edits the restricted JSON
@@ -40,3 +40,32 @@ compiler validation, durable tenant-scoped storage, sandbox, audit receipts,
 signed artifacts and explicit user-approved deployment. Native desktop and
 mobile targets still require independent platform projects, build artifacts,
 GUI E2E and security acceptance.
+
+## Wspólny interfejs Local / Cloud (2026-11-03)
+
+Ten sam edytor Code/NoCode ma dwa jawne tryby przechowywania projektu:
+**Lokalnie** (offline localStorage) oraz **Chmura** (same-origin OAuth Bearer).
+Przełącznik nie kopiuje projektu automatycznie między tenantami ani nie
+wysyła danych bez wyraźnego polecenia operatora.
+
+Tryb Cloud korzysta z istniejącego kontraktu Rust `BuilderHttpBoundary`:
+`GET /v1/projects/{id}`, `PUT /v1/projects/{id}` (CAS `expected`)
+i `POST /v1/projects/preview`. Wymaga rzeczywistego gateway HTTPS
+uwierzytelniającego `AuthenticatedSubject`, aktywnego OAuth i SQLite.
+Dopóki gateway nie jest wdrożony pod tym samym origin co aplikacja,
+żądania Cloud zakończą się błędem i **nie wolno deklarować wdrożonej chmury**.
+Klient nie ufa nagłówkom `x-tenant` ani `x-role`, nie używa cookies,
+nie zapisuje tokenu OAuth na dysku, nie wykonuje narzędzi, nie publikuje
+agentów i nie ponawia automatycznie zapisu po konflikcie HTTP 409.
+Tenant wpisany w UI jest tylko oczekiwaną tożsamością; wiązanie
+token–tenant–user–scope musi wykonać gateway i usługa Rust.
+
+```sh
+node --test apps/agents-builder-web/tests/*.test.mjs
+CHROME_BIN=chromium node apps/agents-builder-web/tests/browser-smoke.mjs
+```
+
+Wariant Android może na tym etapie korzystać z responsywnego PWA w
+przeglądarce; nie jest to natywny APK. Binarny Meta Agent Architekt,
+natywne buildy Windows/macOS/iOS oraz produkcyjna chmura nie są
+objęte tym przyrostem. Macierz 10/10 pozostaje otwarta.

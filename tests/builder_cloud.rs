@@ -419,3 +419,82 @@ fn http_boundary_rejects_duplicate_content_type_as_malformed_request() {
     assert_eq!(response.status, 400);
     assert!(store.load("local", "hello", None).unwrap().is_none());
 }
+
+#[test]
+fn http_boundary_browser_get_without_origin_requires_bearer_and_trusted_subject() {
+    use ocaf_runtime::builder_http::{BuilderHttpBoundary, BuilderHttpRequest};
+    let (_dir, oauth, store) = fixture();
+    let gateway = BuilderHttpBoundary::new(&oauth, &store, RESOURCE, HTTP_ORIGIN).unwrap();
+    let auth = subject("local");
+    let credential = format!(
+        "Bearer {}",
+        token(&oauth, "local", &["builder:read", "builder:write"])
+    );
+    let body = serde_json::to_vec(&serde_json::json!({
+        "project": project(), "expected": null
+    }))
+    .unwrap();
+    let saved = gateway.handle(
+        BuilderHttpRequest {
+            method: "PUT",
+            path: "/v1/projects/hello",
+            headers: &http_headers(&credential),
+            body: &body,
+        },
+        &auth,
+    );
+    assert_eq!(saved.status, 200);
+
+    let no_origin = [("Authorization", credential.as_str())];
+    let loaded = gateway.handle(
+        BuilderHttpRequest {
+            method: "GET",
+            path: "/v1/projects/hello",
+            headers: &no_origin,
+            body: &[],
+        },
+        &auth,
+    );
+    assert_eq!(loaded.status, 200);
+
+    let forged = gateway.handle(
+        BuilderHttpRequest {
+            method: "GET",
+            path: "/v1/projects/hello",
+            headers: &no_origin,
+            body: &[],
+        },
+        &subject("another"),
+    );
+    assert_eq!(forged.status, 403);
+
+    let cross_origin = [
+        ("Origin", "https://attacker.example"),
+        ("Authorization", credential.as_str()),
+    ];
+    let rejected = gateway.handle(
+        BuilderHttpRequest {
+            method: "GET",
+            path: "/v1/projects/hello",
+            headers: &cross_origin,
+            body: &[],
+        },
+        &auth,
+    );
+    assert_eq!(rejected.status, 403);
+
+    let missing_origin_write = [
+        ("Authorization", credential.as_str()),
+        ("Content-Type", "application/json"),
+    ];
+    let rejected_write = gateway.handle(
+        BuilderHttpRequest {
+            method: "PUT",
+            path: "/v1/projects/hello",
+            headers: &missing_origin_write,
+            body: &body,
+        },
+        &auth,
+    );
+    assert_eq!(rejected_write.status, 403);
+}

@@ -154,13 +154,14 @@ impl<'a> BuilderHttpBoundary<'a> {
         {
             return reject(403);
         }
-        let origin = match unique_header(request.headers, "Origin") {
-            Ok(Some(value)) => value,
-            Ok(None) => return reject(403),
+        // Browsers omit Origin on same-origin GET. Bearer tokens and the trusted
+        // gateway subject remain mandatory; mutating requests require exact Origin.
+        // Any supplied cross-origin value is rejected even for GET.
+        match unique_header(request.headers, "Origin") {
+            Ok(Some(value)) if value == self.allowed_origin => {}
+            Ok(None) if request.method == "GET" => {}
+            Ok(None | Some(_)) => return reject(403),
             Err(()) => return reject(400),
-        };
-        if origin != self.allowed_origin {
-            return reject(403);
         }
         let authorization = match unique_header(request.headers, "Authorization") {
             Ok(Some(value)) => value,

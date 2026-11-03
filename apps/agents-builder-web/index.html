@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="pl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b0e14">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="theme-color" content="#07080A">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./style.css">
   <title>OCAF Agents Builder — Code / NoCode</title>
@@ -12,11 +12,11 @@
 </head>
 <body>
 <header class="topbar">
-  <div class="brand"><span class="brand-mark">Ω</span><div><strong>OCAF Agents Builder</strong><small>Code / NoCode · Offline workspace</small></div></div>
-  <div class="build-status">Local editor · No deployment</div>
+  <div class="brand"><span class="brand-mark">Ω</span><div><strong>OCAF Agents Builder</strong><small>Atelier Sovereign · Code / NoCode · Local / Cloud</small></div></div>
+  <div class="build-status">Typed DAG · OAuth Cloud · Bez automatycznej publikacji</div>
 </header>
 <main class="shell">
-  <section class="intro"><div><p class="eyebrow">AGENT DESIGN WORKSPACE / 0.51</p><h1>Build an agent graph.</h1><p>One typed project. Two editable views. No implicit tool execution.</p></div><div class="project-meta"><span id="project-title">demo</span><span id="revision-label">r1</span></div></section>
+  <section class="intro"><div><p class="eyebrow">OCAF ATELIER SOVEREIGN / 0.50–0.52</p><h1>Projektuj agentów.</h1><p>Jeden typowany projekt. Code i NoCode. Lokalnie lub w uwierzytelnionej chmurze.</p></div><div class="project-meta"><span id="project-title">demo</span><span id="revision-label">r1</span></div></section>
   <section class="toolbar" aria-label="Project management">
     <label>Project ID <input id="project-id" value="demo" maxlength="64" autocomplete="off" spellcheck="false"></label>
     <button id="new-project" type="button" class="secondary">New</button>
@@ -25,6 +25,25 @@
     <button id="export" type="button" class="secondary">Export JSON</button>
     <label>History <select id="revision" aria-label="Saved revisions"></select></label>
     <button id="restore" type="button" class="secondary">Restore</button>
+  </section>
+  <section class="workspace-connection" aria-label="Środowisko pracy">
+    <div class="mode-switch" role="group" aria-label="Lokalnie lub chmura">
+      <button id="workspace-local" type="button" aria-pressed="true">Lokalnie</button>
+      <button id="workspace-cloud" type="button" aria-pressed="false">Chmura</button>
+    </div>
+    <div id="cloud-controls" hidden>
+      <p class="muted">Połączenie wymaga tego samego origin HTTPS, aktywnego gateway TLS oraz tokenu OAuth z zakresem builder:read / builder:write. Token nie jest zapisywany.</p>
+      <div class="cloud-form">
+        <label>Tenant <input id="cloud-tenant" maxlength="64" autocomplete="off" spellcheck="false" placeholder="Tenant z sesji OAuth"></label>
+        <label>Token OAuth <input id="cloud-token" type="password" autocomplete="off" spellcheck="false" placeholder="Token dostępu (tylko pamięć)"></label>
+        <button id="cloud-connect" type="button" class="secondary">Połącz</button>
+        <button id="cloud-disconnect" type="button" class="secondary">Rozłącz</button>
+        <button id="cloud-open" type="button" class="secondary" disabled>Otwórz w chmurze</button>
+        <button id="cloud-new" type="button" class="secondary" disabled>Nowy w chmurze</button>
+        <button id="cloud-save" type="button" class="primary" disabled>Zapisz w chmurze</button>
+      </div>
+      <p id="cloud-status" class="cloud-status" role="status">Brak połączenia.</p>
+    </div>
   </section>
   <section class="workspace">
     <div class="workspace-header"><div class="mode-switch" role="group" aria-label="Editor mode"><button id="mode-nocode" type="button" aria-pressed="true">NoCode graph</button><button id="mode-code" type="button" aria-pressed="false">Code DSL</button></div><button id="preview" type="button" class="primary">Validate / Dry run</button></div>
@@ -48,7 +67,7 @@
     </div>
     <section id="code-view" class="panel code-panel" hidden><h2>Typed JSON Code DSL</h2><p class="muted">Only the supported schema is accepted. Arbitrary Rust and executable imports are rejected. Apply validates and saves a new revision.</p><label for="dsl" class="sr-only">Code DSL editor</label><textarea id="dsl" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="JSON Code DSL"></textarea><button id="apply-code" type="button" class="primary">Validate and apply Code</button></section>
   </section>
-  <section class="bottom-grid"><div class="panel"><h2>Validation and preview</h2><pre id="preview-output" aria-live="polite">Select Validate / Dry run to inspect the inert compilation plan.</pre></div><div class="panel security"><h2>Execution boundary</h2><p>This is an offline browser workspace. No backend identity, sandbox execution, signed export, remote deployment or production authorization is connected.</p><p>Browser storage is local to this origin and is not an authenticated multi-tenant database. Exported files are unsigned.</p></div></section>
+  <section class="bottom-grid"><div class="panel"><h2>Validation and preview</h2><pre id="preview-output" aria-live="polite">Select Validate / Dry run to inspect the inert compilation plan.</pre></div><div class="panel security"><h2>Execution boundary</h2><p>Lokalny edytor nie uwierzytelnia tenantów. Tryb Cloud korzysta wyłącznie z jawnych żądań do uwierzytelnionego gateway; bez podłączonego serwera nie działa. Nie ma wykonania agentów, podpisywania, wdrożenia ani publikacji.</p><p>Dane lokalne pozostają w pamięci przeglądarki. Dane chmurowe są zapisywane wyłącznie na żądanie z kontrolą rewizji CAS. Eksport JSON pozostaje niepodpisany.</p></div></section>
   <p id="message" role="status" aria-live="polite"></p>
 </main>
 <footer>OCAF / Agents Builder · Stage 0.51 partial · Restricted typed DSL · No automatic publishing</footer>
