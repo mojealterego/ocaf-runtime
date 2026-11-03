@@ -333,3 +333,41 @@ fn memory_bridge_rejects_cross_tenant_tampering_and_oversize() {
     )
     .is_err());
 }
+
+#[test]
+fn external_anchor_detects_truncation_and_cross_tenant_substitution() {
+    let dir = tempdir().unwrap();
+    let path = dir.path().join("om.db");
+    let engine = OmEngine::open(&path).unwrap();
+    engine.register("tenant_a", contract("tenant_a")).unwrap();
+    engine.register("tenant_b", contract("tenant_b")).unwrap();
+    engine
+        .claim("tenant_a", "research_001", Role::Planner, "plan", 1, "p1", 10)
+        .unwrap();
+
+    // The caller must pin this checkpoint in a separately controlled trust domain.
+    let pinned = engine.audit_head("tenant_a", "research_001").unwrap();
+    let json = serde_json::to_string(&pinned).unwrap();
+    let restored: ocaf_runtime::om_engine::AuditHead = serde_json::from_str(&json).unwrap();
+    assert_eq!(restored, pinned);
+    assert!(engine
+        .verify_audit_anchor("tenant_a", "research_001", &pinned)
+        .is_ok());
+    assert!(matches!(
+        engine.verify_audit_anchor("tenant_b", "research_001", &pinned),
+        Err(OmError::Integrity)
+    ));
+
+    drop(engine);
+    // A valid hash chain with a deleted final event is indistinguishable
+    // from its original prefix UNLESS the expected high-water mark was pinned.
+    let db = rusqlite::Connection::open(&path).unwrap();
+    db.execute("DELETE FROM om_events WHERE tenant='tenant_a'", []).unwrap();
+    drop(db);
+    let engine = OmEngine::open(&path).unwrap();
+    assert_eq!(engine.audit_head("tenant_a", "research_001").unwrap().events, 0);
+    assert!(matches!(
+        engine.verify_audit_anchor("tenant_a", "research_001", &pinned),
+        Err(OmError::Integrity)
+    ));
+}
