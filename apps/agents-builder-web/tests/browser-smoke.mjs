@@ -159,7 +159,11 @@ try {
   await evaluate('document.getElementById("cloud-tenant").value="tenant-a";document.getElementById("cloud-token").value="test-token";document.getElementById("cloud-connect").click()');
   assert.equal(await evaluate('document.getElementById("cloud-token").value'), '', 'token cleared from input');
   await evaluate('document.getElementById("project-id").value="cloud-demo";document.getElementById("cloud-new").click()');
-  await until(async () => await evaluate('document.getElementById("cloud-save").disabled') === false, 'new cloud draft');
+  await until(async () => {
+    if (await evaluate('document.getElementById("cloud-save").disabled') === false) return true;
+    const state = await evaluate('JSON.stringify({message:document.getElementById("message").textContent,cloud:document.getElementById("cloud-status").textContent,newDisabled:document.getElementById("cloud-new").disabled,project:document.getElementById("project-title").textContent})');
+    throw new Error(state);
+  }, 'new cloud draft');
   await evaluate('document.getElementById("cloud-save").click()');
   await until(async () => await evaluate('document.getElementById("cloud-save").disabled') === true, 'first CAS cloud save');
   assert.equal(cloudProjects.get('cloud-demo').head.revision,1);
