@@ -188,3 +188,173 @@ fn revoked_tokens_and_wrong_audience_are_rejected() {
     ));
     assert!(BuilderCloudService::new(&oauth, &store, "http://insecure").is_err());
 }
+
+
+const HTTP_ORIGIN: &str = "https://editor.ocaf.example";
+
+fn http_headers<'a>(credential: &'a str) -> [(&'a str, &'a str); 3] {
+    [
+        ("Origin", HTTP_ORIGIN),
+        ("Authorization", credential),
+        ("Content-Type", "application/json"),
+    ]
+}
+
+#[test]
+fn http_boundary_browser_preview_save_and_read_use_trusted_subject() {
+    use ocaf_runtime::builder_http::{BuilderHttpBoundary, BuilderHttpRequest};
+    let (_dir, oauth, store) = fixture();
+    let gateway = BuilderHttpBoundary::new(&oauth, &store, RESOURCE, HTTP_ORIGIN).unwrap();
+    let auth = subject("local");
+    let credential = format!(
+        "Bearer {}",
+        token(&oauth, "local", &["builder:read", "builder:write"])
+    );
+    let headers = http_headers(&credential);
+    let body = serde_json::to_vec(&project()).unwrap();
+    let preview = gateway.handle(
+        BuilderHttpRequest {
+            method: "POST",
+            path: "/v1/projects/preview",
+            headers: &headers,
+            body: &body,
+        },
+        &auth,
+    );
+    assert_eq!(preview.status, 200);
+    let preview_json: serde_json::Value = serde_json::from_slice(&preview.body).unwrap();
+    assert_eq!(preview_json["ordered_nodes"], serde_json::json!(["input", "output"]));
+    assert!(store.load("local", "hello", None).unwrap().is_none());
+
+    let save_body = serde_json::to_vec(&serde_json::json!({
+        "project": project(), "expected": null
+    }))
+    .unwrap();
+    let saved = gateway.handle(
+        BuilderHttpRequest {
+            method: "PUT",
+            path: "/v1/projects/hello",
+            headers: &headers,
+            body: &save_body,
+        },
+        &auth,
+    );
+    assert_eq!(saved.status, 200);
+    let saved_json: serde_json::Value = serde_json::from_slice(&saved.body).unwrap();
+    assert_eq!(saved_json["revision"], 1);
+    assert_eq!(saved_json["sha256"].as_str().unwrap().len(), 64);
+    let duplicate = gateway.handle(
+        BuilderHttpRequest {
+            method: "PUT",
+            path: "/v1/projects/hello",
+            headers: &headers,
+            body: &save_body,
+        },
+        &auth,
+    );
+    assert_eq!(duplicate.status, 409);
+    let loaded = gateway.handle(
+        BuilderHttpRequest {
+            method: "GET",
+            path: "/v1/projects/hello",
+            headers: &headers,
+            body: &[],
+        },
+        &auth,
+    );
+    assert_eq!(loaded.status, 200);
+    let loaded_json: serde_json::Value = serde_json::from_slice(&loaded.body).unwrap();
+    assert_eq!(loaded_json["project"]["project_id"], "hello");
+}
+
+#[test]
+fn http_boundary_rejects_cross_origin_cookies_duplicate_auth_and_spoofing() {
+    use ocaf_runtime::builder_http::{BuilderHttpBoundary, BuilderHttpRequest};
+    let (_dir, oauth, store) = fixture();
+    let gateway = BuilderHttpBoundary::new(&oauth, &store, RESOURCE, HTTP_ORIGIN).unwrap();
+    let credential = format!(
+        "Bearer {}",
+        token(&oauth, "local", &["builder:read", "builder:write"])
+    );
+    let auth = subject("local");
+    let payload = serde_json::to_vec(&project()).unwrap();
+    for headers in [
+        vec![("Origin", "https://attacker.example"), ("Authorization", &credential), ("Content-Type", "application/json")],
+        vec![("Authorization", &credential), ("Content-Type", "application/json")],
+        vec![("Origin", HTTP_ORIGIN), ("Authorization", &credential), ("Cookie", "session=evil"), ("Content-Type", "application/json")],
+    ] {
+        let result = gateway.handle(
+            BuilderHttpRequest {
+                method: "POST",
+                path: "/v1/projects/preview",
+                headers: &headers,
+                body: &payload,
+            },
+            &auth,
+        );
+        assert_eq!(result.status, 403);
+    }
+    let duplicate = gateway.handle(
+        BuilderHttpRequest {
+            method: "POST",
+            path: "/v1/projects/preview",
+            headers: &[
+                ("Origin", HTTP_ORIGIN),
+                ("Authorization", &credential),
+                ("authorization", &credential),
+                ("Content-Type", "application/json"),
+            ],
+            body: &payload,
+        },
+        &auth,
+    );
+    assert_eq!(duplicate.status, 400);
+    let forged = gateway.handle(
+        BuilderHttpRequest {
+            method: "POST",
+            path: "/v1/projects/preview",
+            headers: &http_headers(&credential),
+            body: &payload,
+        },
+        &subject("another"),
+    );
+    assert_eq!(forged.status, 403);
+    assert!(store.load("local", "hello", None).unwrap().is_none());
+}
+
+#[test]
+fn http_boundary_rejects_oversize_unknown_paths_invalid_methods_and_payloads() {
+    use ocaf_runtime::builder_http::{BuilderHttpBoundary, BuilderHttpRequest};
+    let (_dir, oauth, store) = fixture();
+    let gateway = BuilderHttpBoundary::new(&oauth, &store, RESOURCE, HTTP_ORIGIN).unwrap();
+    let credential = format!("Bearer {}", token(&oauth, "local", &["builder:read", "builder:write"]));
+    let headers = http_headers(&credential);
+    let auth = subject("local");
+    let oversized = vec![b'x'; 128 * 1024 + 1];
+    let result = gateway.handle(
+        BuilderHttpRequest { method: "POST", path: "/v1/projects/preview", headers: &headers, body: &oversized },
+        &auth,
+    );
+    assert_eq!(result.status, 413);
+    for (method, path, expected) in [
+        ("POST", "/v1/projects/../preview", 404),
+        ("DELETE", "/v1/projects/hello", 405),
+        ("GET", "/v1/projects/hello?tenant=another", 404),
+        ("PUT", "/v1/projects/preview", 405),
+    ] {
+        let result = gateway.handle(
+            BuilderHttpRequest { method, path, headers: &headers, body: &[] },
+            &auth,
+        );
+        assert_eq!(result.status, expected);
+    }
+    let mismatch = serde_json::to_vec(&serde_json::json!({
+        "project": project(), "expected": null, "unexpected": true
+    })).unwrap();
+    let result = gateway.handle(
+        BuilderHttpRequest { method: "PUT", path: "/v1/projects/hello", headers: &headers, body: &mismatch },
+        &auth,
+    );
+    assert_eq!(result.status, 400);
+    assert!(store.load("local", "hello", None).unwrap().is_none());
+}
