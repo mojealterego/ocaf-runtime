@@ -39,7 +39,7 @@ const verifyProject = (project, tenant, projectId) => {
 };
 
 export class CloudWorkspaceClient {
-  constructor({token, origin, fetchImpl = fetch}) {
+  constructor({token, origin, fetchImpl = globalThis.fetch.bind(globalThis)}) {
     if (typeof token !== 'string' || !token || token.length > 4096 || /[^\x21-\x7e]/.test(token)) {
       throw new Error('oauth: invalid access token');
     }
