@@ -189,7 +189,6 @@ fn revoked_tokens_and_wrong_audience_are_rejected() {
     assert!(BuilderCloudService::new(&oauth, &store, "http://insecure").is_err());
 }
 
-
 const HTTP_ORIGIN: &str = "https://editor.ocaf.example";
 
 fn http_headers<'a>(credential: &'a str) -> [(&'a str, &'a str); 3] {
@@ -223,7 +222,10 @@ fn http_boundary_browser_preview_save_and_read_use_trusted_subject() {
     );
     assert_eq!(preview.status, 200);
     let preview_json: serde_json::Value = serde_json::from_slice(&preview.body).unwrap();
-    assert_eq!(preview_json["ordered_nodes"], serde_json::json!(["input", "output"]));
+    assert_eq!(
+        preview_json["ordered_nodes"],
+        serde_json::json!(["input", "output"])
+    );
     assert!(store.load("local", "hello", None).unwrap().is_none());
 
     let save_body = serde_json::to_vec(&serde_json::json!({
@@ -279,9 +281,21 @@ fn http_boundary_rejects_cross_origin_cookies_duplicate_auth_and_spoofing() {
     let auth = subject("local");
     let payload = serde_json::to_vec(&project()).unwrap();
     for headers in [
-        vec![("Origin", "https://attacker.example"), ("Authorization", &credential), ("Content-Type", "application/json")],
-        vec![("Authorization", &credential), ("Content-Type", "application/json")],
-        vec![("Origin", HTTP_ORIGIN), ("Authorization", &credential), ("Cookie", "session=evil"), ("Content-Type", "application/json")],
+        vec![
+            ("Origin", "https://attacker.example"),
+            ("Authorization", &credential),
+            ("Content-Type", "application/json"),
+        ],
+        vec![
+            ("Authorization", &credential),
+            ("Content-Type", "application/json"),
+        ],
+        vec![
+            ("Origin", HTTP_ORIGIN),
+            ("Authorization", &credential),
+            ("Cookie", "session=evil"),
+            ("Content-Type", "application/json"),
+        ],
     ] {
         let result = gateway.handle(
             BuilderHttpRequest {
@@ -327,12 +341,20 @@ fn http_boundary_rejects_oversize_unknown_paths_invalid_methods_and_payloads() {
     use ocaf_runtime::builder_http::{BuilderHttpBoundary, BuilderHttpRequest};
     let (_dir, oauth, store) = fixture();
     let gateway = BuilderHttpBoundary::new(&oauth, &store, RESOURCE, HTTP_ORIGIN).unwrap();
-    let credential = format!("Bearer {}", token(&oauth, "local", &["builder:read", "builder:write"]));
+    let credential = format!(
+        "Bearer {}",
+        token(&oauth, "local", &["builder:read", "builder:write"])
+    );
     let headers = http_headers(&credential);
     let auth = subject("local");
     let oversized = vec![b'x'; 128 * 1024 + 1];
     let result = gateway.handle(
-        BuilderHttpRequest { method: "POST", path: "/v1/projects/preview", headers: &headers, body: &oversized },
+        BuilderHttpRequest {
+            method: "POST",
+            path: "/v1/projects/preview",
+            headers: &headers,
+            body: &oversized,
+        },
         &auth,
     );
     assert_eq!(result.status, 413);
@@ -343,16 +365,27 @@ fn http_boundary_rejects_oversize_unknown_paths_invalid_methods_and_payloads() {
         ("PUT", "/v1/projects/preview", 405),
     ] {
         let result = gateway.handle(
-            BuilderHttpRequest { method, path, headers: &headers, body: &[] },
+            BuilderHttpRequest {
+                method,
+                path,
+                headers: &headers,
+                body: &[],
+            },
             &auth,
         );
         assert_eq!(result.status, expected);
     }
     let mismatch = serde_json::to_vec(&serde_json::json!({
         "project": project(), "expected": null, "unexpected": true
-    })).unwrap();
+    }))
+    .unwrap();
     let result = gateway.handle(
-        BuilderHttpRequest { method: "PUT", path: "/v1/projects/hello", headers: &headers, body: &mismatch },
+        BuilderHttpRequest {
+            method: "PUT",
+            path: "/v1/projects/hello",
+            headers: &headers,
+            body: &mismatch,
+        },
         &auth,
     );
     assert_eq!(result.status, 400);
