@@ -5,8 +5,8 @@
 //! SQLite event chains detect accidental corruption; external anchoring is needed
 //! to resist a malicious database administrator or rollback.
 use crate::omnidev_workflow::{
-    Claim, Completion, OmniDevWorkflow, Outcome, Receipt, Role, StepStatus,
-    TimeoutReconciliation, TimeoutResolution, WorkflowContract, WorkflowError,
+    Claim, Completion, OmniDevWorkflow, Outcome, Receipt, Role, StepStatus, TimeoutReconciliation,
+    TimeoutResolution, WorkflowContract, WorkflowError,
 };
 use rusqlite::{params, Connection, OptionalExtension, Transaction, TransactionBehavior};
 use serde::{Deserialize, Serialize};
@@ -84,7 +84,9 @@ enum EngineEvent {
 fn valid_id(value: &str) -> bool {
     !value.is_empty()
         && value.len() <= 96
-        && value.bytes().all(|b| b.is_ascii_alphanumeric() || b"_.:-".contains(&b))
+        && value
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"_.:-".contains(&b))
 }
 
 fn digest(bytes: &[u8]) -> String {
@@ -97,7 +99,11 @@ fn genesis() -> String {
 
 fn event_hash(previous: &str, event_json: &str) -> String {
     let mut hasher = Sha256::new();
-    for part in [b"OCAF-OM-ENGINE-EVENT-v1".as_slice(), previous.as_bytes(), event_json.as_bytes()] {
+    for part in [
+        b"OCAF-OM-ENGINE-EVENT-v1".as_slice(),
+        previous.as_bytes(),
+        event_json.as_bytes(),
+    ] {
         hasher.update((part.len() as u64).to_be_bytes());
         hasher.update(part);
     }
@@ -106,49 +112,91 @@ fn event_hash(previous: &str, event_json: &str) -> String {
 
 fn replay(workflow: &mut OmniDevWorkflow, tenant: &str, event: EngineEvent) -> Result<(), OmError> {
     match event {
-        EngineEvent::Claim { role, step, epoch, attempt, now_unix } => {
+        EngineEvent::Claim {
+            role,
+            step,
+            epoch,
+            attempt,
+            now_unix,
+        } => {
             workflow.claim(tenant, role, &step, epoch, &attempt, now_unix)?;
         }
         EngineEvent::Complete {
-            role, step, epoch, attempt, passed, evidence_sha256, actual_cost_minor, now_unix,
+            role,
+            step,
+            epoch,
+            attempt,
+            passed,
+            evidence_sha256,
+            actual_cost_minor,
+            now_unix,
         } => {
-            let outcome = if passed { Outcome::Passed } else { Outcome::Failed };
-            let recorded = workflow.complete(tenant, role, &step, Receipt {
-                epoch, attempt_id: attempt, outcome, evidence_sha256, actual_cost_minor,
-            }, now_unix)?;
+            let outcome = if passed {
+                Outcome::Passed
+            } else {
+                Outcome::Failed
+            };
+            let recorded = workflow.complete(
+                tenant,
+                role,
+                &step,
+                Receipt {
+                    epoch,
+                    attempt_id: attempt,
+                    outcome,
+                    evidence_sha256,
+                    actual_cost_minor,
+                },
+                now_unix,
+            )?;
             if recorded != Completion::Recorded {
                 return Err(OmError::Integrity);
             }
         }
         EngineEvent::Reconcile {
-            step, epoch, no_effect_confirmed, evidence_sha256, now_unix,
+            step,
+            epoch,
+            no_effect_confirmed,
+            evidence_sha256,
+            now_unix,
         } => {
-            workflow.reconcile_timeout(tenant, Role::Verifier, &step, TimeoutReconciliation {
-                epoch,
-                resolution: if no_effect_confirmed {
-                    TimeoutResolution::NoEffectConfirmed
-                } else {
-                    TimeoutResolution::UnknownOutcome
+            workflow.reconcile_timeout(
+                tenant,
+                Role::Verifier,
+                &step,
+                TimeoutReconciliation {
+                    epoch,
+                    resolution: if no_effect_confirmed {
+                        TimeoutResolution::NoEffectConfirmed
+                    } else {
+                        TimeoutResolution::UnknownOutcome
+                    },
+                    evidence_sha256: &evidence_sha256,
+                    now_unix,
                 },
-                evidence_sha256: &evidence_sha256,
-                now_unix,
-            })?;
+            )?;
         }
     }
     Ok(())
 }
 
-fn load(tx: &Transaction<'_>, tenant: &str, workflow_id: &str) -> Result<(OmniDevWorkflow, u64, String), OmError> {
+fn load(
+    tx: &Transaction<'_>,
+    tenant: &str,
+    workflow_id: &str,
+) -> Result<(OmniDevWorkflow, u64, String), OmError> {
     let row: Option<(String, String)> = tx.query_row(
         "SELECT contract_json, contract_sha256 FROM om_workflows WHERE tenant=?1 AND workflow_id=?2",
         params![tenant, workflow_id],
         |row| Ok((row.get(0)?, row.get(1)?)),
     ).optional()?;
     let (contract_json, contract_sha) = row.ok_or(OmError::NotFound)?;
-    if contract_json.len() > MAX_CONTRACT_BYTES || digest(contract_json.as_bytes()) != contract_sha {
+    if contract_json.len() > MAX_CONTRACT_BYTES || digest(contract_json.as_bytes()) != contract_sha
+    {
         return Err(OmError::Integrity);
     }
-    let contract: WorkflowContract = serde_json::from_str(&contract_json).map_err(|_| OmError::Integrity)?;
+    let contract: WorkflowContract =
+        serde_json::from_str(&contract_json).map_err(|_| OmError::Integrity)?;
     if contract.tenant != tenant || contract.workflow_id != workflow_id {
         return Err(OmError::Integrity);
     }
@@ -166,7 +214,11 @@ fn load(tx: &Transaction<'_>, tenant: &str, workflow_id: &str) -> Result<(OmniDe
         let prev: String = row.get(2)?;
         let hash: String = row.get(3)?;
         count = count.checked_add(1).ok_or(OmError::Integrity)?;
-        if count > MAX_EVENTS || seq != count as i64 || prev != previous || event_hash(&prev, &payload) != hash {
+        if count > MAX_EVENTS
+            || seq != count as i64
+            || prev != previous
+            || event_hash(&prev, &payload) != hash
+        {
             return Err(OmError::Integrity);
         }
         let event: EngineEvent = serde_json::from_str(&payload).map_err(|_| OmError::Integrity)?;
@@ -186,7 +238,11 @@ pub struct OmEngine {
 
 impl OmEngine {
     pub fn open(path: impl AsRef<Path>) -> Result<Self, OmError> {
-        if path.as_ref().symlink_metadata().is_ok_and(|m| m.file_type().is_symlink()) {
+        if path
+            .as_ref()
+            .symlink_metadata()
+            .is_ok_and(|m| m.file_type().is_symlink())
+        {
             return Err(OmError::Invalid);
         }
         let db = Connection::open(path)?;
@@ -206,13 +262,19 @@ impl OmEngine {
         Ok(Self { db: Mutex::new(db) })
     }
 
-    pub fn register(&self, trusted_tenant: &str, contract: WorkflowContract) -> Result<(), OmError> {
+    pub fn register(
+        &self,
+        trusted_tenant: &str,
+        contract: WorkflowContract,
+    ) -> Result<(), OmError> {
         if !valid_id(trusted_tenant) || contract.tenant != trusted_tenant {
             return Err(OmError::Denied);
         }
         OmniDevWorkflow::new(contract.clone())?;
         let json = serde_json::to_string(&contract)?;
-        if json.len() > MAX_CONTRACT_BYTES { return Err(OmError::Invalid); }
+        if json.len() > MAX_CONTRACT_BYTES {
+            return Err(OmError::Invalid);
+        }
         let hash = digest(json.as_bytes());
         let mut db = self.db.lock().map_err(|_| OmError::Poisoned)?;
         let tx = db.transaction_with_behavior(TransactionBehavior::Immediate)?;
@@ -225,21 +287,30 @@ impl OmEngine {
             params![trusted_tenant, contract.workflow_id],
             |row| Ok((row.get(0)?, row.get(1)?)),
         )?;
-        if stored != (json, hash) { return Err(OmError::Conflict); }
+        if stored != (json, hash) {
+            return Err(OmError::Conflict);
+        }
         tx.commit()?;
         Ok(())
     }
 
-    fn change<T>(&self, trusted_tenant: &str, workflow_id: &str,
+    fn change<T>(
+        &self,
+        trusted_tenant: &str,
+        workflow_id: &str,
         operation: impl FnOnce(&mut OmniDevWorkflow) -> Result<(T, Option<EngineEvent>), OmError>,
     ) -> Result<T, OmError> {
-        if !valid_id(trusted_tenant) || !valid_id(workflow_id) { return Err(OmError::Invalid); }
+        if !valid_id(trusted_tenant) || !valid_id(workflow_id) {
+            return Err(OmError::Invalid);
+        }
         let mut db = self.db.lock().map_err(|_| OmError::Poisoned)?;
         let tx = db.transaction_with_behavior(TransactionBehavior::Immediate)?;
         let (mut workflow, count, previous) = load(&tx, trusted_tenant, workflow_id)?;
         let (result, event) = operation(&mut workflow)?;
         if let Some(event) = event {
-            if count >= MAX_EVENTS { return Err(OmError::Capacity); }
+            if count >= MAX_EVENTS {
+                return Err(OmError::Capacity);
+            }
             let payload = serde_json::to_string(&event)?;
             let hash = event_hash(&previous, &payload);
             tx.execute(
@@ -251,25 +322,51 @@ impl OmEngine {
         Ok(result)
     }
 
-    pub fn claim(&self, tenant: &str, workflow_id: &str, role: Role, step: &str,
-        epoch: u64, attempt: &str, now_unix: u64) -> Result<Claim, OmError> {
+    pub fn claim(
+        &self,
+        tenant: &str,
+        workflow_id: &str,
+        role: Role,
+        step: &str,
+        epoch: u64,
+        attempt: &str,
+        now_unix: u64,
+    ) -> Result<Claim, OmError> {
         self.change(tenant, workflow_id, |wf| {
             let claim = wf.claim(tenant, role, step, epoch, attempt, now_unix)?;
-            Ok((claim, Some(EngineEvent::Claim {
-                role, step: step.to_owned(), epoch, attempt: attempt.to_owned(), now_unix,
-            })))
+            Ok((
+                claim,
+                Some(EngineEvent::Claim {
+                    role,
+                    step: step.to_owned(),
+                    epoch,
+                    attempt: attempt.to_owned(),
+                    now_unix,
+                }),
+            ))
         })
     }
 
-    pub fn complete(&self, tenant: &str, workflow_id: &str, role: Role, step: &str,
-        receipt: Receipt, now_unix: u64) -> Result<Completion, OmError> {
+    pub fn complete(
+        &self,
+        tenant: &str,
+        workflow_id: &str,
+        role: Role,
+        step: &str,
+        receipt: Receipt,
+        now_unix: u64,
+    ) -> Result<Completion, OmError> {
         self.change(tenant, workflow_id, |wf| {
             let completion = wf.complete(tenant, role, step, receipt.clone(), now_unix)?;
             let event = (completion == Completion::Recorded).then(|| EngineEvent::Complete {
-                role, step: step.to_owned(), epoch: receipt.epoch,
-                attempt: receipt.attempt_id, passed: receipt.outcome == Outcome::Passed,
+                role,
+                step: step.to_owned(),
+                epoch: receipt.epoch,
+                attempt: receipt.attempt_id,
+                passed: receipt.outcome == Outcome::Passed,
                 evidence_sha256: receipt.evidence_sha256,
-                actual_cost_minor: receipt.actual_cost_minor, now_unix,
+                actual_cost_minor: receipt.actual_cost_minor,
+                now_unix,
             });
             Ok((completion, event))
         })
@@ -277,21 +374,42 @@ impl OmEngine {
 
     /// Only a separately trusted Verifier can reconcile an expired lease.
     /// UNKNOWN outcomes are terminal and never automatically retried.
-    pub fn reconcile(&self, tenant: &str, workflow_id: &str, role: Role, step: &str,
-        evidence: TimeoutReconciliation<'_>) -> Result<(), OmError> {
-        if role != Role::Verifier { return Err(OmError::Denied); }
+    pub fn reconcile(
+        &self,
+        tenant: &str,
+        workflow_id: &str,
+        role: Role,
+        step: &str,
+        evidence: TimeoutReconciliation<'_>,
+    ) -> Result<(), OmError> {
+        if role != Role::Verifier {
+            return Err(OmError::Denied);
+        }
         self.change(tenant, workflow_id, |wf| {
             wf.reconcile_timeout(tenant, role, step, evidence)?;
-            Ok(((), Some(EngineEvent::Reconcile {
-                step: step.to_owned(), epoch: evidence.epoch,
-                no_effect_confirmed: evidence.resolution == TimeoutResolution::NoEffectConfirmed,
-                evidence_sha256: evidence.evidence_sha256.to_owned(), now_unix: evidence.now_unix,
-            })))
+            Ok((
+                (),
+                Some(EngineEvent::Reconcile {
+                    step: step.to_owned(),
+                    epoch: evidence.epoch,
+                    no_effect_confirmed: evidence.resolution
+                        == TimeoutResolution::NoEffectConfirmed,
+                    evidence_sha256: evidence.evidence_sha256.to_owned(),
+                    now_unix: evidence.now_unix,
+                }),
+            ))
         })
     }
 
-    pub fn status(&self, tenant: &str, workflow_id: &str, step: &str) -> Result<StepStatus, OmError> {
-        if !valid_id(tenant) || !valid_id(workflow_id) { return Err(OmError::Invalid); }
+    pub fn status(
+        &self,
+        tenant: &str,
+        workflow_id: &str,
+        step: &str,
+    ) -> Result<StepStatus, OmError> {
+        if !valid_id(tenant) || !valid_id(workflow_id) {
+            return Err(OmError::Invalid);
+        }
         let mut db = self.db.lock().map_err(|_| OmError::Poisoned)?;
         let tx = db.transaction_with_behavior(TransactionBehavior::Immediate)?;
         let (wf, _, _) = load(&tx, tenant, workflow_id)?;
@@ -301,20 +419,33 @@ impl OmEngine {
     }
 
     pub fn audit_head(&self, tenant: &str, workflow_id: &str) -> Result<AuditHead, OmError> {
-        if !valid_id(tenant) || !valid_id(workflow_id) { return Err(OmError::Invalid); }
+        if !valid_id(tenant) || !valid_id(workflow_id) {
+            return Err(OmError::Invalid);
+        }
         let mut db = self.db.lock().map_err(|_| OmError::Poisoned)?;
         let tx = db.transaction_with_behavior(TransactionBehavior::Immediate)?;
         let (wf, events, event_sha256) = load(&tx, tenant, workflow_id)?;
         let (scheduler_events, scheduler_sha256) = wf.audit_head(tenant)?;
-        let result = AuditHead { events, event_sha256, scheduler_events, scheduler_sha256: scheduler_sha256.to_owned() };
+        let result = AuditHead {
+            events,
+            event_sha256,
+            scheduler_events,
+            scheduler_sha256: scheduler_sha256.to_owned(),
+        };
         tx.commit()?;
         Ok(result)
     }
 
     /// An inert, typed JSON interchange envelope for future Digital-Life
     /// integration. It does not authenticate peers or execute payloads.
-    pub fn export_memory(&self, tenant: &str, workflow_id: &str,
-        namespace: &str, record_id: &str, payload: Value) -> Result<MemoryEnvelope, OmError> {
+    pub fn export_memory(
+        &self,
+        tenant: &str,
+        workflow_id: &str,
+        namespace: &str,
+        record_id: &str,
+        payload: Value,
+    ) -> Result<MemoryEnvelope, OmError> {
         self.audit_head(tenant, workflow_id)?;
         MemoryEnvelope::new(tenant, workflow_id, namespace, record_id, payload)
     }
@@ -334,19 +465,35 @@ pub struct MemoryEnvelope {
 }
 
 impl MemoryEnvelope {
-    pub fn new(tenant: &str, workflow: &str, namespace: &str,
-        record: &str, payload: Value) -> Result<Self, OmError> {
-        if [tenant, workflow, namespace, record].iter().any(|v| !valid_id(v)) {
+    pub fn new(
+        tenant: &str,
+        workflow: &str,
+        namespace: &str,
+        record: &str,
+        payload: Value,
+    ) -> Result<Self, OmError> {
+        if [tenant, workflow, namespace, record]
+            .iter()
+            .any(|v| !valid_id(v))
+        {
             return Err(OmError::Invalid);
         }
-        if !payload.is_object() { return Err(OmError::Invalid); }
+        if !payload.is_object() {
+            return Err(OmError::Invalid);
+        }
         let encoded = serde_json::to_vec(&payload)?;
-        if encoded.is_empty() || encoded.len() > MAX_MEMORY_BYTES { return Err(OmError::Invalid); }
+        if encoded.is_empty() || encoded.len() > MAX_MEMORY_BYTES {
+            return Err(OmError::Invalid);
+        }
         Ok(Self {
-            schema_version: BRIDGE_VERSION, source_engine: "ocaf.om_engine".to_owned(),
-            tenant_id: tenant.to_owned(), workflow_id: workflow.to_owned(),
-            namespace: namespace.to_owned(), record_id: record.to_owned(),
-            payload_sha256: digest(&encoded), payload,
+            schema_version: BRIDGE_VERSION,
+            source_engine: "ocaf.om_engine".to_owned(),
+            tenant_id: tenant.to_owned(),
+            workflow_id: workflow.to_owned(),
+            namespace: namespace.to_owned(),
+            record_id: record.to_owned(),
+            payload_sha256: digest(&encoded),
+            payload,
         })
     }
 
@@ -354,18 +501,28 @@ impl MemoryEnvelope {
     /// authenticate the Digital-Life peer and authorize the target namespace.
     pub fn verify(&self, trusted_tenant: &str) -> Result<(), OmError> {
         if self.schema_version != BRIDGE_VERSION
-            || !matches!(self.source_engine.as_str(), "ocaf.om_engine" | "digital-life.noevaris")
+            || !matches!(
+                self.source_engine.as_str(),
+                "ocaf.om_engine" | "digital-life.noevaris"
+            )
             || !valid_id(trusted_tenant)
             || self.tenant_id != trusted_tenant
-            || [self.workflow_id.as_str(), self.namespace.as_str(), self.record_id.as_str()]
-                .iter().any(|v| !valid_id(v))
+            || [
+                self.workflow_id.as_str(),
+                self.namespace.as_str(),
+                self.record_id.as_str(),
+            ]
+            .iter()
+            .any(|v| !valid_id(v))
             || !self.payload.is_object()
         {
             return Err(OmError::Denied);
         }
         let encoded = serde_json::to_vec(&self.payload)?;
-        if encoded.is_empty() || encoded.len() > MAX_MEMORY_BYTES
-            || digest(&encoded) != self.payload_sha256 {
+        if encoded.is_empty()
+            || encoded.len() > MAX_MEMORY_BYTES
+            || digest(&encoded) != self.payload_sha256
+        {
             return Err(OmError::Integrity);
         }
         Ok(())
