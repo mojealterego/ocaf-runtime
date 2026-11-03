@@ -99,7 +99,14 @@ def archive_bytes(repo: Path, path: str) -> bytes:
         or PurePosixPath(path).as_posix() != path
     ):
         raise ValueError("unsafe bundle entry path")
-    file = repo / path
+    # Check every ancestor with lstat: checking only the leaf permits a
+    # symlinked directory to redirect reads outside the checked-out tree.
+    current = repo
+    for part in parts[:-1]:
+        current = current / part
+        if not stat.S_ISDIR(current.lstat().st_mode):
+            raise ValueError(f"refusing symlink or non-directory ancestor: {path}")
+    file = current / parts[-1]
     mode = file.lstat().st_mode
     if not stat.S_ISREG(mode):
         raise ValueError(f"refusing non-regular tracked file: {path}")
