@@ -198,7 +198,10 @@ def verify_bundle(archive_path: Path, sha: str, files: list[str], repo: Path) ->
             path = item["path"]
             if hashlib.sha256(z.read(prefix + path)).hexdigest() != item["sha256"]:
                 raise ValueError("ZIP file hash mismatch: " + path)
-            if z.read(prefix + path) != archive_bytes(repo, path):
+            committed = git(repo, "show", f"{sha}:{path}")
+            if z.read(prefix + path) != committed:
+                raise ValueError("ZIP differs from committed source at Git HEAD: " + path)
+            if committed != archive_bytes(repo, path):
                 raise ValueError("ZIP differs from checked-out source: " + path)
 
 
