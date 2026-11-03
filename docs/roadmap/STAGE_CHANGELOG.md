@@ -1,3 +1,9 @@
+## 2026-11-03 — Rust CI precheck failure diagnosis (FIX_COMMITTED_CI_PENDING)
+
+- CI #41618263155 on `22a6256c5d90ecde156f6d254769be3e11775495`: 746 Python tests, 2 failures, 4 skipped. Failure 1: safe `O_NOFOLLOW` denial emitted `secure source open rejected`, while the symlink regression test only allowed `symlink|non-regular|unsafe`. Assertion extended to recognize the existing fail-closed denial; no security guard relaxed.
+- Failure 2: README warning `ZABRONIONA JEST SAMOWOLKA` fell outside the first 1500 characters required by `test_render_readme_roadmap.py`; moved the existing warning to the very beginning, without removing content or historical roadmap records.
+- CI for this corrective commit pending. No Builder product acceptance or production approval.
+
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
 ## 2026-11-03 — Builder source bundle pinned Git blob verification (IMPLEMENTED_CI_PENDING)

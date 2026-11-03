@@ -80,7 +80,7 @@ class PackageBuilderTests(unittest.TestCase):
         outside.mkdir()
         (outside / "payload.txt").write_bytes(b"PRIVATE-OUTSIDE-REPOSITORY")
         (self.root / "linked-dir").symlink_to(outside, target_is_directory=True)
-        with self.assertRaisesRegex(ValueError, "symlink|non-regular|unsafe"):
+        with self.assertRaisesRegex(ValueError, "symlink|non-regular|unsafe|secure source open rejected"):
             bundle.archive_bytes(self.root, "linked-dir/payload.txt")
 
     def test_archive_opens_every_component_without_following_symlinks(self):
