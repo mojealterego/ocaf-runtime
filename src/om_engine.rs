@@ -322,6 +322,7 @@ impl OmEngine {
         Ok(result)
     }
 
+    #[expect(clippy::too_many_arguments, reason = "explicit trusted scheduler claim boundary")]
     pub fn claim(
         &self,
         tenant: &str,
