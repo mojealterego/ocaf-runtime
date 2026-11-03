@@ -133,6 +133,28 @@ class PackageBuilderTests(unittest.TestCase):
             bundle.write_bundle(self.root, destination, sha, paths, "unit-test")
         self.assertFalse(destination.exists())
 
+    def test_rejects_head_movement_during_bundle_verification(self):
+        # A concurrent commit must not be published under the old HEAD.
+        from unittest.mock import patch
+
+        paths = bundle.tracked_files(self.root)
+        sha = bundle.current_sha(self.root)
+        destination = Path(self.temp.name) / "head-race.zip"
+        real_verify = bundle.verify_bundle
+
+        def concurrent_commit(*args, **kwargs):
+            real_verify(*args, **kwargs)
+            self.write("notes.txt", b"new committed revision")
+            subprocess.run(["git", "-C", str(self.root), "add", "notes.txt"],
+                           check=True, capture_output=True)
+            subprocess.run(["git", "-C", str(self.root), "commit", "-qm", "concurrent"],
+                           check=True, capture_output=True)
+
+        with patch.object(bundle, "verify_bundle", side_effect=concurrent_commit):
+            with self.assertRaisesRegex(ValueError, "HEAD changed"):
+                bundle.write_bundle(self.root, destination, sha, paths, "unit-test")
+        self.assertFalse(destination.exists())
+
     def test_bundle_is_refused_when_file_mutated_between_checkout_and_package(self):
         paths = bundle.tracked_files(self.root)
         self.write("notes.txt", b"UNCOMMITTED")
