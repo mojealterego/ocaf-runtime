@@ -1,0 +1,33 @@
+# OCAF Agents Builder — wielojęzyczność, klucze API i GGUF (2026-11-03)
+
+## Kontrakt
+- Używamy **jednego** istniejącego UI dla Code/NoCode i Local/Cloud.
+- Język polski pozostaje fallback; katalogi en-US, cs-CZ, sk-SK, de-DE, uk-UA i ar-SA.
+  Inne języki jako kontrolowane katalogi BCP47; brak obietnicy przetłumaczenia 7000 języków.
+- Tokeny OAuth Cloud pozostają oddzielne od kluczy dostawców. Klucze API
+  są sesyjne, nigdy nie są zapisywane ani dołączane do projektu.
+- Publiczny katalog Hugging Face pod stałym origin; URL pobierania tylko
+  zweryfikowany repo/path i przypięty commit SHA. Plik lokalny podlega
+  kontroli podpisu GGUF i wersji, nie tylko rozszerzenia.
+- Model profile schema v1 jest ściśle walidowany. Inferencja nie jest uruchamiana.
+
+## Zakres implementacji
+- `apps/agents-builder-web/i18n.mjs`
+- `apps/agents-builder-web/credentials.mjs`
+- `apps/agents-builder-web/models.mjs`
+- `apps/agents-builder-web/integrations-ui.mjs`
+- `apps/agents-builder-web/tests/integrations.test.mjs`
+- Integracja z istniejącymi `app.mjs`, `index.html`, `style.css`, `sw.js`,
+  test Chromium i workflow `stage051-builder-web.yml`.
+
+## Otwarta bramka i ryzyka
+- Aktywowanie **rzeczywistej inferencji GGUF** wymaga adaptera llama.cpp
+  lub równoważnego, z limitem pamięci/VRAM, kontrolą urządzenia i testami.
+  Odczyt nagłówka/wybranie pliku nie potwierdza załadowania modelu.
+- Aby użyć kluczy w usługach produkcyjnych, wymagany szyfrowany vault/
+  systemowy Keychain/Keystore, broker tenant-scoped, polityki egress,
+  audyt, rotacja i nieprzechowywanie sekretów w JS przez czas nieograniczony.
+- HF private/gated i licencje modeli pozostają poza nieautoryzowanym automatem.
+- Testy i CI wymagają powiązania z konkretnym SHA zanim status
+  zostanie podniesiony z IMPLEMENTED_CI_PENDING.
+- Macierz 10 produktów i status `production_approved=false` bez zmian.

@@ -11,3 +11,31 @@
 .cloud-status{color:var(--atelier-accent-gold);font-size:12px;overflow-wrap:anywhere}
 #cloud-token{font-family:ui-monospace,monospace}
 @media(max-width:600px){.workspace-connection{padding:12px;flex-direction:column}.workspace-connection .mode-switch{width:100%}.workspace-connection .mode-switch button{flex:1}.cloud-form{display:grid;grid-template-columns:1fr 1fr}.cloud-form label{grid-column:1/-1}.cloud-form button{width:100%}}
+
+/* OCAF Atelier — multilingual, secret-session and GGUF model registry */
+.topbar-options{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.locale-control{display:flex;align-items:center;gap:10px;color:#D4AF37;font-size:13px}
+.locale-control select{min-width:140px;max-width:190px;background:#0E1015;color:#F4F1EA;border:1px solid #85703e;border-radius:5px;padding:7px}
+.integrations{margin-top:20px;border:1px solid #534525;background:linear-gradient(160deg,#12151c,#07080a);border-radius:12px;padding:20px}
+.integration-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.integration-heading h2{font-family:Georgia,serif;font-weight:400;color:#D4AF37;margin:0 0 20px}
+.integrations-grid{display:grid;grid-template-columns:minmax(230px,0.85fr) minmax(250px,1fr) minmax(330px,1.5fr);gap:15px}
+.integrations .panel{background:rgba(14,16,21,.9);border-color:#36352d}
+.integrations .panel h3{font-family:Georgia,serif;font-size:21px;margin:0 0 15px;color:#e6d7b6;letter-spacing:0}
+.integrations label{display:flex;flex-direction:column;gap:7px;font-size:13px;color:#c0c2c8;margin:13px 0}
+.integrations select,.integrations input[type=text],.integrations input[type=password],.integrations input[type=number],.integrations input:not([type]){width:100%;min-width:0;background:#080a0f;border:1px solid #4c4b47;color:#f4f1ea;border-radius:5px;padding:9px;font-size:13px}
+.integrations input[type=file]{max-width:100%;font-size:12px}
+.integration-actions{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}
+.integration-actions button{flex:1;min-width:130px;font-size:12px}
+.settings-grid{display:grid;grid-template-columns:repeat(3,minmax(85px,1fr));gap:10px}
+.settings-grid label{font-size:11px;margin:3px 0;justify-content:space-between}
+.settings-grid input[type=checkbox]{width:18px;height:18px;accent-color:#D4AF37}
+.download-gguf{display:inline-block;border:1px solid #D4AF37;color:#D4AF37;text-decoration:none;padding:10px 13px;border-radius:5px;overflow-wrap:anywhere}
+.download-gguf:hover{background:#282312}
+.integrations output{display:block;font-size:12px;line-height:1.5;color:#d4af37;overflow-wrap:anywhere;white-space:pre-wrap}
+.integrations output[data-level=error]{color:#ef9b9b}
+.catalog-upload{margin:0 0 15px!important;font-size:12px!important}
+[dir=rtl] .integrations, [dir=rtl] .workspace-connection{text-align:start}
+#dsl,[id=cloud-token],#model-id,#hf-repo{direction:ltr;text-align:left}
+@media(max-width:1100px){.integrations-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.model-parameters{grid-column:1/-1}}
+@media(max-width:720px){.integrations-grid{grid-template-columns:1fr}.model-parameters{grid-column:auto}.settings-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.integration-heading{align-items:stretch}.topbar-options{gap:6px}.integrations{padding:12px}}

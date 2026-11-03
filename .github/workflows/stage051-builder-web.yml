@@ -29,6 +29,10 @@ jobs:
           node --check apps/agents-builder-web/editor.mjs
           node --check apps/agents-builder-web/app.mjs
           node --check apps/agents-builder-web/cloud.mjs
+          node --check apps/agents-builder-web/i18n.mjs
+          node --check apps/agents-builder-web/credentials.mjs
+          node --check apps/agents-builder-web/models.mjs
+          node --check apps/agents-builder-web/integrations-ui.mjs
       - name: Web editor model contract
         run: node --test apps/agents-builder-web/tests/*.test.mjs
       - name: Chromium GUI end-to-end smoke

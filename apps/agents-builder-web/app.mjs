@@ -3,6 +3,7 @@ import {
   encodeDsl, decodeDsl, saveProject, loadProject, listRevisions, restoreRevision
 } from './editor.mjs';
 import {CloudWorkspaceClient, CloudApiError} from './cloud.mjs';
+import {initIntegrations} from './integrations-ui.mjs';
 
 const TENANT = 'local';
 const el = id => document.getElementById(id);
@@ -12,6 +13,7 @@ const state = {
   cloud:{tenant:null, head:null, pending:false}
 };
 let cloudClient = null;
+let refreshIntegrations = () => {};
 const currentTenant = () => state.workspace === 'cloud' ? state.cloud.tenant : TENANT;
 const fail = error => {
   el('message').textContent = error instanceof Error ? error.message : String(error);
@@ -181,6 +183,7 @@ function render() {
   el('grant-list').textContent = hasProject && state.project.grants.length ? state.project.grants.join(', ') : 'No tool grants';
   renderGraph();
   renderHistory();
+  refreshIntegrations();
 }
 function add(kind) {
   const project = state.project;
@@ -419,8 +422,16 @@ function init() {
     state.project = project;
     state.saved = 1;
   }
+  refreshIntegrations = initIntegrations({
+    getContext: () => ({
+      tenant: currentTenant(),
+      projectId: state.project?.project_id ?? null,
+      workspace: state.workspace
+    }),
+    notify: (message, isError=false) => isError ? fail(new Error(message)) : notice(message)
+  });
   render();
-  notice('Offline workspace ready. Select Code or NoCode; no remote operations.');
+  notice('Offline workspace ready. Code/NoCode, Local/Cloud and model profiles configured; no automatic execution.');
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }

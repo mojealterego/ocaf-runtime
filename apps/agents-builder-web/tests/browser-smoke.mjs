@@ -12,7 +12,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 
 const ROOT = new URL('../', import.meta.url);
-const ALLOWED = new Set(['/index.html','/app.mjs','/editor.mjs','/cloud.mjs','/style.css','/manifest.webmanifest','/sw.js']);
+const ALLOWED = new Set(['/index.html','/app.mjs','/editor.mjs','/cloud.mjs','/i18n.mjs','/credentials.mjs','/models.mjs','/integrations-ui.mjs','/style.css','/manifest.webmanifest','/sw.js']);
 const MIME = {'.html':'text/html','.mjs':'text/javascript','.css':'text/css','.webmanifest':'application/manifest+json','.js':'text/javascript'};
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function until(fn, description, maxMs = 20000) {
@@ -153,6 +153,27 @@ try {
   await cmd('Page.reload', {ignoreCache:true});
   await until(async () => await evaluate('document.querySelectorAll(".node-card").length') === 3, 'offline persistence after reload');
   assert.equal(await evaluate('document.getElementById("revision-label").textContent'), 'r3');
+  assert.equal(await evaluate('document.documentElement.lang'), 'pl-PL');
+  await evaluate('document.getElementById("ui-language").value="cs-CZ";document.getElementById("ui-language").dispatchEvent(new Event("change"))');
+  assert.equal(await evaluate('document.querySelector("h1").textContent'), 'Navrhujte agenty.');
+  await evaluate('document.getElementById("ui-language").value="ar-SA";document.getElementById("ui-language").dispatchEvent(new Event("change"))');
+  assert.equal(await evaluate('document.documentElement.dir'), 'rtl');
+  await evaluate('document.getElementById("ui-language").value="pl-PL";document.getElementById("ui-language").dispatchEvent(new Event("change"))');
+  assert.equal(await evaluate('document.documentElement.dir'), 'ltr');
+  await evaluate('document.getElementById("api-provider").value="openai";document.getElementById("api-secret").value="sk-super-secret-test";document.getElementById("api-add").click()');
+  assert.equal(await evaluate('document.getElementById("api-secret").value'), '');
+  assert.equal(await evaluate('JSON.stringify(localStorage).includes("sk-super-secret-test")'),false);
+
+  // Actual binary GGUF signature and version from a browser File object.
+  await evaluate('(()=>{const e=document.getElementById("model-kind");e.value="file";e.dispatchEvent(new Event("change"));const b=new ArrayBuffer(24);const v=new DataView(b);["G","G","U","F"].forEach((c,i)=>v.setUint8(i,c.charCodeAt(0)));v.setUint32(4,3,true);v.setBigUint64(8,1n,true);const t=new DataTransfer();t.items.add(new File([b],"sample.gguf",{type:"application/octet-stream"}));const f=document.getElementById("gguf-file");f.files=t.files;f.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  await until(async () => await evaluate('document.getElementById("gguf-status").textContent.includes("GGUF v3")'), 'GGUF binary inspection');
+  await evaluate('document.getElementById("model-setting-context_size").value="8192";document.getElementById("model-save").click()');
+  await until(async () => await evaluate('document.getElementById("model-status").textContent.includes("Profil zapisany")'), 'model profile persisted');
+  assert.equal(await evaluate('JSON.stringify(localStorage).includes("sk-super-secret-test")'),false);
+  assert.equal(await evaluate('JSON.stringify(localStorage).includes("sample.gguf")'),true);
+  await evaluate('document.getElementById("api-remove").click()');
+  assert.match(await evaluate('document.getElementById("api-status").textContent'), /Brak klucza/);
+
   await evaluate('document.getElementById("workspace-cloud").click()');
   assert.equal(await evaluate('document.getElementById("cloud-controls").hidden'), false);
   assert.equal(await evaluate('document.getElementById("cloud-save").disabled'), true);

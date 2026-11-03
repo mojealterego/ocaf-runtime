@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#07080A">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://huggingface.co; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./style.css">
   <title>OCAF Agents Builder — Code / NoCode</title>
@@ -13,10 +13,12 @@
 <body>
 <header class="topbar">
   <div class="brand"><span class="brand-mark">Ω</span><div><strong>OCAF Agents Builder</strong><small>Atelier Sovereign · Code / NoCode · Local / Cloud</small></div></div>
-  <div class="build-status">Typed DAG · OAuth Cloud · Bez automatycznej publikacji</div>
+  <div class="topbar-options"><label class="locale-control"><span data-i18n="language">Język</span>
+<select id="ui-language" aria-label="Język interfejsu"></select></label>
+<div class="build-status">Typed DAG · OAuth Cloud · Bez automatycznej publikacji</div></div>
 </header>
 <main class="shell">
-  <section class="intro"><div><p class="eyebrow">OCAF ATELIER SOVEREIGN / 0.50–0.52</p><h1>Projektuj agentów.</h1><p>Jeden typowany projekt. Code i NoCode. Lokalnie lub w uwierzytelnionej chmurze.</p></div><div class="project-meta"><span id="project-title">demo</span><span id="revision-label">r1</span></div></section>
+  <section class="intro"><div><p class="eyebrow">OCAF ATELIER SOVEREIGN / 0.50–0.52</p><h1 data-i18n="title">Projektuj agentów.</h1><p data-i18n="description">Jeden typowany projekt. Dwa edytory. Dwa środowiska.</p></div><div class="project-meta"><span id="project-title">demo</span><span id="revision-label">r1</span></div></section>
   <section class="toolbar" aria-label="Project management">
     <label>Project ID <input id="project-id" value="demo" maxlength="64" autocomplete="off" spellcheck="false"></label>
     <button id="new-project" type="button" class="secondary">New</button>
@@ -28,8 +30,8 @@
   </section>
   <section class="workspace-connection" aria-label="Środowisko pracy">
     <div class="mode-switch" role="group" aria-label="Lokalnie lub chmura">
-      <button id="workspace-local" type="button" aria-pressed="true">Lokalnie</button>
-      <button id="workspace-cloud" type="button" aria-pressed="false">Chmura</button>
+      <button id="workspace-local" type="button" aria-pressed="true" data-i18n="local">Lokalnie</button>
+      <button id="workspace-cloud" type="button" aria-pressed="false" data-i18n="cloud">Chmura</button>
     </div>
     <div id="cloud-controls" hidden>
       <p class="muted">Połączenie wymaga tego samego origin HTTPS, aktywnego gateway TLS oraz tokenu OAuth z zakresem builder:read / builder:write. Token nie jest zapisywany.</p>
@@ -46,7 +48,7 @@
     </div>
   </section>
   <section class="workspace">
-    <div class="workspace-header"><div class="mode-switch" role="group" aria-label="Editor mode"><button id="mode-nocode" type="button" aria-pressed="true">NoCode graph</button><button id="mode-code" type="button" aria-pressed="false">Code DSL</button></div><button id="preview" type="button" class="primary">Validate / Dry run</button></div>
+    <div class="workspace-header"><div class="mode-switch" role="group" aria-label="Editor mode"><button id="mode-nocode" type="button" aria-pressed="true" data-i18n="nocode">NoCode · Graf</button><button id="mode-code" type="button" aria-pressed="false" data-i18n="code">Code · DSL</button></div><button id="preview" type="button" class="primary" data-i18n="validate">Waliduj / Symuluj</button></div>
     <div id="nocode-view" class="editor-grid">
       <aside class="panel">
         <h2>Node palette</h2><p class="muted">Tap to insert or drag onto the canvas. Select a connection to choose the insertion point.</p>
@@ -68,6 +70,63 @@
     <section id="code-view" class="panel code-panel" hidden><h2>Typed JSON Code DSL</h2><p class="muted">Only the supported schema is accepted. Arbitrary Rust and executable imports are rejected. Apply validates and saves a new revision.</p><label for="dsl" class="sr-only">Code DSL editor</label><textarea id="dsl" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="JSON Code DSL"></textarea><button id="apply-code" type="button" class="primary">Validate and apply Code</button></section>
   </section>
   <section class="bottom-grid"><div class="panel"><h2>Validation and preview</h2><pre id="preview-output" aria-live="polite">Select Validate / Dry run to inspect the inert compilation plan.</pre></div><div class="panel security"><h2>Execution boundary</h2><p>Lokalny edytor nie uwierzytelnia tenantów. Tryb Cloud korzysta wyłącznie z jawnych żądań do uwierzytelnionego gateway; bez podłączonego serwera nie działa. Nie ma wykonania agentów, podpisywania, wdrożenia ani publikacji.</p><p>Dane lokalne pozostają w pamięci przeglądarki. Dane chmurowe są zapisywane wyłącznie na żądanie z kontrolą rewizji CAS. Eksport JSON pozostaje niepodpisany.</p></div></section>
+  <section class="integrations" aria-label="Konfiguracja modeli i dostawców API">
+    <div class="integration-heading">
+      <div><p class="eyebrow">OCAF / MODEL REGISTRY</p>
+      <h2 data-i18n="integrations">Modele i dostawcy API</h2></div>
+      <label class="catalog-upload"><span data-i18n="locale_import">Wczytaj katalog tłumaczeń JSON</span>
+        <input id="locale-catalog" type="file" accept=".json,application/json"></label>
+    </div>
+    <div class="integrations-grid">
+      <div class="panel">
+        <h3 data-i18n="api_keys">Klucze API · tylko bieżąca sesja</h3>
+        <p class="muted" data-i18n="api_notice">Klucze pozostają tylko w pamięci tej karty. Nie trafiają do projektów ani eksportu.</p>
+        <label><span data-i18n="provider">Dostawca</span><select id="api-provider"></select></label>
+        <label><span data-i18n="secret">Klucz API</span><input id="api-secret" type="password" autocomplete="new-password" spellcheck="false" maxlength="4096"></label>
+        <div class="integration-actions">
+          <button id="api-add" class="primary" type="button" data-i18n="add_key">Dodaj / zamień klucz</button>
+          <button id="api-remove" class="secondary" type="button" data-i18n="remove_key">Usuń klucz</button>
+        </div>
+        <output id="api-status" aria-live="polite">Brak klucza w pamięci.</output>
+      </div>
+      <div class="panel">
+        <h3 data-i18n="model_source">Źródło modelu</h3>
+        <label><span data-i18n="model_type">Typ profilu</span>
+          <select id="model-kind">
+            <option value="api" data-i18n="api_model">Model API</option>
+            <option value="huggingface" data-i18n="gguf">GGUF · Hugging Face</option>
+            <option value="file" data-i18n="local_gguf">Wczytaj lokalny plik GGUF</option>
+          </select>
+        </label>
+        <div id="model-api-controls">
+          <label><span data-i18n="provider">Dostawca</span><select id="model-provider"></select></label>
+          <label><span data-i18n="model_id">Identyfikator modelu</span><input id="model-id" maxlength="160" autocomplete="off" placeholder="np. gpt-4.1-mini"></label>
+        </div>
+        <div id="model-hf-controls" hidden>
+          <label><span data-i18n="hf_repo">Repozytorium Hugging Face</span><input id="hf-repo" placeholder="organizacja/nazwa-modelu" autocomplete="off" spellcheck="false"></label>
+          <button id="hf-search" type="button" class="secondary" data-i18n="hf_search">Wyszukaj pliki GGUF</button>
+          <label><span data-i18n="hf_file">Plik GGUF</span><select id="hf-file"></select></label>
+          <a id="hf-download" class="download-gguf" href="#" target="_blank" rel="noopener noreferrer" hidden data-i18n="hf_download">Pobierz GGUF z Hugging Face</a>
+          <output id="hf-status" aria-live="polite"></output>
+        </div>
+        <div id="model-file-controls" hidden>
+          <label><span data-i18n="local_gguf">Wczytaj lokalny plik GGUF</span><input id="gguf-file" type="file" accept=".gguf"></label>
+          <output id="gguf-status" aria-live="polite"></output>
+        </div>
+      </div>
+      <div class="panel model-parameters">
+        <h3 data-i18n="runtime">Ustawienia inferencji</h3>
+        <div id="model-settings" class="settings-grid"></div>
+        <div class="integration-actions">
+          <button id="model-save" type="button" class="primary" data-i18n="save_profile">Zapisz profil modelu</button>
+          <button id="model-export" type="button" class="secondary" data-i18n="export_profile">Eksportuj profil JSON</button>
+        </div>
+        <p id="model-context" class="muted"></p>
+        <output id="model-status" aria-live="polite"></output>
+        <p class="muted" data-i18n="model_notice">Profil konfiguracji nie uruchamia inferencji. Wymagany zgodny silnik lokalny lub chmurowy.</p>
+      </div>
+    </div>
+  </section>
   <p id="message" role="status" aria-live="polite"></p>
 </main>
 <footer>OCAF / Agents Builder · Stage 0.51 partial · Restricted typed DSL · No automatic publishing</footer>

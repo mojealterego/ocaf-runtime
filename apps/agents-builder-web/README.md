@@ -69,3 +69,48 @@ Wariant Android może na tym etapie korzystać z responsywnego PWA w
 przeglądarce; nie jest to natywny APK. Binarny Meta Agent Architekt,
 natywne buildy Windows/macOS/iOS oraz produkcyjna chmura nie są
 objęte tym przyrostem. Macierz 10/10 pozostaje otwarta.
+
+## Multilingual · API credentials · GGUF model profiles (2026-11-03)
+
+The existing single Local/Cloud Code/NoCode UI now includes:
+
+- Native UI catalog: `pl-PL` fallback, `en-US`, `cs-CZ`, `sk-SK`,
+  `de-DE`, `uk-UA`, `ar-SA`. Direction is LTR/RTL; `Code DSL`
+  remains LTR. Additional BCP 47 translations can be imported from a user
+  catalog JSON (`{"locale":"it-IT","messages":{"title":"Crea agenti."}}`).
+  Missing translations fall back to Polish; this is **not** a claim of
+  completed translations for every language or all legacy status messages.
+- Session-only credentials for OpenAI, Anthropic, Gemini, OpenRouter, Groq,
+  Mistral, DeepSeek, Cohere, Hugging Face. The secrets are held only in
+  JavaScript memory; they are cleared from the input immediately, never sent
+  with exported DSL, never stored in localStorage/SQLite, and not uploaded to
+  a server. A **production** credential vault or delegated OAuth/Keychain
+  broker still requires a separate, tenant-authenticated implementation.
+  Merely entering a key does not trigger provider calls, charges or inference.
+- Public Hugging Face model lookup from `/api/models/{repo}?files_metadata=true`,
+  filtering GGUF filenames and sizes. Download links target an exact verified
+  repository SHA instead of mutable `main`. Downloads happen only following
+  a direct operator click and are handled by the browser. Gated/private model
+  access is not bypassed, and model rights and licenses must be respected.
+- Local GGUF file picker with bounded binary-header validation (magic,
+  GGUF version 2/3, tensor/metadata counts). Only a small header is read;
+  no model weights are cached by the UI. Large tokenizer metadata may
+  be reported as partial. The original file is **not** retained after
+  closing the tab, so it must be reselected for subsequent execution.
+- Versioned, bounded inference profile: context size, CPU threads,
+  batch size, GPU layers, temperature, top-p, top-k, min-p, repetition,
+  presence/frequency penalty, seed, maximum output, flash attention, mmap.
+  Profiles are stored locally under `tenant/project_id` **outside** the
+  typed Rust JSON DSL schema and are exportable without API secrets.
+  They are not automatically synchronized with Cloud workspaces.
+- These are configuration and download/inspection features. **No actual
+  GGUF inference**, remote provider invocation, API-key server vault,
+  multi-device synchronization, or production model load is claimed.
+  A compatible inference adapter must be integrated and independently tested
+  before advertising an operational agent.
+
+Verification:
+```bash
+node --test apps/agents-builder-web/tests/*.test.mjs
+node apps/agents-builder-web/tests/browser-smoke.mjs
+```

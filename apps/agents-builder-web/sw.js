@@ -1,6 +1,6 @@
 // Cache only public static editor assets, never API responses or credentials.
-const CACHE = 'ocaf-builder-web-v2';
-const ASSETS = ['./', './index.html', './style.css', './app.mjs', './editor.mjs', './cloud.mjs', './manifest.webmanifest'];
+const CACHE = 'ocaf-builder-web-v3';
+const ASSETS = ['./', './index.html', './style.css', './app.mjs', './editor.mjs', './cloud.mjs', './i18n.mjs', './credentials.mjs', './models.mjs', './integrations-ui.mjs', './manifest.webmanifest'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
