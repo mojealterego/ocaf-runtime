@@ -976,3 +976,10 @@ Potwierdzony aktualny kod: `src/omas_signed.rs`, `src/omas_policy.rs`; obecnoś�
 - **Przypięty SHA:** `0be306742f7444b4c9719fba282ba4b14682430d`; **GitHub Actions:** [OCAF 0.52 Builder Cloud OAuth admission](https://github.com/mojealterego/ocaf-runtime/actions/runs/41536940370) — `completed/success`.
 - **Potwierdzone:** Rust formatting PASS; 4/4 testy integracyjne OAuth / tenant / CAS / scopes / revocation PASS; Clippy `--locked --no-default-features --test builder_cloud -- -D warnings` PASS.
 - **Zakres:** jedynie `src/builder_cloud.rs`, `tests/builder_cloud.rs`, istniejące OAuth/SQLite/typed IR. Status komponentu `TESTED_LOCAL_PARTIAL`; brak HTTP ingress, wdrożenia Cloud, sandbox execution i platform E2E. Żaden z 10 produktów nie został odebrany; `production_approved=false`.
+
+## 2026-11-03 — Agents Builder source ZIP: concurrent HEAD guard (CI_PENDING)
+
+- Test regresyjny wymusza nowy commit Git między weryfikacją ZIP a publikacją; oczekuje odmowy publikacji i braku docelowego artefaktu.
+- `scripts/package_agents_builder.py` ponownie sprawdza `HEAD` oraz czystość śledzonego drzewa po `verify_bundle()` i przed `os.replace()`; rozbieżność kończy pakowanie bez publikacji.
+- Commity: RED `8ffef314c4457df770dbbde3b0ba18dc1493d79f`, implementacja `e39872a4215ae15b1a72fdcab89ea9071ebe7d66`. RED/GREEN oraz CI nie są jeszcze potwierdzone; pozostaje możliwe TOCTOU między ostatnią kontrolą a podmianą oraz brak atomowej publikacji całego zestawu.
+- Status produktów 0.50–0.55 i `production_approved=false` bez zmian.
