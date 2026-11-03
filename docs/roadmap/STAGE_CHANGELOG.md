@@ -1,5 +1,13 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-03 — dystrybucja źródeł Agents Builder (IMPLEMENTED_CI_PENDING)
+
+- Dodano deterministyczne budowanie dwóch ZIP: kompletnego pakietu Agents Builder i pełnego snapshotu OCAF z aktualnego commita Git.
+- `scripts/package_agents_builder.py` wybiera pliki wyłącznie z Git, odrzuca nieczysty HEAD, symlinki, path traversal i nadmierne rozmiary; manifest wymienia SHA-256 **każdego** pliku w paczce.
+- `.github/workflows/agents-builder-source-bundle.yml` przeprowadza testy Pythona, Node, Chromium, sprawdza CRC/hashes ZIP, tworzy artefakt Actions i prerelease z trwałymi linkami pobierania.
+- Testy: `scripts/tests/test_package_agents_builder.py` oraz istniejące testy web UI. Dowód CI i release będzie przypięty do SHA **po** faktycznym przebiegu.
+- Brak produkcyjnego runnera GGUF, hardware attestation, sejfu API i wdrożonego Cloud. Status 0.51–0.55 i `production_approved=false` pozostają otwarte.
+
 ## 2026-11-03 — OM Engine: zewnętrzny high-water mark dla journalu (TESTED_CI_PARTIAL)
 
 - `AuditHead` wiąże tenant/workflow z dwoma hashami audytu i serializuje kontrakt dowodowy do JSON.

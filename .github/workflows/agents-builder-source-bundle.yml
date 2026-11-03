@@ -1,0 +1,81 @@
+name: OCAF Agents Builder verified full ZIP source bundles
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/agents-builder-web/**"
+      - "src/builder_*.rs"
+      - "src/model_router.rs"
+      - "tests/builder_*.rs"
+      - "scripts/package_agents_builder.py"
+      - "scripts/tests/test_package_agents_builder.py"
+      - ".github/workflows/agents-builder-source-bundle.yml"
+      - "docs/BUILD_SOURCE_BUNDLES.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ocaf-source-bundle-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish-source:
+    name: Test, archive, verify and publish source ZIP
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+      - name: Packaging unit and security tests
+        run: python3 -m unittest discover -s scripts/tests -p test_package_agents_builder.py -v
+      - name: Builder JavaScript unit and contract tests
+        run: node --test apps/agents-builder-web/tests/*.test.mjs
+      - name: Browser GUI end-to-end smoke
+        run: |
+          command -v google-chrome
+          node apps/agents-builder-web/tests/browser-smoke.mjs
+      - name: Assemble SHA-pinned source ZIP archives
+        run: python3 scripts/package_agents_builder.py --repo . --out dist --expected-sha "$GITHUB_SHA"
+      - name: Verify ZIP checksums and manifest
+        run: |
+          cd dist
+          sha256sum --check SHA256SUMS
+          python3 -m json.tool bundle-report.json >/dev/null
+      - name: Upload verified ZIPs as workflow artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: "ocaf-source-zip-${{ github.sha }}"
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS
+            dist/bundle-report.json
+          retention-days: 90
+          if-no-files-found: error
+      - name: Publish direct-download ZIPs in GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          short="$(printf '%s' "$GITHUB_SHA" | cut -c1-12)"
+          tag="ocaf-agents-builder-source-$short"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Immutable source release already exists: $tag"
+            exit 0
+          fi
+          gh release create "$tag" \
+            dist/*.zip dist/SHA256SUMS dist/bundle-report.json \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "OCAF Agents Builder — verified sources $short" \
+            --notes "Reproducible source-only ZIP bundles, verified against Git commit $GITHUB_SHA. The focused archive includes Code/NoCode UI, i18n, session API credential code, GGUF model profiles, Rust builder modules, tests, CI and documentation. The full-source archive includes every Git-tracked regular file. SHA256SUMS and RELEASE_MANIFEST.json provide provenance. Not a production build, no model weights or API keys, and no claim of actual GGUF inference or approved Cloud deployment." \
+            --prerelease \
+            --latest=false

@@ -22,3 +22,6 @@ target/
 *.db
 *.db-wal
 *.db-shm
+
+# Generated, SHA-pinned source archives
+dist/
