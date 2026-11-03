@@ -525,6 +525,25 @@
       "acceptance": "64 projects permitted; 65th rejected with Limit; existing revisions and separate tenant remain writable",
       "red_run_url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41544812685",
       "verified_source_sha": "a04e66dafede5c1aee3d22efec45a95a5ca7bddc"
+    },
+    {
+      "id": "BUILDER-CLOUD-HTTP-REQUEST-BOUNDARY",
+      "parent_stage": "0.52",
+      "kind": "authenticated_request_adapter",
+      "scope": "Transport-neutral bounded HTTP request adapter requiring trusted TLS-gateway subject; OAuth bearer/origin enforcement, cookie rejection, tenant isolation, JSON schema validation, SQLite CAS, read/history and inert preview. No socket/TLS termination or Cloud deployment.",
+      "source_sha": "812d7411bd591ac2eb226d4b16949c5309bcffce",
+      "source_paths": [
+        "src/builder_http.rs",
+        "src/builder_cloud.rs",
+        "tests/builder_cloud.rs",
+        "src/lib.rs",
+        ".github/workflows/stage052-builder-cloud.yml"
+      ],
+      "status": "TESTED_LOCAL_PARTIAL",
+      "ci_run_url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41552347121",
+      "red_run_url": "https://github.com/mojealterego/ocaf-runtime/actions/runs/41551314517",
+      "acceptance": "7/7 builder_cloud tests PASS, rustfmt and Clippy PASS; invalid Origin/cookies/duplicate authorization/cross-tenant/CAS/replay rejected; no listener or platform E2E",
+      "production_approved": false
     }
   ]
 }
