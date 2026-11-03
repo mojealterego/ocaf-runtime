@@ -1,5 +1,14 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-03 — Agents Builder 0.51–0.52: języki, klucze sesyjne API i GGUF (TESTED_LOCAL_PARTIAL)
+
+- Zachowano wspólny interfejs Code/NoCode × Local/Cloud; dodano domyślny polski, katalogi en/cs/sk/de/uk/ar, obsługę RTL i import katalogów BCP47. Nie deklarujemy gotowych tłumaczeń wszystkich języków.
+- `ProviderSessionKeys`: OpenAI/Anthropic/Gemini/OpenRouter/Groq/Mistral/DeepSeek/Cohere/Hugging Face; klucze wyłącznie w pamięci karty, brak zapisu do projektów, brak wykonawczego adaptera API.
+- `models.mjs`: publiczny katalog Hugging Face, stabilny commit SHA w linku GGUF, sprawdzenie nagłówka pliku, ograniczone parametry inferencji i lokalny eksport profilu projektu bez sekretów. Kliknięcie `Pobierz GGUF` deleguje pobieranie do przeglądarki; nie oznacza uruchomienia modelu.
+- **CI potwierdzone 2026-11-03:** commit `eb400184b69dfc80d59aa4f525bcaa9e47ed2c6b`; [OCAF Builder Web #41578863024](https://github.com/mojealterego/ocaf-runtime/actions/runs/41578863024) zakończony `completed/success`: 20/20 testów Node JavaScript, Chrome GUI E2E (w tym locale/RTL, nietrwały klucz sesyjny, walidacja lokalnego GGUF, zapis profilu), 1/1 Rust fixture PASS. [Roadmap v11 #41578863062](https://github.com/mojealterego/ocaf-runtime/actions/runs/41578863062) zakończony `completed/success`. **Jedynie `TESTED_LOCAL_PARTIAL`; brak wykonania inferencji, sejfu API, realnego pobierania modelu w CI, natywnych buildów i produkcyjnego Cloud.**
+- Otwarta bramka: produkcyjny backend secrets vault i tenant-scoped model registry, rzeczywisty runner GGUF, integracja Code/NoCode z inferencją i pełne testy na urządzeniu Android. Żaden z 10 wariantów nie otrzymuje produktu PASS; `production_approved=false`.
+- Audyt: `docs/audits/STAGE051_BUILDER_MULTILANG_API_GGUF_2026-11-03.md`. Statusy manifestów i numeracja etapów niezmienione.
+
 ## 2026-11-03 — OM Engine: durable OmniDev coordinator (IMPLEMENTED_CI_PENDING)
 
 - Przyrost 0.56: `src/om_engine.rs`, `tests/om_engine.rs`, `.github/workflows/om-engine.yml` i dokumentacja. Replay SQLite w transakcji, SHA-256 chain, tenant binding, timeout reconciliation i inertny kontrakt wymiany pamięci z przyszłym Digital-Life.

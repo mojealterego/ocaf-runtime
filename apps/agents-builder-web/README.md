@@ -22,7 +22,7 @@ project, with optimistic revision checks; export JSON to keep an external copy.
 - Interactive NoCode canvas, edge selection, palette drag/drop (or tap), typed
   Transform/Tool insertion, node removal and explicit tool grant/budget edits.
 - Versioned browser-local projects, save/reopen, history and non-destructive revert.
-- Static dry-run plan; **no execution**, network access, publication or signing.
+- Static dry-run plan; **no model/tool execution**, provider inference, publication or signing. User-triggered read-only public Hugging Face discovery is supported.
 - Bounded project/DSL sizes, rejected unsupported schema and arbitrary code.
 - Shared Rust fixture checked in tests/builder_web_contract.rs.
 

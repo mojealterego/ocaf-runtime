@@ -28,6 +28,9 @@
   systemowy Keychain/Keystore, broker tenant-scoped, polityki egress,
   audyt, rotacja i nieprzechowywanie sekretów w JS przez czas nieograniczony.
 - HF private/gated i licencje modeli pozostają poza nieautoryzowanym automatem.
-- Testy i CI wymagają powiązania z konkretnym SHA zanim status
-  zostanie podniesiony z IMPLEMENTED_CI_PENDING.
+- Kod klienta i testy są przypięte do SHA (poniżej), status `TESTED_LOCAL_PARTIAL`.
 - Macierz 10 produktów i status `production_approved=false` bez zmian.
+
+## Zweryfikowane wykonanie
+
+**CI potwierdzone 2026-11-03:** commit `eb400184b69dfc80d59aa4f525bcaa9e47ed2c6b`; [OCAF Builder Web #41578863024](https://github.com/mojealterego/ocaf-runtime/actions/runs/41578863024) zakończony `completed/success`: 20/20 testów Node JavaScript, Chrome GUI E2E (w tym locale/RTL, nietrwały klucz sesyjny, walidacja lokalnego GGUF, zapis profilu), 1/1 Rust fixture PASS. [Roadmap v11 #41578863062](https://github.com/mojealterego/ocaf-runtime/actions/runs/41578863062) zakończony `completed/success`. **Jedynie `TESTED_LOCAL_PARTIAL`; brak wykonania inferencji, sejfu API, realnego pobierania modelu w CI, natywnych buildów i produkcyjnego Cloud.**

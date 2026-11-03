@@ -20,13 +20,13 @@
 <main class="shell">
   <section class="intro"><div><p class="eyebrow">OCAF ATELIER SOVEREIGN / 0.50–0.52</p><h1 data-i18n="title">Projektuj agentów.</h1><p data-i18n="description">Jeden typowany projekt. Dwa edytory. Dwa środowiska.</p></div><div class="project-meta"><span id="project-title">demo</span><span id="revision-label">r1</span></div></section>
   <section class="toolbar" aria-label="Project management">
-    <label>Project ID <input id="project-id" value="demo" maxlength="64" autocomplete="off" spellcheck="false"></label>
-    <button id="new-project" type="button" class="secondary">New</button>
-    <button id="open-project" type="button" class="secondary">Open</button>
-    <label class="import-label">Import JSON<input id="import" type="file" accept=".json,application/json"></label>
-    <button id="export" type="button" class="secondary">Export JSON</button>
-    <label>History <select id="revision" aria-label="Saved revisions"></select></label>
-    <button id="restore" type="button" class="secondary">Restore</button>
+    <label><span data-i18n="project">Identyfikator projektu</span> <input id="project-id" value="demo" maxlength="64" autocomplete="off" spellcheck="false"></label>
+    <button id="new-project" type="button" class="secondary" data-i18n="new">Nowy</button>
+    <button id="open-project" type="button" class="secondary" data-i18n="open">Otwórz</button>
+    <label class="import-label"><span data-i18n="import">Importuj JSON</span><input id="import" type="file" accept=".json,application/json"></label>
+    <button id="export" type="button" class="secondary" data-i18n="export">Eksportuj JSON</button>
+    <label><span data-i18n="history">Historia</span> <select id="revision" aria-label="Saved revisions"></select></label>
+    <button id="restore" type="button" class="secondary" data-i18n="restore">Przywróć</button>
   </section>
   <section class="workspace-connection" aria-label="Środowisko pracy">
     <div class="mode-switch" role="group" aria-label="Lokalnie lub chmura">
@@ -38,11 +38,11 @@
       <div class="cloud-form">
         <label>Tenant <input id="cloud-tenant" maxlength="64" autocomplete="off" spellcheck="false" placeholder="Tenant z sesji OAuth"></label>
         <label>Token OAuth <input id="cloud-token" type="password" autocomplete="off" spellcheck="false" placeholder="Token dostępu (tylko pamięć)"></label>
-        <button id="cloud-connect" type="button" class="secondary">Połącz</button>
-        <button id="cloud-disconnect" type="button" class="secondary">Rozłącz</button>
-        <button id="cloud-open" type="button" class="secondary" disabled>Otwórz w chmurze</button>
-        <button id="cloud-new" type="button" class="secondary" disabled>Nowy w chmurze</button>
-        <button id="cloud-save" type="button" class="primary" disabled>Zapisz w chmurze</button>
+        <button id="cloud-connect" type="button" class="secondary" data-i18n="connect">Połącz</button>
+        <button id="cloud-disconnect" type="button" class="secondary" data-i18n="disconnect">Rozłącz</button>
+        <button id="cloud-open" type="button" class="secondary" disabled data-i18n="open_cloud">Otwórz z chmury</button>
+        <button id="cloud-new" type="button" class="secondary" disabled data-i18n="new_cloud">Nowy w chmurze</button>
+        <button id="cloud-save" type="button" class="primary" disabled data-i18n="save_cloud">Zapisz w chmurze</button>
       </div>
       <p id="cloud-status" class="cloud-status" role="status">Brak połączenia.</p>
     </div>
@@ -51,25 +51,25 @@
     <div class="workspace-header"><div class="mode-switch" role="group" aria-label="Editor mode"><button id="mode-nocode" type="button" aria-pressed="true" data-i18n="nocode">NoCode · Graf</button><button id="mode-code" type="button" aria-pressed="false" data-i18n="code">Code · DSL</button></div><button id="preview" type="button" class="primary" data-i18n="validate">Waliduj / Symuluj</button></div>
     <div id="nocode-view" class="editor-grid">
       <aside class="panel">
-        <h2>Node palette</h2><p class="muted">Tap to insert or drag onto the canvas. Select a connection to choose the insertion point.</p>
-        <label>New node ID <input id="node-id" placeholder="e.g. analyze" maxlength="64" spellcheck="false"></label>
-        <button id="add-transform" data-palette="transform" type="button" class="palette-item">＋ Transform <small>Typed data mapping</small></button>
-        <div class="subpanel"><label>Tool grant <input id="tool-name" placeholder="tool_search" maxlength="64" spellcheck="false"></label><label>Maximum tool cost <input id="tool-cost" type="number" min="1" max="1000000000000" step="1" value="10"></label><button id="add-tool" data-palette="tool" type="button" class="palette-item">＋ Tool <small>Permission required</small></button></div>
-        <div class="subpanel"><label>Project budget <input id="cost-budget" type="number" min="0" max="1000000000000" step="1"></label><button id="set-budget" type="button" class="secondary">Update budget</button></div>
-        <p class="muted">Declared grants</p><output id="grant-list">No tool grants</output>
+        <h2 data-i18n="palette">Paleta węzłów</h2><p class="muted" data-i18n="palette_help">Wstaw węzeł albo przeciągnij go na płótno.</p>
+        <label><span data-i18n="node_id">Identyfikator węzła</span> <input id="node-id" placeholder="e.g. analyze" maxlength="64" spellcheck="false"></label>
+        <button id="add-transform" data-palette="transform" type="button" class="palette-item"><span data-i18n="transform">Transformacja</span> <small>Typed data mapping</small></button>
+        <div class="subpanel"><label><span data-i18n="tool_grant">Uprawnienie narzędzia</span> <input id="tool-name" placeholder="tool_search" maxlength="64" spellcheck="false"></label><label><span data-i18n="tool_cost">Maksymalny koszt narzędzia</span> <input id="tool-cost" type="number" min="1" max="1000000000000" step="1" value="10"></label><button id="add-tool" data-palette="tool" type="button" class="palette-item"><span data-i18n="tool">Narzędzie</span> <small>Permission required</small></button></div>
+        <div class="subpanel"><label><span data-i18n="budget">Budżet projektu</span> <input id="cost-budget" type="number" min="0" max="1000000000000" step="1"></label><button id="set-budget" type="button" class="secondary" data-i18n="budget_update">Zmień budżet</button></div>
+        <p class="muted" data-i18n="grants">Zadeklarowane uprawnienia</p><output id="grant-list">No tool grants</output>
       </aside>
       <section class="panel canvas-panel" aria-label="NoCode graph editor">
-        <div class="panel-heading"><div><h2>Graph canvas</h2><p class="muted">Select a node or connection to edit.</p></div><span class="small-pill">DAG</span></div>
+        <div class="panel-heading"><div><h2 data-i18n="canvas">Graf przepływu</h2><p class="muted" data-i18n="canvas_help">Wybierz węzeł lub połączenie.</p></div><span class="small-pill">DAG</span></div>
         <div id="graph" class="graph-canvas" aria-label="Editable graph nodes"></div>
-        <h3>Typed connections</h3><div id="edges" class="edge-list" aria-label="Graph edges"></div>
-        <div class="node-actions"><button id="remove-node" type="button" class="danger" disabled>Remove selected node</button>
-          <div id="node-settings" hidden><h3>Selected tool</h3><label>Tool name <input id="tool-edit-name" maxlength="64" spellcheck="false"></label><label>Max cost <input id="tool-edit-cost" type="number" min="1" step="1"></label><button id="update-tool" type="button" class="secondary">Update tool</button></div>
+        <h3 data-i18n="edges">Typowane połączenia</h3><div id="edges" class="edge-list" aria-label="Graph edges"></div>
+        <div class="node-actions"><button id="remove-node" type="button" class="danger" disabled data-i18n="remove_node">Usuń wybrany węzeł</button>
+          <div id="node-settings" hidden><h3 data-i18n="selected_tool">Wybrane narzędzie</h3><label><span data-i18n="tool_name">Nazwa narzędzia</span> <input id="tool-edit-name" maxlength="64" spellcheck="false"></label><label>Max cost <input id="tool-edit-cost" type="number" min="1" step="1"></label><button id="update-tool" type="button" class="secondary" data-i18n="tool_update">Zmień narzędzie</button></div>
         </div>
       </section>
     </div>
-    <section id="code-view" class="panel code-panel" hidden><h2>Typed JSON Code DSL</h2><p class="muted">Only the supported schema is accepted. Arbitrary Rust and executable imports are rejected. Apply validates and saves a new revision.</p><label for="dsl" class="sr-only">Code DSL editor</label><textarea id="dsl" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="JSON Code DSL"></textarea><button id="apply-code" type="button" class="primary">Validate and apply Code</button></section>
+    <section id="code-view" class="panel code-panel" hidden><h2 data-i18n="code_title">Edytor JSON DSL</h2><p class="muted">Only the supported schema is accepted. Arbitrary Rust and executable imports are rejected. Apply validates and saves a new revision.</p><label for="dsl" class="sr-only">Code DSL editor</label><textarea id="dsl" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="JSON Code DSL"></textarea><button id="apply-code" type="button" class="primary" data-i18n="apply_code">Waliduj i zastosuj Code</button></section>
   </section>
-  <section class="bottom-grid"><div class="panel"><h2>Validation and preview</h2><pre id="preview-output" aria-live="polite">Select Validate / Dry run to inspect the inert compilation plan.</pre></div><div class="panel security"><h2>Execution boundary</h2><p>Lokalny edytor nie uwierzytelnia tenantów. Tryb Cloud korzysta wyłącznie z jawnych żądań do uwierzytelnionego gateway; bez podłączonego serwera nie działa. Nie ma wykonania agentów, podpisywania, wdrożenia ani publikacji.</p><p>Dane lokalne pozostają w pamięci przeglądarki. Dane chmurowe są zapisywane wyłącznie na żądanie z kontrolą rewizji CAS. Eksport JSON pozostaje niepodpisany.</p></div></section>
+  <section class="bottom-grid"><div class="panel"><h2 data-i18n="preview">Walidacja i podgląd</h2><pre id="preview-output" aria-live="polite">Select Validate / Dry run to inspect the inert compilation plan.</pre></div><div class="panel security"><h2 data-i18n="boundary">Granica wykonania</h2><p>Lokalny edytor nie uwierzytelnia tenantów. Tryb Cloud korzysta wyłącznie z jawnych żądań do uwierzytelnionego gateway; bez podłączonego serwera nie działa. Nie ma wykonania agentów, podpisywania, wdrożenia ani publikacji.</p><p>Dane lokalne pozostają w pamięci przeglądarki. Dane chmurowe są zapisywane wyłącznie na żądanie z kontrolą rewizji CAS. Eksport JSON pozostaje niepodpisany.</p></div></section>
   <section class="integrations" aria-label="Konfiguracja modeli i dostawców API">
     <div class="integration-heading">
       <div><p class="eyebrow">OCAF / MODEL REGISTRY</p>
