@@ -109,3 +109,5 @@ pub mod agentic_prompt_dsl;
 pub mod compound_reasoning;
 
 pub mod collaboration_store;
+
+pub mod om_engine;

@@ -1,5 +1,10 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-03 — OM Engine: durable OmniDev coordinator (IMPLEMENTED_CI_PENDING)
+
+- Przyrost 0.56: `src/om_engine.rs`, `tests/om_engine.rs`, `.github/workflows/om-engine.yml` i dokumentacja. Replay SQLite w transakcji, SHA-256 chain, tenant binding, timeout reconciliation i inertny kontrakt wymiany pamięci z przyszłym Digital-Life.
+- Brak nowego etapu i zmiany statusów; połączenie OCAF–Digital-Life, zewnętrzna autoryzacja, rozproszony HA i odbiór produkcyjny są otwarte. Wynik CI wymaga oddzielnej weryfikacji na SHA.
+
 ## 2026-11-03 — Etapy 0.51–0.52: jeden Code/NoCode Local/Cloud UI (TESTED_LOCAL_PARTIAL)
 
 - Zmiana architektury UX: jeden istniejący edytor Code/NoCode z przełącznikiem lokalnie/chmura, bez dziesięciu duplikatów UI. PWA działa lokalnie; Cloud wymaga zewnętrznego, uwierzytelnionego gateway HTTPS, którego nie wdrożono.

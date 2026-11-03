@@ -1,0 +1,27 @@
+name: OM Engine durable orchestration
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/om_engine.rs'
+      - 'src/omnidev_workflow.rs'
+      - 'src/lib.rs'
+      - 'tests/om_engine.rs'
+      - '.github/workflows/om-engine.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  om-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          components: rustfmt, clippy
+      - run: cargo test --locked --no-default-features --test om_engine
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --locked --no-default-features --all-targets -- -D warnings

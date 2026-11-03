@@ -4,6 +4,8 @@
 **Stan bramki artefaktów agentów (2026-10-30):** [CI #41095114134](https://github.com/mojealterego/ocaf-runtime/actions/runs/41095114134) — walidacja struktury **SUCCESS**; G01 zaimplementowany strukturalnie, G02–G33 nadal `PLANNED`, odbiór `--release` nadal odmawiany. [Szczegółowy audyt](docs/audits/AGENT_ARTIFACT_CONTRACT_GATE_2026-10-30.md).
 
 
+**OM Engine / 0.56 — trwały dziennik i kontrakt Digital-Life (2026-11-03, IMPLEMENTED_CI_PENDING):** `src/om_engine.rs`, `tests/om_engine.rs` i `docs/om-engine/ARCHITECTURE.md` rozwijają istniejący scheduler OmniDev o SQLite journal/replay i neutralny `MemoryEnvelope v1`. Bez wykonawcy narzędzi, autoryzowanego gateway, połączenia Digital-Life ani certyfikacji; status 0.56 i `production_approved=false` bez zmian.
+
 **Kontrakt inżynieryjny agentów repozytorium:** [AGENTS.md](AGENTS.md) — read-only kontrola governance i kontrakt Agent Foundry/Tool Foundry; nie zastępuje kodu, CI, autoryzacji ani odbioru.
 
 [![UWAGA CZYTAĆ — ZAKAZ SAMOWOLKI](https://img.shields.io/badge/UWAGA%20CZYTA%C4%86-ZAKAZ%20SAMOWOLKI-ff0000?style=for-the-badge&labelColor=8b0000)](ROADMAP.md)
