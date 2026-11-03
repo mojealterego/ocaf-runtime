@@ -101,6 +101,15 @@ class PackageBuilderTests(unittest.TestCase):
         for _, flags in opened:
             self.assertTrue(flags & os.O_NOFOLLOW)
 
+    def test_bundle_rejects_modified_tracked_content_even_when_zip_matches_worktree(self):
+        # A dirty checkout must not be mislabeled with the clean HEAD SHA.
+        paths = bundle.tracked_files(self.root)
+        sha = bundle.current_sha(self.root)
+        self.write("notes.txt", b"UNCOMMITTED-SECRET")
+        destination = Path(self.temp.name) / "dirty.zip"
+        with self.assertRaisesRegex(ValueError, "Git HEAD|committed source"):
+            bundle.write_bundle(self.root, destination, sha, paths, "unit-test")
+
     def test_bundle_is_refused_when_file_mutated_between_checkout_and_package(self):
         paths = bundle.tracked_files(self.root)
         self.write("notes.txt", b"UNCOMMITTED")
