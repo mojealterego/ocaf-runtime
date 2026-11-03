@@ -4,7 +4,7 @@
 **Stan bramki artefaktów agentów (2026-10-30):** [CI #41095114134](https://github.com/mojealterego/ocaf-runtime/actions/runs/41095114134) — walidacja struktury **SUCCESS**; G01 zaimplementowany strukturalnie, G02–G33 nadal `PLANNED`, odbiór `--release` nadal odmawiany. [Szczegółowy audyt](docs/audits/AGENT_ARTIFACT_CONTRACT_GATE_2026-10-30.md).
 
 
-**OM Engine / 0.56 — trwały dziennik i kontrakt Digital-Life (2026-11-03, IMPLEMENTED_CI_PENDING):** `src/om_engine.rs`, `tests/om_engine.rs` i `docs/om-engine/ARCHITECTURE.md` rozwijają istniejący scheduler OmniDev o SQLite journal/replay i neutralny `MemoryEnvelope v1`. Bez wykonawcy narzędzi, autoryzowanego gateway, połączenia Digital-Life ani certyfikacji; status 0.56 i `production_approved=false` bez zmian.
+**OM Engine / 0.56 — trwały dziennik i kontrakt Digital-Life (2026-11-03, TESTED_CI_PARTIAL):** `src/om_engine.rs`, `tests/om_engine.rs` i `docs/om-engine/ARCHITECTURE.md` rozwijają istniejący scheduler OmniDev o SQLite journal/replay i neutralny `MemoryEnvelope v1`. Bez wykonawcy narzędzi, autoryzowanego gateway, połączenia Digital-Life ani certyfikacji; [CI 5/5, fmt, Clippy PASS](https://github.com/mojealterego/ocaf-runtime/actions/runs/41578989418) na `c7e4aa5dc4158fd825dc949a35161cb1b5231b19`; status 0.56 i `production_approved=false` bez zmian.
 
 **Kontrakt inżynieryjny agentów repozytorium:** [AGENTS.md](AGENTS.md) — read-only kontrola governance i kontrakt Agent Foundry/Tool Foundry; nie zastępuje kodu, CI, autoryzacji ani odbioru.
 

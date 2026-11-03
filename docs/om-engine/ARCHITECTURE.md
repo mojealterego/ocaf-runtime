@@ -129,3 +129,12 @@ Tabela `om_workflows`: klucz `(tenant,workflow_id)`, kontrakt JSON, SHA-256. Tab
 ## 7. Kryteria wdrożenia
 
 `IMPLEMENTED` = kod i testy obecne; `TESTED_LOCAL` = uruchomione testy; `CI_VERIFIED` = zielony przebieg przypięty do SHA; `INTEGRATED` = prawdziwe połączenie OMAs/OMAt/Builder/Digital-Life; `DEPLOYED` = rzeczywiste środowisko i health checks; `PRODUCTION_APPROVED` = formalny odbiór. Stan jednego poziomu nie implikuje kolejnego. Nie należy deklarować produkcyjnej autonomii, ASI, formalnej weryfikacji, Firecracker/KVM ani pełnej zgodności Digital-Life na podstawie tego przyrostu.
+
+## 8. Zweryfikowany przyrost CI (2026-11-03)
+
+- Kod przypięty do SHA `c7e4aa5dc4158fd825dc949a35161cb1b5231b19`.
+- [OM Engine CI #41578989418](https://github.com/mojealterego/ocaf-runtime/actions/runs/41578989418): `completed/success`.
+- `cargo test --locked --no-default-features --test om_engine`: **5/5 PASS**.
+- `cargo fmt --all -- --check`: **PASS**.
+- `cargo clippy --locked --no-default-features --all-targets -- -D warnings`: **PASS**.
+- Status: `TESTED_CI_PARTIAL`, nie `INTEGRATED`, `DEPLOYED`, `PRODUCTION_APPROVED` ani `EXTERNALLY_AUDITED`.

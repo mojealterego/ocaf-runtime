@@ -9,10 +9,10 @@
 - Otwarta bramka: produkcyjny backend secrets vault i tenant-scoped model registry, rzeczywisty runner GGUF, integracja Code/NoCode z inferencją i pełne testy na urządzeniu Android. Żaden z 10 wariantów nie otrzymuje produktu PASS; `production_approved=false`.
 - Audyt: `docs/audits/STAGE051_BUILDER_MULTILANG_API_GGUF_2026-11-03.md`. Statusy manifestów i numeracja etapów niezmienione.
 
-## 2026-11-03 — OM Engine: durable OmniDev coordinator (IMPLEMENTED_CI_PENDING)
+## 2026-11-03 — OM Engine: durable OmniDev coordinator (TESTED_CI_PARTIAL)
 
 - Przyrost 0.56: `src/om_engine.rs`, `tests/om_engine.rs`, `.github/workflows/om-engine.yml` i dokumentacja. Replay SQLite w transakcji, SHA-256 chain, tenant binding, timeout reconciliation i inertny kontrakt wymiany pamięci z przyszłym Digital-Life.
-- Brak nowego etapu i zmiany statusów; połączenie OCAF–Digital-Life, zewnętrzna autoryzacja, rozproszony HA i odbiór produkcyjny są otwarte. Wynik CI wymaga oddzielnej weryfikacji na SHA.
+- Brak nowego etapu i zmiany statusów; połączenie OCAF–Digital-Life, zewnętrzna autoryzacja, rozproszony HA i odbiór produkcyjny są otwarte. CI [#41578989418](https://github.com/mojealterego/ocaf-runtime/actions/runs/41578989418) `completed/success` na `c7e4aa5dc4158fd825dc949a35161cb1b5231b19`: 5/5 testów SQLite, rustfmt i Clippy PASS; brak wdrożenia, integracji Digital-Life i niezależnego audytu.
 
 ## 2026-11-03 — Etapy 0.51–0.52: jeden Code/NoCode Local/Cloud UI (TESTED_LOCAL_PARTIAL)
 
