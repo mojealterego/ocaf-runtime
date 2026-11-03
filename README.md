@@ -51,7 +51,7 @@ aktualnymi dowodami: [`DELIVERY_STATUS_2026-10-21.md`](docs/DELIVERY_STATUS_2026
 
 **[OTWÓRZ PEŁNĄ KANONICZNĄ ROADMAPĘ — wszystkie etapy od początku do końca](ROADMAP.md)** · [Manifest identyfikatorów](docs/roadmap/canonical_v11_inventory.json)
 
-**Aktualny licznik manifestu v11:** 334 etapy główne + 64 techniczne + 10 produktów = **408 pozycji**. Ostatni główny etap: **333**. Następny nowy etap: **334**. Tabela poniżej obejmuje wszystkie 408 pozycji. **ZAKAZ SAMOWOLKI:** nie usuwać, nie skracać i nie renumerować.
+**Aktualny licznik manifestu v11:** 334 etapy główne + 64 techniczne + 10 produktów = **408 pozycji**. Ostatni główny etap: **334**. Następny nowy etap: **335**. Tabela poniżej obejmuje wszystkie 408 pozycji. **ZAKAZ SAMOWOLKI:** nie usuwać, nie skracać i nie renumerować.
 
 ## Kanoniczny rejestr 408 pozycji
 
