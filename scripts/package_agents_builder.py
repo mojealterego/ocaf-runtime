@@ -14,6 +14,7 @@ from pathlib import Path, PurePosixPath
 import stat
 import subprocess
 import sys
+import tempfile
 import zipfile
 
 FIXED_TIME = (1980, 1, 1, 0, 0, 0)
@@ -147,34 +148,46 @@ def write_bundle(repo: Path, dst: Path, sha: str, files: list[str], kind: str) -
         "files": [],
     }
     dst.parent.mkdir(parents=True, exist_ok=True)
-    total = 0
-    with zipfile.ZipFile(dst, "w", compression=zipfile.ZIP_DEFLATED,
-                         compresslevel=9, allowZip64=True) as archive:
-        for path in files:
-            content = archive_bytes(repo, path)
-            total += len(content)
-            if total > MAX_SOURCE_BYTES:
-                raise ValueError("source snapshot exceeds 30 MiB safety limit")
-            manifest["files"].append({
-                "path": path,
-                "size": len(content),
-                "sha256": hashlib.sha256(content).hexdigest(),
-            })
-            info = zipfile.ZipInfo(f"{label}/{path}", FIXED_TIME)
+    # Stage in the destination filesystem; verification must succeed before
+    # the final name becomes visible. A failed attempt preserves an old ZIP.
+    fd, staged_name = tempfile.mkstemp(prefix=f".{dst.name}.", suffix=".tmp",
+                                     dir=dst.parent)
+    staged = Path(staged_name)
+    try:
+        os.close(fd)
+        total = 0
+        with zipfile.ZipFile(dst, "w", compression=zipfile.ZIP_DEFLATED,
+                             compresslevel=9, allowZip64=True) as archive:
+            for path in files:
+                content = archive_bytes(repo, path)
+                total += len(content)
+                if total > MAX_SOURCE_BYTES:
+                    raise ValueError("source snapshot exceeds 30 MiB safety limit")
+                manifest["files"].append({
+                    "path": path,
+                    "size": len(content),
+                    "sha256": hashlib.sha256(content).hexdigest(),
+                })
+                info = zipfile.ZipInfo(f"{label}/{path}", FIXED_TIME)
+                info.compress_type = zipfile.ZIP_DEFLATED
+                info.external_attr = (0o100644 << 16)
+                archive.writestr(info, content, compress_type=zipfile.ZIP_DEFLATED,
+                                 compresslevel=9)
+            raw = (json.dumps(manifest, indent=2, ensure_ascii=False, sort_keys=True)
+                   + "\n").encode("utf-8")
+            info = zipfile.ZipInfo(f"{label}/RELEASE_MANIFEST.json", FIXED_TIME)
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = (0o100644 << 16)
-            archive.writestr(info, content, compress_type=zipfile.ZIP_DEFLATED,
+            archive.writestr(info, raw, compress_type=zipfile.ZIP_DEFLATED,
                              compresslevel=9)
-        raw = (json.dumps(manifest, indent=2, ensure_ascii=False, sort_keys=True)
-               + "\n").encode("utf-8")
-        info = zipfile.ZipInfo(f"{label}/RELEASE_MANIFEST.json", FIXED_TIME)
-        info.compress_type = zipfile.ZIP_DEFLATED
-        info.external_attr = (0o100644 << 16)
-        archive.writestr(info, raw, compress_type=zipfile.ZIP_DEFLATED,
-                         compresslevel=9)
-    verify_bundle(dst, sha, files, repo)
-    return {"name": dst.name, "bytes": dst.stat().st_size,
-            "sha256": hashlib.sha256(dst.read_bytes()).hexdigest(),
+        verify_bundle(staged, sha, files, repo)
+        with staged.open("rb") as source:
+            digest = hashlib.file_digest(source, "sha256").hexdigest()
+            size = os.fstat(source.fileno()).st_size
+        os.replace(staged, dst)
+    finally:
+        staged.unlink(missing_ok=True)
+    return {"name": dst.name, "bytes": size, "sha256": digest,
             "file_count": len(files)}
 
 
