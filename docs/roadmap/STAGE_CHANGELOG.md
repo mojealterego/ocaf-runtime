@@ -1,5 +1,11 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-03 — Agents Builder source ZIP atomic publication (IMPLEMENTED_CI_PENDING)
+
+- Regression tests added at commit `5d6e6010400b984b8d08e4932e1eb28621bb40a1`: a failed Git HEAD verification must preserve an existing published ZIP and must not expose a new invalid ZIP. RED execution on that SHA is not confirmed.
+- Implementation at `d55f9cb82e196c7d1f9a5c6f0853564972f2a3b3`: write a temporary ZIP in the destination directory, verify its Git-pinned contents before `os.replace`, remove temporary files on failure, and return the digest of the verified bytes. No weakening of Git blob, descriptor, or size checks.
+- Evidence status: CI and platform E2E on final SHA not yet confirmed. This is source-distribution hardening, not a native application release, Cloud deployment, or acceptance of stages 0.50–0.55. All 10 products remain open; `production_approved=false`.
+
 ## 2026-11-03 — Rust CI precheck failure diagnosis (FIX_COMMITTED_CI_PENDING)
 
 - CI #41618263155 on `22a6256c5d90ecde156f6d254769be3e11775495`: 746 Python tests, 2 failures, 4 skipped. Failure 1: safe `O_NOFOLLOW` denial emitted `secure source open rejected`, while the symlink regression test only allowed `symlink|non-regular|unsafe`. Assertion extended to recognize the existing fail-closed denial; no security guard relaxed.
