@@ -99,21 +99,40 @@ def archive_bytes(repo: Path, path: str) -> bytes:
         or PurePosixPath(path).as_posix() != path
     ):
         raise ValueError("unsafe bundle entry path")
-    # Check every ancestor with lstat: checking only the leaf permits a
-    # symlinked directory to redirect reads outside the checked-out tree.
-    current = repo
-    for part in parts[:-1]:
-        current = current / part
-        if not stat.S_ISDIR(current.lstat().st_mode):
-            raise ValueError(f"refusing symlink or non-directory ancestor: {path}")
-    file = current / parts[-1]
-    mode = file.lstat().st_mode
-    if not stat.S_ISREG(mode):
-        raise ValueError(f"refusing non-regular tracked file: {path}")
-    size = file.stat().st_size
-    if size > MAX_ENTRY_BYTES:
-        raise ValueError(f"oversized tracked file: {path}")
-    return file.read_bytes()
+    # Traverse by directory descriptors: path names cannot redirect the
+    # final read after an earlier lstat check (TOCTOU). Never follow symlinks.
+    if not hasattr(os, "O_NOFOLLOW") or not hasattr(os, "O_DIRECTORY"):
+        raise ValueError("secure descriptor-relative opening unavailable")
+    descriptors = []
+    try:
+        root_fd = os.open(repo, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        descriptors.append(root_fd)
+        for part in parts[:-1]:
+            directory_fd = os.open(
+                part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                dir_fd=descriptors[-1],
+            )
+            descriptors.append(directory_fd)
+        file_fd = os.open(
+            parts[-1], os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_NONBLOCK", 0),
+            dir_fd=descriptors[-1],
+        )
+        descriptors.append(file_fd)
+        metadata = os.fstat(file_fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            raise ValueError(f"refusing non-regular tracked file: {path}")
+        if metadata.st_size > MAX_ENTRY_BYTES:
+            raise ValueError(f"oversized tracked file: {path}")
+        with os.fdopen(os.dup(file_fd), "rb") as source:
+            content = source.read(MAX_ENTRY_BYTES + 1)
+        if len(content) > MAX_ENTRY_BYTES:
+            raise ValueError(f"oversized tracked file: {path}")
+        return content
+    except OSError as error:
+        raise ValueError(f"secure source open rejected: {path}") from error
+    finally:
+        for descriptor in reversed(descriptors):
+            os.close(descriptor)
 
 
 def write_bundle(repo: Path, dst: Path, sha: str, files: list[str], kind: str) -> dict:
