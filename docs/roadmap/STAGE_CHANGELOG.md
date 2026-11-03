@@ -1,5 +1,13 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-03 — Etapy 0.51–0.52: jeden Code/NoCode Local/Cloud UI (TESTED_LOCAL_PARTIAL)
+
+- Zmiana architektury UX: jeden istniejący edytor Code/NoCode z przełącznikiem lokalnie/chmura, bez dziesięciu duplikatów UI. PWA działa lokalnie; Cloud wymaga zewnętrznego, uwierzytelnionego gateway HTTPS, którego nie wdrożono.
+- Kontrakt: OAuth Bearer wyłącznie w pamięci, same-origin, GET/PUT CAS/POST preview; brak automatycznego kopiowania tenantów, publikacji i płatnych efektów. Backend GET dopuszcza brak Origin wyłącznie z Bearer i zaufanym subject; POST/PUT nadal wymagają Origin.
+- **Kod:** `9a51b438ccc482452eb78dbccf57c361df49df38`. **Testy:** [Web #41577269625](https://github.com/mojealterego/ocaf-runtime/actions/runs/41577269625) `completed/success` (15/15 JS, Chromium GUI E2E z testowym API, Rust fixture); [Cloud #41576965898](https://github.com/mojealterego/ocaf-runtime/actions/runs/41576965898) `completed/success` (9/9 Rust, rustfmt, Clippy); [Roadmap #41576965891](https://github.com/mojealterego/ocaf-runtime/actions/runs/41576965891) `completed/success`.
+- **Odbiór:** `TESTED_LOCAL_PARTIAL`. Żaden produkt z macierzy 10/10 nie otrzymuje PASS; `production_approved=false`. Brak gateway, live Cloud, natywnych APK/IPA/Tauri, podpisów i sandboxa.
+- Dowód: `docs/audits/STAGE052_UNIFIED_UI_LOCAL_CLOUD_INCREMENT_2026-11-03.md`. Nie zmieniono numeracji ani kanonicznych statusów produktów.
+
 ## 2026-11-03 — Stage 0.52 Cloud HTTP request boundary (7/7 CI PASS, nie Cloud deployment)
 
 **AKTUALIZACJA 2026-11-03 / 0.52 — CLOUD HTTP REQUEST BOUNDARY (TESTED_LOCAL_PARTIAL):** `src/builder_http.rs` dodaje ograniczony, transport-neutralny adapter żądań HTTP dla preview, zapisu, odczytu i historii projektów. Wymaga `AuthenticatedSubject` z zaufanego gateway TLS; nie wyprowadza tożsamości z nagłówków ani JSON. Odrzuca obce Origin, cookies, powielone Authorization, nieznane trasy, nadmiarowe body i próby cross-tenant; waliduje OAuth Bearer przed parsowaniem danych projektu, a zapisy używają CAS SQLite. **RED:** [CI #41551314517](https://github.com/mojealterego/ocaf-runtime/actions/runs/41551314517) (brak modułu, testy nie kompilowały się). **GREEN:** [CI #41552347121](https://github.com/mojealterego/ocaf-runtime/actions/runs/41552347121) na SHA `812d7411bd591ac2eb226d4b16949c5309bcffce`: 7/7 testów Builder Cloud, rustfmt i Clippy PASS. **Nie jest to listener HTTP, terminacja TLS, uwierzytelniony gateway, wdrożenie Cloud, sandbox ani produkt natywny.** Wszystkie 10 produktów pozostają `NOT_IMPLEMENTED`, `production_approved=false`.

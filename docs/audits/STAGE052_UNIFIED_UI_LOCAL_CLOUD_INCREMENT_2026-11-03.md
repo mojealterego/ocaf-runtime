@@ -18,7 +18,7 @@
 ## Kryteria i otwarte bramki
 
 - `IMPLEMENTED_PARTIAL`: kod klienta, UI i regresja HTTP.
-- `TESTED_LOCAL_PARTIAL`: wyłącznie po wykonaniu właściwych testów; wynik należy powiązać z commit SHA i logiem CI.
+- `TESTED_LOCAL_PARTIAL`: potwierdzone przypiętymi przebiegami GitHub Actions wymienionymi poniżej.
 - `INTEGRATED_CLOUD`: **NIE** — nie ma rzeczywistego listenera HTTPS, terminacji TLS, gateway zapewniającego `AuthenticatedSubject`, OAuth flow w UI ani deploymentu.
 - `PRODUCTION_APPROVED`: **NIE** — brak rzeczywistego sandbox, publikacji, audytu, podpisów i macierzy 10/10.
 - Android: responsywny PWA w przeglądarce, nie natywny APK. Binarny Meta Agent Architekt poza priorytetem.
@@ -33,3 +33,7 @@ cargo test --locked --no-default-features --test builder_cloud
 cargo fmt --all -- --check
 cargo clippy --locked --no-default-features --test builder_cloud -- -D warnings
 ```
+
+## Wyniki CI i identyfikowalne dowody
+
+**DOWÓD CI (2026-11-03):** web `9a51b438ccc482452eb78dbccf57c361df49df38` — [run #41577269625](https://github.com/mojealterego/ocaf-runtime/actions/runs/41577269625) `completed/success`: Node syntax, 15/15 JS tests, rzeczywisty Chromium GUI E2E (z testowym serwerem API, nie produkcyjną chmurą) oraz Rust web fixture PASS. Cloud Rust `86f396031fd903499ba9b56a3bc132fefaf2fbb0` — [run #41576965898](https://github.com/mojealterego/ocaf-runtime/actions/runs/41576965898) `completed/success`: rustfmt, 9/9 Builder Cloud tests i Clippy PASS. Roadmap validator [run #41576965891](https://github.com/mojealterego/ocaf-runtime/actions/runs/41576965891) `completed/success`. **Status tylko `TESTED_LOCAL_PARTIAL`, bez `INTEGRATED_CLOUD`, `DEPLOYED` ani `PRODUCTION_APPROVED`.**
