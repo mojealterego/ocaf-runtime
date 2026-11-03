@@ -138,3 +138,10 @@ Tabela `om_workflows`: klucz `(tenant,workflow_id)`, kontrakt JSON, SHA-256. Tab
 - `cargo fmt --all -- --check`: **PASS**.
 - `cargo clippy --locked --no-default-features --all-targets -- -D warnings`: **PASS**.
 - Status: `TESTED_CI_PARTIAL`, nie `INTEGRATED`, `DEPLOYED`, `PRODUCTION_APPROVED` ani `EXTERNALLY_AUDITED`.
+
+
+## Checkpoint zewnętrzny i wykrywanie rollbacku (przyrost 2026-11-03)
+
+`OmEngine::audit_head(tenant, workflow_id)` zwraca teraz serializowalny `AuditHead` zawierający identyfikator tenanta, workflow i oba łańcuchy SHA-256 (journal i scheduler). Zaufany operator może zapisać ten punkt kontrolny w niezależnej domenie zaufania, np. podpisanym rejestrze dowodowym, i porównać go później z lokalnym stanem przez `verify_audit_anchor(...)`. Porównanie jest dokładne: wykrywa zarówno zmianę, jak i **ucięcie końcowych zdarzeń**, nawet jeśli pozostały prefiks łańcucha jest poprawny.
+
+Kontrakt **nie jest podpisem kryptograficznym ani automatycznym atestowaniem**. OCAF nie przechowuje tu zaufanego klucza, nie dostarcza zewnętrznego storage i nie wymusza atestacji przy `claim`/`complete`. Samo `verify_audit_anchor` jest tylko odczytem — między weryfikacją a nowym zapisem możliwa jest zmiana stanu (**TOCTOU**). W przyszłym integratorze Digital-Life wymagane będzie uwierzytelnienie tożsamości peera, wersjonowany kontrakt i transakcyjna kontrola wymaganego high-water mark podczas mutacji. Nie wolno przyjmować pola `AuditHead` dostarczonego przez model jako zaufanego dowodu.

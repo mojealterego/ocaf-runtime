@@ -44,8 +44,11 @@ pub enum OmError {
     Json(#[from] serde_json::Error),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct AuditHead {
+    pub tenant_id: String,
+    pub workflow_id: String,
     pub events: u64,
     pub event_sha256: String,
     pub scheduler_events: u64,
@@ -431,6 +434,8 @@ impl OmEngine {
         let (wf, events, event_sha256) = load(&tx, tenant, workflow_id)?;
         let (scheduler_events, scheduler_sha256) = wf.audit_head(tenant)?;
         let result = AuditHead {
+            tenant_id: tenant.to_owned(),
+            workflow_id: workflow_id.to_owned(),
             events,
             event_sha256,
             scheduler_events,
@@ -438,6 +443,24 @@ impl OmEngine {
         };
         tx.commit()?;
         Ok(result)
+    }
+
+    /// Compare a journal checkpoint against an independently pinned high-water mark.
+    ///
+    /// The pin MUST be retained outside the SQLite trust domain. This read-only
+    /// verification is not an authorization gate for subsequent mutations: the
+    /// caller must prevent TOCTOU and authenticate the external pin separately.
+    pub fn verify_audit_anchor(
+        &self,
+        tenant: &str,
+        workflow_id: &str,
+        pinned: &AuditHead,
+    ) -> Result<(), OmError> {
+        let current = self.audit_head(tenant, workflow_id)?;
+        if current != *pinned {
+            return Err(OmError::Integrity);
+        }
+        Ok(())
     }
 
     /// An inert, typed JSON interchange envelope for future Digital-Life
