@@ -1,5 +1,13 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-03 — Builder source bundle pinned Git blob verification (IMPLEMENTED_CI_PENDING)
+
+- Regression test: `699cb02e38eb3da951321a6251e8d12bafb0cec6` adds a negative case: modified tracked worktree content must not be packaged as if it belonged to the clean Git HEAD. The RED test was committed, but execution on that commit is not confirmed.
+- Implementation: `0d8df087774135fc1dc22d3434051b6810175f5c` extends `verify_bundle()` to compare each archived payload against the immutable `git show <sha>:<path>` blob as well as the securely opened worktree file. The prior check compared only ZIP and mutable worktree bytes.
+- Security scope: prevents a consistent dirty ZIP/worktree pair from being accepted as a clean SHA-pinned source snapshot. Does not prove an atomic snapshot under concurrent mutation; the post-write verification may reject after creating a partial artifact. No new production acceptance or Builder product status.
+- Evidence gate: GitHub Actions test execution and artifact verification for the final SHA remain unconfirmed; local git clone was blocked by DNS resolution. Status `IMPLEMENTED_CI_PENDING`.
+
+
 ## 2026-11-03 — Builder source bundler descriptor-relative file reads (IMPLEMENTED_CI_PENDING)
 
 - RED test: commit `414935d7131b35e56ab638c46f2d03d6d9fca007` adds a regression assertion that every path component is opened with `O_NOFOLLOW`; the preceding implementation used `Path.lstat()` followed by `Path.read_bytes()` and could not meet this assertion. RED execution has not been verified.
