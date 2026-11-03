@@ -69,10 +69,7 @@ fn valid_project_id(value: &str) -> bool {
             .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b'.'))
 }
 
-fn unique_header<'a>(
-    headers: &'a [(&str, &'a str)],
-    name: &str,
-) -> Result<Option<&'a str>, ()> {
+fn unique_header<'a>(headers: &'a [(&str, &'a str)], name: &str) -> Result<Option<&'a str>, ()> {
     let mut found = None;
     for (key, value) in headers {
         if key.eq_ignore_ascii_case(name) {
@@ -136,9 +133,7 @@ impl<'a> BuilderHttpBoundary<'a> {
         if request.headers.len() > MAX_HEADERS
             || request.headers.iter().any(|(name, value)| {
                 name.is_empty()
-                    || !name
-                        .bytes()
-                        .all(|b| b.is_ascii_alphanumeric() || b == b'-')
+                    || !name.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-')
                     || value.len() > MAX_HEADER_VALUE_BYTES
                     || value.bytes().any(|b| !(32..=126).contains(&b))
             })
