@@ -278,17 +278,14 @@ impl OmEngine {
     /// Only a separately trusted Verifier can reconcile an expired lease.
     /// UNKNOWN outcomes are terminal and never automatically retried.
     pub fn reconcile(&self, tenant: &str, workflow_id: &str, role: Role, step: &str,
-        epoch: u64, resolution: TimeoutResolution, evidence_sha256: &str,
-        now_unix: u64) -> Result<(), OmError> {
+        evidence: TimeoutReconciliation<'_>) -> Result<(), OmError> {
         if role != Role::Verifier { return Err(OmError::Denied); }
         self.change(tenant, workflow_id, |wf| {
-            wf.reconcile_timeout(tenant, role, step, TimeoutReconciliation {
-                epoch, resolution, evidence_sha256, now_unix,
-            })?;
+            wf.reconcile_timeout(tenant, role, step, evidence)?;
             Ok(((), Some(EngineEvent::Reconcile {
-                step: step.to_owned(), epoch,
-                no_effect_confirmed: resolution == TimeoutResolution::NoEffectConfirmed,
-                evidence_sha256: evidence_sha256.to_owned(), now_unix,
+                step: step.to_owned(), epoch: evidence.epoch,
+                no_effect_confirmed: evidence.resolution == TimeoutResolution::NoEffectConfirmed,
+                evidence_sha256: evidence.evidence_sha256.to_owned(), now_unix: evidence.now_unix,
             })))
         })
     }

@@ -1,7 +1,7 @@
 use ocaf_runtime::om_engine::{MemoryEnvelope, OmEngine, OmError};
 use ocaf_runtime::omnidev_workflow::{
     Completion, Outcome, Receipt, Role, StepContract, StepStatus,
-    TimeoutResolution, WorkflowContract,
+    TimeoutReconciliation, TimeoutResolution, WorkflowContract,
 };
 use serde_json::json;
 use tempfile::tempdir;
@@ -81,9 +81,11 @@ fn expired_effect_is_uncertain_until_explicit_verifier_reconciliation() {
     assert!(matches!(engine.claim("tenant_a", "research_001", Role::Planner,
         "plan", 2, "p2", 21), Err(OmError::Workflow(_))));
     assert!(matches!(engine.reconcile("tenant_a", "research_001", Role::Coder,
-        "plan", 1, TimeoutResolution::NoEffectConfirmed, &"c".repeat(64), 21), Err(OmError::Denied)));
+        "plan", TimeoutReconciliation { epoch: 1, resolution: TimeoutResolution::NoEffectConfirmed,
+            evidence_sha256: &"c".repeat(64), now_unix: 21 }), Err(OmError::Denied)));
     engine.reconcile("tenant_a", "research_001", Role::Verifier,
-        "plan", 1, TimeoutResolution::UnknownOutcome, &"c".repeat(64), 21).unwrap();
+        "plan", TimeoutReconciliation { epoch: 1, resolution: TimeoutResolution::UnknownOutcome,
+            evidence_sha256: &"c".repeat(64), now_unix: 21 }).unwrap();
     assert!(matches!(engine.status("tenant_a", "research_001", "plan").unwrap(), StepStatus::Halted));
     assert!(matches!(engine.claim("tenant_a", "research_001", Role::Planner,
         "plan", 2, "p2", 22), Err(OmError::Workflow(_))));
