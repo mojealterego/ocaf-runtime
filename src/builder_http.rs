@@ -4,8 +4,8 @@
 //! This module does not trust headers for identity and does not open a socket,
 //! terminate TLS, set cookies, or grant deployment permissions. The gateway
 //! must enforce request framing, HTTP parser limits, TLS and connection limits.
-use crate::builder_cloud::{BuilderCloudError, BuilderCloudService};
-use crate::builder_core::{from_dsl, BuilderProject};
+use crate::builder_cloud::{BuilderCloudError, BuilderCloudService, READ_SCOPE, WRITE_SCOPE};
+use crate::builder_core::{from_dsl, BuilderError, BuilderProject};
 use crate::builder_store::{BuilderHead, BuilderStoreError, SqliteBuilderStore};
 use crate::stage044_oauth::{AuthenticatedSubject, OAuthService};
 use serde::Deserialize;
@@ -182,8 +182,12 @@ impl<'a> BuilderHttpBoundary<'a> {
                 Ok(source) => source,
                 Err(_) => return reject(400),
             };
+            if let Err(error) = self.service.authorize(token, trusted_subject, READ_SCOPE) {
+                return reject(error_status(&error));
+            }
             let project = match from_dsl(source, &trusted_subject.tenant) {
                 Ok(project) => project,
+                Err(BuilderError::Denied) => return reject(403),
                 Err(_) => return reject(422),
             };
             return match self.service.preview(token, trusted_subject, &project) {
@@ -246,6 +250,9 @@ impl<'a> BuilderHttpBoundary<'a> {
                 }
             }
             "PUT" => {
+                if let Err(error) = self.service.authorize(token, trusted_subject, WRITE_SCOPE) {
+                    return reject(error_status(&error));
+                }
                 if !Self::json_content_type(request.headers) {
                     return reject(415);
                 }

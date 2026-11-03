@@ -11,8 +11,8 @@ use crate::stage044_oauth::{AuthenticatedSubject, OAuthError, OAuthService};
 use std::collections::BTreeSet;
 use thiserror::Error;
 
-const READ_SCOPE: &str = "builder:read";
-const WRITE_SCOPE: &str = "builder:write";
+pub(crate) const READ_SCOPE: &str = "builder:read";
+pub(crate) const WRITE_SCOPE: &str = "builder:write";
 
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum BuilderCloudError {
@@ -58,7 +58,7 @@ impl<'a> BuilderCloudService<'a> {
         })
     }
 
-    fn authorize(
+    pub(crate) fn authorize(
         &self,
         token: &str,
         trusted_subject: &AuthenticatedSubject,
