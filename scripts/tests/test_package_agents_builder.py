@@ -110,6 +110,29 @@ class PackageBuilderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Git HEAD|committed source"):
             bundle.write_bundle(self.root, destination, sha, paths, "unit-test")
 
+    def test_failed_verification_preserves_previous_artifact_and_cleans_temporary_file(self):
+        # A dirty source must never replace a previously published valid ZIP.
+        paths = bundle.tracked_files(self.root)
+        sha = bundle.current_sha(self.root)
+        destination = Path(self.temp.name) / "published.zip"
+        original = bundle.write_bundle(self.root, destination, sha, paths, "unit-test")
+        original_bytes = destination.read_bytes()
+        self.write("notes.txt", b"UNCOMMITTED-SECRET")
+        with self.assertRaisesRegex(ValueError, "Git HEAD|committed source"):
+            bundle.write_bundle(self.root, destination, sha, paths, "unit-test")
+        self.assertEqual(destination.read_bytes(), original_bytes)
+        self.assertEqual(hashlib.sha256(destination.read_bytes()).hexdigest(), original["sha256"])
+        self.assertEqual(sorted(p.name for p in destination.parent.iterdir() if p.name.startswith(".published.zip.")), [])
+
+    def test_failed_verification_does_not_publish_new_archive(self):
+        paths = bundle.tracked_files(self.root)
+        sha = bundle.current_sha(self.root)
+        destination = Path(self.temp.name) / "new.zip"
+        self.write("notes.txt", b"UNCOMMITTED-SECRET")
+        with self.assertRaisesRegex(ValueError, "Git HEAD|committed source"):
+            bundle.write_bundle(self.root, destination, sha, paths, "unit-test")
+        self.assertFalse(destination.exists())
+
     def test_bundle_is_refused_when_file_mutated_between_checkout_and_package(self):
         paths = bundle.tracked_files(self.root)
         self.write("notes.txt", b"UNCOMMITTED")
