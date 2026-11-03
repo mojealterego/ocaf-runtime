@@ -156,7 +156,7 @@ def write_bundle(repo: Path, dst: Path, sha: str, files: list[str], kind: str) -
     try:
         os.close(fd)
         total = 0
-        with zipfile.ZipFile(dst, "w", compression=zipfile.ZIP_DEFLATED,
+        with zipfile.ZipFile(staged, "w", compression=zipfile.ZIP_DEFLATED,
                              compresslevel=9, allowZip64=True) as archive:
             for path in files:
                 content = archive_bytes(repo, path)
