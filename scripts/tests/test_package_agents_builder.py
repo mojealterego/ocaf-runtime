@@ -73,6 +73,16 @@ class PackageBuilderTests(unittest.TestCase):
         self.assertEqual(bundle.tracked_files(self.root),
                          ["apps/agents-builder-web/index.html", "notes.txt", "src/builder_core.rs"])
 
+    def test_rejects_symlinked_parent_directory_even_if_leaf_is_regular(self):
+        # An attacker can replace a tracked parent directory with a symlink
+        # after checkout. lstat() of the leaf alone does not prevent escape.
+        outside = Path(self.temp.name) / "outside"
+        outside.mkdir()
+        (outside / "payload.txt").write_bytes(b"PRIVATE-OUTSIDE-REPOSITORY")
+        (self.root / "linked-dir").symlink_to(outside, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, "symlink|non-regular|unsafe"):
+            bundle.archive_bytes(self.root, "linked-dir/payload.txt")
+
     def test_bundle_is_refused_when_file_mutated_between_checkout_and_package(self):
         paths = bundle.tracked_files(self.root)
         self.write("notes.txt", b"UNCOMMITTED")
