@@ -391,3 +391,31 @@ fn http_boundary_rejects_oversize_unknown_paths_invalid_methods_and_payloads() {
     assert_eq!(result.status, 400);
     assert!(store.load("local", "hello", None).unwrap().is_none());
 }
+
+#[test]
+fn http_boundary_rejects_duplicate_content_type_as_malformed_request() {
+    use ocaf_runtime::builder_http::{BuilderHttpBoundary, BuilderHttpRequest};
+    let (_dir, oauth, store) = fixture();
+    let gateway = BuilderHttpBoundary::new(&oauth, &store, RESOURCE, HTTP_ORIGIN).unwrap();
+    let credential = format!(
+        "Bearer {}",
+        token(&oauth, "local", &["builder:read", "builder:write"])
+    );
+    let payload = serde_json::to_vec(&project()).unwrap();
+    let response = gateway.handle(
+        BuilderHttpRequest {
+            method: "POST",
+            path: "/v1/projects/preview",
+            headers: &[
+                ("Origin", HTTP_ORIGIN),
+                ("Authorization", &credential),
+                ("Content-Type", "application/json"),
+                ("content-type", "application/json"),
+            ],
+            body: &payload,
+        },
+        &subject("local"),
+    );
+    assert_eq!(response.status, 400);
+    assert!(store.load("local", "hello", None).unwrap().is_none());
+}
