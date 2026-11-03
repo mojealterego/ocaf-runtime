@@ -191,7 +191,7 @@ fn revoked_tokens_and_wrong_audience_are_rejected() {
 
 const HTTP_ORIGIN: &str = "https://editor.ocaf.example";
 
-fn http_headers<'a>(credential: &'a str) -> [(&'a str, &'a str); 3] {
+fn http_headers(credential: &str) -> [(&str, &str); 3] {
     [
         ("Origin", HTTP_ORIGIN),
         ("Authorization", credential),
