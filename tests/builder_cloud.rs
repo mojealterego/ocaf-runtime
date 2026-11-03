@@ -498,3 +498,40 @@ fn http_boundary_browser_get_without_origin_requires_bearer_and_trusted_subject(
     );
     assert_eq!(rejected_write.status, 403);
 }
+
+#[test]
+fn http_boundary_rejects_ambiguous_http_framing_before_project_write() {
+    use ocaf_runtime::builder_http::{BuilderHttpBoundary, BuilderHttpRequest};
+    let (_dir, oauth, store) = fixture();
+    let gateway = BuilderHttpBoundary::new(&oauth, &store, RESOURCE, HTTP_ORIGIN).unwrap();
+    let credential = format!(
+        "Bearer {}",
+        token(&oauth, "local", &["builder:read", "builder:write"])
+    );
+    let auth = subject("local");
+    let body = serde_json::to_vec(&serde_json::json!({
+        "project": project(), "expected": null
+    }))
+    .unwrap();
+    for extra in [
+        vec![("Transfer-Encoding", "chunked")],
+        vec![("Content-Length", "0"), ("content-length", "0")],
+        vec![("Content-Length", "invalid")],
+        vec![("Content-Length", "1")],
+        vec![("Content-Length", "0"), ("Transfer-Encoding", "chunked")],
+    ] {
+        let mut headers = http_headers(&credential).to_vec();
+        headers.extend(extra);
+        let response = gateway.handle(
+            BuilderHttpRequest {
+                method: "PUT",
+                path: "/v1/projects/hello",
+                headers: &headers,
+                body: &body,
+            },
+            &auth,
+        );
+        assert_eq!(response.status, 400);
+        assert!(store.load("local", "hello", None).unwrap().is_none());
+    }
+}
