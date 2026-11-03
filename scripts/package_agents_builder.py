@@ -181,6 +181,11 @@ def write_bundle(repo: Path, dst: Path, sha: str, files: list[str], kind: str) -
             archive.writestr(info, raw, compress_type=zipfile.ZIP_DEFLATED,
                              compresslevel=9)
         verify_bundle(staged, sha, files, repo)
+        # Reject a concurrent Git commit after verification but before publish.
+        # The source manifest must describe the repository's current HEAD.
+        if current_sha(repo) != sha:
+            raise ValueError("HEAD changed during source bundle packaging")
+        require_clean_tree(repo)
         with staged.open("rb") as source:
             digest = hashlib.file_digest(source, "sha256").hexdigest()
             size = os.fstat(source.fileno()).st_size
