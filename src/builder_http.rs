@@ -140,6 +140,29 @@ impl<'a> BuilderHttpBoundary<'a> {
         {
             return reject(400);
         }
+        // The gateway owns HTTP framing. Reject transfer codings here rather than
+        // accepting a potentially inconsistent representation of the body.
+        if request
+            .headers
+            .iter()
+            .any(|(name, _)| name.eq_ignore_ascii_case("Transfer-Encoding"))
+        {
+            return reject(400);
+        }
+        // Content-Length is a singleton. Never accept conflicting, non-decimal,
+        // or inaccurate lengths from a downstream HTTP parser or proxy.
+        match unique_header(request.headers, "Content-Length") {
+            Err(()) => return reject(400),
+            Ok(Some(value)) => {
+                if value.is_empty()
+                    || !value.bytes().all(|byte| byte.is_ascii_digit())
+                    || value.parse::<usize>().ok() != Some(request.body.len())
+                {
+                    return reject(400);
+                }
+            }
+            Ok(None) => {}
+        }
         // Duplicate singleton headers are malformed, even when their values agree.
         // Check before routing so malformed Content-Type cannot be mistaken for 415.
         for singleton in ["Origin", "Authorization", "Content-Type"] {
