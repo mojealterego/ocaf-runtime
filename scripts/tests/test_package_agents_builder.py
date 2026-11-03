@@ -83,6 +83,24 @@ class PackageBuilderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "symlink|non-regular|unsafe"):
             bundle.archive_bytes(self.root, "linked-dir/payload.txt")
 
+    def test_archive_opens_every_component_without_following_symlinks(self):
+        import os
+        from unittest.mock import patch
+
+        real_open = os.open
+        opened = []
+
+        def checked_open(path, flags, *args, **kwargs):
+            opened.append((path, flags))
+            return real_open(path, flags, *args, **kwargs)
+
+        with patch.object(bundle.os, "open", side_effect=checked_open):
+            self.assertEqual(bundle.archive_bytes(self.root, "src/builder_core.rs"),
+                             b"// compiler")
+        self.assertGreaterEqual(len(opened), 3)
+        for _, flags in opened:
+            self.assertTrue(flags & os.O_NOFOLLOW)
+
     def test_bundle_is_refused_when_file_mutated_between_checkout_and_package(self):
         paths = bundle.tracked_files(self.root)
         self.write("notes.txt", b"UNCOMMITTED")
