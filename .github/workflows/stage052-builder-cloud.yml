@@ -4,6 +4,7 @@ on:
     branches: ["main"]
     paths:
       - "src/builder_cloud.rs"
+      - "src/builder_http.rs"
       - "src/builder_store.rs"
       - "src/builder_core.rs"
       - "src/stage044_oauth.rs"
