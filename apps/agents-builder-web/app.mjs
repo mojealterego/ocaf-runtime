@@ -111,7 +111,7 @@ function renderGraph() {
   edges.replaceChildren();
   if (!project) return;
   let order;
-  try { order = validateProject(project, TENANT).order; }
+  try { order = validateProject(project, currentTenant()).order; }
   catch (error) { fail(error); return; }
   for (const [index, name] of order.entries()) {
     graph.append(nodeCard(project.nodes.find(n => n.id === name), index));

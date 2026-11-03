@@ -164,11 +164,13 @@ try {
     const state = await evaluate('JSON.stringify({message:document.getElementById("message").textContent,cloud:document.getElementById("cloud-status").textContent,newDisabled:document.getElementById("cloud-new").disabled,project:document.getElementById("project-title").textContent})');
     throw new Error(state);
   }, 'new cloud draft');
+  assert.equal(await evaluate('document.querySelectorAll(".node-card").length'), 2, 'cloud graph renders under authenticated tenant');
   await evaluate('document.getElementById("cloud-save").click()');
   await until(async () => await evaluate('document.getElementById("cloud-save").disabled') === true, 'first CAS cloud save');
   assert.equal(cloudProjects.get('cloud-demo').head.revision,1);
   await evaluate('document.getElementById("mode-nocode").click();document.getElementById("node-id").value="remote-step";document.getElementById("add-transform").click()');
   await until(async () => await evaluate('document.getElementById("cloud-save").disabled') === false, 'cloud edit pending');
+  assert.equal(await evaluate('document.querySelectorAll(".node-card").length'), 3, 'cloud graph reflects NoCode edit');
   await evaluate('document.getElementById("cloud-save").click()');
   await until(async () => await evaluate('document.getElementById("cloud-save").disabled') === true, 'second CAS cloud save');
   assert.equal(cloudProjects.get('cloud-demo').head.revision,2);
