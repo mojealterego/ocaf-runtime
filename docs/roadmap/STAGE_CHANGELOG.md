@@ -1,5 +1,12 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-03 — Builder source bundler descriptor-relative file reads (IMPLEMENTED_CI_PENDING)
+
+- RED test: commit `414935d7131b35e56ab638c46f2d03d6d9fca007` adds a regression assertion that every path component is opened with `O_NOFOLLOW`; the preceding implementation used `Path.lstat()` followed by `Path.read_bytes()` and could not meet this assertion. RED execution has not been verified.
+- Implementation: commit `32bf8f519f7d4c07c47e50cdefc8cf21adc27fcf` changes `scripts/package_agents_builder.py::archive_bytes` to descriptor-relative directory traversal with `O_DIRECTORY | O_NOFOLLOW`, file `O_NOFOLLOW`, `fstat`, bounded reads, and descriptor cleanup. The path never reopens via a checked string after validation.
+- Scope: source packaging hardening only. Full Python regression suite, CI evidence and concurrent attacker race test remain unverified; no product acceptance, no roadmap stage closure, no release certification. Existing 10 Builder product statuses and `production_approved=false` are unchanged.
+
+
 ## 2026-11-03 — dystrybucja źródeł Agents Builder (IMPLEMENTED_CI_PENDING)
 
 - Dodano deterministyczne budowanie dwóch ZIP: kompletnego pakietu Agents Builder i pełnego snapshotu OCAF z aktualnego commita Git.
