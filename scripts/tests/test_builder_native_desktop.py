@@ -1,5 +1,9 @@
 """Source contracts for actual Windows/macOS Tauri v2 entrypoint; no build claims."""
 import json
+import subprocess
+import sys
+import tempfile
+import struct
 from pathlib import Path
 import unittest
 
@@ -16,6 +20,16 @@ class DesktopNativeSourceTests(unittest.TestCase):
         self.assertTrue((WEB / "app.mjs").is_file())
         self.assertTrue((WEB / "index.html").is_file())
         self.assertEqual(config["app"]["windows"][0]["url"], "index.html")
+
+    def test_generated_windows_icon_is_valid_png_backed_ico(self):
+        subprocess.run([sys.executable, str(ROOT / "scripts/generate_builder_icons.py")],
+                       check=True)
+        icon_dir = DESKTOP / "src-tauri" / "icons"
+        png = (icon_dir / "icon.png").read_bytes()
+        ico = (icon_dir / "icon.ico").read_bytes()
+        self.assertTrue(png.startswith(bytes.fromhex("89504e470d0a1a0a")))
+        self.assertEqual(ico[:6], struct.pack("<HHH", 0, 1, 1))
+        self.assertEqual(ico[22:], png)
 
     def test_native_rust_entrypoint_and_restricted_capabilities(self):
         cargo = (DESKTOP / "src-tauri" / "Cargo.toml").read_text()
