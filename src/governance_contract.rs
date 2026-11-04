@@ -421,8 +421,8 @@ mod tests {
     fn procurement_risk_cap_cannot_be_overridden_by_signed_approval() {
         let c = contract();
         let authority = ApprovalAuthority::new([9; 32]).unwrap();
-        let mut r = request();
         for tier in [RiskTier::High, RiskTier::Critical] {
+            let mut r = request();
             r.risk = tier;
             let approval = signed_approval(&r, ApproverRole::ProcurementLead);
             r.approval = Some(&approval);
