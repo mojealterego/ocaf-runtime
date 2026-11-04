@@ -11,6 +11,7 @@ html = (ROOT / "index.html").read_text(encoding="utf-8")
 html = html.replace('<link rel="stylesheet" href="style.css">', "<style>" + (ROOT / "style.css").read_text(encoding="utf-8") + "</style>")
 html = html.replace('<script src="canonical-graph.js"></script>', "<script>" + (ROOT / "canonical-graph.js").read_text(encoding="utf-8") + "</script>")
 html = html.replace('<script src="app.js"></script>', "<script>" + (ROOT / "app.js").read_text(encoding="utf-8") + "</script>")
+html = html.replace('<script src="canonical-ui.js"></script>', "<script>" + (ROOT / "canonical-ui.js").read_text(encoding="utf-8") + "</script>")
 assert "<script>" in html and "<style>" in html
 
 with sync_playwright() as playwright:
