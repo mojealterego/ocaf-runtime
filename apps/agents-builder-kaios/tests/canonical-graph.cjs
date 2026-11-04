@@ -29,4 +29,21 @@ p.nodes.splice(1,0,{id:'step',kind:'transform',inputs:[{name:'in',kind:'text'}],
 p.edges=[{from_node:'in',from_port:'out',to_node:'step',to_port:'in'},
          {from_node:'step',from_port:'out',to_node:'out',to_port:'in'}];
 assert.deepEqual(compile(p,'tenant').ordered_nodes,['in','step','out']);
-console.log('PASS canonical KaiOS graph validation: 8 assertions');
+
+// Additional negative contract cases for canonical graph safety.
+p=project(); p.revision=0;
+assert.throws(() => compile(p,'tenant'), /Invalid project/);
+p=project(); p.max_cost_minor=1000000000001;
+assert.throws(() => compile(p,'tenant'), /Invalid budget/);
+p=project(); p.nodes[0].outputs[0].kind='bytes'; p.nodes[1].inputs[0].kind='bytes';
+assert.deepEqual(compile(p,'tenant').ordered_nodes,['in','out']);
+p=project(); p.nodes[0].outputs[0].kind='json'; p.nodes[1].inputs[0].kind='json';
+assert.deepEqual(compile(p,'tenant').ordered_nodes,['in','out']);
+p=project(); p.edges.push({...p.edges[0]});
+assert.throws(() => compile(p,'tenant'), /Duplicate edge/);
+p=project(); p.nodes.push({id:'orphan',kind:'transform',inputs:[{name:'in',kind:'text'}],outputs:[{name:'out',kind:'text'}],tool_name:null,max_cost_minor:0});
+assert.throws(() => compile(p,'tenant'), /Unconnected input/);
+p=project(); p.nodes[1].id='__proto__'; p.edges[0].to_node='__proto__';
+assert.deepEqual(compile(p,'tenant').ordered_nodes,['in','__proto__']);
+
+console.log('PASS canonical KaiOS graph validation: 15 assertions');
