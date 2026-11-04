@@ -64,6 +64,15 @@ with sync_playwright() as playwright:
     page.locator("#canonical-source").fill(json.dumps(canonical))
     page.locator("#canonical-check").click()
     assert "Invalid edge port" in page.locator("#canonical-result").inner_text()
+    page.locator("#canonical-new").click()
+    assert json.loads(page.locator("#canonical-source").input_value())["edges"][0]["to_node"] == "output"
+    page.locator("#canonical-node-id").fill("step")
+    page.locator("#canonical-transform").click()
+    assert json.loads(page.locator("#canonical-result").inner_text())["ordered_nodes"] == ["input", "step", "output"]
+    page.locator("#canonical-save").click()
+    page.locator("#canonical-source").fill("")
+    page.locator("#canonical-load").click()
+    assert len(json.loads(page.locator("#canonical-source").input_value())["edges"]) == 2
     evidence = ROOT.parents[1] / "dist" / "kaios-chromium-e2e.png"
     evidence.parent.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(evidence), full_page=True)
