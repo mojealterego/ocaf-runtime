@@ -8,6 +8,9 @@ const elements = {
   'canonical-check': { onclick: null },
   'canonical-save': { onclick: null },
   'canonical-load': { onclick: null },
+  'canonical-new': { onclick: null },
+  'canonical-transform': { onclick: null },
+  'canonical-node-id': { value: 'step' },
   'canonical-source': { value: '' },
   'canonical-tenant': { value: 'local' },
   'canonical-id': { value: 'agent' },
@@ -53,4 +56,15 @@ elements['canonical-source'].value = JSON.stringify(project);
 elements['canonical-save'].onclick();
 assert.match(elements['canonical-result'].textContent, /Błąd/);
 assert.equal(JSON.parse(storage.get('ocaf-kaios-canonical-v1:local:agent')).edges[0].to_port, 'in');
-console.log('PASS canonical KaiOS UI validation and persistence');
+elements['canonical-new'].onclick();
+assert.deepEqual(JSON.parse(elements['canonical-source'].value).nodes.map(n => n.id), ['input','output']);
+elements['canonical-node-id'].value = 'step';
+elements['canonical-transform'].onclick();
+const transformed = JSON.parse(elements['canonical-source'].value);
+assert.deepEqual(transformed.nodes.map(n => n.id), ['input','output','step']);
+assert.equal(transformed.edges.length, 2);
+assert.deepEqual(JSON.parse(elements['canonical-result'].textContent).ordered_nodes, ['input','step','output']);
+elements['canonical-transform'].onclick();
+assert.match(elements['canonical-result'].textContent, /Błąd/);
+assert.equal(JSON.parse(elements['canonical-source'].value).nodes.length, 3);
+console.log('PASS canonical KaiOS UI validation, persistence and NoCode transform');
