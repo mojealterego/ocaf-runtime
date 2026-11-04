@@ -28,6 +28,8 @@ async function until(fn, description, maxMs = 20000) {
 const cloudProjects = new Map();
 let delayedCloudPut = false;
 let cloudPutReceived = false;
+let delayedCloudGet = false;
+let cloudGetReceived = false;
 const runnerModels = [{name:'sample.gguf',size_bytes:1024,version:3,tensor_count:1}];
 const server = createServer(async (request, response) => {
   try {
@@ -98,6 +100,11 @@ const server = createServer(async (request, response) => {
       const id = file.slice('/v1/projects/'.length);
       if (!/^[A-Za-z0-9_.-]{1,64}$/.test(id)) {send(404,{error:'http_404'});return;}
       if (request.method === 'GET') {
+        if (delayedCloudGet) {
+          delayedCloudGet = false;
+          cloudGetReceived = true;
+          await pause(600);
+        }
         const record = cloudProjects.get(id);
         send(record ? 200 : 404,record ?? {error:'http_404'});
         return;
@@ -312,6 +319,19 @@ try {
   assert.equal(await evaluate('document.getElementById("revision-label").textContent'),'r4');
   await evaluate('document.getElementById("cloud-open").click()');
   await until(async () => await evaluate('document.getElementById("project-title").textContent') === 'cloud-demo', 'authenticated cloud reopen');
+  // An old GET response must never restore a project after disconnect/reconnect.
+  delayedCloudGet = true;
+  cloudGetReceived = false;
+  await evaluate('document.getElementById("cloud-open").click()');
+  await until(() => cloudGetReceived, 'delayed Cloud GET started');
+  await evaluate('document.getElementById("cloud-disconnect").click()');
+  await until(async () => await evaluate('document.getElementById("project-title").textContent') === 'Brak projektu', 'Cloud disconnected');
+  await pause(850);
+  assert.equal(await evaluate('document.getElementById("project-title").textContent'), 'Brak projektu',
+               'stale GET must not restore project after disconnect');
+  assert.equal(await evaluate('document.getElementById("cloud-open").disabled'), true,
+               'disconnected Cloud remains locked');
+
   assert.deepEqual(exceptions, [], 'no uncaught browser exceptions');
   process.stdout.write('PASS: Chrome Code/NoCode GUI, local persistence, authenticated Cloud transport mock, CAS and workspace switch\n');
 } finally {
