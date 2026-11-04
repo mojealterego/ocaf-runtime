@@ -3,6 +3,9 @@
 
 **AKTUALNY STAN (2026-10-16): 334 etapy główne, 64 podetapy techniczne, 10 produktów Agents Builder; razem 408 pozycji. Następny etap: 335. Audyt 606 repozytoriów: planowany, bez dowodów integracji.**
 
+**Agents Builder Linux / 0.53 (2026-11-04, CI_UNVERIFIED):** [Linux CI RED #41923011618](https://github.com/mojealterego/ocaf-runtime/actions/runs/41923011618) exposed malformed POSIX smoke test fixture (`\\n` as literal text); corrected in [26da156](https://github.com/mojealterego/ocaf-runtime/commit/26da156a699d005662cfe99e8c0c7fc36ed5632f). Linux ELF build and runtime acceptance are **not** confirmed. [Linux/HarmonyOS architecture](docs/roadmap/AGENTS_BUILDER_LINUX_HARMONYOS.md).
+
+
 **Stan bramki artefaktów agentów (2026-10-30):** [CI #41095114134](https://github.com/mojealterego/ocaf-runtime/actions/runs/41095114134) — walidacja struktury **SUCCESS**; G01 zaimplementowany strukturalnie, G02–G33 nadal `PLANNED`, odbiór `--release` nadal odmawiany. [Szczegółowy audyt](docs/audits/AGENT_ARTIFACT_CONTRACT_GATE_2026-10-30.md).
 
 
