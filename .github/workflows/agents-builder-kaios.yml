@@ -24,6 +24,8 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p test_builder_kaios.py -v
       - name: Check JavaScript syntax
         run: node --check apps/agents-builder-kaios/app.js
+      - name: Run KaiOS behavior regression tests
+        run: node apps/agents-builder-kaios/tests/runtime.cjs
       - name: Package KaiOS 2.5 web application
         run: |
           set -euo pipefail
