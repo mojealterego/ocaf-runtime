@@ -1,0 +1,11 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const source = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
+const validateAt = source.indexOf('var candidate = validate(');
+const storeAt = source.indexOf("localStorage.setItem('ocaf-kaios-v1:' + candidate.project_id");
+const commitAt = source.indexOf('state = candidate;');
+assert.ok(validateAt >= 0 && storeAt > validateAt && commitAt > storeAt);
+assert.ok(source.includes('Object.create(null)'));
+console.log('KaiOS save ordering checks passed');
