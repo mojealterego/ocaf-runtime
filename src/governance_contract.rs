@@ -156,6 +156,13 @@ impl AgentContract {
         if !self.permissions.contains(req.action) {
             return PreflightDecision::Deny(D::NotAllowlisted);
         }
+        // Mandatory action risk is derived from the policy, not the caller's claim.
+        if req.domain == Domain::ContractObligations
+            && req.action == "contract.verify_obligation"
+            && req.risk < RiskTier::Medium
+        {
+            return PreflightDecision::Deny(D::InvalidRequest);
+        }
         if req.domain == Domain::ProcurementScout && req.risk > RiskTier::Medium {
             return PreflightDecision::Deny(D::RiskCapExceeded);
         }
