@@ -359,6 +359,7 @@ pub fn gated_extract_obligation(
         || request.risk != RiskTier::Low
         || clause.tenant_id != trusted_peer.0
         || clause.debtor_id.is_empty()
+        || request.payload_sha256 != crate::governance_contract::payload_sha256(clause.text.as_bytes())
     {
         return Err(GatedExtractionError::InvalidAction);
     }
@@ -627,7 +628,7 @@ mod tests {
         let request = ActionRequest {
             request_id: "req_1", tenant: "tenant_a", actor: "agent_a",
             action: "contract.extract_obligation", domain: Domain::ContractObligations,
-            risk: RiskTier::Low, payload_sha256: payload_sha256(b"source clause"),
+            risk: RiskTier::Low, payload_sha256: payload_sha256(b"Supplier shall report within 2 days."),
             uses_external_provider: false, provider: None, approval: None,
         };
         let invalid = cited("Supplier must not report within 2 days.");
@@ -657,7 +658,7 @@ mod tests {
             request_id: "req_1", tenant: "tenant_a", actor: "agent_a",
             action: "contract.extract_obligation", domain: Domain::ContractObligations,
             risk: crate::governance_contract::RiskTier::Low,
-            payload_sha256: payload_sha256(b"source clause"), uses_external_provider: false,
+            payload_sha256: payload_sha256(b"Supplier shall report within 2 days."), uses_external_provider: false,
             provider: None, approval: None,
         };
         let clause = cited("Supplier shall report within 2 days.");
