@@ -18,6 +18,8 @@ class MobileNativeContracts(unittest.TestCase):
         self.assertIn("WebView", main)
         self.assertIn("https://appassets.androidplatform.net/assets/index.html", main)
         self.assertIn("WebViewAssetLoader", main)
+        self.assertIn('WebResourceResponse("text/javascript", "UTF-8"', main)
+        self.assertIn("android.useAndroidX=true", (ANDROID / "gradle.properties").read_text())
         self.assertIn("setAllowFileAccessFromFileURLs(false)", main)
         self.assertIn("setAllowUniversalAccessFromFileURLs(false)", main)
 
