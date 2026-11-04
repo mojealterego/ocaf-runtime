@@ -28,7 +28,7 @@ jobs:
       - name: Install Linux Tauri dependencies and virtual display
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf xvfb
+          sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf xvfb xdotool imagemagick
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
       - name: Run artifact verification regression tests
