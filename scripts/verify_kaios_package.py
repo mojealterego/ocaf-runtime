@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 import zipfile
 
-EXPECTED = {"manifest.webapp", "index.html", "app.js", "style.css"}
+EXPECTED = {"manifest.webapp", "index.html", "app.js", "style.css", "canonical-graph.js"}
 MAX_ENTRY_BYTES = 64 * 1024
 
 
@@ -25,7 +25,8 @@ def verify(path: Path) -> dict:
             raise ValueError("Unsupported KaiOS launch configuration")
         if manifest.get("permissions") != {}:
             raise ValueError("Unexpected privileged KaiOS permissions")
-        if b'<script src="app.js"></script>' not in archive.read("index.html"):
+        if (b'<script src="app.js"></script>' not in archive.read("index.html") or
+                b'<script src="canonical-graph.js"></script>' not in archive.read("index.html")):
             raise ValueError("App entrypoint not referenced")
         return {name: hashlib.sha256(archive.read(name)).hexdigest() for name in sorted(EXPECTED)}
 
