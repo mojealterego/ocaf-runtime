@@ -6,7 +6,7 @@
   "effective_date": "2026-10-15",
   "category": "AGENTS_BUILDER_PRODUCTS_NOT_AGENTS",
   "source_scope": "historical original Agents Builder capability, restored inside existing milestone IDs 0.50–0.55",
-  "note": "Five unified platform applications with Code/NoCode/Cloud switches. Ten historical product records remain as two acceptance variants per platform, not ten separate applications.",
+  "note": "Four native applications (Windows/macOS/Android/iOS), each with Code/NoCode and Local/Cloud switches. Browser/Cloud is a shared service, not a fifth app. Eight native acceptance records plus two historical Cloud service mode gates remain.",
   "parent_stages": [
     "0.50",
     "0.51",
@@ -547,9 +547,9 @@
     }
   ],
   "application_architecture": {
-    "version": 1,
-    "architecture": "five-unified-applications",
-    "description": "Five applications, each with Code/NoCode mode and Cloud workspace switch; legacy ten mode acceptance records remain independent.",
+    "version": 2,
+    "architecture": "four-native-applications-cloud-service",
+    "description": "Four native apps, each with Code/NoCode and Local/Cloud switches; Web/Cloud is a shared service with two separately tested historical capability gates.",
     "mode_switch": [
       "Code",
       "NoCode"
@@ -559,17 +559,6 @@
       "Cloud"
     ],
     "applications": [
-      {
-        "id": "AB-APP-WEB",
-        "platform_id": "cloud",
-        "runtime": "browser",
-        "mode_product_ids": [
-          "AB-CLOUD-CODE",
-          "AB-CLOUD-NOCODE"
-        ],
-        "cloud_workspace": "native",
-        "native_artifact_required": false
-      },
       {
         "id": "AB-APP-WINDOWS",
         "platform_id": "windows",
@@ -615,7 +604,18 @@
         "native_artifact_required": true
       }
     ],
-    "acceptance_policy": "An application is not accepted until both legacy mode records and its platform-specific E2E gates pass; a browser/PWA does not count as a native executable.",
-    "implementation_status": "SPECIFIED_NOT_ACCEPTED"
+    "acceptance_policy": "Four native applications require both Code/NoCode platform gates and native E2E build evidence (eight native gates). Two historical Cloud Code/NoCode records are separate service acceptance gates; browser/PWA never counts as a native executable.",
+    "implementation_status": "SPECIFIED_NOT_ACCEPTED",
+    "cloud_service": {
+      "id": "AB-SERVICE-CLOUD",
+      "platform_id": "cloud",
+      "runtime": "browser-and-authenticated-rust-service",
+      "mode_gate_ids": [
+        "AB-CLOUD-CODE",
+        "AB-CLOUD-NOCODE"
+      ],
+      "native_artifact_required": false,
+      "role": "shared-remote-workspace-not-a-fifth-application"
+    }
   }
 }
