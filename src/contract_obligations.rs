@@ -377,6 +377,28 @@ mod tests {
     }
 
     #[test]
+    fn rejects_zero_reference_and_control_characters() {
+        let mut clause = cited("Supplier shall report within 2 days.");
+        clause.reference_unix = 0;
+        assert_eq!(extract_cited_obligation(clause).unwrap_err(), ClauseError::InvalidSource);
+        assert_eq!(
+            extract_cited_obligation(cited("Supplier shall report\\nwithin 2 days.")).unwrap_err(),
+            ClauseError::InvalidSource
+        );
+    }
+
+    #[test]
+    fn rejects_normative_negation_variants_and_multiple_sentences() {
+        for text in [
+            "Supplier shall never disclose data within 2 days.",
+            "Supplier must refrain from sharing data within 2 days.",
+            "Supplier shall report within 2 days. Buyer accepts delivery.",
+        ] {
+            assert_eq!(extract_cited_obligation(cited(text)).unwrap_err(), ClauseError::UnsupportedGrammar);
+        }
+    }
+
+    #[test]
     fn warning_window_and_source_size_are_bounded() {
         let obligation = extracted();
         assert_eq!(
