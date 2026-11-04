@@ -759,6 +759,28 @@ mod tests {
         let second = gated_extract_obligation(&journal, &contract, &request, None, ("tenant_a", "agent_a"), 170, "idem_1", clause).unwrap();
         assert_eq!(second, GatedExtraction::Admission(Admission::ReplayPending));
         assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 2);
+        drop(journal);
+        let reopened = GovernanceJournal::open_existing(file.path()).unwrap();
+        assert_eq!(
+            gated_extract_obligation(
+                &reopened, &contract, &request, None, ("tenant_a", "agent_a"),
+                170, "idem_1", clause,
+            ).unwrap(),
+            GatedExtraction::Admission(Admission::ReplayPending)
+        );
+        // Synthetic receipt tests persistence, not independent verification.
+        let receipt = crate::governance_contract::payload_sha256(b"test-only-receipt");
+        assert!(reopened.record_verified_outcome(
+            "tenant_a", "agent_a", &request, "idem_1", receipt,
+        ).unwrap());
+        assert_eq!(
+            gated_extract_obligation(
+                &reopened, &contract, &request, None, ("tenant_a", "agent_a"),
+                170, "idem_1", clause,
+            ).unwrap(),
+            GatedExtraction::Admission(Admission::ReplayCommitted)
+        );
+        assert_eq!(reopened.inspect("tenant_a", None).unwrap().sequence, 5);
     }
 
     #[test]
