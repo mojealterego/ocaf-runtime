@@ -30,6 +30,8 @@ jobs:
         run: node --check apps/agents-builder-kaios/app.js
       - name: Run KaiOS behavior regression tests
         run: node apps/agents-builder-kaios/tests/runtime.cjs
+      - name: Verify KaiOS NoCode node removal
+        run: node apps/agents-builder-kaios/tests/delete-node.cjs
       - name: Verify KaiOS keypad softkeys
         run: node apps/agents-builder-kaios/tests/softkeys.cjs
       - name: Check KaiOS save ordering
