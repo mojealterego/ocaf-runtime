@@ -9,10 +9,11 @@ from scripts.verify_kaios_package import verify
 
 VALID = {
     "manifest.webapp": json.dumps({"launch_path": "/index.html", "type": "web", "permissions": {}}).encode(),
-    "index.html": b'<script src="canonical-graph.js"></script><script src="app.js"></script>',
+    "index.html": b'<script src="canonical-graph.js"></script><script src="app.js"></script><script src="canonical-ui.js"></script>',
     "app.js": b"/* source */",
     "style.css": b"body {}",
     "canonical-graph.js": b"/* canonical */",
+    "canonical-ui.js": b"/* canonical UI */",
 }
 
 
@@ -26,7 +27,7 @@ class KaiOSPackageVerifierTests(unittest.TestCase):
             return verify(path)
 
     def test_valid_package(self):
-        self.assertEqual(len(self.check(list(VALID.items()))), 5)
+        self.assertEqual(len(self.check(list(VALID.items()))), 6)
 
     def test_path_traversal_rejected(self):
         with self.assertRaises(ValueError):
