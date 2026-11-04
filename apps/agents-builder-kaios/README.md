@@ -49,3 +49,7 @@ Formularz umożliwia wybór typu portu `text`, `json` albo `bytes` dla nowego gr
 ## Import i eksport kanonicznego DAG
 
 **Eksportuj DAG** kopiuje zwalidowany projekt do pola tekstowego, skąd użytkownik może skopiować JSON do innego środowiska. **Importuj DAG** weryfikuje rozmiar (maks. 128 KiB), identyfikator projektu, tenant i cały kanoniczny graf przed aktualizacją edytora. Nie wykonuje kodu, nie wysyła danych do sieci i nie zapisuje importu automatycznie. To transfer JSON przez schowek użytkownika, nie eksport podpisanego manifestu OCAF ani pakietu wykonywalnego.
+
+## Węzły Tool w NoCode
+
+**Dodaj Tool** tworzy typowany węzeł narzędzia pomiędzy poprzednikiem a `Output`, deklaruje `tool_name`, przydziela uprawnienie w `grants`, zwiększa budżet o zadeklarowany koszt oraz inkrementuje `revision`. **Usuń Tool** usuwa wskazany węzeł, przywraca połączenie, odejmuje jego koszt i usuwa grant tylko wtedy, gdy żaden inny węzeł nie żąda tego narzędzia. Każda operacja przechodzi walidację kanonicznego DAG przed aktualizacją edytora. To wyłącznie projektowanie statycznego kontraktu — aplikacja nie uruchamia narzędzi, nie wydaje uprawnień w backendzie i nie zarządza sekretami.
