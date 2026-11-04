@@ -49,6 +49,11 @@ class KaiOSContracts(unittest.TestCase):
         self.assertIn("raw.length > 16384", js)
         self.assertIn("loaded.project_id !== id", js)
 
+    def test_code_save_prechecks_identity_before_applying_draft(self):
+        js = (APP / "app.js").read_text()
+        save = js.split("$('save').onclick", 1)[1].split("$('load').onclick", 1)[0]
+        self.assertLess(save.index("JSON.parse($('source').value).project_id"), save.index("applySource();"))
+
     def test_single_non_module_script_and_keypad_controls(self):
         html = (APP / "index.html").read_text()
         js = (APP / "app.js").read_text()
