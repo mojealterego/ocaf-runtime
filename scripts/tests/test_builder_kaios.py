@@ -44,6 +44,11 @@ class KaiOSContracts(unittest.TestCase):
         self.assertIn("state = candidate;", js)
         self.assertLess(js.index("var candidate = validate("), js.index("state = candidate;"))
 
+    def test_load_rejects_mismatched_identity_and_oversized_storage(self):
+        js = (APP / "app.js").read_text()
+        self.assertIn("raw.length > 16384", js)
+        self.assertIn("loaded.project_id !== id", js)
+
     def test_single_non_module_script_and_keypad_controls(self):
         html = (APP / "index.html").read_text()
         js = (APP / "app.js").read_text()
