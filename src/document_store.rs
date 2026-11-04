@@ -532,6 +532,20 @@ mod tests {
         ));
     }
     #[test]
+    fn scoped_driver_rejects_cross_tenant_reads_and_writes() {
+        let (_file, driver, own) = setup();
+        let other = DocumentKey::new("other", "doc").unwrap();
+        let scoped = TenantDocumentDriver::new(&driver, "tenant").unwrap();
+        let head = scoped.append(&own, &Head::default(), &create()).unwrap();
+        assert_eq!(scoped.load(&own, Some(&head)).unwrap().1, head);
+        assert!(matches!(scoped.load(&other, None), Err(StoreError::Invalid)));
+        assert!(matches!(
+            scoped.append(&other, &Head::default(), &create()),
+            Err(StoreError::Invalid)
+        ));
+        assert_eq!(driver.load(&other, None).unwrap().1, Head::default());
+    }
+    #[test]
     fn links_require_same_tenant_existing_labels_and_pinned_head() {
         let (_file, d, key) = setup();
         let head = d.append(&key, &Head::default(), &create()).unwrap();
