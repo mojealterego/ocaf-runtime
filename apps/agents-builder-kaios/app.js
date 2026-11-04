@@ -35,7 +35,7 @@
     try { fn(); } catch (error) { status(error.message || 'Błąd operacji'); }
   }
   $('code').onclick = function () { mode = 'code'; render(); };
-  $('nocode').onclick = function () { mode = 'nocode'; render(); };
+  $('nocode').onclick = function () { safe(function () { if (mode === 'code') applySource(); mode = 'nocode'; render(); }); };
   $('workspace').onchange = function () {
     if ($('workspace').value !== 'local') {
       $('workspace').value = 'local';
@@ -47,11 +47,13 @@
     var next = validate({ version: 1, project_id: state.project_id, nodes: state.nodes.concat([{ id: id }]) });
     state = next; $('node-name').value = ''; render(); status('Węzeł dodany. Nie uruchomiono narzędzi.');
   }); };
+  function applySource() { state = validate(JSON.parse($('source').value)); }
   $('apply').onclick = function () { safe(function () {
-    state = validate(JSON.parse($('source').value));
+    applySource();
     render(); status('Zaimportowano obsługiwany podzbiór JSON.');
   }); };
   $('save').onclick = function () { safe(function () {
+    if (mode === 'code') applySource();
     state.project_id = $('project').value.trim();
     state = validate(state);
     localStorage.setItem('ocaf-kaios-v1:' + state.project_id, JSON.stringify(state));
