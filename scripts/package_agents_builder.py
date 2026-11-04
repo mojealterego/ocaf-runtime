@@ -269,10 +269,10 @@ def main() -> int:
             write_bundle(repo, staged / f"ocaf-runtime-full-source-{sha[:12]}.zip",
                          sha, paths, "runtime-full-source"),
         ]
-        sums = "".join(f'{item["sha256"]}  {item["name"]}\\n' for item in results)
+        sums = "".join(f'{item["sha256"]}  {item["name"]}\n' for item in results)
         (staged / "SHA256SUMS").write_text(sums, encoding="ascii")
         (staged / "bundle-report.json").write_text(
-            json.dumps({"sha": sha, "artifacts": results}, indent=2) + "\\n",
+            json.dumps({"sha": sha, "artifacts": results}, indent=2) + "\n",
             encoding="utf-8",
         )
         if current_sha(repo) != sha:
