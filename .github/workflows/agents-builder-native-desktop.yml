@@ -34,6 +34,9 @@ jobs:
           persist-credentials: false
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
+      - name: Verify artifact verifier regression tests
+        shell: bash
+        run: python3 -m unittest discover -s scripts/tests -p test_verify_native_artifact.py -v
       - name: Check native source contracts
         shell: bash
         run: python3 -m unittest discover -s scripts/tests -p test_builder_native_desktop.py -v
