@@ -84,6 +84,15 @@ with sync_playwright() as playwright:
     assert json.loads(page.locator("#canonical-source").input_value())["nodes"][-1]["inputs"][0]["kind"] == "json"
     page.locator("#canonical-remove").click()
     assert json.loads(page.locator("#canonical-result").inner_text())["ordered_nodes"] == ["input", "output"]
+    page.locator("#canonical-export").click()
+    exported = page.locator("#canonical-import").input_value()
+    assert json.loads(exported)["project_id"] == "agent"
+    page.locator("#canonical-source").fill("")
+    page.locator("#canonical-import-button").click()
+    assert json.loads(page.locator("#canonical-source").input_value())["project_id"] == "agent"
+    page.locator("#canonical-import").fill(exported.replace('"tenant_id": "local"', '"tenant_id": "other"'))
+    page.locator("#canonical-import-button").click()
+    assert "Tenant denied" in page.locator("#canonical-result").inner_text()
     evidence = ROOT.parents[1] / "dist" / "kaios-chromium-e2e.png"
     evidence.parent.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(evidence), full_page=True)
