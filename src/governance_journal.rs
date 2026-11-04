@@ -346,6 +346,7 @@ impl GovernanceJournal {
         if !valid_id(trusted_tenant)
             || !valid_id(trusted_actor)
             || !valid_id(idempotency_key)
+            || outcome_sha256 == [0; 32]
             || trusted_tenant != request.tenant
             || trusted_actor != request.actor
         {
