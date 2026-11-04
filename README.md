@@ -1,4 +1,8 @@
 <!-- OCAF_README_ROADMAP_BEGIN -->
+
+**AKTUALIZACJA 2026-11-05 / 0.53 — LINUX RUST TOOLCHAIN PIN (IMPLEMENTED_CI_UNVERIFIED):** Workflow `agents-builder-native-linux.yml` wybiera jawnie Rust `1.99.0` zgodny z `rust-toolchain.toml`, zamiast polegać na zmiennym domyślnym kompilatorze akcji. Dodano test kontraktowy w `scripts/tests/test_builder_native_desktop.py`. Commity RED `90abec7`, implementacja `9169cfd`, korekta asercji `bd16ec8`. Testy wykonawcze i build Linux na końcowym SHA niepotwierdzone; status 10 produktów bez zmian.
+
+
 # 🔴 UWAGA CZYTAĆ — ZABRONIONA JEST SAMOWOLKA 🔴
 
 **AKTUALNY STAN (2026-10-16): 334 etapy główne, 64 podetapy techniczne, 10 produktów Agents Builder; razem 408 pozycji. Następny etap: 335. Audyt 606 repozytoriów: planowany, bez dowodów integracji.**
