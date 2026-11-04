@@ -244,6 +244,56 @@ pub fn evaluate_deadline(
     })
 }
 
+/// PDF-1.34 bounded preflight only. The caller MUST independently verify
+/// evidence authenticity and obtain authorization through the governance journal.
+/// A successful result does not mutate lifecycle state or attest fulfillment.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FulfillmentError {
+    MissingAuthorization,
+    MissingEvidence,
+    InvalidEvidence,
+    DeadlineBreached,
+    InvalidTime,
+    InvalidState,
+}
+
+pub fn verify_fulfillment_preflight(
+    obligation: &ContractObligation,
+    trusted_now_unix: u64,
+    verified_evidence_ids: &[&str],
+    authorized_by_trusted_caller: bool,
+) -> Result<(), FulfillmentError> {
+    if !authorized_by_trusted_caller {
+        return Err(FulfillmentError::MissingAuthorization);
+    }
+    if trusted_now_unix == 0 {
+        return Err(FulfillmentError::InvalidTime);
+    }
+    if matches!(
+        obligation.state,
+        ObligationLifecycle::VerifiedFulfilled | ObligationLifecycle::DeadlineBreached
+    ) {
+        return Err(FulfillmentError::InvalidState);
+    }
+    if trusted_now_unix >= obligation.due_at_unix {
+        return Err(FulfillmentError::DeadlineBreached);
+    }
+    if verified_evidence_ids.is_empty() {
+        return Err(FulfillmentError::MissingEvidence);
+    }
+    if verified_evidence_ids.len() > 128
+        || verified_evidence_ids.iter().any(|id| !valid_id(id))
+    {
+        return Err(FulfillmentError::InvalidEvidence);
+    }
+    let unique: std::collections::BTreeSet<&str> =
+        verified_evidence_ids.iter().copied().collect();
+    if unique.len() != verified_evidence_ids.len() {
+        return Err(FulfillmentError::InvalidEvidence);
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
