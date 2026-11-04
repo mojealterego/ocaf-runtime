@@ -630,6 +630,47 @@ mod tests {
     }
 
     #[test]
+    fn invalid_receipt_request_identifiers_do_not_touch_audit() {
+        let (_file, journal) = setup();
+        let c = contract();
+        let r = request();
+        assert_eq!(
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "invalid_receipt")
+                .unwrap(),
+            Admission::FreshPending
+        );
+        let pinned = journal.inspect("tenant_a", None).unwrap();
+        for (action, request_id) in [
+            ("read..private", "req_1"),
+            ("read", "invalid/request"),
+            ("", "req_1"),
+            ("read", ""),
+        ] {
+            let mut malformed = request();
+            malformed.action = action;
+            malformed.request_id = request_id;
+            assert!(matches!(
+                journal.record_verified_outcome(
+                    "tenant_a",
+                    "agent_a",
+                    &malformed,
+                    "invalid_receipt",
+                    payload_sha256(b"synthetic-receipt"),
+                ),
+                Err(JournalError::Invalid)
+            ));
+            assert_eq!(journal.inspect("tenant_a", Some(&pinned)).unwrap(), pinned);
+        }
+        assert_eq!(
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "invalid_receipt")
+                .unwrap(),
+            Admission::ReplayPending
+        );
+    }
+
+    #[test]
     fn zero_receipt_digest_cannot_commit_pending_intent() {
         let (_file, journal) = setup();
         let c = contract();
