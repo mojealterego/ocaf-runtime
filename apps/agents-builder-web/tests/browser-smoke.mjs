@@ -278,6 +278,13 @@ try {
   assert.equal(await evaluate('document.getElementById("cloud-save").disabled'), true,
                'concurrent Cloud save must disable duplicate submission');
   await until(() => cloudPutReceived, 'delayed Cloud PUT received');
+  // Workspace changes during a CAS request would orphan the server's new head.
+  await evaluate('document.getElementById("workspace-local").click()');
+  assert.equal(await evaluate('document.getElementById("workspace-cloud").getAttribute("aria-pressed")'), 'true',
+               'Cloud workspace cannot be switched while CAS is in flight');
+  assert.equal(await evaluate('document.getElementById("workspace-local").disabled'), true,
+               'workspace switch disabled during Cloud save');
+
   await evaluate('document.getElementById("node-id").value="inflight-b";document.getElementById("add-transform").click()');
   await until(async () => await evaluate('document.getElementById("cloud-status").textContent.includes("niezapisany szkic")'), 'newer draft pending');
   await until(async () => cloudProjects.get('cloud-demo').head.revision === 3, 'older CAS completes');
