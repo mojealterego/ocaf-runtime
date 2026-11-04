@@ -41,3 +41,7 @@ Przycisk **Nowy graf** tworzy poprawny, dwuwęzłowy projekt kanoniczny `Input �
 ## Odwracalne operacje NoCode
 
 **Usuń Transform** usuwa wskazany identyfikatorem węzeł typu `transform` z dokładnie jednym wejściem i jednym wyjściem `text`, a następnie łączy jego poprzednika z następnikiem. Zmiana jest atomowa na poziomie stanu formularza: edytor aktualizuje JSON dopiero po pomyślnej walidacji całego grafu. Odmowa następuje dla innych typów węzłów, nieobsługiwanych portów i nieprawidłowej topologii. To nie jest mechanizm cofania dowolnych zmian ani pełny edytor DAG.
+
+## Typowane porty w NoCode
+
+Formularz umożliwia wybór typu portu `text`, `json` albo `bytes` dla nowego grafu. Wstawienie transformacji dziedziczy typ z połączenia prowadzącego do `Output`; usuwanie transformacji zachowuje typ istniejących portów. Wybór nieznanej wartości jest odrzucany bez modyfikacji projektu. To statyczne sprawdzanie kontraktów, a nie uruchamianie transformacji.
