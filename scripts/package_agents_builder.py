@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 from pathlib import Path, PurePosixPath
 import stat
 import subprocess
@@ -251,18 +252,40 @@ def main() -> int:
     missing = [path for path in required if path not in selected]
     if missing:
         raise ValueError("required builder files missing: " + ", ".join(missing))
-    results = [
-        write_bundle(repo, args.out / f"ocaf-agents-builder-{sha[:12]}.zip",
-                     sha, selected, "agents-builder"),
-        write_bundle(repo, args.out / f"ocaf-runtime-full-source-{sha[:12]}.zip",
-                     sha, paths, "runtime-full-source"),
-    ]
-    sums = "".join(f'{item["sha256"]}  {item["name"]}\n' for item in results)
-    (args.out / "SHA256SUMS").write_text(sums, encoding="ascii")
-    (args.out / "bundle-report.json").write_text(
-        json.dumps({"sha": sha, "artifacts": results}, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    # Publish the entire four-file release as one directory entry. Never
+    # expose a valid-looking partial set if the second ZIP or metadata fails.
+    # An existing destination is deliberately immutable: no non-atomic
+    # replacement of a populated directory and no silent overwrite.
+    out = args.out
+    out.parent.mkdir(parents=True, exist_ok=True)
+    if out.exists() or out.is_symlink():
+        raise FileExistsError(f"release destination already exists: {out}")
+    staged = Path(tempfile.mkdtemp(prefix=f".{out.name}.", suffix=".tmp",
+                                   dir=out.parent))
+    try:
+        results = [
+            write_bundle(repo, staged / f"ocaf-agents-builder-{sha[:12]}.zip",
+                         sha, selected, "agents-builder"),
+            write_bundle(repo, staged / f"ocaf-runtime-full-source-{sha[:12]}.zip",
+                         sha, paths, "runtime-full-source"),
+        ]
+        sums = "".join(f'{item["sha256"]}  {item["name"]}\\n' for item in results)
+        (staged / "SHA256SUMS").write_text(sums, encoding="ascii")
+        (staged / "bundle-report.json").write_text(
+            json.dumps({"sha": sha, "artifacts": results}, indent=2) + "\\n",
+            encoding="utf-8",
+        )
+        if current_sha(repo) != sha:
+            raise ValueError("HEAD changed during release assembly")
+        require_clean_tree(repo)
+        # On the same filesystem, directory rename publishes all artifacts
+        # together. Do not replace an existing release or follow a symlink.
+        if out.exists() or out.is_symlink():
+            raise FileExistsError(f"release destination appeared: {out}")
+        os.rename(staged, out)
+    finally:
+        if staged.exists():
+            shutil.rmtree(staged)
     print(json.dumps({"sha": sha, "artifacts": results}, indent=2))
     return 0
 
