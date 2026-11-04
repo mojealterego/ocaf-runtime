@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - apps/agents-builder-web/**
+      - scripts/tests/test_agents_builder_local_runner.py
       - tests/builder_web_contract.rs
       - src/builder_core.rs
       - .github/workflows/stage051-builder-web.yml
@@ -33,6 +34,9 @@ jobs:
           node --check apps/agents-builder-web/credentials.mjs
           node --check apps/agents-builder-web/models.mjs
           node --check apps/agents-builder-web/integrations-ui.mjs
+          node --check apps/agents-builder-web/runner-client.mjs
+      - name: Python local GGUF process and HTTP boundary tests
+        run: python3 -m unittest discover -s scripts/tests -p test_agents_builder_local_runner.py -v
       - name: Web editor model contract
         run: node --test apps/agents-builder-web/tests/*.test.mjs
       - name: Chromium GUI end-to-end smoke

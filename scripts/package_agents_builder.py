@@ -31,6 +31,7 @@ EXACT = frozenset({
     "docs/roadmap/agents_builder_products_v11.json",
     "docs/roadmap/STAGE_CHANGELOG.md",
     "scripts/package_agents_builder.py",
+    "scripts/tests/test_agents_builder_local_runner.py",
     "scripts/tests/test_package_agents_builder.py",
 })
 PREFIXES = (
@@ -244,6 +245,9 @@ def main() -> int:
     paths = tracked_files(repo)
     selected = [p for p in paths if select_builder(p)]
     required = ("apps/agents-builder-web/index.html", "apps/agents-builder-web/app.mjs",
+                "apps/agents-builder-web/local_runner.py",
+                "apps/agents-builder-web/runner-client.mjs",
+                "scripts/tests/test_agents_builder_local_runner.py",
                 "apps/agents-builder-web/models.mjs", "apps/agents-builder-web/i18n.mjs",
                 "apps/agents-builder-web/credentials.mjs", "src/builder_core.rs",
                 "src/builder_cloud.rs", "src/builder_http.rs",

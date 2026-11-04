@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "apps/agents-builder-web/**"
+      - "scripts/tests/test_agents_builder_local_runner.py"
       - "src/builder_*.rs"
       - "src/model_router.rs"
       - "tests/builder_*.rs"
@@ -37,6 +38,8 @@ jobs:
           node-version: "22"
       - name: Packaging unit and security tests
         run: python3 -m unittest discover -s scripts/tests -p test_package_agents_builder.py -v
+      - name: Local GGUF runner subprocess and localhost security tests
+        run: python3 -m unittest discover -s scripts/tests -p test_agents_builder_local_runner.py -v
       - name: Builder JavaScript unit and contract tests
         run: node --test apps/agents-builder-web/tests/*.test.mjs
       - name: Browser GUI end-to-end smoke

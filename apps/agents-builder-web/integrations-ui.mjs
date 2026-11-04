@@ -1,4 +1,5 @@
 import {LOCALES,supportedLocales,translate,applyLanguage,registerCatalog} from './i18n.mjs';
+import {LocalRunnerClient} from './runner-client.mjs';
 import {ProviderSessionKeys,PROVIDERS} from './credentials.mjs';
 import {SETTINGS_SPEC,defaultSettings,validateSettings,makeModelProfile,
   listHuggingFaceGguf,inspectLocalGguf,saveModelProfile,loadModelProfile,
@@ -11,6 +12,7 @@ export function initIntegrations({getContext,notify}){
   const el=id=>document.getElementById(id);
   const vault=new ProviderSessionKeys();
   let catalog=null,localGguf=null,contextKey=null,activeProfile=null;
+  let runnerClient=null;
   let locale='pl-PL';
   try{
     const saved=localStorage.getItem('ocaf.builder.ui.locale');
@@ -248,6 +250,7 @@ export function initIntegrations({getContext,notify}){
     const next=ctx?.projectId ? ctx.tenant+':'+ctx.projectId+':'+ctx.workspace : '';
     el('model-save').disabled=!next;
     el('model-export').disabled=!next;
+    if(el('runner-start'))el('runner-start').disabled=!next||ctx.workspace!=='local'||!el('runner-model').value;
     if(contextKey===next)return;
     contextKey=next;
     catalog=null;localGguf=null;activeProfile=null;
@@ -262,8 +265,87 @@ export function initIntegrations({getContext,notify}){
       'Brak profilu modelu dla projektu '+ctx.projectId+'.';
     if(profile)fillProfile(profile);
   }
+  function initRunner(){
+    const label=el('runner-status');
+    const setStatus=text=>{label.textContent=text;};
+    const connect=async()=>{
+      if(getContext().workspace!=='local')throw Error('runner: przełącz na lokalny projekt');
+      if(runnerClient)runnerClient.disconnect();
+      runnerClient=null;
+      const token=el('runner-token').value.trim();
+      let client;
+      try{client=new LocalRunnerClient({token,origin:location.origin});}
+      finally{el('runner-token').value='';}
+      try{
+        const [models,status]=await Promise.all([client.models(),client.status()]);
+        runnerClient=client;
+        showModels(models);
+        showStatus(status);
+      }catch(error){
+        client.disconnect();
+        throw error;
+      }
+    };
+    const showModels=models=>{
+      const selected=el('runner-model').value;
+      el('runner-model').replaceChildren();
+      for(const model of models){
+        const option=document.createElement('option');
+        option.value=model.name;
+        option.textContent=model.name+' · '+(model.size_bytes/1024**3).toFixed(2)+' GiB · GGUF v'+model.version;
+        el('runner-model').append(option);
+      }
+      if(models.some(m=>m.name===selected))el('runner-model').value=selected;
+      el('runner-start').disabled=!models.length||getContext().workspace!=='local';
+    };
+    const showStatus=status=>{
+      setStatus('Stan lokalnego llama.cpp: '+status.state+(status.model?' · '+status.model:''));
+    };
+    const refresh=async()=>{
+      if(!runnerClient)throw Error('runner: najpierw połącz z lokalnym serwerem');
+      const [models,status]=await Promise.all([runnerClient.models(),runnerClient.status()]);
+      showModels(models);showStatus(status);
+    };
+    el('runner-connect').addEventListener('click',safe(connect));
+    el('runner-disconnect').addEventListener('click',safe(()=>{
+      runnerClient?.disconnect();runnerClient=null;
+      el('runner-token').value='';
+      el('runner-model').replaceChildren();
+      el('runner-start').disabled=true;
+      setStatus('Rozłączono. Proces modelu pozostaje pod kontrolą lokalnego serwera.');
+    }));
+    el('runner-refresh').addEventListener('click',safe(refresh));
+    el('runner-start').addEventListener('click',safe(async()=>{
+      if(!runnerClient)throw Error('runner: brak sesji');
+      if(getContext().workspace!=='local')throw Error('runner: tylko tryb Local');
+      const model=el('runner-model').value;
+      const response=await runnerClient.start(model,readSettings());
+      showStatus(response);
+      emit('Uruchamianie GGUF przez lokalny llama-server. Odśwież stan przed inferencją.');
+    }));
+    el('runner-stop').addEventListener('click',safe(async()=>{
+      if(!runnerClient)throw Error('runner: brak sesji');
+      showStatus(await runnerClient.stop());
+    }));
+    el('runner-send').addEventListener('click',safe(async()=>{
+      if(!runnerClient)throw Error('runner: brak sesji');
+      if(getContext().workspace!=='local')throw Error('runner: tylko tryb Local');
+      el('runner-answer').textContent='Inferencja lokalna trwa…';
+      try{
+        const answer=await runnerClient.chat(el('runner-prompt').value);
+        el('runner-answer').textContent=answer.text;
+        showStatus({state:'ready',model:answer.model});
+      }catch(error){
+        el('runner-answer').textContent='Brak wyniku.';
+        throw error;
+      }
+    }));
+    window.addEventListener('pagehide',()=>runnerClient?.disconnect(),{once:true});
+    setStatus('Połącz z serwerem uruchomionym na tym samym urządzeniu.');
+  }
   function init(){
     initProviders();
+    initRunner();
     initSettings();
     updateLanguage();
     el('ui-language').addEventListener('change',safe(event=>setLocale(event.target.value)));

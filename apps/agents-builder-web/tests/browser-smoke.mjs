@@ -12,7 +12,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 
 const ROOT = new URL('../', import.meta.url);
-const ALLOWED = new Set(['/index.html','/app.mjs','/editor.mjs','/cloud.mjs','/i18n.mjs','/credentials.mjs','/models.mjs','/integrations-ui.mjs','/style.css','/manifest.webmanifest','/sw.js']);
+const ALLOWED = new Set(['/index.html','/app.mjs','/editor.mjs','/cloud.mjs','/i18n.mjs','/credentials.mjs','/models.mjs','/integrations-ui.mjs','/runner-client.mjs','/style.css','/manifest.webmanifest','/sw.js']);
 const MIME = {'.html':'text/html','.mjs':'text/javascript','.css':'text/css','.webmanifest':'application/manifest+json','.js':'text/javascript'};
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function until(fn, description, maxMs = 20000) {
@@ -30,6 +30,42 @@ const server = createServer(async (request, response) => {
   try {
     const pathname = new URL(request.url, 'http://localhost').pathname;
     const file = pathname === '/' ? '/index.html' : pathname;
+    if (file.startsWith('/v1/local-runner/')) {
+      const send=(status,data)=>{
+        response.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});
+        response.end(JSON.stringify(data));
+      };
+      if(request.headers.authorization!=='Bearer runner-test-secret'){
+        send(401,{error:'local token required'});return;
+      }
+      if(file==='/v1/local-runner/models'&&request.method==='GET'){
+        send(200,{models:[{name:'sample.gguf',size_bytes:1024,version:3,tensor_count:1}]});return;
+      }
+      if(file==='/v1/local-runner/status'&&request.method==='GET'){
+        send(200,{state:'ready',model:'sample.gguf'});return;
+      }
+      const payload=await new Promise((resolve,reject)=>{
+        let body='';
+        request.on('data',chunk=>{body+=chunk;if(body.length>32768)reject(new Error('limit'));});
+        request.on('end',()=>resolve(body));
+        request.on('error',reject);
+      });
+      if(file==='/v1/local-runner/start'&&request.method==='POST'){
+        const data=JSON.parse(payload);
+        if(data.model!=='sample.gguf'||data.settings.context_size!==8192){
+          send(422,{error:'invalid model/settings'});return;
+        }
+        send(200,{state:'loading',model:data.model});return;
+      }
+      if(file==='/v1/local-runner/chat'&&request.method==='POST'){
+        const data=JSON.parse(payload);
+        send(200,{text:'MODEL E2E: '+data.prompt,model:'sample.gguf'});return;
+      }
+      if(file==='/v1/local-runner/stop'&&request.method==='POST'){
+        send(200,{state:'stopped',model:null});return;
+      }
+      send(404,{error:'unknown local runner endpoint'});return;
+    }
     if (file.startsWith('/v1/projects/')) {
       const send = (status, value) => {
         response.writeHead(status, {'Content-Type':'application/json','Cache-Control':'no-store'});
@@ -174,6 +210,15 @@ try {
   await evaluate('document.getElementById("api-remove").click()');
   assert.match(await evaluate('document.getElementById("api-status").textContent'), /Brak klucza/);
 
+  await evaluate('document.getElementById("runner-token").value="runner-test-secret";document.getElementById("runner-connect").click()');
+  await until(async()=>await evaluate('document.getElementById("runner-model").value')==='sample.gguf','runner connection and model catalog');
+  await evaluate('document.getElementById("runner-start").click()');
+  await until(async()=>await evaluate('document.getElementById("runner-status").textContent.includes("loading")'),'runner start with selected settings');
+  await evaluate('document.getElementById("runner-prompt").value="Dzień dobry!";document.getElementById("runner-send").click()');
+  await until(async()=>await evaluate('document.getElementById("runner-answer").textContent.includes("MODEL E2E: Dzień dobry!")'),'local inference request');
+  await evaluate('document.getElementById("runner-stop").click()');
+  await until(async()=>await evaluate('document.getElementById("runner-status").textContent.includes("stopped")'),'runner stop');
+  assert.equal(await evaluate('JSON.stringify(localStorage).includes("runner-test-secret")'),false,'local token not persisted');
   await evaluate('document.getElementById("workspace-cloud").click()');
   assert.equal(await evaluate('document.getElementById("cloud-controls").hidden'), false);
   assert.equal(await evaluate('document.getElementById("cloud-save").disabled'), true);

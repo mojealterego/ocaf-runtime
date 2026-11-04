@@ -127,6 +127,36 @@
       </div>
     </div>
   </section>
+  <section class="integrations local-inference" aria-labelledby="runner-heading">
+    <div class="integration-heading">
+      <div><p class="eyebrow">OCAF / LOOPBACK INFERENCE</p>
+        <h2 id="runner-heading" data-i18n="runner_title">Lokalny runner GGUF · llama.cpp</h2>
+      </div>
+      <span class="small-pill">127.0.0.1 · bez usług Cloud</span>
+    </div>
+    <p class="muted" data-i18n="runner_desc">Uruchom na tym urządzeniu lokalny serwer Python i llama-server. Modele tylko z dozwolonego katalogu. Żadnego wykonywania narzędzi agentów.</p>
+    <div class="runner-controls">
+      <label><span data-i18n="runner_token">Token lokalnej sesji</span>
+        <input id="runner-token" type="password" autocomplete="off" spellcheck="false" placeholder="Token z terminala lokalnego runnera">
+      </label>
+      <button id="runner-connect" type="button" class="primary" data-i18n="runner_connect">Połącz runner</button>
+      <button id="runner-disconnect" type="button" class="secondary" data-i18n="runner_disconnect">Rozłącz runner</button>
+      <button id="runner-refresh" type="button" class="secondary" data-i18n="runner_refresh">Odśwież modele / stan</button>
+    </div>
+    <div class="runner-controls">
+      <label><span data-i18n="runner_model">Lokalny plik GGUF</span>
+        <select id="runner-model" aria-label="Model GGUF dostępny w lokalnym katalogu"></select>
+      </label>
+      <button id="runner-start" type="button" class="primary" disabled data-i18n="runner_start">Załaduj i uruchom model</button>
+      <button id="runner-stop" type="button" class="danger" data-i18n="runner_stop">Zatrzymaj model</button>
+    </div>
+    <output id="runner-status" role="status" aria-live="polite">Brak połączenia.</output>
+    <label class="runner-prompt"><span data-i18n="runner_prompt">Wiadomość dla modelu</span>
+      <textarea id="runner-prompt" rows="4" maxlength="12000" placeholder="Wpisz pytanie do lokalnego modelu (bez automatycznego wykonywania narzędzi)"></textarea>
+    </label>
+    <button id="runner-send" type="button" class="primary" data-i18n="runner_send">Generuj lokalnie</button>
+    <pre id="runner-answer" aria-live="polite"></pre>
+  </section>
   <p id="message" role="status" aria-live="polite"></p>
 </main>
 <footer>OCAF / Agents Builder · Stage 0.51 partial · Restricted typed DSL · No automatic publishing</footer>
