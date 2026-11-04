@@ -1,5 +1,14 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-04 — Agents Builder release-directory atomic assembly (CI_PENDING)
+
+- Requirement: prevent partial publication when the second ZIP or release metadata fails. Scope: source distribution only; no platform-native product or production approval.
+- Test commit `fc45f662fe0a4637f32bd7c4bbe54bb010c19b3f` introduced a fault-injection regression. Its workflow [41759706605](https://github.com/mojealterego/ocaf-runtime/actions/runs/41759706605) failed at Python import due to a test syntax error; **this is not valid behavioral RED evidence**.
+- Implementation commits `9693b12092ffc4bce1adf194d8c6fe47a5309495` and `1ce68dac96524d4c5457ada187ded2c0b1d1494c`: stage two verified ZIPs and both metadata files in a temporary sibling directory, verify pinned HEAD/clean tree, then publish the directory by rename. On failure, remove the staged directory. Existing output directories are rejected rather than overwritten.
+- Test syntax corrected in `ea1408c69b5615740c821eb6d18ff02aac60414d`. Final CI result is pending; do not mark TESTED or production approved until the exact SHA and job logs are verified.
+- Limitations: destination existence check followed by rename has a concurrent-creator race; no crash-durability fsync guarantee; this is not a cross-filesystem transaction and GitHub Release upload itself is a separate external operation. All 10 Builder product acceptance gates remain open.
+
+
 ## 2026-11-03 — Agents Builder source ZIP atomic publication (IMPLEMENTED_CI_PENDING)
 
 - Regression tests added at commit `5d6e6010400b984b8d08e4932e1eb28621bb40a1`: a failed Git HEAD verification must preserve an existing published ZIP and must not expose a new invalid ZIP. RED execution on that SHA is not confirmed.
