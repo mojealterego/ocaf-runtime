@@ -119,10 +119,32 @@ jobs:
           xcrun simctl bootstatus "$device" -b
           app="apps/agents-builder-ios/build/Build/Products/Debug-iphonesimulator/OCAFAgentsBuilder.app"
           xcrun simctl install "$device" "$app"
-          xcrun simctl launch "$device" org.ocaf.agentsbuilder
+          launch_output=$(xcrun simctl launch "$device" org.ocaf.agentsbuilder)
+          printf '%s\\n' "$launch_output"
+          echo "$launch_output" | grep -E '^org\\.ocaf\\.agentsbuilder: [0-9]+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: "ocaf-builder-ios-launch-evidence-${{ github.sha }}"
+          path: apps/agents-builder-ios/build/evidence/ios-launch.png
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: "ocaf-builder-ios-simulator-${{ github.sha }}"
+          path: apps/agents-builder-ios/build/Build/Products/Debug-iphonesimulator/OCAFAgentsBuilder.app
+          if-no-files-found: error
+          retention-days: 30
+
+          sleep 5
           mkdir -p apps/agents-builder-ios/build/evidence
           xcrun simctl io "$device" screenshot apps/agents-builder-ios/build/evidence/ios-launch.png
-          test -s apps/agents-builder-ios/build/evidence/ios-launch.png
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("apps/agents-builder-ios/build/evidence/ios-launch.png")
+          assert p.is_file() and p.stat().st_size > 1024, "iOS screenshot missing or empty"
+          assert p.read_bytes()[:8] == bytes.fromhex("89504e470d0a1a0a"), "Invalid iOS screenshot PNG"
+          print("iOS screenshot PNG validated")
+          PY
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: "ocaf-builder-ios-launch-evidence-${{ github.sha }}"
