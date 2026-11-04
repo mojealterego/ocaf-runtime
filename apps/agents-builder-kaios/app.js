@@ -10,10 +10,11 @@
   function validate(value) {
     if (!value || value.version !== 1 || !validName(value.project_id) ||
         !Array.isArray(value.nodes) || value.nodes.length > 32) throw Error('Nieprawidłowy projekt');
+    if (Object.keys(value).sort().join(',') !== 'nodes,project_id,version') throw Error('Nieobsługiwane pola projektu');
     var seen = {};
     for (var i = 0; i < value.nodes.length; i++) {
       var n = value.nodes[i];
-      if (!n || !validName(n.id) || Object.prototype.hasOwnProperty.call(seen, n.id)) throw Error('Nieprawidłowy lub powtórzony węzeł');
+      if (!n || !validName(n.id) || Object.keys(n).join(',') !== 'id' || Object.prototype.hasOwnProperty.call(seen, n.id)) throw Error('Nieprawidłowy, nieobsługiwany lub powtórzony węzeł');
       seen[n.id] = true;
     }
     return { version: 1, project_id: value.project_id, nodes: value.nodes.map(function (n) { return { id: n.id }; }) };
