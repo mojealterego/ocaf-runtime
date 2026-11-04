@@ -690,6 +690,25 @@ mod tests {
     }
 
     #[test]
+    fn corrupted_committed_receipt_is_not_replayed() {
+        let (file, journal) = setup();
+        let c = contract();
+        let r = request();
+        assert_eq!(
+            journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "receipt").unwrap(),
+            Admission::FreshPending
+        );
+        let db = Connection::open(file.path()).unwrap();
+        db.execute(
+            "UPDATE governance_intents_v1 SET status='COMMITTED', outcome_sha256=NULL WHERE idem='receipt'",
+            [],
+        ).unwrap();
+        assert!(matches!(
+            journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "receipt"),
+            Err(JournalError::Integrity)
+        ));
+    }
+    #[test]
     fn peer_is_derived_from_trusted_context_not_requested_identity() {
         let (_file, journal) = setup();
         let c = contract();
