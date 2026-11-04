@@ -435,6 +435,7 @@ fn scan_audit(tx: &Transaction<'_>, tenant: &str) -> Result<AuditHead, JournalEr
         let previous: String = row.get(7).map_err(|_| JournalError::Integrity)?;
         let hash: String = row.get(8).map_err(|_| JournalError::Integrity)?;
         if seq != head.sequence + 1
+            || !matches!(decision.as_str(), "DENY" | "REPLAY" | "ALLOW_INTENT" | "OUTCOME_RECEIPT")
             || seq > MAX_TENANT_AUDIT_ROWS
             || payload.len() != 32
             || previous != head.digest
