@@ -177,6 +177,9 @@ function render() {
   for (const id of ['mode-nocode','mode-code','preview','export','add-transform','add-tool','remove-node','update-tool','set-budget','apply-code']) {
     el(id).disabled = !hasProject;
   }
+  // render() rewrites the DSL textarea; do not allow concurrent Code editing while CAS is pending.
+  el('dsl').disabled = !hasProject || cloudSaveInFlight;
+  el('apply-code').disabled = !hasProject || cloudSaveInFlight;
   el('restore').disabled = !hasProject || state.workspace !== 'local';
   el('mode-nocode').setAttribute('aria-pressed', String(state.mode === 'nocode'));
   el('mode-code').setAttribute('aria-pressed', String(state.mode === 'code'));
