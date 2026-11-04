@@ -20,6 +20,32 @@ class LinuxGuiSmokeTests(unittest.TestCase):
                     module.run(Path(tmp) / "missing", Path(tmp) / "screen.png")
                 spawn.assert_not_called()
 
+    def test_window_from_another_process_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            binary = Path(tmp) / "binary"
+            binary.write_bytes(b"binary")
+            class Process:
+                pid = 1234
+                def poll(self):
+                    return None
+                def terminate(self):
+                    pass
+                def communicate(self, timeout):
+                    return (b"", b"")
+            class Result:
+                def __init__(self, code, output):
+                    self.returncode = code
+                    self.stdout = output
+            def command(argv, **kwargs):
+                if "search" in argv:
+                    return Result(0, "9876\\n")
+                return Result(0, "5678\\n")
+            with patch.object(module.subprocess, "Popen", return_value=Process()), \\
+                 patch.object(module.subprocess, "run", side_effect=command), \\
+                 patch.object(module.time, "sleep"):
+                with self.assertRaisesRegex(RuntimeError, "No visible"):
+                    module.run(binary, Path(tmp) / "screen.png", seconds=0.01)
+
     def test_dead_process_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             binary = Path(tmp) / "binary"
