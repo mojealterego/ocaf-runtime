@@ -59,6 +59,9 @@ assert.deepEqual(nodes(), ['toString','constructor'], 'Prototype-like node IDs m
 elements.source.value = ' '.repeat(16385);
 click('apply');
 assert.match(elements.status.textContent, /16 KiB/);
+elements.source.value = JSON.stringify({version:1,project_id:'other',nodes:[]});
+click('save');
+assert.match(elements.status.textContent, /Niezgodny identyfikator projektu/);
 elements.workspace.value = 'cloud';
 elements.workspace.onchange();
 assert.equal(elements.workspace.value, 'local', 'Cloud must fail closed');
