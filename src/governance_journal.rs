@@ -627,6 +627,26 @@ mod tests {
     }
 
     #[test]
+    fn zero_receipt_digest_cannot_commit_pending_intent() {
+        let (_file, journal) = setup();
+        let c = contract();
+        let r = request();
+        assert_eq!(
+            journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "zero_receipt").unwrap(),
+            Admission::FreshPending
+        );
+        assert!(matches!(
+            journal.record_verified_outcome("tenant_a", "agent_a", &r, "zero_receipt", [0; 32]),
+            Err(JournalError::Invalid)
+        ));
+        assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 1);
+        assert_eq!(
+            journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "zero_receipt").unwrap(),
+            Admission::ReplayPending
+        );
+    }
+
+    #[test]
     fn receipt_committed_once_and_cross_tenant_receipt_denied() {
         let (_file, journal) = setup();
         let c = contract();
