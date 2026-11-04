@@ -3,6 +3,7 @@
 import argparse
 from pathlib import Path
 import subprocess
+import struct
 import time
 
 
@@ -36,8 +37,12 @@ def run(binary: Path, screenshot: Path, seconds: float = 15.0) -> None:
             raise RuntimeError("No visible OCAF Agents Builder window detected")
         screenshot.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(["import", "-window", window, str(screenshot)], check=True, timeout=15)
-        if screenshot.stat().st_size < 1024 or screenshot.read_bytes()[:8] != bytes.fromhex("89504e470d0a1a0a"):
+        data = screenshot.read_bytes()
+        if len(data) < 1024 or data[:8] != bytes.fromhex("89504e470d0a1a0a"):
             raise RuntimeError("Missing or invalid Linux window screenshot")
+        width, height = struct.unpack(">II", data[16:24])
+        if width < 320 or height < 240:
+            raise RuntimeError("Linux window screenshot has invalid dimensions")
     finally:
         if process.poll() is None:
             process.terminate()
