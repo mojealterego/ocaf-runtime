@@ -6,6 +6,7 @@ on:
     paths:
       - "apps/agents-builder-kaios/**"
       - "scripts/tests/test_builder_kaios.py"
+      - "scripts/verify_kaios_package.py"
       - ".github/workflows/agents-builder-kaios.yml"
   workflow_dispatch:
 
@@ -36,6 +37,7 @@ jobs:
           zip -9 -X ../../dist/ocaf-agents-builder-kaios-2.5.zip manifest.webapp index.html app.js style.css
           cd ../..
           unzip -t dist/ocaf-agents-builder-kaios-2.5.zip
+          python3 scripts/verify_kaios_package.py dist/ocaf-agents-builder-kaios-2.5.zip
           (cd apps/agents-builder-kaios && sha256sum manifest.webapp index.html app.js style.css) > dist/ocaf-agents-builder-kaios-2.5.files.sha256
           sha256sum dist/ocaf-agents-builder-kaios-2.5.zip > dist/ocaf-agents-builder-kaios-2.5.zip.sha256
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
