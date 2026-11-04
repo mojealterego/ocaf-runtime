@@ -77,6 +77,13 @@ with sync_playwright() as playwright:
     page.locator("#canonical-source").fill("")
     page.locator("#canonical-load").click()
     assert len(json.loads(page.locator("#canonical-source").input_value())["edges"]) == 2
+    page.locator("#canonical-port-kind").select_option("json")
+    page.locator("#canonical-new").click()
+    assert json.loads(page.locator("#canonical-source").input_value())["nodes"][0]["outputs"][0]["kind"] == "json"
+    page.locator("#canonical-transform").click()
+    assert json.loads(page.locator("#canonical-source").input_value())["nodes"][-1]["inputs"][0]["kind"] == "json"
+    page.locator("#canonical-remove").click()
+    assert json.loads(page.locator("#canonical-result").inner_text())["ordered_nodes"] == ["input", "output"]
     evidence = ROOT.parents[1] / "dist" / "kaios-chromium-e2e.png"
     evidence.parent.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(evidence), full_page=True)
