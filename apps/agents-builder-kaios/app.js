@@ -48,11 +48,12 @@
     var next = validate({ version: 1, project_id: state.project_id, nodes: state.nodes.concat([{ id: id }]) });
     state = next; $('node-name').value = ''; render(); status('Węzeł dodany. Nie uruchomiono narzędzi.');
   }); };
-  function applySource() {
+  function parseSource() {
     var source = $('source').value;
     if (source.length > 16384) throw Error('Projekt przekracza limit 16 KiB');
-    state = validate(JSON.parse(source));
+    return validate(JSON.parse(source));
   }
+  function applySource() { state = parseSource(); }
   $('apply').onclick = function () { safe(function () {
     applySource();
     render(); status('Zaimportowano obsługiwany podzbiór JSON.');
