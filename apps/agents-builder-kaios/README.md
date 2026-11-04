@@ -2,7 +2,7 @@
 
 Status: **source implementation committed; packaging CI and real device/simulator execution unverified**.
 
-This is a small, keypad-friendly, offline **subset** of OCAF Agents Builder, not a full agent compiler or runtime. It targets the KaiOS 2.5 packaged web-app model (`manifest.webapp`). KaiOS 3.x compatibility has not been established and must be tested separately.
+A side-effect-free canonical typed DAG validator is included in `canonical-graph.js` and tested separately. The v1 editor still uses its restricted node-only schema; canonical project editing and execution are not integrated.\n\nThis is a small, keypad-friendly, offline **subset** of OCAF Agents Builder, not a full agent compiler or runtime. It targets the KaiOS 2.5 packaged web-app model (`manifest.webapp`). KaiOS 3.x compatibility has not been established and must be tested separately.
 
 ## Implemented
 
