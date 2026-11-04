@@ -11,7 +11,7 @@
     if (!value || value.version !== 1 || !validName(value.project_id) ||
         !Array.isArray(value.nodes) || value.nodes.length > 32) throw Error('Nieprawidłowy projekt');
     if (Object.keys(value).sort().join(',') !== 'nodes,project_id,version') throw Error('Nieobsługiwane pola projektu');
-    var seen = {};
+    var seen = Object.create(null);
     for (var i = 0; i < value.nodes.length; i++) {
       var n = value.nodes[i];
       if (!n || !validName(n.id) || Object.keys(n).join(',') !== 'id' || Object.prototype.hasOwnProperty.call(seen, n.id)) throw Error('Nieprawidłowy, nieobsługiwany lub powtórzony węzeł');
