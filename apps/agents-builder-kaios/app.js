@@ -78,8 +78,8 @@
     state = loaded; render(); status('Otworzono projekt.');
   }); };
   document.addEventListener('keydown', function (event) {
-    if (event.key === 'SoftLeft') $('save').click();
-    if (event.key === 'SoftRight') $('load').click();
+    if (event.key === 'SoftLeft') { event.preventDefault(); $('save').click(); }
+    if (event.key === 'SoftRight') { event.preventDefault(); $('load').click(); }
   });
   render();
 }());
