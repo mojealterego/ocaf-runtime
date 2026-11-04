@@ -60,11 +60,9 @@
   }); };
   $('save').onclick = function () { safe(function () {
     var requestedId = $('project').value.trim();
-    if (mode === 'code' && $('source').value.length > 16384) throw Error('Projekt przekracza limit 16 KiB');
-    if (mode === 'code' && JSON.parse($('source').value).project_id !== requestedId) throw Error('Niezgodny identyfikator projektu w edytorze Code');
-    if (mode === 'code') applySource();
-    if (mode === 'code' && requestedId !== state.project_id) throw Error('Niezgodny identyfikator projektu w edytorze Code');
-    var candidate = validate({ version: state.version, project_id: requestedId, nodes: state.nodes });
+    var draft = mode === 'code' ? parseSource() : state;
+    if (mode === 'code' && draft.project_id !== requestedId) throw Error('Niezgodny identyfikator projektu w edytorze Code');
+    var candidate = validate({ version: draft.version, project_id: requestedId, nodes: draft.nodes });
     localStorage.setItem('ocaf-kaios-v1:' + candidate.project_id, JSON.stringify(candidate));
     state = candidate;
     render(); status('Zapisano lokalnie.');
