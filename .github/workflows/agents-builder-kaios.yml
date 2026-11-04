@@ -1,0 +1,41 @@
+name: OCAF Agents Builder KaiOS source package
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/agents-builder-kaios/**"
+      - "scripts/tests/test_builder_kaios.py"
+      - ".github/workflows/agents-builder-kaios.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  kaios-package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify KaiOS source contracts
+        run: python3 -m unittest discover -s scripts/tests -p test_builder_kaios.py -v
+      - name: Check JavaScript syntax
+        run: node --check apps/agents-builder-kaios/app.js
+      - name: Package KaiOS 2.5 web application
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cd apps/agents-builder-kaios
+          zip -9 -X ../../dist/ocaf-agents-builder-kaios-2.5.zip manifest.webapp index.html app.js style.css
+          cd ../..
+          unzip -t dist/ocaf-agents-builder-kaios-2.5.zip
+          sha256sum dist/ocaf-agents-builder-kaios-2.5.zip > dist/ocaf-agents-builder-kaios-2.5.zip.sha256
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ocaf-agents-builder-kaios-source-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
