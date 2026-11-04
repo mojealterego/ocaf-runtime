@@ -491,6 +491,19 @@ mod tests {
     }
 
     #[test]
+    fn obligation_tool_descriptors_have_stable_names_and_risk() {
+        let descriptors = obligation_tool_descriptors();
+        assert_eq!(descriptors.len(), 2);
+        assert_eq!(descriptors[0].name, "contract.extract_obligation");
+        assert_eq!(descriptors[0].risk, crate::governance_contract::RiskTier::Low);
+        assert_eq!(descriptors[1].name, "contract.verify_obligation");
+        assert_eq!(descriptors[1].risk, crate::governance_contract::RiskTier::Medium);
+        assert!(descriptors.iter().all(|d| d.requires_governance_journal));
+        assert!(descriptors[1].requires_human_approval);
+        assert!(!descriptors[0].requires_human_approval);
+    }
+
+    #[test]
     fn warning_window_and_source_size_are_bounded() {
         let obligation = extracted();
         assert_eq!(
