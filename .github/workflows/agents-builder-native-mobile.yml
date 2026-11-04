@@ -75,7 +75,7 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: "ocaf-builder-android-launch-evidence-${{ github.sha }}"
-          path: apps/agents-builder-android/build/evidence/android-launch.png
+          path: apps/agents-builder-android/build/evidence/
           if-no-files-found: error
           retention-days: 30
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
