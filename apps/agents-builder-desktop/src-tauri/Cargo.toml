@@ -1,0 +1,14 @@
+[package]
+name = "ocaf-agents-builder-desktop"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "build.rs"
+
+[dependencies]
+tauri = { version = "2", default-features = true }
+
+[build-dependencies]
+tauri-build = { version = "2" }
+
+[workspace]
