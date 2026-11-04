@@ -26,6 +26,8 @@ jobs:
         run: node --check apps/agents-builder-kaios/app.js
       - name: Run KaiOS behavior regression tests
         run: node apps/agents-builder-kaios/tests/runtime.cjs
+      - name: Check KaiOS save ordering
+        run: node apps/agents-builder-kaios/tests/save-regression.cjs
       - name: Package KaiOS 2.5 web application
         run: |
           set -euo pipefail
