@@ -49,6 +49,55 @@ WORKFLOWS = frozenset({
 })
 
 
+def publish_release_directory(staged: Path, destination: Path) -> None:
+    """Publish a complete release atomically, refusing an existing destination.
+
+    Linux uses renameat2(RENAME_NOREPLACE); macOS uses renamex_np(RENAME_EXCL).
+    Windows rename fails if the target exists. Unknown platforms fail closed.
+    Both paths must be siblings on the same filesystem.
+    """
+    import ctypes
+    import errno
+
+    if staged.parent != destination.parent:
+        raise ValueError("release staging and destination must be siblings")
+    if sys.platform.startswith("linux"):
+        libc = ctypes.CDLL(None, use_errno=True)
+        renameat2 = getattr(libc, "renameat2", None)
+        if renameat2 is None:
+            raise OSError(errno.ENOTSUP, "atomic no-replace rename unavailable")
+        renameat2.argtypes = [
+            ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p,
+            ctypes.c_uint,
+        ]
+        renameat2.restype = ctypes.c_int
+        result = renameat2(
+            -100, os.fsencode(staged), -100, os.fsencode(destination), 1,
+        )
+        if result != 0:
+            code = ctypes.get_errno()
+            if code == errno.EEXIST:
+                raise FileExistsError(code, os.strerror(code), str(destination))
+            raise OSError(code, os.strerror(code), str(destination))
+    elif sys.platform == "darwin":
+        libc = ctypes.CDLL(None, use_errno=True)
+        renamex_np = getattr(libc, "renamex_np", None)
+        if renamex_np is None:
+            raise OSError(errno.ENOTSUP, "atomic no-replace rename unavailable")
+        renamex_np.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint]
+        renamex_np.restype = ctypes.c_int
+        if renamex_np(os.fsencode(staged), os.fsencode(destination), 0x00000004) != 0:
+            code = ctypes.get_errno()
+            if code == errno.EEXIST:
+                raise FileExistsError(code, os.strerror(code), str(destination))
+            raise OSError(code, os.strerror(code), str(destination))
+    elif os.name == "nt":
+        # MoveFileEx without MOVEFILE_REPLACE_EXISTING (Python os.rename).
+        os.rename(staged, destination)
+    else:
+        raise OSError(errno.ENOTSUP, "atomic no-replace rename unavailable")
+
+
 def git(repo: Path, *args: str) -> bytes:
     return subprocess.check_output(
         ["git", "-C", str(repo), *args], stderr=subprocess.DEVNULL
@@ -286,7 +335,7 @@ def main() -> int:
         # together. Do not replace an existing release or follow a symlink.
         if out.exists() or out.is_symlink():
             raise FileExistsError(f"release destination appeared: {out}")
-        os.rename(staged, out)
+        publish_release_directory(staged, out)
     finally:
         if staged.exists():
             shutil.rmtree(staged)
