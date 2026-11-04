@@ -21,8 +21,16 @@ def run(binary: Path, screenshot: Path, seconds: float = 15.0) -> None:
                 capture_output=True, text=True, timeout=5, check=False,
             )
             if result.returncode == 0 and result.stdout.strip():
-                window = result.stdout.splitlines()[0].strip()
-                break
+                for candidate in result.stdout.splitlines():
+                    owner = subprocess.run(
+                        ["xdotool", "getwindowpid", candidate.strip()],
+                        capture_output=True, text=True, timeout=5, check=False,
+                    )
+                    if owner.returncode == 0 and owner.stdout.strip() == str(process.pid):
+                        window = candidate.strip()
+                        break
+                if window is not None:
+                    break
             time.sleep(0.5)
         if window is None:
             raise RuntimeError("No visible OCAF Agents Builder window detected")
