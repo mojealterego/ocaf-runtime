@@ -22,7 +22,7 @@ def png() -> bytes:
             stroke = border and (x in (9, SIZE - 10) or y in (9, SIZE - 10))
             rows.extend(GOLD if stroke else BG)
     ihdr = struct.pack(">IIBBBBB", SIZE, SIZE, 8, 6, 0, 0, 0)
-    return b"\\x89PNG\\r\\n\\x1a\\n" + chunk(b"IHDR", ihdr) + chunk(b"IDAT", zlib.compress(bytes(rows), 9)) + chunk(b"IEND", b"")
+    return bytes.fromhex("89504e470d0a1a0a") + chunk(b"IHDR", ihdr) + chunk(b"IDAT", zlib.compress(bytes(rows), 9)) + chunk(b"IEND", b"")
 
 
 def main() -> None:
