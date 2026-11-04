@@ -6,7 +6,7 @@
   "effective_date": "2026-10-15",
   "category": "AGENTS_BUILDER_PRODUCTS_NOT_AGENTS",
   "source_scope": "historical original Agents Builder capability, restored inside existing milestone IDs 0.50–0.55",
-  "note": "10 separately tracked product variants. These are tools for building agents, not ten separate agents. No extra milestone numbers have been invented for originally specified functionality.",
+  "note": "Five unified platform applications with Code/NoCode/Cloud switches. Ten historical product records remain as two acceptance variants per platform, not ten separate applications.",
   "parent_stages": [
     "0.50",
     "0.51",
@@ -545,5 +545,77 @@
       "acceptance": "7/7 builder_cloud tests PASS, rustfmt and Clippy PASS; invalid Origin/cookies/duplicate authorization/cross-tenant/CAS/replay rejected; no listener or platform E2E",
       "production_approved": false
     }
-  ]
+  ],
+  "application_architecture": {
+    "version": 1,
+    "architecture": "five-unified-applications",
+    "description": "Five applications, each with Code/NoCode mode and Cloud workspace switch; legacy ten mode acceptance records remain independent.",
+    "mode_switch": [
+      "Code",
+      "NoCode"
+    ],
+    "workspace_switch": [
+      "Local",
+      "Cloud"
+    ],
+    "applications": [
+      {
+        "id": "AB-APP-WEB",
+        "platform_id": "cloud",
+        "runtime": "browser",
+        "mode_product_ids": [
+          "AB-CLOUD-CODE",
+          "AB-CLOUD-NOCODE"
+        ],
+        "cloud_workspace": "native",
+        "native_artifact_required": false
+      },
+      {
+        "id": "AB-APP-WINDOWS",
+        "platform_id": "windows",
+        "runtime": "tauri-v2",
+        "mode_product_ids": [
+          "AB-WINDOWS-CODE",
+          "AB-WINDOWS-NOCODE"
+        ],
+        "cloud_workspace": "remote-authenticated",
+        "native_artifact_required": true
+      },
+      {
+        "id": "AB-APP-MACOS",
+        "platform_id": "macos",
+        "runtime": "tauri-v2",
+        "mode_product_ids": [
+          "AB-MACOS-CODE",
+          "AB-MACOS-NOCODE"
+        ],
+        "cloud_workspace": "remote-authenticated",
+        "native_artifact_required": true
+      },
+      {
+        "id": "AB-APP-ANDROID",
+        "platform_id": "android",
+        "runtime": "kotlin-compose-uniffi",
+        "mode_product_ids": [
+          "AB-ANDROID-CODE",
+          "AB-ANDROID-NOCODE"
+        ],
+        "cloud_workspace": "remote-authenticated",
+        "native_artifact_required": true
+      },
+      {
+        "id": "AB-APP-IOS",
+        "platform_id": "ios",
+        "runtime": "swiftui-uniffi",
+        "mode_product_ids": [
+          "AB-IOS-CODE",
+          "AB-IOS-NOCODE"
+        ],
+        "cloud_workspace": "remote-authenticated",
+        "native_artifact_required": true
+      }
+    ],
+    "acceptance_policy": "An application is not accepted until both legacy mode records and its platform-specific E2E gates pass; a browser/PWA does not count as a native executable.",
+    "implementation_status": "SPECIFIED_NOT_ACCEPTED"
+  }
 }
