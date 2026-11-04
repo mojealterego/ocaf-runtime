@@ -441,6 +441,26 @@ mod tests {
         }
     }
     #[test]
+    fn contract_verification_cannot_spoof_another_domain() {
+        let mut c = contract();
+        c.permissions.insert("contract.verify_obligation".into());
+        let mut r = request();
+        r.action = "contract.verify_obligation";
+        r.domain = Domain::CoreRetrieval;
+        r.risk = RiskTier::Low;
+        assert_eq!(
+            c.evaluate(&r, None, 150),
+            PreflightDecision::Deny(DenyReason::InvalidRequest)
+        );
+        r.action = "contract.extract_obligation";
+        c.permissions.insert("contract.extract_obligation".into());
+        assert_eq!(
+            c.evaluate(&r, None, 150),
+            PreflightDecision::Deny(DenyReason::InvalidRequest)
+        );
+    }
+
+    #[test]
     fn contract_verification_cannot_self_downgrade_risk() {
         let mut c = contract();
         c.permissions.insert("contract.verify_obligation".into());
