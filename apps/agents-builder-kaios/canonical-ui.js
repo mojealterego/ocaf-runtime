@@ -24,6 +24,58 @@
       result.textContent = 'Błąd walidacji: ' + (error.message || 'Nieprawidłowy graf');
     }
   }
+  function port(name) { return { name: name, kind: 'text' }; }
+  function node(id, kind) {
+    return { id: id, kind: kind, inputs: kind === 'input' ? [] : [port('in')],
+      outputs: kind === 'output' ? [] : [port('out')],
+      tool_name: null, max_cost_minor: 0 };
+  }
+  function edge(from, to) {
+    return { from_node: from, from_port: 'out', to_node: to, to_port: 'in' };
+  }
+  get('canonical-new').onclick = function () {
+    safe(function () {
+      key();
+      var project = { schema_version: 1, tenant_id: get('canonical-tenant').value,
+        project_id: get('canonical-id').value, revision: 1, max_cost_minor: 0,
+        grants: [], nodes: [node('input','input'), node('output','output')],
+        edges: [edge('input','output')] };
+      var plan = OCAFCanonicalGraph.compile(project, get('canonical-tenant').value);
+      get('canonical-source').value = JSON.stringify(project, null, 2);
+      result.textContent = JSON.stringify(plan, null, 2);
+    });
+  };
+  get('canonical-transform').onclick = function () {
+    safe(function () {
+      var checkedProject = checked();
+      var project = checkedProject.project;
+      var id = get('canonical-node-id').value;
+      if (!validId(id) || project.nodes.some(function (n) { return n.id === id; }))
+        throw Error('Nieprawidłowy lub powtórzony identyfikator Transform');
+      // Conservative NoCode operation: insert into the unique final edge.
+      var output = project.nodes.filter(function (n) { return n.kind === 'output'; })[0];
+      var incoming = project.edges.filter(function (e) { return e.to_node === output.id; });
+      if (incoming.length !== 1 || output.inputs.length !== 1 ||
+          incoming[0].to_port !== 'in' || incoming[0].from_port !== 'out' ||
+          output.inputs[0].kind !== 'text')
+        throw Error('Graf nieobsługiwany przez operację NoCode Transform');
+      var predecessor = project.nodes.filter(function (n) { return n.id === incoming[0].from_node; })[0];
+      var outgoingPort = predecessor.outputs.filter(function (p) { return p.name === 'out'; })[0];
+      if (!outgoingPort || outgoingPort.kind !== 'text')
+        throw Error('Transform wymaga portów text/out/in');
+      var candidate = JSON.parse(JSON.stringify(project));
+      candidate.nodes.push(node(id,'transform'));
+      candidate.edges = candidate.edges.filter(function (e) {
+        return !(e.from_node === incoming[0].from_node && e.from_port === incoming[0].from_port &&
+          e.to_node === incoming[0].to_node && e.to_port === incoming[0].to_port);
+      });
+      candidate.edges.push(edge(predecessor.id,id));
+      candidate.edges.push(edge(id,output.id));
+      var plan = OCAFCanonicalGraph.compile(candidate, get('canonical-tenant').value);
+      get('canonical-source').value = JSON.stringify(candidate, null, 2);
+      result.textContent = JSON.stringify(plan, null, 2);
+    });
+  };
   get('canonical-check').onclick = function () {
     safe(function () { result.textContent = JSON.stringify(checked().plan, null, 2); });
   };
