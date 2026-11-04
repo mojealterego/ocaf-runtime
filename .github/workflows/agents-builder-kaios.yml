@@ -30,6 +30,8 @@ jobs:
         run: node --check apps/agents-builder-kaios/app.js
       - name: Run KaiOS behavior regression tests
         run: node apps/agents-builder-kaios/tests/runtime.cjs
+      - name: Verify canonical KaiOS typed DAG validator
+        run: node apps/agents-builder-kaios/tests/canonical-graph.cjs
       - name: Verify KaiOS NoCode node removal
         run: node apps/agents-builder-kaios/tests/delete-node.cjs
       - name: Verify KaiOS keypad softkeys
@@ -48,11 +50,11 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           cd apps/agents-builder-kaios
-          zip -9 -X ../../dist/ocaf-agents-builder-kaios-2.5.zip manifest.webapp index.html app.js style.css
+          zip -9 -X ../../dist/ocaf-agents-builder-kaios-2.5.zip manifest.webapp index.html app.js style.css canonical-graph.js
           cd ../..
           unzip -t dist/ocaf-agents-builder-kaios-2.5.zip
           python3 scripts/verify_kaios_package.py dist/ocaf-agents-builder-kaios-2.5.zip
-          (cd apps/agents-builder-kaios && sha256sum manifest.webapp index.html app.js style.css) > dist/ocaf-agents-builder-kaios-2.5.files.sha256
+          (cd apps/agents-builder-kaios && sha256sum manifest.webapp index.html app.js style.css canonical-graph.js) > dist/ocaf-agents-builder-kaios-2.5.files.sha256
           sha256sum dist/ocaf-agents-builder-kaios-2.5.zip > dist/ocaf-agents-builder-kaios-2.5.zip.sha256
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
