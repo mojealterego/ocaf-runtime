@@ -605,6 +605,20 @@ mod tests {
     }
 
     #[test]
+    fn cited_payload_digest_is_tenant_and_party_scoped() {
+        let original = cited("Supplier shall report within 2 days.");
+        let digest = cited_clause_payload_sha256(original);
+        let other_tenant = CitedClause { tenant_id: "tenant_b", ..original };
+        let other_contract = CitedClause { contract_id: "agreement_2", ..original };
+        let other_debtor = CitedClause { debtor_id: "different_supplier", ..original };
+        let other_creditor = CitedClause { creditor_id: "different_customer", ..original };
+        let other_reference = CitedClause { reference_unix: REF + 1, ..original };
+        for changed in [other_tenant, other_contract, other_debtor, other_creditor, other_reference] {
+            assert_ne!(digest, cited_clause_payload_sha256(changed));
+        }
+    }
+
+    #[test]
     fn gated_extraction_rejects_citation_substitution_without_audit() {
         use crate::governance_contract::{Accountability, AgentContract, ActionRequest, Domain, RiskTier};
         use crate::governance_journal::GovernanceJournal;
@@ -677,7 +691,7 @@ mod tests {
         let request = ActionRequest {
             request_id: "req_1", tenant: "tenant_a", actor: "agent_a",
             action: "contract.extract_obligation", domain: Domain::ContractObligations,
-            risk: RiskTier::Low, payload_sha256: cited_clause_payload_sha256(cited("Supplier shall report within 2 days.")),
+            risk: RiskTier::Low, payload_sha256: cited_clause_payload_sha256(cited("Supplier must not report within 2 days.")),
             uses_external_provider: false, provider: None, approval: None,
         };
         let invalid = cited("Supplier must not report within 2 days.");
