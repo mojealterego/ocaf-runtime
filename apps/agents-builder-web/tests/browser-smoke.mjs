@@ -26,6 +26,8 @@ async function until(fn, description, maxMs = 20000) {
 }
 
 const cloudProjects = new Map();
+let delayedCloudPut = false;
+let cloudPutReceived = false;
 const runnerModels = [{name:'sample.gguf',size_bytes:1024,version:3,tensor_count:1}];
 const server = createServer(async (request, response) => {
   try {
@@ -101,6 +103,11 @@ const server = createServer(async (request, response) => {
         return;
       }
       if (request.method === 'PUT') {
+        if (delayedCloudPut) {
+          cloudPutReceived = true;
+          await pause(600);
+          delayedCloudPut = false;
+        }
         const {project,expected} = JSON.parse(payload);
         const previous = cloudProjects.get(id);
         if (project.tenant_id !== 'tenant-a' || project.project_id !== id) {send(403,{error:'http_403'});return;}
@@ -259,6 +266,24 @@ try {
   await evaluate('document.getElementById("cloud-save").click()');
   await until(async () => await evaluate('document.getElementById("cloud-save").disabled') === true, 'second CAS cloud save');
   assert.equal(cloudProjects.get('cloud-demo').head.revision,2);
+  // Edit the same Cloud project after PUT starts but before the server responds.
+  // The successful older CAS must not clear the newer unsaved draft.
+  await evaluate('document.getElementById("node-id").value="inflight-a";document.getElementById("add-transform").click()');
+  await until(async () => await evaluate('document.getElementById("cloud-save").disabled') === false, 'third cloud draft');
+  delayedCloudPut = true;
+  cloudPutReceived = false;
+  await evaluate('document.getElementById("cloud-save").click()');
+  await until(() => cloudPutReceived, 'delayed Cloud PUT received');
+  await evaluate('document.getElementById("node-id").value="inflight-b";document.getElementById("add-transform").click()');
+  await until(async () => await evaluate('document.getElementById("cloud-status").textContent.includes("niezapisany szkic")'), 'newer draft pending');
+  await until(async () => cloudProjects.get('cloud-demo').head.revision === 3, 'older CAS completes');
+  await until(async () => await evaluate('document.getElementById("revision-label").textContent') === 'r4 (szkic)', 'newer draft preserved after CAS');
+  assert.equal(await evaluate('document.querySelectorAll(".node-card").length'), 5);
+  assert.equal(cloudProjects.get('cloud-demo').project.nodes.length, 4, 'older save did not include concurrent edit');
+  await evaluate('document.getElementById("cloud-save").click()');
+  await until(async () => cloudProjects.get('cloud-demo').head.revision === 4, 'newer draft saved');
+  assert.equal(cloudProjects.get('cloud-demo').project.nodes.length, 5, 'newer edit persisted on retry');
+
   await evaluate('document.getElementById("workspace-local").click()');
   assert.equal(await evaluate('document.getElementById("revision-label").textContent'),'r3');
   await evaluate('document.getElementById("workspace-cloud").click()');
