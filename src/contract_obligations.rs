@@ -322,6 +322,55 @@ pub const fn obligation_tool_descriptors() -> [ObligationToolDescriptor; 2] {
     ]
 }
 
+/// PDF-1.37 bounded adapter: the shared caller must supply authenticated
+/// peer identity, trusted time and a canonical idempotency key. This only
+/// extracts a clause after durable policy admission; it does not dispatch
+/// external effects, register a network endpoint, or certify evidence.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum GatedExtraction {
+    Extracted(Option<ContractObligation>),
+    Admission(crate::governance_journal::Admission),
+}
+
+#[derive(Debug, Error)]
+pub enum GatedExtractionError {
+    #[error("governance journal admission failed")]
+    Journal(#[from] crate::governance_journal::JournalError),
+    #[error("invalid cited clause")]
+    Clause(#[from] ClauseError),
+    #[error("action, domain or risk does not match extraction descriptor")]
+    InvalidAction,
+}
+
+pub fn gated_extract_obligation(
+    journal: &crate::governance_journal::GovernanceJournal,
+    contract: &crate::governance_contract::AgentContract,
+    request: &crate::governance_contract::ActionRequest<'_>,
+    approval_authority: Option<&crate::governance_contract::ApprovalAuthority>,
+    trusted_peer: (&str, &str),
+    trusted_now_unix: u64,
+    idempotency_key: &str,
+    clause: CitedClause<'_>,
+) -> Result<GatedExtraction, GatedExtractionError> {
+    use crate::governance_contract::{Domain, RiskTier};
+    use crate::governance_journal::Admission;
+    if request.action != "contract.extract_obligation"
+        || request.domain != Domain::ContractObligations
+        || request.risk != RiskTier::Low
+        || clause.tenant_id != trusted_peer.0
+        || clause.debtor_id.is_empty()
+    {
+        return Err(GatedExtractionError::InvalidAction);
+    }
+    let admission = journal.begin(
+        contract, request, approval_authority, trusted_peer, trusted_now_unix, idempotency_key,
+    )?;
+    if admission != Admission::FreshPending {
+        return Ok(GatedExtraction::Admission(admission));
+    }
+    Ok(GatedExtraction::Extracted(extract_cited_obligation(clause)?))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
