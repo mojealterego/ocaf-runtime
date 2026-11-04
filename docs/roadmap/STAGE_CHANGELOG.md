@@ -1,3 +1,9 @@
+## 2026-11-05 — Linux native Rust toolchain pin (CI UNVERIFIED)
+
+- Source: `rust-toolchain.toml` specifies `1.99.0`; Linux workflow now explicitly requests the same compiler.
+- Test: `scripts/tests/test_builder_native_desktop.py` checks the version is read from the TOML source and present in the workflow.
+- Commits: `90abec7`, `9169cfd`, `bd16ec8`. Execution and final-SHA CI remain unverified. No product acceptance status changed.
+
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 ## 2026-11-04 — Linux desktop process smoke regression fix (CI UNVERIFIED)
 
