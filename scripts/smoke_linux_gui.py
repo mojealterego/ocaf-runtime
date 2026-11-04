@@ -9,7 +9,7 @@ import time
 def run(binary: Path, screenshot: Path, seconds: float = 15.0) -> None:
     if not binary.is_file():
         raise FileNotFoundError(binary)
-    process = subprocess.Popen([str(binary)], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    process = subprocess.Popen([str(binary)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         deadline = time.monotonic() + seconds
         window = None
