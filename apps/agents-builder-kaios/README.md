@@ -37,3 +37,7 @@ Formularz kanonicznego DAG ma osobne pola `Tenant` i `ID projektu DAG`. Zapis i 
 ## Kanoniczny NoCode — operacje grafowe
 
 Przycisk **Nowy graf** tworzy poprawny, dwuwęzłowy projekt kanoniczny `Input → Output` z portami `text`. Przycisk **Dodaj Transform** wstawia nowy węzeł w jedyne połączenie prowadzące do `Output` (wymagane porty `out` i `in`, typ `text`). Po operacji następuje pełna walidacja kanonicznego DAG. Błędne identyfikatory, duplikaty i nieobsługiwane grafy są odrzucane bez modyfikacji edytora. Jest to ograniczony edytor liniowych transformacji, **nie** kompletny wizualny edytor dowolnych grafów, narzędzi ani uprawnień.
+
+## Odwracalne operacje NoCode
+
+**Usuń Transform** usuwa wskazany identyfikatorem węzeł typu `transform` z dokładnie jednym wejściem i jednym wyjściem `text`, a następnie łączy jego poprzednika z następnikiem. Zmiana jest atomowa na poziomie stanu formularza: edytor aktualizuje JSON dopiero po pomyślnej walidacji całego grafu. Odmowa następuje dla innych typów węzłów, nieobsługiwanych portów i nieprawidłowej topologii. To nie jest mechanizm cofania dowolnych zmian ani pełny edytor DAG.
