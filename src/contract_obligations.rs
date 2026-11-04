@@ -401,6 +401,27 @@ mod tests {
     }
 
     #[test]
+    fn fulfillment_preflight_requires_evidence_and_unexpired_deadline() {
+        let record = extracted();
+        assert_eq!(
+            verify_fulfillment_preflight(&record, record.due_at_unix - 1, &[], true),
+            Err(FulfillmentError::MissingEvidence)
+        );
+        assert_eq!(
+            verify_fulfillment_preflight(&record, record.due_at_unix - 1, &["evidence_1"], false),
+            Err(FulfillmentError::MissingAuthorization)
+        );
+        assert_eq!(
+            verify_fulfillment_preflight(&record, record.due_at_unix, &["evidence_1"], true),
+            Err(FulfillmentError::DeadlineBreached)
+        );
+        assert_eq!(
+            verify_fulfillment_preflight(&record, record.due_at_unix - 1, &["evidence_1"], true),
+            Ok(())
+        );
+    }
+
+    #[test]
     fn warning_window_and_source_size_are_bounded() {
         let obligation = extracted();
         assert_eq!(
