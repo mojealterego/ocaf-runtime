@@ -164,6 +164,47 @@ pub trait DocumentDriver {
     fn append(&self, key: &DocumentKey, expected: &Head, event: &Event)
         -> Result<Head, StoreError>;
 }
+/// Restricts a document driver to the tenant authenticated by the caller.
+/// The tenant identifier must come from a trusted identity mapping, never
+/// from an untrusted tool request or document payload.
+pub struct TenantDocumentDriver<'a, D: DocumentDriver> {
+    inner: &'a D,
+    tenant: String,
+}
+impl<'a, D: DocumentDriver> TenantDocumentDriver<'a, D> {
+    pub fn new(inner: &'a D, authenticated_tenant: &str) -> Result<Self, StoreError> {
+        DocumentKey::new(authenticated_tenant, "scope")?;
+        Ok(Self {
+            inner,
+            tenant: authenticated_tenant.to_owned(),
+        })
+    }
+    fn authorize(&self, key: &DocumentKey) -> Result<(), StoreError> {
+        if key.tenant != self.tenant {
+            return Err(StoreError::Invalid);
+        }
+        Ok(())
+    }
+}
+impl<D: DocumentDriver> DocumentDriver for TenantDocumentDriver<'_, D> {
+    fn load(
+        &self,
+        key: &DocumentKey,
+        expected: Option<&Head>,
+    ) -> Result<(DocumentState, Head), StoreError> {
+        self.authorize(key)?;
+        self.inner.load(key, expected)
+    }
+    fn append(
+        &self,
+        key: &DocumentKey,
+        expected: &Head,
+        event: &Event,
+    ) -> Result<Head, StoreError> {
+        self.authorize(key)?;
+        self.inner.append(key, expected, event)
+    }
+}
 pub struct SqliteDocumentDriver {
     path: PathBuf,
 }
