@@ -38,6 +38,8 @@ click('nocode');
 assert.deepEqual(nodes(), ['second'], 'Code draft must survive mode switch');
 click('code');
 elements.source.value = JSON.stringify({ version: 1, project_id: 'agent', nodes: [{id:'third'}] });
+click('code');
+assert.deepEqual(nodes(), ['third'], 'Repeated Code selection must preserve unsaved draft');
 click('save');
 assert.deepEqual(JSON.parse(storage.get('ocaf-kaios-v1:agent')).nodes, [{id:'third'}], 'Code draft must be saved');
 elements.source.value = '{broken';
