@@ -293,8 +293,14 @@ impl DocumentDriver for SqliteDocumentDriver {
         let mut c = self.checked_connection()?;
         let tx = c.transaction().map_err(|_| StoreError::Database)?;
         let (state, head, _) = replay(&tx, key)?;
-        if expected.is_some_and(|h| h != &head) {
-            return Err(StoreError::Conflict);
+        if let Some(pinned) = expected {
+            if pinned.revision > head.revision {
+                // A previously witnessed revision has disappeared: fail closed.
+                return Err(StoreError::Integrity);
+            }
+            if pinned != &head {
+                return Err(StoreError::Conflict);
+            }
         }
         Ok((state, head))
     }
