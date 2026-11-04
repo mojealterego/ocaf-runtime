@@ -45,6 +45,25 @@ jobs:
         run: python3 scripts/verify_native_artifact.py linux apps/agents-builder-desktop/src-tauri/target/release/ocaf-agents-builder-desktop
       - name: Run Linux desktop process under virtual X server
         run: xvfb-run -a python3 scripts/smoke_native_desktop.py apps/agents-builder-desktop/src-tauri/target/release/ocaf-agents-builder-desktop --seconds 5
+      - name: Record ELF architecture and runtime library dependencies
+        run: |
+          set -euo pipefail
+          binary="apps/agents-builder-desktop/src-tauri/target/release/ocaf-agents-builder-desktop"
+          mkdir -p apps/agents-builder-desktop/src-tauri/target/evidence
+          file "$binary" | tee apps/agents-builder-desktop/src-tauri/target/evidence/linux-file.txt
+          ldd "$binary" | tee apps/agents-builder-desktop/src-tauri/target/evidence/linux-ldd.txt
+          if grep -Fq "not found" apps/agents-builder-desktop/src-tauri/target/evidence/linux-ldd.txt; then
+            echo "Missing Linux runtime shared library" >&2
+            exit 1
+          fi
+          sha256sum "$binary" | tee apps/agents-builder-desktop/src-tauri/target/evidence/linux-sha256.txt
+      - name: Upload Linux dependency and digest evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ocaf-agents-builder-linux-evidence-${{ github.sha }}
+          path: apps/agents-builder-desktop/src-tauri/target/evidence/
+          if-no-files-found: error
+          retention-days: 30
       - name: Upload Linux executable
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
