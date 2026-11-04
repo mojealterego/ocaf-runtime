@@ -24,7 +24,7 @@ class DesktopSmokeTests(unittest.TestCase):
     def test_healthy_process_survives_window(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "healthy"
-            p.write_text("#!/bin/sh\\nsleep 3\\n")
+            p.write_text("#!/bin/sh\nsleep 3\n")
             p.chmod(p.stat().st_mode | stat.S_IXUSR)
             smoke.smoke(p, 0.5)
 
@@ -32,7 +32,7 @@ class DesktopSmokeTests(unittest.TestCase):
     def test_crash_is_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "crash"
-            p.write_text("#!/bin/sh\\nexit 7\\n")
+            p.write_text("#!/bin/sh\nexit 7\n")
             p.chmod(p.stat().st_mode | stat.S_IXUSR)
             with self.assertRaises(RuntimeError):
                 smoke.smoke(p, 0.5)
