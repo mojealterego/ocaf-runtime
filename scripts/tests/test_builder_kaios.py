@@ -34,6 +34,10 @@ class KaiOSContracts(unittest.TestCase):
         self.assertIn("Object.keys(value).sort()", js)
         self.assertIn("Object.keys(n).join(',')", js)
 
+    def test_node_id_map_has_null_prototype(self):
+        js = (APP / "app.js").read_text()
+        self.assertIn("var seen = Object.create(null);", js)
+
     def test_single_non_module_script_and_keypad_controls(self):
         html = (APP / "index.html").read_text()
         js = (APP / "app.js").read_text()
