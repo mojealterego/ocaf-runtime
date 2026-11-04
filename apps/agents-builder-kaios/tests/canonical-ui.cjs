@@ -12,6 +12,7 @@ const elements = {
   'canonical-transform': { onclick: null },
   'canonical-remove': { onclick: null },
   'canonical-node-id': { value: 'step' },
+  'canonical-port-kind': { value: 'text' },
   'canonical-source': { value: '' },
   'canonical-tenant': { value: 'local' },
   'canonical-id': { value: 'agent' },
@@ -75,4 +76,23 @@ assert.deepEqual(JSON.parse(elements['canonical-result'].textContent).ordered_no
 elements['canonical-remove'].onclick();
 assert.match(elements['canonical-result'].textContent, /Błąd/);
 assert.equal(JSON.parse(elements['canonical-source'].value).nodes.length, 2);
-console.log('PASS canonical KaiOS UI validation, persistence, NoCode insert/remove');
+elements['canonical-port-kind'].value = 'json';
+elements['canonical-new'].onclick();
+let typed = JSON.parse(elements['canonical-source'].value);
+assert.equal(typed.nodes[0].outputs[0].kind, 'json');
+assert.equal(typed.nodes[1].inputs[0].kind, 'json');
+elements['canonical-transform'].onclick();
+typed = JSON.parse(elements['canonical-source'].value);
+assert.equal(typed.nodes[2].inputs[0].kind, 'json');
+assert.equal(typed.nodes[2].outputs[0].kind, 'json');
+elements['canonical-remove'].onclick();
+assert.deepEqual(JSON.parse(elements['canonical-result'].textContent).ordered_nodes, ['input','output']);
+elements['canonical-port-kind'].value = 'bytes';
+elements['canonical-new'].onclick();
+assert.equal(JSON.parse(elements['canonical-source'].value).nodes[0].outputs[0].kind, 'bytes');
+elements['canonical-port-kind'].value = 'invalid';
+const previousSource = elements['canonical-source'].value;
+elements['canonical-new'].onclick();
+assert.match(elements['canonical-result'].textContent, /Błąd/);
+assert.equal(elements['canonical-source'].value, previousSource);
+console.log('PASS canonical KaiOS UI typed ports, persistence, NoCode insert/remove');
