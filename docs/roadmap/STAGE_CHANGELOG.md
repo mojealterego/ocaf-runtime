@@ -1,5 +1,13 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-04 — Agents Builder: bezpieczny import GGUF do lokalnego runnera (IMPLEMENTED_CI_PENDING)
+
+- Testy RED SHA `af8b3058161ca1aa8839664f084068a3c27ea41a`: import pliku z browser File API, endpoint HTTP, ścisły Origin/Host/Bearer, atomowe wykluczenie nadpisania, usuwanie uszkodzonych plików i integralność SHA-256.
+- Backend: dodano `POST /v1/local-runner/import`, przesyłanie binarne kawałkami ≤1 MiB, kontrolę GGUF v2/v3, twardy limit wielkości, prywatny plik tymczasowy oraz atomowe opublikowanie tylko nowej nazwy bez nadpisania. Odrzucone żądania zamykają połączenie HTTP.
+- UI: nowy kontrolowany import wcześniej pobranego GGUF, odświeżenie katalogu i wybór modelu; brak importu bez sesji, bez wykonania modelu do wyraźnego kliknięcia.
+- Nie ma backendowego pobierania dowolnych URL: operator pobiera GGUF przeglądarką z katalogu Hugging Face o przypiętym SHA, następnie importuje File do tej samej maszyny.
+- Kanoniczne stany 0.50–0.55 i `production_approved=false` nie zmienione. Brak rzeczywistego modelu E2E, testów na fizycznym Android i produkcyjnego sejfu API.
+
 ## 2026-11-04 — Agents Builder: lokalny GGUF runner i inferencja llama.cpp (IMPLEMENTED_CI_PENDING)
 
 - Nowy most `apps/agents-builder-web/local_runner.py`: HTTP server związany z 127.0.0.1, token sesji, jawny POST, dokładny Origin, kontrola Host, walidacja GGUF i limit zasobów. Startuje lokalne `llama-server` przez `subprocess.Popen` bez shella, z odrębnym tokenem backendowym przekazanym przez środowisko procesu; brak narzędzi modelu.

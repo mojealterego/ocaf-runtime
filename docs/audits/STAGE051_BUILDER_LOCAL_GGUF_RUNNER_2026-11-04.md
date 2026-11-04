@@ -32,3 +32,9 @@
   RAM/VRAM na Samsung Android, niezależnego audytu, systemowego sandboxa,
   produkcyjnego uwierzytelniania wielotenantowego i akceptacji operatora.
   `production_approved=false`; historyczna roadmapa pozostaje nienaruszona.
+
+## Uzupełnienie 2026-11-04: bezpieczny browser-to-local upload
+
+- Endpoint POST /v1/local-runner/import wymaga sesyjnego Bearer i Origin; transfer odbywa się wyłącznie do dozwolonego katalogu GGUF na localhost.
+- JSON nie zawiera wag ani kluczy API; plik strumieniowany do 1 MiB porcji, z limitem rozmiaru, integralnością SHA-256, weryfikacją nagłówka i atomowym utworzeniem nazwy bez nadpisania.
+- Testy red commit af8b3058161ca1aa8839664f084068a3c27ea41a; green CI do weryfikacji. Produkcyjne wagi/model E2E niepotwierdzone.

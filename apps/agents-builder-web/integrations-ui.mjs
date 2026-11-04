@@ -251,6 +251,7 @@ export function initIntegrations({getContext,notify}){
     el('model-save').disabled=!next;
     el('model-export').disabled=!next;
     if(el('runner-start'))el('runner-start').disabled=!next||ctx.workspace!=='local'||!el('runner-model').value;
+    if(el('runner-import'))el('runner-import').disabled=!next||ctx.workspace!=='local'||!runnerClient||!el('runner-file').files?.length;
     if(contextKey===next)return;
     contextKey=next;
     catalog=null;localGguf=null;activeProfile=null;
@@ -279,6 +280,7 @@ export function initIntegrations({getContext,notify}){
       try{
         const [models,status]=await Promise.all([client.models(),client.status()]);
         runnerClient=client;
+        el('runner-import').disabled=!el('runner-file').files?.length;
         showModels(models);
         showStatus(status);
       }catch(error){
@@ -312,9 +314,26 @@ export function initIntegrations({getContext,notify}){
       el('runner-token').value='';
       el('runner-model').replaceChildren();
       el('runner-start').disabled=true;
+      el('runner-import').disabled=true;
       setStatus('Rozłączono. Proces modelu pozostaje pod kontrolą lokalnego serwera.');
     }));
     el('runner-refresh').addEventListener('click',safe(refresh));
+    el('runner-file').addEventListener('change',()=>{
+      el('runner-import').disabled=!runnerClient||!el('runner-file').files?.length||
+        getContext().workspace!=='local';
+    });
+    el('runner-import').addEventListener('click',safe(async()=>{
+      if(!runnerClient||getContext().workspace!=='local')throw Error('runner: wymagany lokalny token sesji');
+      const file=el('runner-file').files?.[0];
+      if(!file)throw Error('runner: wybierz pobrany plik GGUF');
+      el('runner-status').textContent='Import GGUF na urządzeniu trwa. Nie zamykaj karty.';
+      const receipt=await runnerClient.importGguf(file);
+      await refresh();
+      el('runner-model').value=receipt.name;
+      setStatus('Zaimportowano '+receipt.name+' · SHA-256 '+receipt.sha256);
+      el('runner-file').value='';
+      el('runner-import').disabled=true;
+    }));
     el('runner-start').addEventListener('click',safe(async()=>{
       if(!runnerClient)throw Error('runner: brak sesji');
       if(getContext().workspace!=='local')throw Error('runner: tylko tryb Local');

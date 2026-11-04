@@ -23,6 +23,7 @@ import stat
 import struct
 import subprocess
 import sys
+import tempfile
 import threading
 from typing import Any
 from urllib.parse import urlsplit
@@ -151,6 +152,52 @@ class LocalRunner:
             except RunnerError:
                 continue
         return models[:200]
+
+    def import_model(self, filename: str, source, length: int) -> dict:
+        """Stream an operator-selected GGUF into models-dir without ever
+        overwriting a model. Keep memory use bounded to 1 MiB.
+        """
+        if not isinstance(filename, str) or not MODEL_NAME.fullmatch(filename):
+            raise RunnerError(422, "model: invalid GGUF filename")
+        if type(length) is not int or not 24 <= length <= self.max_model_bytes:
+            raise RunnerError(413, "model: upload exceeds configured limit")
+        destination = self.models_dir / filename
+        if destination.exists() or destination.is_symlink():
+            raise RunnerError(409, "model: file already exists")
+        fd, temporary = tempfile.mkstemp(prefix=".ocaf-gguf-upload-",
+                                        suffix=".tmp", dir=self.models_dir)
+        hash_state = hashlib.sha256()
+        try:
+            remaining = length
+            with os.fdopen(fd, "wb") as output:
+                while remaining:
+                    chunk = source.read(min(1024 * 1024, remaining))
+                    if not chunk:
+                        raise RunnerError(422, "model: truncated upload")
+                    remaining -= len(chunk)
+                    output.write(chunk)
+                    hash_state.update(chunk)
+                output.flush()
+                os.fsync(output.fileno())
+            with open(temporary, "rb") as uploaded:
+                header = uploaded.read(24)
+            # Validate before publishing an archive, never leave an invalid
+            # GGUF visible in the active model directory.
+            if header[:4] != b"GGUF" or len(header) != 24:
+                raise RunnerError(422, "model: invalid GGUF upload")
+            version, tensors, metadata = struct.unpack_from("<IQQ", header, 4)
+            if version not in (2, 3) or tensors > 10_000_000 or metadata > 65_536:
+                raise RunnerError(422, "model: unsupported GGUF upload")
+            try:
+                os.link(temporary, destination, follow_symlinks=False)
+            except FileExistsError as error:
+                raise RunnerError(409, "model: concurrent upload or existing file") from error
+            return {"name": filename, "size_bytes": length,
+                    "sha256": hash_state.hexdigest(), "version": version}
+        except OSError as error:
+            raise RunnerError(507, "model: local storage unavailable") from error
+        finally:
+            os.unlink(temporary)
 
     def status(self) -> dict:
         with self.lock:
@@ -329,6 +376,8 @@ class LocalHandler(BaseHTTPRequestHandler):
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("Cross-Origin-Resource-Policy", "same-origin")
         self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Connection", "close")
+        self.close_connection = True
         self.end_headers()
         self.wfile.write(content)
 
@@ -395,9 +444,21 @@ class LocalHandler(BaseHTTPRequestHandler):
             self.authorized(write=True)
             path = self.route()
             if path not in ("/v1/local-runner/start", "/v1/local-runner/chat",
-                            "/v1/local-runner/stop"):
+                            "/v1/local-runner/stop", "/v1/local-runner/import"):
                 raise RunnerError(404, "not found")
-            if self.headers.get("Content-Type", "").split(";")[0].strip() != "application/json":
+            mime = self.headers.get("Content-Type", "").split(";")[0].strip()
+            if path == "/v1/local-runner/import":
+                if mime != "application/octet-stream":
+                    raise RunnerError(415, "request: binary GGUF required")
+                try:
+                    size = int(self.headers.get("Content-Length", "0"))
+                except ValueError as error:
+                    raise RunnerError(400, "request: invalid upload length") from error
+                name = self.headers.get("X-OCAF-Model-Name", "")
+                result = self.server.runner.import_model(name, self.rfile, size)
+                self.json_response(201, result)
+                return
+            if mime != "application/json":
                 raise RunnerError(415, "request: application/json required")
             try:
                 n = int(self.headers.get("Content-Length", "0"))

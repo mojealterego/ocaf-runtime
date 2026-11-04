@@ -84,5 +84,37 @@ export class LocalRunnerClient {
     if(typeof result.text!=='string'||result.text.length>200000)throw new Error('runner: invalid chat response');
     return result;
   }
+  async importGguf(file){
+    if(!this.#token)throw new Error('runner: disconnected');
+    if(!(file instanceof Blob)||typeof file.name!=='string'||!MODEL.test(file.name)||
+      file.name.includes('..')||!Number.isSafeInteger(file.size)||
+      file.size<24||file.size>100*1024**3)throw new Error('runner: invalid GGUF upload');
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),20*60*1000);
+    try{
+      const response=await this.#fetch(this.#origin+'/v1/local-runner/import',{
+        method:'POST',body:file,
+        credentials:'omit',redirect:'error',cache:'no-store',
+        referrerPolicy:'no-referrer',signal:controller.signal,
+        headers:{
+          Authorization:'Bearer '+this.#token,
+          Accept:'application/json',
+          'Content-Type':'application/octet-stream',
+          'X-OCAF-Model-Name':file.name,
+        }
+      });
+      if(Number(response.headers?.get('Content-Length'))>8192)throw new Error('runner: upload response limit');
+      const raw=await response.text();
+      if(raw.length>8192)throw new Error('runner: upload response limit');
+      let body;
+      try{body=JSON.parse(raw);}catch{throw new Error('runner: invalid upload response');}
+      if(!response.ok)throw new LocalRunnerError(response.status,
+        typeof body.error==='string'?body.error.slice(0,200):'runner: upload failed');
+      if(body.name!==file.name||body.size_bytes!==file.size||
+        !/^[0-9a-f]{64}$/.test(body.sha256)||![2,3].includes(body.version))
+        throw new Error('runner: invalid upload receipt');
+      return body;
+    }finally{clearTimeout(timeout);}
+  }
   stop(){return this.#request('stop',{method:'POST',payload:{},timeout:15000});}
 }

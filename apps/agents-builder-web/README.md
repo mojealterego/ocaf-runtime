@@ -183,3 +183,26 @@ authentication and negative paths. This is **not** proof that real GGUF
 weights were loaded or inference benchmarked on Android; those E2E gates
 remain open. The source bundle does not contain GGUF weights or a binary
 llama-server executable.
+
+
+### Import a GGUF downloaded from Hugging Face directly from the browser
+
+The GGUF catalog panel provides an explicit download link pinned to a
+Hugging Face model revision. After the browser finishes downloading, return
+to the Local GGUF runner panel, click Connect and select the downloaded
+`.gguf` in **GGUF downloaded to this device**. Click **Import GGUF into local
+model directory**. This sends the selected browser file to the
+same-origin loopback companion server, which streams it in 1 MiB chunks
+to a private temporary file, checks GGUF magic/version and reserves the final
+name with atomic exclusive link. Existing models are **never overwritten**.
+The receipt includes the complete-file SHA-256. The new file appears in
+the runner's models list immediately; then the saved settings can be used
+to start and query it. Provider API keys are not involved.
+
+This is deliberately not remote URL fetching by the privileged Python
+service: the only upload source is the operator's browser File object.
+This avoids arbitrary URL fetching and SSRF in the local control API.
+Large transfers are limited by the configured model size and timeouts;
+if a transfer fails, its temporary file is deleted. A successful import
+does not guarantee the model is compatible with the installed llama.cpp,
+or that device RAM is sufficient.

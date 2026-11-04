@@ -150,6 +150,12 @@
       <button id="runner-start" type="button" class="primary" disabled data-i18n="runner_start">Załaduj i uruchom model</button>
       <button id="runner-stop" type="button" class="danger" data-i18n="runner_stop">Zatrzymaj model</button>
     </div>
+    <div class="runner-controls">
+      <label><span data-i18n="runner_import_label">GGUF pobrany na urządzenie</span>
+        <input id="runner-file" type="file" accept=".gguf">
+      </label>
+      <button id="runner-import" type="button" class="secondary" disabled data-i18n="runner_import">Importuj GGUF do lokalnego katalogu modeli</button>
+    </div>
     <output id="runner-status" role="status" aria-live="polite">Brak połączenia.</output>
     <label class="runner-prompt"><span data-i18n="runner_prompt">Wiadomość dla modelu</span>
       <textarea id="runner-prompt" rows="4" maxlength="12000" placeholder="Wpisz pytanie do lokalnego modelu (bez automatycznego wykonywania narzędzi)"></textarea>
