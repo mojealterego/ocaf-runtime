@@ -434,6 +434,29 @@ mod tests {
         }
     }
     #[test]
+    fn contract_verification_cannot_self_downgrade_risk() {
+        let mut c = contract();
+        c.permissions.insert("contract.verify_obligation".into());
+        let mut r = request();
+        r.domain = Domain::ContractObligations;
+        r.action = "contract.verify_obligation";
+        r.risk = RiskTier::Low;
+        assert_eq!(
+            c.evaluate(&r, None, 150),
+            PreflightDecision::Deny(DenyReason::InvalidRequest)
+        );
+        r.risk = RiskTier::Medium;
+        assert_eq!(
+            c.evaluate(&r, None, 150),
+            PreflightDecision::Deny(DenyReason::MissingApproval)
+        );
+        let authority = ApprovalAuthority::new([9; 32]).unwrap();
+        let approval = signed_approval(&r, ApproverRole::LegalReviewer);
+        r.approval = Some(&approval);
+        assert_eq!(c.evaluate(&r, Some(&authority), 150), PreflightDecision::Continue);
+    }
+
+    #[test]
     fn medium_risk_requires_valid_human_approval_and_role() {
         let c = contract();
         let authority = ApprovalAuthority::new([9; 32]).unwrap();
