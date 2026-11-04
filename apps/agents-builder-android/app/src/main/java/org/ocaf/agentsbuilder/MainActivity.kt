@@ -24,10 +24,14 @@ class MainActivity : ComponentActivity() {
                     settings.setAllowFileAccessFromFileURLs(false)
                     settings.setAllowUniversalAccessFromFileURLs(false)
                     settings.allowContentAccess = false
+                    settings.allowFileAccess = false
                     val loader = WebViewAssetLoader.Builder()
                         .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this@MainActivity))
                         .build()
                     webViewClient = object : WebViewClientCompat() {
+                        override fun shouldOverrideUrlLoading(view: WebView, request: android.webkit.WebResourceRequest): Boolean =
+                            request.url.scheme != "https" || request.url.host != "appassets.androidplatform.net" ||
+                                request.url.path?.startsWith("/assets/") != true
                         override fun shouldInterceptRequest(view: WebView, request: android.webkit.WebResourceRequest): WebResourceResponse? {
                             val resource = loader.shouldInterceptRequest(request.url) ?: return null
                             // Android's MIME map may not recognize .mjs; ES modules require JavaScript MIME.
