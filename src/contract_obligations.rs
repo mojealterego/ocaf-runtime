@@ -294,6 +294,34 @@ pub fn verify_fulfillment_preflight(
     Ok(())
 }
 
+/// Static descriptors for discovery only. Registration does not grant execution
+/// permission; handlers must pass authenticated policy and durable audit gates.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ObligationToolDescriptor {
+    pub name: &'static str,
+    pub risk: crate::governance_contract::RiskTier,
+    pub requires_human_approval: bool,
+    pub requires_governance_journal: bool,
+}
+
+pub const fn obligation_tool_descriptors() -> [ObligationToolDescriptor; 2] {
+    use crate::governance_contract::RiskTier;
+    [
+        ObligationToolDescriptor {
+            name: "contract.extract_obligation",
+            risk: RiskTier::Low,
+            requires_human_approval: false,
+            requires_governance_journal: true,
+        },
+        ObligationToolDescriptor {
+            name: "contract.verify_obligation",
+            risk: RiskTier::Medium,
+            requires_human_approval: true,
+            requires_governance_journal: true,
+        },
+    ]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
