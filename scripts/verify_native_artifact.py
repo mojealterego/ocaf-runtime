@@ -23,7 +23,7 @@ def verify(kind: str, path: Path) -> None:
                 raise ValueError("Windows executable lacks MZ signature")
             pe_offset = struct.unpack_from("<I", header, 0x3C)[0]
             file.seek(pe_offset)
-            if file.read(4) != b"PE\\0\\0".replace(b"\\0", b"\x00"):
+            if file.read(4) != bytes.fromhex("50450000"):
                 raise ValueError("Windows executable lacks PE signature")
         elif kind in {"macos", "ios"}:
             if header[:4] not in MACHO_MAGICS:
