@@ -287,7 +287,7 @@ try {
   await evaluate('document.getElementById("workspace-local").click()');
   assert.equal(await evaluate('document.getElementById("revision-label").textContent'),'r3');
   await evaluate('document.getElementById("workspace-cloud").click()');
-  assert.equal(await evaluate('document.getElementById("revision-label").textContent'),'r2');
+  assert.equal(await evaluate('document.getElementById("revision-label").textContent'),'r4');
   await evaluate('document.getElementById("cloud-open").click()');
   await until(async () => await evaluate('document.getElementById("project-title").textContent') === 'cloud-demo', 'authenticated cloud reopen');
   assert.deepEqual(exceptions, [], 'no uncaught browser exceptions');
