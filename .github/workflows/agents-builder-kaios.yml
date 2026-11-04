@@ -17,7 +17,7 @@ permissions:
 jobs:
   kaios-package:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -36,6 +36,12 @@ jobs:
         run: node apps/agents-builder-kaios/tests/softkeys.cjs
       - name: Check KaiOS save ordering
         run: node apps/agents-builder-kaios/tests/save-regression.cjs
+      - name: Install Chromium E2E dependencies
+        run: |
+          python3 -m pip install --disable-pip-version-check playwright
+          python3 -m playwright install chromium
+      - name: Run Chromium DOM E2E
+        run: python3 apps/agents-builder-kaios/tests/browser_e2e.py
       - name: Package KaiOS 2.5 web application
         run: |
           set -euo pipefail
