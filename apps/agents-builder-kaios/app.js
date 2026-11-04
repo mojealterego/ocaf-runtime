@@ -86,14 +86,6 @@
     if (loaded.project_id !== id) throw Error('Niezgodny identyfikator zapisanego projektu');
     state = loaded; render(); status('Otworzono projekt.');
   }); };
-  $('canonical-check').onclick = function () { safe(function () {
-    var source = $('canonical-source').value;
-    if (source.length > 131072) throw Error('Kanoniczny projekt przekracza limit 128 KiB');
-    if (typeof OCAFCanonicalGraph === 'undefined') throw Error('Brak modułu walidatora DAG');
-    var plan = OCAFCanonicalGraph.compile(JSON.parse(source), $('canonical-tenant').value);
-    $('canonical-result').textContent = JSON.stringify(plan, null, 2);
-    status('Kanoniczny DAG poprawny. Plan statyczny, bez wykonywania narzędzi.');
-  }); };
   document.addEventListener('keydown', function (event) {
     if (event.key === 'SoftLeft') { event.preventDefault(); $('save').click(); }
     if (event.key === 'SoftRight') { event.preventDefault(); $('load').click(); }
