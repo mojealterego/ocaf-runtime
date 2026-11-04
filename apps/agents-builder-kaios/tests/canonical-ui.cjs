@@ -10,6 +10,7 @@ const elements = {
   'canonical-load': { onclick: null },
   'canonical-new': { onclick: null },
   'canonical-transform': { onclick: null },
+  'canonical-remove': { onclick: null },
   'canonical-node-id': { value: 'step' },
   'canonical-source': { value: '' },
   'canonical-tenant': { value: 'local' },
@@ -67,4 +68,11 @@ assert.deepEqual(JSON.parse(elements['canonical-result'].textContent).ordered_no
 elements['canonical-transform'].onclick();
 assert.match(elements['canonical-result'].textContent, /Błąd/);
 assert.equal(JSON.parse(elements['canonical-source'].value).nodes.length, 3);
-console.log('PASS canonical KaiOS UI validation, persistence and NoCode transform');
+elements['canonical-remove'].onclick();
+const afterRemoval = JSON.parse(elements['canonical-source'].value);
+assert.deepEqual(afterRemoval.nodes.map(n => n.id), ['input','output']);
+assert.deepEqual(JSON.parse(elements['canonical-result'].textContent).ordered_nodes, ['input','output']);
+elements['canonical-remove'].onclick();
+assert.match(elements['canonical-result'].textContent, /Błąd/);
+assert.equal(JSON.parse(elements['canonical-source'].value).nodes.length, 2);
+console.log('PASS canonical KaiOS UI validation, persistence, NoCode insert/remove');
