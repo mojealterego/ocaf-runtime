@@ -4,6 +4,7 @@
 (function (root) {
   'use strict';
   function fail(message) { throw Error(message); }
+  function safeInteger(n) { return typeof n === 'number' && isFinite(n) && Math.floor(n) === n && Math.abs(n) <= 9007199254740991; }
   function id(s) { return typeof s === 'string' && /^[A-Za-z0-9_.-]{1,64}$/.test(s); }
   function keys(v, expected) {
     return v && typeof v === 'object' && !Array.isArray(v) &&
@@ -22,9 +23,9 @@
     if (!keys(p, ['schema_version','tenant_id','project_id','revision','max_cost_minor','grants','nodes','edges']))
       fail('Unsupported schema');
     if (!id(trustedTenant) || p.tenant_id !== trustedTenant) fail('Tenant denied');
-    if (p.schema_version !== 1 || !id(p.project_id) || !Number.isSafeInteger(p.revision) || p.revision < 1)
+    if (p.schema_version !== 1 || !id(p.project_id) || !safeInteger(p.revision) || p.revision < 1)
       fail('Invalid project');
-    if (!Number.isSafeInteger(p.max_cost_minor) || p.max_cost_minor < 0 || p.max_cost_minor > 1000000000000)
+    if (!safeInteger(p.max_cost_minor) || p.max_cost_minor < 0 || p.max_cost_minor > 1000000000000)
       fail('Invalid budget');
     if (!Array.isArray(p.nodes) || p.nodes.length < 2 || p.nodes.length > 64 ||
         !Array.isArray(p.edges) || p.edges.length > 256 ||
@@ -38,7 +39,7 @@
         fail('Invalid node');
       if (['input','output','transform','tool'].indexOf(n.kind) < 0) fail('Invalid kind');
       ports(n.inputs); ports(n.outputs);
-      if (!Number.isSafeInteger(n.max_cost_minor) || n.max_cost_minor < 0) fail('Invalid node cost');
+      if (!safeInteger(n.max_cost_minor) || n.max_cost_minor < 0) fail('Invalid node cost');
       if (n.kind === 'input') {
         if (n.inputs.length || !n.outputs.length || n.tool_name !== null || n.max_cost_minor) fail('Invalid input');
         inputs.push(n.id);
@@ -51,7 +52,7 @@
         if (!n.inputs.length || !n.outputs.length || !id(n.tool_name) || n.max_cost_minor < 1) fail('Invalid tool');
         requested[n.tool_name] = true;
         cost += n.max_cost_minor;
-        if (!Number.isSafeInteger(cost)) fail('Cost overflow');
+        if (!safeInteger(cost)) fail('Cost overflow');
       }
       nodes[n.id] = n; indegree[n.id] = 0; children[n.id] = [];
     });
