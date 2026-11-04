@@ -94,6 +94,9 @@ pub enum PreflightDecision {
 fn valid_id(value: &str) -> bool {
     !value.is_empty()
         && value.len() <= 128
+        && !value.starts_with('.')
+        && !value.ends_with('.')
+        && !value.contains("..")
         && value
             .bytes()
             .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b'.' | b':'))
