@@ -459,6 +459,21 @@ mod tests {
         ));
     }
     #[test]
+    fn pinned_older_head_rejects_rewritten_history_even_when_tip_is_valid() {
+        let (file, driver, key) = setup();
+        let pinned = driver.append(&key, &Head::default(), &create()).unwrap();
+        let current = driver.append(&key, &pinned, &Event::Undo).unwrap();
+        assert!(matches!(driver.load(&key, Some(&pinned)), Err(StoreError::Conflict)));
+        let db = Connection::open(file.path()).unwrap();
+        // A valid later revision must not hide a forged earlier pinned receipt.
+        db.execute(
+            "UPDATE document_events_v1 SET digest='tampered' WHERE revision=1",
+            [],
+        ).unwrap();
+        assert!(matches!(driver.load(&key, Some(&pinned)), Err(StoreError::Integrity)));
+        assert_ne!(pinned, current);
+    }
+    #[test]
     fn links_require_same_tenant_existing_labels_and_pinned_head() {
         let (_file, d, key) = setup();
         let head = d.append(&key, &Head::default(), &create()).unwrap();
