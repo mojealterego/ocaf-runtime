@@ -193,8 +193,11 @@ try {
   assert.match(await evaluate('document.getElementById("message").textContent'), /schema/i);
   assert.equal(await evaluate('document.getElementById("revision-label").textContent'), 'r3');
 
+  // Invalid unapplied Code text must not silently validate or export the last saved graph.
   await evaluate('document.getElementById("preview").click()');
-  assert.match(await evaluate('document.getElementById("preview-output").textContent'), /no execution/i);
+  assert.match(await evaluate('document.getElementById("message").textContent'), /unapplied Code DSL/i);
+  await evaluate('document.getElementById("export").click()');
+  assert.match(await evaluate('document.getElementById("message").textContent'), /unapplied Code DSL/i);
 
   await cmd('Page.reload', {ignoreCache:true});
   await until(async () => await evaluate('document.querySelectorAll(".node-card").length') === 3, 'offline persistence after reload');
