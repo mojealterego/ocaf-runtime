@@ -38,10 +38,11 @@ jobs:
         run: node apps/agents-builder-kaios/tests/save-regression.cjs
       - name: Install Chromium E2E dependencies
         run: |
-          python3 -m pip install --disable-pip-version-check playwright
-          python3 -m playwright install chromium
+          python3 -m venv .venv-kaios-e2e
+          .venv-kaios-e2e/bin/python -m pip install --disable-pip-version-check playwright
+          .venv-kaios-e2e/bin/python -m playwright install chromium
       - name: Run Chromium DOM E2E
-        run: python3 apps/agents-builder-kaios/tests/browser_e2e.py
+        run: .venv-kaios-e2e/bin/python apps/agents-builder-kaios/tests/browser_e2e.py
       - name: Package KaiOS 2.5 web application
         run: |
           set -euo pipefail
