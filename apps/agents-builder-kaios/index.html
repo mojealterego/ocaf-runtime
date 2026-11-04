@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OCAF Agents Builder KaiOS</title><link rel="stylesheet" href="style.css"></head>
+<body><header><strong>OCAF Agents Builder</strong><small>KaiOS · tryb uproszczony</small></header>
+<main>
+<label>Projekt <input id="project" maxlength="48" value="agent" autocomplete="off"></label>
+<div class="controls"><button id="code" type="button">Code</button><button id="nocode" type="button">NoCode</button></div>
+<label>Środowisko <select id="workspace"><option value="local">Lokalnie</option><option value="cloud">Chmura (niedostępna)</option></select></label>
+<section id="nocode-panel"><h2>Węzły</h2><ol id="nodes"></ol><label>Nowy węzeł <input id="node-name" maxlength="48"></label><button id="add" type="button">Dodaj węzeł</button></section>
+<section id="code-panel" hidden><h2>Projekt JSON</h2><textarea id="source" rows="8" spellcheck="false"></textarea><button id="apply" type="button">Zastosuj JSON</button></section>
+<div class="controls"><button id="save" type="button">Zapisz</button><button id="load" type="button">Otwórz</button></div>
+<p id="status" role="status" aria-live="polite">Gotowy. Narzędzia nie są wykonywane.</p>
+</main><script src="app.js"></script></body></html>
