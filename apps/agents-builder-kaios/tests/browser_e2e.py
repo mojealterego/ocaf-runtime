@@ -93,6 +93,16 @@ with sync_playwright() as playwright:
     page.locator("#canonical-import").fill(exported.replace('"tenant_id": "local"', '"tenant_id": "other"'))
     page.locator("#canonical-import-button").click()
     assert "Tenant denied" in page.locator("#canonical-result").inner_text()
+    page.locator("#canonical-port-kind").select_option("text")
+    page.locator("#canonical-new").click()
+    page.locator("#canonical-node-id").fill("tool1")
+    page.locator("#canonical-tool-name").fill("search.tool")
+    page.locator("#canonical-tool-cost").fill("7")
+    page.locator("#canonical-tool").click()
+    tool_graph = json.loads(page.locator("#canonical-source").input_value())
+    assert tool_graph["grants"] == ["search.tool"]
+    assert tool_graph["max_cost_minor"] == 7
+    assert json.loads(page.locator("#canonical-result").inner_text())["requested_tools"] == ["search.tool"]
     evidence = ROOT.parents[1] / "dist" / "kaios-chromium-e2e.png"
     evidence.parent.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(evidence), full_page=True)
