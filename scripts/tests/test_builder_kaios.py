@@ -23,6 +23,12 @@ class KaiOSContracts(unittest.TestCase):
         self.assertNotIn("eval(", js)
         self.assertNotIn("fetch(", js)
 
+    def test_code_draft_is_committed_before_mode_switch_and_save(self):
+        js = (APP / "app.js").read_text()
+        self.assertIn("function applySource()", js)
+        self.assertIn("if (mode === 'code') applySource()", js)
+        self.assertIn("if (mode === 'code') applySource();", js)
+
     def test_single_non_module_script_and_keypad_controls(self):
         html = (APP / "index.html").read_text()
         js = (APP / "app.js").read_text()
