@@ -31,6 +31,15 @@ class DesktopNativeSourceTests(unittest.TestCase):
         self.assertEqual(ico[:6], struct.pack("<HHH", 0, 1, 1))
         self.assertEqual(ico[22:], png)
 
+    def test_linux_ci_uses_repository_pinned_rust_toolchain(self):
+        workflow = (ROOT / ".github/workflows/agents-builder-native-linux.yml").read_text()
+        toolchain = (ROOT / "rust-toolchain.toml").read_text()
+        import tomllib
+        pinned = tomllib.loads(toolchain)["toolchain"]["channel"]
+        self.assertIn("dtolnay/rust-toolchain@", workflow)
+        self.assertIn(f"toolchain: '{pinned}'", workflow)
+        self.assertNotIn("dtolnay/rust-toolchain@stable", workflow)
+
     def test_native_rust_entrypoint_and_restricted_capabilities(self):
         cargo = (DESKTOP / "src-tauri" / "Cargo.toml").read_text()
         main = (DESKTOP / "src-tauri" / "src" / "main.rs").read_text()
