@@ -26,6 +26,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.12"
+      - name: Verify artifact verifier regression tests
+        run: python3 -m unittest discover -s scripts/tests -p test_verify_native_artifact.py -v
       - name: Native mobile source contracts
         run: python3 -m unittest discover -s scripts/tests -p test_builder_mobile_native.py -v
       - name: Bundle shared editor into Android assets
