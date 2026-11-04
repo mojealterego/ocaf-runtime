@@ -85,6 +85,17 @@ jobs:
         run: xcodebuild -project OCAFAgentsBuilder.xcodeproj -scheme OCAFAgentsBuilder -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -derivedDataPath build build
       - name: Verify iOS simulator Mach-O executable
         run: python3 scripts/verify_native_artifact.py ios apps/agents-builder-ios/build/Build/Products/Debug-iphonesimulator/OCAFAgentsBuilder.app/OCAFAgentsBuilder
+      - name: iOS simulator install and launch smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          device=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; data=json.load(sys.stdin); print(next((d["udid"] for group in data["devices"].values() for d in group if d["isAvailable"] and "iPhone" in d["name"]), ""))')
+          test -n "$device"
+          xcrun simctl boot "$device"
+          xcrun simctl bootstatus "$device" -b
+          app="apps/agents-builder-ios/build/Build/Products/Debug-iphonesimulator/OCAFAgentsBuilder.app"
+          xcrun simctl install "$device" "$app"
+          xcrun simctl launch "$device" org.ocaf.agentsbuilder
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: "ocaf-builder-ios-simulator-${{ github.sha }}"
