@@ -61,6 +61,12 @@ jobs:
             test ! -s /tmp/ocaf-crash-lines
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
+          name: "ocaf-builder-android-launch-evidence-${{ github.sha }}"
+          path: apps/agents-builder-android/build/evidence/android-launch.png
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
           name: "ocaf-builder-android-${{ github.sha }}"
           path: apps/agents-builder-android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
@@ -104,6 +110,12 @@ jobs:
           mkdir -p apps/agents-builder-ios/build/evidence
           xcrun simctl io "$device" screenshot apps/agents-builder-ios/build/evidence/ios-launch.png
           test -s apps/agents-builder-ios/build/evidence/ios-launch.png
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: "ocaf-builder-ios-launch-evidence-${{ github.sha }}"
+          path: apps/agents-builder-ios/build/evidence/ios-launch.png
+          if-no-files-found: error
+          retention-days: 30
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: "ocaf-builder-ios-simulator-${{ github.sha }}"
