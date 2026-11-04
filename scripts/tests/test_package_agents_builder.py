@@ -188,6 +188,30 @@ class PackageBuilderTests(unittest.TestCase):
         self.assertEqual((destination / "SHA256SUMS").read_text(), "verified")
         self.assertFalse(staged.exists())
 
+    def test_atomic_directory_publish_refuses_symlink_destination(self):
+        staged = Path(self.temp.name) / "staged-symlink"
+        destination = Path(self.temp.name) / "release-link"
+        outside = Path(self.temp.name) / "outside-release"
+        staged.mkdir()
+        outside.mkdir()
+        (outside / "sentinel").write_text("preserve")
+        destination.symlink_to(outside, target_is_directory=True)
+        with self.assertRaises(FileExistsError):
+            bundle.publish_release_directory(staged, destination)
+        self.assertTrue(destination.is_symlink())
+        self.assertEqual((outside / "sentinel").read_text(), "preserve")
+        self.assertTrue(staged.exists())
+
+    def test_atomic_directory_publish_rejects_cross_parent_staging(self):
+        staged = Path(self.temp.name) / "a" / "staged"
+        destination = Path(self.temp.name) / "b" / "release"
+        staged.mkdir(parents=True)
+        destination.parent.mkdir()
+        with self.assertRaisesRegex(ValueError, "siblings"):
+            bundle.publish_release_directory(staged, destination)
+        self.assertTrue(staged.exists())
+        self.assertFalse(destination.exists())
+
     def test_main_does_not_publish_partial_release_when_second_bundle_fails(self):
         from unittest.mock import patch
         import sys
