@@ -199,6 +199,7 @@ function add(kind) {
   renderGraph();
 }
 async function preview() {
+  if (state.dirty) throw new Error('unapplied Code DSL edits: apply or discard changes before validation');
   if (!state.project) throw new Error('workspace: select a project');
   if (state.workspace === 'cloud') {
     if (!cloudClient) throw new Error('oauth: connect first');
@@ -225,6 +226,8 @@ async function preview() {
   notice('Graph validated locally. No tools were executed.');
 }
 function download() {
+  if (state.dirty) throw new Error('unapplied Code DSL edits: apply or discard changes before export');
+  if (!state.project) throw new Error('workspace: select a project');
   const text = encodeDsl(state.project, currentTenant());
   const blob = new Blob([text], {type:'application/json'});
   const url = URL.createObjectURL(blob);
