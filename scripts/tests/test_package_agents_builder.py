@@ -173,6 +173,9 @@ class PackageBuilderTests(unittest.TestCase):
         required = (
             "apps/agents-builder-web/index.html",
             "apps/agents-builder-web/app.mjs",
+            "apps/agents-builder-web/local_runner.py",
+            "apps/agents-builder-web/runner-client.mjs",
+            "scripts/tests/test_agents_builder_local_runner.py",
             "apps/agents-builder-web/models.mjs",
             "apps/agents-builder-web/i18n.mjs",
             "apps/agents-builder-web/credentials.mjs",

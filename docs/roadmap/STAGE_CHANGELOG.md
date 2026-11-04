@@ -1,5 +1,13 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-04 — Agents Builder: lokalny GGUF runner i inferencja llama.cpp (IMPLEMENTED_CI_PENDING)
+
+- Nowy most `apps/agents-builder-web/local_runner.py`: HTTP server związany z 127.0.0.1, token sesji, jawny POST, dokładny Origin, kontrola Host, walidacja GGUF i limit zasobów. Startuje lokalne `llama-server` przez `subprocess.Popen` bez shella, z odrębnym tokenem backendowym przekazanym przez środowisko procesu; brak narzędzi modelu.
+- Klient `runner-client.mjs` i UI: lista GGUF dostępnych w katalogu operatora, ładowanie z parametrami wybranego profilu, health, jawne generowanie odpowiedzi, zatrzymanie procesu. Nie dotyka istniejącego modelu tenantów/OAuth Cloud ani typed DSL i nie zapisuje sekretów.
+- Testy Python: prawdziwy subprocess i HTTP, ale deterministyczny udawany backend (nie prawdziwe wagi GGUF); testy Node i Chromium, testy negatywne. Wcześniejsze TDD RED: `63142b70e8fcbf9d427d19c75838d34f5973206a` – web CI FAIL, zgodnie z oczekiwaniem przy braku implementacji.
+- Zintegrowano pakowanie do obu ZIP wraz z dokumentacją i testami. Kanoniczne statusy produktów 0.50–0.55 i `production_approved=false` pozostają niezmienione.
+- Otwarte: działający model na rzeczywistym Android/Windows/macOS, test pamięci/CPU/GPU, limit pamięci systemowej (cgroups/Job Objects), systemowy vault kluczy, prawdziwa produkcyjna chmura, OS sandbox i odbiór operatora.
+
 ## 2026-11-04 — Agents Builder release-directory atomic assembly (CI_PENDING)
 
 - Requirement: prevent partial publication when the second ZIP or release metadata fails. Scope: source distribution only; no platform-native product or production approval.

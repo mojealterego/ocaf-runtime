@@ -114,3 +114,72 @@ Verification:
 node --test apps/agents-builder-web/tests/*.test.mjs
 node apps/agents-builder-web/tests/browser-smoke.mjs
 ```
+
+
+## Local GGUF inference via llama.cpp (2026-11-04)
+
+The Builder now contains a localhost-only process and HTTP bridge to a
+separately installed `llama-server` binary. The `local_runner.py` companion
+runs the selected GGUF with settings from the Builder and forwards explicit
+user prompts to `POST /v1/chat/completions` after checking `/health`.
+It does not execute agent tools.
+
+### Linux / Android Termux quick start
+
+On the device running the GGUF, install a compatible `llama-server` from
+ggml-org/llama.cpp and put a legitimately obtained GGUF into a local
+directory. Then, from the OCAF repository root:
+
+```sh
+mkdir -p "$HOME/ocaf-models"
+python3 apps/agents-builder-web/local_runner.py \
+  --models-dir "$HOME/ocaf-models" \
+  --llama-bin "$(command -v llama-server)" \
+  --port 8765
+```
+
+Open `http://127.0.0.1:8765/` **on the same device**. Paste the session
+token printed in the terminal into the Local GGUF runner panel. Use Connect,
+select a locally available GGUF, select inference settings, Start, Refresh
+status and Generate locally. Stop releases the model resources.
+
+Browser file selection does not give the Python service access to an Android
+file handle. Downloaded GGUF files must be copied into the configured
+models directory. The browser and service must share the 127.0.0.1 origin.
+Do not expose this service to a public network interface.
+
+### Security and constraints
+
+- The service binds only 127.0.0.1; no remote-origin access is supported.
+- Explicit ephemeral operator token is required on API operations. POST
+  requests additionally require exact same-origin Origin/Host validation.
+- Only known GGUF basenames inside the configured model directory are
+  accepted; symlinks and invalid GGUF headers are rejected.
+- The spawned llama-server is bound to loopback; it receives a **separate**
+  random backend key through the child environment, not a CLI argument.
+- No shell, arbitrary file path, remote URL, agent tools, or arbitrary
+  subprocess options are accepted over the UI control API.
+- Session tokens, model prompts and provider API secrets are not included
+  in source ZIPs or project exports.
+- Default limits: maximum model 8 GiB, context 8192 tokens, 16 CPU threads,
+  batch size 2048. These are policy limits, **not** RAM reservations.
+- On a 12 GB RAM Android device, start with a small quantized GGUF, modest
+  context size and CPU execution; actual compatibility and performance
+  remain device- and model-dependent.
+- The launcher runs as the local OS user; it is not an OS sandbox or a
+  multi-tenant Cloud gateway.
+
+### Verification
+
+```sh
+python3 -m unittest discover -s scripts/tests \
+  -p test_agents_builder_local_runner.py -v
+node --test apps/agents-builder-web/tests/*.test.mjs
+```
+
+CI integration starts a **real local subprocess**, serves a fake compatible
+llama-server API over actual HTTP and exercises start, health, chat, stop,
+authentication and negative paths. This is **not** proof that real GGUF
+weights were loaded or inference benchmarked on Android; those E2E gates
+remain open. The source bundle does not contain GGUF weights or a binary
+llama-server executable.

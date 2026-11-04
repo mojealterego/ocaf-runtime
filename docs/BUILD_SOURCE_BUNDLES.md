@@ -53,3 +53,7 @@ Klucze API **nie są** umieszczane w paczkach ani eksportach.
 
 Status odbioru: \`TESTED_LOCAL_PARTIAL\`. Nie nadano \`DEPLOYED\`,
 \`OPERATOR_ACCEPTED\` ani \`PRODUCTION_APPROVED\`.
+
+## Inference GGUF — dodatkowe pliki pakietu
+
+Pakiet Agents Builder zawiera teraz również skrypt lokalnego runnera Python, klienta JS, testy subprocess/HTTP i dokumentację. Źródłowe wydanie ZIP nie zawiera skompilowanego llama-server ani żadnych wag GGUF. Operator instaluje binarkę zgodną z platformą i podaje katalog modeli. Szczegóły i polecenie uruchomienia: apps/agents-builder-web/README.md.

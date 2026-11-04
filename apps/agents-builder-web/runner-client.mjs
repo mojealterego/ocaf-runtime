@@ -23,7 +23,7 @@ export class LocalRunnerClient {
     const url=new URL(origin);
     if(url.protocol!=='http:'||!['127.0.0.1','localhost'].includes(url.hostname)||
        url.username||url.password||url.pathname!=='/'||url.search||url.hash){
-      throw new Error('runner: a local http://127.0.0.1 origin is required');
+      throw new Error('runner: a loopback http://127.0.0.1 origin is required');
     }
     if(typeof token!=='string'||token.length<8||token.length>512||
        token.trim()!==token||/[\x00-\x1f\x7f]/.test(token))throw new Error('runner: invalid session token');
