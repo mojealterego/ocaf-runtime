@@ -346,12 +346,32 @@ async function newCloudProject() {
 async function saveCloudProject() {
   requireCloud();
   if (!state.project || !state.cloud.pending) throw new Error('workspace: brak zmian do zapisania');
-  const head = await cloudClient.save(state.cloud.tenant, state.project, state.cloud.head);
+  // Capture immutable request inputs: UI edits may occur while the network is in flight.
+  const client = cloudClient;
+  const tenant = state.cloud.tenant;
+  const project = structuredClone(state.project);
+  const expectedHead = state.cloud.head;
+  const head = await client.save(tenant, project, expectedHead);
+  if (cloudClient !== client || state.workspace !== 'cloud' ||
+      state.cloud.tenant !== tenant || state.project?.project_id !== project.project_id) {
+    // A disconnected/replaced workspace must never receive a stale response.
+    return;
+  }
   state.cloud.head = head;
-  state.cloud.pending = false;
-  state.saved = head.revision;
+  if (state.project.revision === project.revision &&
+      encodeDsl(state.project, tenant) === encodeDsl(project, tenant)) {
+    state.cloud.pending = false;
+    state.saved = head.revision;
+    notice('Serwer potwierdził zapis CAS r' + head.revision + '. SHA-256: ' + head.sha256);
+  } else {
+    // Preserve subsequent edits as an unsaved draft and advance CAS baseline.
+    state.cloud.pending = true;
+    state.project.revision = head.revision + 1;
+    state.saved = state.project.revision;
+    notice('Serwer zapisał wcześniejszą wersję r' + head.revision +
+           '. Nowsze zmiany pozostają szkicem — zapisz ponownie.');
+  }
   render();
-  notice('Serwer potwierdził zapis CAS r' + head.revision + '. SHA-256: ' + head.sha256);
 }
 function init() {
   el('workspace-local').addEventListener('click', () => safe(() => setWorkspace('local')));
