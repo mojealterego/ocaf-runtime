@@ -1,0 +1,71 @@
+name: OCAF Agents Builder native Android and iOS builds
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/agents-builder-android/**"
+      - "apps/agents-builder-ios/**"
+      - "apps/agents-builder-web/**"
+      - "scripts/tests/test_builder_mobile_native.py"
+      - ".github/workflows/agents-builder-native-mobile.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@07976c6290703d34c16d382cb36445f98bb43b1f
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.12"
+      - name: Native mobile source contracts
+        run: python3 -m unittest discover -s scripts/tests -p test_builder_mobile_native.py -v
+      - name: Bundle shared editor into Android assets
+        run: |
+          mkdir -p apps/agents-builder-android/app/src/main/assets
+          cp apps/agents-builder-web/{index.html,app.mjs,editor.mjs,cloud.mjs,i18n.mjs,credentials.mjs,models.mjs,integrations-ui.mjs,runner-client.mjs,style.css,manifest.webmanifest,sw.js} apps/agents-builder-android/app/src/main/assets/
+      - name: Build Android debug APK
+        working-directory: apps/agents-builder-android
+        run: gradle --no-daemon :app:assembleDebug
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: "ocaf-builder-android-${{ github.sha }}"
+          path: apps/agents-builder-android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Native mobile source contracts
+        run: python3 -m unittest discover -s scripts/tests -p test_builder_mobile_native.py -v
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Bundle shared editor into iOS resources
+        run: |
+          mkdir -p apps/agents-builder-ios/Resources/Editor
+          cp apps/agents-builder-web/{index.html,app.mjs,editor.mjs,cloud.mjs,i18n.mjs,credentials.mjs,models.mjs,integrations-ui.mjs,runner-client.mjs,style.css,manifest.webmanifest,sw.js} apps/agents-builder-ios/Resources/Editor/
+      - name: Generate native Xcode project
+        working-directory: apps/agents-builder-ios
+        run: xcodegen generate
+      - name: Build unsigned iOS simulator application
+        working-directory: apps/agents-builder-ios
+        run: xcodebuild -project OCAFAgentsBuilder.xcodeproj -scheme OCAFAgentsBuilder -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -derivedDataPath build build
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: "ocaf-builder-ios-simulator-${{ github.sha }}"
+          path: apps/agents-builder-ios/build/Build/Products/Debug-iphonesimulator/OCAFAgentsBuilder.app
+          if-no-files-found: error
+          retention-days: 30
