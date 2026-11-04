@@ -69,6 +69,10 @@ with sync_playwright() as playwright:
     page.locator("#canonical-node-id").fill("step")
     page.locator("#canonical-transform").click()
     assert json.loads(page.locator("#canonical-result").inner_text())["ordered_nodes"] == ["input", "step", "output"]
+    page.locator("#canonical-remove").click()
+    assert json.loads(page.locator("#canonical-result").inner_text())["ordered_nodes"] == ["input", "output"]
+    page.locator("#canonical-transform").click()
+    assert json.loads(page.locator("#canonical-result").inner_text())["ordered_nodes"] == ["input", "step", "output"]
     page.locator("#canonical-save").click()
     page.locator("#canonical-source").fill("")
     page.locator("#canonical-load").click()
