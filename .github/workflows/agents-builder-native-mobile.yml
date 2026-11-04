@@ -56,6 +56,19 @@ jobs:
             mkdir -p apps/agents-builder-android/build/evidence
             adb exec-out screencap -p > apps/agents-builder-android/build/evidence/android-launch.png
             test -s apps/agents-builder-android/build/evidence/android-launch.png
+            adb shell uiautomator dump /sdcard/ocaf-ui.xml
+            adb pull /sdcard/ocaf-ui.xml apps/agents-builder-android/build/evidence/android-ui.xml
+            python3 - <<'PY'
+            from pathlib import Path
+            from xml.etree import ElementTree
+            p = Path("apps/agents-builder-android/build/evidence/android-launch.png")
+            assert p.read_bytes()[:8] == bytes.fromhex("89504e470d0a1a0a"), "Screenshot is not PNG"
+            ui = Path("apps/agents-builder-android/build/evidence/android-ui.xml")
+            root = ElementTree.parse(ui).getroot()
+            assert root.tag == "hierarchy", "Invalid Android UI hierarchy"
+            assert list(root.iter("node")), "Empty Android UI hierarchy"
+            print("Android screenshot and UI hierarchy validated")
+            PY
             adb shell dumpsys activity activities | grep -F 'org.ocaf.agentsbuilder'
             adb logcat -d -t 1500 | grep -E 'FATAL EXCEPTION|Process: org.ocaf.agentsbuilder' > /tmp/ocaf-crash-lines || true
             test ! -s /tmp/ocaf-crash-lines
