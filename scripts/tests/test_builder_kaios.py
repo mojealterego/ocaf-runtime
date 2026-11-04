@@ -29,6 +29,11 @@ class KaiOSContracts(unittest.TestCase):
         self.assertIn("if (mode === 'code') applySource()", js)
         self.assertIn("if (mode === 'code') applySource();", js)
 
+    def test_rejects_unsupported_project_fields(self):
+        js = (APP / "app.js").read_text()
+        self.assertIn("Object.keys(value).sort()", js)
+        self.assertIn("Object.keys(n).join(',')", js)
+
     def test_single_non_module_script_and_keypad_controls(self):
         html = (APP / "index.html").read_text()
         js = (APP / "app.js").read_text()
