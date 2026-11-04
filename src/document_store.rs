@@ -488,6 +488,25 @@ mod tests {
         assert!(matches!(driver.load(&key, None), Err(StoreError::Integrity)));
     }
     #[test]
+    fn pinned_source_link_rejects_source_version_drift() {
+        let (_file, driver, source) = setup();
+        let source_head = driver.append(&source, &Head::default(), &create()).unwrap();
+        let target = DocumentKey::new("tenant", "target").unwrap();
+        let target_head = driver.append(&target, &Head::default(), &create()).unwrap();
+        let root = LabelPath::parse("0").unwrap();
+        let child = LabelPath::parse("0:1").unwrap();
+        resolve_link_pinned(
+            &driver, &source, &root, &source_head, &target, &child, &target_head,
+        ).unwrap();
+        driver.append(&source, &source_head, &Event::Undo).unwrap();
+        assert!(matches!(
+            resolve_link_pinned(
+                &driver, &source, &root, &source_head, &target, &child, &target_head,
+            ),
+            Err(StoreError::Conflict)
+        ));
+    }
+    #[test]
     fn links_require_same_tenant_existing_labels_and_pinned_head() {
         let (_file, d, key) = setup();
         let head = d.append(&key, &Head::default(), &create()).unwrap();
