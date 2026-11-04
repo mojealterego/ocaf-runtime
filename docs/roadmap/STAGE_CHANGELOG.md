@@ -1,5 +1,12 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-04 — Agents Builder source release NOREPLACE hardening (IMPLEMENTED_CI_UNVERIFIED)
+
+- Commits: test 7b94568da0b1ed39b2ad6eb5f893683ee3593300; implementation 18daaa0a4552f9aa1d3cc929f9488a618f3ea4a6; negative tests 103c536ffecadd7dacf99cb7f93f29523928f343.
+- Replaced directory publication via check-then-rename with atomic no-replace platform primitives; Linux renameat2(RENAME_NOREPLACE), macOS renamex_np(RENAME_EXCL), Windows rename without replacement, fail-closed on unsupported platforms.
+- Added regression cases for existing destination, symlink destination, different staging parent and absent destination. Tests committed but RED/GREEN execution and exact-SHA CI remain **unverified**; do not mark PASS.
+- Outstanding: inspect workflow logs and race behavior, durability/fsync and external GitHub Release transaction. No native platform build, no production approval. 10/10 products remain NOT_IMPLEMENTED.
+
 ## 2026-11-04 — Agents Builder: bezpieczny import GGUF do lokalnego runnera (TESTED_LOCAL_PARTIAL)
 
 - **Dowody CI (commit e19ef9e665d9bbe6bc0e62c9dde7d9b98825e4b9):** [Builder Web #41768766591](https://github.com/mojealterego/ocaf-runtime/actions/runs/41768766591) SUCCESS (26/26 Node, Chrome GUI E2E, Python 5/5, Rust fixture); [Source ZIP #41768766620](https://github.com/mojealterego/ocaf-runtime/actions/runs/41768766620) SUCCESS (11/11 testów pakowania, 5/5 backendu, 26/26 Node, Chromium, SHA256SUMS 2/2, wydanie z 2 ZIP); [Roadmap v11 #41768766632](https://github.com/mojealterego/ocaf-runtime/actions/runs/41768766632) SUCCESS. Status TESTED_LOCAL_PARTIAL: testowana walidacja, prawdziwe localhost/subprocess/HTTP i binarny transfer, ale bez faktycznej inferencji wag GGUF i testów na sprzęcie operatora.
