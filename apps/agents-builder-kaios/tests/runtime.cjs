@@ -89,7 +89,7 @@ localStorage.setItem = () => { throw Error('Storage unavailable'); };
 click('save');
 assert.match(elements.status.textContent, /Storage unavailable/);
 localStorage.setItem = previousWrite;
-click('nocode');
+click('code');
 assert.deepEqual(nodes(), ['third'], 'Failed storage write must not commit Code draft');
 assert.ok(document.keydown, 'Keypad shortcuts must be installed');
 console.log('KaiOS runtime behavior tests passed');
