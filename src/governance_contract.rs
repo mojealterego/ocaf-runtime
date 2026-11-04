@@ -418,6 +418,21 @@ mod tests {
     }
 
     #[test]
+    fn procurement_risk_cap_cannot_be_overridden_by_signed_approval() {
+        let c = contract();
+        let authority = ApprovalAuthority::new([9; 32]).unwrap();
+        let mut r = request();
+        for tier in [RiskTier::High, RiskTier::Critical] {
+            r.risk = tier;
+            let approval = signed_approval(&r, ApproverRole::ProcurementLead);
+            r.approval = Some(&approval);
+            assert_eq!(
+                c.evaluate(&r, Some(&authority), 150),
+                PreflightDecision::Deny(DenyReason::RiskCapExceeded)
+            );
+        }
+    }
+    #[test]
     fn medium_risk_requires_valid_human_approval_and_role() {
         let c = contract();
         let authority = ApprovalAuthority::new([9; 32]).unwrap();
