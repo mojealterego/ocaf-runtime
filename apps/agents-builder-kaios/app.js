@@ -35,7 +35,7 @@
   function safe(fn) {
     try { fn(); } catch (error) { status(error.message || 'Błąd operacji'); }
   }
-  $('code').onclick = function () { mode = 'code'; render(); };
+  $('code').onclick = function () { if (mode !== 'code') { mode = 'code'; render(); } };
   $('nocode').onclick = function () { safe(function () { if (mode === 'code') applySource(); mode = 'nocode'; render(); }); };
   $('workspace').onchange = function () {
     if ($('workspace').value !== 'local') {
