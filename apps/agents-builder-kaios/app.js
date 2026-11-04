@@ -29,6 +29,15 @@
     state.nodes.forEach(function (node) {
       var item = document.createElement('li');
       item.textContent = node.id;
+      var remove = document.createElement('button');
+      remove.type = 'button';
+      remove.textContent = 'Usuń ' + node.id;
+      remove.onclick = function () { safe(function () {
+        var remaining = state.nodes.filter(function (entry) { return entry.id !== node.id; });
+        state = validate({ version: 1, project_id: state.project_id, nodes: remaining });
+        render(); status('Węzeł usunięty.');
+      }); };
+      item.appendChild(remove);
       list.appendChild(item);
     });
   }
