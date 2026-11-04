@@ -202,6 +202,9 @@ try {
   await cmd('Page.reload', {ignoreCache:true});
   await until(async () => await evaluate('document.querySelectorAll(".node-card").length') === 3, 'offline persistence after reload');
   assert.equal(await evaluate('document.getElementById("revision-label").textContent'), 'r3');
+  await evaluate('document.getElementById("preview").click()');
+  assert.match(await evaluate('document.getElementById("preview-output").textContent'), /no execution/i);
+  assert.match(await evaluate('document.getElementById("message").textContent'), /validated locally/i);
   assert.equal(await evaluate('document.documentElement.lang'), 'pl-PL');
   await evaluate('document.getElementById("ui-language").value="cs-CZ";document.getElementById("ui-language").dispatchEvent(new Event("change"))');
   assert.equal(await evaluate('document.querySelector("h1").textContent'), 'Navrhujte agenty.');
