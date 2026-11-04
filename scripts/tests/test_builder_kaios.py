@@ -38,6 +38,12 @@ class KaiOSContracts(unittest.TestCase):
         js = (APP / "app.js").read_text()
         self.assertIn("var seen = Object.create(null);", js)
 
+    def test_save_validates_before_state_commit(self):
+        js = (APP / "app.js").read_text()
+        self.assertIn("var candidate = validate(", js)
+        self.assertIn("state = candidate;", js)
+        self.assertLess(js.index("var candidate = validate("), js.index("state = candidate;"))
+
     def test_single_non_module_script_and_keypad_controls(self):
         html = (APP / "index.html").read_text()
         js = (APP / "app.js").read_text()
