@@ -37,6 +37,9 @@ jobs:
       - name: Check native source contracts
         shell: bash
         run: python3 -m unittest discover -s scripts/tests -p test_builder_native_desktop.py -v
+      - name: Generate required Tauri icons
+        shell: bash
+        run: python3 scripts/generate_builder_icons.py
       - name: Compile actual platform-native Tauri executable
         shell: bash
         run: cargo build --release --manifest-path apps/agents-builder-desktop/src-tauri/Cargo.toml
