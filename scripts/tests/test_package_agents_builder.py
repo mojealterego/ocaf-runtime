@@ -165,6 +165,29 @@ class PackageBuilderTests(unittest.TestCase):
 
 
 
+    def test_atomic_directory_publish_never_replaces_existing_release(self):
+        # Regression for a concurrent publisher winning the destination name.
+        staged = Path(self.temp.name) / "staged"
+        destination = Path(self.temp.name) / "release"
+        staged.mkdir()
+        destination.mkdir()
+        (staged / "new").write_text("new")
+        (destination / "sentinel").write_text("original")
+        with self.assertRaises(FileExistsError):
+            bundle.publish_release_directory(staged, destination)
+        self.assertEqual((destination / "sentinel").read_text(), "original")
+        self.assertFalse((destination / "new").exists())
+        self.assertTrue((staged / "new").exists())
+
+    def test_atomic_directory_publish_succeeds_when_destination_absent(self):
+        staged = Path(self.temp.name) / "staged"
+        destination = Path(self.temp.name) / "release"
+        staged.mkdir()
+        (staged / "SHA256SUMS").write_text("verified")
+        bundle.publish_release_directory(staged, destination)
+        self.assertEqual((destination / "SHA256SUMS").read_text(), "verified")
+        self.assertFalse(staged.exists())
+
     def test_main_does_not_publish_partial_release_when_second_bundle_fails(self):
         from unittest.mock import patch
         import sys
