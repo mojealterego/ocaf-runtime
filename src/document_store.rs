@@ -476,6 +476,18 @@ mod tests {
         assert_ne!(pinned, current);
     }
     #[test]
+    fn unreplayable_but_hash_valid_event_is_integrity_error() {
+        let (file, driver, key) = setup();
+        let payload = serde_json::to_vec(&Event::Undo).unwrap();
+        let hash = digest(&key, 1, GENESIS, &payload);
+        let db = Connection::open(file.path()).unwrap();
+        db.execute(
+            "INSERT INTO document_events_v1 VALUES (?1,?2,1,1,?3,?4,?5)",
+            params![key.tenant, key.document, GENESIS, hash, payload],
+        ).unwrap();
+        assert!(matches!(driver.load(&key, None), Err(StoreError::Integrity)));
+    }
+    #[test]
     fn links_require_same_tenant_existing_labels_and_pinned_head() {
         let (_file, d, key) = setup();
         let head = d.append(&key, &Head::default(), &create()).unwrap();
