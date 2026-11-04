@@ -273,6 +273,10 @@ try {
   delayedCloudPut = true;
   cloudPutReceived = false;
   await evaluate('document.getElementById("cloud-save").click()');
+  // A second submit while the first CAS is in flight must be rejected client-side.
+  await evaluate('document.getElementById("cloud-save").click()');
+  assert.equal(await evaluate('document.getElementById("cloud-save").disabled'), true,
+               'concurrent Cloud save must disable duplicate submission');
   await until(() => cloudPutReceived, 'delayed Cloud PUT received');
   await evaluate('document.getElementById("node-id").value="inflight-b";document.getElementById("add-transform").click()');
   await until(async () => await evaluate('document.getElementById("cloud-status").textContent.includes("niezapisany szkic")'), 'newer draft pending');
