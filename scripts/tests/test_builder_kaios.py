@@ -27,7 +27,7 @@ class KaiOSContracts(unittest.TestCase):
         js = (APP / "app.js").read_text()
         self.assertIn("function applySource()", js)
         self.assertIn("if (mode === 'code') applySource()", js)
-        self.assertIn("if (mode === 'code') applySource();", js)
+        self.assertIn("mode === 'code' ? parseSource() : state", js)
 
     def test_rejects_unsupported_project_fields(self):
         js = (APP / "app.js").read_text()
@@ -52,7 +52,7 @@ class KaiOSContracts(unittest.TestCase):
     def test_code_save_prechecks_identity_before_applying_draft(self):
         js = (APP / "app.js").read_text()
         save = js.split("$('save').onclick", 1)[1].split("$('load').onclick", 1)[0]
-        self.assertLess(save.index("JSON.parse($('source').value).project_id"), save.index("applySource();"))
+        self.assertLess(save.index("var draft ="), save.index("var candidate ="))
 
     def test_single_non_module_script_and_keypad_controls(self):
         html = (APP / "index.html").read_text()
