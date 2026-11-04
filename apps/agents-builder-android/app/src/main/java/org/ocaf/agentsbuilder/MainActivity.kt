@@ -2,7 +2,8 @@ package org.ocaf.agentsbuilder
 
 import android.os.Bundle
 import android.webkit.WebView
-import android.webkit.WebViewClient
+import androidx.webkit.WebViewAssetLoader
+import androidx.webkit.WebViewClientCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,8 +23,14 @@ class MainActivity : ComponentActivity() {
                     settings.setAllowFileAccessFromFileURLs(false)
                     settings.setAllowUniversalAccessFromFileURLs(false)
                     settings.allowContentAccess = false
-                    webViewClient = WebViewClient()
-                    loadUrl("file:///android_asset/index.html")
+                    val loader = WebViewAssetLoader.Builder()
+                        .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this@MainActivity))
+                        .build()
+                    webViewClient = object : WebViewClientCompat() {
+                        override fun shouldInterceptRequest(view: WebView, request: android.webkit.WebResourceRequest): android.webkit.WebResourceResponse? =
+                            loader.shouldInterceptRequest(request.url)
+                    }
+                    loadUrl("https://appassets.androidplatform.net/assets/index.html")
                 }
             }
             AndroidView(factory = { editor }, modifier = Modifier.fillMaxSize())
