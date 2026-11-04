@@ -236,16 +236,16 @@ impl GovernanceJournal {
             db(tx.commit())?;
             return Ok(Admission::Denied(reason));
         }
-        let prior: Option<(String, String, Vec<u8>, String)> = db(tx
+        let prior: Option<(String, String, Vec<u8>, String, Option<Vec<u8>>)> = db(tx
             .query_row(
-                "SELECT actor,request_id,payload_sha256,status
+                "SELECT actor,request_id,payload_sha256,status,outcome_sha256
              FROM governance_intents_v1
              WHERE tenant=?1 AND action=?2 AND idem=?3",
                 params![trusted_tenant, request.action, idempotency_key],
-                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
+                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)),
             )
             .optional())?;
-        if let Some((actor, request_id, hash, status)) = prior {
+        if let Some((actor, request_id, hash, status, receipt)) = prior {
             if actor != trusted_actor
                 || request_id != request.request_id
                 || hash.as_slice() != request.payload_sha256.as_slice()
@@ -262,9 +262,9 @@ impl GovernanceJournal {
                 db(tx.commit())?;
                 return Ok(Admission::DeniedIdempotencyCollision);
             }
-            let outcome = match status.as_str() {
-                "PENDING" => Admission::ReplayPending,
-                "COMMITTED" => Admission::ReplayCommitted,
+            let outcome = match (status.as_str(), receipt.as_deref()) {
+                ("PENDING", None) => Admission::ReplayPending,
+                ("COMMITTED", Some(hash)) if hash.len() == 32 => Admission::ReplayCommitted,
                 _ => return Err(JournalError::Integrity),
             };
             append_audit(
