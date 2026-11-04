@@ -45,3 +45,7 @@ Przycisk **Nowy graf** tworzy poprawny, dwuwęzłowy projekt kanoniczny `Input �
 ## Typowane porty w NoCode
 
 Formularz umożliwia wybór typu portu `text`, `json` albo `bytes` dla nowego grafu. Wstawienie transformacji dziedziczy typ z połączenia prowadzącego do `Output`; usuwanie transformacji zachowuje typ istniejących portów. Wybór nieznanej wartości jest odrzucany bez modyfikacji projektu. To statyczne sprawdzanie kontraktów, a nie uruchamianie transformacji.
+
+## Import i eksport kanonicznego DAG
+
+**Eksportuj DAG** kopiuje zwalidowany projekt do pola tekstowego, skąd użytkownik może skopiować JSON do innego środowiska. **Importuj DAG** weryfikuje rozmiar (maks. 128 KiB), identyfikator projektu, tenant i cały kanoniczny graf przed aktualizacją edytora. Nie wykonuje kodu, nie wysyła danych do sieci i nie zapisuje importu automatycznie. To transfer JSON przez schowek użytkownika, nie eksport podpisanego manifestu OCAF ani pakietu wykonywalnego.
