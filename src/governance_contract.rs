@@ -515,6 +515,23 @@ mod tests {
         );
     }
     #[test]
+    fn noncanonical_action_identifiers_are_rejected() {
+        let mut c = contract();
+        c.permissions.insert("read..private".into());
+        assert!(!c.validate());
+        c.permissions.remove("read..private");
+        c.permissions.insert(".read".into());
+        assert!(!c.validate());
+        c.permissions.remove(".read");
+        let mut r = request();
+        r.risk = RiskTier::Low;
+        r.action = "read..private";
+        assert_eq!(
+            c.evaluate(&r, None, 150),
+            PreflightDecision::Deny(DenyReason::InvalidRequest)
+        );
+    }
+    #[test]
     fn invalid_contract_and_untrusted_time_fail_closed() {
         let mut c = contract();
         let r = request();
