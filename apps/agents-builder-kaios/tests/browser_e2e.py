@@ -41,5 +41,9 @@ with sync_playwright() as playwright:
     page.set_content(html)
     page.locator("#load").click()
     assert "second" in page.locator("#nodes li").inner_text()
-    print("PASS KaiOS Chromium DOM E2E: NoCode, Code, delete, persistence shim")
+    evidence = ROOT.parents[1] / "dist" / "kaios-chromium-e2e.png"
+    evidence.parent.mkdir(parents=True, exist_ok=True)
+    page.screenshot(path=str(evidence), full_page=True)
+    assert evidence.stat().st_size > 1024
+    print("PASS KaiOS Chromium DOM E2E: NoCode, Code, delete, persistence shim; screenshot:", evidence)
     browser.close()
