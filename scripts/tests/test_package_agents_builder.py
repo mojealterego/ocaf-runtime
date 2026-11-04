@@ -164,5 +164,46 @@ class PackageBuilderTests(unittest.TestCase):
         self.assertEqual(paths[1], "notes.txt")
 
 
+
+    def test_main_does_not_publish_partial_release_when_second_bundle_fails(self):
+        from unittest.mock import patch
+        import sys
+
+        out = Path(self.temp.name) / "release-output"
+        required = (
+            "apps/agents-builder-web/index.html",
+            "apps/agents-builder-web/app.mjs",
+            "apps/agents-builder-web/models.mjs",
+            "apps/agents-builder-web/i18n.mjs",
+            "apps/agents-builder-web/credentials.mjs",
+            "src/builder_core.rs",
+            "src/builder_cloud.rs",
+            "src/builder_http.rs",
+            "src/builder_store.rs",
+            "tests/builder_web_contract.rs",
+            "scripts/package_agents_builder.py",
+        )
+        def fail_second(*args, **kwargs):
+            if fail_second.calls:
+                raise ValueError("injected second archive failure")
+            fail_second.calls += 1
+            dst = args[1]
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            dst.write_bytes(b"first archive, not a complete release")
+            return {"name": dst.name, "bytes": dst.stat().st_size,
+                    "sha256": hashlib.sha256(dst.read_bytes()).hexdigest(),
+                    "file_count": len(args[3])}
+        fail_second.calls = 0
+        with patch.object(bundle, "tracked_files", return_value=list(required)), \\
+             patch.object(bundle, "select_builder", return_value=True), \\
+             patch.object(bundle, "write_bundle", side_effect=fail_second), \\
+             patch.object(sys, "argv", ["package_agents_builder.py", "--repo", str(self.root),
+                                        "--out", str(out)]):
+            with self.assertRaisesRegex(ValueError, "injected second archive failure"):
+                bundle.main()
+        self.assertFalse(any(out.iterdir()) if out.exists() else False,
+                         "failed release must not expose any partial artifacts")
+
+
 if __name__ == "__main__":
     unittest.main()
