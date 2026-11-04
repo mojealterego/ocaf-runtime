@@ -40,6 +40,8 @@ def run(binary: Path, screenshot: Path, seconds: float = 15.0) -> None:
         data = screenshot.read_bytes()
         if len(data) < 1024 or data[:8] != bytes.fromhex("89504e470d0a1a0a"):
             raise RuntimeError("Missing or invalid Linux window screenshot")
+        if data[12:16] != b"IHDR" or struct.unpack(">I", data[8:12])[0] != 13:
+            raise RuntimeError("Invalid PNG IHDR chunk")
         width, height = struct.unpack(">II", data[16:24])
         if width < 320 or height < 240:
             raise RuntimeError("Linux window screenshot has invalid dimensions")
