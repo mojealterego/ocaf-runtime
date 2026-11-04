@@ -6,11 +6,17 @@ const vm = require('node:vm');
 const root = path.join(__dirname, '..');
 const elements = {
   'canonical-check': { onclick: null },
+  'canonical-save': { onclick: null },
+  'canonical-load': { onclick: null },
   'canonical-source': { value: '' },
   'canonical-tenant': { value: 'local' },
   'canonical-result': { textContent: '' }
 };
-const context = { document: { getElementById(id) { return elements[id]; } } };
+const storage = new Map();
+const context = { document: { getElementById(id) { return elements[id]; } }, localStorage: {
+  getItem(key) { return storage.get(key) || null; },
+  setItem(key,value) { storage.set(key,value); }
+} };
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(root, 'canonical-graph.js'), 'utf8'), context);
 vm.runInContext(fs.readFileSync(path.join(root, 'canonical-ui.js'), 'utf8'), context);
@@ -34,4 +40,16 @@ project.edges[0].to_port = 'wrong';
 elements['canonical-source'].value = JSON.stringify(project);
 elements['canonical-check'].onclick();
 assert.match(elements['canonical-result'].textContent, /Invalid edge port/);
-console.log('PASS canonical KaiOS UI validation, tenant isolation, invalid edge');
+project.edges[0].to_port = 'in';
+elements['canonical-source'].value = JSON.stringify(project);
+elements['canonical-save'].onclick();
+assert.match(elements['canonical-result'].textContent, /Zapisano/);
+elements['canonical-source'].value = '';
+elements['canonical-load'].onclick();
+assert.equal(JSON.parse(elements['canonical-source'].value).project_id, 'agent');
+project.edges[0].to_port = 'wrong';
+elements['canonical-source'].value = JSON.stringify(project);
+elements['canonical-save'].onclick();
+assert.match(elements['canonical-result'].textContent, /Błąd/);
+assert.equal(JSON.parse(storage.get('ocaf-kaios-canonical-v1:local:agent')).edges[0].to_port, 'in');
+console.log('PASS canonical KaiOS UI validation and persistence');
