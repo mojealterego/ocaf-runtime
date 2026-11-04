@@ -581,6 +581,34 @@ mod tests {
     }
 
     #[test]
+    fn invalid_clause_is_rejected_before_reserving_intent() {
+        use crate::governance_contract::{Accountability, AgentContract, ActionRequest, Domain, RiskTier, payload_sha256};
+        use crate::governance_journal::GovernanceJournal;
+        use std::collections::BTreeSet;
+        let file = tempfile::NamedTempFile::new().unwrap();
+        let journal = GovernanceJournal::open_existing(file.path()).unwrap();
+        let contract = AgentContract {
+            contract_id: "contract_1".into(), version: "v1".into(),
+            tenant: "tenant_a".into(), actor: "agent_a".into(),
+            obligations: vec![], permissions: BTreeSet::from(["contract.extract_obligation".into()]),
+            prohibitions: BTreeSet::new(),
+            accountability: Accountability { owner: "owner".into(), escalation_reviewer: "reviewer".into(), audit_authority: "auditor".into() },
+        };
+        let request = ActionRequest {
+            request_id: "req_1", tenant: "tenant_a", actor: "agent_a",
+            action: "contract.extract_obligation", domain: Domain::ContractObligations,
+            risk: RiskTier::Low, payload_sha256: payload_sha256(b"source clause"),
+            uses_external_provider: false, provider: None, approval: None,
+        };
+        let invalid = cited("Supplier must not report within 2 days.");
+        assert!(matches!(
+            gated_extract_obligation(&journal, &contract, &request, None, ("tenant_a", "agent_a"), 170, "idem_1", invalid),
+            Err(GatedExtractionError::Clause(ClauseError::UnsupportedGrammar))
+        ));
+        assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 0);
+    }
+
+    #[test]
     fn shared_extraction_gate_refuses_execution_without_durable_admission() {
         use crate::governance_contract::{Accountability, AgentContract, ActionRequest, Domain, SocialCommitment, payload_sha256};
         use crate::governance_journal::{GovernanceJournal, Admission};
