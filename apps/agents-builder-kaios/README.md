@@ -33,3 +33,7 @@ Weryfikacja: `node apps/agents-builder-kaios/tests/canonical-ui.cjs` oraz `node 
 ## Lokalny zapis kanonicznego DAG
 
 Formularz kanonicznego DAG ma osobne pola `Tenant` i `ID projektu DAG`. Zapis i odczyt używają klucza `ocaf-kaios-canonical-v1:<tenant>:<project>`; przed zapisem oraz po odczycie wykonywana jest walidacja grafu i zgodności identyfikatorów. Błędy walidacji nie nadpisują poprzednio zapisanego projektu. Pamięć `localStorage` nie jest szyfrowana i nie zapewnia izolacji bezpieczeństwa między uwierzytelnionymi tenantami; jest to jedynie lokalna przestrzeń nazw. Nie przechowuj sekretów ani danych poufnych.
+
+## Kanoniczny NoCode — operacje grafowe
+
+Przycisk **Nowy graf** tworzy poprawny, dwuwęzłowy projekt kanoniczny `Input → Output` z portami `text`. Przycisk **Dodaj Transform** wstawia nowy węzeł w jedyne połączenie prowadzące do `Output` (wymagane porty `out` i `in`, typ `text`). Po operacji następuje pełna walidacja kanonicznego DAG. Błędne identyfikatory, duplikaty i nieobsługiwane grafy są odrzucane bez modyfikacji edytora. Jest to ograniczony edytor liniowych transformacji, **nie** kompletny wizualny edytor dowolnych grafów, narzędzi ani uprawnień.
