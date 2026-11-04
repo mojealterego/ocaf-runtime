@@ -194,11 +194,13 @@ class PackageBuilderTests(unittest.TestCase):
                     "sha256": hashlib.sha256(dst.read_bytes()).hexdigest(),
                     "file_count": len(args[3])}
         fail_second.calls = 0
-        with patch.object(bundle, "tracked_files", return_value=list(required)), \\
-             patch.object(bundle, "select_builder", return_value=True), \\
-             patch.object(bundle, "write_bundle", side_effect=fail_second), \\
-             patch.object(sys, "argv", ["package_agents_builder.py", "--repo", str(self.root),
-                                        "--out", str(out)]):
+        with (
+            patch.object(bundle, "tracked_files", return_value=list(required)),
+            patch.object(bundle, "select_builder", return_value=True),
+            patch.object(bundle, "write_bundle", side_effect=fail_second),
+            patch.object(sys, "argv", ["package_agents_builder.py", "--repo",
+                                      str(self.root), "--out", str(out)]),
+        ):
             with self.assertRaisesRegex(ValueError, "injected second archive failure"):
                 bundle.main()
         self.assertFalse(any(out.iterdir()) if out.exists() else False,
