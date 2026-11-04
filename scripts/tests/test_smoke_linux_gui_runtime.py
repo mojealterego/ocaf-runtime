@@ -1,0 +1,39 @@
+"""Executable regression tests for Linux GUI smoke failure paths."""
+import importlib.util
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[2]
+SPEC = importlib.util.spec_from_file_location("linux_gui_smoke", ROOT / "scripts/smoke_linux_gui.py")
+assert SPEC and SPEC.loader
+module = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(module)
+
+
+class LinuxGuiSmokeTests(unittest.TestCase):
+    def test_missing_binary_rejected_without_spawning(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(module.subprocess, "Popen") as spawn:
+                with self.assertRaises(FileNotFoundError):
+                    module.run(Path(tmp) / "missing", Path(tmp) / "screen.png")
+                spawn.assert_not_called()
+
+    def test_dead_process_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            binary = Path(tmp) / "binary"
+            binary.write_bytes(b"binary")
+            class DeadProcess:
+                pid = 1234
+                def poll(self):
+                    return 1
+                def communicate(self, timeout):
+                    return (b"", b"")
+            with patch.object(module.subprocess, "Popen", return_value=DeadProcess()):
+                with self.assertRaisesRegex(RuntimeError, "exited before mapping"):
+                    module.run(binary, Path(tmp) / "screen.png", seconds=1)
+
+
+if __name__ == "__main__":
+    unittest.main()
