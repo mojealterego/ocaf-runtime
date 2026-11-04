@@ -1,10 +1,12 @@
 # OCAF — Agents Builder Code / NoCode — przywrócenie pierwotnego zakresu (v11)
 
-## Kanoniczna architektura wdrożeniowa: pięć aplikacji, trzy przełączniki (2026-11-04)
+## Kanoniczna architektura wdrożeniowa: cztery aplikacje natywne + usługa Cloud (2026-11-04)
 
-**Decyzja operatora:** pięć aplikacji: Web/Cloud, Windows, macOS, Android, iOS. Każda aplikacja ma wspólny edytor z przełącznikiem **Code / NoCode** i wyborem środowiska **Local / Cloud** (Web działa w natywnym środowisku Cloud). **Nie budować dziesięciu osobnych aplikacji.** Dziesięć historycznych rekordów `AB-*-CODE` / `AB-*-NOCODE` pozostaje niezależnymi bramkami odbioru funkcjonalnego, po dwie na aplikację. Definicja maszynowa: `docs/roadmap/agents_builder_products_v11.json#application_architecture`. Kontrakt kontroluje `scripts/tests/test_builder_unified_architecture.py` i workflow source bundle.
+**Decyzja operatora (korekta):** dokładnie **cztery aplikacje**: Windows, macOS, Android, iOS. Każda zawiera jeden interfejs z przełącznikiem **Code / NoCode** oraz **Local / Cloud**. **Web/Cloud nie jest piątą aplikacją**: to współdzielony interfejs i usługa zdalna, dostępna z czterech aplikacji. Nie budować dziesięciu osobnych aplikacji.
 
-Wspólne jądro typowanego DAG/DSL, odseparowane zarządzanie tenantem, jawne połączenie Cloud z OAuth, platformowe przechowywanie sekretów oraz lokalne wykonywanie tylko tam, gdzie platforma i sandbox na to pozwalają. Web/PWA nie zastępuje instalowalnego binarium Windows/macOS ani APK/IPA. **Status: architektura zapisana i testy kontraktu dodane, CI na wynikowym SHA niepotwierdzone; żadna z pięciu aplikacji nie jest produkcyjnie odebrana.**
+Osiem historycznych rekordów `AB-{WINDOWS,MACOS,ANDROID,IOS}-{CODE,NOCODE}` to dwie bramki odbioru na aplikację. Dwa rekordy `AB-CLOUD-CODE` i `AB-CLOUD-NOCODE` pozostają osobnymi **bramkami funkcjonalnymi usługi Cloud**, a nie aplikacjami natywnymi. Maszynowy kontrakt: `docs/roadmap/agents_builder_products_v11.json#application_architecture`; test: `scripts/tests/test_builder_unified_architecture.py`.
+
+Wspólne jądro DAG/DSL, izolacja tenantów, uwierzytelniony dostęp Cloud oraz platformowe przechowywanie sekretów pozostają wymaganiami. Web/PWA nie zastępuje binariów Windows/macOS ani APK/IPA. **Status: architektura zapisana; brak potwierdzonego CI na wynikowym SHA i brak produkcyjnego odbioru którejkolwiek z czterech aplikacji.**
 
 **Dowody CI (commit e19ef9e665d9bbe6bc0e62c9dde7d9b98825e4b9):** [Builder Web #41768766591](https://github.com/mojealterego/ocaf-runtime/actions/runs/41768766591) SUCCESS (26/26 Node, Chrome GUI E2E, Python 5/5, Rust fixture); [Source ZIP #41768766620](https://github.com/mojealterego/ocaf-runtime/actions/runs/41768766620) SUCCESS (11/11 testów pakowania, 5/5 backendu, 26/26 Node, Chromium, SHA256SUMS 2/2, wydanie z 2 ZIP); [Roadmap v11 #41768766632](https://github.com/mojealterego/ocaf-runtime/actions/runs/41768766632) SUCCESS. Status TESTED_LOCAL_PARTIAL: testowana walidacja, prawdziwe localhost/subprocess/HTTP i binarny transfer, ale bez faktycznej inferencji wag GGUF i testów na sprzęcie operatora.
 
