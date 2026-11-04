@@ -14,7 +14,9 @@ This is a small, keypad-friendly, offline **subset** of OCAF Agents Builder, not
 
 ## Limitations and security
 
-The JSON validator rejects unsupported project/node properties rather than silently stripping unknown graph semantics. This is a deliberately strict schema boundary.\n\nThe simplified KaiOS schema is **not** the canonical OCAF typed DAG and is not interoperable with the desktop project's complete schema. The UI must not claim semantic Code/NoCode round-trip with the canonical compiler. The app requests no privileged KaiOS permissions and does not evaluate project JSON as code. Local storage is not encrypted; do not enter secrets.
+The JSON validator rejects unsupported project/node properties rather than silently stripping unknown graph semantics. This is a deliberately strict schema boundary.
+
+The simplified KaiOS schema is **not** the canonical OCAF typed DAG and is not interoperable with the desktop project's complete schema. The UI must not claim semantic Code/NoCode round-trip with the canonical compiler. The app requests no privileged KaiOS permissions and does not evaluate project JSON as code. Local storage is not encrypted; do not enter secrets.
 
 ## Build and acceptance
 
