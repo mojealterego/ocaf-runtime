@@ -23,3 +23,9 @@ The simplified KaiOS schema is **not** the canonical OCAF typed DAG and is not i
 `.github/workflows/agents-builder-kaios.yml` runs source contract tests and JavaScript syntax checks and creates a ZIP of `manifest.webapp`, `index.html`, `app.js`, `style.css`, `canonical-graph.js`. This is an **unsigned web-app package**, not proof of installation.
 
 Acceptance still requires: pinned KaiOS SDK/device target, install and launch, keypad navigation E2E, persistence after restart, storage quota handling, accessibility, and independent negative tests. For KaiOS 3.x, separately verify manifest and runtime requirements before claiming compatibility.
+
+## Kanoniczna walidacja DAG w interfejsie
+
+Sekcja **Kanoniczny DAG OCAF (walidacja)** przyjmuje ścisły JSON projektu `schema_version=1` i jawny identyfikator tenanta. Przycisk **Sprawdź DAG** wywołuje lokalny, bezefektowy walidator `canonical-graph.js` i wyświetla uporządkowany plan lub komunikat błędu. Identyfikator tenanta jest tu wpisywany przez użytkownika, **nie jest to uwierzytelniona tożsamość**. Wynik nie jest podpisanym manifestem, nie wykonuje narzędzi i nie jest dowodem autoryzacji serwerowej.
+
+Weryfikacja: `node apps/agents-builder-kaios/tests/canonical-ui.cjs` oraz `node apps/agents-builder-kaios/tests/canonical-graph.cjs`. Tryb Code/NoCode v1 nadal zachowuje własny, uproszczony format; pełna konwersja semantyczna do kanonicznego DAG nie została wdrożona.
