@@ -16,7 +16,7 @@ class MobileNativeContracts(unittest.TestCase):
         self.assertIn("org.jetbrains.kotlin.plugin.compose", gradle)
         self.assertIn("ComponentActivity", main)
         self.assertIn("WebView", main)
-        self.assertIn("file:///android_asset/index.html", main)
+        self.assertIn("https://appassets.androidplatform.net/assets/index.html", main)\n        self.assertIn("WebViewAssetLoader", main)
         self.assertIn("setAllowFileAccessFromFileURLs(false)", main)
         self.assertIn("setAllowUniversalAccessFromFileURLs(false)", main)
 
@@ -26,7 +26,7 @@ class MobileNativeContracts(unittest.TestCase):
         self.assertIn("WindowGroup", source)
         self.assertIn("WKWebView", source)
         self.assertIn("loadFileURL", source)
-        self.assertIn("isFileAccessAllowed = false", source)
+        self.assertIn("allowingReadAccessTo: directory", source)
 
 
 if __name__ == "__main__":
