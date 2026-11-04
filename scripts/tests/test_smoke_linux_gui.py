@@ -19,6 +19,7 @@ class LinuxGuiSmokeContracts(unittest.TestCase):
         self.assertIn('bytes.fromhex("89504e470d0a1a0a")', source)
         self.assertIn("len(data) < 1024", source)
         self.assertIn('struct.unpack(">II", data[16:24])', source)
+        self.assertIn('data[12:16] != b"IHDR"', source)
 
     def test_workflow_gates_artifact_on_gui_smoke(self):
         workflow = WORKFLOW.read_text()
