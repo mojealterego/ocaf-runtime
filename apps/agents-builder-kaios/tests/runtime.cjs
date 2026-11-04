@@ -92,4 +92,15 @@ localStorage.setItem = previousWrite;
 click('code');
 assert.deepEqual(nodes(), ['third'], 'Failed storage write must not commit Code draft');
 assert.ok(document.keydown, 'Keypad shortcuts must be installed');
-console.log('KaiOS runtime behavior tests passed');
+// Simulate application restart with fresh DOM and VM but unchanged persistent storage.
+const restartedElements = Object.fromEntries(ids.map(id => [id, element(id)]));
+const restartedDocument = {
+  getElementById(id) { assert.ok(restartedElements[id], id); return restartedElements[id]; },
+  createElement(tag) { return element(tag); },
+  addEventListener() {}
+};
+storage.set('ocaf-kaios-v1:agent', JSON.stringify({version:1,project_id:'agent',nodes:[{id:'persisted'}]}));
+vm.runInNewContext(script, { document: restartedDocument, localStorage, Array, JSON, Object, Error }, { timeout: 2000 });
+restartedElements.load.click();
+assert.deepEqual(JSON.parse(restartedElements.source.value).nodes, [{id:'persisted'}], 'Saved project must survive app restart');
+console.log('KaiOS runtime behavior and restart persistence tests passed');
