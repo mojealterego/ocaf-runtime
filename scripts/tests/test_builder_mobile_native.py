@@ -16,7 +16,8 @@ class MobileNativeContracts(unittest.TestCase):
         self.assertIn("org.jetbrains.kotlin.plugin.compose", gradle)
         self.assertIn("ComponentActivity", main)
         self.assertIn("WebView", main)
-        self.assertIn("https://appassets.androidplatform.net/assets/index.html", main)\n        self.assertIn("WebViewAssetLoader", main)
+        self.assertIn("https://appassets.androidplatform.net/assets/index.html", main)
+        self.assertIn("WebViewAssetLoader", main)
         self.assertIn("setAllowFileAccessFromFileURLs(false)", main)
         self.assertIn("setAllowUniversalAccessFromFileURLs(false)", main)
 
