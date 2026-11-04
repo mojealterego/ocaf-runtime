@@ -496,6 +496,24 @@ mod tests {
     }
 
     #[test]
+    fn inconsistent_provider_declaration_is_denied() {
+        let c = contract();
+        let mut r = request();
+        r.risk = RiskTier::Low;
+        let provider = ProviderAccess {
+            authenticated: true,
+            region_model_authorized: true,
+            explicit_cost_approved: true,
+            estimated_cost_micros: 0,
+            approved_cost_micros: 0,
+        };
+        r.provider = Some(&provider);
+        assert_eq!(
+            c.evaluate(&r, None, 150),
+            PreflightDecision::Deny(DenyReason::InvalidRequest)
+        );
+    }
+    #[test]
     fn invalid_contract_and_untrusted_time_fail_closed() {
         let mut c = contract();
         let r = request();
