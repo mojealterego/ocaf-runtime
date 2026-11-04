@@ -263,6 +263,13 @@ try {
   await evaluate('document.getElementById("mode-nocode").click();document.getElementById("node-id").value="remote-step";document.getElementById("add-transform").click()');
   await until(async () => await evaluate('document.getElementById("cloud-save").disabled') === false, 'cloud edit pending');
   assert.equal(await evaluate('document.querySelectorAll(".node-card").length'), 3, 'cloud graph reflects NoCode edit');
+  // Unapplied Code DSL must not be silently omitted from a successful Cloud save.
+  await evaluate('document.getElementById("mode-code").click()');
+  await evaluate('(()=>{const e=document.getElementById("dsl");const p=JSON.parse(e.value);p.max_cost_minor=4321;e.value=JSON.stringify(p);e.dispatchEvent(new Event("input",{bubbles:true}));})()');
+  await evaluate('document.getElementById("cloud-save").click()');
+  assert.match(await evaluate('document.getElementById("message").textContent'), /unapplied Code DSL/i);
+  assert.equal(cloudProjects.get('cloud-demo').head.revision,1,'dirty Code must not trigger Cloud CAS');
+  await evaluate('document.getElementById("apply-code").click()');
   await evaluate('document.getElementById("cloud-save").click()');
   await until(async () => await evaluate('document.getElementById("cloud-save").disabled') === true, 'second CAS cloud save');
   assert.equal(cloudProjects.get('cloud-demo').head.revision,2);
