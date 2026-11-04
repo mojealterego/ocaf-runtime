@@ -9,7 +9,7 @@ A side-effect-free canonical typed DAG validator is included in `canonical-graph
 - Code: edit a constrained JSON project (version 1, project_id, up to 32 unique node IDs).
 - NoCode: add and list typed-identifier nodes; the same JSON document is displayed in Code mode.
 - Local: persist and reopen validated projects in browser localStorage.
-- Cloud: **disabled and fail-closed**. There is no authentication, API key handling, model inference, GGUF, tool execution, cross-device synchronization, deployment, or graph compiler.
+- Cloud: **disabled and fail-closed**. There is no authentication, API key handling, model inference, GGUF, tool execution, cross-device synchronization, or deployment. A separate static typed DAG validator is bundled, but it is not yet wired into the v1 node-only editor and is not a signed compiler.
 - Keypad shortcuts: SoftLeft save, SoftRight open; controls are standard focusable HTML elements.
 
 ## Limitations and security
@@ -20,6 +20,6 @@ The simplified KaiOS schema is **not** the canonical OCAF typed DAG and is not i
 
 ## Build and acceptance
 
-`.github/workflows/agents-builder-kaios.yml` runs source contract tests and JavaScript syntax checks and creates a ZIP of `manifest.webapp`, `index.html`, `app.js`, `style.css`. This is an **unsigned web-app package**, not proof of installation.
+`.github/workflows/agents-builder-kaios.yml` runs source contract tests and JavaScript syntax checks and creates a ZIP of `manifest.webapp`, `index.html`, `app.js`, `style.css`, `canonical-graph.js`. This is an **unsigned web-app package**, not proof of installation.
 
 Acceptance still requires: pinned KaiOS SDK/device target, install and launch, keypad navigation E2E, persistence after restart, storage quota handling, accessibility, and independent negative tests. For KaiOS 3.x, separately verify manifest and runtime requirements before claiming compatibility.
