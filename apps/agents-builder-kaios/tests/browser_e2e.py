@@ -103,6 +103,11 @@ with sync_playwright() as playwright:
     assert tool_graph["grants"] == ["search.tool"]
     assert tool_graph["max_cost_minor"] == 7
     assert json.loads(page.locator("#canonical-result").inner_text())["requested_tools"] == ["search.tool"]
+    page.locator("#canonical-remove-tool").click()
+    removed_tool_graph = json.loads(page.locator("#canonical-source").input_value())
+    assert removed_tool_graph["grants"] == []
+    assert removed_tool_graph["max_cost_minor"] == 0
+    assert json.loads(page.locator("#canonical-result").inner_text())["ordered_nodes"] == ["input", "output"]
     evidence = ROOT.parents[1] / "dist" / "kaios-chromium-e2e.png"
     evidence.parent.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(evidence), full_page=True)
