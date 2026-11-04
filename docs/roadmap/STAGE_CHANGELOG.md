@@ -1,14 +1,15 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
-## 2026-11-04 — Agents Builder: bezpieczny import GGUF do lokalnego runnera (IMPLEMENTED_CI_PENDING)
+## 2026-11-04 — Agents Builder: bezpieczny import GGUF do lokalnego runnera (TESTED_LOCAL_PARTIAL)
 
+- **Dowody CI (commit e19ef9e665d9bbe6bc0e62c9dde7d9b98825e4b9):** [Builder Web #41768766591](https://github.com/mojealterego/ocaf-runtime/actions/runs/41768766591) SUCCESS (26/26 Node, Chrome GUI E2E, Python 5/5, Rust fixture); [Source ZIP #41768766620](https://github.com/mojealterego/ocaf-runtime/actions/runs/41768766620) SUCCESS (11/11 testów pakowania, 5/5 backendu, 26/26 Node, Chromium, SHA256SUMS 2/2, wydanie z 2 ZIP); [Roadmap v11 #41768766632](https://github.com/mojealterego/ocaf-runtime/actions/runs/41768766632) SUCCESS. Status TESTED_LOCAL_PARTIAL: testowana walidacja, prawdziwe localhost/subprocess/HTTP i binarny transfer, ale bez faktycznej inferencji wag GGUF i testów na sprzęcie operatora.
 - Testy RED SHA `af8b3058161ca1aa8839664f084068a3c27ea41a`: import pliku z browser File API, endpoint HTTP, ścisły Origin/Host/Bearer, atomowe wykluczenie nadpisania, usuwanie uszkodzonych plików i integralność SHA-256.
 - Backend: dodano `POST /v1/local-runner/import`, przesyłanie binarne kawałkami ≤1 MiB, kontrolę GGUF v2/v3, twardy limit wielkości, prywatny plik tymczasowy oraz atomowe opublikowanie tylko nowej nazwy bez nadpisania. Odrzucone żądania zamykają połączenie HTTP.
 - UI: nowy kontrolowany import wcześniej pobranego GGUF, odświeżenie katalogu i wybór modelu; brak importu bez sesji, bez wykonania modelu do wyraźnego kliknięcia.
 - Nie ma backendowego pobierania dowolnych URL: operator pobiera GGUF przeglądarką z katalogu Hugging Face o przypiętym SHA, następnie importuje File do tej samej maszyny.
 - Kanoniczne stany 0.50–0.55 i `production_approved=false` nie zmienione. Brak rzeczywistego modelu E2E, testów na fizycznym Android i produkcyjnego sejfu API.
 
-## 2026-11-04 — Agents Builder: lokalny GGUF runner i inferencja llama.cpp (IMPLEMENTED_CI_PENDING)
+## 2026-11-04 — Agents Builder: lokalny GGUF runner i inferencja llama.cpp (TESTED_LOCAL_PARTIAL)
 
 - Nowy most `apps/agents-builder-web/local_runner.py`: HTTP server związany z 127.0.0.1, token sesji, jawny POST, dokładny Origin, kontrola Host, walidacja GGUF i limit zasobów. Startuje lokalne `llama-server` przez `subprocess.Popen` bez shella, z odrębnym tokenem backendowym przekazanym przez środowisko procesu; brak narzędzi modelu.
 - Klient `runner-client.mjs` i UI: lista GGUF dostępnych w katalogu operatora, ładowanie z parametrami wybranego profilu, health, jawne generowanie odpowiedzi, zatrzymanie procesu. Nie dotyka istniejącego modelu tenantów/OAuth Cloud ani typed DSL i nie zapisuje sekretów.
