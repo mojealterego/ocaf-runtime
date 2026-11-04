@@ -322,6 +322,26 @@ pub const fn obligation_tool_descriptors() -> [ObligationToolDescriptor; 2] {
     ]
 }
 
+/// Domain-separated, length-delimited digest binding all cited clause fields
+/// to the policy request, including tenant, contract, parties and reference time.
+pub fn cited_clause_payload_sha256(clause: CitedClause<'_>) -> [u8; 32] {
+    let mut hasher = Sha256::new();
+    hasher.update(b"OCAF-CITED-CLAUSE-PAYLOAD-v1");
+    for field in [
+        clause.tenant_id.as_bytes(),
+        clause.contract_id.as_bytes(),
+        clause.clause_citation.as_bytes(),
+        clause.debtor_id.as_bytes(),
+        clause.creditor_id.as_bytes(),
+        clause.text.as_bytes(),
+        &clause.reference_unix.to_be_bytes(),
+    ] {
+        hasher.update((field.len() as u64).to_be_bytes());
+        hasher.update(field);
+    }
+    hasher.finalize().into()
+}
+
 /// PDF-1.37 bounded adapter: the shared caller must supply authenticated
 /// peer identity, trusted time and a canonical idempotency key. This only
 /// extracts a clause after durable policy admission; it does not dispatch
@@ -359,7 +379,7 @@ pub fn gated_extract_obligation(
         || request.risk != RiskTier::Low
         || clause.tenant_id != trusted_peer.0
         || clause.debtor_id.is_empty()
-        || request.payload_sha256 != crate::governance_contract::payload_sha256(clause.text.as_bytes())
+        || request.payload_sha256 != cited_clause_payload_sha256(clause)
     {
         return Err(GatedExtractionError::InvalidAction);
     }
@@ -630,11 +650,11 @@ mod tests {
         let request = ActionRequest {
             request_id: "req_1", tenant: "tenant_a", actor: "agent_a",
             action: "contract.extract_obligation", domain: Domain::ContractObligations,
-            risk: RiskTier::Low, payload_sha256: payload_sha256(b"unrelated clause"),
+            risk: RiskTier::Low, payload_sha256: cited_clause_payload_sha256(cited("Supplier shall report within 2 days.")),
             uses_external_provider: false, provider: None, approval: None,
         };
         assert!(matches!(
-            gated_extract_obligation(&journal, &contract, &request, None, ("tenant_a", "agent_a"), 170, "idem_1", cited("Supplier shall report within 2 days.")),
+            gated_extract_obligation(&journal, &contract, &request, None, ("tenant_a", "agent_a"), 170, "idem_1", cited("Supplier shall report within 3 days.")),
             Err(GatedExtractionError::InvalidAction)
         ));
         assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 0);
@@ -657,7 +677,7 @@ mod tests {
         let request = ActionRequest {
             request_id: "req_1", tenant: "tenant_a", actor: "agent_a",
             action: "contract.extract_obligation", domain: Domain::ContractObligations,
-            risk: RiskTier::Low, payload_sha256: payload_sha256(b"Supplier shall report within 2 days."),
+            risk: RiskTier::Low, payload_sha256: cited_clause_payload_sha256(cited("Supplier shall report within 2 days.")),
             uses_external_provider: false, provider: None, approval: None,
         };
         let invalid = cited("Supplier must not report within 2 days.");
@@ -687,7 +707,7 @@ mod tests {
             request_id: "req_1", tenant: "tenant_a", actor: "agent_a",
             action: "contract.extract_obligation", domain: Domain::ContractObligations,
             risk: crate::governance_contract::RiskTier::Low,
-            payload_sha256: payload_sha256(b"Supplier shall report within 2 days."), uses_external_provider: false,
+            payload_sha256: cited_clause_payload_sha256(cited("Supplier shall report within 2 days.")), uses_external_provider: false,
             provider: None, approval: None,
         };
         let clause = cited("Supplier shall report within 2 days.");
