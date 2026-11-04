@@ -33,6 +33,8 @@ jobs:
           node --check apps/agents-builder-kaios/canonical-ui.js
       - name: Run KaiOS behavior regression tests
         run: node apps/agents-builder-kaios/tests/runtime.cjs
+      - name: Verify canonical KaiOS UI integration
+        run: node apps/agents-builder-kaios/tests/canonical-ui.cjs
       - name: Verify canonical KaiOS typed DAG validator
         run: node apps/agents-builder-kaios/tests/canonical-graph.cjs
       - name: Verify KaiOS NoCode node removal
