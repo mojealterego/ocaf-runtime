@@ -118,6 +118,24 @@
   get('canonical-check').onclick = function () {
     safe(function () { result.textContent = JSON.stringify(checked().plan, null, 2); });
   };
+  get('canonical-export').onclick = function () {
+    safe(function () {
+      var data = checked();
+      get('canonical-import').value = JSON.stringify(data.project, null, 2);
+      result.textContent = 'DAG gotowy do skopiowania z pola eksportu.';
+    });
+  };
+  get('canonical-import-button').onclick = function () {
+    safe(function () {
+      var raw = get('canonical-import').value;
+      if (raw.length > 131072) throw Error('Import przekracza 128 KiB');
+      var parsed = JSON.parse(raw);
+      if (parsed.project_id !== get('canonical-id').value) throw Error('Niezgodny identyfikator projektu DAG');
+      var plan = OCAFCanonicalGraph.compile(parsed, get('canonical-tenant').value);
+      get('canonical-source').value = JSON.stringify(parsed, null, 2);
+      result.textContent = JSON.stringify(plan, null, 2);
+    });
+  };
   get('canonical-save').onclick = function () {
     safe(function () {
       var data = checked();
