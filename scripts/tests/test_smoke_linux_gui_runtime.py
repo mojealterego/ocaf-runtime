@@ -40,9 +40,9 @@ class LinuxGuiSmokeTests(unittest.TestCase):
                 if "search" in argv:
                     return Result(0, "9876\\n")
                 return Result(0, "5678\\n")
-            with patch.object(module.subprocess, "Popen", return_value=Process()), \\
-                 patch.object(module.subprocess, "run", side_effect=command), \\
-                 patch.object(module.time, "sleep"):
+            with (patch.object(module.subprocess, "Popen", return_value=Process()),
+                  patch.object(module.subprocess, "run", side_effect=command),
+                  patch.object(module.time, "sleep")):
                 with self.assertRaisesRegex(RuntimeError, "No visible"):
                     module.run(binary, Path(tmp) / "screen.png", seconds=0.01)
 
