@@ -32,10 +32,12 @@ EXACT = frozenset({
     "docs/roadmap/STAGE_CHANGELOG.md",
     "scripts/package_agents_builder.py",
     "scripts/tests/test_agents_builder_local_runner.py",
+    "scripts/tests/test_builder_native_desktop.py",
     "scripts/tests/test_package_agents_builder.py",
 })
 PREFIXES = (
     "apps/agents-builder-web/",
+    "apps/agents-builder-desktop/",
     "docs/audits/STAGE050_BUILDER",
     "docs/audits/STAGE051_BUILDER",
     "docs/audits/STAGE052_BUILDER",
@@ -46,6 +48,7 @@ WORKFLOWS = frozenset({
     ".github/workflows/stage051-builder-web.yml",
     ".github/workflows/stage052-builder-cloud.yml",
     ".github/workflows/agents-builder-source-bundle.yml",
+    ".github/workflows/agents-builder-native-desktop.yml",
 })
 
 
