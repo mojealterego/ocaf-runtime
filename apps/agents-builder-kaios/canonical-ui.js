@@ -71,6 +71,8 @@
       if (!outgoingPort || outgoingPort.kind !== portKind)
         throw Error('Transform wymaga portów text/out/in');
       var candidate = JSON.parse(JSON.stringify(project));
+      if (candidate.revision >= 9007199254740991) throw Error('Przekroczono zakres rewizji');
+      candidate.revision++;
       candidate.nodes.push(node(id,'transform',portKind));
       candidate.edges = candidate.edges.filter(function (e) {
         return !(e.from_node === incoming[0].from_node && e.from_port === incoming[0].from_port &&
@@ -98,6 +100,8 @@
           incoming[0].to_port !== 'in' || outgoing[0].from_port !== 'out')
         throw Error('Transform wymaga jednego wejścia i wyjścia');
       var candidate = JSON.parse(JSON.stringify(project));
+      if (candidate.revision >= 9007199254740991) throw Error('Przekroczono zakres rewizji');
+      candidate.revision++;
       candidate.nodes = candidate.nodes.filter(function (n) { return n.id !== id; });
       candidate.edges = candidate.edges.filter(function (e) {
         return e.to_node !== id && e.from_node !== id;
