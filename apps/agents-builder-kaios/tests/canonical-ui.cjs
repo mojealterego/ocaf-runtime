@@ -11,6 +11,9 @@ const elements = {
   'canonical-new': { onclick: null },
   'canonical-transform': { onclick: null },
   'canonical-remove': { onclick: null },
+  'canonical-export': { onclick: null },
+  'canonical-import-button': { onclick: null },
+  'canonical-import': { value: '' },
   'canonical-node-id': { value: 'step' },
   'canonical-port-kind': { value: 'text' },
   'canonical-source': { value: '' },
@@ -98,4 +101,17 @@ const previousSource = elements['canonical-source'].value;
 elements['canonical-new'].onclick();
 assert.match(elements['canonical-result'].textContent, /Błąd/);
 assert.equal(elements['canonical-source'].value, previousSource);
-console.log('PASS canonical KaiOS UI typed ports, persistence, NoCode insert/remove');
+elements['canonical-port-kind'].value = 'text';
+elements['canonical-new'].onclick();
+elements['canonical-export'].onclick();
+const exported = elements['canonical-import'].value;
+assert.equal(JSON.parse(exported).project_id, 'agent');
+elements['canonical-source'].value = '';
+elements['canonical-import-button'].onclick();
+assert.equal(JSON.parse(elements['canonical-source'].value).project_id, 'agent');
+elements['canonical-import'].value = exported.replace('"tenant_id": "local"', '"tenant_id": "other"');
+const beforeRejectedImport = elements['canonical-source'].value;
+elements['canonical-import-button'].onclick();
+assert.match(elements['canonical-result'].textContent, /Błąd/);
+assert.equal(elements['canonical-source'].value, beforeRejectedImport);
+console.log('PASS canonical KaiOS UI typed ports, persistence, import/export, NoCode');
