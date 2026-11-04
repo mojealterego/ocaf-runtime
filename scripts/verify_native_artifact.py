@@ -25,6 +25,13 @@ def verify(kind: str, path: Path) -> None:
             file.seek(pe_offset)
             if file.read(4) != bytes.fromhex("50450000"):
                 raise ValueError("Windows executable lacks PE signature")
+        elif kind == "linux":
+            if header[:4] != bytes.fromhex("7f454c46"):
+                raise ValueError("Linux executable lacks ELF signature")
+            if header[4] not in (1, 2) or header[5] not in (1, 2):
+                raise ValueError("Linux executable has invalid ELF class or byte order")
+            if header[16:18] == bytes.fromhex("0000"):
+                raise ValueError("Linux ELF has no object type")
         elif kind in {"macos", "ios"}:
             if header[:4] not in MACHO_MAGICS:
                 raise ValueError(f"{kind} executable lacks Mach-O signature")
@@ -42,7 +49,7 @@ def verify(kind: str, path: Path) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("kind", choices=["windows", "macos", "android", "ios"])
+    parser.add_argument("kind", choices=["windows", "macos", "android", "ios", "linux"])
     parser.add_argument("path", type=Path)
     args = parser.parse_args()
     try:
