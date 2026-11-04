@@ -127,7 +127,8 @@ pub fn extract_cited_obligation(
         || !valid_id(clause.creditor_id)
         || clause.text.is_empty()
         || clause.text.len() > MAX_CLAUSE_BYTES
-        || clause.text.contains('\0')
+        || clause.reference_unix == 0
+        || clause.text.chars().any(char::is_control)
     {
         return Err(ClauseError::InvalidSource);
     }
@@ -149,7 +150,8 @@ pub fn extract_cited_obligation(
     if norm_positions.len() != 1
         || words
             .get(norm_positions[0] + 1)
-            .is_some_and(|word| word == "not")
+            .is_some_and(|word| matches!(word.as_str(), "not" | "never" | "refrain"))
+        || clause.text.trim_end_matches('.').contains('.')
     {
         return Err(ClauseError::UnsupportedGrammar);
     }
@@ -382,7 +384,7 @@ mod tests {
         clause.reference_unix = 0;
         assert_eq!(extract_cited_obligation(clause).unwrap_err(), ClauseError::InvalidSource);
         assert_eq!(
-            extract_cited_obligation(cited("Supplier shall report\\nwithin 2 days.")).unwrap_err(),
+            extract_cited_obligation(cited("Supplier shall report\nwithin 2 days.")).unwrap_err(),
             ClauseError::InvalidSource
         );
     }
