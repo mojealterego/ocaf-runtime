@@ -134,6 +134,45 @@
       result.textContent = JSON.stringify(plan, null, 2);
     });
   };
+  get('canonical-remove-tool').onclick = function () {
+    safe(function () {
+      var project = checked().project;
+      var id = get('canonical-node-id').value;
+      var target = project.nodes.filter(function (n) { return n.id === id; })[0];
+      if (!target || target.kind !== 'tool' || target.inputs.length !== 1 ||
+          target.outputs.length !== 1 || target.inputs[0].name !== 'in' ||
+          target.outputs[0].name !== 'out' ||
+          target.inputs[0].kind !== target.outputs[0].kind)
+        throw Error('Nieobsługiwany węzeł Tool');
+      var incoming = project.edges.filter(function (e) { return e.to_node === id; });
+      var outgoing = project.edges.filter(function (e) { return e.from_node === id; });
+      if (incoming.length !== 1 || outgoing.length !== 1 ||
+          incoming[0].to_port !== 'in' || outgoing[0].from_port !== 'out')
+        throw Error('Tool wymaga pojedynczego wejścia i wyjścia');
+      if (project.revision >= 9007199254740991)
+        throw Error('Przekroczono zakres rewizji');
+      var candidate = JSON.parse(JSON.stringify(project));
+      candidate.nodes = candidate.nodes.filter(function (n) { return n.id !== id; });
+      candidate.edges = candidate.edges.filter(function (e) {
+        return e.to_node !== id && e.from_node !== id;
+      });
+      candidate.edges.push({
+        from_node: incoming[0].from_node, from_port: incoming[0].from_port,
+        to_node: outgoing[0].to_node, to_port: outgoing[0].to_port
+      });
+      if (!candidate.nodes.some(function (n) {
+        return n.kind === 'tool' && n.tool_name === target.tool_name;
+      })) {
+        candidate.grants = candidate.grants.filter(function (g) { return g !== target.tool_name; });
+      }
+      candidate.max_cost_minor -= target.max_cost_minor;
+      if (candidate.max_cost_minor < 0) throw Error('Niespójny budżet');
+      candidate.revision++;
+      var plan = OCAFCanonicalGraph.compile(candidate, get('canonical-tenant').value);
+      get('canonical-source').value = JSON.stringify(candidate, null, 2);
+      result.textContent = JSON.stringify(plan, null, 2);
+    });
+  };
   get('canonical-remove').onclick = function () {
     safe(function () {
       var project = checked().project;
