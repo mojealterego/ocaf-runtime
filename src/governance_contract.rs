@@ -456,6 +456,18 @@ mod tests {
     }
 
     #[test]
+    fn zero_epoch_approval_is_rejected_even_with_valid_mac() {
+        let authority = ApprovalAuthority::new([9; 32]).unwrap();
+        let r = request();
+        let mut approval = signed_approval(&r, ApproverRole::ProcurementLead);
+        approval.issued_at_unix = 0;
+        approval.expires_at_unix = 100;
+        let mut mac = HmacSha256::new_from_slice(&authority.key).unwrap();
+        mac.update(&approval.signing_bytes());
+        approval.mac.copy_from_slice(&mac.finalize().into_bytes());
+        assert!(!authority.verify(&approval, &r, 50));
+    }
+    #[test]
     fn signature_binds_payload_request_and_expiry() {
         let c = contract();
         let authority = ApprovalAuthority::new([9; 32]).unwrap();
