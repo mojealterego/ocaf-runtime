@@ -50,6 +50,23 @@ class NativeArtifactVerification(unittest.TestCase):
             with self.assertRaises(ValueError):
                 module.verify("android", p)
 
+    def test_linux_elf_signature_and_header(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "app"
+            payload = bytearray(4096)
+            payload[:4] = bytes.fromhex("7f454c46")
+            payload[4] = 2  # ELFCLASS64
+            payload[5] = 1  # little endian
+            payload[16:18] = bytes.fromhex("0300")  # ET_DYN (PIE)
+            p.write_bytes(payload)
+            module.verify("linux", p)
+            for offset, bad in [(0, b"NOPE"), (4, b"\\x00"), (5, b"\\x00"), (16, b"\\x00\\x00")]:
+                changed = bytearray(payload)
+                changed[offset:offset + len(bad)] = bad
+                p.write_bytes(changed)
+                with self.subTest(offset=offset), self.assertRaises(ValueError):
+                    module.verify("linux", p)
+
     def test_missing_artifact_is_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             with self.assertRaises(ValueError):
