@@ -585,6 +585,35 @@ mod tests {
     }
 
     #[test]
+    fn gated_extraction_rejects_citation_substitution_without_audit() {
+        use crate::governance_contract::{Accountability, AgentContract, ActionRequest, Domain, RiskTier};
+        use crate::governance_journal::GovernanceJournal;
+        use std::collections::BTreeSet;
+        let file = tempfile::NamedTempFile::new().unwrap();
+        let journal = GovernanceJournal::open_existing(file.path()).unwrap();
+        let contract = AgentContract {
+            contract_id: "contract_1".into(), version: "v1".into(),
+            tenant: "tenant_a".into(), actor: "agent_a".into(),
+            obligations: vec![], permissions: BTreeSet::from(["contract.extract_obligation".into()]),
+            prohibitions: BTreeSet::new(),
+            accountability: Accountability { owner: "owner".into(), escalation_reviewer: "reviewer".into(), audit_authority: "auditor".into() },
+        };
+        let original = cited("Supplier shall report within 2 days.");
+        let request = ActionRequest {
+            request_id: "req_1", tenant: "tenant_a", actor: "agent_a",
+            action: "contract.extract_obligation", domain: Domain::ContractObligations,
+            risk: RiskTier::Low, payload_sha256: cited_clause_payload_sha256(original),
+            uses_external_provider: false, provider: None, approval: None,
+        };
+        let substituted = CitedClause { clause_citation: "clause_9_9", ..original };
+        assert!(matches!(
+            gated_extract_obligation(&journal, &contract, &request, None, ("tenant_a", "agent_a"), 170, "idem_1", substituted),
+            Err(GatedExtractionError::InvalidAction)
+        ));
+        assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 0);
+    }
+
+    #[test]
     fn gated_extraction_rejects_payload_substitution_without_audit() {
         use crate::governance_contract::{Accountability, AgentContract, ActionRequest, Domain, RiskTier, payload_sha256};
         use crate::governance_journal::GovernanceJournal;
