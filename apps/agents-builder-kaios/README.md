@@ -29,3 +29,7 @@ Acceptance still requires: pinned KaiOS SDK/device target, install and launch, k
 Sekcja **Kanoniczny DAG OCAF (walidacja)** przyjmuje ścisły JSON projektu `schema_version=1` i jawny identyfikator tenanta. Przycisk **Sprawdź DAG** wywołuje lokalny, bezefektowy walidator `canonical-graph.js` i wyświetla uporządkowany plan lub komunikat błędu. Identyfikator tenanta jest tu wpisywany przez użytkownika, **nie jest to uwierzytelniona tożsamość**. Wynik nie jest podpisanym manifestem, nie wykonuje narzędzi i nie jest dowodem autoryzacji serwerowej.
 
 Weryfikacja: `node apps/agents-builder-kaios/tests/canonical-ui.cjs` oraz `node apps/agents-builder-kaios/tests/canonical-graph.cjs`. Tryb Code/NoCode v1 nadal zachowuje własny, uproszczony format; pełna konwersja semantyczna do kanonicznego DAG nie została wdrożona.
+
+## Lokalny zapis kanonicznego DAG
+
+Formularz kanonicznego DAG ma osobne pola `Tenant` i `ID projektu DAG`. Zapis i odczyt używają klucza `ocaf-kaios-canonical-v1:<tenant>:<project>`; przed zapisem oraz po odczycie wykonywana jest walidacja grafu i zgodności identyfikatorów. Błędy walidacji nie nadpisują poprzednio zapisanego projektu. Pamięć `localStorage` nie jest szyfrowana i nie zapewnia izolacji bezpieczeństwa między uwierzytelnionymi tenantami; jest to jedynie lokalna przestrzeń nazw. Nie przechowuj sekretów ani danych poufnych.
