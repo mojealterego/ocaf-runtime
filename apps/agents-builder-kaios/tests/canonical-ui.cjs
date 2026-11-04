@@ -10,6 +10,7 @@ const elements = {
   'canonical-load': { onclick: null },
   'canonical-source': { value: '' },
   'canonical-tenant': { value: 'local' },
+  'canonical-id': { value: 'agent' },
   'canonical-result': { textContent: '' }
 };
 const storage = new Map();
