@@ -17,7 +17,8 @@ class LinuxGuiSmokeContracts(unittest.TestCase):
     def test_screenshot_requires_png_magic_and_nontrivial_size(self):
         source = SCRIPT.read_text()
         self.assertIn('bytes.fromhex("89504e470d0a1a0a")', source)
-        self.assertIn("st_size < 1024", source)
+        self.assertIn("len(data) < 1024", source)
+        self.assertIn('struct.unpack(">II", data[16:24])', source)
 
     def test_workflow_gates_artifact_on_gui_smoke(self):
         workflow = WORKFLOW.read_text()
