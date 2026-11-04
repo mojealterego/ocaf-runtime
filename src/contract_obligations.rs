@@ -472,6 +472,25 @@ mod tests {
     }
 
     #[test]
+    fn fulfillment_preflight_rejects_duplicate_or_malformed_evidence_and_terminal_state() {
+        let mut record = extracted();
+        let now = record.due_at_unix - 1;
+        assert_eq!(
+            verify_fulfillment_preflight(&record, now, &["ev_1", "ev_1"], true),
+            Err(FulfillmentError::InvalidEvidence)
+        );
+        assert_eq!(
+            verify_fulfillment_preflight(&record, now, &["ev/1"], true),
+            Err(FulfillmentError::InvalidEvidence)
+        );
+        record.state = ObligationLifecycle::DeadlineBreached;
+        assert_eq!(
+            verify_fulfillment_preflight(&record, now, &["ev_1"], true),
+            Err(FulfillmentError::InvalidState)
+        );
+    }
+
+    #[test]
     fn warning_window_and_source_size_are_bounded() {
         let obligation = extracted();
         assert_eq!(
