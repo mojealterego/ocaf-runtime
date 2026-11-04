@@ -13,6 +13,7 @@ const state = {
   cloud:{tenant:null, head:null, pending:false}
 };
 let cloudClient = null;
+let cloudSaveInFlight = false;
 let refreshIntegrations = () => {};
 const currentTenant = () => state.workspace === 'cloud' ? state.cloud.tenant : TENANT;
 const fail = error => {
@@ -166,7 +167,7 @@ function render() {
     : 'Brak połączenia z uwierzytelnionym gateway. Żadne żądania nie są wysyłane.';
   el('cloud-open').disabled = !cloudClient;
   el('cloud-new').disabled = !cloudClient;
-  el('cloud-save').disabled = !cloudClient || !hasProject || !state.cloud.pending;
+  el('cloud-save').disabled = !cloudClient || !hasProject || !state.cloud.pending || cloudSaveInFlight;
   el('new-project').disabled = state.workspace !== 'local';
   el('open-project').disabled = state.workspace !== 'local';
   el('import').disabled = state.workspace !== 'local';
@@ -346,6 +347,10 @@ async function newCloudProject() {
 async function saveCloudProject() {
   requireCloud();
   if (!state.project || !state.cloud.pending) throw new Error('workspace: brak zmian do zapisania');
+  if (cloudSaveInFlight) throw new Error('conflict: zapis Cloud już trwa');
+  cloudSaveInFlight = true;
+  render();
+  try {
   // Capture immutable request inputs: UI edits may occur while the network is in flight.
   const client = cloudClient;
   const tenant = state.cloud.tenant;
@@ -371,7 +376,10 @@ async function saveCloudProject() {
     notice('Serwer zapisał wcześniejszą wersję r' + head.revision +
            '. Nowsze zmiany pozostają szkicem — zapisz ponownie.');
   }
-  render();
+  } finally {
+    cloudSaveInFlight = false;
+    render();
+  }
 }
 function init() {
   el('workspace-local').addEventListener('click', () => safe(() => setWorkspace('local')));
