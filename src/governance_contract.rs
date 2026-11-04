@@ -278,6 +278,7 @@ impl ApprovalAuthority {
             || approval.actor != req.actor
             || approval.action != req.action
             || approval.payload_sha256 != req.payload_sha256
+            || approval.issued_at_unix == 0
             || approval.issued_at_unix > trusted_now_unix
             || trusted_now_unix >= approval.expires_at_unix
             || !approval
