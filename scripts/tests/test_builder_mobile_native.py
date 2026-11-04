@@ -19,7 +19,7 @@ class MobileNativeContracts(unittest.TestCase):
         self.assertIn("https://appassets.androidplatform.net/assets/index.html", main)
         self.assertIn("WebViewAssetLoader", main)
         self.assertIn("shouldOverrideUrlLoading", main)
-        self.assertIn("request.url.host == \"appassets.androidplatform.net\"", main)
+        self.assertIn('request.url.host != "appassets.androidplatform.net"', main)
         self.assertIn("settings.allowFileAccess = false", main)
         self.assertIn('WebResourceResponse("text/javascript", "UTF-8"', main)
         self.assertIn("android.useAndroidX=true", (ANDROID / "gradle.properties").read_text())
@@ -34,7 +34,7 @@ class MobileNativeContracts(unittest.TestCase):
         self.assertIn("loadFileURL", source)
         self.assertIn("allowingReadAccessTo: directory", source)
         self.assertIn("WKNavigationDelegate", source)
-        self.assertIn("navigationAction.request.url?.isFileURL", source)
+        self.assertIn("navigationAction.request.url, url.isFileURL", source)
 
 
 if __name__ == "__main__":
