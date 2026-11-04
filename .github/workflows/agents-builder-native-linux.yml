@@ -1,0 +1,54 @@
+name: OCAF Agents Builder native Linux build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/agents-builder-desktop/**"
+      - "apps/agents-builder-web/**"
+      - "scripts/verify_native_artifact.py"
+      - "scripts/smoke_native_desktop.py"
+      - "scripts/tests/test_builder_native_desktop.py"
+      - "scripts/tests/test_smoke_native_desktop.py"
+      - "scripts/tests/test_verify_native_artifact.py"
+      - ".github/workflows/agents-builder-native-linux.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install Linux Tauri dependencies and virtual display
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf xvfb
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run artifact verification regression tests
+        run: python3 -m unittest discover -s scripts/tests -p test_verify_native_artifact.py -v
+      - name: Run process smoke regression tests
+        run: python3 -m unittest discover -s scripts/tests -p test_smoke_native_desktop.py -v
+      - name: Check desktop source contracts
+        run: python3 -m unittest discover -s scripts/tests -p test_builder_native_desktop.py -v
+      - name: Generate Tauri icons
+        run: python3 scripts/generate_builder_icons.py
+      - name: Compile native Linux executable
+        run: cargo build --release --manifest-path apps/agents-builder-desktop/src-tauri/Cargo.toml
+      - name: Verify ELF executable
+        run: python3 scripts/verify_native_artifact.py linux apps/agents-builder-desktop/src-tauri/target/release/ocaf-agents-builder-desktop
+      - name: Run Linux desktop process under virtual X server
+        run: xvfb-run -a python3 scripts/smoke_native_desktop.py apps/agents-builder-desktop/src-tauri/target/release/ocaf-agents-builder-desktop --seconds 5
+      - name: Upload Linux executable
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ocaf-agents-builder-linux-${{ github.sha }}
+          path: apps/agents-builder-desktop/src-tauri/target/release/ocaf-agents-builder-desktop
+          if-no-files-found: error
+          retention-days: 30
