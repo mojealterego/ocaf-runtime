@@ -58,8 +58,9 @@
     render(); status('Zaimportowano obsługiwany podzbiór JSON.');
   }); };
   $('save').onclick = function () { safe(function () {
-    if (mode === 'code') applySource();
     var requestedId = $('project').value.trim();
+    if (mode === 'code' && JSON.parse($('source').value).project_id !== requestedId) throw Error('Niezgodny identyfikator projektu w edytorze Code');
+    if (mode === 'code') applySource();
     if (mode === 'code' && requestedId !== state.project_id) throw Error('Niezgodny identyfikator projektu w edytorze Code');
     var candidate = validate({ version: state.version, project_id: requestedId, nodes: state.nodes });
     localStorage.setItem('ocaf-kaios-v1:' + candidate.project_id, JSON.stringify(candidate));
