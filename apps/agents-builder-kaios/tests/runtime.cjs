@@ -47,6 +47,9 @@ assert.match(elements.status.textContent, /JSON|Unexpected|property|token|positi
 elements.source.value = JSON.stringify({ version: 1, project_id: 'agent', nodes: [{id:'third'},{id:'third'}] });
 click('save');
 assert.deepEqual(JSON.parse(storage.get('ocaf-kaios-v1:agent')).nodes, [{id:'third'}], 'Invalid draft must not overwrite storage');
+elements.source.value = JSON.stringify({version:1,project_id:'agent',nodes:[{id:'third',unexpected:1}]});
+click('apply');
+assert.match(elements.status.textContent, /nieobsługiwany/);
 elements.workspace.value = 'cloud';
 elements.workspace.onchange();
 assert.equal(elements.workspace.value, 'local', 'Cloud must fail closed');
