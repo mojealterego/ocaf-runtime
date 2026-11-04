@@ -59,3 +59,33 @@ test('runner preserves structured, bounded HTTP error without leaking secrets',a
     return true;
   });
 });
+
+test('authenticated GGUF upload streams browser File without secrets and verifies checksum receipt',async()=>{
+  const file=new File([new Uint8Array(24)],'new-model.gguf',{type:'application/octet-stream'});
+  const seen=[];
+  const client=new LocalRunnerClient({token:'runner-session-secret',origin:'http://127.0.0.1:8765',
+    fetchImpl:async(url,options)=>{
+      seen.push({url,options});
+      return new Response(JSON.stringify({name:'new-model.gguf',size_bytes:24,
+        sha256:'a'.repeat(64),version:3}),{status:201});
+    }});
+  const result=await client.importGguf(file);
+  assert.equal(result.name,'new-model.gguf');
+  assert.equal(seen.length,1);
+  assert.equal(seen[0].url,'http://127.0.0.1:8765/v1/local-runner/import');
+  assert.equal(seen[0].options.body,file);
+  assert.equal(seen[0].options.headers['X-OCAF-Model-Name'],'new-model.gguf');
+  assert.equal(seen[0].options.credentials,'omit');
+  assert.equal(JSON.stringify(seen.map(x=>({url:x.url,method:x.options.method}))).includes('runner-session-secret'),false);
+  await assert.rejects(client.importGguf(new File([new Uint8Array(24)],'../bad.gguf')),/invalid GGUF/);
+});
+test('GGUF upload fails closed on conflicting or malformed server receipt',async()=>{
+  const file=new File([new Uint8Array(24)],'model.gguf');
+  const conflict=new LocalRunnerClient({token:'runner-session-secret',origin:'http://localhost:8765',
+    fetchImpl:async()=>new Response(JSON.stringify({error:'file already exists'}),{status:409})});
+  await assert.rejects(conflict.importGguf(file),err=>err.status===409);
+  const broken=new LocalRunnerClient({token:'runner-session-secret',origin:'http://localhost:8765',
+    fetchImpl:async()=>new Response(JSON.stringify({name:'model.gguf',
+      size_bytes:24,sha256:'bad',version:3}),{status:201})});
+  await assert.rejects(broken.importGguf(file),/receipt/);
+});

@@ -147,6 +147,59 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(call("/")[0], 200)
         self.assertEqual(call("/v1/local-runner/stop", "OPTIONS")[0], 405)
 
+    def test_streamed_binary_model_import_is_atomic_and_never_overwrites(self):
+        import io
+        import hashlib
+        payload = b"GGUF" + struct.pack("<IQQ", 3, 1, 0) + b"data"
+        result = self.runner.import_model("downloaded.gguf", io.BytesIO(payload), len(payload))
+        self.assertEqual(result["sha256"], hashlib.sha256(payload).hexdigest())
+        self.assertEqual((self.models / "downloaded.gguf").read_bytes(), payload)
+        with self.assertRaisesRegex(gateway.RunnerError, "already exists"):
+            self.runner.import_model("downloaded.gguf", io.BytesIO(payload), len(payload))
+        with self.assertRaises(gateway.RunnerError):
+            self.runner.import_model("../escaped.gguf", io.BytesIO(payload), len(payload))
+        with self.assertRaisesRegex(gateway.RunnerError, "truncated upload"):
+            self.runner.import_model("truncated.gguf", io.BytesIO(payload[:4]), len(payload))
+        self.assertFalse((self.models / "truncated.gguf").exists())
+        with self.assertRaisesRegex(gateway.RunnerError, "invalid GGUF upload"):
+            self.runner.import_model("invalid.gguf", io.BytesIO(b"FAKE" + payload[4:]),
+                                     len(payload))
+        self.assertFalse((self.models / "invalid.gguf").exists())
+        self.assertFalse(list(self.models.glob(".ocaf-gguf-upload-*")))
+
+    def test_binary_upload_http_requires_token_and_same_origin(self):
+        import http.client
+        import threading
+        token = "binary-upload-test-session-token"
+        server = gateway.OCAFServer(("127.0.0.1", 0),
+                                    ROOT / "apps/agents-builder-web",
+                                    self.runner, token)
+        worker = threading.Thread(target=server.serve_forever, daemon=True)
+        worker.start()
+        self.addCleanup(lambda: (server.shutdown(), server.server_close(), worker.join(timeout=3)))
+        port = server.server_address[1]
+        origin = f"http://127.0.0.1:{port}"
+        payload = b"GGUF" + struct.pack("<IQQ", 3, 1, 0) + b"payload"
+        def upload(auth, req_origin, filename):
+            conn = http.client.HTTPConnection("127.0.0.1", port, timeout=4)
+            conn.request("POST", "/v1/local-runner/import", payload, {
+                "Authorization": auth,
+                "Origin": req_origin,
+                "Content-Type": "application/octet-stream",
+                "X-OCAF-Model-Name": filename,
+            })
+            result = conn.getresponse()
+            status, content = result.status, result.read()
+            conn.close()
+            return status, content
+        self.assertEqual(upload("Bearer wrong", origin, "safe.gguf")[0], 401)
+        self.assertEqual(upload("Bearer " + token, "http://evil.example", "safe.gguf")[0], 403)
+        result = upload("Bearer " + token, origin, "safe.gguf")
+        self.assertEqual(result[0], 201)
+        self.assertEqual((self.models / "safe.gguf").read_bytes(), payload)
+        self.assertEqual(upload("Bearer " + token, origin, "safe.gguf")[0], 409)
+
+
 
 if __name__ == "__main__":
     unittest.main()

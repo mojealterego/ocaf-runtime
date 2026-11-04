@@ -26,6 +26,7 @@ async function until(fn, description, maxMs = 20000) {
 }
 
 const cloudProjects = new Map();
+const runnerModels = [{name:'sample.gguf',size_bytes:1024,version:3,tensor_count:1}];
 const server = createServer(async (request, response) => {
   try {
     const pathname = new URL(request.url, 'http://localhost').pathname;
@@ -39,7 +40,7 @@ const server = createServer(async (request, response) => {
         send(401,{error:'local token required'});return;
       }
       if(file==='/v1/local-runner/models'&&request.method==='GET'){
-        send(200,{models:[{name:'sample.gguf',size_bytes:1024,version:3,tensor_count:1}]});return;
+        send(200,{models:runnerModels});return;
       }
       if(file==='/v1/local-runner/status'&&request.method==='GET'){
         send(200,{state:'ready',model:'sample.gguf'});return;
@@ -50,6 +51,15 @@ const server = createServer(async (request, response) => {
         request.on('end',()=>resolve(body));
         request.on('error',reject);
       });
+      if(file==='/v1/local-runner/import'&&request.method==='POST'){
+        const name=request.headers['x-ocaf-model-name'];
+        if(name!=='new-import.gguf'||request.headers['content-type']!=='application/octet-stream'||
+           payload.length!==24){send(422,{error:'bad GGUF upload'});return;}
+        runnerModels.push({name,size_bytes:24,version:3,tensor_count:1});
+        send(201,{name,size_bytes:24,version:3,
+          sha256:createHash('sha256').update(payload).digest('hex')});
+        return;
+      }
       if(file==='/v1/local-runner/start'&&request.method==='POST'){
         const data=JSON.parse(payload);
         if(data.model!=='sample.gguf'||data.settings.context_size!==8192){
@@ -212,7 +222,10 @@ try {
 
   await evaluate('document.getElementById("runner-token").value="runner-test-secret";document.getElementById("runner-connect").click()');
   await until(async()=>await evaluate('document.getElementById("runner-model").value')==='sample.gguf','runner connection and model catalog');
-  await evaluate('document.getElementById("runner-start").click()');
+  await evaluate('(()=>{const b=new ArrayBuffer(24);const v=new DataView(b);["G","G","U","F"].forEach((c,i)=>v.setUint8(i,c.charCodeAt(0)));v.setUint32(4,3,true);v.setBigUint64(8,1n,true);const d=new DataTransfer();d.items.add(new File([b],"new-import.gguf",{type:"application/octet-stream"}));const f=document.getElementById("runner-file");f.files=d.files;f.dispatchEvent(new Event("change",{bubbles:true}));document.getElementById("runner-import").click();})()');
+  await until(async()=>await evaluate('document.getElementById("runner-status").textContent.includes("Zaimportowano")'),'GGUF import to loopback runner');
+  assert.ok(runnerModels.some(m=>m.name==='new-import.gguf'),'model uploaded through authenticated browser request');
+  await evaluate('document.getElementById("runner-model").value="sample.gguf";document.getElementById("runner-start").click()');
   await until(async()=>await evaluate('document.getElementById("runner-status").textContent.includes("loading")'),'runner start with selected settings');
   await evaluate('document.getElementById("runner-prompt").value="Dzień dobry!";document.getElementById("runner-send").click()');
   await until(async()=>await evaluate('document.getElementById("runner-answer").textContent.includes("MODEL E2E: Dzień dobry!")'),'local inference request');
