@@ -449,7 +449,7 @@ mod tests {
         c.execute("DELETE FROM document_events_v1", []).unwrap();
         assert!(matches!(
             d.load(&key, Some(&head)),
-            Err(StoreError::Conflict)
+            Err(StoreError::Integrity)
         ));
     }
     #[test]
