@@ -11,6 +11,7 @@ const elements = {
   'canonical-new': { onclick: null },
   'canonical-transform': { onclick: null },
   'canonical-tool': { onclick: null },
+  'canonical-remove-tool': { onclick: null },
   'canonical-tool-name': { value: 'search.tool' },
   'canonical-tool-cost': { value: '7' },
   'canonical-remove': { onclick: null },
@@ -133,4 +134,13 @@ const beforeBadTool = elements['canonical-source'].value;
 elements['canonical-tool'].onclick();
 assert.match(elements['canonical-result'].textContent, /Błąd/);
 assert.equal(elements['canonical-source'].value, beforeBadTool);
-console.log('PASS canonical KaiOS UI typed ports, persistence, import/export, NoCode tools');
+elements['canonical-node-id'].value = 'tool1';
+elements['canonical-remove-tool'].onclick();
+let withoutTool = JSON.parse(elements['canonical-source'].value);
+assert.equal(withoutTool.nodes.filter(n => n.kind === 'tool').length, 0);
+assert.deepEqual(withoutTool.grants, []);
+assert.equal(withoutTool.max_cost_minor, 0);
+assert.equal(withoutTool.revision, 3);
+elements['canonical-remove-tool'].onclick();
+assert.match(elements['canonical-result'].textContent, /Błąd/);
+console.log('PASS canonical KaiOS UI typed ports, persistence, import/export, NoCode tool lifecycle');
