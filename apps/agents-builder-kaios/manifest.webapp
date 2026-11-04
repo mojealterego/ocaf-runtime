@@ -1,0 +1,17 @@
+{
+  "name": "OCAF Agents Builder",
+  "description": "Offline Code/NoCode project editor for KaiOS 2.5",
+  "launch_path": "/index.html",
+  "type": "web",
+  "version": "0.1.0",
+  "developer": {
+    "name": "OCAF"
+  },
+  "default_locale": "pl",
+  "locales": {
+    "pl": {
+      "name": "OCAF Agents Builder"
+    }
+  },
+  "permissions": {}
+}
