@@ -39,7 +39,7 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p test_builder_native_desktop.py -v
       - name: Compile actual platform-native Tauri executable
         shell: bash
-        run: cargo build --release --locked --manifest-path apps/agents-builder-desktop/src-tauri/Cargo.toml
+        run: cargo build --release --manifest-path apps/agents-builder-desktop/src-tauri/Cargo.toml
       - name: Upload executable
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
