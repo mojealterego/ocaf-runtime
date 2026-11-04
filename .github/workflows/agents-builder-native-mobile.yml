@@ -39,6 +39,23 @@ jobs:
         run: gradle --no-daemon :app:assembleDebug
       - name: Verify Android APK structure
         run: python3 scripts/verify_native_artifact.py android apps/agents-builder-android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Android emulator install and launch smoke
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-boot-timeout: 600
+          script: |
+            set -euo pipefail
+            adb install -r apps/agents-builder-android/app/build/outputs/apk/debug/app-debug.apk
+            adb shell am start -W -n org.ocaf.agentsbuilder/.MainActivity
+            sleep 5
+            adb shell pidof org.ocaf.agentsbuilder
+            adb shell dumpsys activity activities | grep -F 'org.ocaf.agentsbuilder'
+            adb logcat -d -t 1500 | grep -E 'FATAL EXCEPTION|Process: org.ocaf.agentsbuilder' > /tmp/ocaf-crash-lines || true
+            test ! -s /tmp/ocaf-crash-lines
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: "ocaf-builder-android-${{ github.sha }}"
