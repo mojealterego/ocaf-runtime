@@ -55,9 +55,9 @@
   }); };
   $('save').onclick = function () { safe(function () {
     if (mode === 'code') applySource();
-    state.project_id = $('project').value.trim();
-    state = validate(state);
-    localStorage.setItem('ocaf-kaios-v1:' + state.project_id, JSON.stringify(state));
+    var candidate = validate({ version: state.version, project_id: $('project').value.trim(), nodes: state.nodes });
+    localStorage.setItem('ocaf-kaios-v1:' + candidate.project_id, JSON.stringify(candidate));
+    state = candidate;
     render(); status('Zapisano lokalnie.');
   }); };
   $('load').onclick = function () { safe(function () {
