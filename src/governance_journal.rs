@@ -709,6 +709,25 @@ mod tests {
         ));
     }
     #[test]
+    fn hash_valid_unknown_audit_decision_is_rejected() {
+        let (file, journal) = setup();
+        let c = contract();
+        let r = request();
+        journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "audit").unwrap();
+        let forged = hash_row(AuditDigest {
+            tenant: "tenant_a", sequence: 1, actor: "agent_a", action: "read",
+            request: "req_1", decision: "EXECUTE_ANYWAY", reason: "PENDING_EXTERNAL_GATE",
+            payload_sha256: &r.payload_sha256, previous: GENESIS,
+        });
+        let conn = Connection::open(file.path()).unwrap();
+        conn.execute(
+            "UPDATE governance_audit_v1 SET decision='EXECUTE_ANYWAY', digest=?1 WHERE tenant='tenant_a'",
+            params![forged],
+        ).unwrap();
+        assert!(matches!(journal.inspect("tenant_a", None), Err(JournalError::Integrity)));
+    }
+
+    #[test]
     fn peer_is_derived_from_trusted_context_not_requested_identity() {
         let (_file, journal) = setup();
         let c = contract();
