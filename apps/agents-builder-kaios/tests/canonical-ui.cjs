@@ -10,6 +10,9 @@ const elements = {
   'canonical-load': { onclick: null },
   'canonical-new': { onclick: null },
   'canonical-transform': { onclick: null },
+  'canonical-tool': { onclick: null },
+  'canonical-tool-name': { value: 'search.tool' },
+  'canonical-tool-cost': { value: '7' },
   'canonical-remove': { onclick: null },
   'canonical-export': { onclick: null },
   'canonical-import-button': { onclick: null },
@@ -114,4 +117,20 @@ const beforeRejectedImport = elements['canonical-source'].value;
 elements['canonical-import-button'].onclick();
 assert.match(elements['canonical-result'].textContent, /Błąd/);
 assert.equal(elements['canonical-source'].value, beforeRejectedImport);
-console.log('PASS canonical KaiOS UI typed ports, persistence, import/export, NoCode');
+elements['canonical-port-kind'].value = 'text';
+elements['canonical-new'].onclick();
+elements['canonical-node-id'].value = 'tool1';
+elements['canonical-tool'].onclick();
+let withTool = JSON.parse(elements['canonical-source'].value);
+assert.equal(withTool.nodes.filter(n => n.kind === 'tool').length, 1);
+assert.deepEqual(withTool.grants, ['search.tool']);
+assert.equal(withTool.max_cost_minor, 7);
+assert.equal(withTool.revision, 2);
+assert.deepEqual(JSON.parse(elements['canonical-result'].textContent).requested_tools, ['search.tool']);
+elements['canonical-node-id'].value = 'tool2';
+elements['canonical-tool-cost'].value = '0';
+const beforeBadTool = elements['canonical-source'].value;
+elements['canonical-tool'].onclick();
+assert.match(elements['canonical-result'].textContent, /Błąd/);
+assert.equal(elements['canonical-source'].value, beforeBadTool);
+console.log('PASS canonical KaiOS UI typed ports, persistence, import/export, NoCode tools');
