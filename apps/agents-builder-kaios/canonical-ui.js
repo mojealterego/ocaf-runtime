@@ -24,10 +24,15 @@
       result.textContent = 'Błąd walidacji: ' + (error.message || 'Nieprawidłowy graf');
     }
   }
-  function port(name) { return { name: name, kind: 'text' }; }
-  function node(id, kind) {
-    return { id: id, kind: kind, inputs: kind === 'input' ? [] : [port('in')],
-      outputs: kind === 'output' ? [] : [port('out')],
+  function selectedPortKind() {
+    var kind = get('canonical-port-kind').value;
+    if (['text', 'json', 'bytes'].indexOf(kind) < 0) throw Error('Nieobsługiwany typ portu');
+    return kind;
+  }
+  function port(name, kind) { return { name: name, kind: kind }; }
+  function node(id, kind, portKind) {
+    return { id: id, kind: kind, inputs: kind === 'input' ? [] : [port('in', portKind)],
+      outputs: kind === 'output' ? [] : [port('out', portKind)],
       tool_name: null, max_cost_minor: 0 };
   }
   function edge(from, to) {
@@ -36,9 +41,10 @@
   get('canonical-new').onclick = function () {
     safe(function () {
       key();
+      var portKind = selectedPortKind();
       var project = { schema_version: 1, tenant_id: get('canonical-tenant').value,
         project_id: get('canonical-id').value, revision: 1, max_cost_minor: 0,
-        grants: [], nodes: [node('input','input'), node('output','output')],
+        grants: [], nodes: [node('input','input',portKind), node('output','output',portKind)],
         edges: [edge('input','output')] };
       var plan = OCAFCanonicalGraph.compile(project, get('canonical-tenant').value);
       get('canonical-source').value = JSON.stringify(project, null, 2);
@@ -57,14 +63,15 @@
       var incoming = project.edges.filter(function (e) { return e.to_node === output.id; });
       if (incoming.length !== 1 || output.inputs.length !== 1 ||
           incoming[0].to_port !== 'in' || incoming[0].from_port !== 'out' ||
-          output.inputs[0].kind !== 'text')
+          ['text', 'json', 'bytes'].indexOf(output.inputs[0].kind) < 0)
         throw Error('Graf nieobsługiwany przez operację NoCode Transform');
+      var portKind = output.inputs[0].kind;
       var predecessor = project.nodes.filter(function (n) { return n.id === incoming[0].from_node; })[0];
       var outgoingPort = predecessor.outputs.filter(function (p) { return p.name === 'out'; })[0];
-      if (!outgoingPort || outgoingPort.kind !== 'text')
+      if (!outgoingPort || outgoingPort.kind !== portKind)
         throw Error('Transform wymaga portów text/out/in');
       var candidate = JSON.parse(JSON.stringify(project));
-      candidate.nodes.push(node(id,'transform'));
+      candidate.nodes.push(node(id,'transform',portKind));
       candidate.edges = candidate.edges.filter(function (e) {
         return !(e.from_node === incoming[0].from_node && e.from_port === incoming[0].from_port &&
           e.to_node === incoming[0].to_node && e.to_port === incoming[0].to_port);
@@ -83,8 +90,7 @@
       var target = project.nodes.filter(function (n) { return n.id === id; })[0];
       if (!target || target.kind !== 'transform' || target.inputs.length !== 1 ||
           target.outputs.length !== 1 || target.inputs[0].name !== 'in' ||
-          target.outputs[0].name !== 'out' || target.inputs[0].kind !== 'text' ||
-          target.outputs[0].kind !== 'text')
+          target.outputs[0].name !== 'out' || target.inputs[0].kind !== target.outputs[0].kind)
         throw Error('Nieobsługiwany węzeł Transform');
       var incoming = project.edges.filter(function (e) { return e.to_node === id; });
       var outgoing = project.edges.filter(function (e) { return e.from_node === id; });
