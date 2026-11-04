@@ -7,6 +7,7 @@ on:
       - "apps/agents-builder-kaios/**"
       - "scripts/tests/test_builder_kaios.py"
       - "scripts/verify_kaios_package.py"
+      - "scripts/tests/test_verify_kaios_package.py"
       - ".github/workflows/agents-builder-kaios.yml"
   workflow_dispatch:
 
@@ -23,6 +24,8 @@ jobs:
           persist-credentials: false
       - name: Verify KaiOS source contracts
         run: python3 -m unittest discover -s scripts/tests -p test_builder_kaios.py -v
+      - name: Verify KaiOS package verifier regression tests
+        run: python3 -m unittest discover -s scripts/tests -p test_verify_kaios_package.py -v
       - name: Check JavaScript syntax
         run: node --check apps/agents-builder-kaios/app.js
       - name: Run KaiOS behavior regression tests
