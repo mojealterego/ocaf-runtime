@@ -8,6 +8,7 @@ on:
       - "apps/agents-builder-web/**"
       - "scripts/verify_native_artifact.py"
       - "scripts/smoke_native_desktop.py"
+      - "scripts/smoke_linux_gui.py"
       - "scripts/tests/test_builder_native_desktop.py"
       - "scripts/tests/test_smoke_native_desktop.py"
       - "scripts/tests/test_verify_native_artifact.py"
@@ -45,6 +46,8 @@ jobs:
         run: python3 scripts/verify_native_artifact.py linux apps/agents-builder-desktop/src-tauri/target/release/ocaf-agents-builder-desktop
       - name: Run Linux desktop process under virtual X server
         run: xvfb-run -a python3 scripts/smoke_native_desktop.py apps/agents-builder-desktop/src-tauri/target/release/ocaf-agents-builder-desktop --seconds 5
+      - name: Verify mapped Linux GUI and capture screenshot
+        run: xvfb-run -a python3 scripts/smoke_linux_gui.py apps/agents-builder-desktop/src-tauri/target/release/ocaf-agents-builder-desktop apps/agents-builder-desktop/src-tauri/target/evidence/linux-gui.png
       - name: Record ELF architecture and runtime library dependencies
         run: |
           set -euo pipefail
