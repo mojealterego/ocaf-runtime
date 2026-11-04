@@ -11,6 +11,7 @@ on:
       - "tests/builder_*.rs"
       - "scripts/package_agents_builder.py"
       - "scripts/tests/test_package_agents_builder.py"
+      - "scripts/tests/test_builder_unified_architecture.py"
       - ".github/workflows/agents-builder-source-bundle.yml"
       - "docs/BUILD_SOURCE_BUNDLES.md"
   workflow_dispatch:
@@ -38,6 +39,8 @@ jobs:
           node-version: "22"
       - name: Packaging unit and security tests
         run: python3 -m unittest discover -s scripts/tests -p test_package_agents_builder.py -v
+      - name: Unified five-application architecture contract tests
+        run: python3 -m unittest discover -s scripts/tests -p test_builder_unified_architecture.py -v
       - name: Local GGUF runner subprocess and localhost security tests
         run: python3 -m unittest discover -s scripts/tests -p test_agents_builder_local_runner.py -v
       - name: Builder JavaScript unit and contract tests
