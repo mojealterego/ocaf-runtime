@@ -1,4 +1,12 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
+## 2026-11-04 — Linux desktop process smoke regression fix (CI UNVERIFIED)
+
+- CI RED: [Linux native #41923011618](https://github.com/mojealterego/ocaf-runtime/actions/runs/41923011618), SHA `f69204f1ab764ddb1f8bf8000fd98ec3620a8fa9`: two POSIX smoke fixture scripts contained literal `\\n` instead of newline characters; `subprocess.Popen` raised `FileNotFoundError` before actual Linux build.
+- Fix: `scripts/tests/test_smoke_native_desktop.py`, commit `26da156a699d005662cfe99e8c0c7fc36ed5632f`. Fixture now writes proper shell script lines; no runtime assertions weakened.
+- Test evidence: failing CI log confirmed; minimal local POSIX subprocess fixture launched successfully. Full repository tests and CI on final SHA remain UNVERIFIED.
+- 10 historical Builder products unchanged; Linux and HarmonyOS are additional platform extensions, not replacements or closed milestones.
+
+
 
 ## 2026-11-04 — Agents Builder source release NOREPLACE hardening (IMPLEMENTED_CI_UNVERIFIED)
 
