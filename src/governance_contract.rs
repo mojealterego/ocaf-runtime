@@ -140,6 +140,7 @@ impl AgentContract {
             || !valid_id(req.tenant)
             || !valid_id(req.actor)
             || trusted_now_unix == 0
+            || (!req.uses_external_provider && req.provider.is_some())
         {
             return PreflightDecision::Deny(D::InvalidRequest);
         }
