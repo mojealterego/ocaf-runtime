@@ -85,6 +85,55 @@
       result.textContent = JSON.stringify(plan, null, 2);
     });
   };
+  get('canonical-tool').onclick = function () {
+    safe(function () {
+      var project = checked().project;
+      var id = get('canonical-node-id').value;
+      var toolName = get('canonical-tool-name').value;
+      var rawCost = get('canonical-tool-cost').value;
+      if (!validId(id) || !validId(toolName) ||
+          project.nodes.some(function (n) { return n.id === id; }))
+        throw Error('Nieprawidłowy identyfikator węzła lub narzędzia');
+      if (!/^[1-9][0-9]*$/.test(rawCost)) throw Error('Nieprawidłowy koszt narzędzia');
+      var cost = Number(rawCost);
+      if (!isFinite(cost) || cost > 1000000000000 || cost < 1)
+        throw Error('Koszt poza zakresem');
+      var output = project.nodes.filter(function (n) { return n.kind === 'output'; })[0];
+      if (output.inputs.length !== 1 || output.inputs[0].name !== 'in')
+        throw Error('Nieobsługiwany węzeł Output');
+      var incoming = project.edges.filter(function (e) { return e.to_node === output.id; });
+      if (incoming.length !== 1 || incoming[0].to_port !== 'in')
+        throw Error('Nieobsługiwane połączenie Output');
+      var predecessor = project.nodes.filter(function (n) { return n.id === incoming[0].from_node; })[0];
+      var port = predecessor.outputs.filter(function (p) { return p.name === incoming[0].from_port; })[0];
+      if (!port || port.kind !== output.inputs[0].kind)
+        throw Error('Niezgodność typów portów');
+      if (project.nodes.length >= 64 || project.revision >= 9007199254740991)
+        throw Error('Limit węzłów lub rewizji');
+      var candidate = JSON.parse(JSON.stringify(project));
+      var tool = node(id, 'tool', port.kind);
+      tool.tool_name = toolName;
+      tool.max_cost_minor = cost;
+      candidate.nodes.push(tool);
+      candidate.edges = candidate.edges.filter(function (e) {
+        return !(e.from_node === incoming[0].from_node && e.from_port === incoming[0].from_port &&
+          e.to_node === incoming[0].to_node && e.to_port === incoming[0].to_port);
+      });
+      candidate.edges.push({
+        from_node: incoming[0].from_node, from_port: incoming[0].from_port,
+        to_node: id, to_port: 'in'
+      });
+      candidate.edges.push(edge(id, output.id));
+      if (candidate.grants.indexOf(toolName) < 0) candidate.grants.push(toolName);
+      if (candidate.max_cost_minor + cost > 1000000000000)
+        throw Error('Przekroczono budżet projektu');
+      candidate.max_cost_minor += cost;
+      candidate.revision++;
+      var plan = OCAFCanonicalGraph.compile(candidate, get('canonical-tenant').value);
+      get('canonical-source').value = JSON.stringify(candidate, null, 2);
+      result.textContent = JSON.stringify(plan, null, 2);
+    });
+  };
   get('canonical-remove').onclick = function () {
     safe(function () {
       var project = checked().project;
