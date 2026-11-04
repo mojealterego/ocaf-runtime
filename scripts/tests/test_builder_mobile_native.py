@@ -33,6 +33,8 @@ class MobileNativeContracts(unittest.TestCase):
         self.assertIn("WKWebView", source)
         self.assertIn("loadFileURL", source)
         self.assertIn("allowingReadAccessTo: directory", source)
+        self.assertIn("WKNavigationDelegate", source)
+        self.assertIn("navigationAction.request.url?.isFileURL", source)
 
 
 if __name__ == "__main__":
