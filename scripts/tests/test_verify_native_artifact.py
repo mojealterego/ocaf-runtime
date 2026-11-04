@@ -60,7 +60,7 @@ class NativeArtifactVerification(unittest.TestCase):
             payload[16:18] = bytes.fromhex("0300")  # ET_DYN (PIE)
             p.write_bytes(payload)
             module.verify("linux", p)
-            for offset, bad in [(0, b"NOPE"), (4, b"\\x00"), (5, b"\\x00"), (16, b"\\x00\\x00")]:
+            for offset, bad in [(0, b"NOPE"), (4, bytes(1)), (5, bytes(1)), (16, bytes(2))]:
                 changed = bytearray(payload)
                 changed[offset:offset + len(bad)] = bad
                 p.write_bytes(changed)
