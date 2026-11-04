@@ -14,6 +14,7 @@ const state = {
 };
 let cloudClient = null;
 let cloudSaveInFlight = false;
+let cloudSessionGeneration = 0;
 let refreshIntegrations = () => {};
 const currentTenant = () => state.workspace === 'cloud' ? state.cloud.tenant : TENANT;
 const fail = error => {
@@ -300,6 +301,7 @@ function connectCloud() {
   // The tenant field is only a local expectation. The server must bind token
   // to a trusted TLS subject and reject cross-tenant requests.
   validateProject(newProject(tenant, 'connection-check'), tenant);
+  cloudSessionGeneration += 1;
   cloudClient = client;
   state.cloud = {tenant, head:null, pending:false};
   state.cloudSnapshot = null;
@@ -312,6 +314,7 @@ function connectCloud() {
 function disconnectCloud() {
   if (cloudSaveInFlight) throw new Error('conflict: poczekaj na zakończenie zapisu Cloud');
   if (state.cloud.pending && !window.confirm('Odrzucić niezapisany szkic chmurowy?')) return;
+  cloudSessionGeneration += 1;
   cloudClient = null;
   state.cloud = {tenant:null, head:null, pending:false};
   state.cloudSnapshot = null;
@@ -325,7 +328,13 @@ async function openCloudProject() {
   if (cloudSaveInFlight) throw new Error('conflict: poczekaj na zakończenie zapisu Cloud');
   requireCloud();
   if (state.cloud.pending && !window.confirm('Odrzucić niezapisany szkic chmurowy?')) return;
-  const {project,head} = await cloudClient.load(state.cloud.tenant, el('project-id').value.trim());
+  const client = cloudClient;
+  const generation = cloudSessionGeneration;
+  const tenant = state.cloud.tenant;
+  const projectId = el('project-id').value.trim();
+  const {project,head} = await client.load(tenant, projectId);
+  if (cloudSessionGeneration !== generation || cloudClient !== client ||
+      state.workspace !== 'cloud' || state.cloud.tenant !== tenant) return;
   state.project = project;
   state.cloud.head = head;
   state.cloud.pending = false;
@@ -339,13 +348,18 @@ async function newCloudProject() {
   if (cloudSaveInFlight) throw new Error('conflict: poczekaj na zakończenie zapisu Cloud');
   requireCloud();
   if (state.cloud.pending && !window.confirm('Odrzucić niezapisany szkic chmurowy?')) return;
-  const project = newProject(state.cloud.tenant, el('project-id').value.trim());
+  const client = cloudClient;
+  const generation = cloudSessionGeneration;
+  const tenant = state.cloud.tenant;
+  const project = newProject(tenant, el('project-id').value.trim());
   try {
-    await cloudClient.load(state.cloud.tenant, project.project_id);
+    await client.load(tenant, project.project_id);
     throw new Error('conflict: projekt już istnieje w chmurze; użyj Otwórz');
   } catch (error) {
     if (!(error instanceof CloudApiError && error.status === 404)) throw error;
   }
+  if (cloudSessionGeneration !== generation || cloudClient !== client ||
+      state.workspace !== 'cloud' || state.cloud.tenant !== tenant) return;
   state.project = project;
   state.saved = 1;
   state.cloud.head = null;
