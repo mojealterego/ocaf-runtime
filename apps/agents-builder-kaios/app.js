@@ -69,7 +69,10 @@
     if (!validName(id)) throw Error('Nieprawidłowy identyfikator');
     var raw = localStorage.getItem('ocaf-kaios-v1:' + id);
     if (!raw) throw Error('Nie znaleziono projektu');
-    state = validate(JSON.parse(raw)); render(); status('Otworzono projekt.');
+    if (raw.length > 16384) throw Error('Zapisany projekt przekracza limit 16 KiB');
+    var loaded = validate(JSON.parse(raw));
+    if (loaded.project_id !== id) throw Error('Niezgodny identyfikator zapisanego projektu');
+    state = loaded; render(); status('Otworzono projekt.');
   }); };
   document.addEventListener('keydown', function (event) {
     if (event.key === 'SoftLeft') $('save').click();
