@@ -362,13 +362,16 @@ pub fn gated_extract_obligation(
     {
         return Err(GatedExtractionError::InvalidAction);
     }
+    // Validate the deterministic clause before creating a durable PENDING intent.
+    // Unsupported source text must never reserve an idempotency key.
+    let extracted = extract_cited_obligation(clause)?;
     let admission = journal.begin(
         contract, request, approval_authority, trusted_peer, trusted_now_unix, idempotency_key,
     )?;
     if admission != Admission::FreshPending {
         return Ok(GatedExtraction::Admission(admission));
     }
-    Ok(GatedExtraction::Extracted(extract_cited_obligation(clause)?))
+    Ok(GatedExtraction::Extracted(extracted))
 }
 
 #[cfg(test)]
