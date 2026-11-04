@@ -648,6 +648,44 @@ mod tests {
     }
 
     #[test]
+    fn forged_receipt_cannot_change_pending_intent_or_audit_chain() {
+        let (_file, journal) = setup();
+        let c = contract();
+        let r = request();
+        assert_eq!(
+            journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "receipt_guard").unwrap(),
+            Admission::FreshPending
+        );
+        let initial = journal.inspect("tenant_a", None).unwrap();
+        let receipt = payload_sha256(b"synthetic-receipt");
+        let mut forged = request();
+        forged.payload_sha256 = payload_sha256(b"substituted-request");
+        assert!(matches!(
+            journal.record_verified_outcome(
+                "tenant_a", "agent_a", &forged, "receipt_guard", receipt,
+            ),
+            Err(JournalError::Conflict)
+        ));
+        assert!(matches!(
+            journal.record_verified_outcome(
+                "tenant_a", "other_actor", &r, "receipt_guard", receipt,
+            ),
+            Err(JournalError::Invalid)
+        ));
+        assert!(matches!(
+            journal.record_verified_outcome(
+                "tenant_a", "agent_a", &r, "unknown_key", receipt,
+            ),
+            Err(JournalError::Conflict)
+        ));
+        assert_eq!(journal.inspect("tenant_a", Some(&initial)).unwrap(), initial);
+        assert_eq!(
+            journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "receipt_guard").unwrap(),
+            Admission::ReplayPending
+        );
+    }
+
+    #[test]
     fn receipt_committed_once_and_cross_tenant_receipt_denied() {
         let (_file, journal) = setup();
         let c = contract();
