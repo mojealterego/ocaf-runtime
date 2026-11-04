@@ -354,6 +354,7 @@ async function newCloudProject() {
 }
 async function saveCloudProject() {
   requireCloud();
+  if (state.dirty) throw new Error('unapplied Code DSL edits: apply or discard changes before Cloud save');
   if (!state.project || !state.cloud.pending) throw new Error('workspace: brak zmian do zapisania');
   if (cloudSaveInFlight) throw new Error('conflict: zapis Cloud już trwa');
   cloudSaveInFlight = true;
