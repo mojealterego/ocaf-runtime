@@ -369,6 +369,31 @@ pub fn resolve_link(
     Ok(())
 }
 
+/// Resolve a cross-document link against *both* witnessed revisions.
+/// The caller must obtain both document keys from an authenticated tenant context;
+/// a pinned revision prevents silently following a changed source or target.
+pub fn resolve_link_pinned(
+    driver: &impl DocumentDriver,
+    source: &DocumentKey,
+    source_label: &LabelPath,
+    source_head: &Head,
+    target: &DocumentKey,
+    target_label: &LabelPath,
+    target_head: &Head,
+) -> Result<(), StoreError> {
+    if source.tenant != target.tenant {
+        return Err(StoreError::Invalid);
+    }
+    let (source_state, _) = driver.load(source, Some(source_head))?;
+    let (target_state, _) = driver.load(target, Some(target_head))?;
+    if !source_state.contains_label(source_label)
+        || !target_state.contains_label(target_label)
+    {
+        return Err(StoreError::Invalid);
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
