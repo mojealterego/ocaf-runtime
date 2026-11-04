@@ -16,7 +16,6 @@ struct EditorView: UIViewRepresentable {
         let configuration = WKWebViewConfiguration()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
         let webView = WKWebView(frame: .zero, configuration: configuration)
-        webView.isInspectable = false
         guard let directory = Bundle.main.url(forResource: "Editor", withExtension: nil),
               let index = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "Editor") else {
             assertionFailure("Bundled editor resources missing")
