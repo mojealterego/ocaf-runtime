@@ -2,6 +2,7 @@ package org.ocaf.agentsbuilder
 
 import android.os.Bundle
 import android.webkit.WebView
+import android.webkit.WebResourceResponse
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewClientCompat
 import androidx.activity.ComponentActivity
@@ -27,8 +28,13 @@ class MainActivity : ComponentActivity() {
                         .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this@MainActivity))
                         .build()
                     webViewClient = object : WebViewClientCompat() {
-                        override fun shouldInterceptRequest(view: WebView, request: android.webkit.WebResourceRequest): android.webkit.WebResourceResponse? =
-                            loader.shouldInterceptRequest(request.url)
+                        override fun shouldInterceptRequest(view: WebView, request: android.webkit.WebResourceRequest): WebResourceResponse? {
+                            val resource = loader.shouldInterceptRequest(request.url) ?: return null
+                            // Android's MIME map may not recognize .mjs; ES modules require JavaScript MIME.
+                            return if (request.url.path?.endsWith(".mjs") == true) {
+                                WebResourceResponse("text/javascript", "UTF-8", resource.data)
+                            } else resource
+                        }
                     }
                     loadUrl("https://appassets.androidplatform.net/assets/index.html")
                 }
