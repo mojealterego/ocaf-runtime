@@ -359,6 +359,46 @@ mod tests {
         assert_eq!(doc.redo(), Err(StateError::NoHistory));
     }
     #[test]
+    fn failed_batch_preserves_prior_state_and_undo_history() {
+        let mut doc = DocumentState::default();
+        let label = LabelPath::parse("0:1").unwrap();
+        let guid = Uuid::from_u128(17);
+        doc.commit(
+            "initial",
+            &[
+                Mutation::CreateLabel(label.clone()),
+                Mutation::Attach {
+                    label: label.clone(),
+                    guid,
+                    payload: b"original".to_vec(),
+                },
+            ],
+        )
+        .unwrap();
+        assert_eq!(
+            doc.commit(
+                "must rollback",
+                &[
+                    Mutation::Update {
+                        label: label.clone(),
+                        guid,
+                        payload: b"changed".to_vec(),
+                    },
+                    Mutation::Remember {
+                        label: label.clone(),
+                        guid,
+                    },
+                ],
+            ),
+            Err(StateError::Invalid)
+        );
+        assert_eq!(doc.attribute(&label, guid), Some(b"original".as_slice()));
+        assert_eq!(doc.undo().unwrap(), "initial");
+        assert!(!doc.contains_label(&label));
+        assert_eq!(doc.redo().unwrap(), "initial");
+        assert_eq!(doc.attribute(&label, guid), Some(b"original".as_slice()));
+    }
+    #[test]
     fn bounds_and_parent_existence() {
         let mut doc = DocumentState::default();
         assert_eq!(
