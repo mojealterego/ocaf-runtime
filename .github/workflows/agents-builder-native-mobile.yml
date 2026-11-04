@@ -35,6 +35,8 @@ jobs:
       - name: Build Android debug APK
         working-directory: apps/agents-builder-android
         run: gradle --no-daemon :app:assembleDebug
+      - name: Verify Android APK structure
+        run: python3 scripts/verify_native_artifact.py android apps/agents-builder-android/app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: "ocaf-builder-android-${{ github.sha }}"
@@ -62,6 +64,8 @@ jobs:
       - name: Build unsigned iOS simulator application
         working-directory: apps/agents-builder-ios
         run: xcodebuild -project OCAFAgentsBuilder.xcodeproj -scheme OCAFAgentsBuilder -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -derivedDataPath build build
+      - name: Verify iOS simulator Mach-O executable
+        run: python3 scripts/verify_native_artifact.py ios apps/agents-builder-ios/build/Build/Products/Debug-iphonesimulator/OCAFAgentsBuilder.app/OCAFAgentsBuilder
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: "ocaf-builder-ios-simulator-${{ github.sha }}"
