@@ -275,7 +275,9 @@ fn replay(c: &Connection, key: &DocumentKey) -> Result<(DocumentState, Head, usi
             return Err(StoreError::Integrity);
         }
         let event: Event = serde_json::from_slice(&payload).map_err(|_| StoreError::Integrity)?;
-        event.apply(&mut state)?;
+        // An authenticated event that cannot replay is a corrupted log, not a
+        // recoverable caller mutation error. Never expose a partially rebuilt state.
+        event.apply(&mut state).map_err(|_| StoreError::Integrity)?;
         total += len;
         head = Head {
             revision: rev,
