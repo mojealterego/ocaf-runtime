@@ -69,5 +69,9 @@ elements.source.value = JSON.stringify({ version: 1, project_id: 'agent', nodes:
 click('nocode');
 click('load');
 assert.deepEqual(nodes(), ['third'], 'Stored project must reopen');
+storage.set('ocaf-kaios-v1:agent', JSON.stringify({version:1,project_id:'wrong',nodes:[]}));
+click('load');
+assert.match(elements.status.textContent, /Niezgodny identyfikator zapisanego projektu/);
+assert.deepEqual(nodes(), ['third']);
 assert.ok(document.keydown, 'Keypad shortcuts must be installed');
 console.log('KaiOS runtime behavior tests passed');
