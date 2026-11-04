@@ -1,0 +1,49 @@
+name: OCAF Agents Builder native Windows and macOS builds
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/agents-builder-desktop/**"
+      - "apps/agents-builder-web/**"
+      - "scripts/tests/test_builder_native_desktop.py"
+      - ".github/workflows/agents-builder-native-desktop.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-desktop:
+    name: Native Tauri compile / ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: windows
+            executable: ocaf-agents-builder-desktop.exe
+          - os: macos-latest
+            artifact: macos
+            executable: ocaf-agents-builder-desktop
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      - name: Check native source contracts
+        shell: bash
+        run: python3 -m unittest discover -s scripts/tests -p test_builder_native_desktop.py -v
+      - name: Compile actual platform-native Tauri executable
+        shell: bash
+        run: cargo build --release --locked --manifest-path apps/agents-builder-desktop/src-tauri/Cargo.toml
+      - name: Upload executable
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: "ocaf-agents-builder-${{ matrix.artifact }}-${{ github.sha }}"
+          path: apps/agents-builder-desktop/src-tauri/target/release/${{ matrix.executable }}
+          if-no-files-found: error
+          retention-days: 30
