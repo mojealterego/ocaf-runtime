@@ -159,14 +159,17 @@ function render() {
   const hasProject = Boolean(state.project);
   el('project-title').textContent = hasProject ? currentId() : 'Brak projektu';
   el('revision-label').textContent = hasProject ? 'r' + state.saved + (state.cloud.pending && state.workspace === 'cloud' ? ' (szkic)' : '') : '—';
+  el('workspace-local').disabled = cloudSaveInFlight;
+  el('workspace-cloud').disabled = cloudSaveInFlight;
+  for (const id of ['cloud-connect','cloud-disconnect','cloud-open','cloud-new']) el(id).disabled = cloudSaveInFlight;
   el('workspace-local').setAttribute('aria-pressed', String(state.workspace === 'local'));
   el('workspace-cloud').setAttribute('aria-pressed', String(state.workspace === 'cloud'));
   el('cloud-controls').hidden = state.workspace !== 'cloud';
   el('cloud-status').textContent = cloudClient && state.cloud.tenant
     ? 'OAuth: sesja w pamięci · tenant ' + state.cloud.tenant + (state.cloud.pending ? ' · niezapisany szkic' : '')
     : 'Brak połączenia z uwierzytelnionym gateway. Żadne żądania nie są wysyłane.';
-  el('cloud-open').disabled = !cloudClient;
-  el('cloud-new').disabled = !cloudClient;
+  el('cloud-open').disabled = cloudSaveInFlight || !cloudClient;
+  el('cloud-new').disabled = cloudSaveInFlight || !cloudClient;
   el('cloud-save').disabled = !cloudClient || !hasProject || !state.cloud.pending || cloudSaveInFlight;
   el('new-project').disabled = state.workspace !== 'local';
   el('open-project').disabled = state.workspace !== 'local';
@@ -257,6 +260,7 @@ function importFile(file) {
   })).catch(fail);
 }
 function setWorkspace(workspace) {
+  if (cloudSaveInFlight) throw new Error('conflict: poczekaj na zakończenie zapisu Cloud');
   if (workspace === state.workspace) return;
   if (state.dirty && !window.confirm('Odrzucić niezastosowane zmiany Code DSL?')) return;
   if (state.workspace === 'local') {
@@ -285,6 +289,7 @@ function requireCloud() {
   }
 }
 function connectCloud() {
+  if (cloudSaveInFlight) throw new Error('conflict: poczekaj na zakończenie zapisu Cloud');
   if (state.cloud.pending && !window.confirm('Odrzucić niezapisany szkic chmurowy?')) return;
   const token = el('cloud-token').value.trim();
   const tenant = el('cloud-tenant').value.trim();
@@ -302,6 +307,7 @@ function connectCloud() {
   notice('Token OAuth przechowywany wyłącznie w pamięci. Otwórz projekt, aby zweryfikować dostęp na serwerze.');
 }
 function disconnectCloud() {
+  if (cloudSaveInFlight) throw new Error('conflict: poczekaj na zakończenie zapisu Cloud');
   if (state.cloud.pending && !window.confirm('Odrzucić niezapisany szkic chmurowy?')) return;
   cloudClient = null;
   state.cloud = {tenant:null, head:null, pending:false};
@@ -313,6 +319,7 @@ function disconnectCloud() {
   notice('Rozłączono chmurę. Lokalna przestrzeń robocza pozostaje bez zmian.');
 }
 async function openCloudProject() {
+  if (cloudSaveInFlight) throw new Error('conflict: poczekaj na zakończenie zapisu Cloud');
   requireCloud();
   if (state.cloud.pending && !window.confirm('Odrzucić niezapisany szkic chmurowy?')) return;
   const {project,head} = await cloudClient.load(state.cloud.tenant, el('project-id').value.trim());
@@ -326,6 +333,7 @@ async function openCloudProject() {
   notice('Otworzono uwierzytelniony projekt chmurowy r' + head.revision + '.');
 }
 async function newCloudProject() {
+  if (cloudSaveInFlight) throw new Error('conflict: poczekaj na zakończenie zapisu Cloud');
   requireCloud();
   if (state.cloud.pending && !window.confirm('Odrzucić niezapisany szkic chmurowy?')) return;
   const project = newProject(state.cloud.tenant, el('project-id').value.trim());
