@@ -165,6 +165,42 @@ class PackageBuilderTests(unittest.TestCase):
 
 
 
+    def test_cli_relative_output_publishes_atomic_release(self):
+        # Integration regression: tempfile staging is absolute even for --out dist.
+        import contextlib
+        import io
+        import os
+        import sys
+        from unittest.mock import patch
+        required = [
+            "apps/agents-builder-web/index.html", "apps/agents-builder-web/app.mjs",
+            "apps/agents-builder-web/local_runner.py",
+            "apps/agents-builder-web/runner-client.mjs",
+            "scripts/tests/test_agents_builder_local_runner.py",
+            "apps/agents-builder-web/models.mjs", "apps/agents-builder-web/i18n.mjs",
+            "apps/agents-builder-web/credentials.mjs", "src/builder_core.rs",
+            "src/builder_cloud.rs", "src/builder_http.rs",
+            "src/builder_store.rs", "tests/builder_web_contract.rs",
+            "scripts/package_agents_builder.py",
+        ]
+        def fake_bundle(repo, dst, sha, files, kind):
+            dst.write_bytes(b"ZIP-TEST")
+            return {"name": dst.name, "sha256": hashlib.sha256(b"ZIP-TEST").hexdigest()}
+        old_cwd = Path.cwd()
+        try:
+            os.chdir(self.temp.name)
+            with patch.object(sys, "argv", ["package_agents_builder.py",
+                                            "--repo", str(self.root), "--out", "dist"]), \\
+                 patch.object(bundle, "tracked_files", return_value=required), \\
+                 patch.object(bundle, "write_bundle", side_effect=fake_bundle), \\
+                 patch.object(bundle, "require_clean_tree"), \\
+                 contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(bundle.main(), 0)
+            self.assertTrue(Path("dist/SHA256SUMS").is_file())
+            self.assertEqual(len(list(Path("dist").glob("*.zip"))), 2)
+        finally:
+            os.chdir(old_cwd)
+
     def test_atomic_directory_publish_never_replaces_existing_release(self):
         # Regression for a concurrent publisher winning the destination name.
         staged = Path(self.temp.name) / "staged"
