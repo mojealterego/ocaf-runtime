@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Reject missing, empty or wrong-format native build artifacts in CI."""
 import argparse
+import stat
 from pathlib import Path
 import struct
 import sys
@@ -40,6 +41,10 @@ def verify(kind: str, path: Path) -> None:
                 raise ValueError("APK is not a ZIP archive")
             with zipfile.ZipFile(path) as apk:
                 names = apk.namelist()
+                for entry in apk.infolist():
+                    if (entry.create_system == 3
+                            and stat.S_IFMT(entry.external_attr >> 16) == stat.S_IFLNK):
+                        raise ValueError(f"APK contains symlink ZIP entry: {entry.filename!r}")
                 for name in names:
                     parts = name.split("/")
                     if (not name or name.startswith("/") or "\\" in name
