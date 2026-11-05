@@ -4,7 +4,7 @@
 //! Its integrity check establishes ONLY agreement with a caller-supplied digest;
 //! an independent trusted digest anchor is needed to prove original provenance.
 use sha2::{Digest, Sha256};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use thiserror::Error;
 
 const MAX_ARTIFACTS: usize = 64;
@@ -70,6 +70,8 @@ pub enum EvidenceError {
     InvalidInterval,
     #[error("evidence checksum mismatch")]
     ChecksumMismatch,
+    #[error("evidence digest is missing or differs from the trusted external anchor")]
+    UntrustedDigest,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -186,6 +188,35 @@ pub fn inspect_evidence(
         independently_attested: false,
         certified_compliant: false,
     })
+}
+
+/// Verifies a complete evidence pack against independently provisioned SHA-256 pins.
+/// The pins MUST originate from a trusted source outside the evidence package.
+/// A map assembled from the submitted artifacts does not establish provenance.
+/// Every submitted evidence ID must have exactly one pin, with no extra IDs.
+pub fn inspect_evidence_with_pins(
+    trusted_tenant: &str,
+    framework: RegulatoryFramework,
+    artifacts: &[ComplianceEvidenceArtifact<'_>],
+    trusted_pins: &BTreeMap<String, [u8; 32]>,
+    now_unix: u64,
+) -> Result<EvidenceAssessment, EvidenceError> {
+    if artifacts.len() != trusted_pins.len() {
+        return Err(EvidenceError::UntrustedDigest);
+    }
+    let mut seen = BTreeSet::new();
+    for artifact in artifacts {
+        if !seen.insert(artifact.evidence_id) {
+            return Err(EvidenceError::DuplicateEvidence);
+        }
+        let Some(pinned) = trusted_pins.get(artifact.evidence_id) else {
+            return Err(EvidenceError::UntrustedDigest);
+        };
+        if pinned == &[0; 32] || pinned != &artifact.expected_sha256 {
+            return Err(EvidenceError::UntrustedDigest);
+        }
+    }
+    inspect_evidence(trusted_tenant, framework, artifacts, now_unix)
 }
 
 #[cfg(test)]
