@@ -177,6 +177,20 @@ with sync_playwright() as playwright:
     page.locator("#canonical-edge-to").fill("middle")
     page.locator("#canonical-insert-edge").click()
     assert json.loads(page.locator("#canonical-result").inner_text())["ordered_nodes"] == ["input", "before", "middle", "output"]
+    page.locator("#canonical-new").click()
+    page.locator("#canonical-node-id").fill("middle")
+    page.locator("#canonical-edge-from").fill("input")
+    page.locator("#canonical-edge-to").fill("output")
+    page.locator("#canonical-insert-edge").click()
+    page.locator("#canonical-node-id").fill("meter")
+    page.locator("#canonical-edge-to").fill("middle")
+    page.locator("#canonical-tool-name").fill("meter.tool")
+    page.locator("#canonical-tool-cost").fill("17")
+    page.locator("#canonical-insert-tool-edge").click()
+    inserted_tool = json.loads(page.locator("#canonical-source").input_value())
+    assert inserted_tool["grants"] == ["meter.tool"]
+    assert inserted_tool["max_cost_minor"] == 17
+    assert json.loads(page.locator("#canonical-result").inner_text())["ordered_nodes"] == ["input", "meter", "middle", "output"]
     evidence = ROOT.parents[1] / "dist" / "kaios-chromium-e2e.png"
     evidence.parent.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(evidence), full_page=True)
