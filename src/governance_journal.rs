@@ -872,6 +872,39 @@ mod tests {
     }
 
     #[test]
+    fn malformed_persisted_receipt_digest_is_integrity_failure() {
+        let (file, journal) = setup();
+        let c = contract();
+        let r = request();
+        assert_eq!(
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "malformed_digest")
+                .unwrap(),
+            Admission::FreshPending
+        );
+        let receipt = payload_sha256(b"synthetic-receipt");
+        assert!(journal
+            .record_verified_outcome("tenant_a", "agent_a", &r, "malformed_digest", receipt)
+            .unwrap());
+        let conn = Connection::open(file.path()).unwrap();
+        conn.execute(
+            "UPDATE governance_intents_v1 SET outcome_sha256=x'AB' WHERE idem='malformed_digest'",
+            [],
+        )
+        .unwrap();
+        assert!(matches!(
+            journal.record_verified_outcome(
+                "tenant_a",
+                "agent_a",
+                &r,
+                "malformed_digest",
+                receipt,
+            ),
+            Err(JournalError::Integrity)
+        ));
+    }
+
+    #[test]
     fn corrupted_committed_receipt_is_not_replayed() {
         let (file, journal) = setup();
         let c = contract();
