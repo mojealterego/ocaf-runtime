@@ -135,6 +135,21 @@ with sync_playwright() as playwright:
     assert migrated["revision"] == 3
     assert all(port["kind"] == "bytes" for node in migrated["nodes"] for port in node["inputs"] + node["outputs"])
     assert json.loads(page.locator("#canonical-result").inner_text())["ordered_nodes"] == ["input", "step", "output"]
+    page.locator("#canonical-new").click()
+    page.locator("#canonical-node-id").fill("meter")
+    page.locator("#canonical-tool-name").fill("meter.tool")
+    page.locator("#canonical-tool-cost").fill("7")
+    page.locator("#canonical-tool").click()
+    page.locator("#canonical-tool-cost").fill("19")
+    page.locator("#canonical-update-cost").click()
+    cost_graph = json.loads(page.locator("#canonical-source").input_value())
+    assert cost_graph["max_cost_minor"] == 19
+    assert next(n for n in cost_graph["nodes"] if n["id"] == "meter")["max_cost_minor"] == 19
+    assert cost_graph["revision"] == 3
+    page.locator("#canonical-tool-cost").fill("0")
+    page.locator("#canonical-update-cost").click()
+    assert "Błąd" in page.locator("#canonical-result").inner_text()
+    assert json.loads(page.locator("#canonical-source").input_value()) == cost_graph
     evidence = ROOT.parents[1] / "dist" / "kaios-chromium-e2e.png"
     evidence.parent.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(evidence), full_page=True)
