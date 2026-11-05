@@ -895,6 +895,33 @@ mod tests {
     }
 
     #[test]
+    fn malformed_persisted_actor_and_request_ids_fail_closed_on_replay() {
+        for (column, bad_value) in [("actor", "bad/actor"), ("request_id", "bad/request")] {
+            let (file, journal) = setup();
+            let c = contract();
+            let r = request();
+            assert_eq!(
+                journal
+                    .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "bad_identity")
+                    .unwrap(),
+                Admission::FreshPending
+            );
+            let pinned = journal.inspect("tenant_a", None).unwrap();
+            let conn = Connection::open(file.path()).unwrap();
+            conn.execute(
+                &format!("UPDATE governance_intents_v1 SET {column}=?1 WHERE idem='bad_identity'"),
+                params![bad_value],
+            )
+            .unwrap();
+            assert!(matches!(
+                journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "bad_identity"),
+                Err(JournalError::Integrity)
+            ));
+            assert_eq!(journal.inspect("tenant_a", Some(&pinned)).unwrap(), pinned);
+        }
+    }
+
+    #[test]
     fn corrupt_committed_state_is_rejected_before_idempotency_collision_audit() {
         let (file, journal) = setup();
         let c = contract();
