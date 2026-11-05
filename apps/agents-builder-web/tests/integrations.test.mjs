@@ -102,3 +102,14 @@ test('model profile settings are bounded, per project, exportable and schema-fai
   const api=makeModelProfile({kind:'api',provider:'openai',model_id:'gpt-4.1-mini'});
   assert.equal(api.source.provider,'openai');
 });
+
+test('Hugging Face discovery respects an already-aborted signal before fetch',async()=>{
+  const controller=new AbortController();
+  controller.abort();
+  let called=false;
+  await assert.rejects(listHuggingFaceGguf('org/Model',{
+    signal:controller.signal,
+    fetchImpl:async()=>{called=true;throw Error('unexpected network call');}
+  }),/abort/i);
+  assert.equal(called,false);
+});
