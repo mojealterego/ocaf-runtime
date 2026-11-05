@@ -43,7 +43,7 @@ class NativeArtifactVerification(unittest.TestCase):
             p = Path(d) / "app.apk"
             with zipfile.ZipFile(p, "w") as archive:
                 archive.writestr("AndroidManifest.xml", bytes(2048))
-                archive.writestr("classes.dex", bytes(2048))
+                archive.writestr("classes.dex", b"dex\\n035\\x00" + bytes(2040))
             module.verify("android", p)
             with zipfile.ZipFile(p, "w") as archive:
                 archive.writestr("AndroidManifest.xml", bytes(2048))
