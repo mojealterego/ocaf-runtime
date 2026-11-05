@@ -1,5 +1,11 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-05 — Android APK DEX header validation (IMPLEMENTED_CI_UNVERIFIED)
+
+- Security regression `b91c4b9` adds negative APK cases for empty, zero-filled and unsupported-version DEX payloads.
+- Verifier change `a70dbf4` requires nontruncated DEX entries with recognized `dex\\nNNN\\x00` magic; fixture update `da5a362` supplies a valid header. Escape corrections `01e0b08`, `2cb5d75` ensure Python bytes literals encode real newline/NUL.
+- This checks artifact structure, NOT APK signing, execution, application behavior or sandbox isolation. Executed RED/GREEN and final-SHA Android CI remain UNVERIFIED; native product acceptance status unchanged.
+
 ## 2026-11-05 — Desktop smoke harness CI trigger (IMPLEMENTED_CI_UNVERIFIED)
 
 - Contract `eff388f` adds `test_desktop_ci_rebuilds_when_smoke_harness_changes` for the real process-smoke harness and its regression test.
