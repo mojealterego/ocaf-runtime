@@ -206,7 +206,7 @@ elements['canonical-duplicate'].onclick();
 assert.match(elements['canonical-result'].textContent, /Błąd/);
 assert.equal(elements['canonical-source'].value, JSON.stringify(duplicated, null, 2));
 elements['canonical-check'].onclick();
-assert.match(elements['canonical-graph-preview'].textContent, /first\\.out/);
+assert.match(elements['canonical-graph-preview'].textContent, /first[.]out/);
 elements['canonical-source'].value = '{';
 elements['canonical-check'].onclick();
 assert.match(elements['canonical-graph-preview'].textContent, /Podgląd niedostępny/);
