@@ -225,7 +225,10 @@ pub fn inspect_evidence_with_bound_pins(
         let Some(pin) = trusted_pins.get(artifact.evidence_id) else {
             return Err(EvidenceError::UntrustedDigest);
         };
-        if pin.tenant_id != trusted_tenant
+        if !valid_id(&pin.tenant_id)
+            || !valid_id(&pin.source_id)
+            || !valid_id(artifact.evidence_id)
+            || pin.tenant_id != trusted_tenant
             || pin.tenant_id != artifact.tenant_id
             || pin.source_id != artifact.source_id
             || pin.framework != framework
