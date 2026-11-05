@@ -199,6 +199,9 @@ pub struct EvidencePin {
     pub source_id: String,
     pub framework: RegulatoryFramework,
     pub objective: Option<CafObjective>,
+    pub sensitivity: Sensitivity,
+    pub collected_at_unix: u64,
+    pub valid_until_unix: u64,
     pub expected_sha256: [u8; 32],
 }
 
@@ -228,6 +231,9 @@ pub fn inspect_evidence_with_bound_pins(
             || pin.framework != framework
             || pin.framework != artifact.framework
             || pin.objective != artifact.objective
+            || pin.sensitivity != artifact.sensitivity
+            || pin.collected_at_unix != artifact.collected_at_unix
+            || pin.valid_until_unix != artifact.valid_until_unix
             || pin.expected_sha256 == [0; 32]
             || pin.expected_sha256 != artifact.expected_sha256
         {
@@ -426,6 +432,9 @@ mod tests {
                         source_id: item.source_id.to_owned(),
                         framework: item.framework,
                         objective: item.objective,
+                        sensitivity: item.sensitivity,
+                        collected_at_unix: item.collected_at_unix,
+                        valid_until_unix: item.valid_until_unix,
                         expected_sha256: item.expected_sha256,
                     },
                 )
