@@ -911,6 +911,54 @@ mod tests {
     }
 
     #[test]
+    fn audit_scan_rejects_rehashed_noncanonical_replay_reason() {
+        let (file, journal) = setup();
+        let c = contract();
+        let r = request();
+        assert_eq!(
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "replay_reason")
+                .unwrap(),
+            Admission::FreshPending
+        );
+        assert_eq!(
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "replay_reason")
+                .unwrap(),
+            Admission::ReplayPending
+        );
+        let conn = Connection::open(file.path()).unwrap();
+        let previous: String = conn
+            .query_row(
+                "SELECT digest FROM governance_audit_v1 WHERE tenant='tenant_a' AND seq=1",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        let bad_reason = "ReplayUnknown";
+        let digest = hash_row(AuditDigest {
+            tenant: "tenant_a",
+            sequence: 2,
+            actor: "agent_a",
+            action: "read",
+            request: "req_1",
+            decision: "REPLAY",
+            reason: bad_reason,
+            payload_sha256: &r.payload_sha256,
+            previous: &previous,
+        });
+        conn.execute(
+            "UPDATE governance_audit_v1 SET reason=?1, digest=?2 WHERE tenant='tenant_a' AND seq=2",
+            params![bad_reason, digest],
+        )
+        .unwrap();
+        assert!(matches!(
+            journal.inspect("tenant_a", None),
+            Err(JournalError::Integrity)
+        ));
+    }
+
+    #[test]
     fn audit_scan_rejects_rehashed_noncanonical_intent_reason() {
         let (file, journal) = setup();
         let c = contract();
