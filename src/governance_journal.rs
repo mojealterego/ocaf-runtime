@@ -906,6 +906,41 @@ mod tests {
     }
 
     #[test]
+    fn audit_scan_rejects_semantically_invalid_but_rehashed_row() {
+        let (file, journal) = setup();
+        let c = contract();
+        let r = request();
+        assert_eq!(
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "audit_semantic")
+                .unwrap(),
+            Admission::FreshPending
+        );
+        let conn = Connection::open(file.path()).unwrap();
+        let bad_actor = "invalid/actor";
+        let digest = hash_row(AuditDigest {
+            tenant: "tenant_a",
+            sequence: 1,
+            actor: bad_actor,
+            action: "read",
+            request: "req_1",
+            decision: "ALLOW_INTENT",
+            reason: "PENDING_EXTERNAL_GATE",
+            payload_sha256: &r.payload_sha256,
+            previous: GENESIS,
+        });
+        conn.execute(
+            "UPDATE governance_audit_v1 SET actor=?1, digest=?2 WHERE tenant='tenant_a' AND seq=1",
+            params![bad_actor, digest],
+        )
+        .unwrap();
+        assert!(matches!(
+            journal.inspect("tenant_a", None),
+            Err(JournalError::Integrity)
+        ));
+    }
+
+    #[test]
     fn zero_request_digest_is_rejected_before_database_mutation() {
         let (_file, journal) = setup();
         let c = contract();
