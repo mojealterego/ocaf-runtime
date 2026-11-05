@@ -227,6 +227,30 @@
       result.textContent = JSON.stringify(plan, null, 2);
     });
   };
+  get('canonical-update-cost').onclick = function () {
+    safe(function () {
+      var project = checked().project;
+      var id = get('canonical-node-id').value;
+      var rawCost = get('canonical-tool-cost').value;
+      if (!/^[1-9][0-9]*$/.test(rawCost)) throw Error('Nieprawidłowy koszt narzędzia');
+      var cost = Number(rawCost);
+      if (!isFinite(cost) || Math.floor(cost) !== cost || cost > 1000000000000)
+        throw Error('Koszt poza zakresem');
+      var target = project.nodes.filter(function (n) { return n.id === id; })[0];
+      if (!target || target.kind !== 'tool') throw Error('Nie znaleziono węzła Tool');
+      if (project.revision >= 9007199254740991) throw Error('Przekroczono zakres rewizji');
+      var candidate = JSON.parse(JSON.stringify(project));
+      var adjusted = candidate.max_cost_minor - target.max_cost_minor + cost;
+      if (!isFinite(adjusted) || adjusted < 0 || adjusted > 1000000000000)
+        throw Error('Przekroczono budżet projektu');
+      candidate.max_cost_minor = adjusted;
+      candidate.nodes.filter(function (n) { return n.id === id; })[0].max_cost_minor = cost;
+      candidate.revision++;
+      var plan = OCAFCanonicalGraph.compile(candidate, get('canonical-tenant').value);
+      get('canonical-source').value = JSON.stringify(candidate, null, 2);
+      result.textContent = JSON.stringify(plan, null, 2);
+    });
+  };
   get('canonical-retype').onclick = function () {
     safe(function () {
       var project = checked().project;
