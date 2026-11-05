@@ -69,3 +69,7 @@ Przycisk **Zmień narzędzie Tool** zmienia `tool_name` węzła wskazanego w pol
 ## Wstawianie Transform na krawędzi
 
 Pola **Od węzła**, **Do węzła** i **ID Transform** pozwalają wstawić nowy węzeł na wybranej istniejącej krawędzi. Operacja wymaga jednoznacznego połączenia pomiędzy wskazanymi węzłami, zachowuje typ portów, przepisuje krawędź atomowo, zwiększa rewizję i ponownie kompiluje statyczny plan DAG. Obsługa wielu krawędzi między tymi samymi węzłami wymaga edycji JSON — operacja NoCode odrzuca niejednoznaczność.
+
+## Wstawianie Tool na wskazanej krawędzi
+
+Przycisk **Wstaw Tool na krawędzi** wykorzystuje pola Od węzła / Do węzła, ID Transform (identyfikator nowego węzła), nazwę narzędzia i koszt. Zachowuje typ portów wybranej krawędzi, przepina ją przez nowy Tool, dodaje brakujące `grant`, zwiększa `max_cost_minor` i rewizję. Wszystkie zmiany są zatwierdzane dopiero po pomyślnej walidacji kanonicznego DAG. Jest to statyczna deklaracja, nie uruchomienie narzędzia.
