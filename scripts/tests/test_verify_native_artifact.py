@@ -75,6 +75,18 @@ class NativeArtifactVerification(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, "duplicate"):
                         module.verify("android", p)
 
+    def test_apk_rejects_unsafe_zip_entry_paths(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "unsafe.apk"
+            for unsafe in ("../classes2.dex", "/classes2.dex", "assets/../../escape", "assets\\\\escape"):
+                with self.subTest(entry=unsafe):
+                    with zipfile.ZipFile(p, "w") as archive:
+                        archive.writestr("AndroidManifest.xml", bytes(2048))
+                        archive.writestr("classes.dex", b"dex\\n035\\x00" + bytes(2040))
+                        archive.writestr(unsafe, bytes(2048))
+                    with self.assertRaisesRegex(ValueError, "unsafe ZIP entry"):
+                        module.verify("android", p)
+
     def test_linux_elf_signature_and_header(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "app"
