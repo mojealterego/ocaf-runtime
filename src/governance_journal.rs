@@ -365,9 +365,6 @@ impl GovernanceJournal {
         let mut conn = self.connection()?;
         let tx = db(conn.transaction_with_behavior(TransactionBehavior::Immediate))?;
         let head = scan_audit(&tx, trusted_tenant)?;
-        if head.sequence >= MAX_TENANT_AUDIT_ROWS {
-            return Err(JournalError::Limit);
-        }
         let existing: Option<StoredOutcome> = db(tx
             .query_row(
                 "SELECT actor,request_id,payload_sha256,status,outcome_sha256
@@ -402,6 +399,11 @@ impl GovernanceJournal {
         }
         if phase != "PENDING" || existing_outcome.is_some() {
             return Err(JournalError::Integrity);
+        }
+        // A replay of an already committed receipt is read-only even at the audit cap.
+        // A new transition must still reserve capacity for its audit entry.
+        if head.sequence >= MAX_TENANT_AUDIT_ROWS {
+            return Err(JournalError::Limit);
         }
         let updated = db(tx.execute(
             "UPDATE governance_intents_v1
