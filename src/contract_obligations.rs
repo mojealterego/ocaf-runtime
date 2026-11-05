@@ -281,13 +281,10 @@ pub fn verify_fulfillment_preflight(
     if verified_evidence_ids.is_empty() {
         return Err(FulfillmentError::MissingEvidence);
     }
-    if verified_evidence_ids.len() > 128
-        || verified_evidence_ids.iter().any(|id| !valid_id(id))
-    {
+    if verified_evidence_ids.len() > 128 || verified_evidence_ids.iter().any(|id| !valid_id(id)) {
         return Err(FulfillmentError::InvalidEvidence);
     }
-    let unique: std::collections::BTreeSet<&str> =
-        verified_evidence_ids.iter().copied().collect();
+    let unique: std::collections::BTreeSet<&str> = verified_evidence_ids.iter().copied().collect();
     if unique.len() != verified_evidence_ids.len() {
         return Err(FulfillmentError::InvalidEvidence);
     }
@@ -387,7 +384,12 @@ pub fn gated_extract_obligation(
     // Unsupported source text must never reserve an idempotency key.
     let extracted = extract_cited_obligation(clause)?;
     let admission = journal.begin(
-        contract, request, approval_authority, trusted_peer, trusted_now_unix, idempotency_key,
+        contract,
+        request,
+        approval_authority,
+        trusted_peer,
+        trusted_now_unix,
+        idempotency_key,
     )?;
     if admission != Admission::FreshPending {
         return Ok(GatedExtraction::Admission(admission));
@@ -533,7 +535,10 @@ mod tests {
     fn rejects_zero_reference_and_control_characters() {
         let mut clause = cited("Supplier shall report within 2 days.");
         clause.reference_unix = 0;
-        assert_eq!(extract_cited_obligation(clause).unwrap_err(), ClauseError::InvalidSource);
+        assert_eq!(
+            extract_cited_obligation(clause).unwrap_err(),
+            ClauseError::InvalidSource
+        );
         assert_eq!(
             extract_cited_obligation(cited("Supplier shall report\nwithin 2 days.")).unwrap_err(),
             ClauseError::InvalidSource
@@ -547,7 +552,10 @@ mod tests {
             "Supplier must refrain from sharing data within 2 days.",
             "Supplier shall report within 2 days. Buyer accepts delivery.",
         ] {
-            assert_eq!(extract_cited_obligation(cited(text)).unwrap_err(), ClauseError::UnsupportedGrammar);
+            assert_eq!(
+                extract_cited_obligation(cited(text)).unwrap_err(),
+                ClauseError::UnsupportedGrammar
+            );
         }
     }
 
@@ -596,9 +604,15 @@ mod tests {
         let descriptors = obligation_tool_descriptors();
         assert_eq!(descriptors.len(), 2);
         assert_eq!(descriptors[0].name, "contract.extract_obligation");
-        assert_eq!(descriptors[0].risk, crate::governance_contract::RiskTier::Low);
+        assert_eq!(
+            descriptors[0].risk,
+            crate::governance_contract::RiskTier::Low
+        );
         assert_eq!(descriptors[1].name, "contract.verify_obligation");
-        assert_eq!(descriptors[1].risk, crate::governance_contract::RiskTier::Medium);
+        assert_eq!(
+            descriptors[1].risk,
+            crate::governance_contract::RiskTier::Medium
+        );
         assert!(descriptors.iter().all(|d| d.requires_governance_journal));
         assert!(descriptors[1].requires_human_approval);
         assert!(!descriptors[0].requires_human_approval);
@@ -606,27 +620,54 @@ mod tests {
 
     #[test]
     fn cross_tenant_clause_is_rejected_before_journal_admission() {
-        use crate::governance_contract::{Accountability, AgentContract, ActionRequest, Domain, RiskTier};
+        use crate::governance_contract::{
+            Accountability, ActionRequest, AgentContract, Domain, RiskTier,
+        };
         use crate::governance_journal::GovernanceJournal;
         use std::collections::BTreeSet;
         let file = tempfile::NamedTempFile::new().unwrap();
         let journal = GovernanceJournal::open_existing(file.path()).unwrap();
         let contract = AgentContract {
-            contract_id: "contract_1".into(), version: "v1".into(),
-            tenant: "tenant_a".into(), actor: "agent_a".into(),
-            obligations: vec![], permissions: BTreeSet::from(["contract.extract_obligation".into()]),
+            contract_id: "contract_1".into(),
+            version: "v1".into(),
+            tenant: "tenant_a".into(),
+            actor: "agent_a".into(),
+            obligations: vec![],
+            permissions: BTreeSet::from(["contract.extract_obligation".into()]),
             prohibitions: BTreeSet::new(),
-            accountability: Accountability { owner: "owner".into(), escalation_reviewer: "reviewer".into(), audit_authority: "auditor".into() },
+            accountability: Accountability {
+                owner: "owner".into(),
+                escalation_reviewer: "reviewer".into(),
+                audit_authority: "auditor".into(),
+            },
         };
-        let foreign = CitedClause { tenant_id: "tenant_b", ..cited("Supplier shall report within 2 days.") };
+        let foreign = CitedClause {
+            tenant_id: "tenant_b",
+            ..cited("Supplier shall report within 2 days.")
+        };
         let request = ActionRequest {
-            request_id: "req_1", tenant: "tenant_a", actor: "agent_a",
-            action: "contract.extract_obligation", domain: Domain::ContractObligations,
-            risk: RiskTier::Low, payload_sha256: cited_clause_payload_sha256(foreign),
-            uses_external_provider: false, provider: None, approval: None,
+            request_id: "req_1",
+            tenant: "tenant_a",
+            actor: "agent_a",
+            action: "contract.extract_obligation",
+            domain: Domain::ContractObligations,
+            risk: RiskTier::Low,
+            payload_sha256: cited_clause_payload_sha256(foreign),
+            uses_external_provider: false,
+            provider: None,
+            approval: None,
         };
         assert!(matches!(
-            gated_extract_obligation(&journal, &contract, &request, None, ("tenant_a", "agent_a"), 170, "idem_1", foreign),
+            gated_extract_obligation(
+                &journal,
+                &contract,
+                &request,
+                None,
+                ("tenant_a", "agent_a"),
+                170,
+                "idem_1",
+                foreign
+            ),
             Err(GatedExtractionError::InvalidAction)
         ));
         assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 0);
@@ -637,40 +678,88 @@ mod tests {
     fn cited_payload_digest_is_tenant_and_party_scoped() {
         let original = cited("Supplier shall report within 2 days.");
         let digest = cited_clause_payload_sha256(original);
-        let other_tenant = CitedClause { tenant_id: "tenant_b", ..original };
-        let other_contract = CitedClause { contract_id: "agreement_2", ..original };
-        let other_debtor = CitedClause { debtor_id: "different_supplier", ..original };
-        let other_creditor = CitedClause { creditor_id: "different_customer", ..original };
-        let other_reference = CitedClause { reference_unix: REF + 1, ..original };
-        for changed in [other_tenant, other_contract, other_debtor, other_creditor, other_reference] {
+        let other_tenant = CitedClause {
+            tenant_id: "tenant_b",
+            ..original
+        };
+        let other_contract = CitedClause {
+            contract_id: "agreement_2",
+            ..original
+        };
+        let other_debtor = CitedClause {
+            debtor_id: "different_supplier",
+            ..original
+        };
+        let other_creditor = CitedClause {
+            creditor_id: "different_customer",
+            ..original
+        };
+        let other_reference = CitedClause {
+            reference_unix: REF + 1,
+            ..original
+        };
+        for changed in [
+            other_tenant,
+            other_contract,
+            other_debtor,
+            other_creditor,
+            other_reference,
+        ] {
             assert_ne!(digest, cited_clause_payload_sha256(changed));
         }
     }
 
     #[test]
     fn gated_extraction_rejects_citation_substitution_without_audit() {
-        use crate::governance_contract::{Accountability, AgentContract, ActionRequest, Domain, RiskTier};
+        use crate::governance_contract::{
+            Accountability, ActionRequest, AgentContract, Domain, RiskTier,
+        };
         use crate::governance_journal::GovernanceJournal;
         use std::collections::BTreeSet;
         let file = tempfile::NamedTempFile::new().unwrap();
         let journal = GovernanceJournal::open_existing(file.path()).unwrap();
         let contract = AgentContract {
-            contract_id: "contract_1".into(), version: "v1".into(),
-            tenant: "tenant_a".into(), actor: "agent_a".into(),
-            obligations: vec![], permissions: BTreeSet::from(["contract.extract_obligation".into()]),
+            contract_id: "contract_1".into(),
+            version: "v1".into(),
+            tenant: "tenant_a".into(),
+            actor: "agent_a".into(),
+            obligations: vec![],
+            permissions: BTreeSet::from(["contract.extract_obligation".into()]),
             prohibitions: BTreeSet::new(),
-            accountability: Accountability { owner: "owner".into(), escalation_reviewer: "reviewer".into(), audit_authority: "auditor".into() },
+            accountability: Accountability {
+                owner: "owner".into(),
+                escalation_reviewer: "reviewer".into(),
+                audit_authority: "auditor".into(),
+            },
         };
         let original = cited("Supplier shall report within 2 days.");
         let request = ActionRequest {
-            request_id: "req_1", tenant: "tenant_a", actor: "agent_a",
-            action: "contract.extract_obligation", domain: Domain::ContractObligations,
-            risk: RiskTier::Low, payload_sha256: cited_clause_payload_sha256(original),
-            uses_external_provider: false, provider: None, approval: None,
+            request_id: "req_1",
+            tenant: "tenant_a",
+            actor: "agent_a",
+            action: "contract.extract_obligation",
+            domain: Domain::ContractObligations,
+            risk: RiskTier::Low,
+            payload_sha256: cited_clause_payload_sha256(original),
+            uses_external_provider: false,
+            provider: None,
+            approval: None,
         };
-        let substituted = CitedClause { clause_citation: "clause_9_9", ..original };
+        let substituted = CitedClause {
+            clause_citation: "clause_9_9",
+            ..original
+        };
         assert!(matches!(
-            gated_extract_obligation(&journal, &contract, &request, None, ("tenant_a", "agent_a"), 170, "idem_1", substituted),
+            gated_extract_obligation(
+                &journal,
+                &contract,
+                &request,
+                None,
+                ("tenant_a", "agent_a"),
+                170,
+                "idem_1",
+                substituted
+            ),
             Err(GatedExtractionError::InvalidAction)
         ));
         assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 0);
@@ -678,26 +767,52 @@ mod tests {
 
     #[test]
     fn gated_extraction_rejects_payload_substitution_without_audit() {
-        use crate::governance_contract::{Accountability, AgentContract, ActionRequest, Domain, RiskTier, payload_sha256};
+        use crate::governance_contract::{
+            payload_sha256, Accountability, ActionRequest, AgentContract, Domain, RiskTier,
+        };
         use crate::governance_journal::GovernanceJournal;
         use std::collections::BTreeSet;
         let file = tempfile::NamedTempFile::new().unwrap();
         let journal = GovernanceJournal::open_existing(file.path()).unwrap();
         let contract = AgentContract {
-            contract_id: "contract_1".into(), version: "v1".into(),
-            tenant: "tenant_a".into(), actor: "agent_a".into(),
-            obligations: vec![], permissions: BTreeSet::from(["contract.extract_obligation".into()]),
+            contract_id: "contract_1".into(),
+            version: "v1".into(),
+            tenant: "tenant_a".into(),
+            actor: "agent_a".into(),
+            obligations: vec![],
+            permissions: BTreeSet::from(["contract.extract_obligation".into()]),
             prohibitions: BTreeSet::new(),
-            accountability: Accountability { owner: "owner".into(), escalation_reviewer: "reviewer".into(), audit_authority: "auditor".into() },
+            accountability: Accountability {
+                owner: "owner".into(),
+                escalation_reviewer: "reviewer".into(),
+                audit_authority: "auditor".into(),
+            },
         };
         let request = ActionRequest {
-            request_id: "req_1", tenant: "tenant_a", actor: "agent_a",
-            action: "contract.extract_obligation", domain: Domain::ContractObligations,
-            risk: RiskTier::Low, payload_sha256: cited_clause_payload_sha256(cited("Supplier shall report within 2 days.")),
-            uses_external_provider: false, provider: None, approval: None,
+            request_id: "req_1",
+            tenant: "tenant_a",
+            actor: "agent_a",
+            action: "contract.extract_obligation",
+            domain: Domain::ContractObligations,
+            risk: RiskTier::Low,
+            payload_sha256: cited_clause_payload_sha256(cited(
+                "Supplier shall report within 2 days.",
+            )),
+            uses_external_provider: false,
+            provider: None,
+            approval: None,
         };
         assert!(matches!(
-            gated_extract_obligation(&journal, &contract, &request, None, ("tenant_a", "agent_a"), 170, "idem_1", cited("Supplier shall report within 3 days.")),
+            gated_extract_obligation(
+                &journal,
+                &contract,
+                &request,
+                None,
+                ("tenant_a", "agent_a"),
+                170,
+                "idem_1",
+                cited("Supplier shall report within 3 days.")
+            ),
             Err(GatedExtractionError::InvalidAction)
         ));
         assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 0);
@@ -705,79 +820,160 @@ mod tests {
 
     #[test]
     fn invalid_clause_is_rejected_before_reserving_intent() {
-        use crate::governance_contract::{Accountability, AgentContract, ActionRequest, Domain, RiskTier, payload_sha256};
+        use crate::governance_contract::{
+            payload_sha256, Accountability, ActionRequest, AgentContract, Domain, RiskTier,
+        };
         use crate::governance_journal::GovernanceJournal;
         use std::collections::BTreeSet;
         let file = tempfile::NamedTempFile::new().unwrap();
         let journal = GovernanceJournal::open_existing(file.path()).unwrap();
         let contract = AgentContract {
-            contract_id: "contract_1".into(), version: "v1".into(),
-            tenant: "tenant_a".into(), actor: "agent_a".into(),
-            obligations: vec![], permissions: BTreeSet::from(["contract.extract_obligation".into()]),
+            contract_id: "contract_1".into(),
+            version: "v1".into(),
+            tenant: "tenant_a".into(),
+            actor: "agent_a".into(),
+            obligations: vec![],
+            permissions: BTreeSet::from(["contract.extract_obligation".into()]),
             prohibitions: BTreeSet::new(),
-            accountability: Accountability { owner: "owner".into(), escalation_reviewer: "reviewer".into(), audit_authority: "auditor".into() },
+            accountability: Accountability {
+                owner: "owner".into(),
+                escalation_reviewer: "reviewer".into(),
+                audit_authority: "auditor".into(),
+            },
         };
         let request = ActionRequest {
-            request_id: "req_1", tenant: "tenant_a", actor: "agent_a",
-            action: "contract.extract_obligation", domain: Domain::ContractObligations,
-            risk: RiskTier::Low, payload_sha256: cited_clause_payload_sha256(cited("Supplier must not report within 2 days.")),
-            uses_external_provider: false, provider: None, approval: None,
+            request_id: "req_1",
+            tenant: "tenant_a",
+            actor: "agent_a",
+            action: "contract.extract_obligation",
+            domain: Domain::ContractObligations,
+            risk: RiskTier::Low,
+            payload_sha256: cited_clause_payload_sha256(cited(
+                "Supplier must not report within 2 days.",
+            )),
+            uses_external_provider: false,
+            provider: None,
+            approval: None,
         };
         let invalid = cited("Supplier must not report within 2 days.");
         assert!(matches!(
-            gated_extract_obligation(&journal, &contract, &request, None, ("tenant_a", "agent_a"), 170, "idem_1", invalid),
-            Err(GatedExtractionError::Clause(ClauseError::UnsupportedGrammar))
+            gated_extract_obligation(
+                &journal,
+                &contract,
+                &request,
+                None,
+                ("tenant_a", "agent_a"),
+                170,
+                "idem_1",
+                invalid
+            ),
+            Err(GatedExtractionError::Clause(
+                ClauseError::UnsupportedGrammar
+            ))
         ));
         assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 0);
     }
 
     #[test]
     fn shared_extraction_gate_refuses_execution_without_durable_admission() {
-        use crate::governance_contract::{Accountability, AgentContract, ActionRequest, Domain, SocialCommitment, payload_sha256};
-        use crate::governance_journal::{GovernanceJournal, Admission};
+        use crate::governance_contract::{
+            payload_sha256, Accountability, ActionRequest, AgentContract, Domain, SocialCommitment,
+        };
+        use crate::governance_journal::{Admission, GovernanceJournal};
         use std::collections::BTreeSet;
         let file = tempfile::NamedTempFile::new().unwrap();
         let journal = GovernanceJournal::open_existing(file.path()).unwrap();
         let contract = AgentContract {
-            contract_id: "contract_1".into(), version: "v1".into(),
-            tenant: "tenant_a".into(), actor: "agent_a".into(),
-            obligations: vec![SocialCommitment { debtor: "agent_a".into(), creditor: "user".into(), condition: "verify".into() }],
+            contract_id: "contract_1".into(),
+            version: "v1".into(),
+            tenant: "tenant_a".into(),
+            actor: "agent_a".into(),
+            obligations: vec![SocialCommitment {
+                debtor: "agent_a".into(),
+                creditor: "user".into(),
+                condition: "verify".into(),
+            }],
             permissions: BTreeSet::from(["contract.extract_obligation".into()]),
             prohibitions: BTreeSet::new(),
-            accountability: Accountability { owner: "owner".into(), escalation_reviewer: "reviewer".into(), audit_authority: "auditor".into() },
+            accountability: Accountability {
+                owner: "owner".into(),
+                escalation_reviewer: "reviewer".into(),
+                audit_authority: "auditor".into(),
+            },
         };
         let request = ActionRequest {
-            request_id: "req_1", tenant: "tenant_a", actor: "agent_a",
-            action: "contract.extract_obligation", domain: Domain::ContractObligations,
+            request_id: "req_1",
+            tenant: "tenant_a",
+            actor: "agent_a",
+            action: "contract.extract_obligation",
+            domain: Domain::ContractObligations,
             risk: crate::governance_contract::RiskTier::Low,
-            payload_sha256: cited_clause_payload_sha256(cited("Supplier shall report within 2 days.")), uses_external_provider: false,
-            provider: None, approval: None,
+            payload_sha256: cited_clause_payload_sha256(cited(
+                "Supplier shall report within 2 days.",
+            )),
+            uses_external_provider: false,
+            provider: None,
+            approval: None,
         };
         let clause = cited("Supplier shall report within 2 days.");
-        let first = gated_extract_obligation(&journal, &contract, &request, None, ("tenant_a", "agent_a"), 170, "idem_1", clause).unwrap();
+        let first = gated_extract_obligation(
+            &journal,
+            &contract,
+            &request,
+            None,
+            ("tenant_a", "agent_a"),
+            170,
+            "idem_1",
+            clause,
+        )
+        .unwrap();
         assert!(matches!(first, GatedExtraction::Extracted(_)));
-        let second = gated_extract_obligation(&journal, &contract, &request, None, ("tenant_a", "agent_a"), 170, "idem_1", clause).unwrap();
+        let second = gated_extract_obligation(
+            &journal,
+            &contract,
+            &request,
+            None,
+            ("tenant_a", "agent_a"),
+            170,
+            "idem_1",
+            clause,
+        )
+        .unwrap();
         assert_eq!(second, GatedExtraction::Admission(Admission::ReplayPending));
         assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 2);
         drop(journal);
         let reopened = GovernanceJournal::open_existing(file.path()).unwrap();
         assert_eq!(
             gated_extract_obligation(
-                &reopened, &contract, &request, None, ("tenant_a", "agent_a"),
-                170, "idem_1", clause,
-            ).unwrap(),
+                &reopened,
+                &contract,
+                &request,
+                None,
+                ("tenant_a", "agent_a"),
+                170,
+                "idem_1",
+                clause,
+            )
+            .unwrap(),
             GatedExtraction::Admission(Admission::ReplayPending)
         );
         // Synthetic receipt tests persistence, not independent verification.
         let receipt = crate::governance_contract::payload_sha256(b"test-only-receipt");
-        assert!(reopened.record_verified_outcome(
-            "tenant_a", "agent_a", &request, "idem_1", receipt,
-        ).unwrap());
+        assert!(reopened
+            .record_verified_outcome("tenant_a", "agent_a", &request, "idem_1", receipt,)
+            .unwrap());
         assert_eq!(
             gated_extract_obligation(
-                &reopened, &contract, &request, None, ("tenant_a", "agent_a"),
-                170, "idem_1", clause,
-            ).unwrap(),
+                &reopened,
+                &contract,
+                &request,
+                None,
+                ("tenant_a", "agent_a"),
+                170,
+                "idem_1",
+                clause,
+            )
+            .unwrap(),
             GatedExtraction::Admission(Admission::ReplayCommitted)
         );
         assert_eq!(reopened.inspect("tenant_a", None).unwrap().sequence, 5);
