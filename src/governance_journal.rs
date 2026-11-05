@@ -403,7 +403,7 @@ impl GovernanceJournal {
         let Some((actor, request_id, hash, phase, existing_outcome)) = existing else {
             return Err(JournalError::Conflict);
         };
-        if hash.len() != 32 {
+        if hash.len() != 32 || !valid_id(&actor) || !valid_id(&request_id) {
             return Err(JournalError::Integrity);
         }
         if actor != trusted_actor
