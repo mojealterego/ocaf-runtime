@@ -1,5 +1,11 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-05 — Correct duplicate-APK negative test fixture (TEST_FIX_CI_UNVERIFIED)
+
+- Commit `07479b3` corrects the DEX magic in `test_apk_rejects_duplicate_security_critical_entries`: previously `b"dex\\\\n035\\\\x00"` produced literal backslash characters rather than the required `b"dex\\n035\\x00"` byte header, so the fixture was invalid independently of the duplicate-entry defect.
+- The test now targets duplicate-entry rejection with a syntactically valid DEX prefix. No verifier production code or product acceptance status changed.
+- GitHub Actions / complete Python unittest on this SHA remain UNVERIFIED; independent byte-literal reproduction was executed locally.
+
 ## 2026-11-05 — APK duplicate ZIP entry rejection (IMPLEMENTED_CI_UNVERIFIED)
 
 - Security regression `c6ba2ee` adds adversarial duplicate `AndroidManifest.xml` and `classes.dex` APK fixtures. Local independent reproduction confirms duplicate manifest entries are possible and the previous membership check accepted the ambiguous names; repository unittest execution is unverified.
