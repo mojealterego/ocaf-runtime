@@ -877,6 +877,36 @@ mod tests {
     }
 
     #[test]
+    fn malformed_stored_intent_payload_hash_is_integrity_failure() {
+        let (file, journal) = setup();
+        let c = contract();
+        let r = request();
+        assert_eq!(
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "bad_payload_hash")
+                .unwrap(),
+            Admission::FreshPending
+        );
+        let conn = Connection::open(file.path()).unwrap();
+        conn.execute(
+            "UPDATE governance_intents_v1 SET payload_sha256=x'AB' WHERE idem='bad_payload_hash'",
+            [],
+        )
+        .unwrap();
+        assert!(matches!(
+            journal.record_verified_outcome(
+                "tenant_a",
+                "agent_a",
+                &r,
+                "bad_payload_hash",
+                payload_sha256(b"synthetic-receipt"),
+            ),
+            Err(JournalError::Integrity)
+        ));
+        assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 1);
+    }
+
+    #[test]
     fn zeroed_persisted_receipt_digest_is_integrity_failure() {
         let (file, journal) = setup();
         let c = contract();
