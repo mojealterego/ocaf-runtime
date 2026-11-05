@@ -48,6 +48,7 @@ def verify(kind: str, path: Path) -> None:
                 for name in names:
                     parts = name.split("/")
                     if (not name or name.startswith("/") or "\\" in name
+                            or (len(name) >= 2 and name[0].isascii() and name[0].isalpha() and name[1] == ":")
                             or any(part in ("", ".", "..") for part in parts[:-1])
                             or parts[-1] in (".", "..")):
                         raise ValueError(f"APK contains unsafe ZIP entry path: {name!r}")
