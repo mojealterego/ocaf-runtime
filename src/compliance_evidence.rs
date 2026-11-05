@@ -423,6 +423,41 @@ mod tests {
     }
 
     #[test]
+    fn bound_pins_reject_invalid_pinned_identity_even_if_matching_artifact() {
+        let pack = complete_pack();
+        let mut pins: BTreeMap<String, EvidencePin> = pack
+            .iter()
+            .map(|item| {
+                (
+                    item.evidence_id.to_owned(),
+                    EvidencePin {
+                        tenant_id: item.tenant_id.to_owned(),
+                        source_id: item.source_id.to_owned(),
+                        framework: item.framework,
+                        objective: item.objective,
+                        sensitivity: item.sensitivity,
+                        collected_at_unix: item.collected_at_unix,
+                        valid_until_unix: item.valid_until_unix,
+                        expected_sha256: item.expected_sha256,
+                    },
+                )
+            })
+            .collect();
+        pins.get_mut("ev_a").unwrap().source_id = "bad/source".into();
+        assert_eq!(
+            inspect_evidence_with_bound_pins(
+                TENANT,
+                RegulatoryFramework::NcscCafGovAssure,
+                &pack,
+                &pins,
+                NOW,
+            )
+            .unwrap_err(),
+            EvidenceError::UntrustedDigest
+        );
+    }
+
+    #[test]
     fn bound_pins_reject_extended_validity_and_downgraded_sensitivity() {
         let pack = complete_pack();
         let pins: BTreeMap<String, EvidencePin> = pack
