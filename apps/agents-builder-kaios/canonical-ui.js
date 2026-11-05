@@ -227,6 +227,47 @@
       result.textContent = JSON.stringify(plan, null, 2);
     });
   };
+  get('canonical-insert-edge').onclick = function () {
+    safe(function () {
+      var project = checked().project;
+      var fromId = get('canonical-edge-from').value;
+      var toId = get('canonical-edge-to').value;
+      var id = get('canonical-node-id').value;
+      if (!validId(id) || project.nodes.some(function (n) { return n.id === id; }))
+        throw Error('Nieprawidłowe lub zajęte ID Transform');
+      if (project.nodes.length >= 64 || project.revision >= 9007199254740991)
+        throw Error('Limit węzłów lub rewizji');
+      var matches = project.edges.filter(function (e) {
+        return e.from_node === fromId && e.to_node === toId;
+      });
+      if (matches.length !== 1) throw Error('Wybierz istniejącą, jednoznaczną krawędź');
+      var selected = matches[0];
+      var from = project.nodes.filter(function (n) { return n.id === fromId; })[0];
+      var to = project.nodes.filter(function (n) { return n.id === toId; })[0];
+      var outPort = from.outputs.filter(function (p) { return p.name === selected.from_port; })[0];
+      var inPort = to.inputs.filter(function (p) { return p.name === selected.to_port; })[0];
+      if (!outPort || !inPort || outPort.kind !== inPort.kind)
+        throw Error('Niezgodne porty krawędzi');
+      var candidate = JSON.parse(JSON.stringify(project));
+      candidate.nodes.push(node(id, 'transform', outPort.kind));
+      candidate.edges = candidate.edges.filter(function (e) {
+        return !(e.from_node === selected.from_node && e.from_port === selected.from_port &&
+          e.to_node === selected.to_node && e.to_port === selected.to_port);
+      });
+      candidate.edges.push({
+        from_node: selected.from_node, from_port: selected.from_port,
+        to_node: id, to_port: 'in'
+      });
+      candidate.edges.push({
+        from_node: id, from_port: 'out',
+        to_node: selected.to_node, to_port: selected.to_port
+      });
+      candidate.revision++;
+      var plan = OCAFCanonicalGraph.compile(candidate, get('canonical-tenant').value);
+      get('canonical-source').value = JSON.stringify(candidate, null, 2);
+      result.textContent = JSON.stringify(plan, null, 2);
+    });
+  };
   get('canonical-rename-tool').onclick = function () {
     safe(function () {
       var project = checked().project;
