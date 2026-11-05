@@ -312,6 +312,11 @@ try {
   await evaluate('document.getElementById("cloud-save").click()');
   await until(async () => cloudProjects.get('cloud-demo').head.revision === 4, 'newer draft saved');
   assert.equal(cloudProjects.get('cloud-demo').project.nodes.length, 5, 'newer edit persisted on retry');
+  // The server may commit before the browser processes the CAS response and unlocks navigation.
+  await until(async () => await evaluate('document.getElementById("workspace-local").disabled') === false,
+    'Cloud save response processed before workspace switch');
+  await until(async () => await evaluate('document.getElementById("revision-label").textContent') === 'r4',
+    'Cloud revision acknowledged before workspace switch');
 
   await evaluate('document.getElementById("workspace-local").click()');
   assert.equal(await evaluate('document.getElementById("revision-label").textContent'),'r3');
