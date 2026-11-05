@@ -44,6 +44,6 @@ assert.throws(() => compile(p,'tenant'), /Duplicate edge/);
 p=project(); p.nodes.push({id:'orphan',kind:'transform',inputs:[{name:'in',kind:'text'}],outputs:[{name:'out',kind:'text'}],tool_name:null,max_cost_minor:0});
 assert.throws(() => compile(p,'tenant'), /Unconnected input/);
 p=project(); p.nodes[1].id='__proto__'; p.edges[0].to_node='__proto__';
-assert.deepEqual(compile(p,'tenant').ordered_nodes,['__proto__','in']);
+assert.deepEqual(compile(p,'tenant').ordered_nodes,['in','__proto__']);
 
 console.log('PASS canonical KaiOS graph validation: 15 assertions');
