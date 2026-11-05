@@ -1,5 +1,11 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-05 — APK duplicate ZIP entry rejection (IMPLEMENTED_CI_UNVERIFIED)
+
+- Security regression `c6ba2ee` adds adversarial duplicate `AndroidManifest.xml` and `classes.dex` APK fixtures. Local independent reproduction confirms duplicate manifest entries are possible and the previous membership check accepted the ambiguous names; repository unittest execution is unverified.
+- Security fix `b1f643c` rejects any duplicate ZIP entry name before interpreting APK manifest or DEX. Re-fetched verifier and regression source from main and confirmed static presence.
+- Full RED/GREEN unittest execution, CI on final SHA, signed APK authenticity, Android device launch and GUI E2E remain UNVERIFIED. No platform product acceptance status is changed.
+
 ## 2026-11-05 — Android APK DEX header validation (IMPLEMENTED_CI_UNVERIFIED)
 
 - Security regression `b91c4b9` adds negative APK cases for empty, zero-filled and unsupported-version DEX payloads.
