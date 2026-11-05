@@ -209,6 +209,7 @@ impl GovernanceJournal {
             || !valid_id(idempotency_key)
             || !valid_id(request.request_id)
             || !valid_id(request.action)
+            || request.payload_sha256 == [0; 32]
         {
             return Err(JournalError::Invalid);
         }
@@ -376,6 +377,7 @@ impl GovernanceJournal {
             || !valid_id(request.request_id)
             || !valid_id(request.action)
             || outcome_sha256 == [0; 32]
+            || request.payload_sha256 == [0; 32]
             || trusted_tenant != request.tenant
             || trusted_actor != request.actor
         {
