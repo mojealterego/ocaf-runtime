@@ -11,6 +11,8 @@ const elements = {
   'canonical-new': { onclick: null },
   'canonical-transform': { onclick: null },
   'canonical-tool': { onclick: null },
+  'canonical-rename': { onclick: null },
+  'canonical-new-node-id': { value: 'renamed' },
   'canonical-remove-tool': { onclick: null },
   'canonical-tool-name': { value: 'search.tool' },
   'canonical-tool-cost': { value: '7' },
@@ -174,4 +176,18 @@ const beforeMalformedImport = elements['canonical-source'].value;
 elements['canonical-import-button'].onclick();
 assert.match(elements['canonical-result'].textContent, /Błąd/);
 assert.equal(elements['canonical-source'].value, beforeMalformedImport);
-console.log('PASS canonical KaiOS UI typed ports, persistence, corrupt storage, import/export, shared grants');
+elements['canonical-new'].onclick();
+elements['canonical-node-id'].value = 'input';
+elements['canonical-new-node-id'].value = 'source';
+elements['canonical-rename'].onclick();
+let renamed = JSON.parse(elements['canonical-source'].value);
+assert.deepEqual(renamed.nodes.map(n => n.id), ['source', 'output']);
+assert.equal(renamed.edges[0].from_node, 'source');
+assert.equal(renamed.revision, 2);
+elements['canonical-node-id'].value = 'source';
+elements['canonical-new-node-id'].value = 'output';
+const beforeBadRename = elements['canonical-source'].value;
+elements['canonical-rename'].onclick();
+assert.match(elements['canonical-result'].textContent, /Błąd/);
+assert.equal(elements['canonical-source'].value, beforeBadRename);
+console.log('PASS canonical KaiOS UI typed ports, persistence, import/export, rename, shared grants');
