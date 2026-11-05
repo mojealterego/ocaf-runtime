@@ -874,6 +874,39 @@ mod tests {
     }
 
     #[test]
+    fn zeroed_persisted_receipt_digest_is_integrity_failure() {
+        let (file, journal) = setup();
+        let c = contract();
+        let r = request();
+        assert_eq!(
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "zeroed_digest")
+                .unwrap(),
+            Admission::FreshPending
+        );
+        let receipt = payload_sha256(b"synthetic-receipt");
+        assert!(journal
+            .record_verified_outcome("tenant_a", "agent_a", &r, "zeroed_digest", receipt)
+            .unwrap());
+        let conn = Connection::open(file.path()).unwrap();
+        conn.execute(
+            "UPDATE governance_intents_v1 SET outcome_sha256=zeroblob(32) WHERE idem='zeroed_digest'",
+            [],
+        )
+        .unwrap();
+        assert!(matches!(
+            journal.record_verified_outcome(
+                "tenant_a",
+                "agent_a",
+                &r,
+                "zeroed_digest",
+                receipt,
+            ),
+            Err(JournalError::Integrity)
+        ));
+    }
+
+    #[test]
     fn malformed_persisted_receipt_digest_is_integrity_failure() {
         let (file, journal) = setup();
         let c = contract();
