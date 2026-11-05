@@ -14,6 +14,7 @@ on:
       - "scripts/tests/test_builder_native_desktop.py"
       - "scripts/tests/test_smoke_native_desktop.py"
       - "scripts/tests/test_verify_native_artifact.py"
+      - "rust-toolchain.toml"
       - ".github/workflows/agents-builder-native-linux.yml"
   workflow_dispatch:
 
