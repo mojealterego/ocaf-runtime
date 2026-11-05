@@ -1,5 +1,11 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-05 — Desktop native artifact verifier CI trigger (IMPLEMENTED_CI_UNVERIFIED)
+
+- Regression contract `b602092` requires `scripts/verify_native_artifact.py` and `scripts/tests/test_verify_native_artifact.py` in Windows/macOS Builder workflow `push.paths`.
+- Workflow fix `c67d7cb` adds both triggers; re-fetched workflow and test from main and confirmed static path presence and immutable action SHA references.
+- Executed RED/GREEN, final-SHA GitHub Actions, Windows/macOS compilation, binary launch and GUI E2E remain UNVERIFIED. Product acceptance status unchanged.
+
 ## 2026-11-05 — Mobile native artifact verifier CI trigger (IMPLEMENTED_CI_UNVERIFIED)
 
 - RED contract `7141726` adds `test_mobile_ci_rebuilds_when_artifact_verifier_changes` for both artifact verifier source and its regression test.
