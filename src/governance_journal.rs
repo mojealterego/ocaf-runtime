@@ -661,7 +661,7 @@ mod tests {
         );
         let pinned = journal.inspect("tenant_a", None).unwrap();
         for (action, request_id) in [
-            ("read..private", "req_1"),
+            ("read/private", "req_1"),
             ("read", "invalid/request"),
             ("", "req_1"),
             ("read", ""),
