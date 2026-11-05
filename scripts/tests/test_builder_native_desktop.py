@@ -64,6 +64,11 @@ class DesktopNativeSourceTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/agents-builder-native-desktop.yml").read_text()
         self.assertIn('      - "scripts/generate_builder_icons.py"', workflow)
 
+    def test_desktop_ci_rebuilds_when_smoke_harness_changes(self):
+        workflow = (ROOT / ".github/workflows/agents-builder-native-desktop.yml").read_text()
+        self.assertIn('      - "scripts/smoke_native_desktop.py"', workflow)
+        self.assertIn('      - "scripts/tests/test_smoke_native_desktop.py"', workflow)
+
     def test_native_rust_entrypoint_and_restricted_capabilities(self):
         cargo = (DESKTOP / "src-tauri" / "Cargo.toml").read_text()
         main = (DESKTOP / "src-tauri" / "src" / "main.rs").read_text()
