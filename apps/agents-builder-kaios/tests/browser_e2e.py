@@ -150,6 +150,23 @@ with sync_playwright() as playwright:
     page.locator("#canonical-update-cost").click()
     assert "Błąd" in page.locator("#canonical-result").inner_text()
     assert json.loads(page.locator("#canonical-source").input_value()) == cost_graph
+    page.locator("#canonical-new").click()
+    page.locator("#canonical-node-id").fill("first")
+    page.locator("#canonical-tool-name").fill("old.tool")
+    page.locator("#canonical-tool-cost").fill("7")
+    page.locator("#canonical-tool").click()
+    page.locator("#canonical-node-id").fill("second")
+    page.locator("#canonical-tool-cost").fill("11")
+    page.locator("#canonical-tool").click()
+    page.locator("#canonical-node-id").fill("first")
+    page.locator("#canonical-tool-name").fill("new.tool")
+    page.locator("#canonical-rename-tool").click()
+    reassigned = json.loads(page.locator("#canonical-source").input_value())
+    assert sorted(reassigned["grants"]) == ["new.tool", "old.tool"]
+    assert reassigned["max_cost_minor"] == 18
+    page.locator("#canonical-node-id").fill("second")
+    page.locator("#canonical-rename-tool").click()
+    assert json.loads(page.locator("#canonical-source").input_value())["grants"] == ["new.tool"]
     evidence = ROOT.parents[1] / "dist" / "kaios-chromium-e2e.png"
     evidence.parent.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(evidence), full_page=True)
