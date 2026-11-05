@@ -8,6 +8,11 @@ IOS = ROOT / "apps/agents-builder-ios"
 
 
 class MobileNativeContracts(unittest.TestCase):
+    def test_mobile_ci_rebuilds_when_artifact_verifier_changes(self):
+        workflow = (ROOT / ".github/workflows/agents-builder-native-mobile.yml").read_text()
+        self.assertIn('      - "scripts/verify_native_artifact.py"', workflow)
+        self.assertIn('      - "scripts/tests/test_verify_native_artifact.py"', workflow)
+
     def test_android_compose_entrypoint_and_offline_editor(self):
         settings = (ANDROID / "settings.gradle.kts").read_text()
         gradle = (ANDROID / "app/build.gradle.kts").read_text()
