@@ -1,5 +1,11 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-05 — Builder ZIP regression test syntax repair (IMPLEMENTED_TEST_EXECUTION_UNVERIFIED)
+
+- Main HEAD `b9b0cdc` introduced `test_cli_relative_output_publishes_atomic_release` with four doubled backslashes before physical newlines in a Python `with` statement, producing invalid line-continuation syntax.
+- Commit `461c6c7` replaces each doubled backslash with one continuation character. Re-fetched main confirms four single continuations and no doubled continuations in the test source.
+- GitHub CI and focused Python execution on this SHA were not available/verified; no native product acceptance change. Follow up with `python3 -m unittest discover -s scripts/tests -p test_package_agents_builder.py -v` and full CI on final SHA.
+
 ## 2026-11-05 — Desktop native artifact verifier CI trigger (IMPLEMENTED_CI_UNVERIFIED)
 
 - Regression contract `b602092` requires `scripts/verify_native_artifact.py` and `scripts/tests/test_verify_native_artifact.py` in Windows/macOS Builder workflow `push.paths`.
