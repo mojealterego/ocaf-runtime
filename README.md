@@ -1,5 +1,9 @@
 <!-- OCAF_README_ROADMAP_BEGIN -->
 
+**AKTUALIZACJA 2026-11-05 / 0.53 — LINUX TOOLCHAIN TRIGGER (IMPLEMENTED_CI_UNVERIFIED):** Test kontraktowy `test_linux_ci_rebuilds_when_rust_toolchain_changes` (RED `94f6f15`) oraz poprawka workflow `agents-builder-native-linux.yml` (GREEN `462f169`) dodają `rust-toolchain.toml` do filtrów `push.paths`. Zmiana przypiętego kompilatora wyzwala teraz Linux native CI; wcześniejszy workflow mógł ją pominąć. RED/GREEN execution i build na final SHA niepotwierdzone. Status 10 produktów bez zmian.
+
+
+
 **AKTUALIZACJA 2026-11-05 / 0.53 — LINUX RUST TOOLCHAIN PIN (IMPLEMENTED_CI_UNVERIFIED):** Workflow `agents-builder-native-linux.yml` wybiera jawnie Rust `1.99.0` zgodny z `rust-toolchain.toml`, zamiast polegać na zmiennym domyślnym kompilatorze akcji. Dodano test kontraktowy w `scripts/tests/test_builder_native_desktop.py`. Commity RED `90abec7`, implementacja `9169cfd`, korekta asercji `bd16ec8`. Testy wykonawcze i build Linux na końcowym SHA niepotwierdzone; status 10 produktów bez zmian.
 
 
