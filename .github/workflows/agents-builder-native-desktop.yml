@@ -7,6 +7,7 @@ on:
       - "apps/agents-builder-desktop/**"
       - "apps/agents-builder-web/**"
       - "scripts/tests/test_builder_native_desktop.py"
+      - "rust-toolchain.toml"
       - ".github/workflows/agents-builder-native-desktop.yml"
   workflow_dispatch:
 
