@@ -1,5 +1,11 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-05 — Mobile native artifact verifier CI trigger (IMPLEMENTED_CI_UNVERIFIED)
+
+- RED contract `7141726` adds `test_mobile_ci_rebuilds_when_artifact_verifier_changes` for both artifact verifier source and its regression test.
+- Workflow fix `39106a0` adds `scripts/verify_native_artifact.py` and `scripts/tests/test_verify_native_artifact.py` to Android/iOS native `push.paths`.
+- Re-fetched test and workflow from main: both paths present and 9 external action refs use immutable SHA syntax. Executed RED/GREEN, native builds, simulator E2E, and final-SHA CI remain unverified; no platform acceptance change.
+
 ## 2026-11-05 — Desktop native toolchain CI trigger (IMPLEMENTED_CI_UNVERIFIED)
 
 - RED regression contract `a972822`: `test_desktop_ci_rebuilds_when_rust_toolchain_changes` requires the Windows/macOS native workflow to react to `rust-toolchain.toml` edits.
