@@ -914,6 +914,26 @@ mod tests {
     }
 
     #[test]
+    fn journal_identifiers_match_contract_dot_rules() {
+        for invalid in [".actor", "actor.", "actor..name"] {
+            assert!(!valid_id(invalid));
+        }
+        for valid in ["actor.name", "actor_name", "actor-name", "actor:name"] {
+            assert!(valid_id(valid));
+        }
+        let (_file, journal) = setup();
+        let c = contract();
+        let r = request();
+        for invalid in [".key", "key.", "key..segment"] {
+            assert!(matches!(
+                journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, invalid),
+                Err(JournalError::Invalid)
+            ));
+        }
+        assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 0);
+    }
+
+    #[test]
     fn audit_scan_rejects_rehashed_noncanonical_replay_reason() {
         let (file, journal) = setup();
         let c = contract();
