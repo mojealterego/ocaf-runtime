@@ -891,6 +891,40 @@ mod tests {
     }
 
     #[test]
+    fn corrupt_committed_state_is_rejected_before_idempotency_collision_audit() {
+        let (file, journal) = setup();
+        let c = contract();
+        let r = request();
+        assert_eq!(
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "corrupt_collision")
+                .unwrap(),
+            Admission::FreshPending
+        );
+        let conn = Connection::open(file.path()).unwrap();
+        conn.execute(
+            "UPDATE governance_intents_v1 SET status='COMMITTED', outcome_sha256=NULL WHERE idem='corrupt_collision'",
+            [],
+        )
+        .unwrap();
+        let pinned = journal.inspect("tenant_a", None).unwrap();
+        let mut conflicting = request();
+        conflicting.payload_sha256 = payload_sha256(b"different");
+        assert!(matches!(
+            journal.begin(
+                &c,
+                &conflicting,
+                None,
+                ("tenant_a", "agent_a"),
+                170,
+                "corrupt_collision"
+            ),
+            Err(JournalError::Integrity)
+        ));
+        assert_eq!(journal.inspect("tenant_a", Some(&pinned)).unwrap(), pinned);
+    }
+
+    #[test]
     fn replay_rejects_corrupted_persisted_intent_and_receipt() {
         for (idem, column, corrupted) in [
             ("replay_bad_payload", "payload_sha256", "x'AB'"),
