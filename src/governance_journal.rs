@@ -502,6 +502,21 @@ fn scan_audit(tx: &Transaction<'_>, tenant: &str) -> Result<AuditHead, JournalEr
             || (decision == "REPLAY"
                 && reason != "ReplayPending"
                 && reason != "ReplayCommitted")
+            || (decision == "DENY"
+                && !matches!(
+                    reason.as_str(),
+                    "InvalidContract"
+                        | "InvalidRequest"
+                        | "IdentityMismatch"
+                        | "ExplicitProhibition"
+                        | "NotAllowlisted"
+                        | "RiskCapExceeded"
+                        | "ProviderNotAuthorized"
+                        | "MissingApproval"
+                        | "InvalidApproval"
+                        | "IDEMPOTENCY_COLLISION"
+                        | "APPROVAL_ALREADY_CONSUMED"
+                ))
             || previous != head.digest
             || hash
                 != hash_row(AuditDigest {
