@@ -1,3 +1,9 @@
+## 2026-11-05 — Agents Builder native CI supply-chain pinning (IMPLEMENTED_CI_UNVERIFIED)
+
+- CI failure evidence: Rust CI run `41932081049`, job `126931217103`, `test_ci_action_pinning.py::test_all_external_actions_are_immutable_commit_refs` flagged four mutable action references in native desktop/Linux/mobile workflows.
+- `c03e1da`: Linux Rust action pinned to `686976e191b89faba57d3206551f0f330d8cb249`; `05130b4`: Windows/macOS Rust action pinned to same SHA; `6bd623e`: Android Gradle action pinned to `ed408507eac070d1f99cc633dbcf757c94c7933a`, emulator runner to `a421e43855164a8197daf9d8d40fe71c6996bb0d`.
+- Post-write GitHub re-fetch: static SHA-format validation passed for 16 `uses:` references across the three changed workflows. Full repository regression, action execution, native builds, GUI E2E and final-SHA CI success remain UNVERIFIED. No product acceptance or production approval change.
+
 ## 2026-11-05 — Linux native toolchain trigger (CI UNVERIFIED)
 
 - Test RED `94f6f15`, workflow fix `462f169`: add `rust-toolchain.toml` to native Linux `push.paths` to avoid silently skipping toolchain upgrades.
