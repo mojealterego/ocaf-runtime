@@ -929,6 +929,42 @@ mod tests {
     }
 
     #[test]
+    fn audit_scan_rejects_rehashed_unknown_denial_reason() {
+        let (file, journal) = setup();
+        let c = contract();
+        let mut r = request();
+        r.action = "missing";
+        assert_eq!(
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "deny_reason")
+                .unwrap(),
+            Admission::Denied(DenyReason::NotAllowlisted)
+        );
+        let bad_reason = "UNRECOGNIZED_DENIAL";
+        let digest = hash_row(AuditDigest {
+            tenant: "tenant_a",
+            sequence: 1,
+            actor: "agent_a",
+            action: "missing",
+            request: "req_1",
+            decision: "DENY",
+            reason: bad_reason,
+            payload_sha256: &r.payload_sha256,
+            previous: GENESIS,
+        });
+        let conn = Connection::open(file.path()).unwrap();
+        conn.execute(
+            "UPDATE governance_audit_v1 SET reason=?1, digest=?2 WHERE tenant='tenant_a' AND seq=1",
+            params![bad_reason, digest],
+        )
+        .unwrap();
+        assert!(matches!(
+            journal.inspect("tenant_a", None),
+            Err(JournalError::Integrity)
+        ));
+    }
+
+    #[test]
     fn journal_identifiers_match_contract_dot_rules() {
         for invalid in [".actor", "actor.", "actor..name"] {
             assert!(!valid_id(invalid));
