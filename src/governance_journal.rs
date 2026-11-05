@@ -254,7 +254,14 @@ impl GovernanceJournal {
             )
             .optional())?;
         if let Some((actor, request_id, hash, status, receipt)) = prior {
-            if hash.len() != 32 {
+            let stored_state_valid = match (status.as_str(), receipt.as_deref()) {
+                ("PENDING", None) => true,
+                ("COMMITTED", Some(bytes)) => {
+                    bytes.len() == 32 && bytes.iter().any(|byte| *byte != 0)
+                }
+                _ => false,
+            };
+            if hash.len() != 32 || !stored_state_valid {
                 return Err(JournalError::Integrity);
             }
             if actor != trusted_actor
