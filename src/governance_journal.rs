@@ -261,7 +261,11 @@ impl GovernanceJournal {
                 }
                 _ => false,
             };
-            if hash.len() != 32 || !stored_state_valid {
+            if hash.len() != 32
+                || !stored_state_valid
+                || !valid_id(&actor)
+                || !valid_id(&request_id)
+            {
                 return Err(JournalError::Integrity);
             }
             if actor != trusted_actor
