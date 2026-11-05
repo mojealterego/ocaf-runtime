@@ -12,6 +12,7 @@
   }
   function checked() {
     var source = get('canonical-source').value;
+    if (typeof source !== 'string') throw Error('Nieprawidłowy format JSON');
     if (source.length > 131072) throw Error('Kanoniczny projekt przekracza limit 128 KiB');
     if (typeof OCAFCanonicalGraph === 'undefined') throw Error('Brak modułu walidatora DAG');
     var project = JSON.parse(source);
@@ -216,6 +217,7 @@
   get('canonical-import-button').onclick = function () {
     safe(function () {
       var raw = get('canonical-import').value;
+      if (typeof raw !== 'string') throw Error('Nieprawidłowy import');
       if (raw.length > 131072) throw Error('Import przekracza 128 KiB');
       var parsed = JSON.parse(raw);
       if (parsed.project_id !== get('canonical-id').value) throw Error('Niezgodny identyfikator projektu DAG');
@@ -235,7 +237,7 @@
     safe(function () {
       var raw = localStorage.getItem(key());
       if (!raw) throw Error('Nie znaleziono kanonicznego DAG');
-      if (raw.length > 131072) throw Error('Zapisany DAG przekracza limit 128 KiB');
+      if (typeof raw !== 'string' || raw.length > 131072) throw Error('Zapisany DAG przekracza limit 128 KiB');
       var parsed = JSON.parse(raw);
       if (parsed.project_id !== get('canonical-id').value) throw Error('Niezgodny projekt w pamięci');
       var plan = OCAFCanonicalGraph.compile(parsed, get('canonical-tenant').value);
