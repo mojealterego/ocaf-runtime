@@ -93,7 +93,7 @@ class NativeArtifactVerification(unittest.TestCase):
             p = Path(d) / "symlink.apk"
             with zipfile.ZipFile(p, "w") as archive:
                 archive.writestr("AndroidManifest.xml", bytes(2048))
-                archive.writestr("classes.dex", b"dex\\n035\\x00" + bytes(2040))
+                archive.writestr("classes.dex", b"dex\n035\x00" + bytes(2040))
                 link = zipfile.ZipInfo("assets/redirect")
                 link.create_system = 3
                 link.external_attr = (stat.S_IFLNK | 0o777) << 16
