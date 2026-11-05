@@ -7,6 +7,8 @@ on:
       - "apps/agents-builder-ios/**"
       - "apps/agents-builder-web/**"
       - "scripts/tests/test_builder_mobile_native.py"
+      - "scripts/verify_native_artifact.py"
+      - "scripts/tests/test_verify_native_artifact.py"
       - ".github/workflows/agents-builder-native-mobile.yml"
   workflow_dispatch:
 permissions:
