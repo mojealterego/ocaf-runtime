@@ -39,7 +39,10 @@ def verify(kind: str, path: Path) -> None:
             if not zipfile.is_zipfile(path):
                 raise ValueError("APK is not a ZIP archive")
             with zipfile.ZipFile(path) as apk:
-                if "AndroidManifest.xml" not in apk.namelist():
+                names = apk.namelist()
+                if len(names) != len(set(names)):
+                    raise ValueError("APK contains duplicate ZIP entry names")
+                if "AndroidManifest.xml" not in names:
                     raise ValueError("APK lacks AndroidManifest.xml")
                 dex_files = [entry for entry in apk.infolist() if entry.filename.endswith(".dex") and not entry.is_dir()]
                 if not dex_files:
