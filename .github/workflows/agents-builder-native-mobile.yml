@@ -93,6 +93,8 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+      - name: Verify artifact verifier regression tests
+        run: python3 -m unittest discover -s scripts/tests -p test_verify_native_artifact.py -v
       - name: Native mobile source contracts
         run: python3 -m unittest discover -s scripts/tests -p test_builder_mobile_native.py -v
       - name: Install XcodeGen
