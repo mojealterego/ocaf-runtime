@@ -65,3 +65,7 @@ Przycisk **Zmień koszt Tool** aktualizuje `max_cost_minor` wskazanego węzła `
 ## Zmiana narzędzia węzła Tool
 
 Przycisk **Zmień narzędzie Tool** zmienia `tool_name` węzła wskazanego w polu ID. Lista `grants` jest ponownie wyliczana z wszystkich węzłów `Tool` i deduplikowana, więc uprawnienia współdzielone przez inne węzły pozostają zachowane. Budżet nie zmienia się. Zmiana jest atomowa i wymaga ponownej walidacji DAG. Jest to edycja deklaracji, **nie przyznanie uprawnień serwerowych ani wykonanie narzędzia**.
+
+## Wstawianie Transform na krawędzi
+
+Pola **Od węzła**, **Do węzła** i **ID Transform** pozwalają wstawić nowy węzeł na wybranej istniejącej krawędzi. Operacja wymaga jednoznacznego połączenia pomiędzy wskazanymi węzłami, zachowuje typ portów, przepisuje krawędź atomowo, zwiększa rewizję i ponownie kompiluje statyczny plan DAG. Obsługa wielu krawędzi między tymi samymi węzłami wymaga edycji JSON — operacja NoCode odrzuca niejednoznaczność.
