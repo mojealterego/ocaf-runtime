@@ -108,6 +108,13 @@ with sync_playwright() as playwright:
     assert removed_tool_graph["grants"] == []
     assert removed_tool_graph["max_cost_minor"] == 0
     assert json.loads(page.locator("#canonical-result").inner_text())["ordered_nodes"] == ["input", "output"]
+    page.locator("#canonical-new").click()
+    page.locator("#canonical-node-id").fill("input")
+    page.locator("#canonical-new-node-id").fill("source")
+    page.locator("#canonical-rename").click()
+    renamed_graph = json.loads(page.locator("#canonical-source").input_value())
+    assert renamed_graph["edges"][0]["from_node"] == "source"
+    assert renamed_graph["revision"] == 2
     evidence = ROOT.parents[1] / "dist" / "kaios-chromium-e2e.png"
     evidence.parent.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(evidence), full_page=True)
