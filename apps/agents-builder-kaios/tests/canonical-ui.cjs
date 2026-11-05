@@ -153,6 +153,7 @@ elements['canonical-node-id'].value = 'toolB';
 elements['canonical-tool'].onclick();
 assert.deepEqual(JSON.parse(elements['canonical-source'].value).grants, ['shared.tool']);
 assert.equal(JSON.parse(elements['canonical-source'].value).max_cost_minor, 6);
+assert.equal(JSON.parse(elements['canonical-source'].value).revision, 3);
 elements['canonical-node-id'].value = 'toolB';
 elements['canonical-remove-tool'].onclick();
 assert.deepEqual(JSON.parse(elements['canonical-source'].value).grants, ['shared.tool']);
