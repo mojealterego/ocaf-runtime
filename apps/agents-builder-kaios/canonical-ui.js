@@ -174,6 +174,45 @@
       result.textContent = JSON.stringify(plan, null, 2);
     });
   };
+  get('canonical-duplicate').onclick = function () {
+    safe(function () {
+      var project = checked().project;
+      var sourceId = get('canonical-new-node-id').value;
+      var newId = get('canonical-node-id').value;
+      var source = project.nodes.filter(function (n) { return n.id === sourceId; })[0];
+      if (!source || source.kind !== 'transform' || !validId(newId) ||
+          project.nodes.some(function (n) { return n.id === newId; }))
+        throw Error('Wymagany unikatowy ID i istniejący Transform');
+      if (source.inputs.length !== 1 || source.outputs.length !== 1 ||
+          source.inputs[0].name !== 'in' || source.outputs[0].name !== 'out' ||
+          source.inputs[0].kind !== source.outputs[0].kind)
+        throw Error('Nieobsługiwany Transform');
+      var outgoing = project.edges.filter(function (e) { return e.from_node === sourceId; });
+      if (outgoing.length !== 1 || outgoing[0].from_port !== 'out')
+        throw Error('Transform wymaga jednego wyjścia');
+      if (project.nodes.length >= 64 || project.revision >= 9007199254740991)
+        throw Error('Limit węzłów lub rewizji');
+      var candidate = JSON.parse(JSON.stringify(project));
+      var duplicate = JSON.parse(JSON.stringify(source));
+      duplicate.id = newId;
+      candidate.nodes.push(duplicate);
+      candidate.edges = candidate.edges.filter(function (e) {
+        return !(e.from_node === outgoing[0].from_node && e.from_port === outgoing[0].from_port &&
+          e.to_node === outgoing[0].to_node && e.to_port === outgoing[0].to_port);
+      });
+      candidate.edges.push({
+        from_node: sourceId, from_port: 'out', to_node: newId, to_port: 'in'
+      });
+      candidate.edges.push({
+        from_node: newId, from_port: 'out',
+        to_node: outgoing[0].to_node, to_port: outgoing[0].to_port
+      });
+      candidate.revision++;
+      var plan = OCAFCanonicalGraph.compile(candidate, get('canonical-tenant').value);
+      get('canonical-source').value = JSON.stringify(candidate, null, 2);
+      result.textContent = JSON.stringify(plan, null, 2);
+    });
+  };
   get('canonical-rename').onclick = function () {
     safe(function () {
       var project = checked().project;
