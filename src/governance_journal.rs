@@ -884,6 +884,49 @@ mod tests {
     }
 
     #[test]
+    fn replay_rejects_corrupted_persisted_intent_and_receipt() {
+        for (idem, column, corrupted) in [
+            ("replay_bad_payload", "payload_sha256", "x'AB'"),
+            ("replay_zero_receipt", "outcome_sha256", "zeroblob(32)"),
+        ] {
+            let (file, journal) = setup();
+            let c = contract();
+            let r = request();
+            assert_eq!(
+                journal
+                    .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, idem)
+                    .unwrap(),
+                Admission::FreshPending
+            );
+            if column == "outcome_sha256" {
+                assert!(journal
+                    .record_verified_outcome(
+                        "tenant_a",
+                        "agent_a",
+                        &r,
+                        idem,
+                        payload_sha256(b"synthetic-receipt"),
+                    )
+                    .unwrap());
+            }
+            let pinned = journal.inspect("tenant_a", None).unwrap();
+            let conn = Connection::open(file.path()).unwrap();
+            conn.execute(
+                &format!(
+                    "UPDATE governance_intents_v1 SET {column}={corrupted} WHERE idem=?1"
+                ),
+                params![idem],
+            )
+            .unwrap();
+            assert!(matches!(
+                journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, idem),
+                Err(JournalError::Integrity)
+            ));
+            assert_eq!(journal.inspect("tenant_a", Some(&pinned)).unwrap(), pinned);
+        }
+    }
+
+    #[test]
     fn malformed_stored_intent_payload_hash_is_integrity_failure() {
         let (file, journal) = setup();
         let c = contract();
