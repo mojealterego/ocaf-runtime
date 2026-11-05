@@ -82,7 +82,7 @@ class NativeArtifactVerification(unittest.TestCase):
                 with self.subTest(entry=unsafe):
                     with zipfile.ZipFile(p, "w") as archive:
                         archive.writestr("AndroidManifest.xml", bytes(2048))
-                        archive.writestr("classes.dex", b"dex\\n035\\x00" + bytes(2040))
+                        archive.writestr("classes.dex", b"dex\n035\x00" + bytes(2040))
                         archive.writestr(unsafe, bytes(2048))
                     with self.assertRaisesRegex(ValueError, "unsafe ZIP entry"):
                         module.verify("android", p)
