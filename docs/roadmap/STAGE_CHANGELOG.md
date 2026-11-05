@@ -1,3 +1,10 @@
+
+## 2026-11-05 — APK drive-qualified ZIP paths (IMPLEMENTED_CI_UNVERIFIED)
+
+- Regression test commit `ca587fcc` extends unsafe ZIP path cases to `C:/classes2.dex` and `D:classes2.dex`.
+- Verifier fix `e974c926` rejects ASCII drive-letter prefixes before accepting APK members.
+- Isolated predicate reproduction showed acceptance before and rejection after; full repository unittest, native Android build, and CI on final SHA are **UNVERIFIED**. No change to 10 Agents Builder acceptance statuses or `production_approved=false`.
+
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
 ## 2026-11-05 — APK ZIP symlink rejection (IMPLEMENTED_CI_UNVERIFIED)
