@@ -316,7 +316,9 @@ def main() -> int:
     # expose a valid-looking partial set if the second ZIP or metadata fails.
     # An existing destination is deliberately immutable: no non-atomic
     # replacement of a populated directory and no silent overwrite.
-    out = args.out
+    # tempfile returns an absolute staging path even for a relative --out.
+    # Normalize before enforcing the same-parent atomic publication invariant.
+    out = args.out.absolute()
     out.parent.mkdir(parents=True, exist_ok=True)
     if out.exists() or out.is_symlink():
         raise FileExistsError(f"release destination already exists: {out}")
