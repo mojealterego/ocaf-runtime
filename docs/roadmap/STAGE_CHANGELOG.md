@@ -1,3 +1,5 @@
+# OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
+
 ## 2026-11-05 — Agents Builder native CI supply-chain pinning (IMPLEMENTED_CI_UNVERIFIED)
 
 - CI failure evidence: Rust CI run `41932081049`, job `126931217103`, `test_ci_action_pinning.py::test_all_external_actions_are_immutable_commit_refs` flagged four mutable action references in native desktop/Linux/mobile workflows.
@@ -15,7 +17,6 @@
 - Test: `scripts/tests/test_builder_native_desktop.py` checks the version is read from the TOML source and present in the workflow.
 - Commits: `90abec7`, `9169cfd`, `bd16ec8`. Execution and final-SHA CI remain unverified. No product acceptance status changed.
 
-# OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 ## 2026-11-04 — Linux desktop process smoke regression fix (CI UNVERIFIED)
 
 - CI RED: [Linux native #41923011618](https://github.com/mojealterego/ocaf-runtime/actions/runs/41923011618), SHA `f69204f1ab764ddb1f8bf8000fd98ec3620a8fa9`: two POSIX smoke fixture scripts contained literal `\\n` instead of newline characters; `subprocess.Popen` raised `FileNotFoundError` before actual Linux build.
