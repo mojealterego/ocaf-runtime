@@ -1,5 +1,11 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-05 — APK ZIP path traversal rejection (IMPLEMENTED_CI_UNVERIFIED)
+
+- Negative regression 100b68f covers parent traversal, absolute and backslash ZIP entries.
+- Verifier commits 31f9785 and 083d362 reject unsafe member names before manifest/DEX inspection; df8fb53 corrects DEX fixture bytes.
+- Source review is static only; complete unittest RED/GREEN, final-SHA Actions, signed Android APK and device GUI E2E remain UNVERIFIED. Product acceptance unchanged.
+
 ## 2026-11-05 — Correct duplicate-APK negative test fixture (TEST_FIX_CI_UNVERIFIED)
 
 - Commit `07479b3` corrects the DEX magic in `test_apk_rejects_duplicate_security_critical_entries`: previously `b"dex\\\\n035\\\\x00"` produced literal backslash characters rather than the required `b"dex\\n035\\x00"` byte header, so the fixture was invalid independently of the duplicate-entry defect.
