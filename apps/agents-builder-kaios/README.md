@@ -57,3 +57,7 @@ Formularz umożliwia wybór typu portu `text`, `json` albo `bytes` dla nowego gr
 ## Zmiana typu portów grafu
 
 Przycisk **Zmień typ grafu** migruje wszystkie porty jednokanałowego grafu do wybranego typu `text`, `json` lub `bytes`. Zmiana jest atomowa, wymaga poprawnego kanonicznego DAG, zwiększa rewizję i ponownie uruchamia walidator. Grafy z wieloma portami nie są obsługiwane przez tę operację NoCode. Migracja zmienia kontrakt statyczny, **nie konwertuje danych ani nie wykonuje narzędzi**.
+
+## Edycja kosztu Tool
+
+Przycisk **Zmień koszt Tool** aktualizuje `max_cost_minor` wskazanego węzła `Tool` oraz budżet całego DAG o różnicę między nową i starą wartością. Operacja jest atomowa, ograniczona do wartości całkowitych dodatnich nieprzekraczających 10¹², ponownie waliduje projekt i zwiększa rewizję. Jest to edycja deklaratywnego kosztu, **nie naliczenie płatności ani wykonanie narzędzia**.
