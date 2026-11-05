@@ -1,5 +1,11 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-05 — Desktop icon generator CI trigger (IMPLEMENTED_CI_UNVERIFIED)
+
+- RED contract `864b2aa` adds `test_desktop_ci_rebuilds_when_icon_generator_changes`; pre-fix workflow omitted `scripts/generate_builder_icons.py` from `push.paths` despite executing it during Windows/macOS builds.
+- GREEN source fix `9177169` adds this dependency to the native desktop workflow trigger; GitHub re-fetch confirms test and trigger are present.
+- RED/GREEN test execution, complete CI on final SHA, native binary builds and GUI E2E are UNVERIFIED; no product acceptance status change.
+
 ## 2026-11-05 — iOS artifact verifier regression suite in native CI (IMPLEMENTED_CI_UNVERIFIED)
 
 - Audit of `agents-builder-native-mobile.yml` found Android executes `test_verify_native_artifact.py`, while iOS did not run the same regression suite before verifying Mach-O artifacts.
