@@ -242,7 +242,15 @@ impl GovernanceJournal {
              FROM governance_intents_v1
              WHERE tenant=?1 AND action=?2 AND idem=?3",
                 params![trusted_tenant, request.action, idempotency_key],
-                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)),
+                |row| {
+                    Ok((
+                        row.get(0)?,
+                        row.get(1)?,
+                        row.get(2)?,
+                        row.get(3)?,
+                        row.get(4)?,
+                    ))
+                },
             )
             .optional())?;
         if let Some((actor, request_id, hash, status, receipt)) = prior {
@@ -438,7 +446,10 @@ fn scan_audit(tx: &Transaction<'_>, tenant: &str) -> Result<AuditHead, JournalEr
         let previous: String = row.get(7).map_err(|_| JournalError::Integrity)?;
         let hash: String = row.get(8).map_err(|_| JournalError::Integrity)?;
         if seq != head.sequence + 1
-            || !matches!(decision.as_str(), "DENY" | "REPLAY" | "ALLOW_INTENT" | "OUTCOME_RECEIPT")
+            || !matches!(
+                decision.as_str(),
+                "DENY" | "REPLAY" | "ALLOW_INTENT" | "OUTCOME_RECEIPT"
+            )
             || seq > MAX_TENANT_AUDIT_ROWS
             || payload.len() != 32
             || previous != head.digest
@@ -676,7 +687,9 @@ mod tests {
         let c = contract();
         let r = request();
         assert_eq!(
-            journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "zero_receipt").unwrap(),
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "zero_receipt")
+                .unwrap(),
             Admission::FreshPending
         );
         assert!(matches!(
@@ -685,7 +698,9 @@ mod tests {
         ));
         assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 1);
         assert_eq!(
-            journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "zero_receipt").unwrap(),
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "zero_receipt")
+                .unwrap(),
             Admission::ReplayPending
         );
     }
@@ -696,7 +711,9 @@ mod tests {
         let c = contract();
         let r = request();
         assert_eq!(
-            journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "receipt_guard").unwrap(),
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "receipt_guard")
+                .unwrap(),
             Admission::FreshPending
         );
         let initial = journal.inspect("tenant_a", None).unwrap();
@@ -705,25 +722,36 @@ mod tests {
         forged.payload_sha256 = payload_sha256(b"substituted-request");
         assert!(matches!(
             journal.record_verified_outcome(
-                "tenant_a", "agent_a", &forged, "receipt_guard", receipt,
+                "tenant_a",
+                "agent_a",
+                &forged,
+                "receipt_guard",
+                receipt,
             ),
             Err(JournalError::Conflict)
         ));
         assert!(matches!(
             journal.record_verified_outcome(
-                "tenant_a", "other_actor", &r, "receipt_guard", receipt,
+                "tenant_a",
+                "other_actor",
+                &r,
+                "receipt_guard",
+                receipt,
             ),
             Err(JournalError::Invalid)
         ));
         assert!(matches!(
-            journal.record_verified_outcome(
-                "tenant_a", "agent_a", &r, "unknown_key", receipt,
-            ),
+            journal.record_verified_outcome("tenant_a", "agent_a", &r, "unknown_key", receipt,),
             Err(JournalError::Conflict)
         ));
-        assert_eq!(journal.inspect("tenant_a", Some(&initial)).unwrap(), initial);
         assert_eq!(
-            journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "receipt_guard").unwrap(),
+            journal.inspect("tenant_a", Some(&initial)).unwrap(),
+            initial
+        );
+        assert_eq!(
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "receipt_guard")
+                .unwrap(),
             Admission::ReplayPending
         );
     }
@@ -798,7 +826,9 @@ mod tests {
         let c = contract();
         let r = request();
         assert_eq!(
-            journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "receipt").unwrap(),
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "receipt")
+                .unwrap(),
             Admission::FreshPending
         );
         let db = Connection::open(file.path()).unwrap();
@@ -816,18 +846,29 @@ mod tests {
         let (file, journal) = setup();
         let c = contract();
         let r = request();
-        journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "audit").unwrap();
+        journal
+            .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "audit")
+            .unwrap();
         let forged = hash_row(AuditDigest {
-            tenant: "tenant_a", sequence: 1, actor: "agent_a", action: "read",
-            request: "req_1", decision: "EXECUTE_ANYWAY", reason: "PENDING_EXTERNAL_GATE",
-            payload_sha256: &r.payload_sha256, previous: GENESIS,
+            tenant: "tenant_a",
+            sequence: 1,
+            actor: "agent_a",
+            action: "read",
+            request: "req_1",
+            decision: "EXECUTE_ANYWAY",
+            reason: "PENDING_EXTERNAL_GATE",
+            payload_sha256: &r.payload_sha256,
+            previous: GENESIS,
         });
         let conn = Connection::open(file.path()).unwrap();
         conn.execute(
             "UPDATE governance_audit_v1 SET decision='EXECUTE_ANYWAY', digest=?1 WHERE tenant='tenant_a'",
             params![forged],
         ).unwrap();
-        assert!(matches!(journal.inspect("tenant_a", None), Err(JournalError::Integrity)));
+        assert!(matches!(
+            journal.inspect("tenant_a", None),
+            Err(JournalError::Integrity)
+        ));
     }
 
     #[test]
