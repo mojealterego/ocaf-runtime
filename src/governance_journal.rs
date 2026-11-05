@@ -403,7 +403,7 @@ impl GovernanceJournal {
         if phase != "PENDING" || existing_outcome.is_some() {
             return Err(JournalError::Integrity);
         }
-        db(tx.execute(
+        let updated = db(tx.execute(
             "UPDATE governance_intents_v1
              SET status='COMMITTED', outcome_sha256=?4
              WHERE tenant=?1 AND action=?2 AND idem=?3 AND status='PENDING'",
@@ -414,6 +414,9 @@ impl GovernanceJournal {
                 outcome_sha256.as_slice()
             ],
         ))?;
+        if updated != 1 {
+            return Err(JournalError::Integrity);
+        }
         append_audit(
             &tx,
             &head,
