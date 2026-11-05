@@ -49,7 +49,7 @@ def verify(kind: str, path: Path) -> None:
                         raise ValueError(f"APK contains truncated DEX bytecode: {entry.filename}")
                     with apk.open(entry) as dex:
                         magic = dex.read(8)
-                    if not (magic[:4] == b"dex\\n" and magic[4:7] in {b"035", b"037", b"038", b"039", b"040", b"041"} and magic[7:] == b"\\x00"):
+                    if not (magic[:4] == b"dex\n" and magic[4:7] in {b"035", b"037", b"038", b"039", b"040", b"041"} and magic[7:] == b"\x00"):
                         raise ValueError(f"APK contains invalid DEX header: {entry.filename}")
         else:
             raise ValueError(f"Unsupported artifact kind: {kind}")
