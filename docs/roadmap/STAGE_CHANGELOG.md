@@ -1,5 +1,11 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-05 — iOS artifact verifier regression suite in native CI (IMPLEMENTED_CI_UNVERIFIED)
+
+- Audit of `agents-builder-native-mobile.yml` found Android executes `test_verify_native_artifact.py`, while iOS did not run the same regression suite before verifying Mach-O artifacts.
+- Contract test `a46d704` checks the iOS job specifically; workflow change `d0d7678` runs `python3 -m unittest discover -s scripts/tests -p test_verify_native_artifact.py -v` on the macOS runner before iOS build.
+- Re-fetched test and workflow and checked presence of the command in the iOS job. Executed RED/GREEN, full CI, simulator launch and native product acceptance remain UNVERIFIED; no stage status changed.
+
 ## 2026-11-05 — Windows/macOS Rust compiler pin (IMPLEMENTED_CI_UNVERIFIED)
 
 - Source audit: native desktop workflow used `dtolnay/rust-toolchain` without explicit `toolchain`, although repository `rust-toolchain.toml` specifies `1.99.0`. This allowed an unpinned compiler selection at the workflow action step.
