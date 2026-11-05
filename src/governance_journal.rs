@@ -492,6 +492,7 @@ fn scan_audit(tx: &Transaction<'_>, tenant: &str) -> Result<AuditHead, JournalEr
                 "DENY" | "REPLAY" | "ALLOW_INTENT" | "OUTCOME_RECEIPT"
             )
             || seq > MAX_TENANT_AUDIT_ROWS
+            || (seq == 1 && matches!(decision.as_str(), "REPLAY" | "OUTCOME_RECEIPT"))
             || payload.len() != 32
             || payload.iter().all(|byte| *byte == 0)
             || !valid_id(&actor)
