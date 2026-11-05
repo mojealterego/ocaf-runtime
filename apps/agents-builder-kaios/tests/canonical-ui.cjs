@@ -12,6 +12,7 @@ const elements = {
   'canonical-transform': { onclick: null },
   'canonical-tool': { onclick: null },
   'canonical-rename': { onclick: null },
+  'canonical-duplicate': { onclick: null },
   'canonical-new-node-id': { value: 'renamed' },
   'canonical-remove-tool': { onclick: null },
   'canonical-tool-name': { value: 'search.tool' },
@@ -190,4 +191,17 @@ const beforeBadRename = elements['canonical-source'].value;
 elements['canonical-rename'].onclick();
 assert.match(elements['canonical-result'].textContent, /Błąd/);
 assert.equal(elements['canonical-source'].value, beforeBadRename);
-console.log('PASS canonical KaiOS UI typed ports, persistence, import/export, rename, shared grants');
+elements['canonical-new'].onclick();
+elements['canonical-node-id'].value = 'first';
+elements['canonical-transform'].onclick();
+elements['canonical-node-id'].value = 'second';
+elements['canonical-new-node-id'].value = 'first';
+elements['canonical-duplicate'].onclick();
+const duplicated = JSON.parse(elements['canonical-source'].value);
+assert.deepEqual(duplicated.nodes.map(n => n.id), ['input','output','first','second']);
+assert.deepEqual(JSON.parse(elements['canonical-result'].textContent).ordered_nodes, ['input','first','second','output']);
+assert.equal(duplicated.revision, 3);
+elements['canonical-duplicate'].onclick();
+assert.match(elements['canonical-result'].textContent, /Błąd/);
+assert.equal(elements['canonical-source'].value, JSON.stringify(duplicated, null, 2));
+console.log('PASS canonical KaiOS UI typed ports, persistence, import/export, rename, duplicate');
