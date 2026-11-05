@@ -190,10 +190,10 @@ class PackageBuilderTests(unittest.TestCase):
         try:
             os.chdir(self.temp.name)
             with patch.object(sys, "argv", ["package_agents_builder.py",
-                                            "--repo", str(self.root), "--out", "dist"]), \\
-                 patch.object(bundle, "tracked_files", return_value=required), \\
-                 patch.object(bundle, "write_bundle", side_effect=fake_bundle), \\
-                 patch.object(bundle, "require_clean_tree"), \\
+                                            "--repo", str(self.root), "--out", "dist"]), \
+                 patch.object(bundle, "tracked_files", return_value=required), \
+                 patch.object(bundle, "write_bundle", side_effect=fake_bundle), \
+                 patch.object(bundle, "require_clean_tree"), \
                  contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(bundle.main(), 0)
             self.assertTrue(Path("dist/SHA256SUMS").is_file())
