@@ -367,6 +367,72 @@ mod tests {
     }
 
     #[test]
+    fn externally_pinned_pack_rejects_digest_replacement_and_missing_pins() {
+        let pack = complete_pack();
+        let pins: BTreeMap<String, [u8; 32]> = pack
+            .iter()
+            .map(|item| (item.evidence_id.to_owned(), item.expected_sha256))
+            .collect();
+        let result = inspect_evidence_with_pins(
+            TENANT,
+            RegulatoryFramework::NcscCafGovAssure,
+            &pack,
+            &pins,
+            NOW,
+        )
+        .unwrap();
+        assert_eq!(
+            result.state,
+            EvidenceAssessmentState::CafObjectivesPresentUnattested
+        );
+        assert!(!result.independently_attested);
+        assert!(!result.certified_compliant);
+
+        let mut substituted = complete_pack();
+        substituted[0].content = b"attacker-controlled replacement";
+        substituted[0].expected_sha256 = Sha256::digest(substituted[0].content).into();
+        assert_eq!(
+            inspect_evidence_with_pins(
+                TENANT,
+                RegulatoryFramework::NcscCafGovAssure,
+                &substituted,
+                &pins,
+                NOW,
+            )
+            .unwrap_err(),
+            EvidenceError::UntrustedDigest
+        );
+
+        let mut missing = pins.clone();
+        missing.remove("ev_a");
+        assert_eq!(
+            inspect_evidence_with_pins(
+                TENANT,
+                RegulatoryFramework::NcscCafGovAssure,
+                &pack,
+                &missing,
+                NOW,
+            )
+            .unwrap_err(),
+            EvidenceError::UntrustedDigest
+        );
+
+        let mut extra = pins.clone();
+        extra.insert("ev_extra".into(), Sha256::digest(b"extra").into());
+        assert_eq!(
+            inspect_evidence_with_pins(
+                TENANT,
+                RegulatoryFramework::NcscCafGovAssure,
+                &pack,
+                &extra,
+                NOW,
+            )
+            .unwrap_err(),
+            EvidenceError::UntrustedDigest
+        );
+    }
+
+    #[test]
     fn no_artifacts_never_passes() {
         let result =
             inspect_evidence(TENANT, RegulatoryFramework::NcscCafGovAssure, &[], NOW).unwrap();
