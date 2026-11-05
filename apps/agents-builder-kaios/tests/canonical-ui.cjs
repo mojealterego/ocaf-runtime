@@ -15,6 +15,7 @@ const elements = {
   'canonical-duplicate': { onclick: null },
   'canonical-retype': { onclick: null },
   'canonical-update-cost': { onclick: null },
+  'canonical-rename-tool': { onclick: null },
   'canonical-new-node-id': { value: 'renamed' },
   'canonical-remove-tool': { onclick: null },
   'canonical-tool-name': { value: 'search.tool' },
@@ -258,4 +259,31 @@ const beforeInvalidCost = elements['canonical-source'].value;
 elements['canonical-update-cost'].onclick();
 assert.match(elements['canonical-result'].textContent, /Błąd/);
 assert.equal(elements['canonical-source'].value, beforeInvalidCost);
-console.log('PASS canonical KaiOS UI typed ports, persistence, import/export, rename, duplicate, retype, tool cost editing');
+elements['canonical-new'].onclick();
+elements['canonical-node-id'].value = 'first';
+elements['canonical-tool-name'].value = 'old.tool';
+elements['canonical-tool-cost'].value = '7';
+elements['canonical-tool'].onclick();
+elements['canonical-node-id'].value = 'second';
+elements['canonical-tool-cost'].value = '11';
+elements['canonical-tool'].onclick();
+elements['canonical-node-id'].value = 'first';
+elements['canonical-tool-name'].value = 'new.tool';
+elements['canonical-rename-tool'].onclick();
+const renamedTool = JSON.parse(elements['canonical-source'].value);
+assert.deepEqual(renamedTool.grants, ['old.tool','new.tool']);
+assert.equal(renamedTool.nodes.find(n => n.id === 'first').tool_name, 'new.tool');
+assert.equal(renamedTool.nodes.find(n => n.id === 'second').tool_name, 'old.tool');
+assert.equal(renamedTool.max_cost_minor, 18);
+elements['canonical-node-id'].value = 'second';
+elements['canonical-tool-name'].value = 'new.tool';
+elements['canonical-rename-tool'].onclick();
+const renamedBoth = JSON.parse(elements['canonical-source'].value);
+assert.deepEqual(renamedBoth.grants, ['new.tool']);
+assert.equal(renamedBoth.max_cost_minor, 18);
+elements['canonical-tool-name'].value = 'invalid tool';
+const beforeBadName = elements['canonical-source'].value;
+elements['canonical-rename-tool'].onclick();
+assert.match(elements['canonical-result'].textContent, /Błąd/);
+assert.equal(elements['canonical-source'].value, beforeBadName);
+console.log('PASS canonical KaiOS UI typed ports, persistence, import/export, rename, duplicate, retype, tool editing');
