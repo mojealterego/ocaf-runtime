@@ -20,9 +20,23 @@
     var plan = OCAFCanonicalGraph.compile(project, get('canonical-tenant').value);
     return { project: project, plan: plan, source: source };
   }
+  function preview() {
+    var view = get('canonical-graph-preview');
+    if (!view) return;
+    var data = checked();
+    var edges = data.project.edges.map(function (e) {
+      return e.from_node + '.' + e.from_port + ' → ' + e.to_node + '.' + e.to_port;
+    });
+    view.textContent = edges.length ? edges.join(' | ') : 'Brak połączeń';
+  }
   function safe(fn) {
-    try { fn(); } catch (error) {
+    try {
+      fn();
+      preview();
+    } catch (error) {
       result.textContent = 'Błąd walidacji: ' + (error.message || 'Nieprawidłowy graf');
+      var view = get('canonical-graph-preview');
+      if (view) view.textContent = 'Podgląd niedostępny — graf wymaga walidacji';
     }
   }
   function selectedPortKind() {
