@@ -8,6 +8,8 @@ on:
       - "apps/agents-builder-web/**"
       - "scripts/tests/test_builder_native_desktop.py"
       - "scripts/generate_builder_icons.py"
+      - "scripts/smoke_native_desktop.py"
+      - "scripts/tests/test_smoke_native_desktop.py"
       - "scripts/verify_native_artifact.py"
       - "scripts/tests/test_verify_native_artifact.py"
       - "rust-toolchain.toml"
