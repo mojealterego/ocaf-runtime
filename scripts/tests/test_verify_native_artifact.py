@@ -78,7 +78,7 @@ class NativeArtifactVerification(unittest.TestCase):
     def test_apk_rejects_unsafe_zip_entry_paths(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "unsafe.apk"
-            for unsafe in ("../classes2.dex", "/classes2.dex", "assets/../../escape", "assets\\\\escape"):
+            for unsafe in ("../classes2.dex", "/classes2.dex", "C:/classes2.dex", "D:classes2.dex", "assets/../../escape", "assets\\\\escape"):
                 with self.subTest(entry=unsafe):
                     with zipfile.ZipFile(p, "w") as archive:
                         archive.writestr("AndroidManifest.xml", bytes(2048))
