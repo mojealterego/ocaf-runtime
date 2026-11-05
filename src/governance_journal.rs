@@ -262,6 +262,7 @@ impl GovernanceJournal {
                 _ => false,
             };
             if hash.len() != 32
+                || hash.iter().all(|byte| *byte == 0)
                 || !stored_state_valid
                 || !valid_id(&actor)
                 || !valid_id(&request_id)
@@ -403,7 +404,11 @@ impl GovernanceJournal {
         let Some((actor, request_id, hash, phase, existing_outcome)) = existing else {
             return Err(JournalError::Conflict);
         };
-        if hash.len() != 32 || !valid_id(&actor) || !valid_id(&request_id) {
+        if hash.len() != 32
+            || hash.iter().all(|byte| *byte == 0)
+            || !valid_id(&actor)
+            || !valid_id(&request_id)
+        {
             return Err(JournalError::Integrity);
         }
         if actor != trusted_actor
