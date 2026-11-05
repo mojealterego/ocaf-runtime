@@ -902,6 +902,29 @@ mod tests {
     }
 
     #[test]
+    fn zero_request_digest_is_rejected_before_database_mutation() {
+        let (_file, journal) = setup();
+        let c = contract();
+        let mut r = request();
+        r.payload_sha256 = [0; 32];
+        assert!(matches!(
+            journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "zero_request"),
+            Err(JournalError::Invalid)
+        ));
+        assert!(matches!(
+            journal.record_verified_outcome(
+                "tenant_a",
+                "agent_a",
+                &r,
+                "zero_request",
+                payload_sha256(b"synthetic-receipt"),
+            ),
+            Err(JournalError::Invalid)
+        ));
+        assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 0);
+    }
+
+    #[test]
     fn zeroed_persisted_intent_digest_blocks_replay_and_commit() {
         let (file, journal) = setup();
         let c = contract();
