@@ -488,7 +488,10 @@ mod tests {
         let authority = ApprovalAuthority::new([9; 32]).unwrap();
         let approval = signed_approval(&r, ApproverRole::LegalReviewer);
         r.approval = Some(&approval);
-        assert_eq!(c.evaluate(&r, Some(&authority), 150), PreflightDecision::Continue);
+        assert_eq!(
+            c.evaluate(&r, Some(&authority), 150),
+            PreflightDecision::Continue
+        );
     }
 
     #[test]
