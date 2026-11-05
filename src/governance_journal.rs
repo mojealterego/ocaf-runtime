@@ -490,6 +490,10 @@ fn scan_audit(tx: &Transaction<'_>, tenant: &str) -> Result<AuditHead, JournalEr
             )
             || seq > MAX_TENANT_AUDIT_ROWS
             || payload.len() != 32
+            || payload.iter().all(|byte| *byte == 0)
+            || !valid_id(&actor)
+            || !valid_id(&action)
+            || !valid_id(&request)
             || previous != head.digest
             || hash
                 != hash_row(AuditDigest {
