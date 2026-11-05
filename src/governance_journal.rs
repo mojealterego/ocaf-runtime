@@ -908,6 +908,41 @@ mod tests {
     }
 
     #[test]
+    fn audit_scan_rejects_rehashed_noncanonical_intent_reason() {
+        let (file, journal) = setup();
+        let c = contract();
+        let r = request();
+        assert_eq!(
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "reason_semantic")
+                .unwrap(),
+            Admission::FreshPending
+        );
+        let bad_reason = "UNVERIFIED_EXTERNAL_EFFECT";
+        let digest = hash_row(AuditDigest {
+            tenant: "tenant_a",
+            sequence: 1,
+            actor: "agent_a",
+            action: "read",
+            request: "req_1",
+            decision: "ALLOW_INTENT",
+            reason: bad_reason,
+            payload_sha256: &r.payload_sha256,
+            previous: GENESIS,
+        });
+        let conn = Connection::open(file.path()).unwrap();
+        conn.execute(
+            "UPDATE governance_audit_v1 SET reason=?1, digest=?2 WHERE tenant='tenant_a' AND seq=1",
+            params![bad_reason, digest],
+        )
+        .unwrap();
+        assert!(matches!(
+            journal.inspect("tenant_a", None),
+            Err(JournalError::Integrity)
+        ));
+    }
+
+    #[test]
     fn audit_scan_rejects_semantically_invalid_but_rehashed_row() {
         let (file, journal) = setup();
         let c = contract();
