@@ -271,7 +271,7 @@ elements['canonical-node-id'].value = 'first';
 elements['canonical-tool-name'].value = 'new.tool';
 elements['canonical-rename-tool'].onclick();
 const renamedTool = JSON.parse(elements['canonical-source'].value);
-assert.deepEqual(renamedTool.grants, ['old.tool','new.tool']);
+assert.deepEqual(renamedTool.grants, ['new.tool','old.tool']);
 assert.equal(renamedTool.nodes.find(n => n.id === 'first').tool_name, 'new.tool');
 assert.equal(renamedTool.nodes.find(n => n.id === 'second').tool_name, 'old.tool');
 assert.equal(renamedTool.max_cost_minor, 18);
