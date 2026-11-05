@@ -167,6 +167,16 @@ with sync_playwright() as playwright:
     page.locator("#canonical-node-id").fill("second")
     page.locator("#canonical-rename-tool").click()
     assert json.loads(page.locator("#canonical-source").input_value())["grants"] == ["new.tool"]
+    page.locator("#canonical-new").click()
+    page.locator("#canonical-node-id").fill("middle")
+    page.locator("#canonical-edge-from").fill("input")
+    page.locator("#canonical-edge-to").fill("output")
+    page.locator("#canonical-insert-edge").click()
+    assert json.loads(page.locator("#canonical-result").inner_text())["ordered_nodes"] == ["input", "middle", "output"]
+    page.locator("#canonical-node-id").fill("before")
+    page.locator("#canonical-edge-to").fill("middle")
+    page.locator("#canonical-insert-edge").click()
+    assert json.loads(page.locator("#canonical-result").inner_text())["ordered_nodes"] == ["input", "before", "middle", "output"]
     evidence = ROOT.parents[1] / "dist" / "kaios-chromium-e2e.png"
     evidence.parent.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(evidence), full_page=True)
