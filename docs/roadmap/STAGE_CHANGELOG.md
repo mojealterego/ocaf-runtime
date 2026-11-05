@@ -1,5 +1,12 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-05 — APK ZIP symlink rejection (IMPLEMENTED_CI_UNVERIFIED)
+
+- RED regression `d4de65f` with DEX fixture correction `87cc4ef` introduces an APK with a UNIX symlink ZIP member targeting `../../outside`.
+- Fix `7ab53d8` rejects UNIX symlink entries by ZIP external file mode before APK manifest and DEX validation.
+- Isolated Python reproducer failed before the fix and passed with the same predicate after it. Full repository unittest, final-SHA GitHub Actions, signed Android build, device GUI E2E and production acceptance remain UNVERIFIED.
+- No change to the ten historical Builder acceptance records or roadmap numbering.
+
 ## 2026-11-05 — APK ZIP path traversal rejection (IMPLEMENTED_CI_UNVERIFIED)
 
 - Negative regression 100b68f covers parent traversal, absolute and backslash ZIP entries.
