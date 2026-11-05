@@ -392,7 +392,9 @@ impl GovernanceJournal {
             return Err(JournalError::Conflict);
         }
         if phase == "COMMITTED" {
-            if existing_outcome.as_ref().is_none_or(|stored| stored.len() != 32) {
+            if existing_outcome.as_ref().is_none_or(|stored| {
+                stored.len() != 32 || stored.iter().all(|byte| *byte == 0)
+            }) {
                 return Err(JournalError::Integrity);
             }
             if existing_outcome.as_deref() == Some(outcome_sha256.as_slice()) {
