@@ -190,6 +190,53 @@ pub fn inspect_evidence(
     })
 }
 
+/// Trusted, independently provisioned metadata for one evidence artifact.
+/// Digest-only pins cannot prevent a valid blob being relabelled across tenants,
+/// frameworks or objectives; this binding is checked before assessment.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EvidencePin {
+    pub tenant_id: String,
+    pub source_id: String,
+    pub framework: RegulatoryFramework,
+    pub objective: Option<CafObjective>,
+    pub expected_sha256: [u8; 32],
+}
+
+/// Checks external content pins AND their security-critical metadata bindings.
+/// Pins must be authenticated and stored outside the untrusted evidence package.
+pub fn inspect_evidence_with_bound_pins(
+    trusted_tenant: &str,
+    framework: RegulatoryFramework,
+    artifacts: &[ComplianceEvidenceArtifact<'_>],
+    trusted_pins: &BTreeMap<String, EvidencePin>,
+    now_unix: u64,
+) -> Result<EvidenceAssessment, EvidenceError> {
+    if artifacts.len() != trusted_pins.len() {
+        return Err(EvidenceError::UntrustedDigest);
+    }
+    let mut seen = BTreeSet::new();
+    for artifact in artifacts {
+        if !seen.insert(artifact.evidence_id) {
+            return Err(EvidenceError::DuplicateEvidence);
+        }
+        let Some(pin) = trusted_pins.get(artifact.evidence_id) else {
+            return Err(EvidenceError::UntrustedDigest);
+        };
+        if pin.tenant_id != trusted_tenant
+            || pin.tenant_id != artifact.tenant_id
+            || pin.source_id != artifact.source_id
+            || pin.framework != framework
+            || pin.framework != artifact.framework
+            || pin.objective != artifact.objective
+            || pin.expected_sha256 == [0; 32]
+            || pin.expected_sha256 != artifact.expected_sha256
+        {
+            return Err(EvidenceError::UntrustedDigest);
+        }
+    }
+    inspect_evidence(trusted_tenant, framework, artifacts, now_unix)
+}
+
 /// Verifies a complete evidence pack against independently provisioned SHA-256 pins.
 /// The pins MUST originate from a trusted source outside the evidence package.
 /// A map assembled from the submitted artifacts does not establish provenance.
