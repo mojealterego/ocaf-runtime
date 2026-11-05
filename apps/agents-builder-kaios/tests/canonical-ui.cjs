@@ -13,6 +13,7 @@ const elements = {
   'canonical-tool': { onclick: null },
   'canonical-rename': { onclick: null },
   'canonical-duplicate': { onclick: null },
+  'canonical-retype': { onclick: null },
   'canonical-new-node-id': { value: 'renamed' },
   'canonical-remove-tool': { onclick: null },
   'canonical-tool-name': { value: 'search.tool' },
@@ -210,4 +211,20 @@ assert.match(elements['canonical-graph-preview'].textContent, /first[.]out/);
 elements['canonical-source'].value = '{';
 elements['canonical-check'].onclick();
 assert.match(elements['canonical-graph-preview'].textContent, /Podgląd niedostępny/);
-console.log('PASS canonical KaiOS UI typed ports, persistence, import/export, rename, duplicate, safe preview');
+elements['canonical-new'].onclick();
+elements['canonical-node-id'].value = 'step';
+elements['canonical-transform'].onclick();
+elements['canonical-port-kind'].value = 'json';
+elements['canonical-retype'].onclick();
+const retyped = JSON.parse(elements['canonical-source'].value);
+assert.equal(retyped.revision, 3);
+assert.equal(retyped.nodes[0].outputs[0].kind, 'json');
+assert.equal(retyped.nodes[1].inputs[0].kind, 'json');
+assert.equal(retyped.nodes[2].inputs[0].kind, 'json');
+assert.equal(retyped.nodes[2].outputs[0].kind, 'json');
+elements['canonical-port-kind'].value = 'invalid';
+const beforeRetypeError = elements['canonical-source'].value;
+elements['canonical-retype'].onclick();
+assert.match(elements['canonical-result'].textContent, /Błąd/);
+assert.equal(elements['canonical-source'].value, beforeRetypeError);
+console.log('PASS canonical KaiOS UI typed ports, persistence, import/export, rename, duplicate, retype');
