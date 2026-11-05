@@ -494,6 +494,8 @@ fn scan_audit(tx: &Transaction<'_>, tenant: &str) -> Result<AuditHead, JournalEr
             || !valid_id(&actor)
             || !valid_id(&action)
             || !valid_id(&request)
+            || (decision == "ALLOW_INTENT" && reason != "PENDING_EXTERNAL_GATE")
+            || (decision == "OUTCOME_RECEIPT" && reason != "EXTERNALLY_VERIFIED_BY_CALLER")
             || previous != head.digest
             || hash
                 != hash_row(AuditDigest {
