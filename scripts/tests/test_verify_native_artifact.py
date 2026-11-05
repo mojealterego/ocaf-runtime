@@ -67,7 +67,7 @@ class NativeArtifactVerification(unittest.TestCase):
                 with self.subTest(duplicate=duplicate):
                     with zipfile.ZipFile(p, "w") as archive:
                         archive.writestr("AndroidManifest.xml", bytes(2048))
-                        archive.writestr("classes.dex", b"dex\\n035\\x00" + bytes(2040))
+                        archive.writestr("classes.dex", b"dex\n035\x00" + bytes(2040))
                         import warnings
                         with warnings.catch_warnings():
                             warnings.simplefilter("ignore", UserWarning)
