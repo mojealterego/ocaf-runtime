@@ -14,6 +14,7 @@ const elements = {
   'canonical-rename': { onclick: null },
   'canonical-duplicate': { onclick: null },
   'canonical-retype': { onclick: null },
+  'canonical-update-cost': { onclick: null },
   'canonical-new-node-id': { value: 'renamed' },
   'canonical-remove-tool': { onclick: null },
   'canonical-tool-name': { value: 'search.tool' },
@@ -241,4 +242,20 @@ assert.equal(retypedTool.nodes.filter(n => n.kind === 'tool')[0].inputs[0].kind,
 elements['canonical-node-id'].value = 'meter';
 elements['canonical-remove-tool'].onclick();
 assert.equal(JSON.parse(elements['canonical-source'].value).max_cost_minor, 0);
-console.log('PASS canonical KaiOS UI typed ports, persistence, import/export, rename, duplicate, retype with tool');
+elements['canonical-new'].onclick();
+elements['canonical-node-id'].value = 'meter';
+elements['canonical-tool-name'].value = 'meter.tool';
+elements['canonical-tool-cost'].value = '7';
+elements['canonical-tool'].onclick();
+elements['canonical-tool-cost'].value = '19';
+elements['canonical-update-cost'].onclick();
+const updatedCost = JSON.parse(elements['canonical-source'].value);
+assert.equal(updatedCost.nodes.filter(n => n.id === 'meter')[0].max_cost_minor, 19);
+assert.equal(updatedCost.max_cost_minor, 19);
+assert.equal(updatedCost.revision, 3);
+elements['canonical-tool-cost'].value = '0';
+const beforeInvalidCost = elements['canonical-source'].value;
+elements['canonical-update-cost'].onclick();
+assert.match(elements['canonical-result'].textContent, /Błąd/);
+assert.equal(elements['canonical-source'].value, beforeInvalidCost);
+console.log('PASS canonical KaiOS UI typed ports, persistence, import/export, rename, duplicate, retype, tool cost editing');
