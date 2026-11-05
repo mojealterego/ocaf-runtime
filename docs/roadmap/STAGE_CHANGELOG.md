@@ -1,5 +1,11 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-05 — Desktop native toolchain CI trigger (IMPLEMENTED_CI_UNVERIFIED)
+
+- RED regression contract `a972822`: `test_desktop_ci_rebuilds_when_rust_toolchain_changes` requires the Windows/macOS native workflow to react to `rust-toolchain.toml` edits.
+- Workflow change `8d05ae1`: added `rust-toolchain.toml` to native desktop `push.paths` so compiler pin changes cannot bypass Windows/macOS build verification.
+- Source-only verification; RED/GREEN execution and final-SHA native CI are not yet confirmed. No platform acceptance status changed.
+
 ## 2026-11-05 — Agents Builder native CI supply-chain pinning (IMPLEMENTED_CI_UNVERIFIED)
 
 - CI failure evidence: Rust CI run `41932081049`, job `126931217103`, `test_ci_action_pinning.py::test_all_external_actions_are_immutable_commit_refs` flagged four mutable action references in native desktop/Linux/mobile workflows.
