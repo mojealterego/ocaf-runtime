@@ -174,6 +174,28 @@
       result.textContent = JSON.stringify(plan, null, 2);
     });
   };
+  get('canonical-rename').onclick = function () {
+    safe(function () {
+      var project = checked().project;
+      var oldId = get('canonical-node-id').value;
+      var newId = get('canonical-new-node-id').value;
+      if (!validId(newId) || !project.nodes.some(function (n) { return n.id === oldId; }) ||
+          project.nodes.some(function (n) { return n.id === newId; }))
+        throw Error('Nieprawidłowe lub zajęte ID węzła');
+      if (project.revision >= 9007199254740991)
+        throw Error('Przekroczono zakres rewizji');
+      var candidate = JSON.parse(JSON.stringify(project));
+      candidate.nodes.forEach(function (n) { if (n.id === oldId) n.id = newId; });
+      candidate.edges.forEach(function (e) {
+        if (e.from_node === oldId) e.from_node = newId;
+        if (e.to_node === oldId) e.to_node = newId;
+      });
+      candidate.revision++;
+      var plan = OCAFCanonicalGraph.compile(candidate, get('canonical-tenant').value);
+      get('canonical-source').value = JSON.stringify(candidate, null, 2);
+      result.textContent = JSON.stringify(plan, null, 2);
+    });
+  };
   get('canonical-remove').onclick = function () {
     safe(function () {
       var project = checked().project;
