@@ -43,6 +43,14 @@ class DesktopNativeSourceTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/agents-builder-native-linux.yml").read_text()
         self.assertIn('      - "rust-toolchain.toml"', workflow)
 
+    def test_desktop_ci_uses_repository_pinned_rust_toolchain(self):
+        import tomllib
+        workflow = (ROOT / ".github/workflows/agents-builder-native-desktop.yml").read_text()
+        toolchain = tomllib.loads((ROOT / "rust-toolchain.toml").read_text())
+        pinned = toolchain["toolchain"]["channel"]
+        self.assertIn("dtolnay/rust-toolchain@", workflow)
+        self.assertIn(f"toolchain: '{pinned}'", workflow)
+
     def test_desktop_ci_rebuilds_when_rust_toolchain_changes(self):
         workflow = (ROOT / ".github/workflows/agents-builder-native-desktop.yml").read_text()
         self.assertIn('      - "rust-toolchain.toml"', workflow)
