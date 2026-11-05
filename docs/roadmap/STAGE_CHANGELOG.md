@@ -1,5 +1,11 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-05 — Desktop smoke harness CI trigger (IMPLEMENTED_CI_UNVERIFIED)
+
+- Contract `eff388f` adds `test_desktop_ci_rebuilds_when_smoke_harness_changes` for the real process-smoke harness and its regression test.
+- Fix `c43c38d` adds `scripts/smoke_native_desktop.py` and `scripts/tests/test_smoke_native_desktop.py` to native Windows/macOS workflow `push.paths`.
+- Static RED: both paths absent before fix; static GREEN: both paths present after re-fetch from main; immutable external action SHA references remain intact. Python unittest execution, native Windows/macOS builds, GUI E2E and final-SHA CI remain UNVERIFIED; no product acceptance change.
+
 ## 2026-11-05 — Desktop icon generator CI trigger (IMPLEMENTED_CI_UNVERIFIED)
 
 - RED contract `864b2aa` adds `test_desktop_ci_rebuilds_when_icon_generator_changes`; pre-fix workflow omitted `scripts/generate_builder_icons.py` from `push.paths` despite executing it during Windows/macOS builds.
