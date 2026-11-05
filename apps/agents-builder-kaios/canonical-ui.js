@@ -227,6 +227,29 @@
       result.textContent = JSON.stringify(plan, null, 2);
     });
   };
+  get('canonical-rename-tool').onclick = function () {
+    safe(function () {
+      var project = checked().project;
+      var id = get('canonical-node-id').value;
+      var newName = get('canonical-tool-name').value;
+      if (!validId(newName)) throw Error('Nieprawidłowa nazwa narzędzia');
+      var target = project.nodes.filter(function (n) { return n.id === id; })[0];
+      if (!target || target.kind !== 'tool') throw Error('Nie znaleziono węzła Tool');
+      if (target.tool_name === newName) throw Error('Narzędzie nie uległo zmianie');
+      if (project.revision >= 9007199254740991) throw Error('Przekroczono zakres rewizji');
+      var candidate = JSON.parse(JSON.stringify(project));
+      candidate.nodes.filter(function (n) { return n.id === id; })[0].tool_name = newName;
+      candidate.grants = candidate.nodes.filter(function (n) {
+        return n.kind === 'tool';
+      }).map(function (n) { return n.tool_name; }).filter(function (name, index, all) {
+        return all.indexOf(name) === index;
+      });
+      candidate.revision++;
+      var plan = OCAFCanonicalGraph.compile(candidate, get('canonical-tenant').value);
+      get('canonical-source').value = JSON.stringify(candidate, null, 2);
+      result.textContent = JSON.stringify(plan, null, 2);
+    });
+  };
   get('canonical-update-cost').onclick = function () {
     safe(function () {
       var project = checked().project;
