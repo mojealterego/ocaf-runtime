@@ -930,6 +930,43 @@ mod tests {
     }
 
     #[test]
+    fn audit_chain_cannot_start_with_a_replay_or_receipt() {
+        for (decision, reason) in [
+            ("REPLAY", "ReplayPending"),
+            ("OUTCOME_RECEIPT", "EXTERNALLY_VERIFIED_BY_CALLER"),
+        ] {
+            let (file, journal) = setup();
+            let r = request();
+            let digest = hash_row(AuditDigest {
+                tenant: "tenant_a",
+                sequence: 1,
+                actor: "agent_a",
+                action: "read",
+                request: "req_1",
+                decision,
+                reason,
+                payload_sha256: &r.payload_sha256,
+                previous: GENESIS,
+            });
+            let conn = Connection::open(file.path()).unwrap();
+            conn.execute(
+                "INSERT INTO governance_audit_v1
+                 (tenant,seq,actor,action,request_id,decision,reason,payload_sha256,previous,digest)
+                 VALUES (?1,1,?2,?3,?4,?5,?6,?7,?8,?9)",
+                params![
+                    "tenant_a", "agent_a", "read", "req_1", decision, reason,
+                    r.payload_sha256.as_slice(), GENESIS, digest
+                ],
+            )
+            .unwrap();
+            assert!(matches!(
+                journal.inspect("tenant_a", None),
+                Err(JournalError::Integrity)
+            ));
+        }
+    }
+
+    #[test]
     fn audit_scan_rejects_rehashed_unknown_denial_reason() {
         let (file, journal) = setup();
         let c = contract();
