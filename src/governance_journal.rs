@@ -900,6 +900,41 @@ mod tests {
     }
 
     #[test]
+    fn zeroed_persisted_intent_digest_blocks_replay_and_commit() {
+        let (file, journal) = setup();
+        let c = contract();
+        let r = request();
+        assert_eq!(
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "zero_intent")
+                .unwrap(),
+            Admission::FreshPending
+        );
+        let pinned = journal.inspect("tenant_a", None).unwrap();
+        let conn = Connection::open(file.path()).unwrap();
+        conn.execute(
+            "UPDATE governance_intents_v1 SET payload_sha256=zeroblob(32) WHERE idem='zero_intent'",
+            [],
+        )
+        .unwrap();
+        assert!(matches!(
+            journal.begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "zero_intent"),
+            Err(JournalError::Integrity)
+        ));
+        assert!(matches!(
+            journal.record_verified_outcome(
+                "tenant_a",
+                "agent_a",
+                &r,
+                "zero_intent",
+                payload_sha256(b"synthetic-receipt"),
+            ),
+            Err(JournalError::Integrity)
+        ));
+        assert_eq!(journal.inspect("tenant_a", Some(&pinned)).unwrap(), pinned);
+    }
+
+    #[test]
     fn malformed_persisted_identities_fail_closed_during_outcome_commit() {
         for (column, bad_value) in [("actor", "bad/actor"), ("request_id", "bad/request")] {
             let (file, journal) = setup();
