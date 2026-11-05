@@ -254,6 +254,9 @@ impl GovernanceJournal {
             )
             .optional())?;
         if let Some((actor, request_id, hash, status, receipt)) = prior {
+            if hash.len() != 32 {
+                return Err(JournalError::Integrity);
+            }
             if actor != trusted_actor
                 || request_id != request.request_id
                 || hash.as_slice() != request.payload_sha256.as_slice()
@@ -272,7 +275,11 @@ impl GovernanceJournal {
             }
             let outcome = match (status.as_str(), receipt.as_deref()) {
                 ("PENDING", None) => Admission::ReplayPending,
-                ("COMMITTED", Some(hash)) if hash.len() == 32 => Admission::ReplayCommitted,
+                ("COMMITTED", Some(hash))
+                    if hash.len() == 32 && hash.iter().any(|byte| *byte != 0) =>
+                {
+                    Admission::ReplayCommitted
+                }
                 _ => return Err(JournalError::Integrity),
             };
             append_audit(
