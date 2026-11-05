@@ -16,6 +16,9 @@ const elements = {
   'canonical-retype': { onclick: null },
   'canonical-update-cost': { onclick: null },
   'canonical-rename-tool': { onclick: null },
+  'canonical-insert-edge': { onclick: null },
+  'canonical-edge-from': { value: 'input' },
+  'canonical-edge-to': { value: 'output' },
   'canonical-new-node-id': { value: 'renamed' },
   'canonical-remove-tool': { onclick: null },
   'canonical-tool-name': { value: 'search.tool' },
@@ -286,4 +289,23 @@ const beforeBadName = elements['canonical-source'].value;
 elements['canonical-rename-tool'].onclick();
 assert.match(elements['canonical-result'].textContent, /Błąd/);
 assert.equal(elements['canonical-source'].value, beforeBadName);
-console.log('PASS canonical KaiOS UI typed ports, persistence, import/export, rename, duplicate, retype, tool editing');
+elements['canonical-new'].onclick();
+elements['canonical-node-id'].value = 'middle';
+elements['canonical-edge-from'].value = 'input';
+elements['canonical-edge-to'].value = 'output';
+elements['canonical-insert-edge'].onclick();
+let inserted = JSON.parse(elements['canonical-source'].value);
+assert.deepEqual(JSON.parse(elements['canonical-result'].textContent).ordered_nodes, ['input','middle','output']);
+assert.equal(inserted.revision, 2);
+elements['canonical-node-id'].value = 'before';
+elements['canonical-edge-to'].value = 'middle';
+elements['canonical-insert-edge'].onclick();
+inserted = JSON.parse(elements['canonical-source'].value);
+assert.deepEqual(JSON.parse(elements['canonical-result'].textContent).ordered_nodes, ['input','before','middle','output']);
+assert.equal(inserted.revision, 3);
+elements['canonical-edge-from'].value = 'output';
+const beforeMissingEdge = elements['canonical-source'].value;
+elements['canonical-insert-edge'].onclick();
+assert.match(elements['canonical-result'].textContent, /Błąd/);
+assert.equal(elements['canonical-source'].value, beforeMissingEdge);
+console.log('PASS canonical KaiOS UI including arbitrary linear edge insertion');
