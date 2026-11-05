@@ -427,9 +427,7 @@ pub fn resolve_link_pinned(
     }
     let (source_state, _) = driver.load(source, Some(source_head))?;
     let (target_state, _) = driver.load(target, Some(target_head))?;
-    if !source_state.contains_label(source_label)
-        || !target_state.contains_label(target_label)
-    {
+    if !source_state.contains_label(source_label) || !target_state.contains_label(target_label) {
         return Err(StoreError::Invalid);
     }
     Ok(())
@@ -531,14 +529,21 @@ mod tests {
         let (file, driver, key) = setup();
         let pinned = driver.append(&key, &Head::default(), &create()).unwrap();
         let current = driver.append(&key, &pinned, &Event::Undo).unwrap();
-        assert!(matches!(driver.load(&key, Some(&pinned)), Err(StoreError::Conflict)));
+        assert!(matches!(
+            driver.load(&key, Some(&pinned)),
+            Err(StoreError::Conflict)
+        ));
         let db = Connection::open(file.path()).unwrap();
         // A valid later revision must not hide a forged earlier pinned receipt.
         db.execute(
             "UPDATE document_events_v1 SET digest='tampered' WHERE revision=1",
             [],
-        ).unwrap();
-        assert!(matches!(driver.load(&key, Some(&pinned)), Err(StoreError::Integrity)));
+        )
+        .unwrap();
+        assert!(matches!(
+            driver.load(&key, Some(&pinned)),
+            Err(StoreError::Integrity)
+        ));
         assert_ne!(pinned, current);
     }
     #[test]
@@ -550,8 +555,12 @@ mod tests {
         db.execute(
             "INSERT INTO document_events_v1 VALUES (?1,?2,1,1,?3,?4,?5)",
             params![key.tenant, key.document, GENESIS, hash, payload],
-        ).unwrap();
-        assert!(matches!(driver.load(&key, None), Err(StoreError::Integrity)));
+        )
+        .unwrap();
+        assert!(matches!(
+            driver.load(&key, None),
+            Err(StoreError::Integrity)
+        ));
     }
     #[test]
     fn pinned_source_link_rejects_source_version_drift() {
@@ -562,12 +571,25 @@ mod tests {
         let root = LabelPath::parse("0").unwrap();
         let child = LabelPath::parse("0:1").unwrap();
         resolve_link_pinned(
-            &driver, &source, &root, &source_head, &target, &child, &target_head,
-        ).unwrap();
+            &driver,
+            &source,
+            &root,
+            &source_head,
+            &target,
+            &child,
+            &target_head,
+        )
+        .unwrap();
         driver.append(&source, &source_head, &Event::Undo).unwrap();
         assert!(matches!(
             resolve_link_pinned(
-                &driver, &source, &root, &source_head, &target, &child, &target_head,
+                &driver,
+                &source,
+                &root,
+                &source_head,
+                &target,
+                &child,
+                &target_head,
             ),
             Err(StoreError::Conflict)
         ));
@@ -579,7 +601,10 @@ mod tests {
         let scoped = TenantDocumentDriver::new(&driver, "tenant").unwrap();
         let head = scoped.append(&own, &Head::default(), &create()).unwrap();
         assert_eq!(scoped.load(&own, Some(&head)).unwrap().1, head);
-        assert!(matches!(scoped.load(&other, None), Err(StoreError::Invalid)));
+        assert!(matches!(
+            scoped.load(&other, None),
+            Err(StoreError::Invalid)
+        ));
         assert!(matches!(
             scoped.append(&other, &Head::default(), &create()),
             Err(StoreError::Invalid)
