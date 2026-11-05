@@ -50,6 +50,16 @@ class NativeArtifactVerification(unittest.TestCase):
             with self.assertRaises(ValueError):
                 module.verify("android", p)
 
+    def test_apk_rejects_fake_or_empty_dex_bytecode(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "app.apk"
+            for dex in (b"", bytes(2048), b"dex\\n999\\x00" + bytes(2040)):
+                with zipfile.ZipFile(p, "w") as archive:
+                    archive.writestr("AndroidManifest.xml", bytes(2048))
+                    archive.writestr("classes.dex", dex)
+                with self.subTest(dex=dex[:8]), self.assertRaises(ValueError):
+                    module.verify("android", p)
+
     def test_linux_elf_signature_and_header(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "app"
