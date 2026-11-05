@@ -60,6 +60,21 @@ class NativeArtifactVerification(unittest.TestCase):
                 with self.subTest(dex=dex[:8]), self.assertRaises(ValueError):
                     module.verify("android", p)
 
+    def test_apk_rejects_duplicate_security_critical_entries(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "duplicate.apk"
+            for duplicate in ("AndroidManifest.xml", "classes.dex"):
+                with self.subTest(duplicate=duplicate):
+                    with zipfile.ZipFile(p, "w") as archive:
+                        archive.writestr("AndroidManifest.xml", bytes(2048))
+                        archive.writestr("classes.dex", b"dex\\n035\\x00" + bytes(2040))
+                        import warnings
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore", UserWarning)
+                            archive.writestr(duplicate, bytes(2048))
+                    with self.assertRaisesRegex(ValueError, "duplicate"):
+                        module.verify("android", p)
+
     def test_linux_elf_signature_and_header(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "app"
