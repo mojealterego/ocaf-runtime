@@ -13,6 +13,11 @@ class MobileNativeContracts(unittest.TestCase):
         self.assertIn('      - "scripts/verify_native_artifact.py"', workflow)
         self.assertIn('      - "scripts/tests/test_verify_native_artifact.py"', workflow)
 
+    def test_ios_ci_runs_artifact_verifier_regression_suite(self):
+        workflow = (ROOT / ".github/workflows/agents-builder-native-mobile.yml").read_text()
+        ios = workflow.split("\n  ios:\n", 1)[1]
+        self.assertIn("python3 -m unittest discover -s scripts/tests -p test_verify_native_artifact.py -v", ios)
+
     def test_android_compose_entrypoint_and_offline_editor(self):
         settings = (ANDROID / "settings.gradle.kts").read_text()
         gradle = (ANDROID / "app/build.gradle.kts").read_text()
