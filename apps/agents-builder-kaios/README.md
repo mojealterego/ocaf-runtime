@@ -61,3 +61,7 @@ Przycisk **Zmień typ grafu** migruje wszystkie porty jednokanałowego grafu do 
 ## Edycja kosztu Tool
 
 Przycisk **Zmień koszt Tool** aktualizuje `max_cost_minor` wskazanego węzła `Tool` oraz budżet całego DAG o różnicę między nową i starą wartością. Operacja jest atomowa, ograniczona do wartości całkowitych dodatnich nieprzekraczających 10¹², ponownie waliduje projekt i zwiększa rewizję. Jest to edycja deklaratywnego kosztu, **nie naliczenie płatności ani wykonanie narzędzia**.
+
+## Zmiana narzędzia węzła Tool
+
+Przycisk **Zmień narzędzie Tool** zmienia `tool_name` węzła wskazanego w polu ID. Lista `grants` jest ponownie wyliczana z wszystkich węzłów `Tool` i deduplikowana, więc uprawnienia współdzielone przez inne węzły pozostają zachowane. Budżet nie zmienia się. Zmiana jest atomowa i wymaga ponownej walidacji DAG. Jest to edycja deklaracji, **nie przyznanie uprawnień serwerowych ani wykonanie narzędzia**.
