@@ -126,6 +126,15 @@ with sync_playwright() as playwright:
     page.locator("#canonical-duplicate").click()
     assert "Błąd" in page.locator("#canonical-result").inner_text()
     assert "Podgląd niedostępny" in page.locator("#canonical-graph-preview").inner_text()
+    page.locator("#canonical-new").click()
+    page.locator("#canonical-node-id").fill("step")
+    page.locator("#canonical-transform").click()
+    page.locator("#canonical-port-kind").select_option("bytes")
+    page.locator("#canonical-retype").click()
+    migrated = json.loads(page.locator("#canonical-source").input_value())
+    assert migrated["revision"] == 3
+    assert all(port["kind"] == "bytes" for node in migrated["nodes"] for port in node["inputs"] + node["outputs"])
+    assert json.loads(page.locator("#canonical-result").inner_text())["ordered_nodes"] == ["input", "step", "output"]
     evidence = ROOT.parents[1] / "dist" / "kaios-chromium-e2e.png"
     evidence.parent.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(evidence), full_page=True)
