@@ -47,6 +47,11 @@ class DesktopNativeSourceTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/agents-builder-native-desktop.yml").read_text()
         self.assertIn('      - "rust-toolchain.toml"', workflow)
 
+    def test_desktop_ci_rebuilds_when_artifact_verifier_changes(self):
+        workflow = (ROOT / ".github/workflows/agents-builder-native-desktop.yml").read_text()
+        self.assertIn('      - "scripts/verify_native_artifact.py"', workflow)
+        self.assertIn('      - "scripts/tests/test_verify_native_artifact.py"', workflow)
+
     def test_native_rust_entrypoint_and_restricted_capabilities(self):
         cargo = (DESKTOP / "src-tauri" / "Cargo.toml").read_text()
         main = (DESKTOP / "src-tauri" / "src" / "main.rs").read_text()
