@@ -53,3 +53,7 @@ Formularz umożliwia wybór typu portu `text`, `json` albo `bytes` dla nowego gr
 ## Węzły Tool w NoCode
 
 **Dodaj Tool** tworzy typowany węzeł narzędzia pomiędzy poprzednikiem a `Output`, deklaruje `tool_name`, przydziela uprawnienie w `grants`, zwiększa budżet o zadeklarowany koszt oraz inkrementuje `revision`. **Usuń Tool** usuwa wskazany węzeł, przywraca połączenie, odejmuje jego koszt i usuwa grant tylko wtedy, gdy żaden inny węzeł nie żąda tego narzędzia. Każda operacja przechodzi walidację kanonicznego DAG przed aktualizacją edytora. To wyłącznie projektowanie statycznego kontraktu — aplikacja nie uruchamia narzędzi, nie wydaje uprawnień w backendzie i nie zarządza sekretami.
+
+## Zmiana typu portów grafu
+
+Przycisk **Zmień typ grafu** migruje wszystkie porty jednokanałowego grafu do wybranego typu `text`, `json` lub `bytes`. Zmiana jest atomowa, wymaga poprawnego kanonicznego DAG, zwiększa rewizję i ponownie uruchamia walidator. Grafy z wieloma portami nie są obsługiwane przez tę operację NoCode. Migracja zmienia kontrakt statyczny, **nie konwertuje danych ani nie wykonuje narzędzi**.
