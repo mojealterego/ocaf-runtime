@@ -1,5 +1,11 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-05 — Windows/macOS Rust compiler pin (IMPLEMENTED_CI_UNVERIFIED)
+
+- Source audit: native desktop workflow used `dtolnay/rust-toolchain` without explicit `toolchain`, although repository `rust-toolchain.toml` specifies `1.99.0`. This allowed an unpinned compiler selection at the workflow action step.
+- Regression test `9558f4d` asserts that desktop workflow requests the repository-pinned compiler. Fix `0387765` adds `with: toolchain: '1.99.0'` to the immutable-SHA-pinned Rust action.
+- Isolated assertion against the observed old workflow snippet failed (RED), and against the updated snippet passed (GREEN). Full repository unittest, GitHub Actions on final SHA, actual native Windows/macOS builds and GUI E2E remain UNVERIFIED. No acceptance status change.
+
 ## 2026-11-05 — Builder ZIP regression test syntax repair (IMPLEMENTED_TEST_EXECUTION_UNVERIFIED)
 
 - Main HEAD `b9b0cdc` introduced `test_cli_relative_output_publishes_atomic_release` with four doubled backslashes before physical newlines in a Python `with` statement, producing invalid line-continuation syntax.
