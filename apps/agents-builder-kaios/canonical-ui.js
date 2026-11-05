@@ -227,6 +227,27 @@
       result.textContent = JSON.stringify(plan, null, 2);
     });
   };
+  get('canonical-retype').onclick = function () {
+    safe(function () {
+      var project = checked().project;
+      var kind = selectedPortKind();
+      if (project.revision >= 9007199254740991) throw Error('Przekroczono zakres rewizji');
+      var candidate = JSON.parse(JSON.stringify(project));
+      // Deliberately restricted to homogeneous, single-port linear graphs.
+      candidate.nodes.forEach(function (n) {
+        if (n.inputs.length > 1 || n.outputs.length > 1 ||
+            (n.inputs.length && n.inputs[0].name !== 'in') ||
+            (n.outputs.length && n.outputs[0].name !== 'out'))
+          throw Error('Migracja NoCode wymaga grafu jednokanałowego');
+        n.inputs.forEach(function (p) { p.kind = kind; });
+        n.outputs.forEach(function (p) { p.kind = kind; });
+      });
+      candidate.revision++;
+      var plan = OCAFCanonicalGraph.compile(candidate, get('canonical-tenant').value);
+      get('canonical-source').value = JSON.stringify(candidate, null, 2);
+      result.textContent = JSON.stringify(plan, null, 2);
+    });
+  };
   get('canonical-rename').onclick = function () {
     safe(function () {
       var project = checked().project;
