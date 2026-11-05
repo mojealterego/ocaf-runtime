@@ -26,7 +26,8 @@ const elements = {
   'canonical-source': { value: '' },
   'canonical-tenant': { value: 'local' },
   'canonical-id': { value: 'agent' },
-  'canonical-result': { textContent: '' }
+  'canonical-result': { textContent: '' },
+  'canonical-graph-preview': { textContent: '' }
 };
 const storage = new Map();
 const context = { document: { getElementById(id) { return elements[id]; } }, localStorage: {
@@ -204,4 +205,8 @@ assert.equal(duplicated.revision, 3);
 elements['canonical-duplicate'].onclick();
 assert.match(elements['canonical-result'].textContent, /Błąd/);
 assert.equal(elements['canonical-source'].value, JSON.stringify(duplicated, null, 2));
-console.log('PASS canonical KaiOS UI typed ports, persistence, import/export, rename, duplicate');
+assert.match(elements['canonical-graph-preview'].textContent, /first\.out/);
+elements['canonical-source'].value = '{';
+elements['canonical-check'].onclick();
+assert.match(elements['canonical-graph-preview'].textContent, /Podgląd niedostępny/);
+console.log('PASS canonical KaiOS UI typed ports, persistence, import/export, rename, duplicate, safe preview');
