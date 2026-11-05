@@ -40,6 +40,12 @@ def verify(kind: str, path: Path) -> None:
                 raise ValueError("APK is not a ZIP archive")
             with zipfile.ZipFile(path) as apk:
                 names = apk.namelist()
+                for name in names:
+                    parts = name.split("/")
+                    if (not name or name.startswith("/") or "\\\\" in name
+                            or any(part in ("", ".", "..") for part in parts[:-1])
+                            or parts[-1] in (".", "..")):
+                        raise ValueError(f"APK contains unsafe ZIP entry path: {name!r}")
                 if len(names) != len(set(names)):
                     raise ValueError("APK contains duplicate ZIP entry names")
                 if "AndroidManifest.xml" not in names:
