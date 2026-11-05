@@ -414,6 +414,76 @@ mod tests {
     }
 
     #[test]
+    fn bound_pins_reject_tenant_source_and_objective_relabelling() {
+        let pack = complete_pack();
+        let pins: BTreeMap<String, EvidencePin> = pack
+            .iter()
+            .map(|item| {
+                (
+                    item.evidence_id.to_owned(),
+                    EvidencePin {
+                        tenant_id: item.tenant_id.to_owned(),
+                        source_id: item.source_id.to_owned(),
+                        framework: item.framework,
+                        objective: item.objective,
+                        expected_sha256: item.expected_sha256,
+                    },
+                )
+            })
+            .collect();
+        let accepted = inspect_evidence_with_bound_pins(
+            TENANT,
+            RegulatoryFramework::NcscCafGovAssure,
+            &pack,
+            &pins,
+            NOW,
+        )
+        .unwrap();
+        assert!(!accepted.independently_attested);
+        assert!(!accepted.certified_compliant);
+
+        let mut forged = complete_pack();
+        forged[0].source_id = "forged_source";
+        assert_eq!(
+            inspect_evidence_with_bound_pins(
+                TENANT,
+                RegulatoryFramework::NcscCafGovAssure,
+                &forged,
+                &pins,
+                NOW,
+            )
+            .unwrap_err(),
+            EvidenceError::UntrustedDigest
+        );
+        forged[0].source_id = "fixture_source";
+        forged[0].objective = Some(CafObjective::DetectingCyberSecurityEvents);
+        assert_eq!(
+            inspect_evidence_with_bound_pins(
+                TENANT,
+                RegulatoryFramework::NcscCafGovAssure,
+                &forged,
+                &pins,
+                NOW,
+            )
+            .unwrap_err(),
+            EvidenceError::UntrustedDigest
+        );
+        let mut cross_tenant = pins.clone();
+        cross_tenant.get_mut("ev_a").unwrap().tenant_id = "tenant_two".into();
+        assert_eq!(
+            inspect_evidence_with_bound_pins(
+                TENANT,
+                RegulatoryFramework::NcscCafGovAssure,
+                &pack,
+                &cross_tenant,
+                NOW,
+            )
+            .unwrap_err(),
+            EvidenceError::UntrustedDigest
+        );
+    }
+
+    #[test]
     fn externally_pinned_pack_rejects_digest_replacement_and_missing_pins() {
         let pack = complete_pack();
         let pins: BTreeMap<String, [u8; 32]> = pack
