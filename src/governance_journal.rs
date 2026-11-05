@@ -794,6 +794,49 @@ mod tests {
     }
 
     #[test]
+    fn committed_receipt_is_idempotent_across_database_restart() {
+        let (file, journal) = setup();
+        let c = contract();
+        let r = request();
+        assert_eq!(
+            journal
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "restart_receipt")
+                .unwrap(),
+            Admission::FreshPending
+        );
+        let receipt = payload_sha256(b"synthetic-restart-receipt");
+        assert!(journal
+            .record_verified_outcome("tenant_a", "agent_a", &r, "restart_receipt", receipt)
+            .unwrap());
+        let pinned = journal.inspect("tenant_a", None).unwrap();
+        assert_eq!(pinned.sequence, 2);
+        drop(journal);
+
+        let reopened = GovernanceJournal::open_existing(file.path()).unwrap();
+        assert!(!reopened
+            .record_verified_outcome("tenant_a", "agent_a", &r, "restart_receipt", receipt)
+            .unwrap());
+        assert_eq!(reopened.inspect("tenant_a", Some(&pinned)).unwrap(), pinned);
+        assert!(matches!(
+            reopened.record_verified_outcome(
+                "tenant_a",
+                "agent_a",
+                &r,
+                "restart_receipt",
+                payload_sha256(b"conflicting-receipt"),
+            ),
+            Err(JournalError::Conflict)
+        ));
+        assert_eq!(reopened.inspect("tenant_a", Some(&pinned)).unwrap(), pinned);
+        assert_eq!(
+            reopened
+                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "restart_receipt")
+                .unwrap(),
+            Admission::ReplayCommitted
+        );
+    }
+
+    #[test]
     fn modified_hash_chain_and_head_truncation_are_rejected() {
         let (file, journal) = setup();
         let c = contract();
