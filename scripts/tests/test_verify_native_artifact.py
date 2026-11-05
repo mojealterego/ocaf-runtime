@@ -43,7 +43,7 @@ class NativeArtifactVerification(unittest.TestCase):
             p = Path(d) / "app.apk"
             with zipfile.ZipFile(p, "w") as archive:
                 archive.writestr("AndroidManifest.xml", bytes(2048))
-                archive.writestr("classes.dex", b"dex\\n035\\x00" + bytes(2040))
+                archive.writestr("classes.dex", b"dex\n035\x00" + bytes(2040))
             module.verify("android", p)
             with zipfile.ZipFile(p, "w") as archive:
                 archive.writestr("AndroidManifest.xml", bytes(2048))
@@ -53,7 +53,7 @@ class NativeArtifactVerification(unittest.TestCase):
     def test_apk_rejects_fake_or_empty_dex_bytecode(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "app.apk"
-            for dex in (b"", bytes(2048), b"dex\\n999\\x00" + bytes(2040)):
+            for dex in (b"", bytes(2048), b"dex\n999\x00" + bytes(2040)):
                 with zipfile.ZipFile(p, "w") as archive:
                     archive.writestr("AndroidManifest.xml", bytes(2048))
                     archive.writestr("classes.dex", dex)
