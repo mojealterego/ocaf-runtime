@@ -895,6 +895,41 @@ mod tests {
     }
 
     #[test]
+    fn malformed_persisted_identities_fail_closed_during_outcome_commit() {
+        for (column, bad_value) in [("actor", "bad/actor"), ("request_id", "bad/request")] {
+            let (file, journal) = setup();
+            let c = contract();
+            let r = request();
+            assert_eq!(
+                journal
+                    .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "bad_commit_id")
+                    .unwrap(),
+                Admission::FreshPending
+            );
+            let pinned = journal.inspect("tenant_a", None).unwrap();
+            let conn = Connection::open(file.path()).unwrap();
+            conn.execute(
+                &format!(
+                    "UPDATE governance_intents_v1 SET {column}=?1 WHERE idem='bad_commit_id'"
+                ),
+                params![bad_value],
+            )
+            .unwrap();
+            assert!(matches!(
+                journal.record_verified_outcome(
+                    "tenant_a",
+                    "agent_a",
+                    &r,
+                    "bad_commit_id",
+                    payload_sha256(b"synthetic-receipt"),
+                ),
+                Err(JournalError::Integrity)
+            ));
+            assert_eq!(journal.inspect("tenant_a", Some(&pinned)).unwrap(), pinned);
+        }
+    }
+
+    #[test]
     fn malformed_persisted_actor_and_request_ids_fail_closed_on_replay() {
         for (column, bad_value) in [("actor", "bad/actor"), ("request_id", "bad/request")] {
             let (file, journal) = setup();
