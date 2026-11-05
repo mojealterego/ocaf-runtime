@@ -115,6 +115,17 @@ with sync_playwright() as playwright:
     renamed_graph = json.loads(page.locator("#canonical-source").input_value())
     assert renamed_graph["edges"][0]["from_node"] == "source"
     assert renamed_graph["revision"] == 2
+    page.locator("#canonical-new").click()
+    page.locator("#canonical-node-id").fill("first")
+    page.locator("#canonical-transform").click()
+    page.locator("#canonical-new-node-id").fill("first")
+    page.locator("#canonical-node-id").fill("second")
+    page.locator("#canonical-duplicate").click()
+    assert json.loads(page.locator("#canonical-result").inner_text())["ordered_nodes"] == ["input", "first", "second", "output"]
+    assert "first.out" in page.locator("#canonical-graph-preview").inner_text()
+    page.locator("#canonical-duplicate").click()
+    assert "Błąd" in page.locator("#canonical-result").inner_text()
+    assert "Podgląd niedostępny" in page.locator("#canonical-graph-preview").inner_text()
     evidence = ROOT.parents[1] / "dist" / "kaios-chromium-e2e.png"
     evidence.parent.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(evidence), full_page=True)
