@@ -420,6 +420,68 @@ mod tests {
     }
 
     #[test]
+    fn bound_pins_reject_extended_validity_and_downgraded_sensitivity() {
+        let pack = complete_pack();
+        let pins: BTreeMap<String, EvidencePin> = pack
+            .iter()
+            .map(|item| {
+                (
+                    item.evidence_id.to_owned(),
+                    EvidencePin {
+                        tenant_id: item.tenant_id.to_owned(),
+                        source_id: item.source_id.to_owned(),
+                        framework: item.framework,
+                        objective: item.objective,
+                        sensitivity: item.sensitivity,
+                        collected_at_unix: item.collected_at_unix,
+                        valid_until_unix: item.valid_until_unix,
+                        expected_sha256: item.expected_sha256,
+                    },
+                )
+            })
+            .collect();
+        let mut forged = complete_pack();
+        forged[0].valid_until_unix += 86_400;
+        assert_eq!(
+            inspect_evidence_with_bound_pins(
+                TENANT,
+                RegulatoryFramework::NcscCafGovAssure,
+                &forged,
+                &pins,
+                NOW,
+            )
+            .unwrap_err(),
+            EvidenceError::UntrustedDigest
+        );
+        forged[0].valid_until_unix -= 86_400;
+        forged[0].sensitivity = Sensitivity::Internal;
+        assert_eq!(
+            inspect_evidence_with_bound_pins(
+                TENANT,
+                RegulatoryFramework::NcscCafGovAssure,
+                &forged,
+                &pins,
+                NOW,
+            )
+            .unwrap_err(),
+            EvidenceError::UntrustedDigest
+        );
+        forged[0].sensitivity = Sensitivity::Restricted;
+        forged[0].collected_at_unix -= 86_400;
+        assert_eq!(
+            inspect_evidence_with_bound_pins(
+                TENANT,
+                RegulatoryFramework::NcscCafGovAssure,
+                &forged,
+                &pins,
+                NOW,
+            )
+            .unwrap_err(),
+            EvidenceError::UntrustedDigest
+        );
+    }
+
+    #[test]
     fn bound_pins_reject_tenant_source_and_objective_relabelling() {
         let pack = complete_pack();
         let pins: BTreeMap<String, EvidencePin> = pack
