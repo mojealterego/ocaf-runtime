@@ -1,3 +1,8 @@
+## 2026-11-05 — Linux native toolchain trigger (CI UNVERIFIED)
+
+- Test RED `94f6f15`, workflow fix `462f169`: add `rust-toolchain.toml` to native Linux `push.paths` to avoid silently skipping toolchain upgrades.
+- Static source inspection confirmed missing path before fix; no executed RED/GREEN or final-SHA CI proof. No product status change.
+
 ## 2026-11-05 — Linux native Rust toolchain pin (CI UNVERIFIED)
 
 - Source: `rust-toolchain.toml` specifies `1.99.0`; Linux workflow now explicitly requests the same compiler.
