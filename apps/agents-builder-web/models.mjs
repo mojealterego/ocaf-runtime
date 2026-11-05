@@ -66,6 +66,7 @@ export function huggingFaceDownloadUrl(repo,commit,path){
 }
 export async function listHuggingFaceGguf(repo,{fetchImpl=globalThis.fetch.bind(globalThis),signal}={}){
   if(!validRepo(repo))throw Error('huggingface: invalid repository ID');
+  if(signal?.aborted)throw new DOMException('Hugging Face discovery aborted','AbortError');
   const controller=new AbortController();
   const handle=setTimeout(()=>controller.abort(),15000);
   const onAbort=()=>controller.abort();
