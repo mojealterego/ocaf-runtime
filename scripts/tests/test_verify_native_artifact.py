@@ -101,6 +101,34 @@ class NativeArtifactVerification(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "symlink"):
                 module.verify("android", p)
 
+    def test_apk_rejects_encrypted_zip_member(self):
+        # ZIP writers clear encryption flags; modify the central directory fixture.
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "encrypted.apk"
+            with zipfile.ZipFile(p, "w") as archive:
+                archive.writestr("AndroidManifest.xml", bytes(2048))
+                archive.writestr("classes.dex", bytes.fromhex("6465780a30333500") + bytes(2040))
+                archive.writestr("assets/opaque.bin", bytes(2048))
+            data = bytearray(p.read_bytes())
+            offset = 0
+            found = False
+            while True:
+                offset = data.find(bytes.fromhex("504b0102"), offset)
+                if offset < 0:
+                    break
+                name_len = struct.unpack_from("<H", data, offset + 28)[0]
+                name = bytes(data[offset + 46:offset + 46 + name_len])
+                if name == b"assets/opaque.bin":
+                    flags = struct.unpack_from("<H", data, offset + 8)[0]
+                    struct.pack_into("<H", data, offset + 8, flags | 1)
+                    found = True
+                    break
+                offset += 46 + name_len
+            self.assertTrue(found, "Missing ZIP central directory fixture entry")
+            p.write_bytes(data)
+            with self.assertRaisesRegex(ValueError, "encrypted"):
+                module.verify("android", p)
+
     def test_linux_elf_signature_and_header(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "app"
