@@ -47,6 +47,10 @@ class DesktopNativeSourceTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/agents-builder-native-linux.yml").read_text()
         self.assertIn('      - "scripts/generate_builder_icons.py"', workflow)
 
+    def test_linux_ci_rebuilds_when_gui_smoke_harness_changes(self):
+        workflow = (ROOT / ".github/workflows/agents-builder-native-linux.yml").read_text()
+        self.assertIn('      - "scripts/smoke_linux_gui.py"', workflow)
+
     def test_desktop_ci_uses_repository_pinned_rust_toolchain(self):
         import tomllib
         workflow = (ROOT / ".github/workflows/agents-builder-native-desktop.yml").read_text()
