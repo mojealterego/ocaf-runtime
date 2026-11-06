@@ -1,5 +1,7 @@
 <!-- OCAF_README_ROADMAP_BEGIN -->
 
+# 🔴 UWAGA CZYTAĆ — ZABRONIONA JEST SAMOWOLKA 🔴
+
 **AKTUALIZACJA 2026-11-06 / 0.53 — LINUX ICON GENERATOR CI TRIGGER (IMPLEMENTED_CI_UNVERIFIED):** RED kontrakt `5a87a43` wykrywa brak `scripts/generate_builder_icons.py` w `push.paths` workflow Linux; GREEN `ee36e1d` dodaje zależność. Potwierdzono statycznie obecność testu i wyzwalacza; pełne testy Python, Linux ELF/GUI, CI na końcowym SHA oraz odbiór 10 produktów pozostają NIEPOTWIERDZONE. Statusy produktów i `production_approved=false` bez zmian.
 
 
@@ -9,8 +11,6 @@
 
 **AKTUALIZACJA 2026-11-05 / 0.53 — LINUX RUST TOOLCHAIN PIN (IMPLEMENTED_CI_UNVERIFIED):** Workflow `agents-builder-native-linux.yml` wybiera jawnie Rust `1.99.0` zgodny z `rust-toolchain.toml`, zamiast polegać na zmiennym domyślnym kompilatorze akcji. Dodano test kontraktowy w `scripts/tests/test_builder_native_desktop.py`. Commity RED `90abec7`, implementacja `9169cfd`, korekta asercji `bd16ec8`. Testy wykonawcze i build Linux na końcowym SHA niepotwierdzone; status 10 produktów bez zmian.
 
-
-# 🔴 UWAGA CZYTAĆ — ZABRONIONA JEST SAMOWOLKA 🔴
 
 **AKTUALNY STAN (2026-10-16): 334 etapy główne, 64 podetapy techniczne, 10 produktów Agents Builder; razem 408 pozycji. Następny etap: 335. Audyt 606 repozytoriów: planowany, bez dowodów integracji.**
 
