@@ -1,3 +1,5 @@
+**AKTUALIZACJA 2026-11-06 / 0.53 — LINUX ICON GENERATOR CI TRIGGER (IMPLEMENTED_CI_UNVERIFIED):** RED kontrakt `5a87a43` wykrywa brak `scripts/generate_builder_icons.py` w `push.paths` workflow Linux; GREEN `ee36e1d` dodaje zależność. Potwierdzono statycznie obecność testu i wyzwalacza; pełne testy Python, Linux ELF/GUI, CI na końcowym SHA oraz odbiór 10 produktów pozostają NIEPOTWIERDZONE. Statusy produktów i `production_approved=false` bez zmian.
+
 **AKTUALIZACJA 2026-11-06 / 0.55 — APK ENCRYPTED ZIP GUARD (IMPLEMENTED_CI_UNVERIFIED):** RED `6b3d16e` dodaje negatywny test zaszyfrowanego wpisu APK; GREEN `80a1e65` odrzuca każdy wpis ZIP z ustawionym bitem szyfrowania. Fixture central directory odtworzono lokalnie; pełne testy repozytorium i CI na final SHA pozostają UNVERIFIED. Nie potwierdzono podpisu APK, natywnego GUI E2E ani odbioru produktów. Status 10 produktów bez zmian.
 
 # OCAF — JEDYNA PEŁNA KANONICZNA ROADMAPA OD POCZĄTKU (v11, 15.10.2026)
