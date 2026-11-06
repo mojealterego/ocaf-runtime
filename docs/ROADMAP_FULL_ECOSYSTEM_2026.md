@@ -1,3 +1,5 @@
+**AKTUALIZACJA 2026-11-06 / 0.55 — APK ENCRYPTED ZIP GUARD (IMPLEMENTED_CI_UNVERIFIED):** RED `6b3d16e` dodaje negatywny test zaszyfrowanego wpisu APK; GREEN `80a1e65` odrzuca każdy wpis ZIP z ustawionym bitem szyfrowania. Fixture central directory odtworzono lokalnie; pełne testy repozytorium i CI na final SHA pozostają UNVERIFIED. Nie potwierdzono podpisu APK, natywnego GUI E2E ani odbioru produktów. Status 10 produktów bez zmian.
+
 # OCAF — JEDYNA PEŁNA KANONICZNA ROADMAPA OD POCZĄTKU (v11, 15.10.2026)
 
 **AKTUALIZACJA 2026-11-05 / 0.53 — LINUX TOOLCHAIN TRIGGER (IMPLEMENTED_CI_UNVERIFIED):** Test kontraktowy `test_linux_ci_rebuilds_when_rust_toolchain_changes` (RED `94f6f15`) oraz poprawka workflow `agents-builder-native-linux.yml` (GREEN `462f169`) dodają `rust-toolchain.toml` do filtrów `push.paths`. Zmiana przypiętego kompilatora wyzwala teraz Linux native CI; wcześniejszy workflow mógł ją pominąć. RED/GREEN execution i build na final SHA niepotwierdzone. Status 10 produktów bez zmian.
