@@ -1,5 +1,12 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-06 — Linux native Builder icon generator trigger (IMPLEMENTED_CI_UNVERIFIED)
+
+- RED contract `5a87a43` adds `test_linux_ci_rebuilds_when_icon_generator_changes`; pre-fix Linux workflow executes `scripts/generate_builder_icons.py` but omits it from `push.paths`.
+- GREEN workflow `ee36e1d` adds the generator to the native Linux trigger paths. Source re-fetch confirms test and trigger; isolated negative assertion reproduced the missing path before the fix.
+- Full Python suite, actual Linux build/GUI smoke, GitHub Actions on final SHA, and ten product acceptance gates remain **UNVERIFIED**. No product status or production approval changed.
+
+
 ## 2026-11-06 — APK encrypted ZIP member rejection (IMPLEMENTED_CI_UNVERIFIED)
 
 - RED test commit `6b3d16e` adds a central-directory encryption-flag regression fixture for a non-DEX APK entry.
