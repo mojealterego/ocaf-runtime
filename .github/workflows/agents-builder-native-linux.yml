@@ -6,6 +6,7 @@ on:
     paths:
       - "apps/agents-builder-desktop/**"
       - "apps/agents-builder-web/**"
+      - "scripts/generate_builder_icons.py"
       - "scripts/verify_native_artifact.py"
       - "scripts/smoke_native_desktop.py"
       - "scripts/smoke_linux_gui.py"
