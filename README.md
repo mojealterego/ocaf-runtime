@@ -1,5 +1,8 @@
 <!-- OCAF_README_ROADMAP_BEGIN -->
 
+**AKTUALIZACJA 2026-11-06 / 0.53 — LINUX ICON GENERATOR CI TRIGGER (IMPLEMENTED_CI_UNVERIFIED):** RED kontrakt `5a87a43` wykrywa brak `scripts/generate_builder_icons.py` w `push.paths` workflow Linux; GREEN `ee36e1d` dodaje zależność. Potwierdzono statycznie obecność testu i wyzwalacza; pełne testy Python, Linux ELF/GUI, CI na końcowym SHA oraz odbiór 10 produktów pozostają NIEPOTWIERDZONE. Statusy produktów i `production_approved=false` bez zmian.
+
+
 **AKTUALIZACJA 2026-11-05 / 0.53 — LINUX TOOLCHAIN TRIGGER (IMPLEMENTED_CI_UNVERIFIED):** Test kontraktowy `test_linux_ci_rebuilds_when_rust_toolchain_changes` (RED `94f6f15`) oraz poprawka workflow `agents-builder-native-linux.yml` (GREEN `462f169`) dodają `rust-toolchain.toml` do filtrów `push.paths`. Zmiana przypiętego kompilatora wyzwala teraz Linux native CI; wcześniejszy workflow mógł ją pominąć. RED/GREEN execution i build na final SHA niepotwierdzone. Status 10 produktów bez zmian.
 
 
