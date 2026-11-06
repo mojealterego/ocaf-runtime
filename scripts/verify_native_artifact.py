@@ -42,6 +42,8 @@ def verify(kind: str, path: Path) -> None:
             with zipfile.ZipFile(path) as apk:
                 names = apk.namelist()
                 for entry in apk.infolist():
+                    if entry.flag_bits & 0x1:
+                        raise ValueError(f"APK contains encrypted ZIP entry: {entry.filename!r}")
                     if (entry.create_system == 3
                             and stat.S_IFMT(entry.external_attr >> 16) == stat.S_IFLNK):
                         raise ValueError(f"APK contains symlink ZIP entry: {entry.filename!r}")
