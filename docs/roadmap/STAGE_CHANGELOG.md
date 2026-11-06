@@ -1,3 +1,10 @@
+## 2026-11-06 — APK encrypted ZIP member rejection (IMPLEMENTED_CI_UNVERIFIED)
+
+- RED test commit `6b3d16e` adds a central-directory encryption-flag regression fixture for a non-DEX APK entry.
+- GREEN source commit `80a1e65` rejects any encrypted APK ZIP member before reading the manifest/DEX; this prevents opaque, uninspectable members from being accepted by the structural verifier.
+- The adversarial ZIP fixture was independently constructed and inspected locally; complete repository unittest RED/GREEN, final-SHA CI, signed APK authenticity, Android GUI E2E and product acceptance are **UNVERIFIED**.
+- This is structural defense in depth, not proof of a signed or working native product. All ten historical Agents Builder acceptance records remain unchanged.
+
 
 ## 2026-11-05 — APK drive-qualified ZIP paths (IMPLEMENTED_CI_UNVERIFIED)
 
