@@ -359,16 +359,27 @@ pub enum GatedExtractionError {
     InvalidAction,
 }
 
+/// Verified ingress context. Values must be derived from authenticated transport,
+/// never from a caller-controlled request body.
+pub struct ExtractionIngress<'a> {
+    pub trusted_peer: (&'a str, &'a str),
+    pub trusted_now_unix: u64,
+    pub idempotency_key: &'a str,
+}
+
 pub fn gated_extract_obligation(
     journal: &crate::governance_journal::GovernanceJournal,
     contract: &crate::governance_contract::AgentContract,
     request: &crate::governance_contract::ActionRequest<'_>,
     approval_authority: Option<&crate::governance_contract::ApprovalAuthority>,
-    trusted_peer: (&str, &str),
-    trusted_now_unix: u64,
-    idempotency_key: &str,
+    ingress: ExtractionIngress<'_>,
     clause: CitedClause<'_>,
 ) -> Result<GatedExtraction, GatedExtractionError> {
+    let ExtractionIngress {
+        trusted_peer,
+        trusted_now_unix,
+        idempotency_key,
+    } = ingress;
     use crate::governance_contract::{Domain, RiskTier};
     use crate::governance_journal::Admission;
     if request.action != "contract.extract_obligation"
@@ -663,9 +674,7 @@ mod tests {
                 &contract,
                 &request,
                 None,
-                ("tenant_a", "agent_a"),
-                170,
-                "idem_1",
+                ExtractionIngress { trusted_peer: ("tenant_a", "agent_a"), trusted_now_unix: 170, idempotency_key: "idem_1" },
                 foreign
             ),
             Err(GatedExtractionError::InvalidAction)
@@ -755,9 +764,7 @@ mod tests {
                 &contract,
                 &request,
                 None,
-                ("tenant_a", "agent_a"),
-                170,
-                "idem_1",
+                ExtractionIngress { trusted_peer: ("tenant_a", "agent_a"), trusted_now_unix: 170, idempotency_key: "idem_1" },
                 substituted
             ),
             Err(GatedExtractionError::InvalidAction)
@@ -808,9 +815,7 @@ mod tests {
                 &contract,
                 &request,
                 None,
-                ("tenant_a", "agent_a"),
-                170,
-                "idem_1",
+                ExtractionIngress { trusted_peer: ("tenant_a", "agent_a"), trusted_now_unix: 170, idempotency_key: "idem_1" },
                 cited("Supplier shall report within 3 days.")
             ),
             Err(GatedExtractionError::InvalidAction)
@@ -862,9 +867,7 @@ mod tests {
                 &contract,
                 &request,
                 None,
-                ("tenant_a", "agent_a"),
-                170,
-                "idem_1",
+                ExtractionIngress { trusted_peer: ("tenant_a", "agent_a"), trusted_now_unix: 170, idempotency_key: "idem_1" },
                 invalid
             ),
             Err(GatedExtractionError::Clause(
@@ -921,9 +924,7 @@ mod tests {
             &contract,
             &request,
             None,
-            ("tenant_a", "agent_a"),
-            170,
-            "idem_1",
+            ExtractionIngress { trusted_peer: ("tenant_a", "agent_a"), trusted_now_unix: 170, idempotency_key: "idem_1" },
             clause,
         )
         .unwrap();
@@ -933,9 +934,7 @@ mod tests {
             &contract,
             &request,
             None,
-            ("tenant_a", "agent_a"),
-            170,
-            "idem_1",
+            ExtractionIngress { trusted_peer: ("tenant_a", "agent_a"), trusted_now_unix: 170, idempotency_key: "idem_1" },
             clause,
         )
         .unwrap();
@@ -949,9 +948,7 @@ mod tests {
                 &contract,
                 &request,
                 None,
-                ("tenant_a", "agent_a"),
-                170,
-                "idem_1",
+                ExtractionIngress { trusted_peer: ("tenant_a", "agent_a"), trusted_now_unix: 170, idempotency_key: "idem_1" },
                 clause,
             )
             .unwrap(),
@@ -968,9 +965,7 @@ mod tests {
                 &contract,
                 &request,
                 None,
-                ("tenant_a", "agent_a"),
-                170,
-                "idem_1",
+                ExtractionIngress { trusted_peer: ("tenant_a", "agent_a"), trusted_now_unix: 170, idempotency_key: "idem_1" },
                 clause,
             )
             .unwrap(),
