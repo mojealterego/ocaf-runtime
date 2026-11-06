@@ -674,7 +674,11 @@ mod tests {
                 &contract,
                 &request,
                 None,
-                ExtractionIngress { trusted_peer: ("tenant_a", "agent_a"), trusted_now_unix: 170, idempotency_key: "idem_1" },
+                ExtractionIngress {
+                    trusted_peer: ("tenant_a", "agent_a"),
+                    trusted_now_unix: 170,
+                    idempotency_key: "idem_1"
+                },
                 foreign
             ),
             Err(GatedExtractionError::InvalidAction)
@@ -764,7 +768,11 @@ mod tests {
                 &contract,
                 &request,
                 None,
-                ExtractionIngress { trusted_peer: ("tenant_a", "agent_a"), trusted_now_unix: 170, idempotency_key: "idem_1" },
+                ExtractionIngress {
+                    trusted_peer: ("tenant_a", "agent_a"),
+                    trusted_now_unix: 170,
+                    idempotency_key: "idem_1"
+                },
                 substituted
             ),
             Err(GatedExtractionError::InvalidAction)
@@ -815,7 +823,11 @@ mod tests {
                 &contract,
                 &request,
                 None,
-                ExtractionIngress { trusted_peer: ("tenant_a", "agent_a"), trusted_now_unix: 170, idempotency_key: "idem_1" },
+                ExtractionIngress {
+                    trusted_peer: ("tenant_a", "agent_a"),
+                    trusted_now_unix: 170,
+                    idempotency_key: "idem_1"
+                },
                 cited("Supplier shall report within 3 days.")
             ),
             Err(GatedExtractionError::InvalidAction)
@@ -867,7 +879,11 @@ mod tests {
                 &contract,
                 &request,
                 None,
-                ExtractionIngress { trusted_peer: ("tenant_a", "agent_a"), trusted_now_unix: 170, idempotency_key: "idem_1" },
+                ExtractionIngress {
+                    trusted_peer: ("tenant_a", "agent_a"),
+                    trusted_now_unix: 170,
+                    idempotency_key: "idem_1"
+                },
                 invalid
             ),
             Err(GatedExtractionError::Clause(
@@ -924,7 +940,11 @@ mod tests {
             &contract,
             &request,
             None,
-            ExtractionIngress { trusted_peer: ("tenant_a", "agent_a"), trusted_now_unix: 170, idempotency_key: "idem_1" },
+            ExtractionIngress {
+                trusted_peer: ("tenant_a", "agent_a"),
+                trusted_now_unix: 170,
+                idempotency_key: "idem_1",
+            },
             clause,
         )
         .unwrap();
@@ -934,7 +954,11 @@ mod tests {
             &contract,
             &request,
             None,
-            ExtractionIngress { trusted_peer: ("tenant_a", "agent_a"), trusted_now_unix: 170, idempotency_key: "idem_1" },
+            ExtractionIngress {
+                trusted_peer: ("tenant_a", "agent_a"),
+                trusted_now_unix: 170,
+                idempotency_key: "idem_1",
+            },
             clause,
         )
         .unwrap();
@@ -948,7 +972,11 @@ mod tests {
                 &contract,
                 &request,
                 None,
-                ExtractionIngress { trusted_peer: ("tenant_a", "agent_a"), trusted_now_unix: 170, idempotency_key: "idem_1" },
+                ExtractionIngress {
+                    trusted_peer: ("tenant_a", "agent_a"),
+                    trusted_now_unix: 170,
+                    idempotency_key: "idem_1",
+                },
                 clause,
             )
             .unwrap(),
@@ -965,7 +993,11 @@ mod tests {
                 &contract,
                 &request,
                 None,
-                ExtractionIngress { trusted_peer: ("tenant_a", "agent_a"), trusted_now_unix: 170, idempotency_key: "idem_1" },
+                ExtractionIngress {
+                    trusted_peer: ("tenant_a", "agent_a"),
+                    trusted_now_unix: 170,
+                    idempotency_key: "idem_1",
+                },
                 clause,
             )
             .unwrap(),
