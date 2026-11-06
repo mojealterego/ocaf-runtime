@@ -768,7 +768,7 @@ mod tests {
     #[test]
     fn gated_extraction_rejects_payload_substitution_without_audit() {
         use crate::governance_contract::{
-            payload_sha256, Accountability, ActionRequest, AgentContract, Domain, RiskTier,
+            Accountability, ActionRequest, AgentContract, Domain, RiskTier,
         };
         use crate::governance_journal::GovernanceJournal;
         use std::collections::BTreeSet;
@@ -821,7 +821,7 @@ mod tests {
     #[test]
     fn invalid_clause_is_rejected_before_reserving_intent() {
         use crate::governance_contract::{
-            payload_sha256, Accountability, ActionRequest, AgentContract, Domain, RiskTier,
+            Accountability, ActionRequest, AgentContract, Domain, RiskTier,
         };
         use crate::governance_journal::GovernanceJournal;
         use std::collections::BTreeSet;
@@ -877,7 +877,7 @@ mod tests {
     #[test]
     fn shared_extraction_gate_refuses_execution_without_durable_admission() {
         use crate::governance_contract::{
-            payload_sha256, Accountability, ActionRequest, AgentContract, Domain, SocialCommitment,
+            Accountability, ActionRequest, AgentContract, Domain, SocialCommitment,
         };
         use crate::governance_journal::{Admission, GovernanceJournal};
         use std::collections::BTreeSet;
