@@ -1,5 +1,3 @@
-**AKTUALIZACJA 2026-11-06 / 0.55 — APK ENCRYPTED ZIP GUARD (IMPLEMENTED_CI_UNVERIFIED):** RED `6b3d16e` dodaje negatywny test zaszyfrowanego wpisu APK; GREEN `80a1e65` odrzuca każdy wpis ZIP z ustawionym bitem szyfrowania. Fixture central directory odtworzono lokalnie; pełne testy repozytorium i CI na final SHA pozostają UNVERIFIED. Nie potwierdzono podpisu APK, natywnego GUI E2E ani odbioru produktów. Status 10 produktów bez zmian.
-
 <!-- OCAF_README_ROADMAP_BEGIN -->
 
 **AKTUALIZACJA 2026-11-05 / 0.53 — LINUX TOOLCHAIN TRIGGER (IMPLEMENTED_CI_UNVERIFIED):** Test kontraktowy `test_linux_ci_rebuilds_when_rust_toolchain_changes` (RED `94f6f15`) oraz poprawka workflow `agents-builder-native-linux.yml` (GREEN `462f169`) dodają `rust-toolchain.toml` do filtrów `push.paths`. Zmiana przypiętego kompilatora wyzwala teraz Linux native CI; wcześniejszy workflow mógł ją pominąć. RED/GREEN execution i build na final SHA niepotwierdzone. Status 10 produktów bez zmian.
@@ -520,6 +518,9 @@ Rejestr źródłowy (nie oznacza zakończenia implementacji):
 **ARGON SOURCE 1.55–2.06 / kanoniczne mapowanie (2026-10-30):** [20 grup źródłowych, powiązania z etapami, luki i statusy CI](docs/audits/ARGON_155_206_RECONCILIATION_2026-10-30.md). Historyczne etapy 1.55–2.06 pozostają bez renumeracji. NOWY KOD: Rust Document DAG, schema migration SQLite, model routing, bounded compound reasoning, voice firewall, collaborative object tracker with SQLite persistence, prompt DSL oraz pomiary subprocess p50/p95/p99 (CI do sprawdzenia), inne źródłowe wymagania nadal PARTIAL/OPEN; brak globalnego produkcyjnego PASS.
 
 <!-- OCAF_README_ROADMAP_END -->
+
+**AKTUALIZACJA 2026-11-06 / 0.55 — APK ENCRYPTED ZIP GUARD (IMPLEMENTED_CI_UNVERIFIED):** RED `6b3d16e` dodaje negatywny test zaszyfrowanego wpisu APK; GREEN `80a1e65` odrzuca każdy wpis ZIP z ustawionym bitem szyfrowania. Fixture central directory odtworzono lokalnie; pełne testy repozytorium i CI na final SHA pozostają UNVERIFIED. Nie potwierdzono podpisu APK, natywnego GUI E2E ani odbioru produktów. Status 10 produktów bez zmian.
+
 
 > **📌 [PEŁNA ROADMAPA OCAF OD SAMEGO POCZĄTKU — ROADMAP.md](ROADMAP.md)** · [Etapy 0.00–1.94 i statusy wykonania](ROADMAP.md#statystyka-wykonania-i-uczciwe-oznaczenia) · [10 pierwotnych Agents Builder Code / NoCode](docs/AGENTS_BUILDER_CODE_NOCODE_5_PLATFORMS.md) · [inwentaryzacja braków](docs/INVENTORY_LOST_REQUIREMENTS_2026-10-15.md) · [dziennik zmian po każdym etapie](docs/roadmap/STAGE_CHANGELOG.md)  
 > **Jedyna kanoniczna Roadmapa v11 jest przypięta na samym początku README oraz w katalogu głównym.** 195 etapów, 64 podetapy; nowo odkryte elementy dopisywane tylko kolejnymi numerami, stare wymagania przywracane pod pierwotnymi etapami. 
