@@ -18,6 +18,9 @@ use thiserror::Error;
 const MAX_TENANT_AUDIT_ROWS: u64 = 32768;
 const GENESIS: &str = "OCAF-AUDIT-GENESIS-v1";
 
+// Durable intent row: actor, request ID, payload hash, state and optional receipt.
+type StoredIntent = (String, String, Vec<u8>, String, Option<Vec<u8>>);
+
 #[derive(Debug, Error)]
 pub enum JournalError {
     #[error("invalid journal path or authenticated admission input")]
@@ -240,7 +243,7 @@ impl GovernanceJournal {
             db(tx.commit())?;
             return Ok(Admission::Denied(reason));
         }
-        let prior: Option<(String, String, Vec<u8>, String, Option<Vec<u8>>)> = db(tx
+        let prior: Option<StoredIntent> = db(tx
             .query_row(
                 "SELECT actor,request_id,payload_sha256,status,outcome_sha256
              FROM governance_intents_v1
