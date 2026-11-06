@@ -423,9 +423,10 @@ impl GovernanceJournal {
             return Err(JournalError::Conflict);
         }
         if phase == "COMMITTED" {
-            if existing_outcome.as_ref().is_none_or(|stored| {
-                stored.len() != 32 || stored.iter().all(|byte| *byte == 0)
-            }) {
+            if existing_outcome
+                .as_ref()
+                .is_none_or(|stored| stored.len() != 32 || stored.iter().all(|byte| *byte == 0))
+            {
                 return Err(JournalError::Integrity);
             }
             if existing_outcome.as_deref() == Some(outcome_sha256.as_slice()) {
@@ -500,9 +501,7 @@ fn scan_audit(tx: &Transaction<'_>, tenant: &str) -> Result<AuditHead, JournalEr
             || !valid_id(&request)
             || (decision == "ALLOW_INTENT" && reason != "PENDING_EXTERNAL_GATE")
             || (decision == "OUTCOME_RECEIPT" && reason != "EXTERNALLY_VERIFIED_BY_CALLER")
-            || (decision == "REPLAY"
-                && reason != "ReplayPending"
-                && reason != "ReplayCommitted")
+            || (decision == "REPLAY" && reason != "ReplayPending" && reason != "ReplayCommitted")
             || (decision == "DENY"
                 && !matches!(
                     reason.as_str(),
@@ -713,7 +712,14 @@ mod tests {
         let r = request();
         assert_eq!(
             journal
-                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "invalid_receipt")
+                .begin(
+                    &c,
+                    &r,
+                    None,
+                    ("tenant_a", "agent_a"),
+                    170,
+                    "invalid_receipt"
+                )
                 .unwrap(),
             Admission::FreshPending
         );
@@ -741,7 +747,14 @@ mod tests {
         }
         assert_eq!(
             journal
-                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "invalid_receipt")
+                .begin(
+                    &c,
+                    &r,
+                    None,
+                    ("tenant_a", "agent_a"),
+                    170,
+                    "invalid_receipt"
+                )
                 .unwrap(),
             Admission::ReplayPending
         );
@@ -866,7 +879,14 @@ mod tests {
         let r = request();
         assert_eq!(
             journal
-                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "restart_receipt")
+                .begin(
+                    &c,
+                    &r,
+                    None,
+                    ("tenant_a", "agent_a"),
+                    170,
+                    "restart_receipt"
+                )
                 .unwrap(),
             Admission::FreshPending
         );
@@ -896,7 +916,14 @@ mod tests {
         assert_eq!(reopened.inspect("tenant_a", Some(&pinned)).unwrap(), pinned);
         assert_eq!(
             reopened
-                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "restart_receipt")
+                .begin(
+                    &c,
+                    &r,
+                    None,
+                    ("tenant_a", "agent_a"),
+                    170,
+                    "restart_receipt"
+                )
                 .unwrap(),
             Admission::ReplayCommitted
         );
@@ -954,8 +981,15 @@ mod tests {
                  (tenant,seq,actor,action,request_id,decision,reason,payload_sha256,previous,digest)
                  VALUES (?1,1,?2,?3,?4,?5,?6,?7,?8,?9)",
                 params![
-                    "tenant_a", "agent_a", "read", "req_1", decision, reason,
-                    r.payload_sha256.as_slice(), GENESIS, digest
+                    "tenant_a",
+                    "agent_a",
+                    "read",
+                    "req_1",
+                    decision,
+                    reason,
+                    r.payload_sha256.as_slice(),
+                    GENESIS,
+                    digest
                 ],
             )
             .unwrap();
@@ -1077,7 +1111,14 @@ mod tests {
         let r = request();
         assert_eq!(
             journal
-                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "reason_semantic")
+                .begin(
+                    &c,
+                    &r,
+                    None,
+                    ("tenant_a", "agent_a"),
+                    170,
+                    "reason_semantic"
+                )
                 .unwrap(),
             Admission::FreshPending
         );
@@ -1213,9 +1254,7 @@ mod tests {
             let pinned = journal.inspect("tenant_a", None).unwrap();
             let conn = Connection::open(file.path()).unwrap();
             conn.execute(
-                &format!(
-                    "UPDATE governance_intents_v1 SET {column}=?1 WHERE idem='bad_commit_id'"
-                ),
+                &format!("UPDATE governance_intents_v1 SET {column}=?1 WHERE idem='bad_commit_id'"),
                 params![bad_value],
             )
             .unwrap();
@@ -1267,7 +1306,14 @@ mod tests {
         let r = request();
         assert_eq!(
             journal
-                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "corrupt_collision")
+                .begin(
+                    &c,
+                    &r,
+                    None,
+                    ("tenant_a", "agent_a"),
+                    170,
+                    "corrupt_collision"
+                )
                 .unwrap(),
             Admission::FreshPending
         );
@@ -1323,9 +1369,7 @@ mod tests {
             let pinned = journal.inspect("tenant_a", None).unwrap();
             let conn = Connection::open(file.path()).unwrap();
             conn.execute(
-                &format!(
-                    "UPDATE governance_intents_v1 SET {column}={corrupted} WHERE idem=?1"
-                ),
+                &format!("UPDATE governance_intents_v1 SET {column}={corrupted} WHERE idem=?1"),
                 params![idem],
             )
             .unwrap();
@@ -1344,7 +1388,14 @@ mod tests {
         let r = request();
         assert_eq!(
             journal
-                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "bad_payload_hash")
+                .begin(
+                    &c,
+                    &r,
+                    None,
+                    ("tenant_a", "agent_a"),
+                    170,
+                    "bad_payload_hash"
+                )
                 .unwrap(),
             Admission::FreshPending
         );
@@ -1389,13 +1440,7 @@ mod tests {
         )
         .unwrap();
         assert!(matches!(
-            journal.record_verified_outcome(
-                "tenant_a",
-                "agent_a",
-                &r,
-                "zeroed_digest",
-                receipt,
-            ),
+            journal.record_verified_outcome("tenant_a", "agent_a", &r, "zeroed_digest", receipt,),
             Err(JournalError::Integrity)
         ));
     }
@@ -1407,7 +1452,14 @@ mod tests {
         let r = request();
         assert_eq!(
             journal
-                .begin(&c, &r, None, ("tenant_a", "agent_a"), 170, "malformed_digest")
+                .begin(
+                    &c,
+                    &r,
+                    None,
+                    ("tenant_a", "agent_a"),
+                    170,
+                    "malformed_digest"
+                )
                 .unwrap(),
             Admission::FreshPending
         );
@@ -1422,13 +1474,8 @@ mod tests {
         )
         .unwrap();
         assert!(matches!(
-            journal.record_verified_outcome(
-                "tenant_a",
-                "agent_a",
-                &r,
-                "malformed_digest",
-                receipt,
-            ),
+            journal
+                .record_verified_outcome("tenant_a", "agent_a", &r, "malformed_digest", receipt,),
             Err(JournalError::Integrity)
         ));
     }
