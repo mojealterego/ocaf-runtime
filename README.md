@@ -5,6 +5,8 @@
 
 # 🔴 UWAGA CZYTAĆ — ZABRONIONA JEST SAMOWOLKA 🔴
 
+**2026-11-07 / 0.53 — Linux GUI transient capture hardening (IMPLEMENTED_CI_PENDING):** RED regression `a16ed6a` covers ImageMagick `import` returning a transient nonzero exit before a valid capture; implementation `9e09b4b` retries command failures and timeouts within the original deadline, caps each capture at 5 seconds, preserves process-liveness and strict PNG checks. Full CI/Linux GUI E2E on final SHA pending; no change to ten products or production approval.
+
 **2026-11-07 / 0.53 Linux GUI:** RED `1a8eb42`, GREEN `dc873fe` — bounded screenshot retry preserving PNG checks and process ownership; CI/E2E on final SHA UNVERIFIED. Ten Agents Builder products remain unapproved.
 
 **AKTUALIZACJA 2026-11-06 / 0.53 — LINUX ICON GENERATOR CI TRIGGER (IMPLEMENTED_CI_UNVERIFIED):** RED kontrakt `5a87a43` wykrywa brak `scripts/generate_builder_icons.py` w `push.paths` workflow Linux; GREEN `ee36e1d` dodaje zależność. Potwierdzono statycznie obecność testu i wyzwalacza; pełne testy Python, Linux ELF/GUI, CI na końcowym SHA oraz odbiór 10 produktów pozostają NIEPOTWIERDZONE. Statusy produktów i `production_approved=false` bez zmian.
