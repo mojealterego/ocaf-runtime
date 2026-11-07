@@ -42,7 +42,19 @@ def run(binary: Path, screenshot: Path, seconds: float = 15.0) -> None:
             if process.poll() is not None:
                 raise RuntimeError("Linux desktop process exited before screenshot validation")
             screenshot.unlink(missing_ok=True)
-            subprocess.run(["import", "-window", window, str(screenshot)], check=True, timeout=15)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise RuntimeError("Missing or invalid Linux window screenshot")
+            try:
+                subprocess.run(
+                    ["import", "-window", window, str(screenshot)],
+                    check=True,
+                    timeout=min(5.0, remaining),
+                )
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+                # A transient X11 capture failure is not evidence of a valid image.
+                # Retry only while the original smoke deadline and process permit.
+                pass
             data = screenshot.read_bytes() if screenshot.is_file() else b""
             valid_header = (
                 len(data) >= 1024
