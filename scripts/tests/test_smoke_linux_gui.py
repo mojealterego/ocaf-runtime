@@ -17,9 +17,13 @@ class LinuxGuiSmokeContracts(unittest.TestCase):
     def test_screenshot_requires_png_magic_and_nontrivial_size(self):
         source = SCRIPT.read_text()
         self.assertIn('bytes.fromhex("89504e470d0a1a0a")', source)
-        self.assertIn("len(data) >= 1024", source)
-        self.assertIn('struct.unpack(">II", data[16:24])', source)
-        self.assertIn('data[12:16] == b"IHDR"', source)
+        self.assertIn("len(data) < 1024", source)
+        self.assertIn('struct.unpack_from(">I", data, pos)', source)
+        self.assertIn("zlib.crc32(kind + payload)", source)
+        self.assertIn('kind != b"IHDR" or length != 13', source)
+        self.assertIn('kind == b"IDAT"', source)
+        self.assertIn('kind == b"IEND"', source)
+        self.assertIn("pos != len(data)", source)
 
     def test_workflow_gates_artifact_on_gui_smoke(self):
         workflow = WORKFLOW.read_text()
