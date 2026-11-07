@@ -1,5 +1,8 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+**2026-11-07 / 0.53 — Linux GUI CI regression fixtures (TEST_FIX_CI_PENDING):** Rust CI [#42337773570](https://github.com/mojealterego/ocaf-runtime/actions/runs/42337773570) on `0eb3a6a2` failed Python unittest: runtime fixture used literal escaped newline/PNG bytes, while static contract expected obsolete negative comparisons. Commits `1734435` and `351b691` correct fixture bytes and align assertions with existing strict positive PNG checks. Full CI on final SHA pending; no native product acceptance or production approval.
+
+
 ## 2026-11-07 — Linux GUI screenshot retry (IMPLEMENTED_CI_UNVERIFIED)
 
 - RED `1a8eb42` introduces first-capture-invalid/second-capture-valid regression.
