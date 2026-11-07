@@ -4,7 +4,61 @@ import argparse
 from pathlib import Path
 import subprocess
 import struct
+import zlib
 import time
+
+
+
+def _valid_png(data: bytes) -> bool:
+    """Validate bounded PNG chunk structure, CRCs and a terminal IEND."""
+    if len(data) < 1024 or not data.startswith(bytes.fromhex("89504e470d0a1a0a")):
+        return False
+    pos = 8
+    seen_ihdr = seen_idat = seen_iend = after_idat = False
+    while pos < len(data):
+        if len(data) - pos < 12:
+            return False
+        length = struct.unpack_from(">I", data, pos)[0]
+        pos += 4
+        kind = data[pos:pos + 4]
+        pos += 4
+        if length > len(data) - pos - 4:
+            return False
+        payload = data[pos:pos + length]
+        pos += length
+        crc = struct.unpack_from(">I", data, pos)[0]
+        pos += 4
+        if zlib.crc32(kind + payload) & 0xffffffff != crc:
+            return False
+        if not seen_ihdr:
+            if kind != b"IHDR" or length != 13:
+                return False
+            width, height, depth, color, compression, filter_method, interlace = struct.unpack(">IIBBBBB", payload)
+            if (width < 320 or height < 240 or depth not in (1, 2, 4, 8, 16)
+                    or color not in (0, 2, 3, 4, 6) or compression != 0
+                    or filter_method != 0 or interlace not in (0, 1)):
+                return False
+            if (color in (2, 4, 6) and depth not in (8, 16)) or (color == 3 and depth == 16):
+                return False
+            seen_ihdr = True
+        elif kind == b"IHDR":
+            return False
+        elif kind == b"IDAT":
+            if after_idat or length == 0:
+                return False
+            seen_idat = True
+        elif kind == b"IEND":
+            if length != 0 or not seen_idat or pos != len(data):
+                return False
+            seen_iend = True
+            break
+        else:
+            if seen_idat:
+                after_idat = True
+            # Unknown critical chunks are not safe to accept.
+            if not kind or kind[0] & 32 == 0:
+                return False
+    return seen_ihdr and seen_idat and seen_iend
 
 
 def run(binary: Path, screenshot: Path, seconds: float = 15.0) -> None:
@@ -71,16 +125,8 @@ def run(binary: Path, screenshot: Path, seconds: float = 15.0) -> None:
                 # Retry only while the original smoke deadline and process permit.
                 pass
             data = screenshot.read_bytes() if screenshot.is_file() else b""
-            valid_header = (
-                len(data) >= 1024
-                and data[:8] == bytes.fromhex("89504e470d0a1a0a")
-                and data[12:16] == b"IHDR"
-                and struct.unpack(">I", data[8:12])[0] == 13
-            )
-            if valid_header:
-                width, height = struct.unpack(">II", data[16:24])
-                if width >= 320 and height >= 240:
-                    break
+            if _valid_png(data):
+                break
             if time.monotonic() >= deadline:
                 raise RuntimeError("Missing or invalid Linux window screenshot")
             time.sleep(min(0.5, max(0.0, deadline - time.monotonic())))
