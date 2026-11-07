@@ -15,7 +15,7 @@ def _chunk(kind, payload):
 
 def _valid_fixture():
     # Real, complete PNG with enough entropy to exceed the smoke size threshold.
-    rows = b"".join(b"\\x00" + bytes((x * 17 + y * 31) % 256 for x in range(640 * 3)) for y in range(480))
+    rows = b"".join(b"\x00" + bytes((x * 17 + y * 31) % 256 for x in range(640 * 3)) for y in range(480))
     return (bytes.fromhex("89504e470d0a1a0a")
             + _chunk(b"IHDR", struct.pack(">IIBBBBB", 640, 480, 8, 2, 0, 0, 0))
             + _chunk(b"IDAT", zlib.compress(rows))
