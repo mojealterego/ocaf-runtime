@@ -1,5 +1,7 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+**2026-11-07 / 0.53 — Linux GUI transient capture hardening (IMPLEMENTED_CI_PENDING):** RED regression `a16ed6a` covers ImageMagick `import` returning a transient nonzero exit before a valid capture; implementation `9e09b4b` retries command failures and timeouts within the original deadline, caps each capture at 5 seconds, preserves process-liveness and strict PNG checks. Full CI/Linux GUI E2E on final SHA pending; no change to ten products or production approval.
+
 **2026-11-07 / 0.53 — Linux GUI CI regression fixtures (TEST_FIX_CI_PENDING):** Rust CI [#42337773570](https://github.com/mojealterego/ocaf-runtime/actions/runs/42337773570) on `0eb3a6a2` failed Python unittest: runtime fixture used literal escaped newline/PNG bytes, while static contract expected obsolete negative comparisons. Commits `1734435` and `351b691` correct fixture bytes and align assertions with existing strict positive PNG checks. Full CI on final SHA pending; no native product acceptance or production approval.
 
 
