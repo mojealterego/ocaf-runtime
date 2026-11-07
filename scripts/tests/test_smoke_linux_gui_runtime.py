@@ -105,7 +105,7 @@ class LinuxGuiSmokeTests(unittest.TestCase):
                         screenshot.write_bytes(b"bad")
                     else:
                         import struct
-                        screenshot.write_bytes(bytes.fromhex("89504e470d0a1a0a") + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 640, 480) + b"\x08\x02\x00\x00\x00" + b"x" * 1100)
+                        screenshot.write_bytes(_valid_fixture())
                     return Result()
                 raise AssertionError(argv)
             with (patch.object(module.subprocess, "Popen", return_value=Process()),
@@ -157,7 +157,7 @@ class LinuxGuiSmokeTests(unittest.TestCase):
                     if len(captures) == 1:
                         raise module.subprocess.CalledProcessError(1, argv)
                     import struct
-                    screenshot.write_bytes(bytes.fromhex("89504e470d0a1a0a") + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 640, 480) + b"\x08\x02\x00\x00\x00" + b"x" * 1100)
+                    screenshot.write_bytes(_valid_fixture())
                     return Result()
                 raise AssertionError(argv)
             with (patch.object(module.subprocess, "Popen", return_value=Process()),
