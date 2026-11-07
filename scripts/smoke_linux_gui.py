@@ -17,22 +17,37 @@ def run(binary: Path, screenshot: Path, seconds: float = 15.0) -> None:
         while time.monotonic() < deadline:
             if process.poll() is not None:
                 raise RuntimeError("Linux desktop process exited before mapping its window")
-            result = subprocess.run(
-                ["xdotool", "search", "--onlyvisible", "--name", "OCAF Agents Builder"],
-                capture_output=True, text=True, timeout=5, check=False,
-            )
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            try:
+                result = subprocess.run(
+                    ["xdotool", "search", "--onlyvisible", "--name", "OCAF Agents Builder"],
+                    capture_output=True, text=True, timeout=min(5.0, remaining), check=False,
+                )
+            except subprocess.TimeoutExpired:
+                # Window discovery must not outlive the shared GUI smoke deadline.
+                continue
             if result.returncode == 0 and result.stdout.strip():
                 for candidate in result.stdout.splitlines():
-                    owner = subprocess.run(
-                        ["xdotool", "getwindowpid", candidate.strip()],
-                        capture_output=True, text=True, timeout=5, check=False,
-                    )
+                    if process.poll() is not None:
+                        raise RuntimeError("Linux desktop process exited before mapping its window")
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        break
+                    try:
+                        owner = subprocess.run(
+                            ["xdotool", "getwindowpid", candidate.strip()],
+                            capture_output=True, text=True, timeout=min(5.0, remaining), check=False,
+                        )
+                    except subprocess.TimeoutExpired:
+                        continue
                     if owner.returncode == 0 and owner.stdout.strip() == str(process.pid):
                         window = candidate.strip()
                         break
                 if window is not None:
                     break
-            time.sleep(0.5)
+            time.sleep(min(0.5, max(0.0, deadline - time.monotonic())))
         if window is None:
             raise RuntimeError("No visible OCAF Agents Builder window detected")
         screenshot.parent.mkdir(parents=True, exist_ok=True)
