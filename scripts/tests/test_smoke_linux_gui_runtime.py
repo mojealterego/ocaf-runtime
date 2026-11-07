@@ -138,5 +138,33 @@ class LinuxGuiSmokeTests(unittest.TestCase):
             self.assertTrue(all(0 < timeout <= 5 for timeout in captures))
 
 
+
+    def test_window_discovery_respects_global_deadline(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            binary = Path(tmp) / "binary"
+            binary.write_bytes(b"binary")
+
+            class Process:
+                pid = 1234
+                def poll(self):
+                    return None
+                def terminate(self):
+                    pass
+                def communicate(self, timeout):
+                    return (b"", b"")
+
+            def command(argv, **kwargs):
+                if argv[0] == "xdotool":
+                    self.assertGreater(kwargs["timeout"], 0)
+                    self.assertLessEqual(kwargs["timeout"], 0.1)
+                    raise module.subprocess.TimeoutExpired(argv, kwargs["timeout"])
+                raise AssertionError(argv)
+
+            with (patch.object(module.subprocess, "Popen", return_value=Process()),
+                  patch.object(module.subprocess, "run", side_effect=command),
+                  patch.object(module.time, "sleep")):
+                with self.assertRaisesRegex(RuntimeError, "No visible"):
+                    module.run(binary, Path(tmp) / "screen.png", seconds=0.1)
+
 if __name__ == "__main__":
     unittest.main()
