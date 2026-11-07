@@ -14,7 +14,7 @@ def _valid_png(data: bytes) -> bool:
     if len(data) < 1024 or not data.startswith(bytes.fromhex("89504e470d0a1a0a")):
         return False
     pos = 8
-    seen_ihdr = seen_idat = seen_iend = after_idat = False
+    seen_ihdr = seen_idat = seen_iend = after_idat = seen_plte = False
     while pos < len(data):
         if len(data) - pos < 12:
             return False
@@ -43,8 +43,12 @@ def _valid_png(data: bytes) -> bool:
             seen_ihdr = True
         elif kind == b"IHDR":
             return False
+        elif kind == b"PLTE":
+            if seen_plte or seen_idat or length == 0 or length > 768 or length % 3:
+                return False
+            seen_plte = True
         elif kind == b"IDAT":
-            if after_idat or length == 0:
+            if after_idat or length == 0 or (color == 3 and not seen_plte):
                 return False
             seen_idat = True
         elif kind == b"IEND":
