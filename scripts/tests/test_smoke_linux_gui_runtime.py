@@ -119,15 +119,15 @@ class LinuxGuiSmokeTests(unittest.TestCase):
             captures = []
             def command(argv, **kwargs):
                 if argv[0] == "xdotool" and "search" in argv:
-                    return Result(0, "9876\\n")
+                    return Result(0, "9876\n")
                 if argv[0] == "xdotool":
-                    return Result(0, "1234\\n")
+                    return Result(0, "1234\n")
                 if argv[0] == "import":
                     captures.append(kwargs.get("timeout"))
                     if len(captures) == 1:
                         raise module.subprocess.CalledProcessError(1, argv)
                     import struct
-                    screenshot.write_bytes(bytes.fromhex("89504e470d0a1a0a") + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 640, 480) + b"\\x08\\x02\\x00\\x00\\x00" + b"x" * 1100)
+                    screenshot.write_bytes(bytes.fromhex("89504e470d0a1a0a") + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 640, 480) + b"\x08\x02\x00\x00\x00" + b"x" * 1100)
                     return Result()
                 raise AssertionError(argv)
             with (patch.object(module.subprocess, "Popen", return_value=Process()),
