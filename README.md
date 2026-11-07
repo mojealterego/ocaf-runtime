@@ -1,5 +1,8 @@
 <!-- OCAF_README_ROADMAP_BEGIN -->
 
+**2026-11-07 / 0.53 — Linux GUI CI regression fixtures (TEST_FIX_CI_PENDING):** Rust CI [#42337773570](https://github.com/mojealterego/ocaf-runtime/actions/runs/42337773570) on `0eb3a6a2` failed Python unittest: runtime fixture used literal escaped newline/PNG bytes, while static contract expected obsolete negative comparisons. Commits `1734435` and `351b691` correct fixture bytes and align assertions with existing strict positive PNG checks. Full CI on final SHA pending; no native product acceptance or production approval.
+
+
 # 🔴 UWAGA CZYTAĆ — ZABRONIONA JEST SAMOWOLKA 🔴
 
 **2026-11-07 / 0.53 Linux GUI:** RED `1a8eb42`, GREEN `dc873fe` — bounded screenshot retry preserving PNG checks and process ownership; CI/E2E on final SHA UNVERIFIED. Ten Agents Builder products remain unapproved.
