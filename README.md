@@ -1,5 +1,8 @@
 <!-- OCAF_README_ROADMAP_BEGIN -->
 
+**2026-11-07 / 0.53 — Linux GUI PNG structural integrity (IMPLEMENTED_CI_PENDING):** RED regression `67bbf61c` adds CRC/IEND/truncation/trailing-data negative checks; GREEN `38661f37` adds chunk framing/CRC/IHDR/IDAT/IEND validation; fixture corrections `66f1fc72`, `1a2fe830` replace synthetic headers with complete PNG; `db71f8b4` permits valid indexed PNG palettes with ordering constraints. Standalone local algorithm tests 8/8 PASS; full repository unittest, Rust CI and native Linux GUI E2E on final SHA remain UNVERIFIED. Ten products and production approval unchanged.
+
+
 **2026-11-07 / 0.53 — Linux GUI CI regression fixtures (TEST_FIX_CI_PENDING):** Rust CI [#42337773570](https://github.com/mojealterego/ocaf-runtime/actions/runs/42337773570) on `0eb3a6a2` failed Python unittest: runtime fixture used literal escaped newline/PNG bytes, while static contract expected obsolete negative comparisons. Commits `1734435` and `351b691` correct fixture bytes and align assertions with existing strict positive PNG checks. Full CI on final SHA pending; no native product acceptance or production approval.
 
 
