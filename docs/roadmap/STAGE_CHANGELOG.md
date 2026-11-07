@@ -1,5 +1,11 @@
 # OCAF — DZIENNIK KOŃCA ETAPU I KONTROLA ZMIAN ROADMAPY
 
+## 2026-11-07 — Linux GUI screenshot retry (IMPLEMENTED_CI_UNVERIFIED)
+
+- RED `1a8eb42` introduces first-capture-invalid/second-capture-valid regression.
+- GREEN `dc873fe` retries until deadline while retaining PNG validation, process liveness checks and stale-file removal.
+- Full unittest, Linux GUI E2E and CI on final SHA are unverified. No product approval or status changed.
+
 ## 2026-11-06 — Linux native Builder icon generator trigger (IMPLEMENTED_CI_UNVERIFIED)
 
 - RED contract `5a87a43` adds `test_linux_ci_rebuilds_when_icon_generator_changes`; pre-fix Linux workflow executes `scripts/generate_builder_icons.py` but omits it from `push.paths`.
