@@ -36,15 +36,27 @@ def run(binary: Path, screenshot: Path, seconds: float = 15.0) -> None:
         if window is None:
             raise RuntimeError("No visible OCAF Agents Builder window detected")
         screenshot.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(["import", "-window", window, str(screenshot)], check=True, timeout=15)
-        data = screenshot.read_bytes()
-        if len(data) < 1024 or data[:8] != bytes.fromhex("89504e470d0a1a0a"):
-            raise RuntimeError("Missing or invalid Linux window screenshot")
-        if data[12:16] != b"IHDR" or struct.unpack(">I", data[8:12])[0] != 13:
-            raise RuntimeError("Invalid PNG IHDR chunk")
-        width, height = struct.unpack(">II", data[16:24])
-        if width < 320 or height < 240:
-            raise RuntimeError("Linux window screenshot has invalid dimensions")
+        # A mapped X11 window may not have completed its first paint.
+        # Keep all PNG checks strict; retry only within the original deadline.
+        while True:
+            if process.poll() is not None:
+                raise RuntimeError("Linux desktop process exited before screenshot validation")
+            screenshot.unlink(missing_ok=True)
+            subprocess.run(["import", "-window", window, str(screenshot)], check=True, timeout=15)
+            data = screenshot.read_bytes() if screenshot.is_file() else b""
+            valid_header = (
+                len(data) >= 1024
+                and data[:8] == bytes.fromhex("89504e470d0a1a0a")
+                and data[12:16] == b"IHDR"
+                and struct.unpack(">I", data[8:12])[0] == 13
+            )
+            if valid_header:
+                width, height = struct.unpack(">II", data[16:24])
+                if width >= 320 and height >= 240:
+                    break
+            if time.monotonic() >= deadline:
+                raise RuntimeError("Missing or invalid Linux window screenshot")
+            time.sleep(min(0.5, max(0.0, deadline - time.monotonic())))
     finally:
         if process.poll() is None:
             process.terminate()
