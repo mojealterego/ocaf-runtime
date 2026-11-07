@@ -5,6 +5,23 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+import struct
+import zlib
+
+
+def _chunk(kind, payload):
+    return struct.pack(">I", len(payload)) + kind + payload + struct.pack(">I", zlib.crc32(kind + payload) & 0xffffffff)
+
+
+def _valid_fixture():
+    # Real, complete PNG with enough entropy to exceed the smoke size threshold.
+    rows = b"".join(b"\\x00" + bytes((x * 17 + y * 31) % 256 for x in range(640 * 3)) for y in range(480))
+    return (bytes.fromhex("89504e470d0a1a0a")
+            + _chunk(b"IHDR", struct.pack(">IIBBBBB", 640, 480, 8, 2, 0, 0, 0))
+            + _chunk(b"IDAT", zlib.compress(rows))
+            + _chunk(b"IEND", b""))
+
+
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location("linux_gui_smoke", ROOT / "scripts/smoke_linux_gui.py")
 assert SPEC and SPEC.loader
@@ -13,6 +30,19 @@ SPEC.loader.exec_module(module)
 
 
 class LinuxGuiSmokeTests(unittest.TestCase):
+    def test_png_integrity_rejects_corruption(self):
+        valid = _valid_fixture()
+        self.assertTrue(module._valid_png(valid))
+        crc_corrupt = bytearray(valid)
+        crc_corrupt[29] ^= 1
+        self.assertFalse(module._valid_png(bytes(crc_corrupt)))
+        self.assertFalse(module._valid_png(valid[:-12]))  # no IEND
+        self.assertFalse(module._valid_png(valid + b"trailing"))
+        self.assertFalse(module._valid_png(valid[:-2]))
+        self.assertFalse(module._valid_png(valid[:8]))
+        self.assertFalse(module._valid_png(
+            valid[:33] + _chunk(b"IEND", b"")))  # no IDAT
+
     def test_missing_binary_rejected_without_spawning(self):
         with tempfile.TemporaryDirectory() as tmp:
             with patch.object(module.subprocess, "Popen") as spawn:
