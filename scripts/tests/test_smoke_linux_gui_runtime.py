@@ -46,6 +46,44 @@ class LinuxGuiSmokeTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "No visible"):
                     module.run(binary, Path(tmp) / "screen.png", seconds=0.01)
 
+    def test_invalid_first_capture_retries_until_valid_png(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            binary = Path(tmp) / "binary"
+            binary.write_bytes(b"binary")
+            screenshot = Path(tmp) / "screen.png"
+            class Process:
+                pid = 1234
+                def poll(self):
+                    return None
+                def terminate(self):
+                    pass
+                def communicate(self, timeout):
+                    return (b"", b"")
+            class Result:
+                def __init__(self, code=0, output=""):
+                    self.returncode = code
+                    self.stdout = output
+            captures = []
+            def command(argv, **kwargs):
+                if argv[0] == "xdotool" and "search" in argv:
+                    return Result(0, "9876\\n")
+                if argv[0] == "xdotool":
+                    return Result(0, "1234\\n")
+                if argv[0] == "import":
+                    captures.append(1)
+                    if len(captures) == 1:
+                        screenshot.write_bytes(b"bad")
+                    else:
+                        import struct
+                        screenshot.write_bytes(bytes.fromhex("89504e470d0a1a0a") + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 640, 480) + b"\\x08\\x02\\x00\\x00\\x00" + b"x" * 1100)
+                    return Result()
+                raise AssertionError(argv)
+            with (patch.object(module.subprocess, "Popen", return_value=Process()),
+                  patch.object(module.subprocess, "run", side_effect=command),
+                  patch.object(module.time, "sleep")):
+                module.run(binary, screenshot, seconds=5)
+            self.assertEqual(len(captures), 2)
+
     def test_dead_process_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             binary = Path(tmp) / "binary"
