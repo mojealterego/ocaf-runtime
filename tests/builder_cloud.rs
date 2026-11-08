@@ -535,3 +535,39 @@ fn http_boundary_rejects_ambiguous_http_framing_before_project_write() {
         assert!(store.load("local", "hello", None).unwrap().is_none());
     }
 }
+
+#[test]
+fn http_boundary_rejects_malformed_configured_https_origins() {
+    use ocaf_runtime::builder_http::BuilderHttpBoundary;
+    let (_dir, oauth, store) = fixture();
+    for origin in [
+        "https://:443",
+        "https://example.com:",
+        "https://example.com:abc",
+        "https://example.com:0",
+        "https://example.com:65536",
+        "https://example..com",
+        "https://-example.com",
+        "https://example.com.",
+        "https://[::1",
+        "https://example.com:443:444",
+    ] {
+        assert!(
+            BuilderHttpBoundary::new(&oauth, &store, RESOURCE, origin).is_err(),
+            "invalid configured origin accepted: {origin}"
+        );
+    }
+    for origin in [
+        "https://example.com",
+        "https://example.com:443",
+        "https://sub.example.com:8443",
+        "https://localhost:3000",
+        "https://127.0.0.1:443",
+        "https://[::1]:443",
+    ] {
+        assert!(
+            BuilderHttpBoundary::new(&oauth, &store, RESOURCE, origin).is_ok(),
+            "valid configured origin rejected: {origin}"
+        );
+    }
+}
