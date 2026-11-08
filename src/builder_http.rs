@@ -225,7 +225,7 @@ impl<'a> BuilderHttpBoundary<'a> {
         }
         // Duplicate singleton headers are malformed, even when their values agree.
         // Check before routing so malformed Content-Type cannot be mistaken for 415.
-        for singleton in ["Origin", "Authorization", "Content-Type"] {
+        for singleton in ["Host", "Origin", "Authorization", "Content-Type"] {
             if unique_header(request.headers, singleton).is_err() {
                 return reject(400);
             }
