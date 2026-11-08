@@ -563,6 +563,7 @@ fn http_boundary_rejects_malformed_configured_https_origins() {
         "https://sub.example.com:8443",
         "https://localhost:3000",
         "https://127.0.0.1:443",
+        "https://[::1]",
         "https://[::1]:443",
     ] {
         assert!(
