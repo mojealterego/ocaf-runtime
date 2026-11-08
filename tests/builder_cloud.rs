@@ -591,3 +591,27 @@ fn http_boundary_rejects_oversized_request_target_before_auth_or_storage() {
     assert_eq!(response.status, 414);
     assert!(store.load("local", "hello", None).unwrap().is_none());
 }
+
+#[test]
+fn http_boundary_rejects_aggregate_header_budget_before_authorization() {
+    use ocaf_runtime::builder_http::{BuilderHttpBoundary, BuilderHttpRequest};
+    let (_dir, oauth, store) = fixture();
+    let gateway = BuilderHttpBoundary::new(&oauth, &store, RESOURCE, HTTP_ORIGIN).unwrap();
+    // Each field is individually below the per-value cap and the count is
+    // below MAX_HEADERS, but their combined footprint is excessive.
+    let large_value = "x".repeat(4096);
+    let headers: Vec<(&str, &str)> = (0..5)
+        .map(|_| ("X-Padding", large_value.as_str()))
+        .collect();
+    let response = gateway.handle(
+        BuilderHttpRequest {
+            method: "GET",
+            path: "/v1/projects/hello",
+            headers: &headers,
+            body: &[],
+        },
+        &subject("local"),
+    );
+    assert_eq!(response.status, 431);
+    assert!(store.load("local", "hello", None).unwrap().is_none());
+}
