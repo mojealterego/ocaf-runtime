@@ -148,7 +148,9 @@ impl<'a> BuilderHttpBoundary<'a> {
                         || label.len() > 63
                         || label.starts_with('-')
                         || label.ends_with('-')
-                        || !label.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-')
+                        || !label
+                            .bytes()
+                            .all(|b| b.is_ascii_alphanumeric() || b == b'-')
                 }))
         {
             return Err(BuilderCloudError::Configuration);
@@ -156,7 +158,11 @@ impl<'a> BuilderHttpBoundary<'a> {
         if let Some(port) = port {
             if port.is_empty()
                 || !port.bytes().all(|b| b.is_ascii_digit())
-                || port.parse::<u16>().ok().filter(|value| *value != 0).is_none()
+                || port
+                    .parse::<u16>()
+                    .ok()
+                    .filter(|value| *value != 0)
+                    .is_none()
             {
                 return Err(BuilderCloudError::Configuration);
             }
@@ -194,9 +200,12 @@ impl<'a> BuilderHttpBoundary<'a> {
         }
         // Bound aggregate header storage independently of the per-field cap.
         // Saturating arithmetic keeps the admission decision fail-closed.
-        let header_bytes = request.headers.iter().fold(0_usize, |total, (name, value)| {
-            total.saturating_add(name.len()).saturating_add(value.len())
-        });
+        let header_bytes = request
+            .headers
+            .iter()
+            .fold(0_usize, |total, (name, value)| {
+                total.saturating_add(name.len()).saturating_add(value.len())
+            });
         if header_bytes > MAX_TOTAL_HEADER_BYTES {
             return reject(431);
         }
