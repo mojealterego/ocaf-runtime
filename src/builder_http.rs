@@ -123,10 +123,16 @@ impl<'a> BuilderHttpBoundary<'a> {
             address
                 .parse::<std::net::Ipv6Addr>()
                 .map_err(|_| BuilderCloudError::Configuration)?;
-            let port = suffix
-                .strip_prefix(':')
-                .ok_or(BuilderCloudError::Configuration)?;
-            ("[ipv6]", Some(port))
+            let port = if suffix.is_empty() {
+                None
+            } else {
+                Some(
+                    suffix
+                        .strip_prefix(':')
+                        .ok_or(BuilderCloudError::Configuration)?,
+                )
+            };
+            ("[ipv6]", port)
         } else {
             match authority.split_once(':') {
                 Some((host, port)) => (host, Some(port)),
