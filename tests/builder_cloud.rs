@@ -572,3 +572,22 @@ fn http_boundary_rejects_malformed_configured_https_origins() {
         );
     }
 }
+
+#[test]
+fn http_boundary_rejects_oversized_request_target_before_auth_or_storage() {
+    use ocaf_runtime::builder_http::{BuilderHttpBoundary, BuilderHttpRequest};
+    let (_dir, oauth, store) = fixture();
+    let gateway = BuilderHttpBoundary::new(&oauth, &store, RESOURCE, HTTP_ORIGIN).unwrap();
+    let target = format!("/v1/projects/{}", "x".repeat(8192));
+    let response = gateway.handle(
+        BuilderHttpRequest {
+            method: "GET",
+            path: &target,
+            headers: &[],
+            body: &[],
+        },
+        &subject("local"),
+    );
+    assert_eq!(response.status, 414);
+    assert!(store.load("local", "hello", None).unwrap().is_none());
+}
