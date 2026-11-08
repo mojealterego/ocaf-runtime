@@ -148,3 +148,34 @@ Kontrakt **nie jest podpisem kryptograficznym ani automatycznym atestowaniem**. 
 
 
 **Dowód przyrostu high-water mark:** [GitHub Actions OM Engine #41586244060](https://github.com/mojealterego/ocaf-runtime/actions/runs/41586244060), SHA kodu `c62e0f013cb355bb02dca6ac90b16e71e3e56088`, `completed/success`: testy Rust 6/6, rustfmt, Clippy PASS. Nie jest to certyfikacja ani produkcyjny connector Digital-Life.
+
+## 2026-11-08 — OM Architect / DGM–RSI / AlphaEvolve: kontrakt rozszerzenia (SPECIFIED, NOT IMPLEMENTED)
+
+**Provenance:** materiały dostarczone przez operatora: *AlphaEvolve: A coding agent for scientific and algorithmic discovery* (Google DeepMind, 2025), *Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents* (arXiv:2505.22954v3, ICLR 2026), `DGM_RSI_OMEGA_PRODUCTION_BLUEPRINT_v1.0.md`, `DGM_RSI_OMEGA_SECURITY_VALIDATION_AND_RELEASE_v1.0.md` oraz dwie wersje *Architektura Autonomicznego Systemu DGM*. Dokumenty są **materiałem wejściowym**, nie dowodem wykonania. Dwa dokumenty DGM–RSI Ω pierwotnie opisują **oddzielny projekt**, dlatego ich wymagania nie stają się automatycznie istniejącą implementacją OCAF.
+
+### Decyzja architektoniczna i kolejność zależności
+
+1. **OM Evolution Core (przed integracją Builder):** wielopokoleniowe archiwum kandydatów DGM, selekcja jakości/różnorodności, lineage CAS, propozycje modyfikacji agentów i harnessu (RSI), automatyczne mierzalne ewaluatory w stylu AlphaEvolve, deterministyczne seed, baseline i holdout. AlphaEvolve oznacza tu **inspirowany publikacją wzorzec**, nie wykorzystanie zamkniętego produktu Google.
+2. **OM Architect:** kontrolowany planner, fabryka agentów z opisów tekstowych i głosowych, resolver katalogu, router zadań, delegacja do agentów/rojów, weryfikator oraz interfejs do OMAt/OMAs. Mowa wymaga osobnych rzeczywistych adapterów STT/TTS i zgód mikrofonu.
+3. **Market Intelligence:** cotygodniowy job pobierający dane o popycie, konkurencji, niszach i rentowności. Dane muszą mieć źródło, datę, metodę, koszty i przedziały niepewności. Prognoza rentowności nie jest przychodem. Job jest zewnętrznie schedulowany, z ograniczeniami egress i budżetu; sam wpis w dokumencie nie uruchamia go.
+4. **Agents Builder:** siedem aplikacji docelowych Windows, Android, macOS, iOS, Linux, KaiOS, HarmonyOS z Code/NoCode, przełącznikiem Cloud (gdzie wspierany) oraz nowym Architect Chat/Voice. Istniejące historyczne **10 rekordów v11** pozostaje nienaruszone; rozszerzenie platform wymaga odrębnej, addytywnej matrycy odbioru. KaiOS i HarmonyOS wymagają jawnej analizy ograniczeń natywnych API i realnych artefaktów.
+5. **Poligon:** benchmarki agentów i rojów, adversarial testing, fault injection, replay/recovery, podpisane dowody i rozdzielony admission/release.
+
+### Granice uprawnień i samoczynne aktualizacje
+
+Operator wymaga, aby Architekt sam aktualizował moduły aplikacji bez każdorazowej interakcji. Realizuje to **wcześniej zdefiniowana, wersjonowana polityka delegowanej autoryzacji**, nie możliwość nadawania sobie uprawnień. Policy kernel, podpisy, tożsamość release authority, mechanizm audytu, uprawnienia, sekret store i niezależny evaluator są poza modyfikowalną powierzchnią DGM. Brak potwierdzonej izolacji => fail closed. Kandidat nie otrzymuje host filesystem, produkcyjnych tokenów, bezpośredniego internetu ani możliwości edycji własnych bramek. Internet zapewnia oddzielny allowlisted research gateway, a nie sandbox wykonujący kod kandydata.
+
+Dopuszczalne bez interakcji: pobranie publicznych danych, sporządzenie propozycji, mutacja w odizolowanym workspace, ewaluacja, zapis do append-only archive, budowa/testy agentów i publikacja do **STAGED**. Automatyczne aktywowanie zmian jest dopuszczalne wyłącznie dla wcześniej zatwierdzonego zakresu reversible, przy ważnym delegowanym grancie, niezależnych testach, podpisie release authority, ograniczeniu blast radius, health gates i działającym rollback. Zmiany uprawnień, polityk bezpieczeństwa, sekretów, zewnętrznych płatności, destrukcyjnych migracji i nieodwracalnych skutków nie należą do tej delegacji.
+
+### Kontrakt kandydata i cykl ewolucji
+
+- Wejście: `tenant_id` z zaufanego ingress, `candidate_id`, `parent_digest`, `source_tree_sha256`, `policy_sha256`, `evaluation_bundle_sha256`, `seed`, `max_generations`, `max_cost_minor`, `deadline`, `allowed_paths`, `allowed_tools`, `risk_class`.
+- Przejścia: `PROPOSED -> ADMITTED -> SANDBOXED -> EVALUATED -> ARCHIVED -> STAGED`; `QUARANTINED` po naruszeniu. `ACTIVE` wymaga osobnej decyzji release authority, nawet przy delegowanym trybie auto-update.
+- Ocena: correctness, regression, security, latency, resource/cost, novelty, quality-diversity i holdout; scorecards podpisane przez **niezależny** evaluator. Odrzucone mutacje nie mogą nadpisywać archiwum. Ogranicz wielokrotne próby holdout i przeciek benchmarku.
+- Niezmienniki: `candidate.mutable_paths ∩ {policy,evaluator,release,signer,secrets}=∅`; brak zwiększenia uprawnień i egress; dowody związane z pełnym tree digest; idempotent release; fenced epoch; rollback do znanego digest; izolacja tenantów; koszty i deadline twarde, bez nieograniczonej rekurencji.
+- Negatywne testy obowiązkowe: prompt injection w danych rynku, symlink/path traversal, SSRF/cloud metadata, nieautoryzowany egress, fałszywe wyniki benchmarku, modyfikacja scorecard, próba zmiany policy, wyciek sekretu, cross-tenant, replay podpisu, wyczerpanie budżetu, fork bomb, utrata lease, awaria w połowie rollout, nieudany rollback i brak cleanup.
+- Minimalny dowód: commit SHA, source tree digest, pełny fixture digest, policy digest, środowisko, polecenia i logi testów, liczby prób, wyniki negatywne, ocena niezależnego weryfikatora, release receipt i status operatora.
+
+### Kryteria odbioru i aktualny stan
+
+**SPECIFIED / NOT IMPLEMENTED** dla DGM–RSI–AlphaEvolve w OM Engine, Architect Chat/Voice, Market Intelligence, samoczynnego release i integracji siedmiu Builderów. `src/om_engine.rs` pozostaje trwałym koordynatorem workflow, a nie implementacją RSI. Brak nowych buildów, CI ani benchmarków na podstawie tego dodatku. Wymagane są osobne cykle RED/GREEN i testy na konkretnym SHA przed zmianą statusu. Wszelkie historyczne etapy 0.50–0.56 i manifest v11 zachowują swoje znaczenie.
