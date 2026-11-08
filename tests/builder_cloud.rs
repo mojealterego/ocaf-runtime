@@ -615,3 +615,31 @@ fn http_boundary_rejects_aggregate_header_budget_before_authorization() {
     assert_eq!(response.status, 431);
     assert!(store.load("local", "hello", None).unwrap().is_none());
 }
+
+#[test]
+fn http_boundary_rejects_duplicate_host_header_before_authorization() {
+    use ocaf_runtime::builder_http::{BuilderHttpBoundary, BuilderHttpRequest};
+    let (_dir, oauth, store) = fixture();
+    let gateway = BuilderHttpBoundary::new(&oauth, &store, RESOURCE, HTTP_ORIGIN).unwrap();
+    let credential = format!(
+        "Bearer {}",
+        token(&oauth, "local", &["builder:read", "builder:write"])
+    );
+    let headers = [
+        ("Origin", HTTP_ORIGIN),
+        ("Authorization", credential.as_str()),
+        ("Host", "builder.ocaf.example"),
+        ("host", "attacker.example"),
+    ];
+    let response = gateway.handle(
+        BuilderHttpRequest {
+            method: "GET",
+            path: "/v1/projects/hello",
+            headers: &headers,
+            body: &[],
+        },
+        &subject("local"),
+    );
+    assert_eq!(response.status, 400);
+    assert!(store.load("local", "hello", None).unwrap().is_none());
+}
