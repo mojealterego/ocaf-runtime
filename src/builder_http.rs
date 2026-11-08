@@ -14,6 +14,7 @@ use serde_json::{json, Value};
 const MAX_BODY_BYTES: usize = 128 * 1024;
 const MAX_REQUEST_TARGET_BYTES: usize = 2048;
 const MAX_HEADERS: usize = 32;
+const MAX_TOTAL_HEADER_BYTES: usize = 16 * 1024;
 const MAX_HEADER_VALUE_BYTES: usize = 4096;
 
 pub struct BuilderHttpRequest<'a> {
@@ -190,6 +191,14 @@ impl<'a> BuilderHttpBoundary<'a> {
             })
         {
             return reject(400);
+        }
+        // Bound aggregate header storage independently of the per-field cap.
+        // Saturating arithmetic keeps the admission decision fail-closed.
+        let header_bytes = request.headers.iter().fold(0_usize, |total, (name, value)| {
+            total.saturating_add(name.len()).saturating_add(value.len())
+        });
+        if header_bytes > MAX_TOTAL_HEADER_BYTES {
+            return reject(431);
         }
         // The gateway owns HTTP framing. Reject transfer codings here rather than
         // accepting a potentially inconsistent representation of the body.
