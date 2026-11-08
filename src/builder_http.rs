@@ -104,15 +104,55 @@ impl<'a> BuilderHttpBoundary<'a> {
         audience: &str,
         allowed_origin: &str,
     ) -> Result<Self, BuilderCloudError> {
-        let host = allowed_origin
+        // A configured Origin must be a single HTTPS authority, not merely a
+        // string beginning with "https://". Reject ambiguous hosts and ports.
+        let authority = allowed_origin
             .strip_prefix("https://")
             .ok_or(BuilderCloudError::Configuration)?;
-        if host.is_empty()
-            || host
+        if authority.is_empty()
+            || authority
                 .bytes()
                 .any(|b| b <= 32 || b >= 127 || matches!(b, b'/' | b'?' | b'#' | b'@' | b'\\'))
         {
             return Err(BuilderCloudError::Configuration);
+        }
+        let (host, port) = if let Some(bracketed) = authority.strip_prefix('[') {
+            let (address, suffix) = bracketed
+                .split_once(']')
+                .ok_or(BuilderCloudError::Configuration)?;
+            let address = address
+                .parse::<std::net::Ipv6Addr>()
+                .map_err(|_| BuilderCloudError::Configuration)?;
+            let _ = address;
+            let port = suffix
+                .strip_prefix(':')
+                .ok_or(BuilderCloudError::Configuration)?;
+            ("[ipv6]", Some(port))
+        } else {
+            match authority.split_once(':') {
+                Some((host, port)) => (host, Some(port)),
+                None => (authority, None),
+            }
+        };
+        if host != "[ipv6]"
+            && (host.len() > 253
+                || host.split('.').any(|label| {
+                    label.is_empty()
+                        || label.len() > 63
+                        || label.starts_with('-')
+                        || label.ends_with('-')
+                        || !label.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-')
+                }))
+        {
+            return Err(BuilderCloudError::Configuration);
+        }
+        if let Some(port) = port {
+            if port.is_empty()
+                || !port.bytes().all(|b| b.is_ascii_digit())
+                || port.parse::<u16>().ok().filter(|value| *value != 0).is_none()
+            {
+                return Err(BuilderCloudError::Configuration);
+            }
         }
         Ok(Self {
             service: BuilderCloudService::new(oauth, store, audience)?,
