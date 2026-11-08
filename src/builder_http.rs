@@ -120,10 +120,9 @@ impl<'a> BuilderHttpBoundary<'a> {
             let (address, suffix) = bracketed
                 .split_once(']')
                 .ok_or(BuilderCloudError::Configuration)?;
-            let address = address
+            address
                 .parse::<std::net::Ipv6Addr>()
                 .map_err(|_| BuilderCloudError::Configuration)?;
-            let _ = address;
             let port = suffix
                 .strip_prefix(':')
                 .ok_or(BuilderCloudError::Configuration)?;
