@@ -3,6 +3,9 @@ on:
   push:
     branches: ["main"]
     paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
       - "src/builder_cloud.rs"
       - "src/builder_http.rs"
       - "src/builder_store.rs"
@@ -13,6 +16,9 @@ on:
       - ".github/workflows/stage052-builder-cloud.yml"
   pull_request:
     paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
       - "src/builder_cloud.rs"
       - "src/builder_http.rs"
       - "src/builder_store.rs"
