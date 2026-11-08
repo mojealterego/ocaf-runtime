@@ -12,6 +12,7 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 
 const MAX_BODY_BYTES: usize = 128 * 1024;
+const MAX_REQUEST_TARGET_BYTES: usize = 2048;
 const MAX_HEADERS: usize = 32;
 const MAX_HEADER_VALUE_BYTES: usize = 4096;
 
@@ -172,6 +173,11 @@ impl<'a> BuilderHttpBoundary<'a> {
         request: BuilderHttpRequest<'_>,
         trusted_subject: &AuthenticatedSubject,
     ) -> BuilderHttpResponse {
+        // Defense in depth: a parsed request target must be bounded even when
+        // the upstream HTTP gateway is responsible for parser limits.
+        if request.path.len() > MAX_REQUEST_TARGET_BYTES {
+            return reject(414);
+        }
         if request.body.len() > MAX_BODY_BYTES {
             return reject(413);
         }
