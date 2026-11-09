@@ -17,6 +17,9 @@ def push_paths(source: str) -> set[str]:
     lines = source.splitlines()
     if not lines or not re.search(r'^on:\s*$', source, re.M):
         raise ValueError('missing top-level on mapping')
+    # Reject later top-level trigger mappings, even after jobs/name sections.
+    if sum(1 for line in lines if line == 'on:') != 1:
+        raise ValueError('duplicate or ambiguous top-level on mapping')
     state = 'seek_on'
     found = False
     result: set[str] = set()

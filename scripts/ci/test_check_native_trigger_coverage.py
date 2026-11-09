@@ -17,6 +17,20 @@ class TriggerAuditTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             push_paths('on:\n  push:\n    paths:\n      - *aliases\n')
 
+    def test_rejects_duplicate_on_after_jobs(self):
+        source = 'on:\n  push:\n    paths:\n      - "Cargo.toml"\njobs:\n  build:\n    runs-on: ubuntu-latest\non:\n  workflow_dispatch:\n'
+        with self.assertRaisesRegex(ValueError, 'duplicate'):
+            push_paths(source)
+
+    def test_rejects_duplicate_on_after_name(self):
+        source = 'on:\n  push:\n    paths:\n      - "Cargo.toml"\nname: audit\non:\n  push:\n    paths:\n      - "Cargo.lock"\n'
+        with self.assertRaisesRegex(ValueError, 'duplicate'):
+            push_paths(source)
+
+    def test_accepts_single_on_with_unrelated_top_level_fields(self):
+        source = 'name: audit\non:\n  push:\n    paths:\n      - "Cargo.toml"\njobs:\n  build:\n    runs-on: ubuntu-latest\n'
+        self.assertEqual(push_paths(source), {'Cargo.toml'})
+
     def test_detects_all_missing_dependencies(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
