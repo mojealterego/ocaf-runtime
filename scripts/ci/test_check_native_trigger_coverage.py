@@ -32,12 +32,12 @@ class TriggerAuditTests(unittest.TestCase):
         self.assertEqual(push_paths(source), {'Cargo.toml'})
 
     def test_rejects_duplicate_push_mapping(self):
-        source = 'on:\\n  push:\\n    paths:\\n      - "Cargo.toml"\\n  push:\\n    paths:\\n      - "Cargo.lock"\\n'
+        source = 'on:\n  push:\n    paths:\n      - "Cargo.toml"\n  push:\n    paths:\n      - "Cargo.lock"\n'
         with self.assertRaisesRegex(ValueError, 'duplicate push'):
             push_paths(source)
 
     def test_rejects_duplicate_push_paths_mapping(self):
-        source = 'on:\\n  push:\\n    paths:\\n      - "Cargo.toml"\\n    paths:\\n      - "Cargo.lock"\\n'
+        source = 'on:\n  push:\n    paths:\n      - "Cargo.toml"\n    paths:\n      - "Cargo.lock"\n'
         with self.assertRaisesRegex(ValueError, 'duplicate push paths'):
             push_paths(source)
 
