@@ -111,3 +111,5 @@ pub mod compound_reasoning;
 pub mod collaboration_store;
 
 pub mod om_engine;
+
+pub mod task_cas;
