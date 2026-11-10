@@ -20,6 +20,28 @@ def push_paths(source: str) -> set[str]:
     # Reject later top-level trigger mappings, even after jobs/name sections.
     if sum(1 for line in lines if line == 'on:') != 1:
         raise ValueError('duplicate or ambiguous top-level on mapping')
+    # A second push or paths key can override the audited list in a YAML loader.
+    in_on = False
+    in_push = False
+    seen_push = False
+    seen_paths = False
+    for line in lines:
+        if not line.strip() or line.lstrip().startswith('#'):
+            continue
+        indent = len(line) - len(line.lstrip(' '))
+        if indent == 0:
+            in_on = line == 'on:'
+            in_push = False
+        elif in_on and indent == 2:
+            in_push = line.strip() == 'push:'
+            if in_push:
+                if seen_push:
+                    raise ValueError('duplicate push mapping')
+                seen_push = True
+        elif in_on and in_push and indent == 4 and line.strip() == 'paths:':
+            if seen_paths:
+                raise ValueError('duplicate push paths mapping')
+            seen_paths = True
     state = 'seek_on'
     found = False
     result: set[str] = set()
