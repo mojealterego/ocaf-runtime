@@ -1,3 +1,5 @@
+pub mod ricci_routing;
+
 //! Fail-closed operator-supplied Zenoh network configuration validation.
 //!
 //! This preflight blocks plaintext outside explicit loopback development and
