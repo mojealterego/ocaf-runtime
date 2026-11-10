@@ -132,7 +132,7 @@ mod tests {
     fn intermediate_overflow_is_rejected_without_mutation() {
         let optimizer = RicciFlowOptimizer::new(1.0).unwrap();
         let mut edges = vec![edge(), RoutingGraphEdge {
-            traffic_load: f64::MAX, latency_cost: f64::MAX, ..edge()
+            traffic_load: f64::MAX, latency_cost: f64::MIN_POSITIVE, ..edge()
         }];
         let before = edges[0].current_weight;
         assert_eq!(optimizer.compute_ricci_step(&mut edges), Err(RicciError::NumericalInstability));
