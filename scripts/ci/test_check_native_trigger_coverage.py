@@ -41,6 +41,16 @@ class TriggerAuditTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'duplicate push paths'):
             push_paths(source)
 
+    def test_rejects_indented_on_mapping(self):
+        source = 'on:\n  push:\n    paths:\n      - "Cargo.toml"\n on:\n  push:\n    paths:\n      - "Cargo.lock"\n'
+        with self.assertRaisesRegex(ValueError, 'ambiguous'):
+            push_paths(source)
+
+    def test_rejects_quoted_on_mapping(self):
+        source = 'on:\n  push:\n    paths:\n      - "Cargo.toml"\n"on":\n  push:\n    paths:\n      - "Cargo.lock"\n'
+        with self.assertRaisesRegex(ValueError, 'ambiguous'):
+            push_paths(source)
+
     def test_detects_all_missing_dependencies(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
