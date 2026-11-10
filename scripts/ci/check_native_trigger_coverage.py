@@ -15,6 +15,14 @@ REQUIRED = {
 def push_paths(source: str) -> set[str]:
     """Read only the literal on.push.paths sequence, rejecting ambiguous YAML."""
     lines = source.splitlines()
+    # Refuse alternate trigger-key spellings or misleading indentation.
+    # A lightweight parser must fail closed instead of auditing a different map.
+    if any(
+        re.match(r'^\s+on\s*:', line)
+        or re.match(r'''^\s*["']on["']\s*:''', line)
+        for line in lines
+    ):
+        raise ValueError('ambiguous on mapping')
     if not lines or not re.search(r'^on:\s*$', source, re.M):
         raise ValueError('missing top-level on mapping')
     # Reject later top-level trigger mappings, even after jobs/name sections.
