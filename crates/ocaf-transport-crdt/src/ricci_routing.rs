@@ -16,6 +16,7 @@ pub enum RicciError {
     InvalidConfiguration,
     InvalidEdge,
     NumericalInstability,
+    ResourceExhausted,
 }
 
 #[derive(Debug, Clone)]
@@ -55,7 +56,16 @@ impl RicciFlowOptimizer {
     /// Computes a whole-graph update. A failed update leaves all weights unchanged.
     /// Callers should route with validated original weights (e.g. Dijkstra) on error.
     pub fn compute_ricci_step(&self, edges: &mut [RoutingGraphEdge]) -> Result<(), RicciError> {
-        let mut candidates = Vec::with_capacity(edges.len());
+        // Reject pathological batches before allocating candidate storage.
+        // No graph weights are mutated on any error path.
+        const MAX_BATCH_EDGES: usize = 1_000_000;
+        if edges.len() > MAX_BATCH_EDGES {
+            return Err(RicciError::ResourceExhausted);
+        }
+        let mut candidates = Vec::new();
+        candidates
+            .try_reserve_exact(edges.len())
+            .map_err(|_| RicciError::ResourceExhausted)?;
         for edge in edges.iter() {
             if !edge.latency_cost.is_finite()
                 || edge.latency_cost <= 0.0
@@ -137,6 +147,28 @@ mod tests {
         let before = edges[0].current_weight;
         assert_eq!(optimizer.compute_ricci_step(&mut edges), Err(RicciError::NumericalInstability));
         assert_eq!(edges[0].current_weight, before);
+    }
+
+    #[test]
+    fn invalid_weight_and_load_leave_graph_unchanged() {
+        let optimizer = RicciFlowOptimizer::new(0.5).unwrap();
+        for invalid in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY, -1.0] {
+            let mut edges = vec![edge(), RoutingGraphEdge { traffic_load: invalid, ..edge() }];
+            let snapshot = edges.clone();
+            assert_eq!(optimizer.compute_ricci_step(&mut edges), Err(RicciError::InvalidEdge));
+            assert_eq!(edges, snapshot);
+            let mut edges = vec![edge(), RoutingGraphEdge { current_weight: invalid, ..edge() }];
+            let snapshot = edges.clone();
+            assert_eq!(optimizer.compute_ricci_step(&mut edges), Err(RicciError::InvalidEdge));
+            assert_eq!(edges, snapshot);
+        }
+    }
+
+    #[test]
+    fn zero_edges_are_valid() {
+        let optimizer = RicciFlowOptimizer::new(0.5).unwrap();
+        let mut edges = Vec::new();
+        assert_eq!(optimizer.compute_ricci_step(&mut edges), Ok(()));
     }
 
     #[test]
