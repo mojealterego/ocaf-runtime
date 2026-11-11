@@ -78,14 +78,14 @@ impl DtnStore {
         if peer.is_empty() || peer.len() > 256 || peer.chars().any(char::is_control) {
             return Err(DtnError::InvalidPeer);
         }
-        if max_items == 0 || max_items > self.max_bundles {
+        if max_items == 0 {
             return Err(DtnError::Capacity);
         }
         self.purge_expired(now);
         let mut batch = Vec::new();
         for item in self.bundles.values_mut() {
             if batch.len() == max_items { break; }
-            if item.bundle.hops_remaining <= 1 || item.forwarded_to.contains(peer) {
+            if item.bundle.hops_remaining <= 1 || item.forwarded_to.contains(peer) || item.forwarded_to.len() >= 64 {
                 continue;
             }
             let mut outgoing = item.bundle.clone();
