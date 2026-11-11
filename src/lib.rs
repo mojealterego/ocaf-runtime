@@ -123,3 +123,4 @@ pub mod trs_geometry;
 pub mod trs_cover_traffic;
 pub mod trs_traffic;
 pub mod trs_dtn;
+pub mod trs_dtn_reliable;
