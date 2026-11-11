@@ -37,7 +37,7 @@ pub fn initialize(conn: &Connection) -> Result<(), DurableSealError> {
     Ok(())
 }
 
-/// Verify the authenticated envelope and atomically claim its replay identity.
+/// Low-level verification only: does NOT bind an authenticated session identity.\n/// Prefer verify_and_record_authorized for network-facing admission.\n/// Verify the authenticated envelope and atomically claim its replay identity.
 /// This function does not decrypt the payload and is not an authorization check.
 pub fn verify_and_record(
     conn: &mut Connection,
@@ -229,5 +229,54 @@ mod fencing_tests {
             verify_and_record_pinned(&mut conn, &keys, &msg),
             Err(DurableSealError::Seal(SealError::UnauthorizedFencingEpoch))
         ));
+    }
+}
+
+/// Authenticate a message against the caller's authorized tenant and sender
+/// before durable replay admission. The identities must come from the
+/// authenticated transport/session, never from the envelope itself.
+pub fn verify_and_record_authorized(
+    conn: &mut Connection,
+    keys: &SealKeys,
+    authorized_tenant: &str,
+    authorized_sender: &str,
+    envelope: &Envelope,
+) -> Result<(), DurableSealError> {
+    if envelope.tenant != authorized_tenant || envelope.sender != authorized_sender {
+        return Err(DurableSealError::Seal(SealError::InvalidIdentity));
+    }
+    verify_and_record_pinned(conn, keys, envelope)
+}
+
+#[cfg(test)]
+mod authorization_tests {
+    use super::*;
+
+    #[test]
+    fn valid_mac_cannot_cross_authenticated_tenant_boundary() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        initialize(&conn).unwrap();
+        advance_fencing_epoch(&mut conn, "tenant-b", 4).unwrap();
+        let keys = SealKeys::new(1, &[0x33; 32]).unwrap();
+        let message = keys.sign("tenant-b", "sender", 4, 1, b"payload").unwrap();
+        assert!(matches!(
+            verify_and_record_authorized(&mut conn, &keys, "tenant-a", "sender", &message),
+            Err(DurableSealError::Seal(SealError::InvalidIdentity))
+        ));
+        verify_and_record_authorized(&mut conn, &keys, "tenant-b", "sender", &message).unwrap();
+    }
+
+    #[test]
+    fn valid_mac_cannot_impersonate_another_authenticated_sender() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        initialize(&conn).unwrap();
+        advance_fencing_epoch(&mut conn, "tenant-a", 4).unwrap();
+        let keys = SealKeys::new(1, &[0x33; 32]).unwrap();
+        let message = keys.sign("tenant-a", "sender-b", 4, 1, b"payload").unwrap();
+        assert!(matches!(
+            verify_and_record_authorized(&mut conn, &keys, "tenant-a", "sender-a", &message),
+            Err(DurableSealError::Seal(SealError::InvalidIdentity))
+        ));
+        verify_and_record_authorized(&mut conn, &keys, "tenant-a", "sender-b", &message).unwrap();
     }
 }
