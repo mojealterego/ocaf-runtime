@@ -280,3 +280,69 @@ mod authorization_tests {
         verify_and_record_authorized(&mut conn, &keys, "tenant-a", "sender-b", &message).unwrap();
     }
 }
+
+
+#[cfg(test)]
+mod security_regression_tests {
+    use super::*;
+
+    #[test]
+    fn duplicate_sequence_with_different_payload_is_still_replay() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        initialize(&conn).unwrap();
+        advance_fencing_epoch(&mut conn, "tenant-a", 8).unwrap();
+        let keys = SealKeys::new(1, &[0x41; 32]).unwrap();
+        let first = keys.sign("tenant-a", "sender", 8, 42, b"original").unwrap();
+        let second = keys.sign("tenant-a", "sender", 8, 42, b"replacement").unwrap();
+        verify_and_record_authorized(&mut conn, &keys, "tenant-a", "sender", &first).unwrap();
+        assert!(matches!(
+            verify_and_record_authorized(&mut conn, &keys, "tenant-a", "sender", &second),
+            Err(DurableSealError::Replay)
+        ));
+    }
+
+    #[test]
+    fn invalid_mac_cannot_claim_a_sequence() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        initialize(&conn).unwrap();
+        advance_fencing_epoch(&mut conn, "tenant-a", 8).unwrap();
+        let keys = SealKeys::new(1, &[0x41; 32]).unwrap();
+        let original = keys.sign("tenant-a", "sender", 8, 42, b"original").unwrap();
+        let mut tampered = original.clone();
+        tampered.tag[0] ^= 0x80;
+        assert!(matches!(
+            verify_and_record_authorized(&mut conn, &keys, "tenant-a", "sender", &tampered),
+            Err(DurableSealError::Seal(SealError::InvalidTag))
+        ));
+        verify_and_record_authorized(&mut conn, &keys, "tenant-a", "sender", &original).unwrap();
+    }
+
+    #[test]
+    fn separate_tenants_may_use_same_sequence_with_independent_fencing() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        initialize(&conn).unwrap();
+        advance_fencing_epoch(&mut conn, "tenant-a", 8).unwrap();
+        advance_fencing_epoch(&mut conn, "tenant-b", 9).unwrap();
+        let keys = SealKeys::new(1, &[0x41; 32]).unwrap();
+        let a = keys.sign("tenant-a", "sender", 8, 42, b"a").unwrap();
+        let b = keys.sign("tenant-b", "sender", 9, 42, b"b").unwrap();
+        verify_and_record_authorized(&mut conn, &keys, "tenant-a", "sender", &a).unwrap();
+        verify_and_record_authorized(&mut conn, &keys, "tenant-b", "sender", &b).unwrap();
+    }
+
+    #[test]
+    fn epoch_change_rejects_previously_valid_message_without_consuming_replay_slot() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        initialize(&conn).unwrap();
+        advance_fencing_epoch(&mut conn, "tenant-a", 8).unwrap();
+        let keys = SealKeys::new(1, &[0x41; 32]).unwrap();
+        let stale = keys.sign("tenant-a", "sender", 8, 42, b"stale").unwrap();
+        advance_fencing_epoch(&mut conn, "tenant-a", 9).unwrap();
+        assert!(matches!(
+            verify_and_record_authorized(&mut conn, &keys, "tenant-a", "sender", &stale),
+            Err(DurableSealError::Seal(SealError::UnauthorizedFencingEpoch))
+        ));
+        let count: i64 = conn.query_row("SELECT COUNT(*) FROM ocaf_trs_replay", [], |r| r.get(0)).unwrap();
+        assert_eq!(count, 0);
+    }
+}
