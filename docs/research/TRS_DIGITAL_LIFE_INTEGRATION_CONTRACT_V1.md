@@ -1,0 +1,39 @@
+# TRS → Digital-Life / NOEVARIS Ω: integration contract v1
+
+Status: **PREPARATORY / NOT INTEGRATED**. Destination: `mojealterego/Digital-Life`, branch `main`. This document does not authorize changes to that repository. Final ZIP must only be produced after acceptance gates, not at intermediate milestones.
+
+## Architectural decision
+
+Digital-Life declares **one IntegratedEngine**, with mathematical reasoning, DGM/RSI and multimedia modules in a single orchestration. TRS is a subordinate, capability-restricted library/service adapter, **not** a second engine, agent supervisor or self-updating subsystem.
+
+## API v1
+
+Source: `src/trs_digital_life.rs`. JSON fields: `version` (currently 1), `tenant`, `sender`, `operation`, `payload` (byte array). Strict version checking, nonempty bounded identities, deny unknown fields, payload <= 65536 bytes, explicit allowlist:
+
+- `trs.geometry.fisher_rao`
+- `trs.geometry.hodge_laplacian`
+- `trs.math.sat_evaluate`
+- `trs.health`
+
+These are **names only**. No dispatcher or typed payload schema is implemented. A successful `validate()` is **not** authentication, authorization, replay protection, or permission to execute.
+
+## Required Digital-Life integration
+
+1. Identify the existing IntegratedEngine module/plugin registry, dependency injection, trust boundary and checkpoint schema in Digital-Life before changing it.
+2. Implement typed request/response schemas per operation; validate dimensions, finite numbers, payload size, algorithm version and resource budgets.
+3. Bind authenticated transport principal to tenant/sender and capability allowlist; reject mismatches before deserialization/dispatch side effects.
+4. For remote calls, use authenticated encrypted transport, TRS-SEAL replay/fencing where appropriate, and a durable authoritative fencing epoch.
+5. Keep DGM/RSI proposer **read-only** to TRS trust policies, keys, proofs and admission rules. Explicit human approval for promotions.
+6. Test with the actual IntegratedEngine: contract compatibility, authorization denial, tenant isolation, malformed payloads, restart/replay, failure injection, and end-to-end output equivalence.
+7. Provide SBOM, pinned dependency hashes, build provenance, offline deployment instructions, rollback and measurable resource ceilings.
+
+## Release gates
+
+- `cargo fmt --all -- --check`
+- `cargo test --workspace --all-targets`
+- `cargo clippy --workspace --all-targets -- -D warnings`
+- Actual Digital-Life adapter integration tests on pinned source revisions
+- Security review of cryptographic protocol and runtime permissions
+- Final source ZIP with SHA-256 manifest and verified reproducible build
+
+**Unverified:** Rust compilation, all integration tests, security certification, Digital-Life runtime compatibility. No final ZIP released.
