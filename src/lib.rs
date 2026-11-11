@@ -118,3 +118,4 @@ pub mod task_cas_sqlite;
 
 pub mod trs_seal;
 pub mod trs_seal_sqlite;
+pub mod trs_math;
