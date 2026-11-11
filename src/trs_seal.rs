@@ -188,4 +188,23 @@ mod tests {
         assert_eq!(verifier.verify(&keys, &first), Ok(()));
         assert_eq!(verifier.verify(&keys, &second), Err(SealError::CapacityExceeded));
     }
+    #[test]
+    fn rejected_rotation_preserves_current_signing_key() {
+        let mut keys = SealKeys::new(7, &KEY_A).unwrap();
+        assert_eq!(keys.rotate(8, &[1u8; 31], false), Err(SealError::InvalidKey));
+        let msg = keys.sign("tenant-a", "node-1", 4, 9, b"after-error").unwrap();
+        assert_eq!(msg.key_epoch, 7);
+        let mut verifier = SealVerifier::new(4, 1).unwrap();
+        assert_eq!(verifier.verify(&keys, &msg), Ok(()));
+    }
+
+    #[test]
+    fn different_sender_cannot_reuse_authenticated_tag() {
+        let keys = SealKeys::new(1, &KEY_A).unwrap();
+        let mut verifier = SealVerifier::new(4, 2).unwrap();
+        let mut msg = keys.sign("tenant-a", "sender-a", 4, 1, b"data").unwrap();
+        msg.sender = "sender-b".to_string();
+        assert_eq!(verifier.verify(&keys, &msg), Err(SealError::InvalidTag));
+    }
+
 }
