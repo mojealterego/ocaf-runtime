@@ -1,4 +1,4 @@
-use ocaf_runtime::trs_digital_life::{Admission, BridgeError, BridgeRequest, BridgeResponse, DIGITAL_LIFE_BRIDGE_VERSION};
+use ocaf_runtime::trs_digital_life::{BridgeError, BridgeRequest, BridgeResponse, DIGITAL_LIFE_BRIDGE_VERSION};
 
 #[test]
 fn version_and_identity_are_checked_before_dispatch() {
