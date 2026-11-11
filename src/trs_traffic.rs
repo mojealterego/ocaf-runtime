@@ -32,7 +32,7 @@ impl TrafficQueue {
     pub fn new(config: TrafficConfig) -> Result<Self, TrafficError> {
         if config.packet_size == 0 || config.packet_size > 65_536
             || config.capacity == 0 || config.capacity > 4_096
-            || config.packet_size.checked_mul(config.capacity).is_none_or(|n| n > 64 * 1024 * 1024)
+            || config.packet_size.checked_mul(config.capacity).map_or(true, |n| n > 64 * 1024 * 1024)
         {
             return Err(TrafficError::InvalidConfig);
         }
