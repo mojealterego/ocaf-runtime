@@ -68,6 +68,18 @@ impl ReliableDtn {
         }
         Ok(out)
     }
+    /// Release an in-flight lease after a locally detected transport failure.
+    /// This does not acknowledge delivery and allows immediate retransmission.
+    /// Only call after the transport reports failure; an ambiguous timeout
+    /// can result in duplicate delivery, which receivers must deduplicate.
+    pub fn cancel_pending(&mut self, id: &[u8; 32], peer: &str) -> Result<(), ReliableError> {
+        if !peer_valid(peer) { return Err(ReliableError::InvalidPeer); }
+        let entry = self.entries.get_mut(id).ok_or(ReliableError::UnknownBundle)?;
+        if entry.pending.remove(peer).is_none() {
+            return Err(ReliableError::NotInFlight);
+        }
+        Ok(())
+    }
     pub fn acknowledge(&mut self, id: &[u8; 32], peer: &str, now: u64) -> Result<(), ReliableError> {
         if !peer_valid(peer) { return Err(ReliableError::InvalidPeer); }
         let entry = self.entries.get_mut(id).ok_or(ReliableError::UnknownBundle)?;
