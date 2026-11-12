@@ -13,6 +13,7 @@ pub enum BridgeError {
     ForbiddenOperation,
     PayloadTooLarge,
     InvalidPayload,
+    Unauthorized,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -112,8 +113,8 @@ pub fn dispatch_local(request: &BridgeRequest) -> Result<BridgeResponse, BridgeE
         "trs.math.sat_evaluate" => {
             let input: SatInput = serde_json::from_slice(&request.payload)
                 .map_err(|_| BridgeError::InvalidPayload)?;
-            // Enumerating assignments is exponential. Cap to 2^16.
-            if input.variables == 0 || input.variables > 16 || input.clauses.len() > 4096 {
+            // Enumeration and result serialization are exponential. Cap to 2^12.
+            if input.variables == 0 || input.variables > 12 || input.clauses.len() > 4096 {
                 return Err(BridgeError::InvalidPayload);
             }
             let clauses: Vec<crate::trs_math::Clause3> =
@@ -133,4 +134,31 @@ pub fn dispatch_local(request: &BridgeRequest) -> Result<BridgeResponse, BridgeE
         return Err(BridgeError::PayloadTooLarge);
     }
     Ok(BridgeResponse::accepted(encoded))
+}
+
+/// Identity asserted by an independently authenticated transport. Never
+/// construct this value from untrusted BridgeRequest fields.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AuthenticatedPrincipal {
+    pub tenant: String,
+    pub sender: String,
+    pub allowed_operations: Vec<String>,
+}
+
+/// Bind claimed identity and capability to transport-authenticated identity
+/// before any mathematical operation is evaluated.
+pub fn dispatch_authorized(
+    principal: &AuthenticatedPrincipal,
+    request: &BridgeRequest,
+) -> Result<BridgeResponse, BridgeError> {
+    request.validate()?;
+    if !valid_identity(&principal.tenant)
+        || !valid_identity(&principal.sender)
+        || principal.tenant != request.tenant
+        || principal.sender != request.sender
+        || !principal.allowed_operations.iter().any(|op| op == &request.operation)
+    {
+        return Err(BridgeError::Unauthorized);
+    }
+    dispatch_local(request)
 }
