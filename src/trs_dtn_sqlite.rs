@@ -47,7 +47,7 @@ pub fn claim(conn: &mut Connection, tenant: &str, peer: &str, now: u64,
              retry_secs: u64, limit: usize) -> Result<Vec<ReliableBundle>, DtnStoreError> {
     if !identity(tenant)||!identity(peer)||retry_secs==0||limit==0||limit>4096 { return Err(DtnStoreError::Invalid); }
     let tx=conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
-    tx.execute("DELETE FROM trs_dtn_bundles WHERE tenant=?1 AND CAST(expires AS INTEGER)<=?2",
+    tx.execute("DELETE FROM trs_dtn_bundles WHERE tenant=?1 AND expires<=?2",
                params![tenant,format!("{now:020}")])?;
     let mut candidates=Vec::new();
     {
@@ -67,6 +67,7 @@ pub fn claim(conn: &mut Connection, tenant: &str, peer: &str, now: u64,
         if id.len()!=32 || !(2..=255).contains(&hops) { return Err(DtnStoreError::Invalid); }
         let mut key=[0u8;32];key.copy_from_slice(&id);
         let expires_at=expires.parse::<u64>().map_err(|_|DtnStoreError::Invalid)?;
+        if expires_at <= now { continue; }
         let peers:i64=tx.query_row("SELECT COUNT(*) FROM trs_dtn_delivery WHERE tenant=?1 AND id=?2",
                                   params![tenant,&id],|r|r.get(0))?;
         let exists:bool=tx.query_row("SELECT EXISTS(SELECT 1 FROM trs_dtn_delivery WHERE tenant=?1 AND id=?2 AND peer=?3)",
