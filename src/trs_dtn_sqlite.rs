@@ -82,11 +82,16 @@ pub fn claim(conn: &mut Connection, tenant: &str, peer: &str, now: u64,
     check_and_advance_clock(&tx, tenant, now)?;
     let mut candidates=Vec::new();
     {
+        // Filter saturated fanout in SQL before LIMIT to bound ciphertext memory.
         let mut stmt=tx.prepare("SELECT b.id,b.ciphertext,b.expires,b.hops FROM trs_dtn_bundles b
            LEFT JOIN trs_dtn_delivery d ON d.tenant=b.tenant AND d.id=b.id AND d.peer=?2
-           WHERE b.tenant=?1 AND b.hops>1 AND (d.ack IS NULL OR (d.ack=0 AND d.deadline<=?3))
-           ORDER BY b.id")?;
-        let rows=stmt.query_map(params![tenant,peer,format!("{now:020}")],|r|{
+           WHERE b.tenant=?1 AND b.hops>1 AND b.expires>?3
+             AND (d.ack IS NULL OR (d.ack=0 AND d.deadline<=?3))
+             AND (d.peer IS NOT NULL OR
+                  (SELECT COUNT(*) FROM trs_dtn_delivery f
+                   WHERE f.tenant=b.tenant AND f.id=b.id)<64)
+           ORDER BY b.id LIMIT ?4")?;
+        let rows=stmt.query_map(params![tenant,peer,format!("{now:020}"),limit as i64],|r|{
             let id:Vec<u8>=r.get(0)?;let ciphertext:Vec<u8>=r.get(1)?;
             let expires:String=r.get(2)?;let hops:i64=r.get(3)?;
             Ok((id,ciphertext,expires,hops))
@@ -100,11 +105,6 @@ pub fn claim(conn: &mut Connection, tenant: &str, peer: &str, now: u64,
         let mut key=[0u8;32];key.copy_from_slice(&id);
         let expires_at=expires.parse::<u64>().map_err(|_|DtnStoreError::Invalid)?;
         if expires_at <= now { continue; }
-        let peers:i64=tx.query_row("SELECT COUNT(*) FROM trs_dtn_delivery WHERE tenant=?1 AND id=?2",
-                                  params![tenant,&id],|r|r.get(0))?;
-        let exists:bool=tx.query_row("SELECT EXISTS(SELECT 1 FROM trs_dtn_delivery WHERE tenant=?1 AND id=?2 AND peer=?3)",
-                                    params![tenant,&id,peer],|r|r.get(0))?;
-        if !exists && peers>=64 { continue; }
         tx.execute("INSERT INTO trs_dtn_delivery(tenant,id,peer,deadline,ack) VALUES(?1,?2,?3,?4,0)
                     ON CONFLICT(tenant,id,peer) DO UPDATE SET deadline=excluded.deadline WHERE ack=0",
                    params![tenant,&id,peer,format!("{:020}",now.saturating_add(retry_secs).min(expires_at))])?;
