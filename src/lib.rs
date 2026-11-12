@@ -125,3 +125,4 @@ pub mod trs_traffic;
 pub mod trs_dtn;
 pub mod trs_dtn_reliable;
 pub mod trs_digital_life;
+pub mod trs_digital_life_session;
