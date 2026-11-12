@@ -15,6 +15,10 @@ pub fn initialize(conn: &Connection) -> Result<(), DtnStoreError> {
           tenant TEXT NOT NULL, id BLOB NOT NULL, ciphertext BLOB NOT NULL,
           expires TEXT NOT NULL, hops INTEGER NOT NULL,
           PRIMARY KEY(tenant,id)) WITHOUT ROWID;
+        CREATE TABLE IF NOT EXISTS trs_dtn_clock(
+          tenant TEXT PRIMARY KEY NOT NULL,
+          high_water TEXT NOT NULL
+        ) WITHOUT ROWID;
         CREATE TABLE IF NOT EXISTS trs_dtn_delivery(
           tenant TEXT NOT NULL, id BLOB NOT NULL, peer TEXT NOT NULL,
           deadline TEXT, ack INTEGER NOT NULL DEFAULT 0,
@@ -51,6 +55,21 @@ pub fn claim(conn: &mut Connection, tenant: &str, peer: &str, now: u64,
     let tx=conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
     tx.execute("DELETE FROM trs_dtn_bundles WHERE tenant=?1 AND expires<=?2",
                params![tenant,format!("{now:020}")])?;
+    // A persisted per-tenant watermark rejects clock rollback after a restart.
+    // Update and claim share the same IMMEDIATE transaction.
+    let prior: Option<String> = tx.query_row(
+        "SELECT high_water FROM trs_dtn_clock WHERE tenant=?1",
+        params![tenant], |r| r.get(0),
+    ).optional()?;
+    if let Some(prior) = prior {
+        let previous = prior.parse::<u64>().map_err(|_| DtnStoreError::Invalid)?;
+        if now < previous { return Err(DtnStoreError::Invalid); }
+    }
+    tx.execute(
+        "INSERT INTO trs_dtn_clock(tenant,high_water) VALUES(?1,?2)
+         ON CONFLICT(tenant) DO UPDATE SET high_water=excluded.high_water",
+        params![tenant,format!("{now:020}")],
+    )?;
     let mut candidates=Vec::new();
     {
         let mut stmt=tx.prepare("SELECT b.id,b.ciphertext,b.expires,b.hops FROM trs_dtn_bundles b
