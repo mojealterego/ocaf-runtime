@@ -9,7 +9,7 @@ fn saturated_first_bundle_does_not_starve_next_bundle() {
  }
  for i in 0..64 {
   let peer=format!("existing-{i}");
-  let first=claim(&mut db,"tenant",&peer,1,10,2).unwrap();
+  let first=claim(&mut db,"tenant",&peer,1,10,1).unwrap();
   assert!(!first.is_empty());
  }
  let selected=claim(&mut db,"tenant","new-peer",2,10,1).unwrap();
