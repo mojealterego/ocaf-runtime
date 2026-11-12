@@ -37,3 +37,9 @@ These are **names only**. No dispatcher or typed payload schema is implemented. 
 - Final source ZIP with SHA-256 manifest and verified reproducible build
 
 **Unverified:** Rust compilation, all integration tests, security certification, Digital-Life runtime compatibility. No final ZIP released.
+
+## Implementation update — 2026-11-12
+
+The local mathematical dispatcher now exists in `src/trs_digital_life.rs`, supporting bounded Fisher–Rao distance, graph Hodge 0-Laplacian, exact finite SAT evaluation, and health responses. `dispatch_authorized` checks claimed tenant/sender against a caller-supplied `AuthenticatedPrincipal` and an explicit capability list. **The caller must derive the principal from a genuinely authenticated channel**; passing user-controlled principal fields defeats this boundary. SAT evaluation is capped at 12 variables to bound computation and output. Tests are recorded in `tests/trs_digital_life_dispatch.rs` and `tests/trs_digital_life_authorization.rs`, but compilation and execution remain unverified.
+
+Remaining mandatory work: authenticated transport adapter; replay-resistant invocation envelope; stable typed schemas and resource ceilings; actual Digital-Life IntegratedEngine registration; E2E integration and Rust verification; security review. No release ZIP before these gates.
