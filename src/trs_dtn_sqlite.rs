@@ -32,15 +32,15 @@ pub fn insert(conn: &mut Connection, tenant: &str, bundle: &ReliableBundle,
         || bundle.ciphertext.is_empty() || bundle.ciphertext.len() > max_payload
         || bundle.hops_remaining == 0 || bundle.expires_at <= now { return Err(DtnStoreError::Invalid); }
     let tx=conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
-    tx.execute("DELETE FROM trs_dtn_bundles WHERE tenant=?1 AND CAST(expires AS INTEGER)<=?2",
-               params![tenant,now.to_string()])?;
+    tx.execute("DELETE FROM trs_dtn_bundles WHERE tenant=?1 AND expires<=?2",
+               params![tenant,format!("{now:020}")])?;
     let existing: bool=tx.query_row("SELECT EXISTS(SELECT 1 FROM trs_dtn_bundles WHERE tenant=?1 AND id=?2)",
                params![tenant,bundle.id.as_slice()],|r|r.get(0))?;
     if existing { return Err(DtnStoreError::Duplicate); }
     let count: i64=tx.query_row("SELECT COUNT(*) FROM trs_dtn_bundles WHERE tenant=?1",params![tenant],|r|r.get(0))?;
     if count as usize>=max_bundles { return Err(DtnStoreError::Capacity); }
     tx.execute("INSERT INTO trs_dtn_bundles(tenant,id,ciphertext,expires,hops) VALUES(?1,?2,?3,?4,?5)",
-               params![tenant,bundle.id.as_slice(),&bundle.ciphertext,bundle.expires_at.to_string(),i64::from(bundle.hops_remaining)])?;
+               params![tenant,bundle.id.as_slice(),&bundle.ciphertext,format!("{:020}",bundle.expires_at),i64::from(bundle.hops_remaining)])?;
     tx.commit()?;Ok(())
 }
 pub fn claim(conn: &mut Connection, tenant: &str, peer: &str, now: u64,
@@ -48,14 +48,14 @@ pub fn claim(conn: &mut Connection, tenant: &str, peer: &str, now: u64,
     if !identity(tenant)||!identity(peer)||retry_secs==0||limit==0||limit>4096 { return Err(DtnStoreError::Invalid); }
     let tx=conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
     tx.execute("DELETE FROM trs_dtn_bundles WHERE tenant=?1 AND CAST(expires AS INTEGER)<=?2",
-               params![tenant,now.to_string()])?;
+               params![tenant,format!("{now:020}")])?;
     let mut candidates=Vec::new();
     {
         let mut stmt=tx.prepare("SELECT b.id,b.ciphertext,b.expires,b.hops FROM trs_dtn_bundles b
            LEFT JOIN trs_dtn_delivery d ON d.tenant=b.tenant AND d.id=b.id AND d.peer=?2
-           WHERE b.tenant=?1 AND b.hops>1 AND (d.ack IS NULL OR (d.ack=0 AND CAST(d.deadline AS INTEGER)<=?3))
+           WHERE b.tenant=?1 AND b.hops>1 AND (d.ack IS NULL OR (d.ack=0 AND d.deadline<=?3))
            ORDER BY b.id LIMIT ?4")?;
-        let rows=stmt.query_map(params![tenant,peer,now.to_string(),limit as i64],|r|{
+        let rows=stmt.query_map(params![tenant,peer,format!("{now:020}"),limit as i64],|r|{
             let id:Vec<u8>=r.get(0)?;let ciphertext:Vec<u8>=r.get(1)?;
             let expires:String=r.get(2)?;let hops:i64=r.get(3)?;
             Ok((id,ciphertext,expires,hops))
@@ -74,7 +74,7 @@ pub fn claim(conn: &mut Connection, tenant: &str, peer: &str, now: u64,
         if !exists && peers>=64 { continue; }
         tx.execute("INSERT INTO trs_dtn_delivery(tenant,id,peer,deadline,ack) VALUES(?1,?2,?3,?4,0)
                     ON CONFLICT(tenant,id,peer) DO UPDATE SET deadline=excluded.deadline WHERE ack=0",
-                   params![tenant,&id,peer,now.saturating_add(retry_secs).to_string()])?;
+                   params![tenant,&id,peer,format!("{:020}",now.saturating_add(retry_secs))])?;
         out.push(ReliableBundle{id:key,ciphertext,expires_at,hops_remaining:(hops-1) as u8});
     }
     tx.commit()?;Ok(out)
