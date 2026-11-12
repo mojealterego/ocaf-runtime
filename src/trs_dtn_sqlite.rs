@@ -31,6 +31,7 @@ pub fn insert(conn: &mut Connection, tenant: &str, bundle: &ReliableBundle,
         || max_bundles.checked_mul(max_payload).map_or(true, |n| n > 64*1024*1024)
         || bundle.ciphertext.is_empty() || bundle.ciphertext.len() > max_payload
         || bundle.hops_remaining == 0 || bundle.expires_at <= now { return Err(DtnStoreError::Invalid); }
+    conn.execute_batch("PRAGMA foreign_keys=ON;")?;
     let tx=conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
     tx.execute("DELETE FROM trs_dtn_bundles WHERE tenant=?1 AND expires<=?2",
                params![tenant,format!("{now:020}")])?;
@@ -46,6 +47,7 @@ pub fn insert(conn: &mut Connection, tenant: &str, bundle: &ReliableBundle,
 pub fn claim(conn: &mut Connection, tenant: &str, peer: &str, now: u64,
              retry_secs: u64, limit: usize) -> Result<Vec<ReliableBundle>, DtnStoreError> {
     if !identity(tenant)||!identity(peer)||retry_secs==0||limit==0||limit>4096 { return Err(DtnStoreError::Invalid); }
+    conn.execute_batch("PRAGMA foreign_keys=ON;")?;
     let tx=conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
     tx.execute("DELETE FROM trs_dtn_bundles WHERE tenant=?1 AND expires<=?2",
                params![tenant,format!("{now:020}")])?;
@@ -83,6 +85,7 @@ pub fn claim(conn: &mut Connection, tenant: &str, peer: &str, now: u64,
 }
 pub fn acknowledge(conn:&mut Connection,tenant:&str,peer:&str,id:&[u8;32],now:u64)->Result<(),DtnStoreError>{
     if !identity(tenant)||!identity(peer) {return Err(DtnStoreError::Invalid);}
+    conn.execute_batch("PRAGMA foreign_keys=ON;")?;
     let tx=conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
     let expires:Option<String>=tx.query_row("SELECT expires FROM trs_dtn_bundles WHERE tenant=?1 AND id=?2",
        params![tenant,id.as_slice()],|r|r.get(0)).optional()?;
