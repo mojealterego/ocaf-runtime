@@ -121,8 +121,8 @@ pub fn acknowledge(conn:&mut Connection,tenant:&str,peer:&str,id:&[u8;32],now:u6
        params![tenant,id.as_slice()],|r|r.get(0)).optional()?;
     let expires=expires.ok_or(DtnStoreError::Missing)?.parse::<u64>().map_err(|_|DtnStoreError::Invalid)?;
     if expires<=now {return Err(DtnStoreError::Missing);}
-    let n=tx.execute("UPDATE trs_dtn_delivery SET ack=1,deadline=NULL WHERE tenant=?1 AND id=?2 AND peer=?3 AND ack=0",
-                     params![tenant,id.as_slice(),peer])?;
+    let n=tx.execute("UPDATE trs_dtn_delivery SET ack=1,deadline=NULL WHERE tenant=?1 AND id=?2 AND peer=?3 AND ack=0 AND deadline>=?4",
+                     params![tenant,id.as_slice(),peer,format!("{now:020}")])?;
     if n!=1 {return Err(DtnStoreError::Missing);}
     tx.commit()?;Ok(())
 }
