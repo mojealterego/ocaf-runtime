@@ -12,6 +12,7 @@ pub enum BridgeError {
     InvalidIdentity,
     ForbiddenOperation,
     PayloadTooLarge,
+    InvalidPayload,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -65,4 +66,71 @@ impl BridgeResponse {
     pub fn rejected() -> Self {
         Self { version: DIGITAL_LIFE_BRIDGE_VERSION, accepted: false, payload: Vec::new() }
     }
+}
+
+/// Pure local mathematical dispatch; never call directly on untrusted network
+/// input without independent transport identity and capability authorization.
+/// Every operation has a bounded, strictly typed payload schema.
+pub fn dispatch_local(request: &BridgeRequest) -> Result<BridgeResponse, BridgeError> {
+    request.validate()?;
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct FisherInput { p: Vec<f64>, q: Vec<f64> }
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct HodgeInput { values: Vec<f64>, edges: Vec<(usize, usize)> }
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct SatInput { variables: usize, clauses: Vec<[i32; 3]> }
+    let payload = match request.operation.as_str() {
+        "trs.health" => {
+            if !request.payload.is_empty() && request.payload != b"{}" {
+                return Err(BridgeError::InvalidPayload);
+            }
+            serde_json::json!({"status":"ready","version":DIGITAL_LIFE_BRIDGE_VERSION})
+        }
+        "trs.geometry.fisher_rao" => {
+            let input: FisherInput = serde_json::from_slice(&request.payload)
+                .map_err(|_| BridgeError::InvalidPayload)?;
+            if input.p.is_empty() || input.p.len() > 4096 || input.q.len() != input.p.len() {
+                return Err(BridgeError::InvalidPayload);
+            }
+            let distance = crate::trs_geometry::fisher_rao_distance(&input.p, &input.q)
+                .map_err(|_| BridgeError::InvalidPayload)?;
+            serde_json::json!({"distance":distance})
+        }
+        "trs.geometry.hodge_laplacian" => {
+            let input: HodgeInput = serde_json::from_slice(&request.payload)
+                .map_err(|_| BridgeError::InvalidPayload)?;
+            if input.values.is_empty() || input.values.len() > 4096 || input.edges.len() > 8192 {
+                return Err(BridgeError::InvalidPayload);
+            }
+            let values = crate::trs_geometry::hodge_zero_laplacian(&input.values, &input.edges)
+                .map_err(|_| BridgeError::InvalidPayload)?;
+            serde_json::json!({"values":values})
+        }
+        "trs.math.sat_evaluate" => {
+            let input: SatInput = serde_json::from_slice(&request.payload)
+                .map_err(|_| BridgeError::InvalidPayload)?;
+            // Enumerating assignments is exponential. Cap to 2^16.
+            if input.variables == 0 || input.variables > 16 || input.clauses.len() > 4096 {
+                return Err(BridgeError::InvalidPayload);
+            }
+            let clauses: Vec<crate::trs_math::Clause3> =
+                input.clauses.into_iter().map(crate::trs_math::Clause3).collect();
+            let result = crate::trs_math::enumerate_3sat(input.variables, &clauses)
+                .map_err(|_| BridgeError::InvalidPayload)?;
+            serde_json::json!({
+                "minimum_energy":result.minimum_energy,
+                "satisfying_count":result.satisfying_count,
+                "minimizers":result.minimizers
+            })
+        }
+        _ => return Err(BridgeError::ForbiddenOperation),
+    };
+    let encoded = serde_json::to_vec(&payload).map_err(|_| BridgeError::InvalidPayload)?;
+    if encoded.len() > MAX_PAYLOAD {
+        return Err(BridgeError::PayloadTooLarge);
+    }
+    Ok(BridgeResponse::accepted(encoded))
 }
