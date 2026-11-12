@@ -103,3 +103,21 @@ pub fn release(conn:&mut Connection,tenant:&str,peer:&str,id:&[u8;32])->Result<(
     if n!=1 {return Err(DtnStoreError::Missing);}
     Ok(())
 }
+
+/// Atomically removes expired bundles and their delivery leases for one tenant.
+/// Uses the same fixed-width u64 representation as insertion and claiming.
+pub fn purge_expired(
+    conn: &mut Connection,
+    tenant: &str,
+    now: u64,
+) -> Result<usize, DtnStoreError> {
+    if !identity(tenant) { return Err(DtnStoreError::Invalid); }
+    conn.execute_batch("PRAGMA foreign_keys=ON;")?;
+    let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
+    let deleted = tx.execute(
+        "DELETE FROM trs_dtn_bundles WHERE tenant=?1 AND expires<=?2",
+        params![tenant, format!("{now:020}")],
+    )?;
+    tx.commit()?;
+    Ok(deleted)
+}
