@@ -27,6 +27,29 @@ pub fn initialize(conn: &Connection) -> Result<(), DtnStoreError> {
         ) WITHOUT ROWID; PRAGMA foreign_keys=ON;")?;
     Ok(())
 }
+/// Clock checks and updates must run inside the same IMMEDIATE transaction
+/// as the operation, so concurrent connections cannot bypass the watermark.
+fn check_and_advance_clock(
+    tx: &rusqlite::Transaction<'_>,
+    tenant: &str,
+    now: u64,
+) -> Result<(), DtnStoreError> {
+    let prior: Option<String> = tx.query_row(
+        "SELECT high_water FROM trs_dtn_clock WHERE tenant=?1",
+        params![tenant], |row| row.get(0),
+    ).optional()?;
+    if let Some(previous) = prior {
+        let previous = previous.parse::<u64>().map_err(|_| DtnStoreError::Invalid)?;
+        if now < previous { return Err(DtnStoreError::Invalid); }
+    }
+    tx.execute(
+        "INSERT INTO trs_dtn_clock(tenant,high_water) VALUES(?1,?2)
+         ON CONFLICT(tenant) DO UPDATE SET high_water=excluded.high_water",
+        params![tenant,format!("{now:020}")],
+    )?;
+    Ok(())
+}
+
 /// Bounds are enforced for every insertion, not merely at startup.
 pub fn insert(conn: &mut Connection, tenant: &str, bundle: &ReliableBundle,
               now: u64, max_bundles: usize, max_payload: usize) -> Result<(), DtnStoreError> {
@@ -37,6 +60,7 @@ pub fn insert(conn: &mut Connection, tenant: &str, bundle: &ReliableBundle,
         || bundle.hops_remaining == 0 || bundle.expires_at <= now { return Err(DtnStoreError::Invalid); }
     conn.execute_batch("PRAGMA foreign_keys=ON;")?;
     let tx=conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
+    check_and_advance_clock(&tx, tenant, now)?;
     tx.execute("DELETE FROM trs_dtn_bundles WHERE tenant=?1 AND expires<=?2",
                params![tenant,format!("{now:020}")])?;
     let existing: bool=tx.query_row("SELECT EXISTS(SELECT 1 FROM trs_dtn_bundles WHERE tenant=?1 AND id=?2)",
@@ -55,21 +79,7 @@ pub fn claim(conn: &mut Connection, tenant: &str, peer: &str, now: u64,
     let tx=conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
     tx.execute("DELETE FROM trs_dtn_bundles WHERE tenant=?1 AND expires<=?2",
                params![tenant,format!("{now:020}")])?;
-    // A persisted per-tenant watermark rejects clock rollback after a restart.
-    // Update and claim share the same IMMEDIATE transaction.
-    let prior: Option<String> = tx.query_row(
-        "SELECT high_water FROM trs_dtn_clock WHERE tenant=?1",
-        params![tenant], |r| r.get(0),
-    ).optional()?;
-    if let Some(prior) = prior {
-        let previous = prior.parse::<u64>().map_err(|_| DtnStoreError::Invalid)?;
-        if now < previous { return Err(DtnStoreError::Invalid); }
-    }
-    tx.execute(
-        "INSERT INTO trs_dtn_clock(tenant,high_water) VALUES(?1,?2)
-         ON CONFLICT(tenant) DO UPDATE SET high_water=excluded.high_water",
-        params![tenant,format!("{now:020}")],
-    )?;
+    check_and_advance_clock(&tx, tenant, now)?;
     let mut candidates=Vec::new();
     {
         let mut stmt=tx.prepare("SELECT b.id,b.ciphertext,b.expires,b.hops FROM trs_dtn_bundles b
@@ -106,6 +116,7 @@ pub fn acknowledge(conn:&mut Connection,tenant:&str,peer:&str,id:&[u8;32],now:u6
     if !identity(tenant)||!identity(peer) {return Err(DtnStoreError::Invalid);}
     conn.execute_batch("PRAGMA foreign_keys=ON;")?;
     let tx=conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
+    check_and_advance_clock(&tx, tenant, now)?;
     let expires:Option<String>=tx.query_row("SELECT expires FROM trs_dtn_bundles WHERE tenant=?1 AND id=?2",
        params![tenant,id.as_slice()],|r|r.get(0)).optional()?;
     let expires=expires.ok_or(DtnStoreError::Missing)?.parse::<u64>().map_err(|_|DtnStoreError::Invalid)?;
@@ -133,6 +144,7 @@ pub fn purge_expired(
     if !identity(tenant) { return Err(DtnStoreError::Invalid); }
     conn.execute_batch("PRAGMA foreign_keys=ON;")?;
     let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
+    check_and_advance_clock(&tx, tenant, now)?;
     let deleted = tx.execute(
         "DELETE FROM trs_dtn_bundles WHERE tenant=?1 AND expires<=?2",
         params![tenant, format!("{now:020}")],
