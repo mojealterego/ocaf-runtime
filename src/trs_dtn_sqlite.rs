@@ -107,7 +107,7 @@ pub fn claim(conn: &mut Connection, tenant: &str, peer: &str, now: u64,
         if !exists && peers>=64 { continue; }
         tx.execute("INSERT INTO trs_dtn_delivery(tenant,id,peer,deadline,ack) VALUES(?1,?2,?3,?4,0)
                     ON CONFLICT(tenant,id,peer) DO UPDATE SET deadline=excluded.deadline WHERE ack=0",
-                   params![tenant,&id,peer,format!("{:020}",now.saturating_add(retry_secs))])?;
+                   params![tenant,&id,peer,format!("{:020}",now.saturating_add(retry_secs).min(expires_at))])?;
         out.push(ReliableBundle{id:key,ciphertext,expires_at,hops_remaining:(hops-1) as u8});
     }
     tx.commit()?;Ok(out)
