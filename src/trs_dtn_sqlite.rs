@@ -101,7 +101,7 @@ pub fn claim(conn: &mut Connection, tenant: &str, peer: &str, now: u64,
     let mut out=Vec::new();
     for (id, ciphertext, expires, hops) in candidates {
         if out.len() >= limit { break; }
-        if id.len()!=32 || !(2..=255).contains(&hops) { return Err(DtnStoreError::Invalid); }
+        if id.len()!=32 || !(2..=255).contains(&hops) || ciphertext.is_empty() || ciphertext.len()>65536 { return Err(DtnStoreError::Invalid); }
         let mut key=[0u8;32];key.copy_from_slice(&id);
         let expires_at=expires.parse::<u64>().map_err(|_|DtnStoreError::Invalid)?;
         if expires_at <= now { continue; }
