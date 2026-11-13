@@ -63,7 +63,7 @@ impl ReliableDtn {
             } else if entry.pending.len() + entry.acknowledged.len() >= 64 { continue; }
             let mut copy = entry.bundle.clone();
             copy.hops_remaining -= 1;
-            entry.pending.insert(peer.to_owned(), now.saturating_add(self.retry_secs));
+            entry.pending.insert(peer.to_owned(), now.saturating_add(self.retry_secs).min(entry.bundle.expires_at));
             out.push(copy);
         }
         Ok(out)
@@ -84,7 +84,11 @@ impl ReliableDtn {
         if !peer_valid(peer) { return Err(ReliableError::InvalidPeer); }
         let entry = self.entries.get_mut(id).ok_or(ReliableError::UnknownBundle)?;
         if entry.bundle.expires_at <= now { return Err(ReliableError::Expired); }
-        if entry.pending.remove(peer).is_none() { return Err(ReliableError::NotInFlight); }
+        match entry.pending.get(peer) {
+            Some(&deadline) if now <= deadline => {},
+            _ => return Err(ReliableError::NotInFlight),
+        }
+        entry.pending.remove(peer);
         entry.acknowledged.insert(peer.to_owned());
         Ok(())
     }
