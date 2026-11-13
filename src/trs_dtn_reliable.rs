@@ -126,6 +126,21 @@ mod tests {
         assert_eq!(dtn.acknowledge(&[4; 32], "peer", 100), Err(ReliableError::Expired));
     }
     #[test]
+    fn select_rejects_unbounded_batch_without_mutating_state() {
+        let mut dtn = ReliableDtn::new(1, 32, 5).unwrap();
+        dtn.insert(bundle(9, 3), 0).unwrap();
+        assert_eq!(dtn.select("peer", 10, usize::MAX), Err(ReliableError::Capacity));
+        assert_eq!(dtn.select("peer", 10, 1).unwrap().len(), 1);
+    }
+    #[test]
+    fn stale_ack_does_not_release_pending_fanout_slot() {
+        let mut dtn = ReliableDtn::new(1, 32, 5).unwrap();
+        dtn.insert(bundle(8, 3), 0).unwrap();
+        assert_eq!(dtn.select("peer", 10, 1).unwrap().len(), 1);
+        assert_eq!(dtn.acknowledge(&[8;32], "peer", 16), Err(ReliableError::NotInFlight));
+        assert_eq!(dtn.select("peer", 16, 1).unwrap().len(), 1);
+    }
+    #[test]
     fn validation_and_expiry() {
         let mut dtn = ReliableDtn::new(1, 32, 5).unwrap();
         assert_eq!(dtn.insert(bundle(1, 0), 0), Err(ReliableError::InvalidBundle));
