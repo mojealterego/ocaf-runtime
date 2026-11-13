@@ -93,8 +93,8 @@ pub fn claim(conn: &mut Connection, tenant: &str, peer: &str, now: u64,
     check_and_advance_clock(&tx, tenant, now)?;
     let mut candidates=Vec::new();
     {
-        // Filter saturated fanout in SQL before LIMIT to bound ciphertext memory.
-        let mut stmt=tx.prepare("SELECT b.id,b.ciphertext,b.expires,b.hops FROM trs_dtn_bundles b
+        // Filter saturated fanout in SQL before LIMIT to bound ciphertext memory.\n        // Do not materialize oversized persisted blobs; NULL causes a fail-closed\n        // rusqlite type error rather than allocating attacker-controlled data.
+        let mut stmt=tx.prepare("SELECT b.id,CASE WHEN length(b.ciphertext) BETWEEN 1 AND 65536 THEN b.ciphertext ELSE NULL END,b.expires,b.hops FROM trs_dtn_bundles b
            LEFT JOIN trs_dtn_delivery d ON d.tenant=b.tenant AND d.id=b.id AND d.peer=?2
            WHERE b.tenant=?1 AND b.hops>1 AND b.expires>?3
              AND (d.ack IS NULL OR (d.ack=0 AND d.deadline<=?3))
