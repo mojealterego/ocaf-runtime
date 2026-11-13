@@ -68,6 +68,17 @@ pub fn insert(conn: &mut Connection, tenant: &str, bundle: &ReliableBundle,
     if existing { return Err(DtnStoreError::Duplicate); }
     let count: i64=tx.query_row("SELECT COUNT(*) FROM trs_dtn_bundles WHERE tenant=?1",params![tenant],|r|r.get(0))?;
     if count as usize>=max_bundles { return Err(DtnStoreError::Capacity); }
+    // Enforce the actual per-tenant stored bytes, including records written
+    // under previous limits. Checking only max_bundles * max_payload is unsafe
+    // when callers change limits between insertions.
+    let used: i64=tx.query_row(
+        "SELECT COALESCE(SUM(length(ciphertext)),0) FROM trs_dtn_bundles WHERE tenant=?1",
+        params![tenant], |row| row.get(0),
+    )?;
+    let incoming=i64::try_from(bundle.ciphertext.len()).map_err(|_|DtnStoreError::Capacity)?;
+    if used<0 || used.checked_add(incoming).map_or(true,|total|total>64*1024*1024) {
+        return Err(DtnStoreError::Capacity);
+    }
     tx.execute("INSERT INTO trs_dtn_bundles(tenant,id,ciphertext,expires,hops) VALUES(?1,?2,?3,?4,?5)",
                params![tenant,bundle.id.as_slice(),&bundle.ciphertext,format!("{:020}",bundle.expires_at),i64::from(bundle.hops_remaining)])?;
     tx.commit()?;Ok(())
