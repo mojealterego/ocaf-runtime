@@ -52,7 +52,7 @@ impl ReliableDtn {
     }
     pub fn select(&mut self, peer: &str, now: u64, limit: usize) -> Result<Vec<ReliableBundle>, ReliableError> {
         if !peer_valid(peer) { return Err(ReliableError::InvalidPeer); }
-        if limit == 0 { return Err(ReliableError::Capacity); }
+        if limit == 0 || limit > 4096 { return Err(ReliableError::Capacity); }
         self.purge_expired(now);
         let mut out = Vec::new();
         for entry in self.entries.values_mut() {
