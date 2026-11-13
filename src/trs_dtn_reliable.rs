@@ -106,6 +106,22 @@ mod tests {
         assert!(dtn.select("peer", 20, 1).unwrap().is_empty());
     }
     #[test]
+    fn expired_retry_lease_cannot_be_acknowledged() {
+        let mut dtn = ReliableDtn::new(2, 32, 5).unwrap();
+        dtn.insert(bundle(3, 3), 0).unwrap();
+        assert_eq!(dtn.select("peer", 10, 1).unwrap().len(), 1);
+        assert_eq!(dtn.acknowledge(&[3; 32], "peer", 16), Err(ReliableError::NotInFlight));
+        assert_eq!(dtn.select("peer", 16, 1).unwrap().len(), 1);
+        assert_eq!(dtn.acknowledge(&[3; 32], "peer", 17), Ok(()));
+    }
+    #[test]
+    fn retry_deadline_is_clamped_to_bundle_expiration() {
+        let mut dtn = ReliableDtn::new(2, 32, u64::MAX).unwrap();
+        dtn.insert(bundle(4, 3), 0).unwrap();
+        assert_eq!(dtn.select("peer", 99, 1).unwrap().len(), 1);
+        assert_eq!(dtn.acknowledge(&[4; 32], "peer", 100), Err(ReliableError::Expired));
+    }
+    #[test]
     fn validation_and_expiry() {
         let mut dtn = ReliableDtn::new(1, 32, 5).unwrap();
         assert_eq!(dtn.insert(bundle(1, 0), 0), Err(ReliableError::InvalidBundle));
