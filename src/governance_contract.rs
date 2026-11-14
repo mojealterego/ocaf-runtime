@@ -639,4 +639,74 @@ mod tests {
         );
         assert!(ApprovalAuthority::new([0; 32]).is_none());
     }
+    #[test]
+    fn procurement_commit_requires_canonical_domain_risk_and_human_approval() {
+        let mut c = contract();
+        c.permissions.insert("procurement.commit_purchase_order".into());
+        let mut r = request();
+        r.action = "procurement.commit_purchase_order";
+        r.domain = Domain::CoreRetrieval;
+        r.risk = RiskTier::Low;
+        assert_eq!(
+            c.evaluate(&r, None, 150),
+            PreflightDecision::Deny(DenyReason::InvalidRequest)
+        );
+        r.domain = Domain::ProcurementScout;
+        assert_eq!(
+            c.evaluate(&r, None, 150),
+            PreflightDecision::Deny(DenyReason::InvalidRequest)
+        );
+        r.risk = RiskTier::Medium;
+        assert_eq!(
+            c.evaluate(&r, None, 150),
+            PreflightDecision::Deny(DenyReason::MissingApproval)
+        );
+        let authority = ApprovalAuthority::new([9; 32]).unwrap();
+        let approval = signed_approval(&r, ApproverRole::FinanceApprover);
+        r.approval = Some(&approval);
+        assert_eq!(
+            c.evaluate(&r, Some(&authority), 150),
+            PreflightDecision::Continue
+        );
+    }
+
+    #[test]
+    fn procurement_read_only_screening_cannot_claim_medium_or_wrong_domain() {
+        let mut c = contract();
+        c.permissions
+            .insert("procurement.evaluate_supplier_dossier".into());
+        let mut r = request();
+        r.action = "procurement.evaluate_supplier_dossier";
+        r.domain = Domain::ContractObligations;
+        r.risk = RiskTier::Low;
+        assert_eq!(
+            c.evaluate(&r, None, 150),
+            PreflightDecision::Deny(DenyReason::InvalidRequest)
+        );
+        r.domain = Domain::ProcurementScout;
+        r.risk = RiskTier::Medium;
+        assert_eq!(
+            c.evaluate(&r, None, 150),
+            PreflightDecision::Deny(DenyReason::InvalidRequest)
+        );
+        r.risk = RiskTier::Low;
+        assert_eq!(c.evaluate(&r, None, 150), PreflightDecision::Continue);
+    }
+
+    #[test]
+    fn compliance_evidence_validation_cannot_spoof_retrieval_domain() {
+        let mut c = contract();
+        c.permissions.insert("compliance.validate_evidence_pack".into());
+        let mut r = request();
+        r.action = "compliance.validate_evidence_pack";
+        r.domain = Domain::CoreRetrieval;
+        r.risk = RiskTier::Low;
+        assert_eq!(
+            c.evaluate(&r, None, 150),
+            PreflightDecision::Deny(DenyReason::InvalidRequest)
+        );
+        r.domain = Domain::ComplianceEvidence;
+        assert_eq!(c.evaluate(&r, None, 150), PreflightDecision::Continue);
+    }
+
 }
