@@ -51,6 +51,8 @@ jobs:
         run: cargo fmt --all -- --check
       - name: Bounded deterministic virtual-time simulator (simulation only)
         run: cargo test --locked --no-default-features --lib deterministic_fault_simulator::tests
+      - name: Safe bounded GGUF v2/v3 header parser (header only)
+        run: cargo test --locked --no-default-features --lib gguf_header::tests
       - name: Clippy (core only)
         run: cargo clippy --locked --all-targets --no-default-features -- -D warnings
       - name: OmniDev 0.56 Cargo workspace graph (locked offline, no candidate execution)
