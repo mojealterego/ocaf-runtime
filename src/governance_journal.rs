@@ -662,7 +662,16 @@ mod tests {
                 .unwrap(),
             Admission::Denied(DenyReason::InvalidRequest)
         );
+        let trusted_provider = ProviderAccess {
+            authenticated: true,
+            region_model_authorized: true,
+            explicit_cost_approved: true,
+            estimated_cost_micros: 1,
+            approved_cost_micros: 1,
+        };
         req.risk = RiskTier::Medium;
+        req.uses_external_provider = true;
+        req.provider = Some(&trusted_provider);
         assert_eq!(
             journal
                 .begin(&contract, &req, None, ("tenant_a", "agent_a"), 170, "po_1")
