@@ -49,6 +49,8 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p test_mtls_lifecycle.py -v
       - name: Formatting
         run: cargo fmt --all -- --check
+      - name: Bounded deterministic virtual-time simulator (simulation only)
+        run: cargo test --locked --no-default-features --lib deterministic_fault_simulator::tests
       - name: Clippy (core only)
         run: cargo clippy --locked --all-targets --no-default-features -- -D warnings
       - name: OmniDev 0.56 Cargo workspace graph (locked offline, no candidate execution)
