@@ -472,6 +472,36 @@ mod tests {
     }
 
 
+
+    #[test]
+    fn legacy_buy_requires_provider_check_even_with_signed_approval() {
+        let c = contract();
+        let authority = ApprovalAuthority::new([9; 32]).unwrap();
+        let mut r = request();
+        let approval = signed_approval(&r, ApproverRole::FinanceApprover);
+        r.approval = Some(&approval);
+        assert_eq!(
+            c.evaluate(&r, Some(&authority), 150),
+            PreflightDecision::Deny(DenyReason::InvalidRequest)
+        );
+        let unauthenticated = ProviderAccess {
+            authenticated: false,
+            ..authorized_test_provider()
+        };
+        r.uses_external_provider = true;
+        r.provider = Some(&unauthenticated);
+        assert_eq!(
+            c.evaluate(&r, Some(&authority), 150),
+            PreflightDecision::Deny(DenyReason::ProviderNotAuthorized)
+        );
+        let authorized = authorized_test_provider();
+        r.provider = Some(&authorized);
+        assert_eq!(
+            c.evaluate(&r, Some(&authority), 150),
+            PreflightDecision::Continue
+        );
+    }
+
     #[test]
     fn legacy_buy_alias_cannot_downgrade_or_spoof_procurement_risk() {
         let c = contract();
