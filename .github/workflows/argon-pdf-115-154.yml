@@ -11,6 +11,7 @@ on:
       - 'src/lib.rs'
       - 'src/compliance_evidence.rs'
       - 'src/contract_obligations.rs'
+      - 'src/procurement_scout.rs'
       - 'src/mcp_registry_integrity.rs'
       - 'src/claim_ledger_verifier.rs'
       - 'ROADMAP.md'
@@ -52,6 +53,8 @@ jobs:
         run: cargo test --locked --no-default-features --lib compliance_evidence::tests
       - name: Contract obligation extraction and deadline tests
         run: cargo test --locked --no-default-features --lib contract_obligations::tests
+      - name: Procurement Scout bounded read-only safety tests
+        run: cargo test --locked --no-default-features --lib procurement_scout::tests
       - name: Pinned MCP registry content hash and path negative tests
         run: cargo test --locked --no-default-features --lib mcp_registry_integrity::tests
       - name: Evidence bound architectural claim and exaggeration tests
