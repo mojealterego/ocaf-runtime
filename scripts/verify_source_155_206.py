@@ -113,6 +113,9 @@ def evaluate(repo: Path) -> dict[str, Any]:
         or inventory['technical_count'] != 64
         or inventory.get('production_approved') is not False
         or not isinstance(inventory.get('main'), list)
+        or len(inventory['main']) != inventory['main_count']
+        or not isinstance(inventory.get('technical'), list)
+        or len(inventory['technical']) != inventory['technical_count']
     ):
         problems.append('canonical_inventory_invalid')
         return report
