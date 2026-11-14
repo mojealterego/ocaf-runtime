@@ -169,6 +169,33 @@ impl AgentContract {
             {
                 return PreflightDecision::Deny(D::InvalidRequest);
             }
+            "contract.extract_obligations" | "contract.record_action"
+                if req.domain != Domain::ContractObligations || req.risk != RiskTier::Low =>
+            {
+                return PreflightDecision::Deny(D::InvalidRequest);
+            }
+            "compliance.validate_evidence_pack"
+                if req.domain != Domain::ComplianceEvidence || req.risk != RiskTier::Low =>
+            {
+                return PreflightDecision::Deny(D::InvalidRequest);
+            }
+            "procurement.evaluate_supplier_dossier"
+                if req.domain != Domain::ProcurementScout || req.risk != RiskTier::Low =>
+            {
+                return PreflightDecision::Deny(D::InvalidRequest);
+            }
+            "procurement.commit_purchase_order"
+                if req.domain != Domain::ProcurementScout || req.risk < RiskTier::Medium =>
+            {
+                return PreflightDecision::Deny(D::InvalidRequest);
+            }
+            action
+                if action.starts_with("procurement.")
+                    || action.starts_with("contract.")
+                    || action.starts_with("compliance.") =>
+            {
+                return PreflightDecision::Deny(D::InvalidRequest);
+            }
             _ => {}
         }
         if req.domain == Domain::ProcurementScout && req.risk > RiskTier::Medium {
