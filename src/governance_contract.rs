@@ -736,4 +736,25 @@ mod tests {
         assert_eq!(c.evaluate(&r, None, 150), PreflightDecision::Continue);
     }
 
+    #[test]
+    fn unknown_scoped_actions_fail_closed_even_when_explicitly_allowlisted() {
+        let mut c = contract();
+        c.permissions.insert("procurement.commit_without_policy".into());
+        c.permissions.insert("contract.verify_without_policy".into());
+        c.permissions.insert("compliance.clear_without_policy".into());
+        let mut r = request();
+        r.risk = RiskTier::Low;
+        for action in [
+            "procurement.commit_without_policy",
+            "contract.verify_without_policy",
+            "compliance.clear_without_policy",
+        ] {
+            r.action = action;
+            assert_eq!(
+                c.evaluate(&r, None, 150),
+                PreflightDecision::Deny(DenyReason::InvalidRequest)
+            );
+        }
+    }
+
 }
