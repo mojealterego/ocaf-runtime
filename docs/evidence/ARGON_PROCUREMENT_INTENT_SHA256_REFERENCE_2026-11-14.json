@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "deterministic_python_hash_reference_only",
+  "component": "OCAF Argon procurement purchase intent",
+  "source_file": "src/procurement_scout.rs",
+  "date_utc": "2026-11-14",
+  "source_test_name": "purchase_intent_matches_independently_calculated_sha256_test_vector",
+  "reference_engine": "Python stdlib hashlib.sha256",
+  "domain_separation": [
+    "OCAF-PROCUREMENT-FEED-v1",
+    "OCAF-PROCUREMENT-POLICY-v1",
+    "OCAF-PROCUREMENT-DOSSIER-v1",
+    "OCAF-PROCUREMENT-PURCHASE-INTENT-v1"
+  ],
+  "encoding": "8-byte big-endian length prefix followed by raw bytes; u64 fields big-endian; ASCII canonical names uppercase/collapsed whitespace; watchlist and beneficial owner tuples lexicographically sorted",
+  "fixture": {
+    "timestamp_unix": 1800000000,
+    "tenant": "tenant-A",
+    "supplier_id": "supplier-1",
+    "legal_name": "ACME INC",
+    "beneficial_owners": [
+      "KNOWN OWNER"
+    ],
+    "amount_cents": 9000,
+    "currency": "USD",
+    "tax_expires_unix": 1800000001,
+    "insurance_expires_unix": 1800000001,
+    "iso27001_claimed": true,
+    "financial_score": 80,
+    "medium_risk_cap_cents": 10000,
+    "minimum_financial_score": 60,
+    "max_feed_age_secs": 86400,
+    "iso_claim_required": true,
+    "feed_issuer": "trusted-upstream",
+    "feed_issued_unix": 1799999940,
+    "feed_expires_unix": 1800003600,
+    "feed_records": [
+      {
+        "id": "w1",
+        "name": "OTHER LTD"
+      }
+    ]
+  },
+  "expected_hashes": {
+    "watchlist_sha256": "e0a2397db9b2b95b8f3487dff8d0483c6cc84b5cb9f96f0f487dda26a1de0155",
+    "policy_sha256": "a2d74bb6b4a5dbf67250514288844de740fa143bc4889c61f04125d9a95d140a",
+    "dossier_sha256": "ee4f0bbcdc34ae70d8df30b2ac13dc29223951cbc77cad7681632b11c6b8e115",
+    "purchase_payload_sha256": "6152f3efa22fd59112ec371d9ab8e96059cf9ee389a8a8cef0ed03d44c9c4989"
+  },
+  "mutated_expected_purchase_hashes": {
+    "amount_9001": "16a95ba5cff46f06e6d3a9401fa0b60920d94617172ffcae08f8bcf4567ce535",
+    "policy_cap_10001": "ddeb5cd249267942e6ef8283c3f8341bd379990cf1d283ef388df5d20051949e",
+    "owner_DIFFERENT_OWNER": "2776fa5f3e510b03c4416fa5e9abe3e0c3bb17a3170f8380534fe997471d0cc5",
+    "watchlist_OTHER_UNRELATED_PARTNER": "219b34cfa0ccc2bcaca835aab4e8e1fc0000815c9742b9242d7bda44e895e283"
+  },
+  "deterministic_model_checks": {
+    "passed": 644,
+    "failed": 0,
+    "runner": "local Python 3 stdlib",
+    "scope": "model hash changes on amount, policy cap, owner, watchlist, tax-expiry mutations and watchlist order invariance"
+  },
+  "rust_test_status": "NOT_EXECUTED",
+  "rust_compile_status": "NOT_EXECUTED",
+  "remote_ci_status": "NOT_CONFIRMED_PASSING",
+  "external_provider_authorization": "NOT_IMPLEMENTED_BY_THIS_ARTIFACT",
+  "operator_approval": "NOT_GRANTED",
+  "production_approved": false,
+  "caveat": "These reference hashes and model checks establish an expected canonical representation only. They do not prove that Rust source compiles, that Rust produces matching hashes, or that any supplier is sanctioned/clear."
+}
