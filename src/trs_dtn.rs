@@ -96,3 +96,28 @@ impl DtnStore {
         Ok(batch)
     }
 }
+
+#[cfg(test)]
+mod safety_regression_tests {
+    use super::*;
+
+    fn bundle(id: u8) -> Bundle {
+        Bundle { id: [id; 32], ciphertext: vec![7; 32], expires_at: 100, hops_remaining: 3 }
+    }
+
+    #[test]
+    fn reject_unbounded_forward_batch_without_consuming_peer_delivery() {
+        let mut store = DtnStore::new(4, 64).unwrap();
+        store.insert(bundle(1), 0).unwrap();
+        assert_eq!(store.forward_for("peer", 1, usize::MAX), Err(DtnError::Capacity));
+        assert_eq!(store.forward_for("peer", 1, 1).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn forward_is_tenant_agnostic_and_must_not_be_used_for_cross_tenant_isolation() {
+        let mut store = DtnStore::new(4, 64).unwrap();
+        store.insert(bundle(1), 0).unwrap();
+        assert_eq!(store.forward_for("peer", 1, 1).unwrap()[0].id, [1; 32]);
+        assert!(store.forward_for("peer", 2, 1).unwrap().is_empty());
+    }
+}
