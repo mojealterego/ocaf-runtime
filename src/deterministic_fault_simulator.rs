@@ -9,7 +9,9 @@
 //! - the transcript SHA-256 is an UNSIGNED simulation fingerprint, not a
 //!   hardware receipt, network attestation or production approval.
 //!
-//! No OS clock, thread, actual network, disk or executable side effects.
+//! The simulator itself has no OS clock, threads, network or filesystem I/O.
+//! The caller-supplied delivery callback is NOT sandboxed or side-effect-free
+//! by construction; production executors MUST NOT treat this as authorization.
 
 use sha2::{Digest, Sha256};
 use std::cmp::Ordering;
@@ -186,7 +188,14 @@ pub struct SimulationReceipt {
     /// UNSIGNED fingerprint of simulated event decisions. Not a real-world
     /// effect receipt and not an assertion of external infrastructure.
     pub transcript_sha256: [u8; 32],
-    pub simulation_only: bool,
+    simulation_only: bool,
+}
+
+impl SimulationReceipt {
+    /// Cannot be changed by a consumer to claim a hardware or production run.
+    pub fn is_simulation_only(&self) -> bool {
+        self.simulation_only
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -265,9 +274,8 @@ impl DeterministicSimulator {
         Ok(new_id)
     }
 
-    /// Store an immutable clone of the input so later caller mutations cannot
-    /// alter a scheduled delivery. This is a synthetic message, not trusted
-    /// network ingress.
+    /// Take ownership of the message; the caller cannot mutate the scheduled
+    /// event afterward. This is synthetic data, not authenticated ingress.
     pub fn schedule_message(&mut self, delay_ms: u64, message: SimMessage) -> Result<u64, SimError> {
         if !valid_id(&message.tenant)
             || !valid_id(&message.sender)
@@ -508,7 +516,7 @@ mod tests {
         assert_eq!(observed, vec![b"A".to_vec(), b"B".to_vec(), b"C".to_vec()]);
         assert_eq!(r.processed_events, 3);
         assert!(!r.budget_exhausted);
-        assert!(r.simulation_only);
+        assert!(r.is_simulation_only());
     }
 
     #[test]
@@ -707,8 +715,8 @@ mod tests {
         let rb = b.run_until(3, 10, |_, _, _| {}).unwrap();
         assert_eq!(ra.transcript_sha256, rb.transcript_sha256);
         assert_ne!(ra.transcript_sha256, [0; 32]);
-        assert!(ra.simulation_only);
-        assert!(rb.simulation_only);
+        assert!(ra.is_simulation_only());
+        assert!(rb.is_simulation_only());
     }
 
     #[test]
