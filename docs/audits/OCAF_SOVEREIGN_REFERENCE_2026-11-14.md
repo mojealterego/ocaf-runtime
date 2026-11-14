@@ -20,7 +20,7 @@ Głównym źródłem kanonicznych identyfikatorów pozostają `ROADMAP.md`, `doc
 | s. 18–20: TRS-SEAL | Referencja wyznacza nonce z `(epoch as u32)` i sekwencji, co może doprowadzić do ponownego użycia nonce po utracie wyższych bitów epoki; ponadto **zużywa okno replay przed uwierzytelnieniem**. Istniejące `src/trs_seal.rs` i `src/trs_seal_sqlite.rs` wymagają osobnej kompatybilnej migracji, a nie podmiany | `REJECTED_CRYPTO_SNIPPET` |
 | s. 20–22: Ricci heuristic i hybrydowy PQC | `crates/ocaf-transport-crdt/src/ricci_routing.rs` już zawiera bezpieczniejszy, doradczy algorytm. Kod PDF nie oblicza rzeczywistego Wassersteina-1; propozycja PQC jest tylko funkcją HKDF nad **założonymi** shared secrets, nie implementacją ML-KEM | `PARTIAL` |
 | s. 23–27: WASI, Firecracker, eBPF, SSRF | Istnieją kontrakty sandboxu; eBPF tracepoint zwracający `1` nie stanowi mechanizmu blokowania syscall w Linuksie. URL-filter hostowy z PDF nie obejmuje DNS rebinding, przekierowań i sieci prywatnych | `REQUIRES_RUNTIME_PROOF` |
-| s. 28–31: GGUF, Merkle/FRI, HDC | Przykład GGUF odczytuje tylko nagłówek; sama weryfikacja gałęzi Merkle nie jest dowodem STARK/FRI. Brak hardware HIL w treści kodu | `SCOPED_RESEARCH` |
+| s. 28–31: GGUF, Merkle/FRI, HDC | Dodano `src/gguf_header.rs`: odczyt tylko 24-bajtowego nagłówka GGUF v2/v3, little endian, limit liczby tensorów i metadanych (10 źródłowych testów Rust). Nie analizuje kompletnych metadanych, tablic tensorów, offsetów ani wag. Gałąź Merkle nie stanowi pełnego STARK/FRI | `HEADER_SOURCE_ONLY / RUST_TEST_UNVERIFIED / STAGE_330_PLANNED` |
 | s. 32–38: UI 8 × 4, UniFFI i platformy | Tabela jest matrycą wymagań, nie dowodem binariów AAB/APK/IPA/MSIX/HAP ani testów natywnych na wszystkich 8 systemach. Mobilny przykład podaje pusty delegation token | `UNVERIFIED_NATIVE_BUILDS` |
 | s. 39–40: symulator zdarzeń i fault injection | Dodano `src/deterministic_fault_simulator.rs` w istniejącym Rust runtime: virtual clock, LCG, deterministic heap, partycje per tenant, utrata/duplikacja/mutacja, limity, nierozmywanie kolejki. Uzupełniono `src/lib.rs`, Rust CI | `SOURCE_IMPLEMENTED / RUST_TEST_UNVERIFIED` |
 | s. 40–43: EvidenceReceipt, SLSA i statusy | Wzór SLSA z pustym digest SHA-256 i przykładowym linkiem do obcego repo nie poświadcza binariów. Tabela `PRODUCTION_APPROVED` dla symulatora w PDF nie jest dowodem operatora. Nowy `SimulationReceipt` ma tylko jawny `simulation_only=true` i nie udaje podpisu | `NO_PRODUCTION_GO` |
@@ -43,3 +43,13 @@ cargo test --locked --no-default-features
 ```
 
 Brak wyniku PASS jest blokadą statusu `TESTED_LOCAL` i `CI_VERIFIED`. Symulacja nie może zmienić `DEVICE_VERIFIED` ani `PRODUCTION_APPROVED`.
+
+## Rozszerzenie — nagłówek GGUF, etap historyczny 330
+
+W istniejącym `src/model_router.rs` nie znaleziono parsera GGUF. Dodano osobny `src/gguf_header.rs` z walidacją 24-bajtowego nagłówka w formacie little-endian: magiczne bajty `GGUF`, wersje 2/3 i u64 liczników, ograniczone hard-cap do 1 000 000 tensorów i 1 000 000 par metadanych bez alokacji proporcjonalnej do pól pliku. 10 zapisanych w module testów obejmuje granice długości, uszkodzoną sygnaturę, nieobsługiwane wersje, niepoprawne liczby, little-endian, wartości graniczne i deterministyczny negatywny korpus. Eksport `src/lib.rs` i skoncentrowany krok `.github/workflows/rust.yml` zostały dodane.
+
+**Nie jest to kompletny parser GGUF, weryfikacja tensorów ani sprawdzanie źródła, checksum z zaufanego manifestu lub SSRF.** Kanoniczny wpis etapu 330 w `canonical_v11_inventory.json` wymaga dokładnie takich pełnych kontraktów; dlatego pozostaje `PLANNED` i nie jest uznany za zrealizowany. Rustfmt, Cargo, Clippy i CI dla nowego kodu nie zostały potwierdzone jako PASS.
+
+## Uściślenie granicy trust w symulatorze
+
+`SimulationReceipt::simulation_only` jest teraz polem prywatnym i udostępnia wyłącznie `is_simulation_only()`. Nie da się go bezpośrednio nadpisać w zewnętrznym kodzie korzystającym z biblioteki. Symulator nie wykonuje systemowego I/O samodzielnie, lecz **arbitralny callback podany przez wywołującego nie jest sandboxowany** i może mieć własne skutki uboczne. Ten silnik musi być zasilany wyłącznie przez kontrolowany handler bez uprawnień produkcyjnych. Żaden digest symulacyjny nie staje się podpisem operatora.
