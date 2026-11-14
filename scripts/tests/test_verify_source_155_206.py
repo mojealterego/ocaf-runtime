@@ -34,10 +34,11 @@ class SourceReconciliationTests(unittest.TestCase):
         (self.root / 'src/document_state.rs').write_text('// synthetic fixture', encoding='utf-8')
         self.inventory = {
             'main_count': 334, 'technical_count': 64, 'production_approved': False,
-            'main': [
-                {'id': point, 'title': title}
-                for point, title in zip(EXPECTED_POINTS, CANONICAL)
-            ],
+            'main': (
+                [{'id': point, 'title': title} for point, title in zip(EXPECTED_POINTS, CANONICAL)]
+                + [{'id': f'fixture-{n}', 'title': f'Synthetic stage {n}'} for n in range(314)]
+            ),
+            'technical': [{'id': f'test-technical-{n}'} for n in range(64)],
         }
         self.manifest = {
             'schema_version': 1,
@@ -100,7 +101,7 @@ class SourceReconciliationTests(unittest.TestCase):
         self.assertIn('canonical_inventory_invalid', self.check()['problems'])
 
     def test_missing_canonical_stage_fails(self):
-        self.inventory['main'] = self.inventory['main'][1:]
+        self.inventory['main'][0] = {'id': 'fixture-missing', 'title': 'No original stage 1.55'}
         self.write()
         self.assertIn('canonical_mismatch:SOURCE-1.55', self.check()['problems'])
 
@@ -124,6 +125,16 @@ class SourceReconciliationTests(unittest.TestCase):
         self.manifest['items'][0]['implementation_paths'] = ['src/link.rs']
         self.write()
         self.assertIn('unsafe_implementation_path:SOURCE-1.55', self.check()['problems'])
+
+    def test_truncated_main_inventory_rejected_despite_declared_count(self):
+        self.inventory['main'].pop()
+        self.write()
+        self.assertIn('canonical_inventory_invalid', self.check()['problems'])
+
+    def test_truncated_technical_inventory_rejected_despite_declared_count(self):
+        self.inventory['technical'].pop()
+        self.write()
+        self.assertIn('canonical_inventory_invalid', self.check()['problems'])
 
     def test_gaps_cannot_be_silently_removed(self):
         self.manifest['items'][0]['remaining_gaps'] = []
