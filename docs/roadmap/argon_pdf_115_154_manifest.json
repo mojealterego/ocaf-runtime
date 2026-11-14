@@ -658,11 +658,14 @@
       "mapping": "SEMANTIC_PROPOSED",
       "status": "OPEN",
       "code_paths": [
-        "src/procurement_scout.rs"
+        "src/procurement_scout.rs",
+        "src/governance_contract.rs",
+        "src/governance_journal.rs"
       ],
       "verified_ci": [],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "ACTION_RISK_PREFLIGHT_ONLY_CI_UNVERIFIED"
     },
     {
       "source_id": "PDF-1.46",
