@@ -1236,10 +1236,10 @@ Roadmapa Argona z Drive jest historyczną migawką tej samej listy (`5a6ebf0`): 
 | PDF-1.40 | GovAssure / NCSC CAF / SOC 2 validator | 1.92, 1.93 | **TESTED_LOCAL_PARTIAL — TESTY LOKALNE PASS** · etap pełny NIE | `src/compliance_evidence.rs` |
 | PDF-1.41 | Compliance Evidence governed runtime | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.42 | Compliance Evidence safety tests | 1.92, 1.93 | **TESTED_LOCAL_PARTIAL — TESTY LOKALNE PASS** · etap pełny NIE | `src/compliance_evidence.rs` |
-| PDF-1.43 | ProcurementScout foundation | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
-| PDF-1.44 | Sanctions / supplier anomaly screening | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.43 | ProcurementScout foundation | 1.92, 1.93 | **IMPLEMENTED_CI_PENDING** · etap pełny NIE | `src/procurement_scout.rs` (preflight only, CI pending) |
+| PDF-1.44 | Sanctions / supplier anomaly screening | 1.92, 1.93 | **IMPLEMENTED_CI_PENDING** · etap pełny NIE | `src/procurement_scout.rs` (preflight only, CI pending) |
 | PDF-1.45 | Procurement governance | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
-| PDF-1.46 | Procurement safety tests | 1.92, 1.93 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
+| PDF-1.46 | Procurement safety tests | 1.92, 1.93 | **IMPLEMENTED_CI_PENDING** · etap pełny NIE | `src/procurement_scout.rs` (preflight only, CI pending) |
 | PDF-1.47 | InProcessLexicalSelector | 1.65 | **ZROBIONE — MODUŁ LOKALNY / TESTED** · etap pełny NIE | `src/retrieval_quality.rs` |
 | PDF-1.48 | MossRetrievalAdapter | 1.65 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
 | PDF-1.49 | ZenohTransportBridge | 0.46, 1.15, 1.55 | **OPEN** · etap pełny NIE | Brak dowodu zintegrowanego kodu |
