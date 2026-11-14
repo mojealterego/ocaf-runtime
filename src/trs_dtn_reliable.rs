@@ -141,6 +141,15 @@ mod tests {
         assert_eq!(dtn.select("peer", 16, 1).unwrap().len(), 1);
     }
     #[test]
+    fn ack_at_retry_deadline_is_stale_until_a_new_lease_is_claimed() {
+        let mut dtn = ReliableDtn::new(1, 32, 5).unwrap();
+        dtn.insert(bundle(5, 3), 0).unwrap();
+        assert_eq!(dtn.select("peer", 10, 1).unwrap().len(), 1);
+        assert_eq!(dtn.acknowledge(&[5; 32], "peer", 15), Err(ReliableError::NotInFlight));
+        assert_eq!(dtn.select("peer", 15, 1).unwrap().len(), 1);
+        assert_eq!(dtn.acknowledge(&[5; 32], "peer", 15), Ok(()));
+    }
+    #[test]
     fn validation_and_expiry() {
         let mut dtn = ReliableDtn::new(1, 32, 5).unwrap();
         assert_eq!(dtn.insert(bundle(1, 0), 0), Err(ReliableError::InvalidBundle));
