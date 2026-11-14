@@ -300,10 +300,18 @@ mod tests {
 
     #[test]
     fn candidate_never_authorizes_purchase() {
-        let r = assess(&supplier(&[]), &feed(&[RECORD])).unwrap();
+        let r = assess(&supplier(&["KNOWN OWNER"]), &feed(&[RECORD])).unwrap();
         assert_eq!(r.recommendation, Recommendation::PassCandidate);
         assert!(r.human_attestation_required);
         assert!(!r.purchase_authorized);
+    }
+    #[test]
+    fn missing_beneficial_owner_identity_requires_manual_review() {
+        let result = assess(&supplier(&[]), &feed(&[RECORD])).unwrap();
+        assert_eq!(result.recommendation, Recommendation::ReviewNeeded);
+        assert!(result.findings.contains(&Finding::MissingBeneficialOwnerIdentity));
+        assert!(result.human_attestation_required);
+        assert!(!result.purchase_authorized);
     }
     #[test]
     fn supplier_exact_match_is_blocked() {
