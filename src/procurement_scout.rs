@@ -391,7 +391,7 @@ pub fn prepare_purchase_intent(
     let mut payload = Sha256::new();
     payload.update(b"OCAF-PROCUREMENT-PURCHASE-INTENT-v1");
     for bytes in [
-        b"procurement.commit_purchase_order".as_slice(),
+        &b"procurement.commit_purchase_order"[..],
         trusted_tenant.as_bytes(),
         supplier.supplier_id.as_bytes(),
         b"USD",
@@ -661,6 +661,14 @@ mod tests {
         };
         let database = tempfile::NamedTempFile::new().unwrap();
         let journal = GovernanceJournal::open_existing(database.path()).unwrap();
+        let missing_provider = intent.to_action_request("request-1", "agent-1", None, None);
+        assert_eq!(
+            journal.begin(
+                &agent_contract, &missing_provider, None,
+                ("tenant-A", "agent-1"), NOW, "order-idem"
+            ).unwrap(),
+            Admission::Denied(DenyReason::ProviderNotAuthorized)
+        );
         assert_eq!(
             journal.begin(
                 &agent_contract, &request, None,
@@ -668,7 +676,7 @@ mod tests {
             ).unwrap(),
             Admission::Denied(DenyReason::MissingApproval)
         );
-        assert_eq!(journal.inspect("tenant-A", None).unwrap().sequence, 1);
+        assert_eq!(journal.inspect("tenant-A", None).unwrap().sequence, 2);
         assert!(!intent.purchase_authorized);
     }
 
