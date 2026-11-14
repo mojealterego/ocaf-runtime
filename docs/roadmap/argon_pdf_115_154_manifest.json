@@ -622,11 +622,14 @@
         "1.93"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "OPEN",
-      "code_paths": [],
+      "status": "IMPLEMENTED_CI_PENDING",
+      "code_paths": [
+        "src/procurement_scout.rs"
+      ],
       "verified_ci": [],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "LOCAL_SOURCE_AND_TESTS_UNVERIFIED"
     },
     {
       "source_id": "PDF-1.44",
@@ -636,11 +639,14 @@
         "1.93"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "OPEN",
-      "code_paths": [],
+      "status": "IMPLEMENTED_CI_PENDING",
+      "code_paths": [
+        "src/procurement_scout.rs"
+      ],
       "verified_ci": [],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "LOCAL_SOURCE_AND_TESTS_UNVERIFIED"
     },
     {
       "source_id": "PDF-1.45",
@@ -651,7 +657,9 @@
       ],
       "mapping": "SEMANTIC_PROPOSED",
       "status": "OPEN",
-      "code_paths": [],
+      "code_paths": [
+        "src/procurement_scout.rs"
+      ],
       "verified_ci": [],
       "complete": false,
       "production_approved": false
@@ -664,11 +672,14 @@
         "1.93"
       ],
       "mapping": "SEMANTIC_PROPOSED",
-      "status": "OPEN",
-      "code_paths": [],
+      "status": "IMPLEMENTED_CI_PENDING",
+      "code_paths": [
+        "src/procurement_scout.rs"
+      ],
       "verified_ci": [],
       "complete": false,
-      "production_approved": false
+      "production_approved": false,
+      "scoped_completion": "LOCAL_SOURCE_AND_TESTS_UNVERIFIED"
     },
     {
       "source_id": "PDF-1.47",
