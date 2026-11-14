@@ -51,13 +51,18 @@
     "amount_9001": "16a95ba5cff46f06e6d3a9401fa0b60920d94617172ffcae08f8bcf4567ce535",
     "policy_cap_10001": "ddeb5cd249267942e6ef8283c3f8341bd379990cf1d283ef388df5d20051949e",
     "owner_DIFFERENT_OWNER": "2776fa5f3e510b03c4416fa5e9abe3e0c3bb17a3170f8380534fe997471d0cc5",
-    "watchlist_OTHER_UNRELATED_PARTNER": "219b34cfa0ccc2bcaca835aab4e8e1fc0000815c9742b9242d7bda44e895e283"
+    "watchlist_OTHER_UNRELATED_PARTNER": "8435b34ec75cd20acb15885ae939e6570db879b9aecd479e5e300567881545e7"
   },
   "deterministic_model_checks": {
     "passed": 644,
     "failed": 0,
-    "runner": "local Python 3 stdlib",
-    "scope": "model hash changes on amount, policy cap, owner, watchlist, tax-expiry mutations and watchlist order invariance"
+    "runner": "Python 3 stdlib unittest (locally executed)",
+    "test_cases_passed": 6,
+    "test_cases_failed": 0,
+    "command": "python3 -m unittest discover -s scripts/tests -p 'test_argon_procurement_vectors.py' -v",
+    "source_script": "scripts/tests/test_argon_procurement_vectors.py",
+    "scope": "644 independently executed deterministic reference-model perturbation comparisons, plus base SHA-256, mutation-vector, owner and watchlist-order test cases",
+    "caveat": "Python reference model checks only; not rustc, cargo test, Rust formatting or real sanctions provider tests"
   },
   "rust_test_status": "NOT_EXECUTED",
   "rust_compile_status": "NOT_EXECUTED",
@@ -65,5 +70,12 @@
   "external_provider_authorization": "NOT_IMPLEMENTED_BY_THIS_ARTIFACT",
   "operator_approval": "NOT_GRANTED",
   "production_approved": false,
-  "caveat": "These reference hashes and model checks establish an expected canonical representation only. They do not prove that Rust source compiles, that Rust produces matching hashes, or that any supplier is sanctioned/clear."
+  "caveat": "These reference hashes and model checks establish an expected canonical representation only. They do not prove that Rust source compiles, that Rust produces matching hashes, or that any supplier is sanctioned/clear.",
+  "correction": {
+    "date": "2026-11-14",
+    "reason": "Earlier expected watchlist mutation digest did not match the specified byte encoding. A fresh local Python unittest reproduces RED with the original expected value and GREEN with the corrected expected value.",
+    "previous_mutated_watchlist_sha256": "219b34cfa0ccc2bcaca835aab4e8e1fc0000815c9742b9242d7bda44e895e283",
+    "corrected_mutated_watchlist_sha256": "8435b34ec75cd20acb15885ae939e6570db879b9aecd479e5e300567881545e7",
+    "rust_compile_performed": false
+  }
 }
