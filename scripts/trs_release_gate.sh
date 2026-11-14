@@ -25,7 +25,7 @@ rustc --version
 cargo fmt --all -- --check
 cargo test --workspace --no-default-features --locked
 cargo test --workspace --locked
-cargo clippy --workspace --all-targets --locked -- -D warnings
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 cargo build --workspace --release --locked
 cargo test --locked --test trs_dtn_sqlite_concurrent_claim
 cargo test --locked --test trs_dtn_sqlite_e2e_recovery
@@ -62,8 +62,11 @@ for name in (
         candidate = release / (name + suffix)
         if candidate.is_file():
             executables.append(candidate)
-if not executables:
-    raise SystemExit("BLOCKED: no verified release executables found")
+required = {"ocaf-cluster-health", "ocaf-omas-server", "ocaf-omas-mtls-server", "ocaf-omat-server"}
+found = {item.stem if item.suffix == ".exe" else item.name for item in executables}
+missing = required - found
+if missing:
+    raise SystemExit(f"BLOCKED: missing release executables: {sorted(missing)}")
 manifest = {
     "commit": sha,
     "source_sha256": hashlib.sha256(source).hexdigest(),
