@@ -254,10 +254,12 @@
       "source_title": "ReproducibleBenchHarness",
       "canonical_id": "2.05",
       "canonical_title": "Agent-Zero and Bonfire self-programming research sandbox",
-      "status": "OPEN",
-      "implementation_paths": [],
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "scripts/ocaf_benchmark_harness.py"
+      ],
       "remaining_gaps": [
-        "No verified cold/warm benchmark corpus, host fingerprint or exact source-SHA provenance."
+        "Only a bounded opt-in Python SHA-256 microbenchmark is implemented. Hardware environment is system-reported but unattested. Warm/cold cache condition is not independently verified. Real Rust hot-path, p95 SLIs, CI results and full OCAF end-to-end benchmarks remain unverified."
       ]
     },
     {
