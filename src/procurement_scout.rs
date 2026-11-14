@@ -63,6 +63,7 @@ pub enum Finding {
     AboveMediumRiskCap,
     MissingTaxEvidence,
     MissingInsuranceEvidence,
+    MissingBeneficialOwnerIdentity,
     InsufficientFinancialScore,
     MissingIso27001Claim,
 }
@@ -215,6 +216,9 @@ pub fn assess_supplier(
         })
         .collect::<Vec<_>>();
     let mut findings = Vec::new();
+    if supplier.beneficial_owners.is_empty() {
+        findings.push(Finding::MissingBeneficialOwnerIdentity);
+    }
     if !possible_listing_ids.is_empty() {
         findings.push(Finding::PossibleWatchlistMatch);
     }
