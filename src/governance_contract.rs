@@ -176,7 +176,7 @@ impl AgentContract {
             "procurement.evaluate_supplier_dossier" => {
                 req.domain == Domain::ProcurementScout && req.risk == RiskTier::Low
             }
-            "procurement.commit_purchase_order" => {
+            "procurement.commit_purchase_order" | "buy" => {
                 req.domain == Domain::ProcurementScout && req.risk >= RiskTier::Medium
             }
             action
@@ -605,6 +605,8 @@ mod tests {
     fn external_provider_requires_all_permissions_and_integer_cost_ceiling() {
         let c = contract();
         let mut r = request();
+        r.action = "read";
+        r.domain = Domain::CoreRetrieval;
         r.risk = RiskTier::Low;
         r.uses_external_provider = true;
         assert_eq!(
@@ -635,6 +637,8 @@ mod tests {
     fn inconsistent_provider_declaration_is_denied() {
         let c = contract();
         let mut r = request();
+        r.action = "read";
+        r.domain = Domain::CoreRetrieval;
         r.risk = RiskTier::Low;
         let provider = ProviderAccess {
             authenticated: true,
