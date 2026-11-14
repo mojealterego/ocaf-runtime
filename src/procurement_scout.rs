@@ -381,6 +381,120 @@ mod tests {
         assert_eq!(digest_snapshot(&feed(&d)).unwrap_err(), ProcurementError::DuplicateListing);
         assert_eq!(digest_snapshot(&feed(&[])).unwrap_err(), ProcurementError::ResourceLimit);
     }
+
+    #[test]
+    fn purchase_intent_binds_exact_supplier_amount_and_operator_policy() {
+        let records = [RECORD];
+        let snapshot = feed(&records);
+        let owners = ["KNOWN OWNER"];
+        let base = supplier(&owners);
+        let first = prepare_purchase_intent(
+            "tenant-A", NOW, policy(), &base, &snapshot, digest_snapshot(&snapshot).unwrap()
+        ).unwrap();
+        assert_eq!(first.amount_cents, 9_000);
+        assert_eq!(first.tenant, "tenant-A");
+        assert_eq!(first.supplier_id, "supplier-1");
+        assert_eq!(first.action, "procurement.commit_purchase_order");
+        assert!(!first.purchase_authorized);
+        let request = first.to_action_request("req-1", "agent-1", None);
+        assert_eq!(request.domain, crate::governance_contract::Domain::ProcurementScout);
+        assert_eq!(request.risk, crate::governance_contract::RiskTier::Medium);
+        assert_eq!(request.payload_sha256, first.payload_sha256);
+
+        let again = prepare_purchase_intent(
+            "tenant-A", NOW, policy(), &base, &snapshot, digest_snapshot(&snapshot).unwrap()
+        ).unwrap();
+        assert_eq!(first.payload_sha256, again.payload_sha256);
+        let mut changed_amount = supplier(&owners);
+        changed_amount.proposed_commitment_cents += 1;
+        let after_amount = prepare_purchase_intent(
+            "tenant-A", NOW, policy(), &changed_amount, &snapshot, digest_snapshot(&snapshot).unwrap()
+        ).unwrap();
+        assert_ne!(first.payload_sha256, after_amount.payload_sha256);
+        let mut changed_policy = policy();
+        changed_policy.medium_risk_cap_cents += 1;
+        let after_policy = prepare_purchase_intent(
+            "tenant-A", NOW, changed_policy, &base, &snapshot, digest_snapshot(&snapshot).unwrap()
+        ).unwrap();
+        assert_ne!(first.payload_sha256, after_policy.payload_sha256);
+        let mut changed_owner = supplier(&owners);
+        changed_owner.beneficial_owners = &["DIFFERENT OWNER"];
+        let after_owner = prepare_purchase_intent(
+            "tenant-A", NOW, policy(), &changed_owner, &snapshot, digest_snapshot(&snapshot).unwrap()
+        ).unwrap();
+        assert_ne!(first.payload_sha256, after_owner.payload_sha256);
+    }
+
+    #[test]
+    fn purchase_intent_is_denied_on_nonqualified_supplier_or_zero_amount() {
+        let records = [RECORD];
+        let snapshot = feed(&records);
+        let pin = digest_snapshot(&snapshot).unwrap();
+        let mut dossier = supplier(&[]);
+        assert_eq!(
+            prepare_purchase_intent("tenant-A", NOW, policy(), &dossier, &snapshot, pin).unwrap_err(),
+            ProcurementError::SupplierNotQualified
+        );
+        dossier.beneficial_owners = &["KNOWN OWNER"];
+        dossier.proposed_commitment_cents = 0;
+        assert_eq!(
+            prepare_purchase_intent("tenant-A", NOW, policy(), &dossier, &snapshot, pin).unwrap_err(),
+            ProcurementError::InvalidInput
+        );
+        dossier.proposed_commitment_cents = 10_001;
+        assert_eq!(
+            prepare_purchase_intent("tenant-A", NOW, policy(), &dossier, &snapshot, pin).unwrap_err(),
+            ProcurementError::SupplierNotQualified
+        );
+        dossier.proposed_commitment_cents = 9_000;
+        assert_eq!(
+            prepare_purchase_intent("tenant-B", NOW, policy(), &dossier, &snapshot, pin).unwrap_err(),
+            ProcurementError::InvalidInput
+        );
+    }
+
+    #[test]
+    fn purchase_intent_cannot_be_admitted_without_human_approval() {
+        use crate::governance_contract::{Accountability, AgentContract, DenyReason, SocialCommitment};
+        use crate::governance_journal::{Admission, GovernanceJournal};
+        let records = [RECORD];
+        let snapshot = feed(&records);
+        let intent = prepare_purchase_intent(
+            "tenant-A", NOW, policy(), &supplier(&["OWNER LLC"]),
+            &snapshot, digest_snapshot(&snapshot).unwrap()
+        ).unwrap();
+        let request = intent.to_action_request("request-1", "agent-1", None);
+        let agent_contract = AgentContract {
+            contract_id: "contract-1".into(),
+            version: "1".into(),
+            tenant: "tenant-A".into(),
+            actor: "agent-1".into(),
+            obligations: vec![SocialCommitment {
+                debtor: "agent-1".into(),
+                creditor: "operator".into(),
+                condition: "Explicit human purchase authorization".into(),
+            }],
+            permissions: std::collections::BTreeSet::from([intent.action.into()]),
+            prohibitions: std::collections::BTreeSet::new(),
+            accountability: Accountability {
+                owner: "operator".into(),
+                escalation_reviewer: "reviewer".into(),
+                audit_authority: "auditor".into(),
+            },
+        };
+        let database = tempfile::NamedTempFile::new().unwrap();
+        let journal = GovernanceJournal::open_existing(database.path()).unwrap();
+        assert_eq!(
+            journal.begin(
+                &agent_contract, &request, None,
+                ("tenant-A", "agent-1"), NOW, "order-idem"
+            ).unwrap(),
+            Admission::Denied(DenyReason::MissingApproval)
+        );
+        assert_eq!(journal.inspect("tenant-A", None).unwrap().sequence, 1);
+        assert!(!intent.purchase_authorized);
+    }
+
     #[test]
     fn non_ascii_names_are_not_marked_clear() {
         let mut dossier = supplier(&[]);
