@@ -12,6 +12,8 @@ on:
       - 'src/compliance_evidence.rs'
       - 'src/contract_obligations.rs'
       - 'src/procurement_scout.rs'
+      - 'scripts/tests/test_argon_procurement_vectors.py'
+      - 'docs/evidence/ARGON_PROCUREMENT_INTENT_SHA256_REFERENCE_2026-11-14.json'
       - 'src/mcp_registry_integrity.rs'
       - 'src/claim_ledger_verifier.rs'
       - 'ROADMAP.md'
@@ -34,6 +36,8 @@ jobs:
           persist-credentials: false
       - name: Validate all 40 source IDs and no fabricated completion
         run: python3 scripts/validate_argon_pdf_115_154.py .
+      - name: Verify independent Argon procurement SHA-256 vectors (Python reference, not Rust)
+        run: python3 -m unittest discover -s scripts/tests -p 'test_argon_procurement_vectors.py' -v
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
         with:
           components: rustfmt, clippy
