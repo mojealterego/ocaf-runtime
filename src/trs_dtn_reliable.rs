@@ -85,7 +85,7 @@ impl ReliableDtn {
         let entry = self.entries.get_mut(id).ok_or(ReliableError::UnknownBundle)?;
         if entry.bundle.expires_at <= now { return Err(ReliableError::Expired); }
         match entry.pending.get(peer) {
-            Some(&deadline) if now <= deadline => {},
+            Some(&deadline) if now < deadline => {},
             _ => return Err(ReliableError::NotInFlight),
         }
         entry.pending.remove(peer);
