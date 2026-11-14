@@ -102,6 +102,8 @@ pub mod document_function_dag;
 
 pub mod model_router;
 
+pub mod gguf_header;
+
 pub mod voice_narrative_firewall;
 
 pub mod collaboration_tracker;
