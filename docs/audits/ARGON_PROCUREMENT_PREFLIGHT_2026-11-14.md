@@ -9,7 +9,7 @@ Date: 2026-11-14. Repository: `mojealterego/ocaf-runtime`, branch `main`.
 - Snapshot freshness/expiry is checked against a trusted time. Supplier and beneficial owner names use **exact ASCII-only matching**. Unsupported names are rejected for review, not marked clear.
 - Trusted policy owns the monetary risk cap (USD cents as `u64`); the supplier cannot increase it. Potential watchlist matches or over-cap commitments produce `NotQualified`; missing/expired tax/insurance evidence and low financial score produce `ReviewNeeded`.
 - `PassCandidate` means only that these bounded checks found no issue. `human_attestation_required` is always true and `purchase_authorized` is always false.
-- Eleven Rust unit-test cases are present in this module; the Argon workflow has an explicit test step.
+- Twelve Rust unit-test cases are present in this module; the Argon workflow has an explicit test step.
 
 ## Invariants and boundaries
 
@@ -23,3 +23,7 @@ All `trusted_tenant`, `trusted_now`, `ProcurementPolicy` and `independent_digest
 - No real sanctions provider, independently authenticated signed feed, human-approval source, durable OMAt purchase journal or end-to-end procurement execution tested.
 - PDF-1.43, PDF-1.44, PDF-1.46: `IMPLEMENTED_CI_PENDING` (local-source partial capability; NOT complete). PDF-1.45 remains `OPEN`.
 - Canonical roadmap numbering preserved; `production_approved=false`.
+
+## Beneficial ownership review hardening — 2026-11-14
+
+Source-level RED regression test commit `5ded34bb` demonstrates the previous `PassCandidate` path for an empty beneficial-owner list (test execution unavailable). Fix `de5eea6d` introduces `Finding::MissingBeneficialOwnerIdentity` and returns `ReviewNeeded` for otherwise clean dossiers with undisclosed owners; a disclosed, nonmatching owner preserves the read-only `PassCandidate` case. Total **12 Rust unit tests present**, not verified by an executing Rust test runner. Full official beneficial-ownership verification and external sanctions screening remain OPEN.
