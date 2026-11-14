@@ -729,6 +729,47 @@ mod tests {
         assert_eq!(c.evaluate(&r, None, 150), PreflightDecision::Continue);
     }
 
+
+    #[test]
+    fn known_low_risk_governed_actions_remain_admissible() {
+        let mut c = contract();
+        let mut r = request();
+        r.risk = RiskTier::Low;
+        for (action, domain) in [
+            ("contract.extract_obligation", Domain::ContractObligations),
+            ("contract.extract_obligations", Domain::ContractObligations),
+            ("contract.record_action", Domain::ContractObligations),
+            ("compliance.validate_evidence_pack", Domain::ComplianceEvidence),
+            (
+                "procurement.evaluate_supplier_dossier",
+                Domain::ProcurementScout,
+            ),
+        ] {
+            c.permissions.insert(action.into());
+            r.action = action;
+            r.domain = domain;
+            assert_eq!(
+                c.evaluate(&r, None, 150),
+                PreflightDecision::Continue,
+                "known read-only action should not fall through: {action}"
+            );
+        }
+    }
+
+    #[test]
+    fn high_risk_procurement_commit_remains_forbidden() {
+        let mut c = contract();
+        c.permissions.insert("procurement.commit_purchase_order".into());
+        let mut r = request();
+        r.action = "procurement.commit_purchase_order";
+        r.domain = Domain::ProcurementScout;
+        r.risk = RiskTier::High;
+        assert_eq!(
+            c.evaluate(&r, None, 150),
+            PreflightDecision::Deny(DenyReason::RiskCapExceeded)
+        );
+    }
+
     #[test]
     fn unknown_scoped_actions_fail_closed_even_when_explicitly_allowlisted() {
         let mut c = contract();
