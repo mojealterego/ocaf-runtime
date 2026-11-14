@@ -158,45 +158,38 @@ impl AgentContract {
         }
         // Canonical action policy cannot be bypassed by caller-selected domain
         // or by downgrading the declared risk tier.
-        match req.action {
+        // A matched known action must be accepted when its shape is valid.
+        // Guarded match arms would otherwise fall through to the unknown-action
+        // prefix DENY, rejecting even correctly classified requests.
+        let action_shape_valid = match req.action {
             "contract.extract_obligation"
-                if req.domain != Domain::ContractObligations || req.risk != RiskTier::Low =>
-            {
-                return PreflightDecision::Deny(D::InvalidRequest);
+            | "contract.extract_obligations"
+            | "contract.record_action" => {
+                req.domain == Domain::ContractObligations && req.risk == RiskTier::Low
             }
-            "contract.verify_obligation"
-                if req.domain != Domain::ContractObligations || req.risk < RiskTier::Medium =>
-            {
-                return PreflightDecision::Deny(D::InvalidRequest);
+            "contract.verify_obligation" => {
+                req.domain == Domain::ContractObligations && req.risk >= RiskTier::Medium
             }
-            "contract.extract_obligations" | "contract.record_action"
-                if req.domain != Domain::ContractObligations || req.risk != RiskTier::Low =>
-            {
-                return PreflightDecision::Deny(D::InvalidRequest);
+            "compliance.validate_evidence_pack" => {
+                req.domain == Domain::ComplianceEvidence && req.risk == RiskTier::Low
             }
-            "compliance.validate_evidence_pack"
-                if req.domain != Domain::ComplianceEvidence || req.risk != RiskTier::Low =>
-            {
-                return PreflightDecision::Deny(D::InvalidRequest);
+            "procurement.evaluate_supplier_dossier" => {
+                req.domain == Domain::ProcurementScout && req.risk == RiskTier::Low
             }
-            "procurement.evaluate_supplier_dossier"
-                if req.domain != Domain::ProcurementScout || req.risk != RiskTier::Low =>
-            {
-                return PreflightDecision::Deny(D::InvalidRequest);
-            }
-            "procurement.commit_purchase_order"
-                if req.domain != Domain::ProcurementScout || req.risk < RiskTier::Medium =>
-            {
-                return PreflightDecision::Deny(D::InvalidRequest);
+            "procurement.commit_purchase_order" => {
+                req.domain == Domain::ProcurementScout && req.risk >= RiskTier::Medium
             }
             action
                 if action.starts_with("procurement.")
                     || action.starts_with("contract.")
                     || action.starts_with("compliance.") =>
             {
-                return PreflightDecision::Deny(D::InvalidRequest);
+                false
             }
-            _ => {}
+            _ => true,
+        };
+        if !action_shape_valid {
+            return PreflightDecision::Deny(D::InvalidRequest);
         }
         if req.domain == Domain::ProcurementScout && req.risk > RiskTier::Medium {
             return PreflightDecision::Deny(D::RiskCapExceeded);
