@@ -265,21 +265,43 @@ pub fn assess_supplier(
 /// operator policy, and the separately pinned watchlist snapshot.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PurchaseIntent {
-    pub action: &'static str,
-    pub tenant: String,
-    pub supplier_id: String,
+    action: &'static str,
+    tenant: String,
+    supplier_id: String,
     /// USD cents, never floating point and never selected as a policy cap.
-    pub amount_cents: u64,
-    pub dossier_sha256: [u8; 32],
-    pub watchlist_sha256: [u8; 32],
-    pub policy_sha256: [u8; 32],
-    pub payload_sha256: [u8; 32],
+    amount_cents: u64,
+    dossier_sha256: [u8; 32],
+    watchlist_sha256: [u8; 32],
+    policy_sha256: [u8; 32],
+    payload_sha256: [u8; 32],
     /// Never true here: only a separate authenticated execution controller
     /// can decide to commit an external effect after an operator approval.
-    pub purchase_authorized: bool,
+    purchase_authorized: bool,
 }
 
 impl PurchaseIntent {
+    /// Fields remain private: only `prepare_purchase_intent` can construct
+    /// a valid digest-bound intent; downstream callers receive read-only views.
+    pub fn tenant(&self) -> &str {
+        &self.tenant
+    }
+
+    pub fn supplier_id(&self) -> &str {
+        &self.supplier_id
+    }
+
+    pub fn amount_cents(&self) -> u64 {
+        self.amount_cents
+    }
+
+    pub fn payload_sha256(&self) -> [u8; 32] {
+        self.payload_sha256
+    }
+
+    pub fn is_purchase_authorized(&self) -> bool {
+        self.purchase_authorized
+    }
+
     /// Construct the canonical action for the existing governance/journal
     /// gates. Caller supplies authenticated actor/request ID and an approval
     /// issued by an independent human approval service. The separately verified
