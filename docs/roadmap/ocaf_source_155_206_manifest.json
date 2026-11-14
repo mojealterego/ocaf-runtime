@@ -1,0 +1,277 @@
+{
+  "schema_version": 1,
+  "source_kind": "EXTERNAL_ARCHITECTURE_RECONCILIATION",
+  "source_name": "Architektura Wykonawcza OCAF-Runtime (1.55–2.06)",
+  "canonical_inventory": "docs/roadmap/canonical_v11_inventory.json",
+  "production_approved": false,
+  "items": [
+    {
+      "source_id": "SOURCE-1.55",
+      "source_title": "OCAFLabelTree & GUIDAttribute",
+      "canonical_id": "1.55",
+      "canonical_title": "Transport benchmark SHM/TCP",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/document_state.rs"
+      ],
+      "remaining_gaps": [
+        "Local document primitives do not establish distributed authentication or durable provenance by themselves."
+      ]
+    },
+    {
+      "source_id": "SOURCE-1.56",
+      "source_title": "TransactionAndUndoManager",
+      "canonical_id": "1.56",
+      "canonical_title": "SHM tenancy and quota",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/document_state.rs",
+        "src/document_store.rs"
+      ],
+      "remaining_gaps": [
+        "Undo and redo acceptance beyond bounded history and crash scenarios not demonstrated on this commit."
+      ]
+    },
+    {
+      "source_id": "SOURCE-1.57",
+      "source_title": "FunctionMechanismDAG",
+      "canonical_id": "1.57",
+      "canonical_title": "Dual CRDT convergence corpus",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/document_function_dag.rs"
+      ],
+      "remaining_gaps": [
+        "Full driver registration, multi-document propagation and operator authorization remain outside pure planning."
+      ]
+    },
+    {
+      "source_id": "SOURCE-1.58",
+      "source_title": "GovernedPolicyGate",
+      "canonical_id": "1.58",
+      "canonical_title": "Edge Zenoh interoperability",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/governance_contract.rs"
+      ],
+      "remaining_gaps": [
+        "Preflight is not a complete effect authorization; mTLS, approvals and provider integrations remain gated."
+      ]
+    },
+    {
+      "source_id": "SOURCE-1.59",
+      "source_title": "DurableReplayLedger",
+      "canonical_id": "1.59",
+      "canonical_title": "Transport and CRDT release matrix",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/governance_journal.rs",
+        "src/document_store.rs"
+      ],
+      "remaining_gaps": [
+        "Separate journal and document stores are not one atomic cross-store commit."
+      ]
+    },
+    {
+      "source_id": "SOURCE-1.60",
+      "source_title": "PersistencePluginEngine",
+      "canonical_id": "1.60",
+      "canonical_title": "OTel resource precedence",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/document_store.rs"
+      ],
+      "remaining_gaps": [
+        "Versioned SQLite is not a general signed plugin loader or OCAF format migration engine."
+      ]
+    },
+    {
+      "source_id": "SOURCE-1.65",
+      "source_title": "HybridRetrievalSubsystem",
+      "canonical_id": "1.65",
+      "canonical_title": "CoALA typed memory API",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/retrieval_quality.rs"
+      ],
+      "remaining_gaps": [
+        "No trusted Moss vector adapter nor verified retrieval benchmark corpus on this commit."
+      ]
+    },
+    {
+      "source_id": "SOURCE-1.70",
+      "source_title": "CompoundReasoningEngine",
+      "canonical_id": "1.70",
+      "canonical_title": "RQGM immutable examiner epoch",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/compound_reasoning.rs"
+      ],
+      "remaining_gaps": [
+        "Async deliberation does not establish independent model diversity, truth or execution authority."
+      ]
+    },
+    {
+      "source_id": "SOURCE-1.75",
+      "source_title": "AdaptiveModelRouter",
+      "canonical_id": "1.75",
+      "canonical_title": "SDNN arithmetic property corpus",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/model_router.rs"
+      ],
+      "remaining_gaps": [
+        "Operator profiles require independent validation; no live provider or measured p95 latency SLO."
+      ]
+    },
+    {
+      "source_id": "SOURCE-1.80",
+      "source_title": "AgenticPromptCompiler",
+      "canonical_id": "1.80",
+      "canonical_title": "In guest Aya BPF verifier gate",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/agentic_prompt_dsl.rs"
+      ],
+      "remaining_gaps": [
+        "Textual DSL cannot grant tools; validating typed model responses remains separate."
+      ]
+    },
+    {
+      "source_id": "SOURCE-1.85",
+      "source_title": "GEMExecutiveOODALoop",
+      "canonical_id": "1.85",
+      "canonical_title": "L402 settlement provenance",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/om_engine.rs"
+      ],
+      "remaining_gaps": [
+        "No validated H-MoE causal predictor, constitutional red-team engine or full OODA contract."
+      ]
+    },
+    {
+      "source_id": "SOURCE-1.90",
+      "source_title": "DomainGovernanceSuite",
+      "canonical_id": "1.90",
+      "canonical_title": "Cargo Workspace migration boundary",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/contract_obligations.rs",
+        "src/compliance_evidence.rs",
+        "src/procurement_scout.rs"
+      ],
+      "remaining_gaps": [
+        "Real legal approval, sanctions sources, external attestations and purchase effects not certified."
+      ]
+    },
+    {
+      "source_id": "SOURCE-1.95",
+      "source_title": "EpistemicClaimLedger",
+      "canonical_id": "1.95",
+      "canonical_title": "Hyperon/MeTTa neuro-symbolic research adapter",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/claim_ledger_verifier.rs",
+        "src/mcp_registry_integrity.rs"
+      ],
+      "remaining_gaps": [
+        "External approval of evidence and trusted SHA256SUMS pin require authenticated operator channels."
+      ]
+    },
+    {
+      "source_id": "SOURCE-2.00",
+      "source_title": "OCAFUnifiedNexusKernel",
+      "canonical_id": "2.00",
+      "canonical_title": "Taskweaving dependency graph and multi-agent rollback",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/document_state.rs",
+        "src/governance_contract.rs",
+        "src/governance_journal.rs",
+        "src/om_engine.rs"
+      ],
+      "remaining_gaps": [
+        "No atomic transaction spanning policy, document state, audit and effect sinks."
+      ]
+    },
+    {
+      "source_id": "SOURCE-2.01",
+      "source_title": "ZenohZeroLatencyTransport",
+      "canonical_id": "2.01",
+      "canonical_title": "AI Scientist reproducible research lifecycle",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/transport_policy.rs",
+        "crates/ocaf-transport-crdt/src/lib.rs"
+      ],
+      "remaining_gaps": [
+        "No verified tenant-bound label delta replication or network overhead measurement."
+      ]
+    },
+    {
+      "source_id": "SOURCE-2.02",
+      "source_title": "CollaborativeObjectTracker",
+      "canonical_id": "2.02",
+      "canonical_title": "OpenHands agent server and legacy repository adapter",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/collaboration_tracker.rs"
+      ],
+      "remaining_gaps": [
+        "Local provenance requires durable authenticated ingress and richer focus/contribution analytics."
+      ]
+    },
+    {
+      "source_id": "SOURCE-2.03",
+      "source_title": "VoiceNarrativeStateFirewall",
+      "canonical_id": "2.03",
+      "canonical_title": "Theory-of-Mind evaluation and human approval gates",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/voice_narrative_firewall.rs"
+      ],
+      "remaining_gaps": [
+        "Narrative filter does not implement governed economy/RNG or ingress authentication."
+      ]
+    },
+    {
+      "source_id": "SOURCE-2.04",
+      "source_title": "RustHotPathKernel",
+      "canonical_id": "2.04",
+      "canonical_title": "EideticEngine metacognitive memory-control evaluation",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "src/task_cas.rs",
+        "src/governance_contract.rs"
+      ],
+      "remaining_gaps": [
+        "No measured hot-path performance or end-to-end atomic mutation binding."
+      ]
+    },
+    {
+      "source_id": "SOURCE-2.05",
+      "source_title": "ReproducibleBenchHarness",
+      "canonical_id": "2.05",
+      "canonical_title": "Agent-Zero and Bonfire self-programming research sandbox",
+      "status": "OPEN",
+      "implementation_paths": [],
+      "remaining_gaps": [
+        "No verified cold/warm benchmark corpus, host fingerprint or exact source-SHA provenance."
+      ]
+    },
+    {
+      "source_id": "SOURCE-2.06",
+      "source_title": "ReleaseReadinessGuardian",
+      "canonical_id": "2.06",
+      "canonical_title": "NuNet PRIMUS and GodMode experimental orchestration interfaces",
+      "status": "EXISTING_PARTIAL",
+      "implementation_paths": [
+        "scripts/release_readiness.py"
+      ],
+      "remaining_gaps": [
+        "Offline release evidence cannot replace independent CI, branch protection, host tests or operator approval."
+      ]
+    }
+  ]
+}
