@@ -91,6 +91,8 @@ pub enum ProcurementError {
     BadSnapshotDigest,
     #[error("watchlist is expired, stale or from the future")]
     StaleSnapshot,
+    #[error("supplier did not meet the bounded local purchase-intent criteria")]
+    SupplierNotQualified,
 }
 
 fn valid_id(s: &str) -> bool {
@@ -254,6 +256,158 @@ pub fn assess_supplier(
         findings,
         possible_listing_ids,
         human_attestation_required: true,
+        purchase_authorized: false,
+    })
+}
+
+/// A deterministic *proposed* purchase intent, not an order, payment, audit
+/// receipt or approval. Its digest is bound to the exact vetted dossier,
+/// operator policy, and the separately pinned watchlist snapshot.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PurchaseIntent {
+    pub action: &'static str,
+    pub tenant: String,
+    pub supplier_id: String,
+    /// USD cents, never floating point and never selected as a policy cap.
+    pub amount_cents: u64,
+    pub dossier_sha256: [u8; 32],
+    pub watchlist_sha256: [u8; 32],
+    pub policy_sha256: [u8; 32],
+    pub payload_sha256: [u8; 32],
+    /// Never true here: only a separate authenticated execution controller
+    /// can decide to commit an external effect after an operator approval.
+    pub purchase_authorized: bool,
+}
+
+impl PurchaseIntent {
+    /// Construct the canonical action for the existing governance/journal
+    /// gates. Caller supplies authenticated actor/request ID and an approval
+    /// issued by an independent human approval service.
+    ///
+    /// This builder cannot mint approvals, reserve durable idempotency, or
+    /// execute any tool. GovernanceJournal::begin still needs trusted peer
+    /// identity, a verified approval authority, and independent executor gates.
+    pub fn to_action_request<'a>(
+        &'a self,
+        request_id: &'a str,
+        actor: &'a str,
+        approval: Option<&'a crate::governance_contract::ApprovalArtifact>,
+    ) -> crate::governance_contract::ActionRequest<'a> {
+        crate::governance_contract::ActionRequest {
+            request_id,
+            tenant: &self.tenant,
+            actor,
+            action: self.action,
+            domain: crate::governance_contract::Domain::ProcurementScout,
+            risk: crate::governance_contract::RiskTier::Medium,
+            payload_sha256: self.payload_sha256,
+            uses_external_provider: false,
+            provider: None,
+            approval,
+        }
+    }
+}
+
+fn digest_policy(policy: ProcurementPolicy) -> [u8; 32] {
+    let mut digest = Sha256::new();
+    digest.update(b"OCAF-PROCUREMENT-POLICY-v1");
+    hash_field(&mut digest, &policy.medium_risk_cap_cents.to_be_bytes());
+    hash_field(&mut digest, &[policy.min_financial_score]);
+    hash_field(&mut digest, &policy.max_feed_age_secs.to_be_bytes());
+    hash_field(&mut digest, &[u8::from(policy.require_iso27001_claim)]);
+    digest.finalize().into()
+}
+
+fn hash_optional_expiry(digest: &mut Sha256, expiry: Option<u64>) {
+    match expiry {
+        Some(timestamp) => {
+            hash_field(digest, b"some");
+            hash_field(digest, &timestamp.to_be_bytes());
+        }
+        None => hash_field(digest, b"none"),
+    }
+}
+
+fn digest_dossier(dossier: &SupplierDossier<'_>) -> Result<[u8; 32], ProcurementError> {
+    let name = canonical_name(dossier.legal_name)?;
+    let owners = dossier
+        .beneficial_owners
+        .iter()
+        .map(|owner| canonical_name(owner))
+        .collect::<Result<BTreeSet<_>, _>>()?;
+    let mut digest = Sha256::new();
+    digest.update(b"OCAF-PROCUREMENT-DOSSIER-v1");
+    for value in [
+        dossier.tenant.as_bytes(),
+        dossier.supplier_id.as_bytes(),
+        name.as_bytes(),
+        b"USD",
+        &dossier.proposed_commitment_cents.to_be_bytes(),
+    ] {
+        hash_field(&mut digest, value);
+    }
+    hash_field(&mut digest, &(owners.len() as u64).to_be_bytes());
+    for owner in owners {
+        hash_field(&mut digest, owner.as_bytes());
+    }
+    hash_optional_expiry(&mut digest, dossier.tax_evidence_expires);
+    hash_optional_expiry(&mut digest, dossier.insurance_evidence_expires);
+    hash_field(&mut digest, &[u8::from(dossier.iso27001_claimed)]);
+    hash_field(&mut digest, &[dossier.financial_score]);
+    Ok(digest.finalize().into())
+}
+
+/// Prepare a proposed purchase from the *same* supplier dossier and trusted
+/// policy used during screening. No caller-supplied maximum amount is accepted.
+/// A REVIEW_NEEDED or NOT_QUALIFIED supplier cannot produce an intent.
+/// This never authorizes an order, even for a PassCandidate.
+pub fn prepare_purchase_intent(
+    trusted_tenant: &str,
+    trusted_now: u64,
+    policy: ProcurementPolicy,
+    supplier: &SupplierDossier<'_>,
+    feed: &WatchlistSnapshot<'_>,
+    independent_digest_pin: [u8; 32],
+) -> Result<PurchaseIntent, ProcurementError> {
+    if supplier.proposed_commitment_cents == 0 {
+        return Err(ProcurementError::InvalidInput);
+    }
+    let assessment = assess_supplier(
+        trusted_tenant,
+        trusted_now,
+        policy,
+        supplier,
+        feed,
+        independent_digest_pin,
+    )?;
+    if assessment.recommendation != Recommendation::PassCandidate {
+        return Err(ProcurementError::SupplierNotQualified);
+    }
+    let dossier_sha256 = digest_dossier(supplier)?;
+    let policy_sha256 = digest_policy(policy);
+    let mut payload = Sha256::new();
+    payload.update(b"OCAF-PROCUREMENT-PURCHASE-INTENT-v1");
+    for bytes in [
+        b"procurement.commit_purchase_order".as_slice(),
+        trusted_tenant.as_bytes(),
+        supplier.supplier_id.as_bytes(),
+        b"USD",
+        &supplier.proposed_commitment_cents.to_be_bytes(),
+        dossier_sha256.as_slice(),
+        independent_digest_pin.as_slice(),
+        policy_sha256.as_slice(),
+    ] {
+        hash_field(&mut payload, bytes);
+    }
+    Ok(PurchaseIntent {
+        action: "procurement.commit_purchase_order",
+        tenant: trusted_tenant.to_owned(),
+        supplier_id: supplier.supplier_id.to_owned(),
+        amount_cents: supplier.proposed_commitment_cents,
+        dossier_sha256,
+        watchlist_sha256: independent_digest_pin,
+        policy_sha256,
+        payload_sha256: payload.finalize().into(),
         purchase_authorized: false,
     })
 }
