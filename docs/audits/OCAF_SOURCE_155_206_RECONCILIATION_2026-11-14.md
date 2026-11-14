@@ -39,7 +39,7 @@ Status `EXISTING_PARTIAL` oznacza jedynie odnalezienie elementów mechanizmu w p
 ## Weryfikacja wykonana w ramach przyrostu
 
 1. Dodano `scripts/verify_source_155_206.py` — stdlib Python, strict JSON bez duplikatów, twarda lista 20 identyfikatorów, przypięcie nazw aktualnych etapów do kanonicznego manifestu, blokada `production_approved`, sprawdzanie istnienia plików, odmowa symlinków i `..`, odmowa fałszywych statusów CI. **Read-only**.
-2. Dodano `scripts/tests/test_verify_source_155_206.py` z 14 przypadkami pozytywnymi/negatywnymi. Testy jednostkowe były lokalnie uruchomione na syntetycznym inwentarzu z nazwami etapów zweryfikowanymi w GitHub: **14/14 PASS**; nie stanowi to uruchomienia repozytoryjnego Rust/Cargo. Osobny lokalny przebieg sprawdził uzupełniony manifest z syntetycznymi kopiami ścieżek, nie na pełnym Checkout GitHub.
+2. Dodano `scripts/tests/test_verify_source_155_206.py` z 16 przypadkami pozytywnymi/negatywnymi. Testy jednostkowe były lokalnie uruchomione na syntetycznym inwentarzu z nazwami etapów zweryfikowanymi w GitHub: **16/16 PASS**; nie stanowi to uruchomienia repozytoryjnego Rust/Cargo. Osobny lokalny przebieg sprawdził uzupełniony manifest z syntetycznymi kopiami ścieżek, nie na pełnym Checkout GitHub.
 3. Dopisano odczytowy `CollaborationTracker::analyze_object` do istniejącego `src/collaboration_tracker.rs`: ważony wkład aktorów rozdzielony jako 10 000 punktów bazowych (largest-remainder, stabilne rozstrzyganie remisów), znormalizowany wskaźnik Gini-Simpson i chronologiczne zmiany fokusu **w ramach tenanta i obiektu**. Zapisano cztery nowe testy Rust; kompilacja i uruchomienie **UNVERIFIED**. Wynik analityczny nie daje prawa własności ani uprawnień.
 4. Dodano jawny krok walidatora do istniejącego `.github/workflows/rust.yml`, bez tworzenia osobnych workflowów lub uruchamiania płatnego runnera.
 
@@ -76,7 +76,7 @@ Dodano `scripts/ocaf_benchmark_harness.py` i `scripts/tests/test_ocaf_benchmark_
 - zwraca `mean/p50/p95/p99/max` według metody nearest rank, z informacją o dokładnym SHA checkoutu i zabrudzeniu drzewa Git, wersji Pythona, CPU i środowisku (wszystko jako metadane deklarowane/odczytane, nie atestowany hardware);
 - zawsze deklaruje `status=MEASURED_LOCAL_PYTHON_ONLY`, `production_approved=false`, `cache_condition_unverified=true`, `environment_attested=false`.
 
-**Testy lokalne:** 9/9 testów harnessu i 14/14 testów źródłowego crosswalk, łącznie 23/23 PASS (Python 3.13, testy syntetyczne i stdlib). Dodatkowo wykonano 50 prawdziwych próbek SHA-256 w izolowanym syntetycznym repo Git; harnes wskazał 40-znakowy SHA commita tego lokalnego fixture oraz `git_worktree_dirty=true`. Pomiar ten nie stanowi benchmarku `ocaf-runtime` Rust ani testu docelowego urządzenia.
+**Testy lokalne:** 9/9 testów harnessu i 16/16 testów źródłowego crosswalk, łącznie 25/25 PASS (Python 3.13, testy syntetyczne i stdlib). Dodatkowo wykonano 50 prawdziwych próbek SHA-256 w izolowanym syntetycznym repo Git; harnes wskazał 40-znakowy SHA commita tego lokalnego fixture oraz `git_worktree_dirty=true`. Pomiar ten nie stanowi benchmarku `ocaf-runtime` Rust ani testu docelowego urządzenia.
 
 ```bash
 python3 -m unittest discover -s scripts/tests -p test_ocaf_benchmark_harness.py -v
@@ -84,3 +84,5 @@ python3 scripts/ocaf_benchmark_harness.py --repo . --samples 100 --warmups 10 --
 ```
 
 Pozostają otwarte: dokładnie przypięte wyniki release-mode dla kodu Rust, rzeczywiste przebiegi warm/cold z kontrolą cache, osobne pomiary narzutu Zenoh, niezależne potwierdzenie charakterystyki sprzętu i powtarzalność na tym samym SHA. `SOURCE-2.05=EXISTING_PARTIAL` nie modyfikuje kanonicznego `2.05=PLANNED`.
+
+**Uzupełnienie walidacji 2026-11-14:** `verify_source_155_206.py` sprawdza obecnie także rzeczywistą długość tablic `main` (334) i `technical` (64), nie tylko deklarowane liczby. Dodano 2 negatywne testy ucięcia inwentarza. Lokalny zestaw obejmuje 16 testów crosswalk i 9 benchmarkowych — 25/25 PASS; integracyjne CI i Rust nadal niepotwierdzone.
