@@ -687,6 +687,21 @@ mod tests {
         assert!(ApprovalAuthority::new([0; 32]).is_none());
     }
     #[test]
+    fn canonical_purchase_cannot_omit_provider_gate_after_human_approval() {
+        let mut c = contract();
+        c.permissions.insert("procurement.commit_purchase_order".into());
+        let mut r = request();
+        r.action = "procurement.commit_purchase_order";
+        let authority = ApprovalAuthority::new([9; 32]).unwrap();
+        let approval = signed_approval(&r, ApproverRole::FinanceApprover);
+        r.approval = Some(&approval);
+        assert_eq!(
+            c.evaluate(&r, Some(&authority), 150),
+            PreflightDecision::Deny(DenyReason::InvalidRequest)
+        );
+    }
+
+    #[test]
     fn procurement_commit_requires_canonical_domain_risk_and_human_approval() {
         let mut c = contract();
         c.permissions.insert("procurement.commit_purchase_order".into());
