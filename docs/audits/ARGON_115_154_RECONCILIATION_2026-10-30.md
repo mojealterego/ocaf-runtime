@@ -38,10 +38,10 @@ Status `PARTIAL` oznacza wykryty, ograniczony kod w repozytorium, nie pełne kry
 | PDF-1.40 | GovAssure / NCSC CAF / SOC 2 validator | TESTED_LOCAL_PARTIAL | `src/compliance_evidence.rs` — NCSC CAF A-D oraz okres ważności; brak certyfikacji GovAssure |
 | PDF-1.41 | Compliance Evidence governed runtime | OPEN | Rejestracja, audyt i polityka wykonania |
 | PDF-1.42 | Compliance Evidence safety tests | TESTED_LOCAL_PARTIAL | `src/compliance_evidence.rs` — 9 testów w tym tenant, expiry, tampering; brak safety E2E |
-| PDF-1.43 | ProcurementScout foundation | OPEN | Typowane zapytania, dostawcy, dane źródłowe |
-| PDF-1.44 | Sanctions / supplier anomaly screening | OPEN | Aktualne źródła list, dopasowanie i false positives |
-| PDF-1.45 | Procurement governance | OPEN | Risk cap, zgoda, segregacja obowiązków |
-| PDF-1.46 | Procurement safety tests | OPEN | Brak płatności/zakupów bez zgody, retry |
+| PDF-1.43 | ProcurementScout foundation | IMPLEMENTED_CI_PENDING | `src/procurement_scout.rs`: typed bounded supplier dossier, operator-owned medium-risk cap; local tests added, Rust execution pending |
+| PDF-1.44 | Sanctions / supplier anomaly screening | IMPLEMENTED_CI_PENDING | `src/procurement_scout.rs`: pinned-digest snapshot exact-match preflight with expiry and tenant binding; NOT a verified live sanctions integration |
+| PDF-1.45 | Procurement governance | OPEN | Local preflight rejects over-cap candidate only; no live OMAt purchase gate, durable audit or authenticated human approval |
+| PDF-1.46 | Procurement safety tests | IMPLEMENTED_CI_PENDING | `src/procurement_scout.rs` defines 11 safety unit tests; cargo/CI/production E2E unverified |
 | PDF-1.47 | InProcessLexicalSelector | TESTED_LOCAL_COMPONENT | `src/retrieval_quality.rs` — implementacja lokalna, testy CI weryfikowane osobno; pełny E2E otwarty. |
 | PDF-1.48 | MossRetrievalAdapter | OPEN | Zewnętrzny interfejs dopiero po zweryfikowaniu dostawcy; local fallback |
 | PDF-1.49 | ZenohTransportBridge | OPEN | Istnieje transport Zenoh, brak E2E tego konkretnego mostu i benchmarku |
