@@ -583,6 +583,28 @@ mod tests {
     }
 
     #[test]
+    fn watchlist_change_matches_reproducible_python_reference_digest() {
+        // Independent stdlib hashlib vector, checked by scripts/tests/test_argon_procurement_vectors.py.
+        let owners = ["KNOWN OWNER"];
+        let clean = [RECORD];
+        let first = feed(&clean);
+        let original = prepare_purchase_intent(
+            "tenant-A", NOW, policy(), &supplier(&owners), &first, digest_snapshot(&first).unwrap()
+        ).unwrap();
+        let changed_records = [WatchlistRecord {
+            listing_id: "w1",
+            entity_name: "OTHER UNRELATED PARTNER",
+        }];
+        let second = feed(&changed_records);
+        let changed = prepare_purchase_intent(
+            "tenant-A", NOW, policy(), &supplier(&owners), &second, digest_snapshot(&second).unwrap()
+        ).unwrap();
+        assert_ne!(changed.payload_sha256(), original.payload_sha256());
+        assert_eq!(changed.payload_sha256(), [0x84, 0x35, 0xb3, 0x4e, 0xc7, 0x5c, 0xd2, 0x0a, 0xcb, 0x15, 0x88, 0x5a, 0xe9, 0x39, 0xe6, 0x57, 0x0d, 0xb8, 0x79, 0xb9, 0xae, 0xcd, 0x47, 0x9e, 0x5e, 0x30, 0x05, 0x67, 0x88, 0x15, 0x45, 0xe7]);
+        assert!(!changed.is_purchase_authorized());
+    }
+
+    #[test]
     fn purchase_intent_binds_exact_supplier_amount_and_operator_policy() {
         let records = [RECORD];
         let snapshot = feed(&records);
