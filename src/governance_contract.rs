@@ -453,6 +453,29 @@ mod tests {
         );
     }
 
+
+    #[test]
+    fn legacy_buy_alias_cannot_downgrade_or_spoof_procurement_risk() {
+        let c = contract();
+        let mut r = request();
+        r.risk = RiskTier::Low;
+        assert_eq!(
+            c.evaluate(&r, None, 150),
+            PreflightDecision::Deny(DenyReason::InvalidRequest)
+        );
+        r.domain = Domain::CoreRetrieval;
+        r.risk = RiskTier::Medium;
+        assert_eq!(
+            c.evaluate(&r, None, 150),
+            PreflightDecision::Deny(DenyReason::InvalidRequest)
+        );
+        r.domain = Domain::ProcurementScout;
+        assert_eq!(
+            c.evaluate(&r, None, 150),
+            PreflightDecision::Deny(DenyReason::MissingApproval)
+        );
+    }
+
     #[test]
     fn procurement_risk_cap_cannot_be_overridden_by_signed_approval() {
         let c = contract();
