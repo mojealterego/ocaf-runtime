@@ -45,6 +45,8 @@ pub mod stage040_interhost_contract;
 
 pub mod reliability_recovery;
 
+pub mod deterministic_fault_simulator;
+
 pub mod stage041_recovery_contract;
 
 pub mod stage043_agent_store;
