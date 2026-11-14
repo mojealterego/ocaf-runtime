@@ -639,6 +639,49 @@ mod tests {
     }
 
     #[test]
+    fn procurement_commit_spoofing_is_durably_denied_before_intent() {
+        let (_file, journal) = setup();
+        let mut contract = contract();
+        contract
+            .permissions
+            .insert("procurement.commit_purchase_order".into());
+        let mut req = request();
+        req.action = "procurement.commit_purchase_order";
+        req.domain = Domain::CoreRetrieval;
+        req.risk = RiskTier::Low;
+        assert_eq!(
+            journal
+                .begin(&contract, &req, None, ("tenant_a", "agent_a"), 170, "po_1")
+                .unwrap(),
+            Admission::Denied(DenyReason::InvalidRequest)
+        );
+        req.domain = Domain::ProcurementScout;
+        assert_eq!(
+            journal
+                .begin(&contract, &req, None, ("tenant_a", "agent_a"), 170, "po_1")
+                .unwrap(),
+            Admission::Denied(DenyReason::InvalidRequest)
+        );
+        req.risk = RiskTier::Medium;
+        assert_eq!(
+            journal
+                .begin(&contract, &req, None, ("tenant_a", "agent_a"), 170, "po_1")
+                .unwrap(),
+            Admission::Denied(DenyReason::MissingApproval)
+        );
+        // Denial is durable and the idempotency identity was never reserved.
+        assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 3);
+        assert_eq!(
+            journal
+                .begin(&contract, &req, None, ("tenant_b", "agent_a"), 170, "po_1")
+                .unwrap(),
+            Admission::Denied(DenyReason::IdentityMismatch)
+        );
+        assert_eq!(journal.inspect("tenant_a", None).unwrap().sequence, 3);
+        assert_eq!(journal.inspect("tenant_b", None).unwrap().sequence, 1);
+    }
+
+    #[test]
     fn deny_is_audited_and_never_reserves_intent() {
         let (_file, journal) = setup();
         let c = contract();
