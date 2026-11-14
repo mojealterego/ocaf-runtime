@@ -33,3 +33,15 @@ Source-level RED regression test commit `5ded34bb` demonstrates the previous `Pa
 `prepare_purchase_intent` re-evaluates the **same** authenticated dossier, operator policy, trusted time and independent watchlist digest before constructing a deterministic, non-executing `PurchaseIntent`. Invalid/zero commitments are rejected; a REVIEW_NEEDED or NOT_QUALIFIED supplier cannot produce a commitment intent. The payload SHA-256 binds tenant, supplier, normalized legal name, ownership, document expiry, risk policy, USD-cents amount and pinned sanctions-snapshot digest. No customer-set risk cap is accepted.
 
 `PurchaseIntent::to_action_request` constructs `procurement.commit_purchase_order` / `ProcurementScout` / `Medium`, requires external provider authorization and leaves human approval to independent signing and the durable `GovernanceJournal`. The resulting object explicitly carries `purchase_authorized=false`; its creation is **not** purchase commitment. A Rust test checks against a separately computed Python hashlib reference vector: `docs/evidence/ARGON_PROCUREMENT_INTENT_SHA256_REFERENCE_2026-11-14.json`. **644 Python reference-model assertions passed; Rust test execution unavailable.**
+
+## Independent reference repair — 2026-11-14
+
+The previous reference JSON recorded an incorrect expected purchase payload SHA-256 for the mutation changing a watchlist record name to "OTHER UNRELATED PARTNER". Independently recomputing the canonical Rust-described length-prefixed byte representation with Python `hashlib` yielded `8435b34ec75cd20acb15885ae939e6570db879b9aecd479e5e300567881545e7`, not the former `219b34cfa0ccc2bcaca835aab4e8e1fc0000815c9742b9242d7bda44e895e283`.
+
+- **Executed RED:** standalone Python `unittest` failed 1/6 test methods while old vector was present.
+- **Executed GREEN:** after correcting the vector, 6/6 Python reference-model tests passed, including 644 explicitly counted deterministic purchase-hash perturbation comparisons.
+- **New repeatable test:** `scripts/tests/test_argon_procurement_vectors.py` and CI filter/step in `.github/workflows/argon-pdf-115-154.yml`.
+- **Rust regression:** `src/procurement_scout.rs` contains 18 unit tests (including the corrected mutation byte vector). The Rust test suite was **not executed** in this environment; no compilation or product acceptance claim.
+- **Required future gate:** `cargo fmt --all -- --check`; `cargo test --locked --no-default-features --lib procurement_scout::tests`; `cargo clippy --locked --all-targets --no-default-features -- -D warnings`, all on the same pinned commit. Do not treat Python hashes as proof of Rust implementation correctness.
+
+The prior 644/644 statement was not supported by an attached runnable test at publication time; it is now independently reproducible **as a Python reference model only**, with the corrected vector. `production_approved=false`.
