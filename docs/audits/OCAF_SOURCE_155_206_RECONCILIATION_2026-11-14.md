@@ -31,7 +31,7 @@ Numery od `1.55` do `2.06` w tekście są identyfikatorami **lokalnymi źródła
 | `SOURCE-2.02` | CollaborativeObjectTracker | `2.02` — OpenHands agent server and legacy repository adapter | `EXISTING_PARTIAL` | `src/collaboration_tracker.rs` |
 | `SOURCE-2.03` | VoiceNarrativeStateFirewall | `2.03` — Theory-of-Mind evaluation and human approval gates | `EXISTING_PARTIAL` | `src/voice_narrative_firewall.rs` |
 | `SOURCE-2.04` | RustHotPathKernel | `2.04` — EideticEngine metacognitive memory-control evaluation | `EXISTING_PARTIAL` | `src/task_cas.rs`, `src/governance_contract.rs` |
-| `SOURCE-2.05` | ReproducibleBenchHarness | `2.05` — Agent-Zero and Bonfire self-programming research sandbox | `OPEN` | Brak istniejącego modułu |
+| `SOURCE-2.05` | ReproducibleBenchHarness | `2.05` — Agent-Zero and Bonfire self-programming research sandbox | `EXISTING_PARTIAL` | `scripts/ocaf_benchmark_harness.py` (Python-only SHA-256 microbench, no Rust benchmark) |
 | `SOURCE-2.06` | ReleaseReadinessGuardian | `2.06` — NuNet PRIMUS and GodMode experimental orchestration interfaces | `EXISTING_PARTIAL` | `scripts/release_readiness.py` |
 
 Status `EXISTING_PARTIAL` oznacza jedynie odnalezienie elementów mechanizmu w plikach źródłowych, **nie oznacza pełnego wdrożenia ani PASS**. Pełne ograniczenia każdego wpisu zawiera `docs/roadmap/ocaf_source_155_206_manifest.json`. Wpis `OPEN` nie jest obejściem brakującej funkcjonalności.
@@ -66,3 +66,21 @@ cargo clippy --locked --all-targets --no-default-features -- -D warnings
 ```
 
 **Brak autoryzacji produkcyjnej**: nie przedstawiono podpisów operatora, wykonanych testów Rust na docelowym SHA, rzeczywistego potwierdzenia wydajności, integracji Moss, działania wielu hostów, pełnego E2E ani dowodu zatwierdzenia wydań. Inne repozytoria wymienione w źródłowym opracowaniu nie były w tym przyroście niezależnie audytowane.
+
+## Dodatkowy przyrost: źródłowy punkt 2.05 — pomiar referencyjny w Pythonie
+
+Dodano `scripts/ocaf_benchmark_harness.py` i `scripts/tests/test_ocaf_benchmark_harness.py`. Nowy, uruchamiany wyłącznie na żądanie harnes:
+
+- mierzy monotonicznym zegarem `time.perf_counter_ns` czas znanej, lokalnej funkcji `hashlib.sha256`; CLI nie wykonuje nieznanego kodu, poleceń shell, narzędzi zewnętrznych ani wywołań sieciowych;
+- ogranicza liczbę próbek do 10 000, liczbę rozgrzewek do 10 000 oraz payload do 1 MiB; `cold` nie dopuszcza rozgrzewki, ale jest nadal deklaracją profilu, a **nie zweryfikowanym resetem cache**;
+- zwraca `mean/p50/p95/p99/max` według metody nearest rank, z informacją o dokładnym SHA checkoutu i zabrudzeniu drzewa Git, wersji Pythona, CPU i środowisku (wszystko jako metadane deklarowane/odczytane, nie atestowany hardware);
+- zawsze deklaruje `status=MEASURED_LOCAL_PYTHON_ONLY`, `production_approved=false`, `cache_condition_unverified=true`, `environment_attested=false`.
+
+**Testy lokalne:** 9/9 testów harnessu i 14/14 testów źródłowego crosswalk, łącznie 23/23 PASS (Python 3.13, testy syntetyczne i stdlib). Dodatkowo wykonano 50 prawdziwych próbek SHA-256 w izolowanym syntetycznym repo Git; harnes wskazał 40-znakowy SHA commita tego lokalnego fixture oraz `git_worktree_dirty=true`. Pomiar ten nie stanowi benchmarku `ocaf-runtime` Rust ani testu docelowego urządzenia.
+
+```bash
+python3 -m unittest discover -s scripts/tests -p test_ocaf_benchmark_harness.py -v
+python3 scripts/ocaf_benchmark_harness.py --repo . --samples 100 --warmups 10 --payload-bytes 4096 --profile warm
+```
+
+Pozostają otwarte: dokładnie przypięte wyniki release-mode dla kodu Rust, rzeczywiste przebiegi warm/cold z kontrolą cache, osobne pomiary narzutu Zenoh, niezależne potwierdzenie charakterystyki sprzętu i powtarzalność na tym samym SHA. `SOURCE-2.05=EXISTING_PARTIAL` nie modyfikuje kanonicznego `2.05=PLANNED`.
