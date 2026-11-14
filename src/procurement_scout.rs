@@ -608,6 +608,19 @@ mod tests {
     }
 
     #[test]
+    fn purchase_commitment_requests_require_external_provider_authorization() {
+        let records = [RECORD];
+        let snapshot = feed(&records);
+        let intent = prepare_purchase_intent(
+            "tenant-A", NOW, policy(), &supplier(&["KNOWN OWNER"]),
+            &snapshot, digest_snapshot(&snapshot).unwrap()
+        ).unwrap();
+        let request = intent.to_action_request("req-provider", "agent-1", None);
+        assert!(request.uses_external_provider);
+        assert!(request.provider.is_none());
+    }
+
+    #[test]
     fn purchase_intent_cannot_be_admitted_without_human_approval() {
         use crate::governance_contract::{Accountability, AgentContract, DenyReason, SocialCommitment};
         use crate::governance_journal::{Admission, GovernanceJournal};
