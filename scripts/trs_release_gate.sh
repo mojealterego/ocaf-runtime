@@ -11,6 +11,11 @@ mkdir -p "$OUT"
 LOG="$OUT/verification.log"
 exec > >(tee "$LOG") 2>&1
 printf 'OCAF TRS verification started: %s\n' "$(date -u +%FT%TZ)"
+# Never certify a source tree different from the commit packaged by git archive.
+if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
+  echo 'BLOCKED: tracked working tree is dirty; commit or revert before release' >&2
+  exit 2
+fi
 git rev-parse HEAD | tee "$OUT/commit.txt"
 command -v cargo >/dev/null || { echo 'BLOCKED: cargo missing' >&2; exit 127; }
 command -v rustc >/dev/null || { echo 'BLOCKED: rustc missing' >&2; exit 127; }
