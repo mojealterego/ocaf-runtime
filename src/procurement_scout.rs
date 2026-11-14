@@ -282,7 +282,9 @@ pub struct PurchaseIntent {
 impl PurchaseIntent {
     /// Construct the canonical action for the existing governance/journal
     /// gates. Caller supplies authenticated actor/request ID and an approval
-    /// issued by an independent human approval service.
+    /// issued by an independent human approval service. The separately verified
+    /// provider access must also be supplied by the authenticated ingress,
+    /// never from untrusted supplier or model output.
     ///
     /// This builder cannot mint approvals, reserve durable idempotency, or
     /// execute any tool. GovernanceJournal::begin still needs trusted peer
@@ -291,6 +293,7 @@ impl PurchaseIntent {
         &'a self,
         request_id: &'a str,
         actor: &'a str,
+        provider: Option<&'a crate::governance_contract::ProviderAccess>,
         approval: Option<&'a crate::governance_contract::ApprovalArtifact>,
     ) -> crate::governance_contract::ActionRequest<'a> {
         crate::governance_contract::ActionRequest {
@@ -301,8 +304,8 @@ impl PurchaseIntent {
             domain: crate::governance_contract::Domain::ProcurementScout,
             risk: crate::governance_contract::RiskTier::Medium,
             payload_sha256: self.payload_sha256,
-            uses_external_provider: false,
-            provider: None,
+            uses_external_provider: true,
+            provider,
             approval,
         }
     }
@@ -550,7 +553,7 @@ mod tests {
         assert_eq!(first.supplier_id, "supplier-1");
         assert_eq!(first.action, "procurement.commit_purchase_order");
         assert!(!first.purchase_authorized);
-        let request = first.to_action_request("req-1", "agent-1", None);
+        let request = first.to_action_request("req-1", "agent-1", None, None);
         assert_eq!(request.domain, crate::governance_contract::Domain::ProcurementScout);
         assert_eq!(request.risk, crate::governance_contract::RiskTier::Medium);
         assert_eq!(request.payload_sha256, first.payload_sha256);
@@ -615,7 +618,7 @@ mod tests {
             "tenant-A", NOW, policy(), &supplier(&["KNOWN OWNER"]),
             &snapshot, digest_snapshot(&snapshot).unwrap()
         ).unwrap();
-        let request = intent.to_action_request("req-provider", "agent-1", None);
+        let request = intent.to_action_request("req-provider", "agent-1", None, None);
         assert!(request.uses_external_provider);
         assert!(request.provider.is_none());
     }
@@ -630,7 +633,14 @@ mod tests {
             "tenant-A", NOW, policy(), &supplier(&["OWNER LLC"]),
             &snapshot, digest_snapshot(&snapshot).unwrap()
         ).unwrap();
-        let request = intent.to_action_request("request-1", "agent-1", None);
+        let provider = crate::governance_contract::ProviderAccess {
+            authenticated: true,
+            region_model_authorized: true,
+            explicit_cost_approved: true,
+            estimated_cost_micros: 1,
+            approved_cost_micros: 1,
+        };
+        let request = intent.to_action_request("request-1", "agent-1", Some(&provider), None);
         let agent_contract = AgentContract {
             contract_id: "contract-1".into(),
             version: "1".into(),
