@@ -78,7 +78,7 @@ impl DtnStore {
         if peer.is_empty() || peer.len() > 256 || peer.chars().any(char::is_control) {
             return Err(DtnError::InvalidPeer);
         }
-        if max_items == 0 {
+        if max_items == 0 || max_items > 4096 {
             return Err(DtnError::Capacity);
         }
         self.purge_expired(now);
