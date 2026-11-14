@@ -9,7 +9,7 @@ Date: 2026-11-14. Repository: `mojealterego/ocaf-runtime`, branch `main`.
 - Snapshot freshness/expiry is checked against a trusted time. Supplier and beneficial owner names use **exact ASCII-only matching**. Unsupported names are rejected for review, not marked clear.
 - Trusted policy owns the monetary risk cap (USD cents as `u64`); the supplier cannot increase it. Potential watchlist matches or over-cap commitments produce `NotQualified`; missing/expired tax/insurance evidence and low financial score produce `ReviewNeeded`.
 - `PassCandidate` means only that these bounded checks found no issue. `human_attestation_required` is always true and `purchase_authorized` is always false.
-- Twelve Rust unit-test cases are present in this module; the Argon workflow has an explicit test step.
+- Seventeen Rust unit-test cases are present in this module; the Argon workflow has an explicit test step.
 
 ## Invariants and boundaries
 
@@ -26,4 +26,10 @@ All `trusted_tenant`, `trusted_now`, `ProcurementPolicy` and `independent_digest
 
 ## Beneficial ownership review hardening — 2026-11-14
 
-Source-level RED regression test commit `5ded34bb` demonstrates the previous `PassCandidate` path for an empty beneficial-owner list (test execution unavailable). Fix `de5eea6d` introduces `Finding::MissingBeneficialOwnerIdentity` and returns `ReviewNeeded` for otherwise clean dossiers with undisclosed owners; a disclosed, nonmatching owner preserves the read-only `PassCandidate` case. Total **12 Rust unit tests present**, not verified by an executing Rust test runner. Full official beneficial-ownership verification and external sanctions screening remain OPEN.
+Source-level RED regression test commit `5ded34bb` demonstrates the previous `PassCandidate` path for an empty beneficial-owner list (test execution unavailable). Fix `de5eea6d` introduces `Finding::MissingBeneficialOwnerIdentity` and returns `ReviewNeeded` for otherwise clean dossiers with undisclosed owners; a disclosed, nonmatching owner preserves the read-only `PassCandidate` case. Total **17 Rust unit tests present**, not verified by an executing Rust test runner. Full official beneficial-ownership verification and external sanctions screening remain OPEN.
+
+## Bounded PurchaseIntent binding — 2026-11-14
+
+`prepare_purchase_intent` re-evaluates the **same** authenticated dossier, operator policy, trusted time and independent watchlist digest before constructing a deterministic, non-executing `PurchaseIntent`. Invalid/zero commitments are rejected; a REVIEW_NEEDED or NOT_QUALIFIED supplier cannot produce a commitment intent. The payload SHA-256 binds tenant, supplier, normalized legal name, ownership, document expiry, risk policy, USD-cents amount and pinned sanctions-snapshot digest. No customer-set risk cap is accepted.
+
+`PurchaseIntent::to_action_request` constructs `procurement.commit_purchase_order` / `ProcurementScout` / `Medium`, requires external provider authorization and leaves human approval to independent signing and the durable `GovernanceJournal`. The resulting object explicitly carries `purchase_authorized=false`; its creation is **not** purchase commitment. A Rust test checks against a separately computed Python hashlib reference vector: `docs/evidence/ARGON_PROCUREMENT_INTENT_SHA256_REFERENCE_2026-11-14.json`. **644 Python reference-model assertions passed; Rust test execution unavailable.**

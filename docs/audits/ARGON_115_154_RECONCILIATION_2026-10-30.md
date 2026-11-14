@@ -40,8 +40,8 @@ Status `PARTIAL` oznacza wykryty, ograniczony kod w repozytorium, nie pełne kry
 | PDF-1.42 | Compliance Evidence safety tests | TESTED_LOCAL_PARTIAL | `src/compliance_evidence.rs` — 9 testów w tym tenant, expiry, tampering; brak safety E2E |
 | PDF-1.43 | ProcurementScout foundation | IMPLEMENTED_CI_PENDING | `src/procurement_scout.rs`: typed bounded supplier dossier, operator-owned medium-risk cap; local tests added, Rust execution pending |
 | PDF-1.44 | Sanctions / supplier anomaly screening | IMPLEMENTED_CI_PENDING | `src/procurement_scout.rs`: pinned-digest snapshot exact-match preflight with expiry and tenant binding; NOT a verified live sanctions integration |
-| PDF-1.45 | Procurement governance | OPEN | `src/governance_contract.rs` now binds the named purchase action to ProcurementScout/MEDIUM + HMAC human-approval preflight; `src/governance_journal.rs` tests durable DENY. **No OMAt live purchase gate or completed Rust CI.** |
-| PDF-1.46 | Procurement safety tests | IMPLEMENTED_CI_PENDING | `src/procurement_scout.rs` defines 12 safety unit tests; cargo/CI/production E2E unverified |
+| PDF-1.45 | Procurement governance | OPEN | `src/procurement_scout.rs`: SHA-256 bound non-executing purchase intent; `src/governance_contract.rs`: canonical Medium-risk (including `buy`) and provider gate; `src/governance_journal.rs`: durable denial tests. **No live OMAt purchase gate, external approval execution or confirmed Rust CI.** |
+| PDF-1.46 | Procurement safety tests | IMPLEMENTED_CI_PENDING | `src/procurement_scout.rs` defines 17 Rust unit tests (includes cross-module journal denial and hash reference fixture); 644 Python model assertions only. Cargo/CI/production E2E unverified. |
 | PDF-1.47 | InProcessLexicalSelector | TESTED_LOCAL_COMPONENT | `src/retrieval_quality.rs` — implementacja lokalna, testy CI weryfikowane osobno; pełny E2E otwarty. |
 | PDF-1.48 | MossRetrievalAdapter | OPEN | Zewnętrzny interfejs dopiero po zweryfikowaniu dostawcy; local fallback |
 | PDF-1.49 | ZenohTransportBridge | OPEN | Istnieje transport Zenoh, brak E2E tego konkretnego mostu i benchmarku |
