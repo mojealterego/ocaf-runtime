@@ -30,3 +30,6 @@ cargo clippy --locked --all-targets --no-default-features -- -D warnings
 ```
 
 No passing result is asserted until these commands are actually executed with receipts on the final SHA.
+
+## Code-review correction on 2026-11-14
+An intermediate form of the canonical action match used conditional Rust match arms for invalid shapes and then a generic deny for scoped action prefixes. A *valid* named action fell through to the generic denial. This was corrected in commit `32f8acab24a4f40205cd0a8891c74f55343e1ed7` by computing `action_shape_valid` from explicit named arms and returning DENY only when false. Additional positive canonical-action and high-risk negative regression cases were committed in `6a90bbc1d8d436880f3d11aa289f64509b9be8e3`. Existing contract-verification success tests also cover this behavior. No Rust test execution is claimed.
