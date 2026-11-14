@@ -1924,3 +1924,7 @@ Dowód i ograniczenia: docs/audits/STAGE051_BUILDER_WEB_INCREMENT_2026-11-02.md.
 - **Przypięty SHA:** `0be306742f7444b4c9719fba282ba4b14682430d`; **GitHub Actions:** [OCAF 0.52 Builder Cloud OAuth admission](https://github.com/mojealterego/ocaf-runtime/actions/runs/41536940370) — `completed/success`.
 - **Potwierdzone:** Rust formatting PASS; 4/4 testy integracyjne OAuth / tenant / CAS / scopes / revocation PASS; Clippy `--locked --no-default-features --test builder_cloud -- -D warnings` PASS.
 - **Zakres:** jedynie `src/builder_cloud.rs`, `tests/builder_cloud.rs`, istniejące OAuth/SQLite/typed IR. Status komponentu `TESTED_LOCAL_PARTIAL`; brak HTTP ingress, wdrożenia Cloud, sandbox execution i platform E2E. Żaden z 10 produktów nie został odebrany; `production_approved=false`.
+
+### Argon PDF-1.43/1.44/1.46 — Procurement Scout (2026-11-14)
+
+`src/procurement_scout.rs` provides a bounded **read-only** Rust supplier assessment with an operator-controlled medium-risk cap and a separately pinned watchlist digest. It never authorizes purchases, certifies sanctions clearance, verifies an external publisher or bypasses OMAt policy gates. Eleven Rust unit tests were added, but no local Rust toolchain was available and CI for the new SHA is not verified. See [Argon procurement audit](docs/audits/ARGON_PROCUREMENT_PREFLIGHT_2026-11-14.md). `production_approved=false`; canonical stage IDs unchanged.
