@@ -194,6 +194,13 @@ impl AgentContract {
         if req.domain == Domain::ProcurementScout && req.risk > RiskTier::Medium {
             return PreflightDecision::Deny(D::RiskCapExceeded);
         }
+        // Purchase-intent actions cannot suppress the external-provider gate.
+        // This check is independent of the caller-supplied Domain/Risk labels.
+        if matches!(req.action, "procurement.commit_purchase_order" | "buy")
+            && !req.uses_external_provider
+        {
+            return PreflightDecision::Deny(D::InvalidRequest);
+        }
         if req.uses_external_provider {
             match req.provider {
                 Some(provider)
@@ -383,6 +390,17 @@ mod tests {
         }
     }
 
+    fn authorized_test_provider() -> ProviderAccess {
+        // Simulation-only verified-provider metadata; no real purchase provider.
+        ProviderAccess {
+            authenticated: true,
+            region_model_authorized: true,
+            explicit_cost_approved: true,
+            estimated_cost_micros: 1,
+            approved_cost_micros: 1,
+        }
+    }
+
     fn signed_approval(req: &ActionRequest<'_>, role: ApproverRole) -> ApprovalArtifact {
         let mut approval = ApprovalArtifact {
             approval_id: "approval_1".into(),
@@ -458,6 +476,9 @@ mod tests {
     fn legacy_buy_alias_cannot_downgrade_or_spoof_procurement_risk() {
         let c = contract();
         let mut r = request();
+        let provider = authorized_test_provider();
+        r.uses_external_provider = true;
+        r.provider = Some(&provider);
         r.risk = RiskTier::Low;
         assert_eq!(
             c.evaluate(&r, None, 150),
@@ -542,6 +563,9 @@ mod tests {
         let c = contract();
         let authority = ApprovalAuthority::new([9; 32]).unwrap();
         let mut r = request();
+        let provider = authorized_test_provider();
+        r.uses_external_provider = true;
+        r.provider = Some(&provider);
         assert_eq!(
             c.evaluate(&r, Some(&authority), 150),
             PreflightDecision::Deny(DenyReason::MissingApproval)
@@ -577,6 +601,9 @@ mod tests {
         let c = contract();
         let authority = ApprovalAuthority::new([9; 32]).unwrap();
         let mut r = request();
+        let provider = authorized_test_provider();
+        r.uses_external_provider = true;
+        r.provider = Some(&provider);
         let approval = signed_approval(&r, ApproverRole::FinanceApprover);
         r.approval = Some(&approval);
         assert_eq!(
@@ -706,6 +733,9 @@ mod tests {
         let mut c = contract();
         c.permissions.insert("procurement.commit_purchase_order".into());
         let mut r = request();
+        let provider = authorized_test_provider();
+        r.uses_external_provider = true;
+        r.provider = Some(&provider);
         r.action = "procurement.commit_purchase_order";
         r.domain = Domain::CoreRetrieval;
         r.risk = RiskTier::Low;
