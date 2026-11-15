@@ -30,7 +30,7 @@ Dotychczasowych `EXISTING_PARTIAL`, `PLANNED`, `NOT_IMPLEMENTED` i `production_a
 Jeśli nie ma KVM/Firecracker, GPU, HSM, PostgreSQL na niezależnych hostach, urządzenia mobilnego lub płatnego CI, wykonaj deterministyczne modele interfejsów, awarii, quorum, protokołów, limitów i recovery. Oznacz jako `TESTED_ENGINEERING_SIMULATION`, nie `VERIFIED_REAL_HARDWARE`, `NATIVE_BINARY`, `LIVE_E2E` czy `DEPLOYED`. Używaj testów natywnych wszędzie, gdzie kompilator i środowisko są dostępne.
 
 ## 5. Bramka wykonawcza
-`scripts/engineering_simulation_gate.py` uruchamia wyłącznie wpisane na stałe, weryfikowalne zestawy testów Python na czystym checkout `main`. Na początek obejmuje ograniczony zakres `SOURCE-2.05` i `SOURCE-2.06`. Nie certyfikuje wszystkich 20 punktów ani produktu jako całości. Nie uruchamia komend dostarczanych przez niezaufany JSON, prompt czy użytkownika.
+`scripts/engineering_simulation_gate.py` uruchamia wyłącznie wpisane na stałe, weryfikowalne zestawy testów Python na czystym checkout `main`. Obejmuje ograniczony zakres `SOURCE-1.65`, `SOURCE-2.05` i `SOURCE-2.06`; `SOURCE-1.65` dowodzi działania niezależnego modelu referencyjnego, nie kompilacji modułu Rust. Nie certyfikuje wszystkich 20 punktów ani produktu jako całości. Nie uruchamia komend dostarczanych przez niezaufany JSON, prompt czy użytkownika.
 
 Przykład:
     python3 scripts/engineering_simulation_gate.py --repo . --head-sha "$(git rev-parse HEAD)" --requirement SOURCE-2.06

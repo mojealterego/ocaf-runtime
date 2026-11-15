@@ -22,6 +22,11 @@ class GateError(ValueError):
 
 # Strict allowlist: extend only with reviewed, executable engineering tests.
 SUITES = {
+    'SOURCE-1.65': {
+        'scope': 'bounded_hybrid_lexical_vector_reference_model',
+        'paths': ('scripts/ocaf_hybrid_reference.py',),
+        'tests': ('test_ocaf_hybrid_reference.py',),
+    },
     'SOURCE-2.05': {
         'scope': 'bounded_python_microbenchmark_harness',
         'paths': ('scripts/ocaf_benchmark_harness.py',),

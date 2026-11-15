@@ -84,6 +84,8 @@ pub mod governance_contract;
 
 pub mod retrieval_quality;
 
+pub mod hybrid_retrieval;
+
 pub mod governance_journal;
 
 pub mod finops_ledger;

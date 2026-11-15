@@ -92,11 +92,15 @@
       "canonical_title": "CoALA typed memory API",
       "status": "EXISTING_PARTIAL",
       "implementation_paths": [
-        "src/retrieval_quality.rs"
+        "src/retrieval_quality.rs",
+        "src/hybrid_retrieval.rs",
+        "scripts/ocaf_hybrid_reference.py",
+        "scripts/engineering_simulation_gate.py"
       ],
       "remaining_gaps": [
-        "No trusted Moss vector adapter nor verified retrieval benchmark corpus on this commit.",
-        "Mutable tenant-scoped BM25 supports atomic copy-on-write upsert/remove and stale-posting invalidation with Rust regression tests committed; native Rust compilation/CI not verified. Trusted Moss vector provenance, durable indexing and hybrid ranking remain open."
+        "No externally authenticated embedding/model provider (Moss or another production vector service) nor audited retrieval benchmark corpus; vector generation is intentionally outside the trusted in-memory index.",
+        "Earlier mutable BM25-only source remains available in src/retrieval_quality.rs; native Rust compilation, Rust unit execution and Rust CI of the new hybrid module remain UNVERIFIED.",
+        "Bounded in-memory BM25+cosine RRF source is implemented and wired through src/lib.rs; 7 Rust regressions committed but not executed, 10 independent Python reference cases locally PASS, simulation gate executed on clean synthetic Git checkout. No durable vector store, provider attestation, cross-process coordination, live p95 measurements, or production stage acceptance."
       ]
     },
     {

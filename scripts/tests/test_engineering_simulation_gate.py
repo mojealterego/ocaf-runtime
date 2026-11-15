@@ -37,6 +37,33 @@ class EngineeringSimulationGateTests(unittest.TestCase):
         self.git('commit', '-qm', 'fixture')
         self.sha = self.git('rev-parse', 'HEAD')
 
+    def test_pinned_clean_main_executes_hybrid_reference_suite(self):
+        import shutil
+        source = Path(__file__).resolve().parents[1]
+        shutil.copy2(source / 'ocaf_hybrid_reference.py',
+                     self.repo / 'scripts/ocaf_hybrid_reference.py')
+        shutil.copy2(Path(__file__).resolve().parent / 'test_ocaf_hybrid_reference.py',
+                     self.repo / 'scripts/tests/test_ocaf_hybrid_reference.py')
+        self.commit()
+        receipt = evaluate(self.repo, self.sha, 'SOURCE-1.65')
+        self.assertEqual(receipt['scope'], 'bounded_hybrid_lexical_vector_reference_model')
+        self.assertEqual(receipt['test_count'], 10)
+        self.assertEqual(len(receipt['suite_results']), 1)
+        self.assertFalse(receipt['production_approved'])
+        self.assertFalse(receipt['full_stage_accepted'])
+
+    def test_hybrid_reference_source_tampering_never_passes(self):
+        import shutil
+        source = Path(__file__).resolve().parents[1]
+        shutil.copy2(source / 'ocaf_hybrid_reference.py',
+                     self.repo / 'scripts/ocaf_hybrid_reference.py')
+        shutil.copy2(Path(__file__).resolve().parent / 'test_ocaf_hybrid_reference.py',
+                     self.repo / 'scripts/tests/test_ocaf_hybrid_reference.py')
+        self.commit()
+        (self.repo / 'scripts/ocaf_hybrid_reference.py').write_text('source was changed\n')
+        with self.assertRaisesRegex(GateError, 'uncommitted'):
+            evaluate(self.repo, self.sha, 'SOURCE-1.65')
+
     def test_pinned_clean_main_executes_both_real_suites(self):
         report = evaluate(self.repo, self.sha, 'SOURCE-2.06')
         self.assertEqual(report['status'], 'SCOPED_ENGINEERING_SIMULATION_PASS')
