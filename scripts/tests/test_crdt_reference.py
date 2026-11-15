@@ -41,9 +41,13 @@ class Replica:
             if self.operations[key] != op:
                 raise ValueError("dot collision")
             return False
-        if any(op.context_count(old.actor) >= old.counter and old.context_count(op.actor) >= op.counter
-               for old in self.operations.values()):
-            raise ValueError("inconsistent causal context")
+        for old in self.operations.values():
+            new_sees_old = op.context_count(old.actor) >= old.counter
+            old_sees_new = old.context_count(op.actor) >= op.counter
+            if (new_sees_old and old_sees_new
+                    or new_sees_old and any(op.context_count(actor) < n for actor, n in old.context)
+                    or old_sees_new and any(old.context_count(actor) < n for actor, n in op.context)):
+                raise ValueError("inconsistent causal context")
         self.operations[key] = op
         for actor, counter in op.context:
             self.observed[actor] = max(self.observed.get(actor, 0), counter)
@@ -138,6 +142,22 @@ class CrdtReferenceTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             r.apply(Op("other", "actor", 2, "k", b"data", (("actor", 1),)))
         self.assertEqual(r.snapshot(), {"k": b"first".hex()})
+
+    def test_nontransitive_causal_claims_fail_closed(self):
+        r = Replica("tenant")
+        r.apply(Op("tenant", "a", 1, "k", b"a", (("c", 1),)))
+        with self.assertRaises(ValueError):
+            r.apply(Op("tenant", "b", 1, "k", b"b", (("a", 1),)))
+        self.assertEqual(len(r.operations), 1)
+
+    def test_three_actor_cycle_fails_closed(self):
+        r = Replica("tenant")
+        r.apply(Op("tenant", "a", 1, "k", b"a", (("b", 1),)))
+        with self.assertRaises(ValueError):
+            r.apply(Op("tenant", "b", 1, "k", b"b", (("c", 1),)))
+        with self.assertRaises(ValueError):
+            r.apply(Op("tenant", "c", 1, "k", b"c", (("a", 1),)))
+        self.assertEqual(len(r.operations), 1)
 
     def test_atomic_conflicting_merge(self):
         a, b = Replica("tenant"), Replica("tenant")
