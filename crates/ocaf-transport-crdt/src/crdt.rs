@@ -31,7 +31,8 @@ impl VectorClock {
     }
 
     pub fn strictly_dominates(&self, other: &Self) -> bool {
-        self.dominates(other) && self != other
+        self.dominates(other)
+            && self.entries.iter().any(|(actor, count)| *count > other.get(actor))
     }
 
     fn observe(&mut self, actor: &str, counter: u64) {
@@ -254,11 +255,29 @@ impl CrdtStateStore {
         self.winner(key).is_some_and(|op| op.value.is_none())
     }
 
+    /// Materialize all keys in one O(N²) pass, not one full causal scan per
+    /// key (which would be O(N³) for a many-key history).
     pub fn visible_snapshot(&self) -> BTreeMap<String, Vec<u8>> {
-        let keys = self.operations.values().map(|op| op.key.as_str())
-            .collect::<BTreeSet<_>>();
-        keys.into_iter().filter_map(|key| {
-            self.get(key).map(|value| (key.to_owned(), value.to_vec()))
+        let mut winners: BTreeMap<&str, &CrdtOperation> = BTreeMap::new();
+        for candidate in self.operations.values() {
+            let superseded = self.operations.values().any(|other| {
+                other.key == candidate.key
+                    && (other.actor != candidate.actor || other.counter != candidate.counter)
+                    && other.context.get(&candidate.actor) >= candidate.counter
+            });
+            if superseded {
+                continue;
+            }
+            let replace = winners.get(candidate.key.as_str()).is_none_or(|current| {
+                (candidate.counter, candidate.actor.as_str())
+                    > (current.counter, current.actor.as_str())
+            });
+            if replace {
+                winners.insert(candidate.key.as_str(), candidate);
+            }
+        }
+        winners.into_iter().filter_map(|(key, op)| {
+            op.value.as_ref().map(|value| (key.to_owned(), value.clone()))
         }).collect()
     }
 
@@ -417,6 +436,27 @@ mod tests {
         let extreme = operation("a", u64::MAX, "key", Some(b"x"), &[("a", u64::MAX - 1)]);
         store.apply_operation(extreme).unwrap();
         assert_eq!(store.apply_local("a", "key", None), Err(CrdtError::CounterExhausted));
+    }
+
+    #[test]
+    fn explicit_zero_entry_is_not_strict_dominance() {
+        let empty = VectorClock::default();
+        let mut explicit_zero = VectorClock::default();
+        explicit_zero.entries.insert("a".into(), 0);
+        assert!(explicit_zero.dominates(&empty));
+        assert!(!explicit_zero.strictly_dominates(&empty));
+    }
+
+    #[test]
+    fn many_distinct_keys_materialize_without_repeated_full_scans() {
+        let mut store = CrdtStateStore::new("tenant-a").unwrap();
+        for i in 0..128 {
+            let key = format!("key_{i}");
+            store.apply_local("actor", &key, Some(vec![i as u8])).unwrap();
+        }
+        let snapshot = store.visible_snapshot();
+        assert_eq!(snapshot.len(), 128);
+        assert_eq!(snapshot.get("key_127"), Some(&vec![127]));
     }
 
     #[test]
