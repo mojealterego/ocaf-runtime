@@ -86,3 +86,26 @@ python3 scripts/ocaf_benchmark_harness.py --repo . --samples 100 --warmups 10 --
 Pozostają otwarte: dokładnie przypięte wyniki release-mode dla kodu Rust, rzeczywiste przebiegi warm/cold z kontrolą cache, osobne pomiary narzutu Zenoh, niezależne potwierdzenie charakterystyki sprzętu i powtarzalność na tym samym SHA. `SOURCE-2.05=EXISTING_PARTIAL` nie modyfikuje kanonicznego `2.05=PLANNED`.
 
 **Uzupełnienie walidacji 2026-11-14:** `verify_source_155_206.py` sprawdza obecnie także rzeczywistą długość tablic `main` (334) i `technical` (64), nie tylko deklarowane liczby. Dodano 2 negatywne testy ucięcia inwentarza. Lokalny zestaw obejmuje 16 testów crosswalk i 9 benchmarkowych — 25/25 PASS; integracyjne CI i Rust nadal niepotwierdzone.
+
+## 2026-11-15: lokalny strażnik referencji Git — SOURCE-2.06
+
+Nowa, niezależna od Rust implementacja `scripts/ocaf_branch_guardian.py` zapewnia **odczytowe, fail-closed** porównanie fizycznych lokalnych referencji Git z manifestem bazowym przypiętym przez operatora niezależnym SHA-256. Manifest ma dokładnie cztery pola: `schema_version=1`, `repository="mojealterego/ocaf-runtime"`, `baseline_main=<40-hex SHA>`, `historical_refs={<pełne refs/heads/...>:<40-hex commit SHA>}`. Manifest nie jest w tym repozytorium generowany automatycznie: nie wolno uznać niezweryfikowanego snapshotu za prawdziwy historyczny baseline.
+
+Sprawdzenia:
+- odrzucenie zduplikowanych kluczy JSON, nieprawidłowej wartości repozytorium, niepoprawnych OID, symlinków i nadmiernego rozmiaru manifestu, niebezpiecznych nazw referencji i zduplikowania `main` jako „historycznej”;
+- zgodność `git rev-parse --show-toplevel` z wybranym checkoutem i `symbolic-ref HEAD == refs/heads/main`;
+- `git merge-base --is-ancestor <baseline_main> <observed_HEAD>` bez uwzględniania podmienionych Git replace objects;
+- każda wskazana historyczna referencja istnieje, ma dokładnie przypięty SHA oraz wskazuje obiekt `commit`;
+- wyłączone przez filtr zmienne `GIT_*` na wejściu do procesu `git`, `GIT_NO_REPLACE_OBJECTS=1`, timeout 5 s na subprocess, brak `shell=True` i **zero komend modyfikujących** repozytorium;
+- `historical_refs={}` jest prawidłowe, jeżeli operator jednoznacznie przypiął zerowy stan historycznych gałęzi. Liczba 11 referencji z innego projektu nie jest twardo kodowana.
+
+**Przeprowadzone lokalnie 2026-11-15:** TDD RED dla brakującego modułu (import error), następnie GREEN **18/18 Python unittest PASS** w izolowanych fixture repozytoriach Git. Obejmuje bezpieczny fast-forward, odrzucenie force-rewrite, usuwania/podmiany historycznych gałęzi, detached HEAD, manipulacji manifestem i prób przekierowania `GIT_DIR`; `python3 -m py_compile` ukończone. Moduł implementacyjny w GitHub odpowiada bajtowo lokalnie testowanemu źródłu (7352 bajty, FNV32 `b674f8fc`). Testy na GitHub zawierają te same 18 przypadków.
+
+Uruchomienie dla kopii repozytorium wymaga **niezależnie potwierdzonego SHA bazowego**:
+
+```bash
+python3 -m unittest discover -s scripts/tests -p test_ocaf_branch_guardian.py -v
+python3 scripts/ocaf_branch_guardian.py --repo . --baseline /secure/operator-baseline.json --trusted-sha256 "$TRUSTED_BASELINE_SHA256"
+```
+
+**Granice dowodu:** pozytywny wynik daje tylko `LOCAL_REFS_PRESERVED_UNATTESTED`, zawsze `production_approved=false`, `remote_refs_verified=false`, `workflow_safety_verified=false`. Brak zewnętrznego historycznego baseline i operator-pinned digest dla rzeczywistego `ocaf-runtime`; dlatego nie deklaruje się przeprowadzenia tego porównania na aktualnych historycznych referencjach produkcyjnego GitHub. Odczyt gałęzi przez GitHub API 2026-11-15 wykazał `main.protected=false`, co jest otwartą luką governance, nie dowodem ochrony refów. Nadal wymagane są niezależne kontrole GitHub branch protection, audyt uprawnień i workflow, uruchomiony Rust CI oraz testy E2E na docelowych hostach.
