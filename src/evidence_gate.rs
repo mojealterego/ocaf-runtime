@@ -469,6 +469,34 @@ mod tests {
     }
 
     #[test]
+    fn independent_python_ed25519_vector_is_byte_exact() {
+        use sha2::{Digest, Sha256};
+        fn hex_bytes(value: &str) -> Vec<u8> {
+            (0..value.len()).step_by(2).map(|index| {
+                u8::from_str_radix(&value[index..index + 2], 16).unwrap()
+            }).collect()
+        }
+        // Generated with Python cryptography Ed25519 from seed 00..1f.
+        // See docs/evidence/OCAF_EVIDENCE_ED25519_VECTOR_2026-11-15.json.
+        let public: [u8; 32] = hex_bytes(
+            "03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8"
+        ).try_into().unwrap();
+        let gate = EvidenceGate::new(
+            EvidenceAuthorities::new(public, None, None, None).unwrap()
+        );
+        let mut r = receipt(VerificationStatus::TestedLocal, local());
+        r.signature_ed25519 = hex_bytes(concat!(
+            "64134d7db962f2d57c36246857c78f8227dbeba24a815bc124863f8a1ad2839",
+            "1656d5259435bf3ad7d8c4f225eaefed0ad5253a8c3ed1a5e01f26ec39803560a"
+        ));
+        let expected = hex_bytes(
+            "2c29e3d404f0c748692072a42c02c7d8a4ec58e4a72dae4c1314ccec5ca2cebf"
+        );
+        assert_eq!(Sha256::digest(r.signing_bytes()).as_slice(), expected.as_slice());
+        assert_eq!(gate.verify(&r, &DenyExternalEvidence), Ok(()));
+    }
+
+    #[test]
     fn authority_tiers_must_have_distinct_public_keys() {
         let keys = keys();
         assert!(matches!(
