@@ -65,6 +65,25 @@ def _git(repo: Path, *args: str) -> tuple[int, str]:
         return 127, ''
 
 
+def _grafts_state(repo: Path) -> bool | None:
+    """Detect legacy Git grafts in the effective common Git directory.
+
+    GIT_NO_REPLACE_OBJECTS does not disable info/grafts: a forged parent
+    can make merge-base --is-ancestor accept unrelated rewritten history.
+    None means the location could not be verified and must fail closed.
+    """
+    rc, location = _git(repo, 'rev-parse', '--git-path', 'info/grafts')
+    if rc != 0 or not location or '\n' in location:
+        return None
+    path = Path(location)
+    if not path.is_absolute():
+        path = repo / path
+    try:
+        return os.path.lexists(path)  # Includes dangling symlinks.
+    except (OSError, ValueError):
+        return None
+
+
 def evaluate(repo: Path, baseline: Path, trusted_sha256: str) -> dict[str, Any]:
     """Observe local refs only; never create, update, reset or delete a ref."""
     blockers: list[str] = []
@@ -129,6 +148,10 @@ def evaluate(repo: Path, baseline: Path, trusted_sha256: str) -> dict[str, Any]:
     if not same_root:
         blockers.append('not_a_git_checkout')
         return report
+    grafts = _grafts_state(root)
+    if grafts is not False:
+        blockers.append('git_grafts_detected' if grafts else 'git_grafts_path_unverifiable')
+        return report
     rc, active = _git(root, 'symbolic-ref', '--quiet', 'HEAD')
     if rc != 0 or active != 'refs/heads/main':
         blockers.append('not_on_main')
@@ -160,6 +183,11 @@ def evaluate(repo: Path, baseline: Path, trusted_sha256: str) -> dict[str, Any]:
             blockers.append('historical_ref_not_commit:' + ref_name)
             continue
         report['historical_refs_checked'] += 1
+    # Re-check after all Git commands to detect a graft file introduced while
+    # evaluating; this is not a transactional snapshot of an adversarial FS.
+    grafts = _grafts_state(root)
+    if grafts is not False:
+        blockers.append('git_grafts_detected' if grafts else 'git_grafts_path_unverifiable')
     if not blockers:
         report['status'] = 'LOCAL_REFS_PRESERVED_UNATTESTED'
     return report
