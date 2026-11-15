@@ -182,14 +182,19 @@ impl CrdtStateStore {
         if total > MAX_HISTORY_BYTES {
             return Err(CrdtError::CapacityExceeded);
         }
-        // If both dots claim to have observed each other, their causal graph
-        // is inconsistent. This check is necessary but not a substitute for
-        // cryptographic authentication of the causal context.
-        if self.operations.values().any(|existing| {
-            op.context.get(&existing.actor) >= existing.counter
-                && existing.context.get(&op.actor) >= op.counter
-        }) {
-            return Err(CrdtError::InvalidCausality);
+        // Enforce transitive causal closure even for out-of-order delivery:
+        // if X observed Y, X must also include everything Y observed. This
+        // rejects forged longer causal cycles without materializing a graph.
+        // Cryptographic actor authentication is still an external prerequisite.
+        for existing in self.operations.values() {
+            let new_sees_existing = op.context.get(&existing.actor) >= existing.counter;
+            let existing_sees_new = existing.context.get(&op.actor) >= op.counter;
+            if (new_sees_existing && existing_sees_new)
+                || (new_sees_existing && !op.context.dominates(&existing.context))
+                || (existing_sees_new && !existing.context.dominates(&op.context))
+            {
+                return Err(CrdtError::InvalidCausality);
+            }
         }
         self.observed.merge(&op.context);
         self.observed.observe(&op.actor, op.counter);
@@ -457,6 +462,28 @@ mod tests {
         let snapshot = store.visible_snapshot();
         assert_eq!(snapshot.len(), 128);
         assert_eq!(snapshot.get("key_127"), Some(&vec![127]));
+    }
+
+    #[test]
+    fn forged_three_actor_causal_cycle_fails_closed() {
+        let mut store = CrdtStateStore::new("tenant-a").unwrap();
+        let a = operation("a", 1, "k", Some(b"a"), &[("b", 1)]);
+        let b = operation("b", 1, "k", Some(b"b"), &[("c", 1)]);
+        let c = operation("c", 1, "k", Some(b"c"), &[("a", 1)]);
+        store.apply_operation(a).unwrap();
+        assert_eq!(store.apply_operation(b), Err(CrdtError::InvalidCausality));
+        assert_eq!(store.apply_operation(c), Err(CrdtError::InvalidCausality));
+        assert_eq!(store.operation_count(), 1);
+    }
+
+    #[test]
+    fn missing_transitive_dependency_is_rejected() {
+        let mut store = CrdtStateStore::new("tenant-a").unwrap();
+        let a = operation("a", 1, "k", Some(b"a"), &[("c", 1)]);
+        let b = operation("b", 1, "k", Some(b"b"), &[("a", 1)]);
+        store.apply_operation(a).unwrap();
+        assert_eq!(store.apply_operation(b), Err(CrdtError::InvalidCausality));
+        assert_eq!(store.operation_count(), 1);
     }
 
     #[test]
