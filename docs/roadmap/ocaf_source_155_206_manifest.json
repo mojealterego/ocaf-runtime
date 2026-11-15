@@ -269,10 +269,13 @@
       "canonical_title": "NuNet PRIMUS and GodMode experimental orchestration interfaces",
       "status": "EXISTING_PARTIAL",
       "implementation_paths": [
-        "scripts/release_readiness.py"
+        "scripts/release_readiness.py",
+        "scripts/ocaf_branch_guardian.py"
       ],
       "remaining_gaps": [
-        "Offline release evidence cannot replace independent CI, branch protection, host tests or operator approval."
+        "An operator-pinned local-Git ref-preservation preflight is implemented; it is not a GitHub remote/protection check, workflow permission audit, release action or deploy tool.",
+        "Independent trusted baseline provenance is mandatory; a SHA-256 pin derived from the same source cannot prove historical preservation.",
+        "No remote historical-ref baseline or signed CI run evidence has been provided; full native Rust and multi-host E2E acceptance remain open."
       ]
     }
   ]
