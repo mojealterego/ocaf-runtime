@@ -1,0 +1,4 @@
+# Pinned Python tooling for OCAF Builder v1 GATE-10 and schema contract tests.
+# These packages do not build native Rust/Android/iOS applications.
+cryptography==46.0.4
+jsonschema==4.26.0

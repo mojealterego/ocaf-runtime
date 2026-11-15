@@ -1,0 +1,736 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.ocaf.internal/agents-builder/v1/workspace.schema.json",
+  "title": "OCAF Agents Builder v1.0 - strict Workspace Typed DAG IR wire schema",
+  "description": "Structural validation only; policy/graph/reachability/authorization requires trusted builder-core. No production approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "workspace_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+    },
+    "owner_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+    },
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "agents": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/AgentDefinition"
+      },
+      "maxProperties": 128
+    },
+    "graphs": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/TypedDagGraph"
+      },
+      "maxProperties": 128
+    },
+    "tools": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/ToolRegistration"
+      },
+      "maxProperties": 128
+    },
+    "policy_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+      },
+      "maxItems": 64,
+      "uniqueItems": true
+    },
+    "secret_refs": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/SecretReference"
+      },
+      "maxProperties": 128
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+      },
+      "maxItems": 128,
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "workspace_id",
+    "tenant_id",
+    "owner_id",
+    "schema_version",
+    "revision",
+    "agents",
+    "graphs",
+    "tools",
+    "policy_refs",
+    "secret_refs",
+    "artifacts"
+  ],
+  "$defs": {
+    "DataType": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "string",
+            "number",
+            "boolean",
+            "bytes",
+            "object",
+            "array",
+            "stream",
+            "secret-reference"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "structured-schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schema_id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+                },
+                "schema_version": {
+                  "type": "string",
+                  "pattern": "^\\d+\\.\\d+\\.\\d+$"
+                }
+              },
+              "required": [
+                "schema_id",
+                "schema_version"
+              ]
+            }
+          },
+          "required": [
+            "structured-schema"
+          ]
+        }
+      ]
+    },
+    "NodeType": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "trigger",
+            "llm_model",
+            "tool",
+            "memory_rag",
+            "transform",
+            "branch",
+            "retry",
+            "output"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "loop": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "max_iterations": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10000
+                }
+              },
+              "required": [
+                "max_iterations"
+              ]
+            }
+          },
+          "required": [
+            "loop"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "parallel_fork_join": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "max_branches": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 64
+                }
+              },
+              "required": [
+                "max_branches"
+              ]
+            }
+          },
+          "required": [
+            "parallel_fork_join"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "human_approval": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "timeout_seconds": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 86400
+                }
+              },
+              "required": [
+                "timeout_seconds"
+              ]
+            }
+          },
+          "required": [
+            "human_approval"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "delay": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "delay_ms": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 86400000
+                }
+              },
+              "required": [
+                "delay_ms"
+              ]
+            }
+          },
+          "required": [
+            "delay"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "subgraph": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "target_graph_id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+                }
+              },
+              "required": [
+                "target_graph_id"
+              ]
+            }
+          },
+          "required": [
+            "subgraph"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "opaque_code": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "language": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+                },
+                "source_hash": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "language",
+                "source_hash"
+              ]
+            }
+          },
+          "required": [
+            "opaque_code"
+          ]
+        }
+      ]
+    },
+    "TypedPort": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "port_name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "data_type": {
+          "$ref": "#/$defs/DataType"
+        },
+        "cardinality": {
+          "type": "string",
+          "enum": [
+            "required-single",
+            "optional-single",
+            "many"
+          ]
+        }
+      },
+      "required": [
+        "port_name",
+        "data_type",
+        "cardinality"
+      ]
+    },
+    "ResourceBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_steps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "max_duration_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 86400000
+        },
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000000
+        },
+        "max_cost_micros": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000000
+        },
+        "max_cpu_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 86400000
+        },
+        "max_ram_bytes": {
+          "type": "integer",
+          "minimum": 65536,
+          "maximum": 4294967296
+        },
+        "max_concurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1024
+        },
+        "max_delegation_depth": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 64
+        }
+      },
+      "required": [
+        "max_steps",
+        "max_duration_ms",
+        "max_tokens",
+        "max_cost_micros",
+        "max_cpu_ms",
+        "max_ram_bytes",
+        "max_concurrency",
+        "max_delegation_depth"
+      ]
+    },
+    "ErrorPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_retries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 32
+        },
+        "base_backoff_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3600000
+        },
+        "max_backoff_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3600000
+        },
+        "jitter_percent": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "retryable_classes": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "transient_network",
+              "rate_limited",
+              "timeout",
+              "non_retryable_policy_violation",
+              "fatal_validation"
+            ]
+          },
+          "uniqueItems": true,
+          "maxItems": 5
+        },
+        "checkpoint_before_execution": {
+          "type": "boolean"
+        },
+        "idempotency_key_template": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          ]
+        }
+      },
+      "required": [
+        "max_retries",
+        "base_backoff_ms",
+        "max_backoff_ms",
+        "jitter_percent",
+        "retryable_classes",
+        "checkpoint_before_execution",
+        "idempotency_key_template"
+      ]
+    },
+    "DagNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "node_type": {
+          "$ref": "#/$defs/NodeType"
+        },
+        "contract_version": {
+          "const": "1.0"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TypedPort"
+          },
+          "maxItems": 64
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TypedPort"
+          },
+          "maxItems": 64
+        },
+        "config": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "maxProperties": 64
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "llm.invoke",
+              "memory.read",
+              "memory.write",
+              "tool.http.egress",
+              "tool.fs.workspace_read",
+              "tool.fs.workspace_write",
+              "side_effect.external",
+              "subagent.delegate",
+              "human.approval.request"
+            ]
+          },
+          "uniqueItems": true,
+          "maxItems": 9
+        },
+        "resource_budget": {
+          "$ref": "#/$defs/ResourceBudget"
+        },
+        "error_policy": {
+          "$ref": "#/$defs/ErrorPolicy"
+        },
+        "ui_position": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2,
+              "items": false
+            }
+          ]
+        }
+      },
+      "required": [
+        "node_id",
+        "label",
+        "node_type",
+        "contract_version",
+        "inputs",
+        "outputs",
+        "config",
+        "capabilities",
+        "resource_budget",
+        "error_policy",
+        "ui_position"
+      ]
+    },
+    "DagEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "edge_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "source_node": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "source_port": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "target_node": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "target_port": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "data_type": {
+          "$ref": "#/$defs/DataType"
+        },
+        "cardinality": {
+          "type": "string",
+          "enum": [
+            "required-single",
+            "optional-single",
+            "many"
+          ]
+        },
+        "is_bounded_backedge": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "edge_id",
+        "source_node",
+        "source_port",
+        "target_node",
+        "target_port",
+        "data_type",
+        "cardinality",
+        "is_bounded_backedge"
+      ]
+    },
+    "TypedDagGraph": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "graph_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "profile": {
+          "enum": [
+            "state_graph",
+            "supervisor_worker",
+            "dag_workflow"
+          ]
+        },
+        "nodes": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/DagNode"
+          },
+          "maxProperties": 500
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DagEdge"
+          },
+          "maxItems": 2000
+        }
+      },
+      "required": [
+        "graph_id",
+        "profile",
+        "nodes",
+        "edges"
+      ]
+    },
+    "AgentDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "entry_graph_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "global_budget": {
+          "$ref": "#/$defs/ResourceBudget"
+        }
+      },
+      "required": [
+        "agent_id",
+        "name",
+        "entry_graph_id",
+        "global_budget"
+      ]
+    },
+    "ToolRegistration": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tool_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "contract_version": {
+          "const": "1.0"
+        },
+        "argv_schema": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "maxItems": 64
+        },
+        "required_capability": {
+          "enum": [
+            "llm.invoke",
+            "memory.read",
+            "memory.write",
+            "tool.http.egress",
+            "tool.fs.workspace_read",
+            "tool.fs.workspace_write",
+            "side_effect.external",
+            "subagent.delegate",
+            "human.approval.request"
+          ]
+        }
+      },
+      "required": [
+        "tool_id",
+        "contract_version",
+        "argv_schema",
+        "required_capability"
+      ]
+    },
+    "SecretReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "secret_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "key_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "secret_id",
+        "provider",
+        "key_path"
+      ]
+    }
+  }
+}

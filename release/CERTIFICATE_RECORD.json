@@ -1,0 +1,108 @@
+{
+  "certificate_schema_version": "1.0.0",
+  "product_matrix_id": "GATE-10-BASE-SUITE",
+  "specification_baseline": "OCAF Agents Builder v1.0 (2026-11-15)",
+  "pinned_git_commit_sha": null,
+  "verification_lifecycle_stages": {
+    "zaimplementowane": false,
+    "przetestowane_lokalnie": false,
+    "zweryfikowane_integracyjnie": false,
+    "wdrozone": false,
+    "potwierdzone_produkcyjnie": false
+  },
+  "overall_gate_status": "NIEPOTWIERDZONE",
+  "production_approved": false,
+  "reason_for_unconfirmed_status": "Brak 10 fizycznych artefaktów binarnych i zweryfikowanych dowodów E2E powiązanych z docelowym SHA. Lokalne testy weryfikatora nie zastępują GATE-10.",
+  "target_records": [
+    {
+      "product_id": "cloud-code",
+      "platform": "cloud",
+      "mode": "code",
+      "binary_sha256": null,
+      "gui_e2e_log_sha256": null,
+      "signature_verified": false,
+      "status": "NIEPOTWIERDZONE"
+    },
+    {
+      "product_id": "cloud-nocode",
+      "platform": "cloud",
+      "mode": "nocode",
+      "binary_sha256": null,
+      "gui_e2e_log_sha256": null,
+      "signature_verified": false,
+      "status": "NIEPOTWIERDZONE"
+    },
+    {
+      "product_id": "windows-code",
+      "platform": "windows",
+      "mode": "code",
+      "binary_sha256": null,
+      "gui_e2e_log_sha256": null,
+      "signature_verified": false,
+      "status": "NIEPOTWIERDZONE"
+    },
+    {
+      "product_id": "windows-nocode",
+      "platform": "windows",
+      "mode": "nocode",
+      "binary_sha256": null,
+      "gui_e2e_log_sha256": null,
+      "signature_verified": false,
+      "status": "NIEPOTWIERDZONE"
+    },
+    {
+      "product_id": "macos-code",
+      "platform": "macos",
+      "mode": "code",
+      "binary_sha256": null,
+      "gui_e2e_log_sha256": null,
+      "signature_verified": false,
+      "status": "NIEPOTWIERDZONE"
+    },
+    {
+      "product_id": "macos-nocode",
+      "platform": "macos",
+      "mode": "nocode",
+      "binary_sha256": null,
+      "gui_e2e_log_sha256": null,
+      "signature_verified": false,
+      "status": "NIEPOTWIERDZONE"
+    },
+    {
+      "product_id": "android-code",
+      "platform": "android",
+      "mode": "code",
+      "binary_sha256": null,
+      "gui_e2e_log_sha256": null,
+      "signature_verified": false,
+      "status": "NIEPOTWIERDZONE"
+    },
+    {
+      "product_id": "android-nocode",
+      "platform": "android",
+      "mode": "nocode",
+      "binary_sha256": null,
+      "gui_e2e_log_sha256": null,
+      "signature_verified": false,
+      "status": "NIEPOTWIERDZONE"
+    },
+    {
+      "product_id": "ios-code",
+      "platform": "ios",
+      "mode": "code",
+      "binary_sha256": null,
+      "gui_e2e_log_sha256": null,
+      "signature_verified": false,
+      "status": "NIEPOTWIERDZONE"
+    },
+    {
+      "product_id": "ios-nocode",
+      "platform": "ios",
+      "mode": "nocode",
+      "binary_sha256": null,
+      "gui_e2e_log_sha256": null,
+      "signature_verified": false,
+      "status": "NIEPOTWIERDZONE"
+    }
+  ]
+}
