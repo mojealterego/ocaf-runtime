@@ -135,3 +135,5 @@ pub mod trs_digital_life_durable;
 pub mod trs_dtn_sqlite;
 
 pub mod procurement_scout;
+
+pub mod evidence_gate;
