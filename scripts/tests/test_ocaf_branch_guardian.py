@@ -2,11 +2,11 @@
 import hashlib
 import json
 import os
+from unittest.mock import patch
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
-from unittest.mock import patch
 
 from scripts.ocaf_branch_guardian import evaluate
 
