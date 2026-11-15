@@ -4,6 +4,7 @@
  * must bind OAuth access tokens to AuthenticatedSubject on the server.
  */
 import {decodeDsl} from './editor.mjs';
+import {parseUniqueJson} from './strict-json.mjs';
 const IDENTIFIER = /^[A-Za-z0-9_.-]{1,64}$/;
 const SHA256 = /^[0-9a-f]{64}$/;
 const MAX_RESPONSE = 128 * 1024;
@@ -74,7 +75,7 @@ export class CloudWorkspaceClient {
       if (Number(response.headers.get('Content-Length')) > MAX_RESPONSE) throw new Error('limit: oversized cloud response');
       const source = await response.text();
       if (new TextEncoder().encode(source).length > MAX_RESPONSE) throw new Error('limit: oversized cloud response');
-      return JSON.parse(source);
+      return parseUniqueJson(source);
     } finally {
       clearTimeout(timer);
     }

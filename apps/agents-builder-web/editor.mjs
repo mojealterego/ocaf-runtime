@@ -4,6 +4,7 @@
  * authorization boundary. Cloud admission MUST call Rust compile() using a
  * server-authenticated tenant. No tool execution or publishing is exposed.
  */
+import {parseUniqueJson} from './strict-json.mjs';
 const SCHEMA = 1;
 const MAX_BYTES = 128 * 1024;
 const MAX_NODES = 64;
@@ -167,7 +168,7 @@ export function decodeDsl(source, trustedTenant) {
   if (typeof source !== 'string') fault('schema: DSL must be text');
   if (byteLength(source) > MAX_BYTES) fault('limit: DSL exceeds 128 KiB');
   let parsed;
-  try { parsed = JSON.parse(source); } catch { fault('json: invalid or unsupported Code DSL'); }
+  try { parsed = parseUniqueJson(source); } catch { fault('json: invalid or unsupported Code DSL'); }
   const result = canonicalProject(parsed, trustedTenant);
   if (byteLength(JSON.stringify(result)) > MAX_BYTES) fault('limit: project exceeds 128 KiB');
   return result;
@@ -268,7 +269,7 @@ const readRecord = (storage, tenant, projectId) => {
   if (raw === null) return null;
   if (typeof raw !== 'string' || byteLength(raw) > MAX_BYTES * MAX_HISTORY) fault('limit: offline history');
   let record;
-  try { record = JSON.parse(raw); } catch { fault('schema: corrupt offline history'); }
+  try { record = parseUniqueJson(raw, {maxBytes: MAX_BYTES * MAX_HISTORY}); } catch { fault('schema: corrupt offline history'); }
   if (!record || !Array.isArray(record.history) || record.history.length === 0 || record.history.length > MAX_HISTORY) fault('schema: offline history');
   let last = 0;
   for (const snapshot of record.history) {

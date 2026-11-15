@@ -1,5 +1,11 @@
 # OCAF Agents Builder — shared Code/NoCode UI (stages 0.51–0.52 partial)
 
+## Code/NoCode JSON ambiguity hardening (2026-11-15)
+
+The browser editor rejects duplicate JSON object keys (including Unicode-escaped aliases) before converting Code DSL, reading local revision history or accepting Cloud JSON receipts. Rust typed contract parsers may reject duplicates while native JavaScript JSON.parse silently keeps the last key; ambiguous projects must not be admitted.
+The strict-json.mjs parser preserves the 128 KiB Code DSL and Cloud response bound, permits the existing separately capped 4 MiB offline history, and imposes 64-level nesting. It is included in the service worker v5 asset cache. Thirteen focused Node unit regressions passed locally; full browser and native runtime acceptance remain unverified.
+
+
 This is a working, dependency-free **offline web editor**, not a cloud service
 or native Windows/macOS/Android/iOS application. It edits the restricted JSON
 typed DAG DSL from Rust src/builder_core.rs. Code and NoCode are two views

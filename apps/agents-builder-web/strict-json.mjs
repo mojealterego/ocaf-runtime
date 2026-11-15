@@ -1,0 +1,88 @@
+/**
+ * OCAF Agents Builder (REQ-024, REQ-042): unambiguous bounded JSON input.
+ *
+ * JavaScript JSON.parse() uses last-key-wins, but Rust/typed contract parsers
+ * may reject repeated object keys. Duplicate properties (including Unicode
+ * escaped aliases) are rejected before admitting Code DSL or cloud receipts.
+ * This does not grant rights, validate DAG semantics or execute agent tools.
+ */
+const MAX_SOURCE_BYTES = 128 * 1024;
+const MAX_NESTING_DEPTH = 64;
+const WHITESPACE = new Set([' ', '\t', '\r', '\n']);
+
+/**
+ * Parse RFC 8259 JSON and reject duplicate keys in every nested object.
+ * Returns exactly the JSON.parse value for accepted inputs.
+ */
+export function parseUniqueJson(source, {maxBytes = MAX_SOURCE_BYTES} = {}) {
+  if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > MAX_SOURCE_BYTES * 32) {
+    throw new Error('json: invalid size limit');
+  }
+  if (typeof source !== 'string') throw new Error('json: expected text');
+  if (new TextEncoder().encode(source).length > maxBytes) {
+    throw new Error('json: input size limit exceeded');
+  }
+  let parsed;
+  try { parsed = JSON.parse(source); }
+  catch { throw new Error('json: invalid syntax'); }
+
+  let index = 0;
+  const whitespace = () => {
+    while (index < source.length && WHITESPACE.has(source[index])) index += 1;
+  };
+  const stringToken = () => {
+    if (source[index] !== '"') throw new Error('json: invalid object key');
+    const start = index++;
+    while (index < source.length) {
+      const char = source[index++];
+      if (char === '\\') { index += 1; continue; } // JSON.parse checked escape syntax
+      if (char === '"') return JSON.parse(source.slice(start, index));
+    }
+    throw new Error('json: unterminated string');
+  };
+  const value = depth => {
+    if (depth > MAX_NESTING_DEPTH) throw new Error('json: nesting depth limit exceeded');
+    whitespace();
+    if (source[index] === '"') { stringToken(); return; }
+    if (source[index] === '{') {
+      index += 1;
+      whitespace();
+      const seen = new Set();
+      if (source[index] === '}') { index += 1; return; }
+      for (;;) {
+        const key = stringToken();
+        if (seen.has(key)) throw new Error('json: duplicate object key');
+        seen.add(key);
+        whitespace();
+        if (source[index] !== ':') throw new Error('json: expected colon');
+        index += 1;
+        value(depth + 1);
+        whitespace();
+        const next = source[index++];
+        if (next === '}') return;
+        if (next !== ',') throw new Error('json: expected separator');
+        whitespace();
+      }
+    }
+    if (source[index] === '[') {
+      index += 1;
+      whitespace();
+      if (source[index] === ']') { index += 1; return; }
+      for (;;) {
+        value(depth + 1);
+        whitespace();
+        const next = source[index++];
+        if (next === ']') return;
+        if (next !== ',') throw new Error('json: expected separator');
+      }
+    }
+    // JSON.parse() has already verified all primitive syntax and delimiters.
+    while (index < source.length &&
+           !WHITESPACE.has(source[index]) &&
+           ![',', ']', '}'].includes(source[index])) index += 1;
+  };
+  value(0);
+  whitespace();
+  if (index !== source.length) throw new Error('json: unexpected data after value');
+  return parsed;
+}
