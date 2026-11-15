@@ -181,7 +181,7 @@ impl EvidenceReceipt {
 
     /// Stable, length-delimited, domain-separated transcript. All status and
     /// assurance-specific fields are bound into the signature.
-    fn signing_bytes(&self) -> Vec<u8> {
+    pub fn signing_bytes(&self) -> Vec<u8> {
         let mut bytes = DOMAIN.to_vec();
         for value in [
             self.stage_id.as_bytes(),
