@@ -262,11 +262,13 @@
       "status": "EXISTING_PARTIAL",
       "implementation_paths": [
         "scripts/ocaf_benchmark_harness.py",
-        "scripts/engineering_simulation_gate.py"
+        "scripts/engineering_simulation_gate.py",
+        "scripts/ocaf_hybrid_benchmark.py"
       ],
       "remaining_gaps": [
-        "Only a bounded opt-in Python SHA-256 microbenchmark is implemented. Hardware environment is system-reported but unattested. Warm/cold cache condition is not independently verified. Real Rust hot-path, p95 SLIs, CI results and full OCAF end-to-end benchmarks remain unverified.",
-        "Registered engineering evidence gate executes the bounded Python benchmark harness tests on clean SHA-pinned main. Real Rust hot-path benchmarks, p95 SLOs, hardware/CI and integration acceptance remain unverified."
+        "Bounded SHA-256 Python microbenchmark and reproducible local BM25+cosine-RRF reference workload are implemented and measured with real perf_counter_ns, deterministic seed, SHA-256 corpus, labeled top-1 checks and nearest-rank p50/p95/p99. Neither workload executes native Rust.",
+        "Hardware and cache conditions are system-reported, not independently attested; cold profile does not reset actual caches. Real Rust hot-path, live provider latency, p95 SLO, cost model and multi-host E2E acceptance remain UNVERIFIED.",
+        "Engineering simulation gate SOURCE-2.05 now runs both sets of Python unit tests and pins their source/test digests on clean Git main. Local synthetic fixture PASS is not full GitHub checkout CI, release or production acceptance."
       ]
     },
     {

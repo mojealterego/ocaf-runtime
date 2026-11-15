@@ -28,9 +28,13 @@ SUITES = {
         'tests': ('test_ocaf_hybrid_reference.py',),
     },
     'SOURCE-2.05': {
-        'scope': 'bounded_python_microbenchmark_harness',
-        'paths': ('scripts/ocaf_benchmark_harness.py',),
-        'tests': ('test_ocaf_benchmark_harness.py',),
+        'scope': 'bounded_python_sha256_and_hybrid_reference_benchmarks',
+        'paths': (
+            'scripts/ocaf_benchmark_harness.py',
+            'scripts/ocaf_hybrid_reference.py',
+            'scripts/ocaf_hybrid_benchmark.py',
+        ),
+        'tests': ('test_ocaf_benchmark_harness.py', 'test_ocaf_hybrid_benchmark.py'),
     },
     'SOURCE-2.06': {
         'scope': 'local_git_reference_preservation_guardian',

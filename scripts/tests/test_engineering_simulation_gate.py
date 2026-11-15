@@ -64,6 +64,23 @@ class EngineeringSimulationGateTests(unittest.TestCase):
         with self.assertRaisesRegex(GateError, 'uncommitted'):
             evaluate(self.repo, self.sha, 'SOURCE-1.65')
 
+    def test_both_benchmark_suites_execute_under_pinned_git_main(self):
+        import shutil
+        source = Path(__file__).resolve().parents[1]
+        for name in ('ocaf_benchmark_harness.py', 'ocaf_hybrid_reference.py',
+                     'ocaf_hybrid_benchmark.py'):
+            shutil.copy2(source / name, self.repo / 'scripts' / name)
+        for name in ('test_ocaf_benchmark_harness.py', 'test_ocaf_hybrid_benchmark.py'):
+            shutil.copy2(Path(__file__).resolve().parent / name,
+                         self.repo / 'scripts/tests' / name)
+        self.commit()
+        receipt = evaluate(self.repo, self.sha, 'SOURCE-2.05')
+        self.assertEqual(receipt['scope'], 'bounded_python_sha256_and_hybrid_reference_benchmarks')
+        self.assertEqual(receipt['test_count'], 18)
+        self.assertEqual(len(receipt['suite_results']), 2)
+        self.assertFalse(receipt['production_approved'])
+        self.assertFalse(receipt['full_stage_accepted'])
+
     def test_pinned_clean_main_executes_both_real_suites(self):
         report = evaluate(self.repo, self.sha, 'SOURCE-2.06')
         self.assertEqual(report['status'], 'SCOPED_ENGINEERING_SIMULATION_PASS')
