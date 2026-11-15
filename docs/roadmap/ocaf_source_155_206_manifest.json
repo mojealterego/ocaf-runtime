@@ -256,10 +256,12 @@
       "canonical_title": "Agent-Zero and Bonfire self-programming research sandbox",
       "status": "EXISTING_PARTIAL",
       "implementation_paths": [
-        "scripts/ocaf_benchmark_harness.py"
+        "scripts/ocaf_benchmark_harness.py",
+        "scripts/engineering_simulation_gate.py"
       ],
       "remaining_gaps": [
-        "Only a bounded opt-in Python SHA-256 microbenchmark is implemented. Hardware environment is system-reported but unattested. Warm/cold cache condition is not independently verified. Real Rust hot-path, p95 SLIs, CI results and full OCAF end-to-end benchmarks remain unverified."
+        "Only a bounded opt-in Python SHA-256 microbenchmark is implemented. Hardware environment is system-reported but unattested. Warm/cold cache condition is not independently verified. Real Rust hot-path, p95 SLIs, CI results and full OCAF end-to-end benchmarks remain unverified.",
+        "Registered engineering evidence gate executes the bounded Python benchmark harness tests on clean SHA-pinned main. Real Rust hot-path benchmarks, p95 SLOs, hardware/CI and integration acceptance remain unverified."
       ]
     },
     {
@@ -270,12 +272,14 @@
       "status": "EXISTING_PARTIAL",
       "implementation_paths": [
         "scripts/release_readiness.py",
-        "scripts/ocaf_branch_guardian.py"
+        "scripts/ocaf_branch_guardian.py",
+        "scripts/engineering_simulation_gate.py"
       ],
       "remaining_gaps": [
         "An operator-pinned local-Git ref-preservation preflight is implemented; it is not a GitHub remote/protection check, workflow permission audit, release action or deploy tool.",
         "Independent trusted baseline provenance is mandatory; a SHA-256 pin derived from the same source cannot prove historical preservation.",
-        "No remote historical-ref baseline or signed CI run evidence has been provided; full native Rust and multi-host E2E acceptance remain open."
+        "No remote historical-ref baseline or signed CI run evidence has been provided; full native Rust and multi-host E2E acceptance remain open.",
+        "Registered engineering evidence gate executes 24 local Git guardian tests in a pinned clean checkout. Its scope excludes remote refs, GitHub protections, final releases, deployment and Rust/multi-host integration."
       ]
     }
   ]
