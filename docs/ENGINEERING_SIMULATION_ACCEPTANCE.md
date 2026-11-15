@@ -36,3 +36,7 @@ Przykład:
     python3 scripts/engineering_simulation_gate.py --repo . --head-sha "$(git rev-parse HEAD)" --requirement SOURCE-2.06
 
 Wynik `SCOPED_ENGINEERING_SIMULATION_PASS` oznacza wyłącznie sprawdzone przypadki. Rozszerzaj allowlistę dopiero po implementacji modułów i testów.
+
+## 6. Ochrona przed niezgodnością Git index / working tree
+
+`git status --porcelain` samo w sobie **nie stanowi dowodu**, że uruchamiany kod odpowiada wskazanemu commitowi. Flagi indeksu `assume-unchanged` i `skip-worktree` mogą ukrywać modyfikacje plików przed standardowym statusem Git. `engineering_simulation_gate.py` musi przed i po wykonaniu testów porównać **rzeczywiste bajty** każdego zarejestrowanego źródła i testu z obiektem `HEAD:<ścieżka>`, używając `git hash-object --stdin --no-filters` na tych samych odczytanych bajtach i `git rev-parse --verify HEAD:<ścieżka>`. Niezgodność, brak obiektu lub niedostępność Git to `ENGINEERING_GATE_NO_GO`; nie wolno wtedy wystawić dowodu pozytywnego. To zabezpieczenie przed lokalną podmianą zarejestrowanych plików — nie zastępuje niezależnego potwierdzenia źródła bazowego, kontroli uprawnień GitHub ani podpisania artefaktu wydania.

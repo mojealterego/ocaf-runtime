@@ -75,6 +75,34 @@ def _trusted_file(repo: Path, relative: str) -> bytes:
         raise GateError(f'unreadable source: {relative}') from exc
 
 
+def _pinned_file(repo: Path, relative: str) -> bytes:
+    """Bind exact executed bytes to HEAD, ignoring index skip-worktree flags.
+
+    Git status is insufficient: assume-unchanged and skip-worktree can conceal
+    modified tracked files. Compute the actual Git blob ID from the bytes we
+    inspect rather than from the mutable index or re-reading a raced path.
+    """
+    raw = _trusted_file(repo, relative)
+    recorded = _git(repo, 'rev-parse', '--verify', f'HEAD:{relative}')
+    if not OID.fullmatch(recorded):
+        raise GateError(f'committed git blob unavailable: {relative}')
+    env = {k: v for k, v in os.environ.items() if not k.startswith('GIT_')}
+    env['GIT_NO_REPLACE_OBJECTS'] = '1'
+    try:
+        result = subprocess.run(
+            ['git', '-C', str(repo), 'hash-object', '--stdin', '--no-filters'],
+            input=raw, capture_output=True, timeout=10, check=False, env=env,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise GateError(f'cannot hash local git blob: {relative}') from exc
+    observed = result.stdout.decode('ascii', errors='replace').strip()
+    if result.returncode != 0 or not OID.fullmatch(observed):
+        raise GateError(f'cannot hash local git blob: {relative}')
+    if recorded != observed:
+        raise GateError(f'committed git blob mismatch: {relative}')
+    return raw
+
+
 def evaluate(repo: Path, expected_sha: str, requirement: str,
              timeout_seconds: int = 60) -> dict:
     """Execute actual allowlisted suites, pin git checkout and hash evidence."""
@@ -96,7 +124,7 @@ def evaluate(repo: Path, expected_sha: str, requirement: str,
     # Hash the complete set of source files before running any test code.
     fingerprints = {}
     for relative in spec['paths'] + tuple('scripts/tests/' + t for t in spec['tests']):
-        fingerprints[relative] = hashlib.sha256(_trusted_file(root, relative)).hexdigest()
+        fingerprints[relative] = hashlib.sha256(_pinned_file(root, relative)).hexdigest()
 
     results = []
     total = 0
@@ -130,7 +158,7 @@ def evaluate(repo: Path, expected_sha: str, requirement: str,
             or _git(root, 'status', '--porcelain', '--untracked-files=all')):
         raise GateError('checkout changed or no tests executed')
     for relative, digest in fingerprints.items():
-        if hashlib.sha256(_trusted_file(root, relative)).hexdigest() != digest:
+        if hashlib.sha256(_pinned_file(root, relative)).hexdigest() != digest:
             raise GateError('source changed during tests')
     return {
         'schema_version': 1,

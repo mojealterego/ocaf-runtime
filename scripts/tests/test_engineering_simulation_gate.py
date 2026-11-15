@@ -158,6 +158,23 @@ class EngineeringSimulationGateTests(unittest.TestCase):
         with self.assertRaisesRegex(GateError, 'checkout changed'):
             evaluate(self.repo, self.sha, 'SOURCE-2.06')
 
+    def test_assume_unchanged_forged_source_denied(self):
+        self.git('update-index', '--assume-unchanged', 'scripts/ocaf_branch_guardian.py')
+        (self.repo / 'scripts/ocaf_branch_guardian.py').write_text('MARKER = 999\n')
+        self.assertEqual(self.git('status', '--porcelain', '--untracked-files=all'), '')
+        with self.assertRaisesRegex(GateError, 'blob mismatch'):
+            evaluate(self.repo, self.sha, 'SOURCE-2.06')
+
+    def test_skip_worktree_forged_test_denied(self):
+        self.git('update-index', '--skip-worktree', 'scripts/tests/test_ocaf_branch_guardian.py')
+        (self.repo / 'scripts/tests/test_ocaf_branch_guardian.py').write_text(
+            'import unittest\nclass Trojan(unittest.TestCase):\n'
+            '    def test_fake(self):\n        self.assertTrue(True)\n'
+        )
+        self.assertEqual(self.git('status', '--porcelain', '--untracked-files=all'), '')
+        with self.assertRaisesRegex(GateError, 'blob mismatch'):
+            evaluate(self.repo, self.sha, 'SOURCE-2.06')
+
     def test_branch_not_main_rejected(self):
         self.git('checkout', '-q', '-b', 'other')
         with self.assertRaisesRegex(GateError, 'mismatch'):
