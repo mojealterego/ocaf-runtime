@@ -6,10 +6,10 @@
 
 ### Wdrożone w tym przyroście
 
-- `crates/ocaf-transport-crdt/src/crdt.rs`: izolacja per tenant, ograniczone rozmiary, unikalność dot (actor,counter), zegary wektorowe, operacje usunięcia (tombstone), zachowanie historii przyczynowej, deterministyczne rozstrzyganie współbieżnych maksymów, atomowe scalanie i 12 testów źródłowych Rust.
+- `crates/ocaf-transport-crdt/src/crdt.rs`: izolacja per tenant, ograniczone rozmiary, unikalność dot (actor,counter), zegary wektorowe, operacje usunięcia (tombstone), zachowanie historii przyczynowej, deterministyczne rozstrzyganie współbieżnych maksymów, atomowe scalanie, walidacja tranzytywności kontekstu przyczynowego i 14 testów źródłowych Rust.
 - `src/evidence_gate.rs`: weryfikacja Ed25519 z wykorzystaniem już istniejącej zależności OpenSSL, podpisywany transkrypt z separacją domeny i prefiksami długości, oddzielne klucze publiczne dla czterech poziomów, walidacja struktury dowodów, domyślna odmowa awansu CI/DEVICE/PRODUCTION bez zewnętrznego weryfikatora i 6 testów źródłowych Rust.
 - `src/stage_evidence_bridge.rs`: dodatkowy adapter `VerifiedStageLedger`, który odrzuca import etapów z samodzielnie zadeklarowanym `CompleteVerified`, wiąże identyfikator etapu, commit, digest artefaktu i komendę testu z podpisanym kwitem `TESTED_LOCAL`, a następnie dopiero wywołuje `StageLedger::complete`; 5 testów źródłowych Rust. Nie jest jeszcze obowiązkową ścieżką całego runtime.
-- `scripts/tests/test_crdt_reference.py`: deterministyczny **niezależny model referencyjny Python**, 4 testy wykonane lokalnie, 1000 ziaren, 3000 porównań replik PASS. SHA-256 zbioru wyników: `e3a6e0ff8c11c4445d79c3ffad721c4f7190fc80d4ec68fb5352035db9e90b39`.
+- `scripts/tests/test_crdt_reference.py`: deterministyczny **niezależny model referencyjny Python**, 6 testów wykonanych lokalnie, 1000 ziaren, 3000 porównań replik PASS. SHA-256 zbioru wyników: `e3a6e0ff8c11c4445d79c3ffad721c4f7190fc80d4ec68fb5352035db9e90b39`.
 - `docs/evidence/OCAF_EVIDENCE_ED25519_VECTOR_2026-11-15.json`: niezależny wektor Ed25519 wygenerowany i zweryfikowany biblioteką Python cryptography; test Rust weryfikuje podpis i dokładne bajty transkryptu **dopiero po uruchomieniu cargo**.
 - Python cryptography: 1000 deterministycznych mutacji podpisanego komunikatu odrzuconych; 4 lokalne testy modelu PASS. Nie jest to uruchomienie Rust.
 
