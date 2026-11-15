@@ -1,0 +1,17 @@
+{
+  "source": "independent Python cryptography Ed25519 reference model; NOT Rust execution",
+  "stage_id": "320",
+  "status": "TESTED_LOCAL",
+  "source_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "artifact_sha256": "0101010101010101010101010101010101010101010101010101010101010101",
+  "test_vector_sha256": "0202020202020202020202020202020202020202020202020202020202020202",
+  "deterministic_seed": 42,
+  "passed_assertions": 7,
+  "test_command": "cargo test --locked",
+  "log_sha256": "0303030303030303030303030303030303030303030303030303030303030303",
+  "public_key_ed25519": "03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8",
+  "transcript_sha256": "2c29e3d404f0c748692072a42c02c7d8a4ec58e4a72dae4c1314ccec5ca2cebf",
+  "signature_ed25519": "64134d7db962f2d57c36246857c78f8227dbeba24a815bc124863f8a1ad28391656d5259435bf3ad7d8c4f225eaefed0ad5253a8c3ed1a5e01f26ec39803560a",
+  "transcript_bytes": 289,
+  "verified_with_python_cryptography": true
+}
