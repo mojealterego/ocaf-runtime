@@ -95,7 +95,8 @@
         "src/retrieval_quality.rs"
       ],
       "remaining_gaps": [
-        "No trusted Moss vector adapter nor verified retrieval benchmark corpus on this commit."
+        "No trusted Moss vector adapter nor verified retrieval benchmark corpus on this commit.",
+        "Mutable tenant-scoped BM25 supports atomic copy-on-write upsert/remove and stale-posting invalidation with Rust regression tests committed; native Rust compilation/CI not verified. Trusted Moss vector provenance, durable indexing and hybrid ranking remain open."
       ]
     },
     {

@@ -20,6 +20,8 @@ pub enum RetrievalError {
     Duplicate,
     #[error("retrieval resource bound exceeded")]
     Limit,
+    #[error("stale mutable retrieval revision")]
+    Conflict,
 }
 
 fn valid_id(id: &str) -> bool {
@@ -187,6 +189,138 @@ impl LexicalIndex {
         });
         hits.truncate(limit);
         Ok(hits)
+    }
+}
+
+/// A bounded, copy-on-write mutable lexical index for one authenticated tenant.
+///
+/// Every update atomically replaces the full in-memory snapshot on success;
+/// rejected updates leave both the revision and postings unchanged. This
+/// prevents stale tokens after overwrite or deletion. No durable storage,
+/// cross-process synchronization, vector embedding, or external provider is
+/// implied. The tenant must be supplied by trusted ingress, never model text.
+pub struct MutableLexicalIndex {
+    tenant: String,
+    revision: u64,
+    bodies: BTreeMap<String, String>,
+    snapshot: LexicalIndex,
+}
+
+const MAX_MUTABLE_DOCUMENTS: usize = 256;
+const MAX_MUTABLE_TOTAL_BYTES: usize = 2 * 1024 * 1024;
+
+impl MutableLexicalIndex {
+    pub fn new(authenticated_tenant: &str) -> Result<Self, RetrievalError> {
+        if !valid_id(authenticated_tenant) {
+            return Err(RetrievalError::Invalid);
+        }
+        Ok(Self {
+            tenant: authenticated_tenant.to_owned(),
+            revision: 0,
+            bodies: BTreeMap::new(),
+            snapshot: LexicalIndex {
+                tenants: BTreeMap::new(),
+            },
+        })
+    }
+
+    pub fn revision(&self) -> u64 {
+        self.revision
+    }
+
+    fn ensure_tenant(&self, authenticated_tenant: &str) -> Result<(), RetrievalError> {
+        if !valid_id(authenticated_tenant) || authenticated_tenant != self.tenant {
+            return Err(RetrievalError::Invalid);
+        }
+        Ok(())
+    }
+
+    /// Search a stable snapshot. The caller must provide its authenticated
+    /// tenant; this is an authorization boundary, not a trusted identity parser.
+    pub fn search(
+        &self,
+        authenticated_tenant: &str,
+        query: &str,
+        limit: usize,
+    ) -> Result<Vec<SearchHit>, RetrievalError> {
+        self.ensure_tenant(authenticated_tenant)?;
+        self.snapshot.search(&self.tenant, query, limit)
+    }
+
+    /// Insert or replace exactly one document at the expected index revision.
+    /// The full snapshot is built before publication; no partial writes.
+    pub fn upsert(
+        &mut self,
+        authenticated_tenant: &str,
+        source_id: &str,
+        body: &str,
+        expected_revision: u64,
+    ) -> Result<u64, RetrievalError> {
+        self.ensure_tenant(authenticated_tenant)?;
+        if !valid_id(source_id) {
+            return Err(RetrievalError::Invalid);
+        }
+        if expected_revision != self.revision {
+            return Err(RetrievalError::Conflict);
+        }
+        if body.len() > MAX_BODY_BYTES {
+            return Err(RetrievalError::Limit);
+        }
+        let mut candidate = self.bodies.clone();
+        candidate.insert(source_id.to_owned(), body.to_owned());
+        self.publish(candidate)
+    }
+
+    /// Delete without leaving stale terms; a missing document is rejected.
+    pub fn remove(
+        &mut self,
+        authenticated_tenant: &str,
+        source_id: &str,
+        expected_revision: u64,
+    ) -> Result<u64, RetrievalError> {
+        self.ensure_tenant(authenticated_tenant)?;
+        if !valid_id(source_id) {
+            return Err(RetrievalError::Invalid);
+        }
+        if expected_revision != self.revision {
+            return Err(RetrievalError::Conflict);
+        }
+        if !self.bodies.contains_key(source_id) {
+            return Err(RetrievalError::Invalid);
+        }
+        let mut candidate = self.bodies.clone();
+        candidate.remove(source_id);
+        self.publish(candidate)
+    }
+
+    fn publish(&mut self, candidate: BTreeMap<String, String>) -> Result<u64, RetrievalError> {
+        if candidate.len() > MAX_MUTABLE_DOCUMENTS {
+            return Err(RetrievalError::Limit);
+        }
+        let mut total_bytes = 0usize;
+        for body in candidate.values() {
+            total_bytes = total_bytes
+                .checked_add(body.len())
+                .ok_or(RetrievalError::Limit)?;
+            if total_bytes > MAX_MUTABLE_TOTAL_BYTES {
+                return Err(RetrievalError::Limit);
+            }
+        }
+        let next_revision = self.revision.checked_add(1).ok_or(RetrievalError::Limit)?;
+        let next = LexicalIndex::build(
+            candidate
+                .iter()
+                .map(|(source_id, body)| SourceDocument {
+                    tenant: self.tenant.clone(),
+                    source_id: source_id.clone(),
+                    body: body.clone(),
+                })
+                .collect(),
+        )?;
+        self.snapshot = next;
+        self.bodies = candidate;
+        self.revision = next_revision;
+        Ok(next_revision)
     }
 }
 
@@ -423,5 +557,95 @@ mod tests {
             evaluate_quality(&[], 1),
             Err(RetrievalError::Invalid)
         ));
+    }
+
+    #[test]
+    fn mutable_index_overwrite_removes_stale_postings_atomically() {
+        let mut index = MutableLexicalIndex::new("tenant_a").unwrap();
+        assert_eq!(index.upsert("tenant_a", "doc", "stale secret", 0), Ok(1));
+        assert_eq!(index.search("tenant_a", "stale", 10).unwrap().len(), 1);
+        assert_eq!(index.upsert("tenant_a", "doc", "fresh verified", 1), Ok(2));
+        assert!(index.search("tenant_a", "stale", 10).unwrap().is_empty());
+        assert_eq!(index.search("tenant_a", "fresh", 10).unwrap()[0].source_id, "doc");
+        assert_eq!(index.revision(), 2);
+    }
+
+    #[test]
+    fn mutable_index_denies_cross_tenant_read_and_write() {
+        let mut index = MutableLexicalIndex::new("tenant_a").unwrap();
+        assert_eq!(
+            index.upsert("tenant_b", "secret", "hidden", 0),
+            Err(RetrievalError::Invalid)
+        );
+        assert_eq!(
+            index.search("tenant_b", "hidden", 1),
+            Err(RetrievalError::Invalid)
+        );
+        assert_eq!(index.revision(), 0);
+        assert!(index.search("tenant_a", "hidden", 1).unwrap().is_empty());
+    }
+
+    #[test]
+    fn mutable_index_rejected_write_preserves_revision_and_snapshot() {
+        let mut index = MutableLexicalIndex::new("tenant_a").unwrap();
+        assert_eq!(index.upsert("tenant_a", "doc", "unchanged", 0), Ok(1));
+        assert_eq!(
+            index.upsert("tenant_a", "doc", "stale", 0),
+            Err(RetrievalError::Conflict)
+        );
+        assert_eq!(
+            index.upsert("tenant_a", "doc", &"x".repeat(MAX_BODY_BYTES + 1), 1),
+            Err(RetrievalError::Limit)
+        );
+        assert_eq!(index.revision(), 1);
+        assert_eq!(
+            index.search("tenant_a", "unchanged", 1).unwrap()[0].source_id,
+            "doc"
+        );
+        assert!(index.search("tenant_a", "stale", 1).unwrap().is_empty());
+    }
+
+    #[test]
+    fn mutable_index_remove_fences_replay_and_forgets_all_terms() {
+        let mut index = MutableLexicalIndex::new("tenant_a").unwrap();
+        assert_eq!(index.upsert("tenant_a", "doc", "secret", 0), Ok(1));
+        assert_eq!(index.remove("tenant_a", "doc", 1), Ok(2));
+        assert!(index.search("tenant_a", "secret", 1).unwrap().is_empty());
+        assert_eq!(
+            index.remove("tenant_a", "doc", 2),
+            Err(RetrievalError::Invalid)
+        );
+        assert_eq!(
+            index.upsert("tenant_a", "doc", "replayed", 1),
+            Err(RetrievalError::Conflict)
+        );
+        assert_eq!(index.revision(), 2);
+    }
+
+    #[test]
+    fn mutable_index_resource_limit_is_transactional() {
+        let mut index = MutableLexicalIndex::new("tenant_a").unwrap();
+        for id in 0..MAX_MUTABLE_DOCUMENTS {
+            assert_eq!(
+                index.upsert(
+                    "tenant_a",
+                    &format!("doc_{id}"),
+                    "bounded",
+                    id as u64
+                ),
+                Ok((id + 1) as u64)
+            );
+        }
+        assert_eq!(
+            index.upsert(
+                "tenant_a",
+                "one_too_many",
+                "bounded",
+                MAX_MUTABLE_DOCUMENTS as u64
+            ),
+            Err(RetrievalError::Limit)
+        );
+        assert_eq!(index.revision(), MAX_MUTABLE_DOCUMENTS as u64);
+        assert_eq!(index.search("tenant_a", "bounded", 1).unwrap().len(), 1);
     }
 }
