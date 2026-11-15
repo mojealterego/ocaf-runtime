@@ -33,12 +33,15 @@ class SourceReconciliationTests(unittest.TestCase):
         (self.root / 'src').mkdir()
         (self.root / 'src/document_state.rs').write_text('// synthetic fixture', encoding='utf-8')
         self.inventory = {
+            'schema_version': 1, 'repository': 'mojealterego/ocaf-runtime',
+            'branch': 'main',
             'main_count': 334, 'technical_count': 64, 'production_approved': False,
             'main': (
                 [{'id': point, 'title': title} for point, title in zip(EXPECTED_POINTS, CANONICAL)]
                 + [{'id': f'fixture-{n}', 'title': f'Synthetic stage {n}'} for n in range(314)]
             ),
-            'technical': [{'id': f'test-technical-{n}'} for n in range(64)],
+            'technical': [{'id': f'test-technical-{n}', 'title': f'Technical {n}'}
+                          for n in range(64)],
         }
         self.manifest = {
             'schema_version': 1,

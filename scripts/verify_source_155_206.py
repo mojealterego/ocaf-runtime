@@ -107,6 +107,10 @@ def evaluate(repo: Path) -> dict[str, Any]:
         return report
     if (
         not isinstance(inventory, dict)
+        or type(inventory.get('schema_version')) is not int
+        or inventory['schema_version'] != 1
+        or inventory.get('repository') != 'mojealterego/ocaf-runtime'
+        or inventory.get('branch') != 'main'
         or type(inventory.get('main_count')) is not int
         or inventory['main_count'] != 334
         or type(inventory.get('technical_count')) is not int
@@ -120,18 +124,26 @@ def evaluate(repo: Path) -> dict[str, Any]:
         problems.append('canonical_inventory_invalid')
         return report
 
+    # Validate the entire canonical inventory, not only the 20 mapped main
+    # stages. Duplicate or malformed technical entries cannot be masked by
+    # an otherwise correct SOURCE crosswalk.
     canonical: dict[str, str] = {}
-    for stage in inventory['main']:
-        if not isinstance(stage, dict):
-            problems.append('canonical_inventory_invalid')
-            return report
-        stage_id = stage.get('id')
-        stage_title = stage.get('title')
-        if isinstance(stage_id, str) and isinstance(stage_title, str):
-            if stage_id in canonical:
+    for section in ('main', 'technical'):
+        seen_ids: set[str] = set()
+        for stage in inventory[section]:
+            if not isinstance(stage, dict):
                 problems.append('canonical_inventory_invalid')
                 return report
-            canonical[stage_id] = stage_title
+            stage_id = stage.get('id')
+            stage_title = stage.get('title')
+            if (not isinstance(stage_id, str) or not stage_id.strip()
+                    or not isinstance(stage_title, str) or not stage_title.strip()
+                    or stage_id in seen_ids):
+                problems.append('canonical_inventory_invalid')
+                return report
+            seen_ids.add(stage_id)
+            if section == 'main':
+                canonical[stage_id] = stage_title
 
     seen: set[str] = set()
     for item in manifest['items']:
