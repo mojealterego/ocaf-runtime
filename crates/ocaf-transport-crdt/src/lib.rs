@@ -1,10 +1,11 @@
-pub mod ricci_routing;
-
 //! Fail-closed operator-supplied Zenoh network configuration validation.
 //!
 //! This preflight blocks plaintext outside explicit loopback development and
 //! requires TLS-only protocol whitelisting and mTLS material. It does NOT
 //! replace Zenoh's actual certificate chain validation and TLS handshake.
+
+pub mod ricci_routing;
+pub mod crdt;
 
 use std::io::Read;
 use std::net::IpAddr;
