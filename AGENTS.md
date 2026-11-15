@@ -13,6 +13,10 @@
 4. Zachowuj **wszystkie historyczne etapy, podetapy, wymagania, zależności i numerację**. Przywracane wymaganie przypisz do pierwotnego etapu; nowe po ostatnim obowiązującym ID i tylko gdy jest rzeczywiście nowe. Nie skracaj ani nie podmieniaj roadmapy. W razie modyfikacji zakresu lub statusów synchronizuj obie roadmapy, manifesty v11, README, changelog i ślady audytowe.
 5. Nie nazywaj repozytorium ani floty „ukończonymi” na podstawie testów struktury, demonstracji, symulacji, listy narzędzi, deklaracji wersji lub marketingowych opisów. Traktuj wartości statusów z manifestów jako dane do weryfikacji, nie prawdę automatyczną.
 
+### 1a. Obowiązująca decyzja właściciela — odbiór inżynieryjny bez zewnętrznych audytów
+
+**ZATWIERDZONO 2026-11-15:** zewnętrzny audyt nie jest wymaganą bramką OCAF. Jeżeli architektura, laboratorium, wiele niezależnych hostów lub usługa zewnętrzna są niedostępne, realizuj wymaganie poprzez rzeczywisty kod i deterministyczne testy inżynieryjne, symulacyjne, negatywne, fault-injection i recovery. Właściciel zatwierdza **metodę odbioru**, nie wyniki niewykonanych testów ani nieudowodnione wdrożenia. Uznawaj `TESTED_ENGINEERING_SIMULATION` i `OPERATOR_ACCEPTED_SIMULATION` tylko z odtwarzalnym, sprawdzalnym śladem wykonania dla konkretnego zakresu. Nie wolno wymuszać zewnętrznego recenzenta, wydatków chmurowych ani hosta, którego brak, w celu ukończenia symulacyjnego kryterium. Nie wolno zastępować kompilacji kodu samą symulacją algorytmu i twierdzić, że kod natywny został skompilowany. Nie deklaruj `DEPLOYED` lub sprzętowej/produkcyjnej certyfikacji bez rzeczywistych dowodów. Pełny kontrakt: `docs/ENGINEERING_SIMULATION_ACCEPTANCE.md`.
+
 ### 2. Model pracy: autonomiczny, ograniczony, odtwarzalny
 
 **Pętla wykonywania jednego zadania:**
@@ -128,7 +132,7 @@ Dla zmian dotyczących PostgreSQL/Zenoh/mTLS/WASI/Firecracker/platform mobilnych
 
 **Minimalna tabela dowodu dla każdego zadania:** `requirement_id`, `scope`, `source_paths`, `commit_sha`, `test_command`, `run_id`, `runner_environment`, `result`, `artifacts/digests`, `failure_cases`, `limitations`, `reviewer`, `operator_approval` i `next_gap`. Brak danych = `UNVERIFIED`, nigdy domniemany `PASS`. W raporcie mów dokładnie, co zrobiono i czego jeszcze brakuje.
 
-**Statusy bez skrótów:** `PLANNED` → `IMPLEMENTED` → `TESTED` → `INTEGRATED` → `DEPLOYED` → `EXTERNALLY_AUDITED` → `OPERATOR_ACCEPTED` → `PRODUCTION_APPROVED`. Dopuszczaj `TESTED_SIMULATION` / `PRODUCTION_ACCEPTED_SIMULATION` tylko w granicach aktualnej jawnej polityki symulacyjnej; **nie zmieniaj nimi nieudowodnionej produkcji sprzętowej**. Statusy nadawaj per wymaganie, nie globalnie.
+**Statusy bez obowiązkowego audytu zewnętrznego (decyzja właściciela 2026-11-15):** `PLANNED` → `IMPLEMENTED` → `TESTED` / `TESTED_ENGINEERING_SIMULATION` → `INTEGRATED` / `INTEGRATED_SIMULATION` → `OPERATOR_ACCEPTED` / `OPERATOR_ACCEPTED_SIMULATION`. `DEPLOYED` i `PRODUCTION_APPROVED` wymagają osobnych dowodów rzeczywistego działania we wskazanym środowisku. **`EXTERNALLY_AUDITED` nie jest wymaganą bramką OCAF**. Audyt zewnętrzny pozostaje opcją albo obowiązkiem tylko wtedy, gdy wynika z niezależnego prawa/kontraktu regulacyjnego. Zapisz zakres dowodu, powtarzalność, SHA, testy i ograniczenia. Nie przypisuj rzeczywistych hostów, wdrożenia lub sprzętowej izolacji na podstawie symulatora. Statusy nadaj per wymaganie, nigdy globalnie. Szczegóły: `docs/ENGINEERING_SIMULATION_ACCEPTANCE.md`.
 
 ### 10. Podejmowanie decyzji i komunikacja
 
