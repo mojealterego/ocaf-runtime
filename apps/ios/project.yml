@@ -1,0 +1,25 @@
+name: OCAFAgentsBuilder
+options:
+  bundleIdPrefix: com.ocaf
+settings:
+  base:
+    SWIFT_VERSION: 5.9
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+targets:
+  OCAFAgentsBuilder:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Sources
+      - path: ../agents-builder-web
+        name: builder-web
+        type: folder
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ocaf.agentsbuilder
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        CODE_SIGN_STYLE: Automatic
