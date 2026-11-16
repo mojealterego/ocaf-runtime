@@ -73,12 +73,28 @@ struct BuilderWebView: UIViewRepresentable {
                   json.utf8.count < 150_000,
                   let raw = json.data(using: .utf8),
                   let payload = try? JSONSerialization.jsonObject(with: raw) as? [String: Any],
-                  payload["action"] as? String == "export",
                   let content = payload["content"] as? String,
                   let data = content.data(using: .utf8),
                   data.count <= 128 * 1024 else {
                 return
             }
+
+            if payload["action"] as? String == "validate" {
+                let receipt: [String: Any]
+                do {
+                    let result = try validateLocalJsonDsl(source: content)
+                    receipt = ["ok": true, "plan": result]
+                } catch {
+                    receipt = ["ok": false, "error": "Rust validation rejected"]
+                }
+                if let bytes = try? JSONSerialization.data(withJSONObject: receipt) {
+                    let base64 = bytes.base64EncodedString()
+                    let js = "window.dispatchEvent(new CustomEvent('ocaf-rust-validation',{detail:atob('" + base64 + "')}));"
+                    webView?.evaluateJavaScript(js, completionHandler: nil)
+                }
+                return
+            }
+            guard payload["action"] as? String == "export" else { return }
 
             let suppliedName = payload["filename"] as? String ?? "project.ocaf-builder.json"
             let safeName = String(suppliedName.prefix(100).map { character in
