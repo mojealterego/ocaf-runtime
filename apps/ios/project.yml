@@ -12,6 +12,7 @@ targets:
     deploymentTarget: "16.0"
     sources:
       - path: Sources
+      - path: Generated
       - path: ../agents-builder-web
         name: builder-web
         type: folder
@@ -23,3 +24,6 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         CODE_SIGN_STYLE: Automatic
+        HEADER_SEARCH_PATHS: "$(inherited) $(PROJECT_DIR)/Generated"
+        OTHER_SWIFT_FLAGS: "$(inherited) -Xcc -fmodule-map-file=$(PROJECT_DIR)/Generated/ocaf_builder_mobile_ffiFFI.modulemap"
+        OTHER_LDFLAGS: "$(inherited) -force_load $(PROJECT_DIR)/NativeLibraries/$(PLATFORM_NAME)/libocaf_builder_mobile_ffi.a"

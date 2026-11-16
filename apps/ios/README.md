@@ -1,20 +1,26 @@
-# OCAF Agents Builder iOS — Code + NoCode
+# OCAF Agents Builder iOS — native Code + NoCode + shared Rust UniFFI
 
-SwiftUI native application with WKWebView embedding the existing canonical
-offline JSON typed-DAG editor in `apps/agents-builder-web`. XcodeGen adds
-that directory as a bundle folder named `builder-web`. A local-file-only
-navigation delegate blocks external navigation. Native JSON export opens
-the standard iOS share/save sheet; input JSON is size bounded and exported
-only following a user action in the shared editor.
+SwiftUI and WKWebView embed the existing typed-DAG Code/NoCode editor.
+Only local file navigation is allowed; signed Cloud OAuth sessions are not
+created by this native host. User-triggered JSON export opens the iOS share
+sheet, and local preview passes through the existing Rust `builder_core.rs`
+through generated UniFFI Swift bindings.
 
-Build on macOS with Xcode, XcodeGen and an Apple developer identity:
+## Native build on macOS
+
+Install Xcode, XcodeGen, Rust iOS targets and the UniFFI Cargo dependencies.
+From the repo root, **do not** generate Xcode project before bindings exist:
+
 ```sh
-cd apps/ios
-xcodegen generate
-xcodebuild -project OCAFAgentsBuilder.xcodeproj -scheme OCAFAgentsBuilder -sdk iphonesimulator build
+bash apps/ios/build.sh iphonesimulator
+bash apps/ios/build.sh iphoneos
 ```
-Then sign and install on a **physical** device and collect genuine GUI E2E.
 
-Limits: Rust UniFFI binding, Keychain, authenticated Cloud ingress, tested
-local ES module loading on WKWebView, physical build and full E2E remain
-UNVERIFIED. This is a native source application, not GATE-10 certification.
+`build.sh` runs Rust unit tests, generates Swift bindings from the host
+.dylib, compiles the static iOS target library, generates an Xcode project
+and invokes xcodebuild. On-device installation, developer signing and 10/10
+GUI E2E evidence are still required for acceptance.
+
+Status remains **NIEPOTWIERDZONE** unless all actual native build, install,
+import/export, Code/NoCode roundtrip and security evidence is collected.
+WKWebView ES module/localStorage behavior needs a real target test.
