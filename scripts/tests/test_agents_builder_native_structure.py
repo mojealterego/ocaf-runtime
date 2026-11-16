@@ -72,7 +72,7 @@ class NativeBuilderSourceContracts(unittest.TestCase):
         self.assertIn("ocaf-rust-validation", app)
         self.assertIn("encodeDsl(state.project, TENANT)", app)
         sw = source("apps/agents-builder-web/sw.js")
-        self.assertIn("ocaf-builder-web-v6", sw)
+        self.assertIn("ocaf-builder-web-v7", sw)
 
     def test_ten_products_remain_partial_and_never_claim_production(self):
         matrix = json.loads(source("docs/roadmap/agents_builder_products_v11.json"))
