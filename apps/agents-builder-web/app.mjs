@@ -246,6 +246,14 @@ function download() {
     notice('Przekazano eksport do natywnego okna zapisu. Zapis wymaga wyboru pliku.');
     return;
   }
+  // iOS WKScriptMessageHandler: share/save sheet with user confirmation.
+  if (window.webkit?.messageHandlers?.ocafHost) {
+    window.webkit.messageHandlers.ocafHost.postMessage(JSON.stringify({
+      action:'export', filename:currentId() + '.ocaf-builder.json', content:text
+    }));
+    notice('Przekazano eksport do systemowego okna udostępniania iOS.');
+    return;
+  }
   const blob = new Blob([text], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
