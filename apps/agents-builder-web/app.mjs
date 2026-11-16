@@ -254,12 +254,15 @@ async function preview() {
     'Declared cost: ' + plan.cost + ' / ' + state.project.max_cost_minor,
     'Project: ' + currentId() + ' r' + state.saved
   ].join('\n');
-  // Native Android host validates this SAME canonical JSON with the Rust core.
-  // A local UI dry run is not permission to execute effects.
+  // Both mobile shells validate the canonical offline project in the
+  // same Rust core, without granting execution or cloud authority.
+  const nativeMessage = JSON.stringify({
+    action:'validate', content:encodeDsl(state.project, TENANT)
+  });
   if (window.ocafHost && typeof window.ocafHost.postMessage === 'function') {
-    window.ocafHost.postMessage(JSON.stringify({
-      action:'validate', content:encodeDsl(state.project, TENANT)
-    }));
+    window.ocafHost.postMessage(nativeMessage);
+  } else if (window.webkit?.messageHandlers?.ocafHost) {
+    window.webkit.messageHandlers.ocafHost.postMessage(nativeMessage);
   }
   notice('Graph validated locally. No tools were executed.');
 }
