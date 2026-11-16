@@ -22,7 +22,7 @@ window.addEventListener('ocaf-rust-validation', event => {
     }
     if (state.workspace === 'local' && !state.dirty) {
       el('preview-output').textContent +=
-        '\\nRust UniFFI: inert plan verified; SHA-256: ' + plan.project_sha256;
+        '\nRust UniFFI: inert plan verified; SHA-256: ' + plan.project_sha256;
     }
   } catch (error) {
     fail(error);
