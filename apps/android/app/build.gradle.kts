@@ -51,7 +51,7 @@ val generateKotlinFfi by tasks.registering(Exec::class) {
     commandLine(
         "cargo", "run", "--release", "--features", "bindgen", "--bin", "uniffi-bindgen",
         "--manifest-path", ffiManifest.absolutePath, "--", "generate", "--library",
-        file("$"+"{ffiTarget.absolutePath}/release/$"+"{System.mapLibraryName(\"ocaf_builder_mobile_ffi\")}").absolutePath,
+        ffiTarget.resolve("release").resolve(System.mapLibraryName("ocaf_builder_mobile_ffi")).absolutePath,
         "--language", "kotlin", "--out-dir", kotlinBindings.absolutePath
     )
 }
