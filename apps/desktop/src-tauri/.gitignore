@@ -1,0 +1,4 @@
+target/
+gen/
+*.p12
+*.pfx

@@ -1,0 +1,9 @@
+.cargo-target/
+Generated/
+NativeLibraries/
+OCAFAgentsBuilder.xcodeproj/
+build/
+DerivedData/
+*.mobileprovision
+*.p12
+*.xcuserstate
