@@ -33,7 +33,7 @@ struct BuilderWebView: UIViewRepresentable {
         context.coordinator.webView = view
         view.backgroundColor = UIColor(red: 7.0/255.0, green: 8.0/255.0, blue: 10.0/255.0, alpha: 1.0)
         view.isOpaque = false
-        if let url = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "builder-web") {
+        if let url = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "agents-builder-web") {
             let dir = url.deletingLastPathComponent().standardizedFileURL
             context.coordinator.allowedDirectory = dir
             view.loadFileURL(url, allowingReadAccessTo: dir)

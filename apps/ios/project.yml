@@ -14,7 +14,7 @@ targets:
       - path: Sources
       - path: Generated
       - path: ../agents-builder-web
-        name: builder-web
+        name: agents-builder-web
         type: folder
         buildPhase: resources
     settings:
