@@ -237,6 +237,15 @@ function download() {
   if (state.dirty) throw new Error('unapplied Code DSL edits: apply or discard changes before export');
   if (!state.project) throw new Error('workspace: select a project');
   const text = encodeDsl(state.project, currentTenant());
+  // Android native WebMessageListener: explicit SAF CreateDocument picker.
+  // Browser and desktop keep their original standards-based download path.
+  if (window.ocafHost && typeof window.ocafHost.postMessage === 'function') {
+    window.ocafHost.postMessage(JSON.stringify({
+      action:'export', filename:currentId() + '.ocaf-builder.json', content:text
+    }));
+    notice('Przekazano eksport do natywnego okna zapisu. Zapis wymaga wyboru pliku.');
+    return;
+  }
   const blob = new Blob([text], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
