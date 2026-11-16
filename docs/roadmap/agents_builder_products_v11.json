@@ -30,28 +30,28 @@
       "parent": "0.50",
       "scope": "Common ocaf-builder-core typed agent DAG, schema, immutable project IDs, versions, agent manifest compiler and honest Code/NoCode capability negotiation.",
       "acceptance": "Graph→DSL→Graph deterministic round-trip for supported DSL, schema version conversion and rejected unrepresentable constructs",
-      "status": "NOT_IMPLEMENTED"
+      "status": "PARTIAL"
     },
     {
       "id": "BUILDER-CODE-ENGINE",
       "parent": "0.51",
       "scope": "A real source-code editing product with diagnostics, reusable agent graph libraries and controlled build/sandbox/debug/deploy; not merely an LLM coding agent.",
       "acceptance": "Edit typed agent project, compile and run in constrained executor, edit history and durable revert",
-      "status": "NOT_IMPLEMENTED"
+      "status": "PARTIAL"
     },
     {
       "id": "BUILDER-NOCODE-ENGINE",
       "parent": "0.51",
       "scope": "A real visual NoCode editor with palette, draggable nodes, typed edges, permission prompts, simulation and publish gating, not a static picture.",
       "acceptance": "UI interactions persist correct typed graph, generate valid supported DSL, unsupported edge/action denied",
-      "status": "NOT_IMPLEMENTED"
+      "status": "PARTIAL"
     },
     {
       "id": "BUILDER-CONVERSION",
       "parent": "0.51",
       "scope": "Bidirectional supported-subset Code↔NoCode round trip; unsupported arbitrary Rust cannot silently claim semantic equivalence.",
       "acceptance": "Executable program subset preserves properties and requires explicit lossiness warning",
-      "status": "NOT_IMPLEMENTED"
+      "status": "PARTIAL"
     },
     {
       "id": "BUILDER-SECURITY-PUBLISH",
@@ -65,7 +65,7 @@
       "parent": "0.50",
       "scope": "Project gallery/template versioning, syntax hints, typed error messages, debugging trace and reproducible agent project snapshots.",
       "acceptance": "Template creates real valid editable project; broken template fails validation and never publishes",
-      "status": "NOT_IMPLEMENTED"
+      "status": "PARTIAL"
     }
   ],
   "products": [
@@ -79,8 +79,15 @@
       "mode_stage": "0.51",
       "platform_stage": "0.52",
       "safety_stage": "0.55",
-      "status": "NOT_IMPLEMENTED",
-      "code_paths_found": [],
+      "status": "PARTIAL",
+      "code_paths_found": [
+        "apps/agents-builder-web/index.html",
+        "apps/agents-builder-web/editor.mjs",
+        "src/builder_core.rs",
+        "src/builder_cloud.rs",
+        "src/builder_http.rs",
+        "src/builder_store.rs"
+      ],
       "implemented_verified": false,
       "source": "Original Agents Builder project scope 0.50-0.55 (docs/MASTER_ARCHITECTURE_26_PDFS.md and user restoration directive 2026-10-15)",
       "scope": "Web IDE + typed graph IR + Rust backend/Axum + Git integration + isolated build/execute + deployments + versioning",
@@ -100,8 +107,15 @@
       "mode_stage": "0.51",
       "platform_stage": "0.52",
       "safety_stage": "0.55",
-      "status": "NOT_IMPLEMENTED",
-      "code_paths_found": [],
+      "status": "PARTIAL",
+      "code_paths_found": [
+        "apps/agents-builder-web/index.html",
+        "apps/agents-builder-web/editor.mjs",
+        "src/builder_core.rs",
+        "src/builder_cloud.rs",
+        "src/builder_http.rs",
+        "src/builder_store.rs"
+      ],
       "implemented_verified": false,
       "source": "Original Agents Builder project scope 0.50-0.55 (docs/MASTER_ARCHITECTURE_26_PDFS.md and user restoration directive 2026-10-15)",
       "scope": "Browser visual drag/drop graph editor + templates, form nodes, visual tool/MCP grants and one-click preview/publish behind explicit approval",
@@ -121,8 +135,12 @@
       "mode_stage": "0.51",
       "platform_stage": "0.53",
       "safety_stage": "0.55",
-      "status": "NOT_IMPLEMENTED",
-      "code_paths_found": [],
+      "status": "PARTIAL",
+      "code_paths_found": [
+        "apps/desktop/src-tauri/src/main.rs",
+        "apps/desktop/src-tauri/tauri.conf.json",
+        "apps/agents-builder-web/index.html"
+      ],
       "implemented_verified": false,
       "source": "Original Agents Builder project scope 0.50-0.55 (docs/MASTER_ARCHITECTURE_26_PDFS.md and user restoration directive 2026-10-15)",
       "scope": "Native Windows desktop Code IDE (Tauri v2) with local code editor, diagnostics, dependency runner, export to local agent bundle + offline mode",
@@ -142,8 +160,12 @@
       "mode_stage": "0.51",
       "platform_stage": "0.53",
       "safety_stage": "0.55",
-      "status": "NOT_IMPLEMENTED",
-      "code_paths_found": [],
+      "status": "PARTIAL",
+      "code_paths_found": [
+        "apps/desktop/src-tauri/src/main.rs",
+        "apps/desktop/src-tauri/tauri.conf.json",
+        "apps/agents-builder-web/index.html"
+      ],
       "implemented_verified": false,
       "source": "Original Agents Builder project scope 0.50-0.55 (docs/MASTER_ARCHITECTURE_26_PDFS.md and user restoration directive 2026-10-15)",
       "scope": "Windows desktop NoCode designer, node library, visual connections/parameters, local preview, export + user-approved publishing",
@@ -163,8 +185,12 @@
       "mode_stage": "0.51",
       "platform_stage": "0.53",
       "safety_stage": "0.55",
-      "status": "NOT_IMPLEMENTED",
-      "code_paths_found": [],
+      "status": "PARTIAL",
+      "code_paths_found": [
+        "apps/desktop/src-tauri/src/main.rs",
+        "apps/desktop/src-tauri/tauri.conf.json",
+        "apps/agents-builder-web/index.html"
+      ],
       "implemented_verified": false,
       "source": "Original Agents Builder project scope 0.50-0.55 (docs/MASTER_ARCHITECTURE_26_PDFS.md and user restoration directive 2026-10-15)",
       "scope": "Native macOS desktop Code IDE (Tauri v2) including notarization-ready packaging, keychain policy, codesign verification and offline agent editing",
@@ -184,8 +210,12 @@
       "mode_stage": "0.51",
       "platform_stage": "0.53",
       "safety_stage": "0.55",
-      "status": "NOT_IMPLEMENTED",
-      "code_paths_found": [],
+      "status": "PARTIAL",
+      "code_paths_found": [
+        "apps/desktop/src-tauri/src/main.rs",
+        "apps/desktop/src-tauri/tauri.conf.json",
+        "apps/agents-builder-web/index.html"
+      ],
       "implemented_verified": false,
       "source": "Original Agents Builder project scope 0.50-0.55 (docs/MASTER_ARCHITECTURE_26_PDFS.md and user restoration directive 2026-10-15)",
       "scope": "macOS native NoCode canvas, typed forms and graph, local simulator and editable DSL export with reversible subset checks",
@@ -205,8 +235,13 @@
       "mode_stage": "0.51",
       "platform_stage": "0.54",
       "safety_stage": "0.55",
-      "status": "NOT_IMPLEMENTED",
-      "code_paths_found": [],
+      "status": "PARTIAL",
+      "code_paths_found": [
+        "apps/android/app/src/main/java/com/ocaf/builder/MainActivity.kt",
+        "apps/android/app/build.gradle.kts",
+        "crates/ocaf-builder-mobile-ffi/src/lib.rs",
+        "apps/agents-builder-web/index.html"
+      ],
       "implemented_verified": false,
       "source": "Original Agents Builder project scope 0.50-0.55 (docs/MASTER_ARCHITECTURE_26_PDFS.md and user restoration directive 2026-10-15)",
       "scope": "Android Code editor (Kotlin/Compose + UniFFI Rust core), permission-aware on-device DSL edit/validation, mobile build through explicit external authorized compiler",
@@ -226,8 +261,13 @@
       "mode_stage": "0.51",
       "platform_stage": "0.54",
       "safety_stage": "0.55",
-      "status": "NOT_IMPLEMENTED",
-      "code_paths_found": [],
+      "status": "PARTIAL",
+      "code_paths_found": [
+        "apps/android/app/src/main/java/com/ocaf/builder/MainActivity.kt",
+        "apps/android/app/build.gradle.kts",
+        "crates/ocaf-builder-mobile-ffi/src/lib.rs",
+        "apps/agents-builder-web/index.html"
+      ],
       "implemented_verified": false,
       "source": "Original Agents Builder project scope 0.50-0.55 (docs/MASTER_ARCHITECTURE_26_PDFS.md and user restoration directive 2026-10-15)",
       "scope": "Android touch NoCode designer with offline graph CRUD, gestures, templates, safe-preview, signed import/export and user-mediated permission grant",
@@ -247,8 +287,13 @@
       "mode_stage": "0.51",
       "platform_stage": "0.54",
       "safety_stage": "0.55",
-      "status": "NOT_IMPLEMENTED",
-      "code_paths_found": [],
+      "status": "PARTIAL",
+      "code_paths_found": [
+        "apps/ios/Sources/OCAFBuilderApp.swift",
+        "apps/ios/build.sh",
+        "crates/ocaf-builder-mobile-ffi/src/lib.rs",
+        "apps/agents-builder-web/index.html"
+      ],
       "implemented_verified": false,
       "source": "Original Agents Builder project scope 0.50-0.55 (docs/MASTER_ARCHITECTURE_26_PDFS.md and user restoration directive 2026-10-15)",
       "scope": "iOS Code editor (SwiftUI + UniFFI Rust core), edit and static-validate bounded agent DSL, code build/export via authorized remote toolchain, Sandbox constraints",
@@ -268,8 +313,13 @@
       "mode_stage": "0.51",
       "platform_stage": "0.54",
       "safety_stage": "0.55",
-      "status": "NOT_IMPLEMENTED",
-      "code_paths_found": [],
+      "status": "PARTIAL",
+      "code_paths_found": [
+        "apps/ios/Sources/OCAFBuilderApp.swift",
+        "apps/ios/build.sh",
+        "crates/ocaf-builder-mobile-ffi/src/lib.rs",
+        "apps/agents-builder-web/index.html"
+      ],
       "implemented_verified": false,
       "source": "Original Agents Builder project scope 0.50-0.55 (docs/MASTER_ARCHITECTURE_26_PDFS.md and user restoration directive 2026-10-15)",
       "scope": "iOS SwiftUI touch NoCode agent builder with offline graph designer, export/import via Document Picker, user-controlled tool entitlements",
