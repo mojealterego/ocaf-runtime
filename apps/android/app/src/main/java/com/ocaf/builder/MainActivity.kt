@@ -30,6 +30,7 @@ import androidx.webkit.WebViewClientCompat
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import org.json.JSONObject
+import uniffi.ocaf_builder_mobile_ffi.validateLocalJsonDsl
 import java.io.ByteArrayInputStream
 
 /** Secure, native Compose shell for the shared Code / NoCode graph editor. */
@@ -118,14 +119,32 @@ class MainActivity : ComponentActivity() {
                                 val raw = message.data ?: return@addWebMessageListener
                                 if (raw.length > 150000) return@addWebMessageListener
                                 val obj = JSONObject(raw)
-                                if (obj.optString("action") != "export") return@addWebMessageListener
-                                val data = obj.getString("content").toByteArray(Charsets.UTF_8)
+                                val dataString = obj.getString("content")
+                                val data = dataString.toByteArray(Charsets.UTF_8)
                                 if (data.size > 128 * 1024) return@addWebMessageListener
-                                val name = obj.optString("filename", "project.ocaf-builder.json")
-                                    .replace(Regex("[^A-Za-z0-9_.-]"), "_").take(100)
-                                runOnUiThread {
-                                    exportPayload = data
-                                    exportLauncher.launch(name.ifEmpty { "project.json" })
+                                when (obj.optString("action")) {
+                                    "export" -> {
+                                        val name = obj.optString("filename", "project.ocaf-builder.json")
+                                            .replace(Regex("[^A-Za-z0-9_.-]"), "_").take(100)
+                                        runOnUiThread {
+                                            exportPayload = data
+                                            exportLauncher.launch(name.ifEmpty { "project.json" })
+                                        }
+                                    }
+                                    "validate" -> {
+                                        val result = runCatching { validateLocalJsonDsl(dataString) }
+                                        val reply = JSONObject()
+                                            .put("ok", result.isSuccess)
+                                            .put("plan", result.getOrNull())
+                                            .put("error", if (result.isFailure) "Rust validation rejected" else JSONObject.NULL)
+                                            .toString()
+                                        this.post {
+                                            evaluateJavascript(
+                                                "window.dispatchEvent(new CustomEvent('ocaf-rust-validation',{detail:" +
+                                                    JSONObject.quote(reply) + "}));", null
+                                            )
+                                        }
+                                    }
                                 }
                             } catch (_: Exception) {
                                 // Invalid messages have no effect.
