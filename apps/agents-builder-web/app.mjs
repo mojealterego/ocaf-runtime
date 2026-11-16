@@ -6,6 +6,29 @@ import {CloudWorkspaceClient, CloudApiError} from './cloud.mjs';
 import {initIntegrations} from './integrations-ui.mjs';
 
 const TENANT = 'local';
+
+// Native Rust UniFFI confirmation is purely offline validation (never execution).
+window.addEventListener('ocaf-rust-validation', event => {
+  try {
+    const receipt = JSON.parse(event.detail);
+    if (!receipt.ok) {
+      notice('Rust UniFFI odrzucił projekt; graf nie jest zatwierdzony.');
+      return;
+    }
+    const plan = JSON.parse(receipt.plan);
+    if (plan.namespace !== 'local' || plan.effects_executed !== false ||
+        !/^[a-f0-9]{64}$/.test(plan.project_sha256)) {
+      throw new Error('native validation receipt was malformed');
+    }
+    if (state.workspace === 'local' && !state.dirty) {
+      el('preview-output').textContent +=
+        '\\nRust UniFFI: inert plan verified; SHA-256: ' + plan.project_sha256;
+    }
+  } catch (error) {
+    fail(error);
+  }
+});
+
 const el = id => document.getElementById(id);
 const state = {
   project:null, saved:0, mode:'nocode', selectedNode:null, selectedEdge:0, dirty:false,
@@ -231,6 +254,13 @@ async function preview() {
     'Declared cost: ' + plan.cost + ' / ' + state.project.max_cost_minor,
     'Project: ' + currentId() + ' r' + state.saved
   ].join('\n');
+  // Native Android host validates this SAME canonical JSON with the Rust core.
+  // A local UI dry run is not permission to execute effects.
+  if (window.ocafHost && typeof window.ocafHost.postMessage === 'function') {
+    window.ocafHost.postMessage(JSON.stringify({
+      action:'validate', content:encodeDsl(state.project, TENANT)
+    }));
+  }
   notice('Graph validated locally. No tools were executed.');
 }
 function download() {
