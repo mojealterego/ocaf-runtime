@@ -9,11 +9,13 @@ from scripts.verify_kaios_package import verify
 
 VALID = {
     "manifest.webapp": json.dumps({"launch_path": "/index.html", "type": "web", "permissions": {}}).encode(),
-    "index.html": b'<script src="canonical-graph.js"></script><script src="app.js"></script><script src="canonical-ui.js"></script>',
+    "index.html": b'<script src="canonical-graph.js"></script><script src="app.js"></script><script src="canonical-ui.js"></script><script src="cloud.js"></script><script src="cloud-ui.js"></script>',
     "app.js": b"/* source */",
     "style.css": b"body {}",
     "canonical-graph.js": b"/* canonical */",
     "canonical-ui.js": b"/* canonical UI */",
+    "cloud.js": b"/* cloud transport */",
+    "cloud-ui.js": b"/* cloud UI */",
 }
 
 
@@ -27,7 +29,19 @@ class KaiOSPackageVerifierTests(unittest.TestCase):
             return verify(path)
 
     def test_valid_package(self):
-        self.assertEqual(len(self.check(list(VALID.items()))), 6)
+        self.assertEqual(len(self.check(list(VALID.items()))), 8)
+
+    def test_missing_cloud_module_rejected(self):
+        data = dict(VALID)
+        del data["cloud.js"]
+        with self.assertRaises(ValueError):
+            self.check(list(data.items()))
+
+    def test_unreferenced_cloud_module_rejected(self):
+        data = dict(VALID)
+        data["index.html"] = data["index.html"].replace(b'<script src="cloud-ui.js"></script>', b"")
+        with self.assertRaises(ValueError):
+            self.check(list(data.items()))
 
     def test_path_traversal_rejected(self):
         with self.assertRaises(ValueError):

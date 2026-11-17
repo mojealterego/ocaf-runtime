@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 import zipfile
 
-EXPECTED = {"manifest.webapp", "index.html", "app.js", "style.css", "canonical-graph.js", "canonical-ui.js"}
+EXPECTED = {"manifest.webapp", "index.html", "app.js", "style.css", "canonical-graph.js", "canonical-ui.js", "cloud.js", "cloud-ui.js"}
 MAX_ENTRY_BYTES = 64 * 1024
 
 
@@ -30,6 +30,9 @@ def verify(path: Path) -> dict:
             raise ValueError("App entrypoint not referenced")
         if b'<script src="canonical-ui.js"></script>' not in archive.read("index.html"):
             raise ValueError("Canonical UI module missing from entrypoint")
+        for name in ("cloud.js", "cloud-ui.js"):
+            if f'<script src="{name}"></script>'.encode() not in archive.read("index.html"):
+                raise ValueError("Cloud module missing from entrypoint: " + name)
         return {name: hashlib.sha256(archive.read(name)).hexdigest() for name in sorted(EXPECTED)}
 
 

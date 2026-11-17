@@ -77,7 +77,8 @@
       "native_host": "packaged-web-app",
       "source_root": "apps/agents-builder-kaios",
       "distribution": "kaios-webapp",
-      "status": "PARTIAL_PLATFORM_E2E_UNVERIFIED"
+      "status": "HOSTED_CLOUD_CLIENT_SOURCE_TESTED_NATIVE_CLOUD_AND_DEVICE_UNVERIFIED",
+      "cloud_transport": "same-origin HTTPS hosted editor; native app-origin integration unverified"
     }
   ],
   "release_gate": {

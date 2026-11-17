@@ -61,3 +61,10 @@ assert.throws(() => parseUniqueJson('{"x":1,}',16384), /JSON|property|position|t
 assert.equal(parseUniqueJson('"'+'ż'.repeat(8191)+'"',16384).length,8191);
 assert.equal(parseUniqueJson('"'+'a'.repeat(131070)+'"',131072).length,131070);
 console.log('PASS KaiOS unique JSON / UTF-8 / depth admission: 11 assertions');
+
+p=project(); p.project_id='..';
+assert.throws(()=>compile(p,'tenant'),/Invalid project/);
+p=project(); p.edges[0].from_node=['in'];
+assert.throws(()=>compile(p,'tenant'),/Invalid edge/);
+p=project(); p.edges[0].to_port=['in'];
+assert.throws(()=>compile(p,'tenant'),/Invalid edge/);

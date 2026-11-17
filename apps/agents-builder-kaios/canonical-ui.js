@@ -3,7 +3,7 @@
   'use strict';
   var get = function (id) { return document.getElementById(id); };
   var result = get('canonical-result');
-  function validId(id) { return typeof id === 'string' && /^[A-Za-z0-9_.-]{1,64}$/.test(id); }
+  function validId(id) { return typeof id === 'string' && /^[A-Za-z0-9_.-]{1,64}$/.test(id) && id !== '.' && id !== '..'; }
   function key() {
     var tenant = get('canonical-tenant').value;
     var project = get('canonical-id').value;
@@ -29,8 +29,12 @@
     });
     view.textContent = edges.length ? edges.join(' | ') : 'Brak połączeń';
   }
+  function localOnly() {
+    if (typeof OCAFKaiosCloudUI !== 'undefined' && !OCAFKaiosCloudUI.isLocal()) throw Error('Użyj operacji Cloud w tym workspace');
+  }
   function safe(fn) {
     try {
+      if (typeof OCAFKaiosCloudUI !== 'undefined' && OCAFKaiosCloudUI.isBusy()) throw Error('Operacja Cloud w toku');
       fn();
       preview();
     } catch (error) {
@@ -55,6 +59,7 @@
   }
   get('canonical-new').onclick = function () {
     safe(function () {
+      localOnly();
       key();
       var portKind = selectedPortKind();
       var project = { schema_version: 1, tenant_id: get('canonical-tenant').value,
@@ -467,6 +472,7 @@
   };
   get('canonical-save').onclick = function () {
     safe(function () {
+      localOnly();
       var data = checked();
       localStorage.setItem(key(), JSON.stringify(data.project));
       result.textContent = 'Zapisano kanoniczny DAG lokalnie.';
@@ -474,6 +480,7 @@
   };
   get('canonical-load').onclick = function () {
     safe(function () {
+      localOnly();
       var raw = localStorage.getItem(key());
       if (!raw) throw Error('Nie znaleziono kanonicznego DAG');
       if (typeof raw !== 'string' || raw.length > 131072) throw Error('Zapisany DAG przekracza limit 128 KiB');

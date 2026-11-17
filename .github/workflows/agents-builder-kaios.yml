@@ -35,6 +35,8 @@ jobs:
           node --check apps/agents-builder-kaios/app.js
           node --check apps/agents-builder-kaios/canonical-graph.js
           node --check apps/agents-builder-kaios/canonical-ui.js
+          node --check apps/agents-builder-kaios/cloud.js
+          node --check apps/agents-builder-kaios/cloud-ui.js
       - name: Run KaiOS behavior regression tests
         run: node apps/agents-builder-kaios/tests/runtime.cjs
       - name: Verify canonical KaiOS UI integration
@@ -47,6 +49,8 @@ jobs:
         run: node apps/agents-builder-kaios/tests/softkeys.cjs
       - name: Check KaiOS save ordering
         run: node apps/agents-builder-kaios/tests/save-regression.cjs
+      - name: KaiOS Cloud transport and workspace regressions
+        run: node --test apps/agents-builder-kaios/tests/cloud.test.cjs apps/agents-builder-kaios/tests/cloud-ui.test.cjs
       - name: Install Chromium E2E dependencies
         run: |
           python3 -m venv .venv-kaios-e2e
@@ -59,11 +63,11 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           cd apps/agents-builder-kaios
-          zip -9 -X ../../dist/ocaf-agents-builder-kaios-2.5.zip manifest.webapp index.html app.js style.css canonical-graph.js canonical-ui.js
+          zip -9 -X ../../dist/ocaf-agents-builder-kaios-2.5.zip manifest.webapp index.html app.js style.css canonical-graph.js canonical-ui.js cloud.js cloud-ui.js
           cd ../..
           unzip -t dist/ocaf-agents-builder-kaios-2.5.zip
           python3 scripts/verify_kaios_package.py dist/ocaf-agents-builder-kaios-2.5.zip
-          (cd apps/agents-builder-kaios && sha256sum manifest.webapp index.html app.js style.css canonical-graph.js canonical-ui.js) > dist/ocaf-agents-builder-kaios-2.5.files.sha256
+          (cd apps/agents-builder-kaios && sha256sum manifest.webapp index.html app.js style.css canonical-graph.js canonical-ui.js cloud.js cloud-ui.js) > dist/ocaf-agents-builder-kaios-2.5.files.sha256
           sha256sum dist/ocaf-agents-builder-kaios-2.5.zip > dist/ocaf-agents-builder-kaios-2.5.zip.sha256
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:

@@ -92,3 +92,11 @@ and assertion adapters: 301 assertion invocations, no failure. This is
 not an actual KaiOS device test or a native Node/Chromium CI result.
 Reproduce using the commands in the existing KaiOS workflow. Production
 status, signatures, Cloud and device acceptance remain unverified.
+
+## Kanoniczna przestrzeń Cloud (2026-11-17)
+
+Klient cloud.js i UI cloud-ui.js wykorzystują istniejące endpointy Rust GET/PUT /v1/projects/{id} i POST /v1/projects/preview, token OAuth wyłącznie w pamięci, oddzielne szkice, CAS bez automatycznych retry i porównanie planu z DAG. Błąd zapisu blokuje kolejne zapisy do ponownego otwarcia projektu. Nie zmienia to kontroli CORS, TLS ani autoryzacji po stronie serwera. Starszy silnik bez streaming Fetch wymaga ograniczonego Content-Length i identity encoding. Pakiet app:// jawnie odmawia połączenia; wymagane jest udostępnienie statycznego edytora i API pod wspólnym zaufanym HTTPS origin. Native app-origin, rzeczywisty gateway i fizyczne KaiOS pozostają niezweryfikowane. Nie wdrożono usługi ani nie nadano produkcyjnego PASS.
+
+Testy: node --test apps/agents-builder-kaios/tests/cloud.test.cjs apps/agents-builder-kaios/tests/cloud-ui.test.cjs
+
+Evidence: 14/14 nowych testów oraz 29 asercji grafu i 109 asercji istniejącego UI wykonano na dokładnie tych źródłach w izolowanym V8 z kontrolowanymi adapterami DOM/Fetch/timer/UTF-8; nie jest to natywny Node, Chromium lub live HTTPS E2E. Testy Python pakowarki i urządzeniowe nie zostały wykonane w tym przyroście.

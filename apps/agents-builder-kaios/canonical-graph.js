@@ -48,7 +48,7 @@
     return JSON.parse(source);
   }
   function safeInteger(n) { return typeof n === 'number' && isFinite(n) && Math.floor(n) === n && Math.abs(n) <= 9007199254740991; }
-  function id(s) { return typeof s === 'string' && /^[A-Za-z0-9_.-]{1,64}$/.test(s); }
+  function id(s) { return typeof s === 'string' && /^[A-Za-z0-9_.-]{1,64}$/.test(s) && s !== '.' && s !== '..'; }
   function keys(v, expected) {
     return v && typeof v === 'object' && !Array.isArray(v) &&
       Object.keys(v).length === expected.length && expected.every(function (key) {
@@ -107,7 +107,7 @@
     if (cost > p.max_cost_minor) fail('Budget exceeded');
     var seenEdges = Object.create(null), occupied = Object.create(null);
     p.edges.forEach(function (e) {
-      if (!keys(e, ['from_node','from_port','to_node','to_port'])) fail('Invalid edge');
+      if (!keys(e, ['from_node','from_port','to_node','to_port']) || !id(e.from_node) || !id(e.to_node) || !id(e.from_port) || !id(e.to_port)) fail('Invalid edge');
       var a = nodes[e.from_node], b = nodes[e.to_node];
       if (!a || !b || e.from_node === e.to_node) fail('Invalid edge nodes');
       var from = a.outputs.filter(function (x) { return x.name === e.from_port; })[0];
