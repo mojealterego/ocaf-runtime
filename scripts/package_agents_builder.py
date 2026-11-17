@@ -97,6 +97,7 @@ REQUIRED_BUILDER_FILES = (
     "apps/agents-builder-web/i18n.mjs",
     "apps/agents-builder-web/credentials.mjs",
     "apps/agents-builder-web/strict-json.mjs",
+    "apps/agents-builder-web/tests/code-admission.test.mjs",
     "apps/agents-builder-web/preview-gate.mjs",
     "apps/agents-builder-web/sw.js",
     "src/builder_core.rs",

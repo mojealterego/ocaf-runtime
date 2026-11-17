@@ -1,6 +1,6 @@
 import {
   newProject, insertNode, removeNode, setTool, validateProject,
-  encodeDsl, decodeDsl, saveProject, loadProject, listRevisions, restoreRevision
+  encodeDsl, decodeDsl, applyCodeRevision, saveProject, loadProject, listRevisions, restoreRevision
 } from './editor.mjs';
 import {CloudWorkspaceClient, CloudApiError} from './cloud.mjs';
 import {initIntegrations} from './integrations-ui.mjs';
@@ -532,13 +532,7 @@ function init() {
   }));
   el('dsl').addEventListener('input', () => { state.dirty = true; invalidatePreview(); el('message').textContent = 'Unapplied Code DSL changes'; });
   el('apply-code').addEventListener('click', () => safe(() => {
-    const raw = el('dsl').value;
-    if (new TextEncoder().encode(raw).length > 128 * 1024) throw new Error('limit: DSL too large');
-    const parsed = JSON.parse(raw);
-    if (parsed.project_id !== currentId() || parsed.tenant_id !== currentTenant()) throw new Error('tenant: project identity cannot change');
-    parsed.revision = state.saved + 1;
-    const next = decodeDsl(JSON.stringify(parsed), currentTenant());
-    persist(next);
+    persist(applyCodeRevision(el('dsl').value, currentTenant(), currentId(), state.saved));
   }));
   el('preview').addEventListener('click', () => safe(preview));
   el('export').addEventListener('click', () => safe(download));

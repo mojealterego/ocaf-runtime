@@ -278,3 +278,9 @@ Reproduce with:
 
 No live Cloud session, full Node suite or native GUI/device build was
 executed by this scoped test. Acceptance status remains unconfirmed.
+
+## Apply Code admission (2026-11-17)
+
+The untouched JSON Code draft is validated before assigning an editor-owned revision. Duplicate keys, invalid submitted revision, identity changes and revision overflow are rejected before persistence. Canonical objects are reconstructed in Rust struct field order. Valid edits keep the existing offline CAS and Cloud draft semantics. PWA cache v10; browser-smoke server includes all cached static assets.
+
+Evidence: RED 5 failures; GREEN 5/5 focused Node 22.16 tests and node --check editor.mjs. Exact original editor and strict JSON blob hashes verified; new editor/test blobs 995e4169853b54e1868085a718c32aa11e21d592/3d5f21a4fc238ffbb7bf922737f9f79fd4dc19a2. The actual UI handler was additionally exercised in isolated V8 with substituted DOM and storage: old handler accepted duplicate revision; new handler rejected it and accepted valid input. All static PWA assets present in browser test allowlist. Full Chromium, native GUI and live Cloud tests not run. No production acceptance.

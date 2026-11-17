@@ -141,7 +141,22 @@ export function validateProject(project, trustedTenant) {
 
 export function canonicalProject(project, trustedTenant) {
   const {order} = validateProject(project, trustedTenant);
-  const result = clone(project), ranks = new Map(order.map((name, index) => [name,index]));
+  // Rebuild fields in the Rust IR declaration order, independent of input keys.
+  const result = {
+    schema_version: project.schema_version, tenant_id: project.tenant_id,
+    project_id: project.project_id, revision: project.revision,
+    max_cost_minor: project.max_cost_minor, grants: [...project.grants],
+    nodes: project.nodes.map(node => ({
+      id: node.id, kind: node.kind,
+      inputs: node.inputs.map(port => ({name:port.name,kind:port.kind})),
+      outputs: node.outputs.map(port => ({name:port.name,kind:port.kind})),
+      tool_name: node.tool_name, max_cost_minor: node.max_cost_minor
+    })),
+    edges: project.edges.map(edge => ({
+      from_node:edge.from_node,from_port:edge.from_port,to_node:edge.to_node,to_port:edge.to_port
+    }))
+  };
+  const ranks = new Map(order.map((name, index) => [name,index]));
   result.nodes.sort((a,b) => ranks.get(a.id) - ranks.get(b.id));
   for (const node of result.nodes) {
     node.inputs.sort((a,b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
@@ -172,6 +187,17 @@ export function decodeDsl(source, trustedTenant) {
   const result = canonicalProject(parsed, trustedTenant);
   if (byteLength(JSON.stringify(result)) > MAX_BYTES) fault('limit: project exceeds 128 KiB');
   return result;
+}
+
+/** Validate the untouched Code DSL before assigning an editor-owned revision. */
+export function applyCodeRevision(source, trustedTenant, projectId, savedRevision) {
+  const next = decodeDsl(source, trustedTenant);
+  if (next.project_id !== projectId) fault('tenant: project identity cannot change');
+  if (!uint(savedRevision) || savedRevision < 1 || savedRevision >= Number.MAX_SAFE_INTEGER) fault('schema: revision overflow');
+  next.revision = savedRevision + 1;
+  // Check the exact pretty representation which the UI will render/export.
+  encodeDsl(next, trustedTenant);
+  return next;
 }
 
 export function newProject(tenant, projectId) {

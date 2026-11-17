@@ -12,7 +12,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 
 const ROOT = new URL('../', import.meta.url);
-const ALLOWED = new Set(['/index.html','/app.mjs','/editor.mjs','/cloud.mjs','/i18n.mjs','/credentials.mjs','/models.mjs','/integrations-ui.mjs','/runner-client.mjs','/style.css','/manifest.webmanifest','/sw.js']);
+const ALLOWED = new Set(['/index.html','/app.mjs','/editor.mjs','/strict-json.mjs','/preview-gate.mjs','/cloud.mjs','/i18n.mjs','/credentials.mjs','/models.mjs','/integrations-ui.mjs','/runner-client.mjs','/style.css','/manifest.webmanifest','/sw.js']);
 const MIME = {'.html':'text/html','.mjs':'text/javascript','.css':'text/css','.webmanifest':'application/manifest+json','.js':'text/javascript'};
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function until(fn, description, maxMs = 20000) {
