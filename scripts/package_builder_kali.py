@@ -17,6 +17,7 @@ import stat
 import struct
 import subprocess
 import tempfile
+import zlib
 
 PACKAGE = "ocaf-agents-builder"
 BINARY = "ocaf-agents-builder-desktop"
@@ -26,9 +27,9 @@ MAX_BINARY = 512 * 1024 * 1024
 MAX_ICON = 1024 * 1024
 
 
-def regular_file(path: Path, *, limit: int) -> bytes:
+def regular_file(path: Path, *, limit: int, minimum: int = 1024) -> bytes:
     info = path.lstat()
-    if not stat.S_ISREG(info.st_mode) or info.st_size < 1024 or info.st_size > limit:
+    if not stat.S_ISREG(info.st_mode) or info.st_size < minimum or info.st_size > limit:
         raise ValueError(f"invalid regular input file: {path}")
     fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
     try:
@@ -59,8 +60,41 @@ def validate_linux_amd64(binary: bytes) -> None:
 def validate_icon(png: bytes) -> None:
     if not png.startswith(b"\x89PNG\r\n\x1a\n"):
         raise ValueError("icon is not PNG")
-    if len(png) < 33 or png[12:16] != b"IHDR":
-        raise ValueError("PNG missing IHDR")
+    offset = 8
+    seen_ihdr = seen_idat = seen_iend = False
+    while offset < len(png):
+        if len(png) - offset < 12:
+            raise ValueError("truncated PNG chunk")
+        size = struct.unpack_from(">I", png, offset)[0]
+        end = offset + 12 + size
+        if size > MAX_ICON or end > len(png):
+            raise ValueError("truncated PNG chunk")
+        kind = png[offset + 4:offset + 8]
+        payload = png[offset + 8:offset + 8 + size]
+        checksum = struct.unpack_from(">I", png, offset + 8 + size)[0]
+        if zlib.crc32(kind + payload) & 0xffffffff != checksum:
+            raise ValueError("PNG CRC mismatch")
+        if kind == b"IHDR":
+            if seen_ihdr or offset != 8 or size != 13:
+                raise ValueError("invalid PNG IHDR")
+            width, height = struct.unpack_from(">II", payload)
+            if not (1 <= width <= 4096 and 1 <= height <= 4096):
+                raise ValueError("invalid PNG dimensions")
+            seen_ihdr = True
+        elif kind == b"IDAT":
+            if not seen_ihdr:
+                raise ValueError("PNG IDAT before IHDR")
+            seen_idat = True
+        elif kind == b"IEND":
+            if not seen_idat or size or end != len(png):
+                raise ValueError("invalid PNG IEND or trailing data")
+            seen_iend = True
+        elif not seen_ihdr or seen_iend:
+            raise ValueError("invalid PNG chunk ordering")
+        offset = end
+    if not (seen_ihdr and seen_idat and seen_iend):
+        raise ValueError("incomplete PNG")
+
 
 
 def sha256(data: bytes) -> str:
@@ -77,7 +111,7 @@ def package_kali(binary_path: Path, icon_path: Path, output: Path,
         raise ValueError("invalid reproducible build timestamp")
     binary = regular_file(binary_path, limit=MAX_BINARY)
     validate_linux_amd64(binary)
-    icon = regular_file(icon_path, limit=MAX_ICON)
+    icon = regular_file(icon_path, limit=MAX_ICON, minimum=67)
     validate_icon(icon)
     if not shutil.which("dpkg-deb"):
         raise RuntimeError("dpkg-deb is required")
