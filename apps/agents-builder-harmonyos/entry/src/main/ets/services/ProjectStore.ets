@@ -22,7 +22,9 @@ export class ProjectStore {
   load(tenant: string, projectId: string): BuilderProject | null {
     const value = this.database.getSync(this.key(tenant, projectId), '');
     if (typeof value !== 'string' || value.length === 0) return null;
-    return readCode(value, tenant);
+    const project = readCode(value, tenant);
+    if (project.project_id !== projectId) throw new Error('Stored project identity mismatch');
+    return project;
   }
 
   async save(project: BuilderProject, tenant: string): Promise<void> {

@@ -43,7 +43,10 @@ function rejectDuplicateJsonKeys(source: string): void {
   const frames: Array<{ object: boolean; keys: Set<string> }> = [];
   for (let i = 0; i < source.length; i++) {
     const c = source[i];
-    if (c === '{' || c === '[') frames.push({ object: c === '{', keys: new Set<string>() });
+    if (c === '{' || c === '[') {
+      if (frames.length >= 64) fail('JSON nesting depth limit');
+      frames.push({ object: c === '{', keys: new Set<string>() });
+    }
     else if (c === '}' || c === ']') frames.pop();
     else if (c === '"') {
       const start = i;
@@ -183,7 +186,21 @@ export function compileProject(project: BuilderProject, trustedTenant: string): 
 }
 export function canonicalProject(project: BuilderProject, tenant: string): BuilderProject {
   const compiled = compileProject(project, tenant);
-  const copy = JSON.parse(JSON.stringify(project)) as BuilderProject;
+  // Reconstruct every record in Rust struct declaration order, not input key order.
+  const copy: BuilderProject = {
+    schema_version: project.schema_version, tenant_id: project.tenant_id,
+    project_id: project.project_id, revision: project.revision,
+    max_cost_minor: project.max_cost_minor, grants: project.grants.slice(),
+    nodes: project.nodes.map((node: GraphNode): GraphNode => ({
+      id: node.id, kind: node.kind,
+      inputs: node.inputs.map((port: Port): Port => ({ name: port.name, kind: port.kind })),
+      outputs: node.outputs.map((port: Port): Port => ({ name: port.name, kind: port.kind })),
+      tool_name: node.tool_name, max_cost_minor: node.max_cost_minor
+    })),
+    edges: project.edges.map((edge: GraphEdge): GraphEdge => ({
+      from_node: edge.from_node, from_port: edge.from_port, to_node: edge.to_node, to_port: edge.to_port
+    }))
+  };
   const order = new Map<string, number>();
   compiled.ordered_nodes.forEach((id: string, index: number) => order.set(id, index));
   copy.nodes.sort((a: GraphNode, b: GraphNode) => order.get(a.id)! - order.get(b.id)!);
@@ -240,5 +257,71 @@ export function addTransform(project: BuilderProject, tenant: string, nodeId: st
   copy.edges.push({from_node: edge.from_node, from_port: edge.from_port, to_node: nodeId, to_port: 'in'});
   copy.edges.push({from_node: nodeId, from_port: 'out', to_node: output.id, to_port: edge.to_port});
   copy.revision++;
+  return canonicalProject(copy, tenant);
+}
+
+/** Declarative graph authoring only. The grants below are not runtime authorization. */
+function reconcileGrants(project: BuilderProject): void {
+  const grants = new Set<string>();
+  for (const node of project.nodes) if (node.kind === 'tool' && node.tool_name !== null) grants.add(node.tool_name);
+  project.grants = Array.from(grants).sort();
+}
+function editCopy(project: BuilderProject, tenant: string): BuilderProject {
+  const copy = canonicalProject(project, tenant);
+  if (copy.revision >= Number.MAX_SAFE_INTEGER) fail('Invalid revision');
+  copy.revision++;
+  return copy;
+}
+function checkedCost(cost: number): void {
+  if (!uint(cost) || cost < 1 || cost > MAX_COST) fail('Invalid tool cost');
+}
+export function addTool(project: BuilderProject, tenant: string, nodeId: string, toolName: string, cost: number): BuilderProject {
+  checkedCost(cost);
+  if (!validId(toolName)) fail('Invalid tool ID');
+  const copy = addTransform(project, tenant, nodeId);
+  const node = copy.nodes.find((n: GraphNode) => n.id === nodeId)!;
+  if (copy.max_cost_minor > MAX_COST - cost) fail('Tool budget overflow');
+  node.kind = 'tool'; node.tool_name = toolName; node.max_cost_minor = cost;
+  copy.max_cost_minor += cost;
+  reconcileGrants(copy);
+  return canonicalProject(copy, tenant);
+}
+export function removeStep(project: BuilderProject, tenant: string, nodeId: string): BuilderProject {
+  const copy = editCopy(project, tenant);
+  const node = copy.nodes.find((n: GraphNode) => n.id === nodeId);
+  const incoming = copy.edges.filter((e: GraphEdge) => e.to_node === nodeId);
+  const outgoing = copy.edges.filter((e: GraphEdge) => e.from_node === nodeId);
+  if (!node || (node.kind !== 'transform' && node.kind !== 'tool') ||
+      node.inputs.length !== 1 || node.outputs.length !== 1 || incoming.length !== 1 || outgoing.length !== 1 ||
+      node.inputs[0].kind !== node.outputs[0].kind) fail('NoCode conversion lossiness: removal requires one type-preserving input and output');
+  const before = incoming[0]; const after = outgoing[0];
+  copy.nodes = copy.nodes.filter((n: GraphNode) => n.id !== nodeId);
+  copy.edges = copy.edges.filter((e: GraphEdge) => e.from_node !== nodeId && e.to_node !== nodeId);
+  copy.edges.push({ from_node: before.from_node, from_port: before.from_port, to_node: after.to_node, to_port: after.to_port });
+  copy.max_cost_minor -= node.max_cost_minor;
+  reconcileGrants(copy);
+  return canonicalProject(copy, tenant);
+}
+export function renameNode(project: BuilderProject, tenant: string, oldId: string, newId: string): BuilderProject {
+  const copy = editCopy(project, tenant);
+  const node = copy.nodes.find((n: GraphNode) => n.id === oldId);
+  if (!node || !validId(newId) || copy.nodes.some((n: GraphNode) => n.id === newId)) fail('Invalid rename ID');
+  node.id = newId;
+  for (const edge of copy.edges) {
+    if (edge.from_node === oldId) edge.from_node = newId;
+    if (edge.to_node === oldId) edge.to_node = newId;
+  }
+  return canonicalProject(copy, tenant);
+}
+export function updateTool(project: BuilderProject, tenant: string, nodeId: string, toolName: string, cost: number): BuilderProject {
+  checkedCost(cost);
+  const copy = editCopy(project, tenant);
+  const node = copy.nodes.find((n: GraphNode) => n.id === nodeId);
+  if (!node || node.kind !== 'tool' || !validId(toolName)) fail('Invalid tool update');
+  const remainder = copy.max_cost_minor - node.max_cost_minor;
+  if (remainder > MAX_COST - cost) fail('Tool budget overflow');
+  node.tool_name = toolName; node.max_cost_minor = cost;
+  copy.max_cost_minor = remainder + cost;
+  reconcileGrants(copy);
   return canonicalProject(copy, tenant);
 }

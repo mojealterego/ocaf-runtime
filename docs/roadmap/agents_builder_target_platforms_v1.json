@@ -69,8 +69,8 @@
       "native_host": "arkts-arkui",
       "source_root": "apps/agents-builder-harmonyos",
       "distribution": "harmonyos-hap",
-      "status": "SOURCE_IMPLEMENTED_NATIVE_BUILD_E2E_UNVERIFIED",
-      "source_tests": "apps/agents-builder-harmonyos/tests/domain.test.mjs"
+      "status": "LOCAL_NOCODE_DOMAIN_TESTED_NATIVE_BUILD_E2E_UNVERIFIED",
+      "source_tests": "apps/agents-builder-harmonyos/tests/*.test.mjs"
     },
     {
       "platform_id": "kaios",
