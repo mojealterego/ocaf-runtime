@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "name": "OCAF Agents Builder platform targets",
+  "source_of_truth": "docs/roadmap/agents_builder_products_v11.json",
+  "scope": "Additive platform target registry. Historical v11 acceptance records are preserved.",
+  "platform_target_count": 8,
+  "mode_switch": [
+    "Code",
+    "NoCode"
+  ],
+  "workspace_switch": [
+    "Local",
+    "Cloud"
+  ],
+  "cloud": {
+    "separate_native_application": false,
+    "role": "shared authenticated workspace service; remote execution requires explicit authorization",
+    "legacy_acceptance_gates": [
+      "AB-CLOUD-CODE",
+      "AB-CLOUD-NOCODE"
+    ]
+  },
+  "targets": [
+    {
+      "platform_id": "windows",
+      "native_host": "tauri-v2",
+      "source_root": "apps/agents-builder-desktop",
+      "distribution": "windows-native",
+      "status": "BUILD_E2E_UNVERIFIED"
+    },
+    {
+      "platform_id": "macos",
+      "native_host": "tauri-v2",
+      "source_root": "apps/agents-builder-desktop",
+      "distribution": "macos-native",
+      "status": "BUILD_E2E_UNVERIFIED"
+    },
+    {
+      "platform_id": "linux",
+      "native_host": "tauri-v2",
+      "source_root": "apps/agents-builder-desktop",
+      "distribution": "linux-elf",
+      "status": "BUILD_E2E_UNVERIFIED"
+    },
+    {
+      "platform_id": "kali-linux",
+      "native_host": "tauri-v2",
+      "source_root": "apps/agents-builder-desktop",
+      "distribution": "kali-deb-amd64",
+      "packager": "scripts/package_builder_kali.py",
+      "status": "PACKAGE_SOURCE_TESTED_PLATFORM_E2E_UNVERIFIED"
+    },
+    {
+      "platform_id": "android",
+      "native_host": "kotlin-rust-uniffi",
+      "source_root": "apps/android",
+      "distribution": "android-apk",
+      "status": "BUILD_E2E_UNVERIFIED"
+    },
+    {
+      "platform_id": "ios",
+      "native_host": "swiftui-rust-uniffi",
+      "source_root": "apps/ios",
+      "distribution": "ios-ipa",
+      "status": "BUILD_E2E_UNVERIFIED"
+    },
+    {
+      "platform_id": "harmonyos",
+      "native_host": "arkts-arkui",
+      "source_root": "apps/agents-builder-harmonyos",
+      "distribution": "harmonyos-hap",
+      "status": "ARCHITECTURE_ONLY"
+    },
+    {
+      "platform_id": "kaios",
+      "native_host": "packaged-web-app",
+      "source_root": "apps/agents-builder-kaios",
+      "distribution": "kaios-webapp",
+      "status": "PARTIAL_PLATFORM_E2E_UNVERIFIED"
+    }
+  ],
+  "release_gate": {
+    "status": "NOT_ACCEPTED",
+    "required": "Platform-specific native installation, Code/NoCode GUI E2E, Local/Cloud authenticated mode checks, signed package provenance, and actual SHA-bound receipts."
+  }
+}
