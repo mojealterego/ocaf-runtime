@@ -124,6 +124,10 @@ class MainActivity : ComponentActivity() {
                                 if (data.size > 128 * 1024) return@addWebMessageListener
                                 when (obj.optString("action")) {
                                     "export" -> {
+                                        // Native export must pass the same Rust DAG guard as validation.
+                                        if (runCatching { validateLocalJsonDsl(dataString) }.isFailure) {
+                                            return@addWebMessageListener
+                                        }
                                         val name = obj.optString("filename", "project.ocaf-builder.json")
                                             .replace(Regex("[^A-Za-z0-9_.-]"), "_").take(100)
                                         runOnUiThread {

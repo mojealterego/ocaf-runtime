@@ -96,6 +96,9 @@ struct BuilderWebView: UIViewRepresentable {
             }
             guard payload["action"] as? String == "export" else { return }
 
+            // Reject invalid or cross-namespace DAG before presenting the share sheet.
+            guard (try? validateLocalJsonDsl(source: content)) != nil else { return }
+
             let suppliedName = payload["filename"] as? String ?? "project.ocaf-builder.json"
             let safeName = String(suppliedName.prefix(100).map { character in
                 character.isASCII && (character.isLetter || character.isNumber || character == "." || character == "_" || character == "-")

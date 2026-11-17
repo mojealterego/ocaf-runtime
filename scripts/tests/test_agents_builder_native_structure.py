@@ -56,6 +56,20 @@ class NativeBuilderSourceContracts(unittest.TestCase):
         self.assertIn("rustup target list --installed", build)
         self.assertIn("xcodebuild", build)
 
+    def test_android_and_ios_native_export_is_rust_validated_before_file_write(self):
+        kotlin = source("apps/android/app/src/main/java/com/ocaf/builder/MainActivity.kt")
+        export = kotlin.split('"export" -> {', 1)[1].split('"validate" -> {', 1)[0]
+        self.assertIn("validateLocalJsonDsl(dataString)", export)
+        self.assertIn("return@addWebMessageListener", export)
+        self.assertLess(export.index("validateLocalJsonDsl(dataString)"),
+                        export.index("exportLauncher.launch"))
+
+        swift = source("apps/ios/Sources/OCAFBuilderApp.swift")
+        export = swift.split('guard payload["action"] as? String == "export"', 1)[1]
+        self.assertIn("validateLocalJsonDsl(source: content)", export)
+        self.assertLess(export.index("validateLocalJsonDsl(source: content)"),
+                        export.index("data.write(to: temporary)"))
+
     def test_mobile_ffi_consumes_same_canonical_rust_core(self):
         bridge = source("crates/ocaf-builder-mobile-ffi/src/lib.rs")
         self.assertIn('#[path = "../../../src/builder_core.rs"]', bridge)
