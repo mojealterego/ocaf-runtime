@@ -1,6 +1,6 @@
-# OCAF Agents Builder — Linux + HarmonyOS
+# OCAF Agents Builder — Linux, Kali Linux + HarmonyOS
 
-Status: Linux CI **implemented, execution unverified**; HarmonyOS **design only**. No signed Linux distribution, HarmonyOS HAP or device test has been produced by this document.
+Status: Linux CI **implemented, execution unverified**; Kali Linux `.deb` packager **implemented and locally unit-tested, real Kali install/E2E unverified**; HarmonyOS **design only**. No signed Linux distribution, HarmonyOS HAP or device test has been produced by this document.
 
 ## Product topology
 
@@ -9,7 +9,10 @@ One shared versioned typed graph / Code↔NoCode project schema, common model ro
 | Platform | Native host | Local mode | Cloud mode | Acceptance |
 | --- | --- | --- | --- | --- |
 | Linux x86_64 | existing Tauri 2 Rust desktop app + WebKitGTK | constrained local executor, offline project store | authenticated OCAF Cloud | ELF build + Xvfb smoke + GUI E2E + AppImage/deb/rpm validation |
+| Kali Linux amd64 | same Tauri 2 Rust executable, separately packaged as Kali-compatible `.deb` | existing desktop local mode | shared authenticated OCAF Cloud mode, **not another app** | real Kali installation, dependency checks, Code/NoCode GUI E2E, signing/provenance |
 | HarmonyOS NEXT | ArkTS/ArkUI Stage application (HAP) | sandboxed supported subset; no assumption of Android APK or POSIX/WASI availability | HTTPS OCAF Cloud through scoped client | DevEco SDK build + simulator/device launch + ArkUI Code/NoCode E2E + signed HAP |
+
+Target platforms are enumerated in `docs/roadmap/agents_builder_target_platforms_v1.json`: Windows, macOS, Linux, Kali Linux, Android, iOS, HarmonyOS and KaiOS. **Cloud is a mode and common service, not a separately installed Agents Builder.** Existing historical Cloud gates remain as functional acceptance records, not extra native binaries.
 
 ## Linux implementation path
 
@@ -18,6 +21,10 @@ One shared versioned typed graph / Code↔NoCode project schema, common model ro
 3. Add real GUI automation: create/edit/reopen project in Code and NoCode, verify bidirectional conversion, local/cloud isolation, offline behavior and denied permissions.
 4. Package AppImage, deb and rpm **only after** native build and GUI checks. Sign release and publish SHA-256, SBOM and provenance; distinguish unsigned CI binaries from releases.
 5. Negative gates: prevent unrestricted shell/file access, injected model URL, tenant crossing, and false cloud execution receipts.
+
+## Kali Linux packaging implementation
+
+`scripts/package_builder_kali.py` creates a reproducible unsigned Debian package from a prebuilt, real Linux amd64 ELF and a CRC-validated PNG icon. It requires `dpkg-deb`, refuses symlinks and overwrite, validates ELF architecture, records SHA-256 and labels device E2E as `UNVERIFIED`. Unit tests: `scripts/tests/test_package_builder_kali.py`. Linux CI now places the package and evidence under `target/evidence/kali/` **after** native Linux GUI checks. Neither Python fixture tests nor a packaging workflow definition are evidence of installation on Kali, successful Cloud authentication, device GUI E2E, or signed publication.
 
 ## HarmonyOS NEXT design (not implemented)
 
