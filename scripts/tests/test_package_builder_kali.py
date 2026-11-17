@@ -4,6 +4,8 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import struct
+import zlib
 import unittest
 
 SCRIPT = Path(__file__).resolve().parents[1] / "package_builder_kali.py"
@@ -12,7 +14,14 @@ assert spec and spec.loader
 pkg = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(pkg)
 
-PNG = bytes.fromhex("89504e470d0a1a0a") + b"\x00\x00\x00\x0dIHDR" + b"\x00" * 1200
+def chunk(name, data):
+    return struct.pack(">I", len(data)) + name + data + struct.pack(">I", zlib.crc32(name + data) & 0xffffffff)
+
+
+PNG = (bytes.fromhex("89504e470d0a1a0a")
+       + chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0))
+       + chunk(b"IDAT", zlib.compress(b"\x00\x00\x00\x00\xff"))
+       + chunk(b"IEND", b""))
 COMMIT = "0" * 40
 
 
@@ -65,6 +74,16 @@ class KaliPackagingTests(unittest.TestCase):
         with self.assertRaises(FileExistsError):
             self.build(self.one)
         self.assertEqual(before, self.one.read_bytes())
+
+    def test_png_corruption_and_trailing_data_rejected(self):
+        source = self.icon.read_bytes()
+        self.icon.write_bytes(source[:-1] + bytes([source[-1] ^ 1]))
+        with self.assertRaisesRegex(ValueError, "CRC"):
+            self.build(self.one)
+        self.icon.write_bytes(source + b"X")
+        with self.assertRaisesRegex(ValueError, "IEND or trailing"):
+            self.build(self.one)
+        self.assertFalse(self.one.exists())
 
     def test_invalid_png_fails_without_publish(self):
         self.icon.write_bytes(b"not png" * 200)
