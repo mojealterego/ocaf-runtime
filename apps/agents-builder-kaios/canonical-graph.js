@@ -4,11 +4,56 @@
 (function (root) {
   'use strict';
   function fail(message) { throw Error(message); }
+  // ES5-compatible shared JSON admission boundary for the two KaiOS editors.
+  function parseUniqueJson(source, maxBytes) {
+    if (typeof source !== 'string') fail('JSON: expected text');
+    if (maxBytes !== 16384 && maxBytes !== 131072) fail('JSON: invalid size limit');
+    var bytes = 0, i, c;
+    for (i = 0; i < source.length; i++) {
+      c = source.charCodeAt(i);
+      if (c <= 0x7f) bytes++;
+      else if (c <= 0x7ff) bytes += 2;
+      else if (c >= 0xd800 && c <= 0xdbff && i + 1 < source.length &&
+          source.charCodeAt(i + 1) >= 0xdc00 && source.charCodeAt(i + 1) <= 0xdfff) {
+        bytes += 4; i++;
+      } else bytes += 3;
+      if (bytes > maxBytes) fail('JSON: przekroczono limit ' + (maxBytes / 1024) + ' KiB');
+    }
+    // Reject ambiguous keys and excessive nesting before parsing the complete value.
+    var frames = [];
+    for (i = 0; i < source.length; i++) {
+      c = source.charAt(i);
+      if (c === '{' || c === '[') {
+        if (frames.length >= 64) fail('JSON: nesting depth limit');
+        frames.push({ object: c === '{', seen: Object.create(null) });
+      } else if (c === '}' || c === ']') {
+        frames.pop();
+      } else if (c === '"') {
+        var start = i;
+        for (i++; i < source.length; i++) {
+          c = source.charAt(i);
+          if (c === '\\') { i++; continue; }
+          if (c === '"') break;
+        }
+        var j = i + 1;
+        while (j < source.length && /[ \t\r\n]/.test(source.charAt(j))) j++;
+        var frame = frames[frames.length - 1];
+        if (source.charAt(j) === ':' && frame && frame.object) {
+          var key = JSON.parse(source.slice(start, i + 1));
+          if (Object.prototype.hasOwnProperty.call(frame.seen, key)) fail('JSON: duplicate object key');
+          frame.seen[key] = true;
+        }
+      }
+    }
+    return JSON.parse(source);
+  }
   function safeInteger(n) { return typeof n === 'number' && isFinite(n) && Math.floor(n) === n && Math.abs(n) <= 9007199254740991; }
   function id(s) { return typeof s === 'string' && /^[A-Za-z0-9_.-]{1,64}$/.test(s); }
   function keys(v, expected) {
     return v && typeof v === 'object' && !Array.isArray(v) &&
-      Object.keys(v).sort().join(',') === expected.slice().sort().join(',');
+      Object.keys(v).length === expected.length && expected.every(function (key) {
+        return Object.prototype.hasOwnProperty.call(v, key);
+      });
   }
   function ports(items) {
     if (!Array.isArray(items) || items.length > 8) fail('Invalid ports');
@@ -108,5 +153,5 @@
     return { ordered_nodes: ordered, requested_tools: Object.keys(requested).sort(),
       max_cost_minor: p.max_cost_minor };
   }
-  root.OCAFCanonicalGraph = { compile: compile };
+  root.OCAFCanonicalGraph = { compile: compile, parseUniqueJson: parseUniqueJson };
 }(typeof module !== 'undefined' && module.exports ? module.exports : this));

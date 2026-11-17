@@ -15,7 +15,7 @@
     if (typeof source !== 'string') throw Error('Nieprawidłowy format JSON');
     if (source.length > 131072) throw Error('Kanoniczny projekt przekracza limit 128 KiB');
     if (typeof OCAFCanonicalGraph === 'undefined') throw Error('Brak modułu walidatora DAG');
-    var project = JSON.parse(source);
+    var project = OCAFCanonicalGraph.parseUniqueJson(source, 131072);
     if (project.project_id !== get('canonical-id').value) throw Error('Niezgodny identyfikator projektu DAG');
     var plan = OCAFCanonicalGraph.compile(project, get('canonical-tenant').value);
     return { project: project, plan: plan, source: source };
@@ -458,7 +458,7 @@
       var raw = get('canonical-import').value;
       if (typeof raw !== 'string') throw Error('Nieprawidłowy import');
       if (raw.length > 131072) throw Error('Import przekracza 128 KiB');
-      var parsed = JSON.parse(raw);
+      var parsed = OCAFCanonicalGraph.parseUniqueJson(raw, 131072);
       if (parsed.project_id !== get('canonical-id').value) throw Error('Niezgodny identyfikator projektu DAG');
       var plan = OCAFCanonicalGraph.compile(parsed, get('canonical-tenant').value);
       get('canonical-source').value = JSON.stringify(parsed, null, 2);
@@ -477,7 +477,7 @@
       var raw = localStorage.getItem(key());
       if (!raw) throw Error('Nie znaleziono kanonicznego DAG');
       if (typeof raw !== 'string' || raw.length > 131072) throw Error('Zapisany DAG przekracza limit 128 KiB');
-      var parsed = JSON.parse(raw);
+      var parsed = OCAFCanonicalGraph.parseUniqueJson(raw, 131072);
       if (parsed.project_id !== get('canonical-id').value) throw Error('Niezgodny projekt w pamięci');
       var plan = OCAFCanonicalGraph.compile(parsed, get('canonical-tenant').value);
       get('canonical-source').value = JSON.stringify(parsed, null, 2);

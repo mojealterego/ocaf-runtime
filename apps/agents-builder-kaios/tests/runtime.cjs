@@ -24,7 +24,7 @@ const localStorage = {
   setItem(key, value) { storage.set(key, value); },
   getItem(key) { return storage.has(key) ? storage.get(key) : null; }
 };
-const script = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
+const script = fs.readFileSync(path.join(__dirname, '..', 'canonical-graph.js'), 'utf8') + '\n' + fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
 vm.runInNewContext(script, { document, localStorage, Array, JSON, Object, Error }, { timeout: 2000 });
 function click(id) { elements[id].click(); }
 function nodes() { return JSON.parse(elements.source.value).nodes.map(n => n.id); }
@@ -86,13 +86,18 @@ click('save');
 assert.match(elements.status.textContent, /Niezgodny identyfikator/);
 elements['project'].value = 'agent';
 elements.source.value = JSON.stringify({version:1,project_id:'agent',nodes:[{id:'unsaved'}]});
+const savedBeforeFault = JSON.stringify({version:1,project_id:'agent',nodes:[{id:'third'}]});
+storage.set('ocaf-kaios-v1:agent', savedBeforeFault);
 const previousWrite = localStorage.setItem;
 localStorage.setItem = () => { throw Error('Storage unavailable'); };
 click('save');
 assert.match(elements.status.textContent, /Storage unavailable/);
 localStorage.setItem = previousWrite;
 click('code');
-assert.deepEqual(nodes(), ['third'], 'Failed storage write must not commit Code draft');
+assert.deepEqual(nodes(), ['unsaved'], 'Failed save must preserve editable Code draft');
+assert.equal(storage.get('ocaf-kaios-v1:agent'), savedBeforeFault, 'Failed save must not overwrite persisted project');
+click('load');
+assert.deepEqual(nodes(), ['third'], 'Reload must restore last durable project');
 assert.ok(document.keydown, 'Keypad shortcuts must be installed');
 // Simulate application restart with fresh DOM and VM but unchanged persistent storage.
 const restartedElements = Object.fromEntries(ids.map(id => [id, element(id)]));
@@ -106,3 +111,15 @@ vm.runInNewContext(script, { document: restartedDocument, localStorage, Array, J
 restartedElements.load.click();
 assert.deepEqual(JSON.parse(restartedElements.source.value).nodes, [{id:'persisted'}], 'Saved project must survive app restart');
 console.log('KaiOS runtime behavior and restart persistence tests passed');
+
+click('code');
+elements['project'].value = 'agent';
+elements.source.value = '{"version":2,"version":1,"project_id":"agent","nodes":[]}';
+const legacyBefore = storage.get('ocaf-kaios-v1:agent');
+click('save');
+assert.match(elements.status.textContent, /duplicate/);
+assert.equal(storage.get('ocaf-kaios-v1:agent'), legacyBefore);
+storage.set('ocaf-kaios-v1:agent','{"version":1,"project_id":"agent","nodes":[{"id":"first","id":"second"}]}');
+click('load');
+assert.match(elements.status.textContent, /duplicate/);
+console.log('PASS legacy KaiOS duplicate JSON storage admission');

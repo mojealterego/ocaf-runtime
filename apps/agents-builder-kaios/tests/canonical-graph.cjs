@@ -47,3 +47,17 @@ p=project(); p.nodes[1].id='__proto__'; p.edges[0].to_node='__proto__';
 assert.deepEqual(compile(p,'tenant').ordered_nodes,['in','__proto__']);
 
 console.log('PASS canonical KaiOS graph validation: 15 assertions');
+
+const { parseUniqueJson } = require('../canonical-graph.js').OCAFCanonicalGraph;
+assert.deepEqual(parseUniqueJson('{"outer":{"name":"x"},"other":{"name":"y"}}',16384),{outer:{name:"x"},other:{name:"y"}});
+assert.throws(() => parseUniqueJson('{"tenant_id":"x","ten\\u0061nt_id":"y"}',131072), /duplicate/);
+assert.throws(() => parseUniqueJson('{"nodes":[{"id":"x","id":"y"}]}',131072), /duplicate/);
+assert.throws(() => parseUniqueJson('{"__proto__":1,"__proto__":2}',16384), /duplicate/);
+assert.deepEqual(parseUniqueJson('{"name":"quoted \\"x\\"","other":"{[}"}',16384),{name:'quoted "x"',other:'{[}'});
+assert.throws(() => parseUniqueJson('"' + 'ż'.repeat(8192) + '"',16384), /16 KiB/);
+assert.throws(() => parseUniqueJson('"' + '😀'.repeat(4096) + '"',16384), /16 KiB/);
+assert.throws(() => parseUniqueJson('['.repeat(65)+'0'+']'.repeat(65),131072), /depth/);
+assert.throws(() => parseUniqueJson('{"x":1,}',16384), /JSON|property|position|token/i);
+assert.equal(parseUniqueJson('"'+'ż'.repeat(8191)+'"',16384).length,8191);
+assert.equal(parseUniqueJson('"'+'a'.repeat(131070)+'"',131072).length,131070);
+console.log('PASS KaiOS unique JSON / UTF-8 / depth admission: 11 assertions');

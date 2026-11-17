@@ -25,7 +25,7 @@ const localStorage = {
   getItem(key) { return storage.get(key) || null; },
   setItem(key, value) { storage.set(key, value); }
 };
-const source = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '..', 'canonical-graph.js'), 'utf8') + '\n' + fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
 vm.runInNewContext(source, { document, localStorage }, { timeout: 2000 });
 assert.equal(typeof keydown, 'function');
 let prevented = 0;

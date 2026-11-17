@@ -60,7 +60,7 @@
   function parseSource() {
     var source = $('source').value;
     if (source.length > 16384) throw Error('Projekt przekracza limit 16 KiB');
-    return validate(JSON.parse(source));
+    return validate(OCAFCanonicalGraph.parseUniqueJson(source, 16384));
   }
   function applySource() { state = parseSource(); }
   $('apply').onclick = function () { safe(function () {
@@ -82,7 +82,7 @@
     var raw = localStorage.getItem('ocaf-kaios-v1:' + id);
     if (!raw) throw Error('Nie znaleziono projektu');
     if (raw.length > 16384) throw Error('Zapisany projekt przekracza limit 16 KiB');
-    var loaded = validate(JSON.parse(raw));
+    var loaded = validate(OCAFCanonicalGraph.parseUniqueJson(raw, 16384));
     if (loaded.project_id !== id) throw Error('Niezgodny identyfikator zapisanego projektu');
     state = loaded; render(); status('Otworzono projekt.');
   }); };

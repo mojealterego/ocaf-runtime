@@ -73,3 +73,22 @@ Pola **Od węzła**, **Do węzła** i **ID Transform** pozwalają wstawić nowy 
 ## Wstawianie Tool na wskazanej krawędzi
 
 Przycisk **Wstaw Tool na krawędzi** wykorzystuje pola Od węzła / Do węzła, ID Transform (identyfikator nowego węzła), nazwę narzędzia i koszt. Zachowuje typ portów wybranej krawędzi, przepina ją przez nowy Tool, dodaje brakujące `grant`, zwiększa `max_cost_minor` i rewizję. Wszystkie zmiany są zatwierdzane dopiero po pomyślnej walidacji kanonicznego DAG. Jest to statyczna deklaracja, nie uruchomienie narzędzia.
+
+## Strict JSON admission (2026-11-17)
+
+Both the legacy and canonical KaiOS editors use the shared ES5-compatible
+`OCAFCanonicalGraph.parseUniqueJson` boundary. Duplicate object keys
+(including escaped aliases and nested keys) are rejected before changing
+the editor or persistent storage. The legacy and canonical input limits
+are 16 KiB and 128 KiB of UTF-8 respectively, with a maximum structural
+nesting depth of 64. No new privileged app permissions are granted.
+
+The regression suite exercises import, save, load, Unicode byte limits,
+nested duplicate fields and failed writes. A failed save preserves the
+unsaved Code draft and the previously persisted project; manual reload
+restores the durable snapshot. Six JavaScript regression scripts were
+executed in an isolated V8 harness with substituted Node filesystem, VM
+and assertion adapters: 301 assertion invocations, no failure. This is
+not an actual KaiOS device test or a native Node/Chromium CI result.
+Reproduce using the commands in the existing KaiOS workflow. Production
+status, signatures, Cloud and device acceptance remain unverified.

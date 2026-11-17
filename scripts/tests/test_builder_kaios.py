@@ -17,7 +17,11 @@ class KaiOSContracts(unittest.TestCase):
     def test_offline_editor_does_not_claim_cloud_execution(self):
         js = (APP / "app.js").read_text()
         self.assertIn("localStorage.setItem", js)
-        self.assertIn("JSON.parse", js)
+        self.assertIn("OCAFCanonicalGraph.parseUniqueJson", js)
+        self.assertNotIn("JSON.parse(source)", js)
+        self.assertNotIn("JSON.parse(raw)", js)
+        canonical = (APP / "canonical-ui.js").read_text()
+        self.assertEqual(canonical.count("OCAFCanonicalGraph.parseUniqueJson("), 3)
         self.assertIn("value.nodes.length > 32", js)
         self.assertIn("Chmura niedostępna", js)
         self.assertNotIn("eval(", js)

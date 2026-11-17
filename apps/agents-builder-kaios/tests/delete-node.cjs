@@ -19,7 +19,7 @@ const document = {
   addEventListener() {}
 };
 const localStorage = { setItem() {}, getItem() { return null; } };
-vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8'), { document, localStorage }, { timeout: 2000 });
+vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'canonical-graph.js'), 'utf8') + '\n' + fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8'), { document, localStorage }, { timeout: 2000 });
 elements['node-name'].value = 'first';
 elements.add.click();
 assert.equal(elements.nodes.children.length, 1);
