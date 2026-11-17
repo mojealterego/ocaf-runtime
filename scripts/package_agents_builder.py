@@ -29,18 +29,24 @@ EXACT = frozenset({
     "src/stage044_oauth.rs", "src/stage044_provider_refresh.rs",
     "docs/AGENTS_BUILDER_CODE_NOCODE_5_PLATFORMS.md",
     "docs/roadmap/agents_builder_products_v11.json",
+    "docs/roadmap/agents_builder_target_platforms_v1.json",
     "docs/roadmap/STAGE_CHANGELOG.md",
     "scripts/package_agents_builder.py",
     "scripts/tests/test_agents_builder_local_runner.py",
     "scripts/tests/test_builder_native_desktop.py",
     "scripts/tests/test_builder_mobile_native.py",
     "scripts/tests/test_package_agents_builder.py",
+    "scripts/package_builder_kali.py",
+    "scripts/tests/test_package_builder_kali.py",
+    "scripts/tests/test_builder_platform_targets.py",
 })
 PREFIXES = (
     "apps/agents-builder-web/",
     "apps/agents-builder-desktop/",
     "apps/agents-builder-android/",
     "apps/agents-builder-ios/",
+    "apps/agents-builder-harmonyos/",
+    "apps/agents-builder-kaios/",
     "docs/audits/STAGE050_BUILDER",
     "docs/audits/STAGE051_BUILDER",
     "docs/audits/STAGE052_BUILDER",
@@ -53,6 +59,8 @@ WORKFLOWS = frozenset({
     ".github/workflows/agents-builder-source-bundle.yml",
     ".github/workflows/agents-builder-native-desktop.yml",
     ".github/workflows/agents-builder-native-mobile.yml",
+    ".github/workflows/agents-builder-native-linux.yml",
+    ".github/workflows/agents-builder-kaios.yml",
 })
 
 
