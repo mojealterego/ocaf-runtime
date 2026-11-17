@@ -11,7 +11,8 @@ const MAX_NESTING_DEPTH = 64;
 const WHITESPACE = new Set([' ', '\t', '\r', '\n']);
 
 /**
- * Parse RFC 8259 JSON and reject duplicate keys in every nested object.
+ * Parse bounded JSON, rejecting duplicate keys, non-finite numbers and
+ * unpaired UTF-16 surrogates in all keys and string values.
  * Returns exactly the JSON.parse value for accepted inputs.
  */
 export function parseUniqueJson(source, {maxBytes = MAX_SOURCE_BYTES} = {}) {
@@ -36,7 +37,22 @@ export function parseUniqueJson(source, {maxBytes = MAX_SOURCE_BYTES} = {}) {
     while (index < source.length) {
       const char = source[index++];
       if (char === '\\') { index += 1; continue; } // JSON.parse checked escape syntax
-      if (char === '"') return JSON.parse(source.slice(start, index));
+      if (char === '"') {
+        const decoded = JSON.parse(source.slice(start, index));
+        // Unicode scalar values only, matching the Rust JSON boundary.
+        for (let i = 0; i < decoded.length; i++) {
+          const unit = decoded.charCodeAt(i);
+          if (unit >= 0xD800 && unit <= 0xDBFF) {
+            const low = decoded.charCodeAt(++i);
+            if (!(low >= 0xDC00 && low <= 0xDFFF)) {
+              throw new Error('json: unpaired surrogate');
+            }
+          } else if (unit >= 0xDC00 && unit <= 0xDFFF) {
+            throw new Error('json: unpaired surrogate');
+          }
+        }
+        return decoded;
+      }
     }
     throw new Error('json: unterminated string');
   };
@@ -77,9 +93,15 @@ export function parseUniqueJson(source, {maxBytes = MAX_SOURCE_BYTES} = {}) {
       }
     }
     // JSON.parse() has already verified all primitive syntax and delimiters.
+    const start = index;
     while (index < source.length &&
            !WHITESPACE.has(source[index]) &&
            ![',', ']', '}'].includes(source[index])) index += 1;
+    const first = source[start];
+    if ((first === '-' || (first >= '0' && first <= '9')) &&
+        !Number.isFinite(Number(source.slice(start, index)))) {
+      throw new Error('json: non-finite number');
+    }
   };
   value(0);
   whitespace();

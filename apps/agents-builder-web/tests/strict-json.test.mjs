@@ -57,3 +57,20 @@ test('offline revision history can exceed one DSL payload within its distinct ca
 test('callers cannot raise JSON size cap beyond the bounded offline limit', () => {
   assert.throws(() => parseUniqueJson('{}', {maxBytes: Number.MAX_SAFE_INTEGER}), /limit|invalid/i);
 });
+
+test('AB-JSON-014 rejects non-finite numbers in every position', () => {
+  for (const source of ['1e400','-1e400','{"nested":[1e400]}']) {
+    assert.throws(() => parseUniqueJson(source), /non-finite/i);
+  }
+});
+
+test('AB-JSON-015 rejects isolated surrogate code units in keys and values', () => {
+  for (const source of ['"\\uD800"','{"\\uDC00":1}','{"a":["\\uD800x"]}', '"'+String.fromCharCode(0xD800)+'"']) {
+    assert.throws(() => parseUniqueJson(source), /surrogate/i);
+  }
+});
+
+test('AB-JSON-016 retains valid Unicode pairs and finite numeric extremes', () => {
+  const source = '{"\\uD83D\\uDE00":"\\uD83D\\uDE00","values":[1e308,-1e308,0,5e-324]}';
+  assert.deepEqual(parseUniqueJson(source), JSON.parse(source));
+});
