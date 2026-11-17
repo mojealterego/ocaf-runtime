@@ -86,7 +86,7 @@ class NativeBuilderSourceContracts(unittest.TestCase):
         self.assertIn("ocaf-rust-validation", app)
         self.assertIn("encodeDsl(state.project, TENANT)", app)
         sw = source("apps/agents-builder-web/sw.js")
-        self.assertIn("ocaf-builder-web-v8", sw)
+        self.assertIn("ocaf-builder-web-v9", sw)
         self.assertIn("./preview-gate.mjs", sw)
         self.assertIn("previewGate.take(receipt.request_id", app)
         self.assertIn("request_id:requestId", app)

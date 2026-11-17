@@ -257,3 +257,24 @@ a recording backend. The handler, allowlist and parser excerpts match
 the proposed source; the new test blob equals the locally executed test
 file. This was not a full checkout, real llama.cpp inference, browser
 E2E, or a native-platform build. Product acceptance is unchanged.
+
+## Cloud selection concurrency (2026-11-17)
+
+Cloud Open and New share a one-use selection lease. The latest request
+supersedes older lookups, and workspace changes, Code input and rendering
+revoke outstanding selections. Stale successes and errors cannot overwrite
+the selected project or report an obsolete failure. Unapplied Code edits
+require explicit discard confirmation before either operation; a current
+successful open/new clears the dirty flag. A current non-404 error remains
+visible and only an authenticated current 404 permits creating a draft.
+PWA cache v9.
+
+Seven source-level integration regression tests exercise the actual handlers
+with controlled DOM and transport adapters in isolated V8. Four defects
+reproduced on the old source; seven tests passed on the revised source.
+Reproduce with:
+
+    node --test apps/agents-builder-web/tests/cloud-selection.test.mjs
+
+No live Cloud session, full Node suite or native GUI/device build was
+executed by this scoped test. Acceptance status remains unconfirmed.

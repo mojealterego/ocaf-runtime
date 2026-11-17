@@ -8,6 +8,7 @@ import {PreviewGate} from './preview-gate.mjs';
 
 const TENANT = 'local';
 const previewGate = new PreviewGate();
+const cloudSelectionGate = new PreviewGate();
 
 // Native Rust UniFFI confirmation is purely offline validation (never execution).
 window.addEventListener('ocaf-rust-validation', event => {
@@ -185,6 +186,7 @@ function renderHistory() {
 }
 function invalidatePreview() {
   previewGate.invalidate();
+  cloudSelectionGate.invalidate();
   el('preview-output').textContent = 'Wybierz „Weryfikuj”, aby uzyskać plan aktualnego projektu.';
 }
 function render() {
@@ -399,50 +401,68 @@ function disconnectCloud() {
   render();
   notice('Rozłączono chmurę. Lokalna przestrzeń robocza pozostaje bez zmian.');
 }
+// One active selection across both Open and New. All render/Code-draft
+// invalidations also revoke this lease, including workspace round trips.
+function currentCloudSelection(id, client, generation, tenant) {
+  return cloudSelectionGate.take(id, 'cloud') && cloudSessionGeneration === generation &&
+    cloudClient === client && state.workspace === 'cloud' && state.cloud.tenant === tenant;
+}
 async function openCloudProject() {
   if (cloudSaveInFlight) throw new Error('conflict: poczekaj na zakończenie zapisu Cloud');
   requireCloud();
-  if (state.cloud.pending && !window.confirm('Odrzucić niezapisany szkic chmurowy?')) return;
+  if ((state.cloud.pending || state.dirty) && !window.confirm('Odrzucić niezapisany szkic chmurowy?')) return;
   const client = cloudClient;
   const generation = cloudSessionGeneration;
   const tenant = state.cloud.tenant;
   const projectId = el('project-id').value.trim();
-  const {project,head} = await client.load(tenant, projectId);
-  if (cloudSessionGeneration !== generation || cloudClient !== client ||
-      state.workspace !== 'cloud' || state.cloud.tenant !== tenant) return;
+  const id = cloudSelectionGate.begin('cloud');
+  let result;
+  try {
+    result = await client.load(tenant, projectId);
+  } catch (error) {
+    if (currentCloudSelection(id, client, generation, tenant)) throw error;
+    return;
+  }
+  if (!currentCloudSelection(id, client, generation, tenant)) return;
+  const {project,head} = result;
   state.project = project;
   state.cloud.head = head;
   state.cloud.pending = false;
   state.saved = project.revision;
   state.selectedNode = null;
   state.selectedEdge = 0;
+  state.dirty = false;
   render();
   notice('Otworzono uwierzytelniony projekt chmurowy r' + head.revision + '.');
 }
 async function newCloudProject() {
   if (cloudSaveInFlight) throw new Error('conflict: poczekaj na zakończenie zapisu Cloud');
   requireCloud();
-  if (state.cloud.pending && !window.confirm('Odrzucić niezapisany szkic chmurowy?')) return;
+  if ((state.cloud.pending || state.dirty) && !window.confirm('Odrzucić niezapisany szkic chmurowy?')) return;
   const client = cloudClient;
   const generation = cloudSessionGeneration;
   const tenant = state.cloud.tenant;
   const project = newProject(tenant, el('project-id').value.trim());
+  const id = cloudSelectionGate.begin('cloud');
   try {
     await client.load(tenant, project.project_id);
-    throw new Error('conflict: projekt już istnieje w chmurze; użyj Otwórz');
   } catch (error) {
+    if (!currentCloudSelection(id, client, generation, tenant)) return;
     if (!(error instanceof CloudApiError && error.status === 404)) throw error;
+    state.project = project;
+    state.saved = 1;
+    state.cloud.head = null;
+    state.cloud.pending = true;
+    state.selectedNode = null;
+    state.selectedEdge = 0;
+    state.dirty = false;
+    render();
+    notice('Nowy szkic w pamięci. Projekt nie istnieje jeszcze na serwerze — użyj Zapisz w chmurze.');
+    return;
   }
-  if (cloudSessionGeneration !== generation || cloudClient !== client ||
-      state.workspace !== 'cloud' || state.cloud.tenant !== tenant) return;
-  state.project = project;
-  state.saved = 1;
-  state.cloud.head = null;
-  state.cloud.pending = true;
-  state.selectedNode = null;
-  state.selectedEdge = 0;
-  render();
-  notice('Nowy szkic w pamięci. Projekt nie istnieje jeszcze na serwerze — użyj Zapisz w chmurze.');
+  if (currentCloudSelection(id, client, generation, tenant)) {
+    throw new Error('conflict: projekt już istnieje w chmurze; użyj Otwórz');
+  }
 }
 async function saveCloudProject() {
   requireCloud();
