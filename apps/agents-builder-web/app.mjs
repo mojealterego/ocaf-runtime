@@ -4,14 +4,18 @@ import {
 } from './editor.mjs';
 import {CloudWorkspaceClient, CloudApiError} from './cloud.mjs';
 import {initIntegrations} from './integrations-ui.mjs';
+import {PreviewGate} from './preview-gate.mjs';
 
 const TENANT = 'local';
+const previewGate = new PreviewGate();
 
 // Native Rust UniFFI confirmation is purely offline validation (never execution).
 window.addEventListener('ocaf-rust-validation', event => {
+  let receipt;
+  try { receipt = JSON.parse(event.detail); } catch { return; }
+  if (!receipt || !previewGate.take(receipt.request_id, 'native') || state.workspace !== 'local' || state.dirty) return;
   try {
-    const receipt = JSON.parse(event.detail);
-    if (!receipt.ok) {
+    if (receipt.ok !== true) {
       notice('Rust UniFFI odrzucił projekt; graf nie jest zatwierdzony.');
       return;
     }
@@ -179,7 +183,12 @@ function renderHistory() {
   }
   select.value = String(state.workspace === 'cloud' ? (state.cloud.head?.revision ?? 0) : state.saved);
 }
+function invalidatePreview() {
+  previewGate.invalidate();
+  el('preview-output').textContent = 'Wybierz „Weryfikuj”, aby uzyskać plan aktualnego projektu.';
+}
 function render() {
+  invalidatePreview();
   const hasProject = Boolean(state.project);
   el('project-title').textContent = hasProject ? currentId() : 'Brak projektu';
   el('revision-label').textContent = hasProject ? 'r' + state.saved + (state.cloud.pending && state.workspace === 'cloud' ? ' (szkic)' : '') : '—';
@@ -234,7 +243,15 @@ async function preview() {
   if (!state.project) throw new Error('workspace: select a project');
   if (state.workspace === 'cloud') {
     if (!cloudClient) throw new Error('oauth: connect first');
-    const plan = await cloudClient.preview(currentTenant(), state.project);
+    const requestId = previewGate.begin('cloud');
+    el('preview-output').textContent = 'Walidacja Cloud w toku…';
+    let plan;
+    try { plan = await cloudClient.preview(currentTenant(), state.project); }
+    catch (error) {
+      if (previewGate.take(requestId, 'cloud')) throw error;
+      return;
+    }
+    if (!previewGate.take(requestId, 'cloud')) return;
     el('preview-output').textContent = [
       'CLOUD VALIDATION — authenticated Rust plan only; no tool execution.',
       'Graph: ' + plan.ordered_nodes.join(' → '),
@@ -256,13 +273,21 @@ async function preview() {
   ].join('\n');
   // Both mobile shells validate the canonical offline project in the
   // same Rust core, without granting execution or cloud authority.
+  const requestId = previewGate.begin('native');
   const nativeMessage = JSON.stringify({
-    action:'validate', content:encodeDsl(state.project, TENANT)
+    action:'validate', request_id:requestId, content:encodeDsl(state.project, TENANT)
   });
-  if (window.ocafHost && typeof window.ocafHost.postMessage === 'function') {
-    window.ocafHost.postMessage(nativeMessage);
-  } else if (window.webkit?.messageHandlers?.ocafHost) {
-    window.webkit.messageHandlers.ocafHost.postMessage(nativeMessage);
+  try {
+    if (window.ocafHost && typeof window.ocafHost.postMessage === 'function') {
+      window.ocafHost.postMessage(nativeMessage);
+    } else if (window.webkit?.messageHandlers?.ocafHost) {
+      window.webkit.messageHandlers.ocafHost.postMessage(nativeMessage);
+    } else {
+      previewGate.invalidate();
+    }
+  } catch (error) {
+    previewGate.invalidate();
+    throw error;
   }
   notice('Graph validated locally. No tools were executed.');
 }
@@ -485,7 +510,7 @@ function init() {
     next.revision += 1;
     persist(next);
   }));
-  el('dsl').addEventListener('input', () => { state.dirty = true; el('message').textContent = 'Unapplied Code DSL changes'; });
+  el('dsl').addEventListener('input', () => { state.dirty = true; invalidatePreview(); el('message').textContent = 'Unapplied Code DSL changes'; });
   el('apply-code').addEventListener('click', () => safe(() => {
     const raw = el('dsl').value;
     if (new TextEncoder().encode(raw).length > 128 * 1024) throw new Error('limit: DSL too large');

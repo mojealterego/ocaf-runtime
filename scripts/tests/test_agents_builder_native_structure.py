@@ -86,7 +86,13 @@ class NativeBuilderSourceContracts(unittest.TestCase):
         self.assertIn("ocaf-rust-validation", app)
         self.assertIn("encodeDsl(state.project, TENANT)", app)
         sw = source("apps/agents-builder-web/sw.js")
-        self.assertIn("ocaf-builder-web-v7", sw)
+        self.assertIn("ocaf-builder-web-v8", sw)
+        self.assertIn("./preview-gate.mjs", sw)
+        self.assertIn("previewGate.take(receipt.request_id", app)
+        self.assertIn("request_id:requestId", app)
+        self.assertIn("invalidatePreview();", app)
+        self.assertIn('.put("request_id", requestId)', source("apps/android/app/src/main/java/com/ocaf/builder/MainActivity.kt"))
+        self.assertIn('"request_id": requestID', source("apps/ios/Sources/OCAFBuilderApp.swift"))
 
     def test_ten_products_remain_partial_and_never_claim_production(self):
         matrix = json.loads(source("docs/roadmap/agents_builder_products_v11.json"))

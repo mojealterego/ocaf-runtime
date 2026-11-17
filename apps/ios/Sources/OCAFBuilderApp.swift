@@ -80,12 +80,15 @@ struct BuilderWebView: UIViewRepresentable {
             }
 
             if payload["action"] as? String == "validate" {
+                guard let requestID = payload["request_id"] as? String,
+                      requestID.range(of: #"^[1-9][0-9]{0,15}$"#, options: .regularExpression) != nil,
+                      requestID.utf8.allSatisfy({ $0 >= 48 && $0 <= 57 }) else { return }
                 let receipt: [String: Any]
                 do {
                     let result = try validateLocalJsonDsl(source: content)
-                    receipt = ["ok": true, "plan": result]
+                    receipt = ["request_id": requestID, "ok": true, "plan": result]
                 } catch {
-                    receipt = ["ok": false, "error": "Rust validation rejected"]
+                    receipt = ["request_id": requestID, "ok": false, "error": "Rust validation rejected"]
                 }
                 if let bytes = try? JSONSerialization.data(withJSONObject: receipt) {
                     let base64 = bytes.base64EncodedString()

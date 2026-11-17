@@ -136,8 +136,11 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                     "validate" -> {
+                                        val requestId = obj.opt("request_id") as? String ?: return@addWebMessageListener
+                                        if (!requestId.matches(Regex("[1-9][0-9]{0,15}"))) return@addWebMessageListener
                                         val result = runCatching { validateLocalJsonDsl(dataString) }
                                         val reply = JSONObject()
+                                            .put("request_id", requestId)
                                             .put("ok", result.isSuccess)
                                             .put("plan", result.getOrNull())
                                             .put("error", if (result.isFailure) "Rust validation rejected" else JSONObject.NULL)

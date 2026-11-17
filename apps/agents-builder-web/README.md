@@ -216,3 +216,23 @@ or that device RAM is sufficient.
 ### Verified build evidence
 
 **Dowody CI (commit e19ef9e665d9bbe6bc0e62c9dde7d9b98825e4b9):** [Builder Web #41768766591](https://github.com/mojealterego/ocaf-runtime/actions/runs/41768766591) SUCCESS (26/26 Node, Chrome GUI E2E, Python 5/5, Rust fixture); [Source ZIP #41768766620](https://github.com/mojealterego/ocaf-runtime/actions/runs/41768766620) SUCCESS (11/11 testów pakowania, 5/5 backendu, 26/26 Node, Chromium, SHA256SUMS 2/2, wydanie z 2 ZIP); [Roadmap v11 #41768766632](https://github.com/mojealterego/ocaf-runtime/actions/runs/41768766632) SUCCESS. Status TESTED_LOCAL_PARTIAL: testowana walidacja, prawdziwe localhost/subprocess/HTTP i binarny transfer, ale bez faktycznej inferencji wag GGUF i testów na sprzęcie operatora.
+
+## Validation receipt correlation (2026-11-17)
+
+The browser and desktop/mobile WebView editor use a one-use, same-page
+request gate for local Rust UniFFI and Cloud validation. Switching projects,
+changing workspaces, editing Code DSL and starting a newer preview revoke
+the old correlation. Stale or duplicate receipts and stale Cloud errors
+cannot update the visible validation result. Android and iOS return the
+bounded request identifier from the corresponding native validation request.
+The service worker v8 caches the new preview-gate module.
+
+Evidence: five focused Node.js 22 unit tests executed successfully in a
+local environment (module and tests verified by their Git blob hashes).
+Two integration regression tests executed successfully in an isolated V8
+environment with fake DOM/transport adapters and the actual preview and
+receipt-handler source. The integration test is reproducible via the
+existing Node test glob. This does not attest physical WebView execution,
+native Android/iOS compilation, an authenticated live Cloud session,
+or the full browser E2E suite. Request correlation is not authentication
+or cryptographic provenance. Production and platform acceptance unchanged.
