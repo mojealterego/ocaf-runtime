@@ -1,0 +1,7 @@
+{
+  "name": "entry",
+  "version": "0.1.0",
+  "description": "OCAF Agents Builder HarmonyOS entry HAP",
+  "main": "",
+  "dependencies": {}
+}

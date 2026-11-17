@@ -1,6 +1,6 @@
 # OCAF Agents Builder — HarmonyOS NEXT
 
-**Status: architecture preparation only. No HAP, simulator execution or device verification.**
+**Status: HarmonyOS Stage application source implemented; domain typed/behavioral tests executed in Node 22, native SDK build and device GUI E2E still NOT VERIFIED.**
 
 ## Platform boundary
 
@@ -32,3 +32,16 @@ Before implementing ArkTS API calls, pin the actual DevEco Studio/HarmonyOS SDK 
 6. Export has verifiable signature and provenance.
 
 See `docs/roadmap/AGENTS_BUILDER_LINUX_HARMONYOS.md`.
+
+
+## Source implementation (2026-11-17)
+
+The Stage application contains native EntryAbility.ets, ArkUI BuilderPage.ets, Preferences-backed ProjectStore.ets and typed BuilderDomain.ets. Local validation checks resource limits, project ownership namespace, typed ports, directed cycles, tool permission grants and cost bounds. The Code/NoCode editors share a canonical JSON DAG and support an explicitly restricted round-trip. No runtime effect is executed.
+
+Command for domain regression (Node.js 22+):
+
+    node --experimental-strip-types --test apps/agents-builder-harmonyos/tests/domain.test.mjs
+
+The UI exposes Code/NoCode and Local/Cloud switches. Local permits creating, validating, saving and reopening projects; it awaits Preferences.flush before reporting success. Cloud explicitly refuses save/load because authenticated HTTPS ingress, tenant binding and signed export are not integrated. Local tenant identifiers are only namespaces, not authentication.
+
+Native HAP compilation, simulator/device GUI E2E, signatures, secure credentials and live Cloud service remain UNVERIFIED/NOT IMPLEMENTED; static source and Node tests are not equivalent to target-platform build evidence.
