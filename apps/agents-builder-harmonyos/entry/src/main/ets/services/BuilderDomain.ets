@@ -22,6 +22,52 @@ export interface CompiledGraph {
 }
 const MAX_BYTES = 128 * 1024;
 const MAX_COST = 1_000_000_000_000;
+/** Codepoint ordering matches Rust BTreeMap ordering for ASCII identifiers. */
+function byteOrder(a: string, b: string): number { return a < b ? -1 : a > b ? 1 : 0; }
+function utf8Length(value: string): number {
+  let length = 0;
+  for (let i = 0; i < value.length; i++) {
+    const c = value.charCodeAt(i);
+    if (c <= 0x7f) length++;
+    else if (c <= 0x7ff) length += 2;
+    else if (c >= 0xd800 && c <= 0xdbff && i + 1 < value.length &&
+             value.charCodeAt(i + 1) >= 0xdc00 && value.charCodeAt(i + 1) <= 0xdfff) {
+      length += 4; i++;
+    } else length += 3;
+    if (length > MAX_BYTES) return length;
+  }
+  return length;
+}
+/** Reject structurally ambiguous duplicate JSON keys, including escaped aliases. */
+function rejectDuplicateJsonKeys(source: string): void {
+  const frames: Array<{ object: boolean; keys: Set<string> }> = [];
+  for (let i = 0; i < source.length; i++) {
+    const c = source[i];
+    if (c === '{' || c === '[') frames.push({ object: c === '{', keys: new Set<string>() });
+    else if (c === '}' || c === ']') frames.pop();
+    else if (c === '"') {
+      const start = i;
+      let escaped = false;
+      i++;
+      for (; i < source.length; i++) {
+        const next = source[i];
+        if (escaped) { escaped = false; continue; }
+        if (next === '\\') { escaped = true; continue; }
+        if (next === '"') break;
+      }
+      if (i >= source.length) return; // JSON.parse reports malformed strings.
+      let j = i + 1;
+      while (j < source.length && /\s/.test(source[j])) j++;
+      const current = frames[frames.length - 1];
+      if (source[j] === ':' && current && current.object) {
+        const name = JSON.parse(source.slice(start, i + 1)) as string;
+        if (current.keys.has(name)) fail('Duplicate JSON property');
+        current.keys.add(name);
+      }
+    }
+  }
+}
+
 const TYPES: PortType[] = ['text', 'json', 'bytes'];
 const KINDS: NodeKind[] = ['input', 'output', 'transform', 'tool'];
 const PROJECT_KEYS = ['schema_version','tenant_id','project_id','revision','max_cost_minor','grants','nodes','edges'];
@@ -142,25 +188,26 @@ export function canonicalProject(project: BuilderProject, tenant: string): Build
   compiled.ordered_nodes.forEach((id: string, index: number) => order.set(id, index));
   copy.nodes.sort((a: GraphNode, b: GraphNode) => order.get(a.id)! - order.get(b.id)!);
   for (const node of copy.nodes) {
-    node.inputs.sort((a: Port, b: Port) => a.name.localeCompare(b.name));
-    node.outputs.sort((a: Port, b: Port) => a.name.localeCompare(b.name));
+    node.inputs.sort((a: Port, b: Port) => byteOrder(a.name, b.name));
+    node.outputs.sort((a: Port, b: Port) => byteOrder(a.name, b.name));
   }
   copy.edges.sort((a: GraphEdge, b: GraphEdge) =>
-    JSON.stringify([a.from_node, a.from_port, a.to_node, a.to_port]).localeCompare(
+    byteOrder(JSON.stringify([a.from_node, a.from_port, a.to_node, a.to_port]),
       JSON.stringify([b.from_node, b.from_port, b.to_node, b.to_port])));
   copy.grants.sort();
   return copy;
 }
 export function readCode(source: string, tenant: string): BuilderProject {
-  if (typeof source !== 'string' || new TextEncoder().encode(source).length > MAX_BYTES) fail('DSL too large');
+  if (typeof source !== 'string' || utf8Length(source) > MAX_BYTES) fail('DSL too large');
   let parsed: BuilderProject;
+  rejectDuplicateJsonKeys(source);
   try { parsed = JSON.parse(source) as BuilderProject; }
   catch (_error) { return fail('Invalid JSON Code DSL'); }
   return canonicalProject(parsed, tenant);
 }
 export function writeCode(project: BuilderProject, tenant: string): string {
   const source = JSON.stringify(canonicalProject(project, tenant), null, 2);
-  if (new TextEncoder().encode(source).length > MAX_BYTES) fail('DSL too large');
+  if (utf8Length(source) > MAX_BYTES) fail('DSL too large');
   return source;
 }
 export function newProject(tenant: string, projectId: string): BuilderProject {

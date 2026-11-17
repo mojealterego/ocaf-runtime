@@ -88,3 +88,29 @@ test('stable canonicalization across node/edge insertion order', () => {
     assert.deepEqual(core.readCode(core.writeCode(q,'tenant_a'),'tenant_a'), q);
   }
 });
+
+test('Code DSL duplicate key spoofing and escaped aliases denied', () => {
+  const p = core.writeCode(fresh(), 'tenant_a');
+  const duplicate = p.replace('"tenant_id": "tenant_a",', '"tenant_id": "tenant_a", "tenant_id": "tenant_a",');
+  assert.throws(() => core.readCode(duplicate, 'tenant_a'), /Duplicate JSON property/);
+  const escaped = p.replace('"tenant_id": "tenant_a",', '"tenant_id": "tenant_a", "ten\\u0061nt_id": "tenant_a",');
+  assert.throws(() => core.readCode(escaped, 'tenant_a'), /Duplicate JSON property/);
+});
+
+test('canonical ordering matches Rust ASCII order regardless of device locale', () => {
+  let p = fresh();
+  p = core.addTransform(p,'tenant_a','lower');
+  p = core.addTransform(p,'tenant_a','UPPER');
+  const serialized = core.writeCode(p, 'tenant_a');
+  const project = core.readCode(serialized, 'tenant_a');
+  // This graph is linear, but each node has deterministically sorted ports.
+  assert.equal(serialized, core.writeCode(project, 'tenant_a'));
+  const richer = clone(project);
+  const n = richer.nodes.find(x => x.id === 'lower');
+  n.inputs.push({name:'Alpha',kind:'text'});
+  n.inputs.push({name:'beta',kind:'text'});
+  richer.edges.push({from_node:'input',from_port:'out',to_node:'lower',to_port:'Alpha'});
+  richer.edges.push({from_node:'input',from_port:'out',to_node:'lower',to_port:'beta'});
+  const sorted = core.canonicalProject(richer,'tenant_a');
+  assert.deepEqual(sorted.nodes.find(x=>x.id==='lower').inputs.map(x=>x.name), ['Alpha','beta','in']);
+});
