@@ -178,17 +178,7 @@ class PackageBuilderTests(unittest.TestCase):
         import os
         import sys
         from unittest.mock import patch
-        required = [
-            "apps/agents-builder-web/index.html", "apps/agents-builder-web/app.mjs",
-            "apps/agents-builder-web/local_runner.py",
-            "apps/agents-builder-web/runner-client.mjs",
-            "scripts/tests/test_agents_builder_local_runner.py",
-            "apps/agents-builder-web/models.mjs", "apps/agents-builder-web/i18n.mjs",
-            "apps/agents-builder-web/credentials.mjs", "src/builder_core.rs",
-            "src/builder_cloud.rs", "src/builder_http.rs",
-            "src/builder_store.rs", "tests/builder_web_contract.rs",
-            "scripts/package_agents_builder.py",
-        ]
+        required = list(bundle.REQUIRED_BUILDER_FILES)
         def fake_bundle(repo, dst, sha, files, kind):
             dst.write_bytes(b"ZIP-TEST")
             return {"name": dst.name, "sha256": hashlib.sha256(b"ZIP-TEST").hexdigest()}
@@ -259,22 +249,7 @@ class PackageBuilderTests(unittest.TestCase):
         import sys
 
         out = Path(self.temp.name) / "release-output"
-        required = (
-            "apps/agents-builder-web/index.html",
-            "apps/agents-builder-web/app.mjs",
-            "apps/agents-builder-web/local_runner.py",
-            "apps/agents-builder-web/runner-client.mjs",
-            "scripts/tests/test_agents_builder_local_runner.py",
-            "apps/agents-builder-web/models.mjs",
-            "apps/agents-builder-web/i18n.mjs",
-            "apps/agents-builder-web/credentials.mjs",
-            "src/builder_core.rs",
-            "src/builder_cloud.rs",
-            "src/builder_http.rs",
-            "src/builder_store.rs",
-            "tests/builder_web_contract.rs",
-            "scripts/package_agents_builder.py",
-        )
+        required = list(bundle.REQUIRED_BUILDER_FILES)
         def fail_second(*args, **kwargs):
             if fail_second.calls:
                 raise ValueError("injected second archive failure")

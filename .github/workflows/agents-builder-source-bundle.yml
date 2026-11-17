@@ -5,6 +5,19 @@ on:
     branches: [main]
     paths:
       - "apps/agents-builder-web/**"
+      - "apps/agents-builder-desktop/**"
+      - "apps/android/**"
+      - "apps/ios/**"
+      - "apps/agents-builder-android/**"
+      - "apps/agents-builder-ios/**"
+      - "apps/agents-builder-harmonyos/**"
+      - "apps/agents-builder-kaios/**"
+      - "crates/ocaf-builder-mobile-ffi/**"
+      - "scripts/package_builder_kali.py"
+      - "scripts/tests/test_builder_bundle_platform_coverage.py"
+      - "scripts/tests/test_local_runner_http_admission.py"
+      - "docs/roadmap/agents_builder_target_platforms_v1.json"
+      - "rust-toolchain.toml"
       - "scripts/tests/test_agents_builder_local_runner.py"
       - "src/builder_*.rs"
       - "src/model_router.rs"
@@ -39,10 +52,14 @@ jobs:
           node-version: "22"
       - name: Packaging unit and security tests
         run: python3 -m unittest discover -s scripts/tests -p test_package_agents_builder.py -v
-      - name: Unified five-application architecture contract tests
+      - name: Eight-platform source ZIP integration tests
+        run: python3 -m unittest discover -s scripts/tests -p test_builder_bundle_platform_coverage.py -v
+      - name: Historical unified application architecture contract tests
         run: python3 -m unittest discover -s scripts/tests -p test_builder_unified_architecture.py -v
       - name: Local GGUF runner subprocess and localhost security tests
         run: python3 -m unittest discover -s scripts/tests -p test_agents_builder_local_runner.py -v
+      - name: Local HTTP admission regression
+        run: python3 -m unittest discover -s scripts/tests -p test_local_runner_http_admission.py -v
       - name: Builder JavaScript unit and contract tests
         run: node --test apps/agents-builder-web/tests/*.test.mjs
       - name: Browser GUI end-to-end smoke

@@ -57,3 +57,27 @@ Status odbioru: \`TESTED_LOCAL_PARTIAL\`. Nie nadano \`DEPLOYED\`,
 ## Inference GGUF — dodatkowe pliki pakietu
 
 Pakiet Agents Builder zawiera teraz również skrypt lokalnego runnera Python, klienta JS, testy subprocess/HTTP i dokumentację. Źródłowe wydanie ZIP nie zawiera skompilowanego llama-server ani żadnych wag GGUF. Operator instaluje binarkę zgodną z platformą i podaje katalog modeli. Szczegóły i polecenie uruchomienia: apps/agents-builder-web/README.md.
+
+## Eight platform source coverage (2026-11-17)
+
+The focused Agents Builder source ZIP includes the actual Android and iOS
+application directories (apps/android, apps/ios), their shared Rust UniFFI
+crate, desktop Tauri, KaiOS, HarmonyOS, and Kali packaging sources. Desktop
+Tauri is shared by Windows, macOS, Linux and Kali Linux. Cloud is a workspace
+mode/shared service, not another native application. The packager rejects a
+missing required source entrypoint or shared contract before publishing
+any archive. There are 49 mandatory source paths. The focused source ZIP is
+not a standalone installer and does not attest native binaries; use the
+full-runtime source archive for workspace-wide dependencies.
+
+Regression command (does not require GitHub Actions):
+
+    python3 -m unittest discover -s scripts/tests -p test_builder_bundle_platform_coverage.py -v
+
+Evidence: the exact packager source and new test file were run locally
+against temporary Git main repositories with fixture payloads. Three
+test methods passed, including ten missing-anchor rejection subcases,
+SHA-256 manifest validation and two byte-identical source ZIP builds.
+The real repository tree at the parent commit contained all mandatory paths
+except the newly added test, which is included by this change. Real full
+OCAF ZIP creation and platform builds were not executed here.

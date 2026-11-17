@@ -40,12 +40,27 @@ EXACT = frozenset({
     "scripts/package_builder_kali.py",
     "scripts/tests/test_package_builder_kali.py",
     "scripts/tests/test_builder_platform_targets.py",
+    "scripts/tests/test_builder_bundle_platform_coverage.py",
+    "scripts/tests/test_agents_builder_native_structure.py",
+    "rust-toolchain.toml",
+    "scripts/generate_builder_icons.py",
+    "scripts/verify_native_artifact.py",
+    "scripts/smoke_native_desktop.py",
+    "scripts/smoke_linux_gui.py",
+    "scripts/verify_kaios_package.py",
+    "scripts/verify_builder_gate10.py",
+    "scripts/verify_gate10.sh",
+    "schemas/agents_builder_v1_workspace.schema.json",
+    "release/CERTIFICATE_RECORD.json",
 })
 PREFIXES = (
     "apps/agents-builder-web/",
     "apps/agents-builder-desktop/",
     "apps/agents-builder-android/",
     "apps/agents-builder-ios/",
+    "apps/android/",
+    "apps/ios/",
+    "crates/ocaf-builder-mobile-ffi/",
     "apps/agents-builder-harmonyos/",
     "apps/agents-builder-kaios/",
     "docs/audits/STAGE050_BUILDER",
@@ -63,6 +78,61 @@ WORKFLOWS = frozenset({
     ".github/workflows/agents-builder-native-linux.yml",
     ".github/workflows/agents-builder-kaios.yml",
 })
+
+
+# Required entrypoints and shared contracts, not proof of platform compilation.
+REQUIRED_BUILDER_FILES = (
+    "apps/agents-builder-web/index.html",
+    "apps/agents-builder-web/app.mjs",
+    "apps/agents-builder-web/local_runner.py",
+    "apps/agents-builder-web/runner-client.mjs",
+    "apps/agents-builder-web/models.mjs",
+    "apps/agents-builder-web/i18n.mjs",
+    "apps/agents-builder-web/credentials.mjs",
+    "apps/agents-builder-web/strict-json.mjs",
+    "apps/agents-builder-web/preview-gate.mjs",
+    "apps/agents-builder-web/sw.js",
+    "src/builder_core.rs",
+    "src/builder_cloud.rs",
+    "src/builder_http.rs",
+    "src/builder_store.rs",
+    "tests/builder_web_contract.rs",
+    "scripts/package_agents_builder.py",
+    "scripts/tests/test_agents_builder_local_runner.py",
+    "scripts/tests/test_local_runner_http_admission.py",
+    "scripts/tests/test_builder_bundle_platform_coverage.py",
+    "docs/roadmap/agents_builder_target_platforms_v1.json",
+    "rust-toolchain.toml",
+    # Windows, macOS, Linux and Kali share this host.
+    "apps/agents-builder-desktop/src-tauri/Cargo.toml",
+    "apps/agents-builder-desktop/src-tauri/src/main.rs",
+    "apps/agents-builder-desktop/src-tauri/tauri.conf.json",
+    "scripts/package_builder_kali.py",
+    "scripts/generate_builder_icons.py",
+    "scripts/verify_native_artifact.py",
+    "apps/android/app/build.gradle.kts",
+    "apps/android/app/src/main/AndroidManifest.xml",
+    "apps/android/app/src/main/java/com/ocaf/builder/MainActivity.kt",
+    "apps/ios/project.yml",
+    "apps/ios/build.sh",
+    "apps/ios/Sources/OCAFBuilderApp.swift",
+    "crates/ocaf-builder-mobile-ffi/Cargo.toml",
+    "crates/ocaf-builder-mobile-ffi/src/lib.rs",
+    "crates/ocaf-builder-mobile-ffi/src/bin/uniffi-bindgen.rs",
+    "apps/agents-builder-harmonyos/AppScope/app.json5",
+    "apps/agents-builder-harmonyos/entry/src/main/module.json5",
+    "apps/agents-builder-harmonyos/entry/src/main/ets/pages/BuilderPage.ets",
+    "apps/agents-builder-harmonyos/entry/src/main/ets/services/BuilderDomain.ets",
+    "apps/agents-builder-harmonyos/entry/src/main/ets/services/ProjectStore.ets",
+    "apps/agents-builder-kaios/manifest.webapp",
+    "apps/agents-builder-kaios/index.html",
+    "apps/agents-builder-kaios/app.js",
+    "apps/agents-builder-kaios/canonical-graph.js",
+    "apps/agents-builder-kaios/canonical-ui.js",
+    "scripts/verify_kaios_package.py",
+    "schemas/agents_builder_v1_workspace.schema.json",
+    "release/CERTIFICATE_RECORD.json",
+)
 
 
 def publish_release_directory(staged: Path, destination: Path) -> None:
@@ -309,16 +379,7 @@ def main() -> int:
         raise ValueError(f"HEAD {sha} != expected SHA {args.expected_sha}")
     paths = tracked_files(repo)
     selected = [p for p in paths if select_builder(p)]
-    required = ("apps/agents-builder-web/index.html", "apps/agents-builder-web/app.mjs",
-                "apps/agents-builder-web/local_runner.py",
-                "apps/agents-builder-web/runner-client.mjs",
-                "scripts/tests/test_agents_builder_local_runner.py",
-                "apps/agents-builder-web/models.mjs", "apps/agents-builder-web/i18n.mjs",
-                "apps/agents-builder-web/credentials.mjs", "src/builder_core.rs",
-                "src/builder_cloud.rs", "src/builder_http.rs",
-                "src/builder_store.rs", "tests/builder_web_contract.rs",
-                "scripts/package_agents_builder.py")
-    missing = [path for path in required if path not in selected]
+    missing = [path for path in REQUIRED_BUILDER_FILES if path not in selected]
     if missing:
         raise ValueError("required builder files missing: " + ", ".join(missing))
     # Publish the entire four-file release as one directory entry. Never
