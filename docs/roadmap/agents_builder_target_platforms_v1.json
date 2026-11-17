@@ -82,6 +82,12 @@
   ],
   "release_gate": {
     "status": "NOT_ACCEPTED",
-    "required": "Platform-specific native installation, Code/NoCode GUI E2E, Local/Cloud authenticated mode checks, signed package provenance, and actual SHA-bound receipts."
+    "required": "Platform-specific native installation, Code/NoCode GUI E2E, Local/Cloud authenticated mode checks, signed package provenance, and actual SHA-bound receipts.",
+    "verifier": "scripts/verify_builder_platform_gate.py",
+    "schema_version": 2,
+    "platform_packages_required": 8,
+    "mode_workspace_suites_required": 32,
+    "historical_baseline_verifier": "scripts/verify_builder_gate10.py",
+    "certificate_record": "release/PLATFORM_CERTIFICATE_RECORD.json"
   }
 }

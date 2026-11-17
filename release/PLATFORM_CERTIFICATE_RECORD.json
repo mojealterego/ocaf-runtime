@@ -1,0 +1,281 @@
+{
+  "schema_version": 2,
+  "gate": "GATE-10-TARGET-PLATFORMS",
+  "status": "NIEPOTWIERDZONE",
+  "production_approved": false,
+  "pinned_git_commit_sha": null,
+  "platforms": [
+    {
+      "platform": "windows",
+      "distribution": "windows-native",
+      "binary_sha256": null,
+      "install_sha256": null,
+      "sbom_sha256": null,
+      "suites": [
+        {
+          "mode": "Code",
+          "workspace": "Local",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "Code",
+          "workspace": "Cloud",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "NoCode",
+          "workspace": "Local",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "NoCode",
+          "workspace": "Cloud",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        }
+      ],
+      "status": "NIEPOTWIERDZONE"
+    },
+    {
+      "platform": "macos",
+      "distribution": "macos-native",
+      "binary_sha256": null,
+      "install_sha256": null,
+      "sbom_sha256": null,
+      "suites": [
+        {
+          "mode": "Code",
+          "workspace": "Local",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "Code",
+          "workspace": "Cloud",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "NoCode",
+          "workspace": "Local",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "NoCode",
+          "workspace": "Cloud",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        }
+      ],
+      "status": "NIEPOTWIERDZONE"
+    },
+    {
+      "platform": "linux",
+      "distribution": "linux-elf",
+      "binary_sha256": null,
+      "install_sha256": null,
+      "sbom_sha256": null,
+      "suites": [
+        {
+          "mode": "Code",
+          "workspace": "Local",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "Code",
+          "workspace": "Cloud",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "NoCode",
+          "workspace": "Local",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "NoCode",
+          "workspace": "Cloud",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        }
+      ],
+      "status": "NIEPOTWIERDZONE"
+    },
+    {
+      "platform": "kali-linux",
+      "distribution": "kali-deb-amd64",
+      "binary_sha256": null,
+      "install_sha256": null,
+      "sbom_sha256": null,
+      "suites": [
+        {
+          "mode": "Code",
+          "workspace": "Local",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "Code",
+          "workspace": "Cloud",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "NoCode",
+          "workspace": "Local",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "NoCode",
+          "workspace": "Cloud",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        }
+      ],
+      "status": "NIEPOTWIERDZONE"
+    },
+    {
+      "platform": "android",
+      "distribution": "android-apk",
+      "binary_sha256": null,
+      "install_sha256": null,
+      "sbom_sha256": null,
+      "suites": [
+        {
+          "mode": "Code",
+          "workspace": "Local",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "Code",
+          "workspace": "Cloud",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "NoCode",
+          "workspace": "Local",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "NoCode",
+          "workspace": "Cloud",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        }
+      ],
+      "status": "NIEPOTWIERDZONE"
+    },
+    {
+      "platform": "ios",
+      "distribution": "ios-ipa",
+      "binary_sha256": null,
+      "install_sha256": null,
+      "sbom_sha256": null,
+      "suites": [
+        {
+          "mode": "Code",
+          "workspace": "Local",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "Code",
+          "workspace": "Cloud",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "NoCode",
+          "workspace": "Local",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "NoCode",
+          "workspace": "Cloud",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        }
+      ],
+      "status": "NIEPOTWIERDZONE"
+    },
+    {
+      "platform": "harmonyos",
+      "distribution": "harmonyos-hap",
+      "binary_sha256": null,
+      "install_sha256": null,
+      "sbom_sha256": null,
+      "suites": [
+        {
+          "mode": "Code",
+          "workspace": "Local",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "Code",
+          "workspace": "Cloud",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "NoCode",
+          "workspace": "Local",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "NoCode",
+          "workspace": "Cloud",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        }
+      ],
+      "status": "NIEPOTWIERDZONE"
+    },
+    {
+      "platform": "kaios",
+      "distribution": "kaios-webapp",
+      "binary_sha256": null,
+      "install_sha256": null,
+      "sbom_sha256": null,
+      "suites": [
+        {
+          "mode": "Code",
+          "workspace": "Local",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "Code",
+          "workspace": "Cloud",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "NoCode",
+          "workspace": "Local",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        },
+        {
+          "mode": "NoCode",
+          "workspace": "Cloud",
+          "log_sha256": null,
+          "status": "NIEPOTWIERDZONE"
+        }
+      ],
+      "status": "NIEPOTWIERDZONE"
+    }
+  ]
+}

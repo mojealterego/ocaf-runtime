@@ -52,6 +52,11 @@ EXACT = frozenset({
     "scripts/verify_gate10.sh",
     "schemas/agents_builder_v1_workspace.schema.json",
     "release/CERTIFICATE_RECORD.json",
+    "scripts/verify_builder_platform_gate.py",
+    "scripts/tests/test_builder_platform_gate.py",
+    "scripts/requirements-builder-gate10.txt",
+    "docs/AGENTS_BUILDER_PLATFORM_GATE_V2.md",
+    "release/PLATFORM_CERTIFICATE_RECORD.json",
 })
 PREFIXES = (
     "apps/agents-builder-web/",
@@ -132,6 +137,11 @@ REQUIRED_BUILDER_FILES = (
     "scripts/verify_kaios_package.py",
     "schemas/agents_builder_v1_workspace.schema.json",
     "release/CERTIFICATE_RECORD.json",
+    "scripts/verify_builder_platform_gate.py",
+    "scripts/tests/test_builder_platform_gate.py",
+    "scripts/requirements-builder-gate10.txt",
+    "docs/AGENTS_BUILDER_PLATFORM_GATE_V2.md",
+    "release/PLATFORM_CERTIFICATE_RECORD.json",
 )
 
 

@@ -23,6 +23,12 @@ on:
       - "src/model_router.rs"
       - "tests/builder_*.rs"
       - "scripts/package_agents_builder.py"
+      - "scripts/verify_builder_platform_gate.py"
+      - "scripts/tests/test_builder_platform_gate.py"
+      - "scripts/requirements-builder-gate10.txt"
+      - "scripts/verify_gate10.sh"
+      - "docs/AGENTS_BUILDER_PLATFORM_GATE_V2.md"
+      - "release/PLATFORM_CERTIFICATE_RECORD.json"
       - "scripts/tests/test_package_agents_builder.py"
       - "scripts/tests/test_builder_unified_architecture.py"
       - ".github/workflows/agents-builder-source-bundle.yml"
@@ -52,6 +58,10 @@ jobs:
           node-version: "22"
       - name: Packaging unit and security tests
         run: python3 -m unittest discover -s scripts/tests -p test_package_agents_builder.py -v
+      - name: Eight-platform evidence verifier regression
+        run: |
+          python3 -m pip install --disable-pip-version-check -r scripts/requirements-builder-gate10.txt
+          python3 -m unittest discover -s scripts/tests -p test_builder_platform_gate.py -v
       - name: Eight-platform source ZIP integration tests
         run: python3 -m unittest discover -s scripts/tests -p test_builder_bundle_platform_coverage.py -v
       - name: Historical unified application architecture contract tests

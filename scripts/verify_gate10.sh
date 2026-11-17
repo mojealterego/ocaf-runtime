@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# OCAF Agents Builder GATE-10: verify signed evidence, never infer live deployment.
+# OCAF Agents Builder GATE-10: eight-platform target evidence; legacy verifier remains available directly.
 set -euo pipefail
 if [[ $# -ne 3 ]]; then
   printf 'Usage: %s <full-main-git-sha> <release-dir> <trusted-ed25519-public-key-hex>\n' "$0" >&2
@@ -7,7 +7,7 @@ if [[ $# -ne 3 ]]; then
 fi
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(CDPATH= cd -- "${SCRIPT_DIR}/.." && pwd -P)"
-exec python3 "${SCRIPT_DIR}/verify_builder_gate10.py" \
+exec python3 "${SCRIPT_DIR}/verify_builder_platform_gate.py" \
   --repo "${REPO_ROOT}" \
   --release-dir "$2" \
   --head-sha "$1" \
