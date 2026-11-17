@@ -7,9 +7,12 @@ plugins {
 android {
     namespace = "com.ocaf.builder"
     compileSdk = 35
+    ndkVersion = "27.0.12077973"
     defaultConfig {
         applicationId = "com.ocaf.builder"
         minSdk = 26
+        ndk { abiFilters += setOf("arm64-v8a", "x86_64") }
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
@@ -58,7 +61,7 @@ val generateKotlinFfi by tasks.registering(Exec::class) {
 val buildAndroidFfi by tasks.registering(Exec::class) {
     environment("CARGO_TARGET_DIR", ffiTarget.absolutePath)
     commandLine(
-        "cargo", "ndk", "-t", "arm64-v8a", "-o", nativeLibraries.absolutePath,
+        "cargo", "ndk", "--platform", "26", "-t", "arm64-v8a", "-t", "x86_64", "-o", nativeLibraries.absolutePath,
         "build", "--release", "--manifest-path", ffiManifest.absolutePath
     )
 }
@@ -71,4 +74,6 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.webkit:webkit:1.12.1")
     implementation("net.java.dev.jna:jna:5.14.0@aar")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
 }

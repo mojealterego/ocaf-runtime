@@ -42,6 +42,21 @@ class NativeBuilderSourceContracts(unittest.TestCase):
             self.assertIn(term, native)
         self.assertNotIn("addJavascriptInterface(", native)
 
+    def test_canonical_mobile_workflow_builds_current_uniffi_hosts(self):
+        workflow = source(".github/workflows/agents-builder-native-mobile.yml")
+        self.assertIn("working-directory: apps/android", workflow)
+        self.assertIn("bash apps/ios/build.sh iphonesimulator", workflow)
+        self.assertIn("connectedDebugAndroidTest", workflow)
+        self.assertIn("verify_builder_mobile_bundle.py", workflow)
+        self.assertIn("com.ocaf.builder/.MainActivity", workflow)
+        self.assertIn("com.ocaf.agentsbuilder", workflow)
+        gradle = source("apps/android/app/build.gradle.kts")
+        self.assertIn('"-t", "arm64-v8a", "-t", "x86_64"', gradle)
+        self.assertIn('ndkVersion = "27.0.12077973"', gradle)
+        self.assertIn("AndroidJUnitRunner", gradle)
+        self.assertIn("validateLocalJsonDsl(source)", source("apps/android/app/src/androidTest/java/com/ocaf/builder/NativeBuilderFfiTest.kt"))
+        self.assertIn('SIGNING=(CODE_SIGNING_ALLOWED=NO)', source("apps/ios/build.sh"))
+
     def test_ios_has_local_only_navigation_native_export_and_ffi(self):
         spec = source("apps/ios/project.yml")
         self.assertIn("buildPhase: resources", spec)

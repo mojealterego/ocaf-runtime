@@ -24,3 +24,11 @@ GUI E2E evidence are still required for acceptance.
 Status remains **NIEPOTWIERDZONE** unless all actual native build, install,
 import/export, Code/NoCode roundtrip and security evidence is collected.
 WKWebView ES module/localStorage behavior needs a real target test.
+
+## Canonical mobile workflow (2026-11-17)
+
+CI and self-hosted builds now use apps/ios/build.sh rather than the historical
+apps/agents-builder-ios host. Simulator builds disable code signing and use
+apps/ios/build as DerivedData, with the Rust target matched to the macOS
+host architecture; Swift language mode is 5.0. Device builds do not
+disable signing. No compiled iOS artifact or live Cloud session verified.

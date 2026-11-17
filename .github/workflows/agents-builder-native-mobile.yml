@@ -6,6 +6,14 @@ on:
       - "apps/agents-builder-android/**"
       - "apps/agents-builder-ios/**"
       - "apps/agents-builder-web/**"
+      - "apps/android/**"
+      - "apps/ios/**"
+      - "crates/ocaf-builder-mobile-ffi/**"
+      - "src/builder_core.rs"
+      - "rust-toolchain.toml"
+      - "scripts/verify_builder_mobile_bundle.py"
+      - "scripts/tests/test_verify_builder_mobile_bundle.py"
+      - "scripts/tests/test_agents_builder_native_structure.py"
       - "scripts/tests/test_builder_mobile_native.py"
       - "scripts/verify_native_artifact.py"
       - "scripts/tests/test_verify_native_artifact.py"
@@ -15,7 +23,7 @@ permissions:
   contents: read
 jobs:
   android:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -27,20 +35,31 @@ jobs:
           java-version: "17"
       - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a
         with:
-          gradle-version: "8.12"
+          gradle-version: "8.9"
       - name: Verify artifact verifier regression tests
         run: python3 -m unittest discover -s scripts/tests -p test_verify_native_artifact.py -v
       - name: Native mobile source contracts
         run: python3 -m unittest discover -s scripts/tests -p test_builder_mobile_native.py -v
-      - name: Bundle shared editor into Android assets
+      - name: Canonical native structure and APK contract
         run: |
-          mkdir -p apps/agents-builder-android/app/src/main/assets
-          cp apps/agents-builder-web/{index.html,app.mjs,editor.mjs,cloud.mjs,i18n.mjs,credentials.mjs,models.mjs,integrations-ui.mjs,runner-client.mjs,style.css,manifest.webmanifest,sw.js} apps/agents-builder-android/app/src/main/assets/
-      - name: Build Android debug APK
-        working-directory: apps/agents-builder-android
-        run: gradle --no-daemon :app:assembleDebug
-      - name: Verify Android APK structure
-        run: python3 scripts/verify_native_artifact.py android apps/agents-builder-android/app/build/outputs/apk/debug/app-debug.apk
+          python3 -m unittest discover -s scripts/tests -p test_agents_builder_native_structure.py -v
+          python3 -m unittest discover -s scripts/tests -p test_verify_builder_mobile_bundle.py -v
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          targets: aarch64-linux-android,x86_64-linux-android
+      - name: Prepare pinned Android NDK and cargo-ndk
+        run: |
+          set -euo pipefail
+          sdkmanager "ndk;27.0.12077973"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.0.12077973" >> "$GITHUB_ENV"
+          cargo install cargo-ndk --version 4.1.2 --locked
+      - name: Canonical Rust mobile binding tests
+        run: cargo test --manifest-path crates/ocaf-builder-mobile-ffi/Cargo.toml
+      - name: Build canonical Android debug APK and instrumentation tests
+        working-directory: apps/android
+        run: gradle --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest
+      - name: Verify exact shared assets and both Rust ABI libraries
+        run: python3 scripts/verify_builder_mobile_bundle.py apps/android/app/build/outputs/apk/debug/app-debug.apk --web apps/agents-builder-web
       - name: Android emulator install and launch smoke
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
         with:
@@ -51,39 +70,43 @@ jobs:
           emulator-boot-timeout: 600
           script: |
             set -euo pipefail
-            adb install -r apps/agents-builder-android/app/build/outputs/apk/debug/app-debug.apk
-            adb shell am start -W -n org.ocaf.agentsbuilder/.MainActivity
+            adb install -r apps/android/app/build/outputs/apk/debug/app-debug.apk
+            adb logcat -c
+            (cd apps/android && gradle --no-daemon :app:connectedDebugAndroidTest)
+            adb shell am start -W -n com.ocaf.builder/.MainActivity
             sleep 5
-            adb shell pidof org.ocaf.agentsbuilder
-            mkdir -p apps/agents-builder-android/build/evidence
-            adb exec-out screencap -p > apps/agents-builder-android/build/evidence/android-launch.png
-            test -s apps/agents-builder-android/build/evidence/android-launch.png
+            adb shell pidof com.ocaf.builder
+            mkdir -p apps/android/build/evidence
+            adb exec-out screencap -p > apps/android/build/evidence/android-launch.png
+            test -s apps/android/build/evidence/android-launch.png
             adb shell uiautomator dump /sdcard/ocaf-ui.xml
-            adb pull /sdcard/ocaf-ui.xml apps/agents-builder-android/build/evidence/android-ui.xml
+            adb pull /sdcard/ocaf-ui.xml apps/android/build/evidence/android-ui.xml
             python3 - <<'PY'
             from pathlib import Path
             from xml.etree import ElementTree
-            p = Path("apps/agents-builder-android/build/evidence/android-launch.png")
+            p = Path("apps/android/build/evidence/android-launch.png")
             assert p.read_bytes()[:8] == bytes.fromhex("89504e470d0a1a0a"), "Screenshot is not PNG"
-            ui = Path("apps/agents-builder-android/build/evidence/android-ui.xml")
+            ui = Path("apps/android/build/evidence/android-ui.xml")
             root = ElementTree.parse(ui).getroot()
             assert root.tag == "hierarchy", "Invalid Android UI hierarchy"
             assert list(root.iter("node")), "Empty Android UI hierarchy"
             print("Android screenshot and UI hierarchy validated")
             PY
-            adb shell dumpsys activity activities | grep -F 'org.ocaf.agentsbuilder'
-            adb logcat -d -t 1500 | grep -E 'FATAL EXCEPTION|Process: org.ocaf.agentsbuilder' > /tmp/ocaf-crash-lines || true
+            adb shell dumpsys activity activities | grep -F 'com.ocaf.builder'
+            adb logcat -d -t 1500 | grep -E 'FATAL EXCEPTION|Process: com.ocaf.builder' > /tmp/ocaf-crash-lines || true
             test ! -s /tmp/ocaf-crash-lines
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: "ocaf-builder-android-launch-evidence-${{ github.sha }}"
-          path: apps/agents-builder-android/build/evidence/
+          path: |
+            apps/android/build/evidence/
+            apps/android/app/build/outputs/androidTest-results/
           if-no-files-found: error
           retention-days: 30
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: "ocaf-builder-android-${{ github.sha }}"
-          path: apps/agents-builder-android/app/build/outputs/apk/debug/app-debug.apk
+          path: apps/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
   ios:
@@ -97,20 +120,22 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p test_verify_native_artifact.py -v
       - name: Native mobile source contracts
         run: python3 -m unittest discover -s scripts/tests -p test_builder_mobile_native.py -v
-      - name: Install XcodeGen
-        run: brew install xcodegen
-      - name: Bundle shared editor into iOS resources
+      - name: Canonical native structure
+        run: python3 -m unittest discover -s scripts/tests -p test_agents_builder_native_structure.py -v
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+      - name: Install XcodeGen and Rust target
         run: |
-          mkdir -p apps/agents-builder-ios/Resources/Editor
-          cp apps/agents-builder-web/{index.html,app.mjs,editor.mjs,cloud.mjs,i18n.mjs,credentials.mjs,models.mjs,integrations-ui.mjs,runner-client.mjs,style.css,manifest.webmanifest,sw.js} apps/agents-builder-ios/Resources/Editor/
-      - name: Generate native Xcode project
-        working-directory: apps/agents-builder-ios
-        run: xcodegen generate
-      - name: Build unsigned iOS simulator application
-        working-directory: apps/agents-builder-ios
-        run: xcodebuild -project OCAFAgentsBuilder.xcodeproj -scheme OCAFAgentsBuilder -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -derivedDataPath build build
+          set -euo pipefail
+          brew install xcodegen
+          case "$(uname -m)" in
+            arm64) rustup target add aarch64-apple-ios-sim ;;
+            x86_64) rustup target add x86_64-apple-ios ;;
+            *) exit 2 ;;
+          esac
+      - name: Build canonical unsigned iOS simulator app with Swift UniFFI
+        run: bash apps/ios/build.sh iphonesimulator
       - name: Verify iOS simulator Mach-O executable
-        run: python3 scripts/verify_native_artifact.py ios apps/agents-builder-ios/build/Build/Products/Debug-iphonesimulator/OCAFAgentsBuilder.app/OCAFAgentsBuilder
+        run: python3 scripts/verify_native_artifact.py ios apps/ios/build/Build/Products/Debug-iphonesimulator/OCAFAgentsBuilder.app/OCAFAgentsBuilder
       - name: iOS simulator install and launch smoke
         shell: bash
         run: |
@@ -121,24 +146,24 @@ jobs:
             xcrun simctl boot "$device"
           fi
           xcrun simctl bootstatus "$device" -b
-          app="apps/agents-builder-ios/build/Build/Products/Debug-iphonesimulator/OCAFAgentsBuilder.app"
+          app="apps/ios/build/Build/Products/Debug-iphonesimulator/OCAFAgentsBuilder.app"
           xcrun simctl install "$device" "$app"
-          launch_output=$(xcrun simctl launch "$device" org.ocaf.agentsbuilder)
+          launch_output=$(xcrun simctl launch "$device" com.ocaf.agentsbuilder)
           printf "%s\n" "$launch_output"
-          echo "$launch_output" | grep -F "org.ocaf.agentsbuilder:"
+          echo "$launch_output" | grep -F "com.ocaf.agentsbuilder:"
           sleep 5
-          mkdir -p apps/agents-builder-ios/build/evidence
-          xcrun simctl io "$device" screenshot apps/agents-builder-ios/build/evidence/ios-launch.png
-          python3 -c 'from pathlib import Path; p=Path("apps/agents-builder-ios/build/evidence/ios-launch.png"); assert p.stat().st_size > 1024; assert p.read_bytes()[:8] == bytes.fromhex("89504e470d0a1a0a")'
+          mkdir -p apps/ios/build/evidence
+          xcrun simctl io "$device" screenshot apps/ios/build/evidence/ios-launch.png
+          python3 -c 'from pathlib import Path; p=Path("apps/ios/build/evidence/ios-launch.png"); assert p.stat().st_size > 1024; assert p.read_bytes()[:8] == bytes.fromhex("89504e470d0a1a0a")'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: "ocaf-builder-ios-launch-evidence-${{ github.sha }}"
-          path: apps/agents-builder-ios/build/evidence/ios-launch.png
+          path: apps/ios/build/evidence/ios-launch.png
           if-no-files-found: error
           retention-days: 30
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: "ocaf-builder-ios-simulator-${{ github.sha }}"
-          path: apps/agents-builder-ios/build/Build/Products/Debug-iphonesimulator/OCAFAgentsBuilder.app
+          path: apps/ios/build/Build/Products/Debug-iphonesimulator/OCAFAgentsBuilder.app
           if-no-files-found: error
           retention-days: 30

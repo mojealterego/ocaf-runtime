@@ -3,7 +3,7 @@ options:
   bundleIdPrefix: com.ocaf
 settings:
   base:
-    SWIFT_VERSION: 5.9
+    SWIFT_VERSION: '5.0'
     IPHONEOS_DEPLOYMENT_TARGET: "16.0"
 targets:
   OCAFAgentsBuilder:

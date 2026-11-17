@@ -38,5 +38,10 @@ cargo build --release --target "$RUST_TARGET" --manifest-path "$FFI"
 cp "$CARGO_TARGET_DIR/$RUST_TARGET/release/libocaf_builder_mobile_ffi.a" \
    "$APP/NativeLibraries/$SDK/libocaf_builder_mobile_ffi.a"
 (cd "$APP" && xcodegen generate)
+SIGNING=()
+if [[ "$SDK" == "iphonesimulator" ]]; then
+  SIGNING=(CODE_SIGNING_ALLOWED=NO)
+fi
 xcodebuild -project "$APP/OCAFAgentsBuilder.xcodeproj" \
-  -scheme OCAFAgentsBuilder -sdk "$SDK" -configuration Debug build
+  -scheme OCAFAgentsBuilder -sdk "$SDK" -configuration Debug \
+  -derivedDataPath "$APP/build" "${SIGNING[@]}" build
