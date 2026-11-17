@@ -13,6 +13,7 @@ import hashlib
 import http.client
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -33,6 +34,7 @@ STATIC = frozenset({
     "index.html", "style.css", "app.mjs", "editor.mjs", "cloud.mjs",
     "i18n.mjs", "credentials.mjs", "models.mjs", "integrations-ui.mjs",
     "runner-client.mjs", "manifest.webmanifest", "sw.js",
+    "strict-json.mjs", "preview-gate.mjs",
 })
 MIME = {
     ".html": "text/html; charset=utf-8",
@@ -341,6 +343,47 @@ class LocalRunner:
             self.request_slot.release()
 
 
+def parse_request_json(raw: bytes) -> Any:
+    """Bounded UTF-8 JSON, with no ambiguous keys or non-finite numbers."""
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("duplicate JSON key")
+            result[key] = value
+        return result
+
+    def finite_float(value):
+        number = float(value)
+        if not math.isfinite(number):
+            raise ValueError("non-finite JSON number")
+        return number
+
+    def reject_constant(_value):
+        raise ValueError("non-finite JSON constant")
+
+    try:
+        parsed = json.loads(raw.decode("utf-8"), object_pairs_hook=unique_object,
+                            parse_float=finite_float, parse_constant=reject_constant)
+        stack = [(parsed, 1)]
+        while stack:
+            value, depth = stack.pop()
+            if isinstance(value, (dict, list)):
+                if depth > 64:
+                    raise ValueError("JSON nesting limit")
+                if isinstance(value, dict):
+                    for key in value:
+                        key.encode("utf-8")
+                    stack.extend((item, depth + 1) for item in value.values())
+                else:
+                    stack.extend((item, depth + 1) for item in value)
+            elif isinstance(value, str):
+                value.encode("utf-8")  # Reject isolated Unicode surrogates.
+        return parsed
+    except (ValueError, RecursionError) as exc:
+        raise RunnerError(400, "request: invalid JSON") from exc
+
+
 class OCAFServer(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = False
@@ -439,6 +482,15 @@ class LocalHandler(BaseHTTPRequestHandler):
         except OSError:
             self.reject(RunnerError(404, "not found"))
 
+    def content_length(self) -> int:
+        values = self.headers.get_all("Content-Length", [])
+        if self.headers.get_all("Transfer-Encoding") or len(values) != 1:
+            raise RunnerError(400, "request: ambiguous or missing body length")
+        value = values[0]
+        if not value.isascii() or not value.isdecimal() or len(value) > 15:
+            raise RunnerError(400, "request: invalid body length")
+        return int(value)
+
     def do_POST(self):
         try:
             self.authorized(write=True)
@@ -450,26 +502,20 @@ class LocalHandler(BaseHTTPRequestHandler):
             if path == "/v1/local-runner/import":
                 if mime != "application/octet-stream":
                     raise RunnerError(415, "request: binary GGUF required")
-                try:
-                    size = int(self.headers.get("Content-Length", "0"))
-                except ValueError as error:
-                    raise RunnerError(400, "request: invalid upload length") from error
+                size = self.content_length()
                 name = self.headers.get("X-OCAF-Model-Name", "")
                 result = self.server.runner.import_model(name, self.rfile, size)
                 self.json_response(201, result)
                 return
             if mime != "application/json":
                 raise RunnerError(415, "request: application/json required")
-            try:
-                n = int(self.headers.get("Content-Length", "0"))
-            except ValueError as exc:
-                raise RunnerError(400, "request: invalid length") from exc
+            n = self.content_length()
             if not 0 < n <= MAX_REQUEST:
                 raise RunnerError(413, "request: payload too large")
-            try:
-                body = json.loads(self.rfile.read(n))
-            except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-                raise RunnerError(400, "request: invalid JSON") from exc
+            raw = self.rfile.read(n)
+            if len(raw) != n:
+                raise RunnerError(400, "request: truncated body")
+            body = parse_request_json(raw)
             if type(body) is not dict:
                 raise RunnerError(422, "request: expected object")
             if path == "/v1/local-runner/start":

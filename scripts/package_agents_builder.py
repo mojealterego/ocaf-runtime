@@ -33,6 +33,7 @@ EXACT = frozenset({
     "docs/roadmap/STAGE_CHANGELOG.md",
     "scripts/package_agents_builder.py",
     "scripts/tests/test_agents_builder_local_runner.py",
+    "scripts/tests/test_local_runner_http_admission.py",
     "scripts/tests/test_builder_native_desktop.py",
     "scripts/tests/test_builder_mobile_native.py",
     "scripts/tests/test_package_agents_builder.py",

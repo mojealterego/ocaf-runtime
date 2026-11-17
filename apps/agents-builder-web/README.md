@@ -236,3 +236,24 @@ existing Node test glob. This does not attest physical WebView execution,
 native Android/iOS compilation, an authenticated live Cloud session,
 or the full browser E2E suite. Request correlation is not authentication
 or cryptographic provenance. Production and platform acceptance unchanged.
+
+## Local HTTP admission (2026-11-17)
+
+The loopback server now serves both strict-json.mjs and preview-gate.mjs,
+restoring the editor's complete module and PWA cache asset set. JSON
+requests reject duplicate keys (including escaped aliases), non-finite
+numbers, invalid UTF-8, isolated surrogates, and nesting beyond 64 levels.
+POST requests require exactly one decimal Content-Length and reject
+Transfer-Encoding. The model import route uses the same framing guard.
+
+Reproduce on a complete checkout without GitHub Actions:
+
+    python3 -m unittest discover -s scripts/tests -p test_local_runner_http_admission.py -v
+
+Evidence: RED 7 failures (four test methods); GREEN five test methods
+including HTTP framing, all PASS using Python's actual localhost HTTP
+server with the exact reproduced handler/helper and fixture assets plus
+a recording backend. The handler, allowlist and parser excerpts match
+the proposed source; the new test blob equals the locally executed test
+file. This was not a full checkout, real llama.cpp inference, browser
+E2E, or a native-platform build. Product acceptance is unchanged.
