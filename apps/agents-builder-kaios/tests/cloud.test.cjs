@@ -18,3 +18,28 @@ test('concurrent and disconnected requests rejected',async()=>{let done;const e=
 test('disconnect before scheduling prevents credential send',async()=>{const e=env(()=>{throw Error('network');}),c=create(e,'tenant','token',graph),pending=c.load('agent');c.disconnect();await assert.rejects(pending,/disconnected/);assert.equal(e.calls.length,0);});
 test('oversized stream cancelled',async()=>{let cancelled=false;const r=response({project:p,head:h}),get=r.headers.get;r.headers.get=k=>k==='Content-Length'?null:get(k);r.body={getReader:()=>({read:async()=>({done:false,value:new Uint8Array(131073)}),cancel:async()=>{cancelled=true;}})};await assert.rejects(create(env(()=>r),'tenant','token',graph).load('agent'),/limit/);assert.equal(cancelled,true);});
 test('timeout revokes response without AbortController',async()=>{let fire,reply;const e=env(()=>new Promise(resolve=>{reply=resolve;}));e.AbortController=undefined;e.setTimeout=f=>{fire=f;return 1;};e.clearTimeout=()=>{};const c=create(e,'tenant','token',graph),pending=c.load('agent');await Promise.resolve();fire();await assert.rejects(pending,/timeout/);reply(response({project:p,head:h}));});
+
+test('timed out CAS revokes client even when legacy fetch cannot abort',async()=>{
+  let fire,late;
+  const e=env(()=>e.calls.length===1?new Promise(resolve=>{late=resolve;}):response({project:p,head:h}));
+  e.AbortController=undefined;e.setTimeout=f=>{fire=f;return 1;};e.clearTimeout=()=>{};
+  const c=create(e,'tenant','token',graph),pending=c.save(p,null);
+  await Promise.resolve();fire();await assert.rejects(pending,/timeout/);
+  await assert.rejects(c.load('agent'),/disconnected/);assert.equal(e.calls.length,1);
+  late(response(h));
+});
+test('disconnect settles stalled fetch without waiting for timer or network',async()=>{
+  const e=env(()=>new Promise(()=>{}));e.AbortController=undefined;
+  let cleared=false;e.setTimeout=()=>1;e.clearTimeout=()=>{cleared=true;};
+  const c=create(e,'tenant','token',graph),pending=c.load('agent');await Promise.resolve();
+  c.disconnect();
+  const result=await Promise.race([pending.then(()=> 'success',err=>err.message),new Promise(resolve=>setImmediate(()=>resolve('still pending')))]);
+  assert.match(result,/disconnected/);assert.equal(cleared,true);assert.equal(e.calls.length,1);
+});
+test('timeout cancels stalled streaming reader without AbortController',async()=>{
+  let fire,started,cancelled=0;const ready=new Promise(resolve=>{started=resolve;});
+  const r=response({project:p,head:h});r.body={getReader:()=>({read:()=>{started();return new Promise(()=>{});},cancel:async()=>{cancelled++;}})};
+  const e=env(()=>r);e.AbortController=undefined;e.setTimeout=f=>{fire=f;return 1;};e.clearTimeout=()=>{};
+  const c=create(e,'tenant','token',graph),pending=c.load('agent');await ready;fire();
+  await assert.rejects(pending,/timeout/);assert.equal(cancelled,1);
+});

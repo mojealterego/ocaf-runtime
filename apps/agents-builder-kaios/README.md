@@ -100,3 +100,7 @@ Klient cloud.js i UI cloud-ui.js wykorzystują istniejące endpointy Rust GET/PU
 Testy: node --test apps/agents-builder-kaios/tests/cloud.test.cjs apps/agents-builder-kaios/tests/cloud-ui.test.cjs
 
 Evidence: 14/14 nowych testów oraz 29 asercji grafu i 109 asercji istniejącego UI wykonano na dokładnie tych źródłach w izolowanym V8 z kontrolowanymi adapterami DOM/Fetch/timer/UTF-8; nie jest to natywny Node, Chromium lub live HTTPS E2E. Testy Python pakowarki i urządzeniowe nie zostały wykonane w tym przyroście.
+
+## Cloud cancellation and timeout recovery (2026-11-19)
+
+A timeout revokes the client session; reconnect and reload the project before a write. The client does not automatically retry any mutation. Disconnect settles stalled operations immediately and attempts to cancel an active reader even without AbortController. The server outcome may remain uncertain. Local deterministic Node tests: RED 3 failures, GREEN 13/13 PASS. [Evidence](../../docs/audits/BUILDER_KAIOS_CLOUD_CANCELLATION_2026-11-19.md). Native KaiOS and full release acceptance remain open.

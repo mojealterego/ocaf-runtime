@@ -30,15 +30,27 @@
       var body=payload===undefined?undefined:JSON.stringify(payload);
       if(body!==undefined)graph.parseUniqueJson(body,LIMIT);
       var ctl=typeof env.AbortController==='function'?new env.AbortController():null;
-      var cancelled=false;
-      function cancel(){cancelled=true;if(ctl)ctl.abort();}
+      var cancelled=false,reader=null,rejectCancel;
+      var cancellation=new Promise(function(_,reject){rejectCancel=reject;});
+      function cancelReader(){
+        if(!reader)return;
+        var current=reader;reader=null;
+        Promise.resolve().then(function(){return current.cancel();}).catch(function(){});
+      }
+      function cancel(reason){
+        if(cancelled)return;
+        cancelled=true;
+        rejectCancel(reason||Error('Cloud disconnected'));
+        if(ctl)ctl.abort();
+        cancelReader();
+      }
       pending=cancel;
       function live(){if(!active||cancelled)throw Error('Cloud disconnected');}
       var options={method:method,credentials:'omit',redirect:'error',cache:'no-store',headers:{Authorization:'Bearer '+token,Accept:'application/json'}};
       if(body!==undefined){options.body=body;options.headers['Content-Type']='application/json';}
       if(ctl)options.signal=ctl.signal;
       var url=origin+path,timer;
-      var timeout=new Promise(function(_,reject){timer=env.setTimeout(function(){cancel();reject(Error('Cloud timeout; reload before retrying a write'));},10000);});
+      timer=env.setTimeout(function(){active=false;token='';cancel(Error('Cloud timeout; reconnect and reload before retrying a write'));},10000);
       var task=Promise.resolve().then(function(){live();return env.fetch(url,options);}).then(function(r){
         live();
         if(r.redirected||(r.url&&r.url!==url))throw Error('Cloud redirect denied');
@@ -47,8 +59,8 @@
         var l=r.headers.get('Content-Length'),encoding=r.headers.get('Content-Encoding');
         if(l!==null&&(!/^[0-9]{1,9}$/.test(l)||Number(l)>LIMIT))throw Error('Cloud response limit');
         if(r.body&&typeof r.body.getReader==='function'){
-          var reader=r.body.getReader(),total=0,chunks=[];
-          function reject(message){Promise.resolve(reader.cancel()).catch(function(){});throw Error(message);}
+          reader=r.body.getReader();var total=0,chunks=[];
+          function reject(message){cancelReader();throw Error(message); }
           function next(){
             if(!active||cancelled)return reject('Cloud disconnected');
             return reader.read().then(function(part){
@@ -65,7 +77,7 @@
         return r.arrayBuffer().then(function(b){if(b.byteLength!==Number(l)||b.byteLength>LIMIT)throw Error('Cloud response length mismatch');return new Uint8Array(b);});
       }).then(function(bytes){live();return graph.parseUniqueJson(new env.TextDecoder('utf-8',{fatal:true}).decode(bytes),LIMIT);});
       function finish(){env.clearTimeout(timer);pending=null;}
-      return Promise.race([task,timeout]).then(function(v){finish();return v;},function(e){finish();throw e;});
+      return Promise.race([task,cancellation]).then(function(v){finish();return v;},function(e){finish();throw e;});
     }
     return {
       disconnect:function(){active=false;token='';if(pending)pending();},
