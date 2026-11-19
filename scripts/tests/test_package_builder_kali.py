@@ -54,6 +54,12 @@ class KaliPackagingTests(unittest.TestCase):
         self.assertIn("./usr/bin/ocaf-agents-builder", listing)
         self.assertIn("org.ocaf.agentsbuilder.desktop", listing)
 
+    def test_native_tls_runtime_dependency_is_declared(self):
+        self.build(self.one)
+        depends = subprocess.check_output(["dpkg-deb", "--field", str(self.one), "Depends"], text=True)
+        self.assertIn("libssl3t64", depends)
+        self.assertIn("libc6 (>= 2.39)", depends)
+
     def test_rejects_wrong_arch_and_invalid_source_commit(self):
         invalid = bytearray(self.binary.read_bytes())
         invalid[18:20] = b"\x28\x00"

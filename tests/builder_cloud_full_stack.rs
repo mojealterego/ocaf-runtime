@@ -434,8 +434,17 @@ fn mtls_oauth_sqlite_cas_and_restart_full_stack() {
     // Opt-in real GUI run against this ephemeral integration-test PKI and OAuth fixture.
     if let Some(binary) = std::env::var_os("OCAF_LINUX_GUI_BINARY") {
         let driver = std::env::var_os("OCAF_LINUX_GUI_DRIVER").expect("missing GUI driver");
-        let status = Command::new("python3")
-            .arg("scripts/verify_builder_linux_cloud_gui.py")
+        // A platform test runner may execute the same GUI suite inside an
+        // isolated Kali userland. This is an explicit test-only operator hook.
+        let mut gui = match std::env::var_os("OCAF_KALI_GUI_RUNNER") {
+            Some(runner) => Command::new(runner),
+            None => {
+                let mut command = Command::new("python3");
+                command.arg("scripts/verify_builder_linux_cloud_gui.py");
+                command
+            }
+        };
+        let status = gui
             .current_dir(env!("CARGO_MANIFEST_DIR"))
             .env("OCAF_LINUX_GUI_BINARY", binary)
             .env("OCAF_LINUX_GUI_DRIVER", driver)

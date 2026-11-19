@@ -135,7 +135,7 @@ def package_kali(binary_path: Path, icon_path: Path, output: Path,
             f"Package: {PACKAGE}\nVersion: {version}\nSection: utils\n"
             "Priority: optional\nArchitecture: amd64\n"
             "Maintainer: OCAF Project <noreply@ocaf.invalid>\n"
-            "Depends: libwebkit2gtk-4.1-0, libgtk-3-0, libglib2.0-0\n"
+            "Depends: libc6 (>= 2.39), libwebkit2gtk-4.1-0, libgtk-3-0t64 | libgtk-3-0, libglib2.0-0t64 | libglib2.0-0, libssl3t64 | libssl3\n"
             "Description: OCAF Agents Builder Code/NoCode with Local/Cloud switching\n"
             " Unsigned native application package for Kali Linux.\n",
             encoding="utf-8",
