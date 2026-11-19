@@ -1,10 +1,12 @@
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -116,6 +118,40 @@ class PlatformGateTests(unittest.TestCase):
         self.git('update-index', '--assume-unchanged', gate.MATRIX)
         self.matrix.write_text('{}')
         with self.assertRaises(gate.GateError): self.verify()
+
+    def test_replacement_commit_cannot_substitute_pinned_matrix(self):
+        original = self.matrix.read_bytes()
+        matrix = json.loads(original)
+        matrix['targets'][0]['status'] = 'FORGED_STATUS'
+        altered = json.dumps(matrix).encode()
+        self.matrix.write_bytes(altered)
+        self.git('add', gate.MATRIX)
+        self.commit()
+        replacement = self.git('rev-parse', 'HEAD').strip()
+        self.git('reset', '--hard', self.head)
+        self.git('replace', self.head, replacement)
+        self.matrix.write_bytes(altered)
+        with self.assertRaises(gate.GateError): self.verify()
+        self.matrix.write_bytes(original)
+        self.assertEqual(self.verify()['platforms_verified'], 8)
+
+    def test_git_environment_cannot_redirect_provenance_to_other_repo(self):
+        mirror = self.root / 'mirror'
+        self.git('clone', '--quiet', '--no-hardlinks', str(self.repo), str(mirror))
+        (self.repo / 'marker').write_text('new revision')
+        self.git('add', 'marker')
+        self.commit()
+        with patch.dict(os.environ, {'GIT_DIR': str(mirror / '.git'),
+                                    'GIT_WORK_TREE': str(mirror)}):
+            with self.assertRaises(gate.GateError): self.verify()
+
+    def test_nested_directory_is_not_the_pinned_repository_root(self):
+        nested = self.repo / 'nested'
+        matrix = nested / gate.MATRIX
+        matrix.parent.mkdir(parents=True)
+        matrix.write_bytes(self.matrix.read_bytes())
+        with self.assertRaises(gate.GateError):
+            gate.verify(nested, self.release, self.head, self.public)
 
     def test_duplicate_platform_or_evidence_path_fails(self):
         record = self.records[-1]

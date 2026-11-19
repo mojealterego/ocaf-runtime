@@ -72,7 +72,11 @@ def identity(value):
 
 def git(repo, *args):
     try:
-        return subprocess.check_output(['git', '-C', str(repo), *args], stderr=subprocess.PIPE, timeout=10)
+        # Do not allow inherited Git controls or replacement refs to redirect provenance.
+        env = {key: value for key, value in os.environ.items() if not key.startswith('GIT_')}
+        return subprocess.check_output(
+            ['git', '--no-replace-objects', '-C', str(repo), *args],
+            stderr=subprocess.PIPE, timeout=10, env=env)
     except (OSError, subprocess.SubprocessError) as exc:
         raise GateError('Git provenance check failed') from exc
 
@@ -113,6 +117,13 @@ def read_checked(root, path, limit, collect=True):
             os.close(fd)
 
 
+def check_head(repo, head):
+    root = git(repo, 'rev-parse', '--show-toplevel').rstrip(b'\n')
+    require(root == os.fsencode(Path(repo).resolve()), 'wrong repository root')
+    require(git(repo, 'rev-parse', 'HEAD^{commit}').strip() == head.encode() and
+            git(repo, 'symbolic-ref', 'HEAD').strip() == b'refs/heads/main', 'wrong branch or SHA')
+
+
 def check_matrix(repo, head):
     raw, _ = read_checked(repo, MATRIX, JSON_LIMIT)
     require(raw == git(repo, 'show', head + ':' + MATRIX), 'matrix differs from pinned Git tree')
@@ -135,8 +146,7 @@ def verify(repo, release, head, public_hex):
     from cryptography.exceptions import InvalidSignature
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
     require(hex_value(head, 40) and hex_value(public_hex, 64), 'invalid pinned SHA or trust key')
-    require(git(repo, 'rev-parse', 'HEAD^{commit}').strip() == head.encode() and
-            git(repo, 'symbolic-ref', '--short', 'HEAD').strip() == b'main', 'wrong branch or SHA')
+    check_head(repo, head)
     check_matrix(repo, head)
     raw, _ = read_checked(release, 'PLATFORM_EVIDENCE.json', JSON_LIMIT)
     manifest = parse(raw)
@@ -195,8 +205,7 @@ def verify(repo, release, head, public_hex):
             require(all(log[k] == v for k, v in basis.items()) and (log['mode'], log['workspace']) == pair
                     and identity(log['runner_id']) and log['steps'] == [{'step': s, 'status': 'PASS'} for s in steps_for(pair[1])], 'invalid GUI suite evidence')
             count += 1
-    require(git(repo, 'rev-parse', 'HEAD^{commit}').strip() == head.encode() and
-            git(repo, 'symbolic-ref', '--short', 'HEAD').strip() == b'main', 'HEAD changed during verification')
+    check_head(repo, head)
     check_matrix(repo, head)
     return {'status': 'PLATFORM_EVIDENCE_INTEGRITY_VERIFIED', 'git_commit_sha': head,
             'platforms_verified': len(seen), 'suites_verified': count, 'production_approved': False,
