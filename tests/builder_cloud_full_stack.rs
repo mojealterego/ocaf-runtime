@@ -431,6 +431,24 @@ fn mtls_oauth_sqlite_cas_and_restart_full_stack() {
         serde_json::from_slice::<Vec<Value>>(&body).unwrap().len(),
         2
     );
+    // Opt-in real GUI run against this ephemeral integration-test PKI and OAuth fixture.
+    if let Some(binary) = std::env::var_os("OCAF_LINUX_GUI_BINARY") {
+        let driver = std::env::var_os("OCAF_LINUX_GUI_DRIVER").expect("missing GUI driver");
+        let status = Command::new("python3")
+            .arg("scripts/verify_builder_linux_cloud_gui.py")
+            .current_dir(env!("CARGO_MANIFEST_DIR"))
+            .env("OCAF_LINUX_GUI_BINARY", binary)
+            .env("OCAF_LINUX_GUI_DRIVER", driver)
+            .env("OCAF_TEST_GUI_TOKEN", &alice)
+            .env("OCAF_TEST_GUI_FOREIGN_TOKEN", &bob)
+            .env("OCAF_BUILDER_CLOUD_ORIGIN", &lab.origin)
+            .env("OCAF_BUILDER_CLOUD_CA", root.join("ca.crt"))
+            .env("OCAF_BUILDER_CLOUD_CERT", root.join("alice.crt"))
+            .env("OCAF_BUILDER_CLOUD_KEY", root.join("alice.key"))
+            .status()
+            .unwrap();
+        assert!(status.success(), "native Linux Cloud GUI suite failed");
+    }
     assert!(server.stop());
     assert!(!root.join("bridge.sock").exists());
     let mut restarted = lab.start();

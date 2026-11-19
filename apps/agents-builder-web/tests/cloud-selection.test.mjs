@@ -19,17 +19,17 @@ function harness() {
     return new Promise((resolve,reject) => pending.push({tenant,id,resolve,reject}));
   } };
   const fields = {'project-id':{value:'first'}, 'preview-output':{textContent:''}};
-  const previewGate = new PreviewGate(), cloudSelectionGate = new PreviewGate();
+  const previewGate = new PreviewGate(), cloudSelectionGate = new PreviewGate(), importGate = new PreviewGate();
   const window = { confirm: () => true };
   class CloudApiError extends Error { constructor(status) { super('HTTP '+status); this.status=status; } }
   const el = id => fields[id];
   let invalidate;
   const result = new Function('state','cloudClient','cloudSaveInFlight','cloudSessionGeneration',
-    'el','window','notice','newProject','CloudApiError','previewGate','cloudSelectionGate','render',
+    'el','window','notice','newProject','CloudApiError','previewGate','cloudSelectionGate','importGate','render',
     source.slice(c,d)+'\n'+source.slice(a,b)+'\nreturn {openCloudProject,newCloudProject,invalidatePreview};'
   )(state,cloudClient,false,1,el,window,m=>notices.push(m),
     (tenant,id)=>({tenant_id:tenant,project_id:id,revision:1}),
-    CloudApiError,previewGate,cloudSelectionGate,()=>invalidate());
+    CloudApiError,previewGate,cloudSelectionGate,importGate,()=>invalidate());
   invalidate = result.invalidatePreview;
   const open = id => { fields['project-id'].value=id; return result.openCloudProject(); };
   const create = id => { fields['project-id'].value=id; return result.newCloudProject(); };

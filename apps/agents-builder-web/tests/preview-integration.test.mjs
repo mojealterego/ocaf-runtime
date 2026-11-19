@@ -9,7 +9,7 @@ const source = readFileSync(new URL('../app.mjs', import.meta.url), 'utf8');
 
 function harness() {
   const begin = source.indexOf('async function preview()');
-  const end = source.indexOf('function download()', begin);
+  const end = source.indexOf('async function download()', begin);
   const listenerBegin = source.indexOf("window.addEventListener('ocaf-rust-validation'");
   const listenerEnd = source.indexOf('\n\nconst el', listenerBegin);
   assert.ok(begin >= 0 && end > begin && listenerBegin >= 0 && listenerEnd > listenerBegin);
@@ -26,12 +26,12 @@ function harness() {
     project_sha256: 'a'.repeat(64), namespace: 'local', effects_executed: false };
   const preview = new Function(
     'state','cloudClient','window','previewGate','TENANT','currentTenant','el','notice','fail',
-    'validateProject','encodeDsl','currentId',
+    'validateProject','encodeDsl','currentId','linuxNativeInvoke',
     source.slice(listenerBegin, listenerEnd) + '\n' + source.slice(begin, end) + '\nreturn preview;'
   )(state, cloudClient, window, previewGate, 'local',
     () => state.workspace === 'cloud' ? 'tenant' : 'local',
     () => rendered, message => notices.push(message), error => notices.push('FAIL ' + String(error)),
-    project => ({order:[project.project_id], tools:[], cost:0}), JSON.stringify, () => state.project.project_id);
+    project => ({order:[project.project_id], tools:[], cost:0}), JSON.stringify, () => state.project.project_id, () => null);
   const receive = id => listeners['ocaf-rust-validation']({ detail: JSON.stringify({
     request_id: id, ok: true, plan: JSON.stringify(plan)
   }) });

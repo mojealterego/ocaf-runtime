@@ -59,3 +59,21 @@ test('cloud preview performs authenticated inert POST and blocks invalid endpoin
   assert.throws(()=>new CloudWorkspaceClient({token:'x',origin:'https://example.test/path'}),/origin/i);
   await assert.rejects(client.load('tenant-a','../other'),/identifier/i);
 });
+
+// The native transport uses the same typed response/CAS contract without an arbitrary URL.
+test('Linux native Cloud client sends only route and opaque token to native bridge', async () => {
+  const requests=[];
+  const client=new CloudWorkspaceClient({token:'opaque-access-token',nativeInvoke:async (cmd,args)=>{
+    requests.push({cmd,args}); return {status:200,body:JSON.stringify({project,head})};
+  }});
+  assert.deepEqual(await client.load('tenant-a','hello'),{project,head});
+  assert.deepEqual(requests,[{cmd:'native_cloud_request',args:{method:'GET',path:'/v1/projects/hello',token:'opaque-access-token',body:null}}]);
+});
+test('native Cloud CAS error is not retried and oversized receipt is rejected',async()=>{
+  let count=0;
+  const client=new CloudWorkspaceClient({token:'token',nativeInvoke:async()=>{count++;return {status:409,body:'{}'};}});
+  await assert.rejects(client.save('tenant-a',project,null),e=>e instanceof CloudApiError&&e.status===409);
+  assert.equal(count,1);
+  const large=new CloudWorkspaceClient({token:'token',nativeInvoke:async()=>({status:200,body:' '.repeat(131073)})});
+  await assert.rejects(large.load('tenant-a','hello'),/limit/i);
+});

@@ -40,14 +40,18 @@ const verifyProject = (project, tenant, projectId) => {
 };
 
 export class CloudWorkspaceClient {
-  constructor({token, origin, fetchImpl = globalThis.fetch.bind(globalThis)}) {
+  constructor({token, origin, nativeInvoke = null, fetchImpl = globalThis.fetch.bind(globalThis)}) {
     if (typeof token !== 'string' || !token || token.length > 4096 || /[^\x21-\x7e]/.test(token)) {
       throw new Error('oauth: invalid access token');
     }
+    this.nativeInvoke = nativeInvoke;
+    if (nativeInvoke !== null && typeof nativeInvoke !== 'function') throw new Error('native Cloud transport invalid');
+    if (nativeInvoke === null) {
     const url = new URL(origin);
     if (url.origin !== origin || url.username || url.password || url.pathname !== '/' ||
         (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost','127.0.0.1'].includes(url.hostname)))) {
       throw new Error('origin: Cloud API requires same-origin HTTPS (or loopback for local tests)');
+    }
     }
     this.origin = origin;
     this.token = token; // ephemeral only; never persist in localStorage, URL or logs
@@ -58,6 +62,14 @@ export class CloudWorkspaceClient {
     const body = payload === undefined ? undefined : JSON.stringify(payload);
     if (body !== undefined && new TextEncoder().encode(body).length > MAX_REQUEST) {
       throw new Error('limit: Cloud API request exceeds 128 KiB');
+    }
+    if (this.nativeInvoke) {
+      const receipt = await this.nativeInvoke('native_cloud_request', {method,path,token:this.token,body:body ?? null});
+      if (!receipt || !Number.isInteger(receipt.status) || receipt.status < 200 || receipt.status > 599 ||
+          typeof receipt.body !== 'string') throw new Error('schema: invalid native Cloud receipt');
+      if (receipt.status < 200 || receipt.status >= 300) throw new CloudApiError(receipt.status);
+      if (new TextEncoder().encode(receipt.body).length > MAX_RESPONSE) throw new Error('limit: oversized cloud response');
+      return parseUniqueJson(receipt.body);
     }
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 10000);

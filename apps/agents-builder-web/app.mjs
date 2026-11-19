@@ -9,6 +9,11 @@ import {PreviewGate} from './preview-gate.mjs';
 const TENANT = 'local';
 const previewGate = new PreviewGate();
 const cloudSelectionGate = new PreviewGate();
+const importGate = new PreviewGate();
+const linuxNativeInvoke = () => {
+  const invoke = window.__TAURI__?.core?.invoke;
+  return navigator.platform.startsWith('Linux') && typeof invoke === 'function' ? invoke : null;
+};
 
 // Native Rust UniFFI confirmation is purely offline validation (never execution).
 window.addEventListener('ocaf-rust-validation', event => {
@@ -187,6 +192,7 @@ function renderHistory() {
 function invalidatePreview() {
   previewGate.invalidate();
   cloudSelectionGate.invalidate();
+  importGate.invalidate();
   el('preview-output').textContent = 'Wybierz „Weryfikuj”, aby uzyskać plan aktualnego projektu.';
 }
 function render() {
@@ -208,7 +214,7 @@ function render() {
   el('cloud-save').disabled = !cloudClient || !hasProject || !state.cloud.pending || cloudSaveInFlight;
   el('new-project').disabled = state.workspace !== 'local';
   el('open-project').disabled = state.workspace !== 'local';
-  el('import').disabled = state.workspace !== 'local';
+  el('import').disabled = cloudSaveInFlight || (state.workspace === 'cloud' && (!cloudClient || !hasProject));
   for (const id of ['mode-nocode','mode-code','preview','export','add-transform','add-tool','remove-node','update-tool','set-budget','apply-code']) {
     el(id).disabled = !hasProject;
   }
@@ -280,7 +286,18 @@ async function preview() {
     action:'validate', request_id:requestId, content:encodeDsl(state.project, TENANT)
   });
   try {
-    if (window.ocafHost && typeof window.ocafHost.postMessage === 'function') {
+    const invoke = linuxNativeInvoke();
+    if (invoke) {
+      const receipt = await invoke('native_local_compile', {source:encodeDsl(state.project, TENANT)});
+      if (!previewGate.take(requestId, 'native') || state.workspace !== 'local' || state.dirty) return;
+      if (!receipt || receipt.namespace !== TENANT || receipt.effects_executed !== false ||
+          !/^[a-f0-9]{64}$/.test(receipt.project_sha256) ||
+          JSON.stringify(receipt.ordered_nodes) !== JSON.stringify(plan.order) ||
+          JSON.stringify(receipt.requested_tools) !== JSON.stringify(plan.tools)) {
+        throw new Error('native Linux compiler receipt mismatch');
+      }
+      el('preview-output').textContent += '\nRust Linux: inert plan verified; SHA-256: ' + receipt.project_sha256;
+    } else if (window.ocafHost && typeof window.ocafHost.postMessage === 'function') {
       window.ocafHost.postMessage(nativeMessage);
     } else if (window.webkit?.messageHandlers?.ocafHost) {
       window.webkit.messageHandlers.ocafHost.postMessage(nativeMessage);
@@ -293,10 +310,16 @@ async function preview() {
   }
   notice('Graph validated locally. No tools were executed.');
 }
-function download() {
+async function download() {
   if (state.dirty) throw new Error('unapplied Code DSL edits: apply or discard changes before export');
   if (!state.project) throw new Error('workspace: select a project');
   const text = encodeDsl(state.project, currentTenant());
+  const invoke = linuxNativeInvoke();
+  if (invoke) {
+    const filename = await invoke('native_export_project', {source:text,tenant:currentTenant()});
+    notice('Zapisano eksport w Pobranych: ' + filename + '. Bez podpisu i publikacji.');
+    return;
+  }
   // Android native WebMessageListener: explicit SAF CreateDocument picker.
   // Browser and desktop keep their original standards-based download path.
   if (window.ocafHost && typeof window.ocafHost.postMessage === 'function') {
@@ -323,22 +346,36 @@ function download() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   notice('Exported bounded JSON DSL. Export is not signed or published.');
 }
-function importFile(file) {
-  if (state.workspace !== 'local') throw new Error('workspace: import locally first');
+async function importFile(file) {
   if (!file) return;
+  if (cloudSaveInFlight || state.dirty) throw new Error('conflict: finish current edits before import');
+  const workspace = state.workspace;
+  const tenant = currentTenant();
+  const previous = state.project;
+  if (workspace === 'cloud') requireCloud();
+  if (workspace === 'cloud' && !previous) throw new Error('workspace: select a Cloud project before import');
   if (file.size > 128 * 1024) throw new Error('limit: import exceeds 128 KiB');
-  file.text().then(source => safe(() => {
-    const project = decodeDsl(source, TENANT);
-    if (loadProject(localStorage, TENANT, project.project_id)) throw new Error('conflict: import ID already exists; no overwrite');
-    project.revision = 1;
-    saveProject(localStorage, project, 0);
-    state.project = project;
-    state.saved = 1;
-    state.selectedNode = null;
-    state.selectedEdge = 0;
-    notice('Imported project into local offline workspace.');
-    render();
-  })).catch(fail);
+  const requestId = importGate.begin();
+  const source = await file.text();
+  if (!importGate.take(requestId) || workspace !== state.workspace || tenant !== currentTenant() ||
+      previous !== state.project || cloudSaveInFlight || state.dirty) return;
+  const project = decodeDsl(source, tenant);
+  if (workspace === 'cloud') {
+    if (project.project_id !== previous.project_id) throw new Error('tenant: import project identity mismatch');
+    persist(project); // creates a draft only, explicit CAS is still required
+    notice('Import JSON do szkicu Cloud. Zapis wymaga jawnego działania.');
+    return;
+  }
+  if (loadProject(localStorage, TENANT, project.project_id)) throw new Error('conflict: import ID already exists; no overwrite');
+  project.revision = 1;
+  saveProject(localStorage, project, 0);
+  state.project = project;
+  state.saved = 1;
+  state.selectedNode = null;
+  state.selectedEdge = 0;
+  state.dirty = false;
+  notice('Imported project into local offline workspace.');
+  render();
 }
 function setWorkspace(workspace) {
   if (cloudSaveInFlight) throw new Error('conflict: poczekaj na zakończenie zapisu Cloud');
@@ -374,7 +411,12 @@ function connectCloud() {
   if (state.cloud.pending && !window.confirm('Odrzucić niezapisany szkic chmurowy?')) return;
   const token = el('cloud-token').value.trim();
   const tenant = el('cloud-tenant').value.trim();
-  const client = new CloudWorkspaceClient({token, origin:location.origin});
+  // The Linux desktop command is restricted to its local main WebView and
+  // operator-configured mTLS gateway. Other hosts keep same-origin HTTPS.
+  const nativeInvoke = linuxNativeInvoke();
+  const client = nativeInvoke
+    ? new CloudWorkspaceClient({token, nativeInvoke})
+    : new CloudWorkspaceClient({token, origin:location.origin});
   // The tenant field is only a local expectation. The server must bind token
   // to a trusted TLS subject and reject cross-tenant requests.
   validateProject(newProject(tenant, 'connection-check'), tenant);
@@ -536,7 +578,7 @@ function init() {
   }));
   el('preview').addEventListener('click', () => safe(preview));
   el('export').addEventListener('click', () => safe(download));
-  el('import').addEventListener('change', event => safe(() => importFile(event.target.files[0])));
+  el('import').addEventListener('change', event => { const file = event.target.files[0]; event.target.value = ''; safe(() => importFile(file)); });
   el('restore').addEventListener('click', () => safe(() => {
     if (state.workspace !== 'local') throw new Error('workspace: remote history restore not available');
     const revision = Number(el('revision').value);

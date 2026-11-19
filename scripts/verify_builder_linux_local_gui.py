@@ -82,6 +82,11 @@ class Driver:
         self.call("POST", path + "/clear", {})
         self.call("POST", path + "/value", {"text": value, "value": list(value)})
 
+    def upload(self, file):
+        path = str(file.resolve(strict=True))
+        self.call("POST", "/element/" + self.element("import") + "/value",
+                  {"text": path, "value": list(path)})
+
     def read(self, ident, prop="textContent"):
         require(prop in {"textContent", "value", "hidden", "disabled"}, "unsupported property")
         return self.call("GET", f"/element/{self.element(ident)}/property/{prop}")
@@ -96,6 +101,28 @@ class Driver:
                 pass
             time.sleep(0.15)
         raise RuntimeError(f"GUI assertion timed out: {label}")
+
+
+def isolated_downloads(root, env):
+    downloads = root / "downloads"
+    downloads.mkdir(mode=0o700)
+    config = Path(env["XDG_CONFIG_HOME"])
+    (config / "user-dirs.dirs").write_text('XDG_DOWNLOAD_DIR="' + str(downloads) + '"\n')
+    return downloads
+
+
+def export_project(client, downloads, project_id, revision):
+    existing = set(downloads.iterdir())
+    client.click("export")
+    client.wait_for(lambda: len(set(downloads.glob("*.ocaf-builder.json")) - existing) == 1,
+                    "native export file")
+    file = (set(downloads.glob("*.ocaf-builder.json")) - existing).pop()
+    client.wait_for(lambda: "Zapisano eksport" in client.read("message"), "export completion")
+    data = json.loads(file.read_text())
+    require(data["project_id"] == project_id and data["revision"] == revision,
+            "exported file identity or revision mismatch")
+    require(file.stat().st_mode & 0o077 == 0, "export is group/world accessible")
+    return file, data
 
 
 def run(binary, driver):
@@ -114,6 +141,7 @@ def run(binary, driver):
             p = root / subdir
             p.mkdir(mode=0o700)
             env[name] = str(p)
+        downloads = isolated_downloads(root, env)
         # Unique test-local directories prevent writing the operator's projects.
         with (root / "webdriver.log").open("wb") as log:
             process = subprocess.Popen([str(driver), "--port", str(port),
@@ -151,6 +179,41 @@ def run(binary, driver):
                 client.wait_for(lambda: "DRY RUN" in client.read("preview-output") and
                                 "native_transform" in client.read("preview-output") and
                                 "native-e2e r3" in client.read("preview-output"), "local preview")
+                client.wait_for(lambda: "Rust Linux" in client.read("preview-output"), "real local Rust compile")
+                export1, data = export_project(client, downloads, "native-e2e", 3)
+                export2, data2 = export_project(client, downloads, "native-e2e", 3)
+                require(export1 != export2 and data == data2, "repeat export overwrote content")
+                imported = root / "local-import.json"
+                data["project_id"] = "native-import"
+                imported.write_text(json.dumps(data))
+                client.upload(imported)
+                client.wait_for(lambda: client.read("project-title") == "native-import" and
+                                client.read("cost-budget", "value") == "200", "NoCode file import")
+                client.click("mode-code")
+                client.wait_for(lambda: client.read("code-view", "hidden") is False, "Code import view")
+                export_project(client, downloads, "native-import", 1)
+                data["project_id"] = "native-code-import"
+                imported2 = root / "local-code-import.json"
+                imported2.write_text(json.dumps(data))
+                client.upload(imported2)
+                client.wait_for(lambda: client.read("project-title") == "native-code-import", "Code file import")
+                client.click("preview")
+                client.wait_for(lambda: "Rust Linux" in client.read("preview-output"), "Code Rust compile")
+                client.fill("project-id", "native-code-only")
+                client.click("new-project")
+                client.wait_for(lambda: client.read("project-title") == "native-code-only" and
+                                client.read("revision-label") == "r1", "create in Code mode")
+                code = json.loads(client.read("dsl", "value"))
+                code["max_cost_minor"] = 123
+                client.fill("dsl", json.dumps(code))
+                client.click("apply-code")
+                client.wait_for(lambda: client.read("revision-label") == "r2", "edit created Code project")
+                client.click("preview")
+                client.wait_for(lambda: "Rust Linux" in client.read("preview-output"), "new Code Rust compile")
+                export_project(client, downloads, "native-code-only", 2)
+                client.fill("project-id", "native-e2e")
+                client.click("open-project")
+                client.wait_for(lambda: client.read("project-title") == "native-e2e", "original remains intact")
                 client.click("workspace-cloud")
                 client.wait_for(lambda: client.read("cloud-controls", "hidden") is False and
                                 client.read("cloud-open", "disabled") is True and
@@ -178,6 +241,8 @@ def run(binary, driver):
                 return {"test": "AB-LINUX-LOCAL-CODE-NOCODE-E2E", "result": "PASS",
                         "binary_sha256": hashlib.file_digest(binary.open("rb"),"sha256").hexdigest(),
                         "local_code_nocode_roundtrip": True, "persistent_restart": True,
+                        "native_rust_compile": True, "code_nocode_export_import": True,
+                        "no_overwrite": True,
                         "unauthenticated_cloud_disabled": True,
                         "authenticated_cloud": "UNVERIFIED", "platform": "linux-x86_64"}
             finally:
