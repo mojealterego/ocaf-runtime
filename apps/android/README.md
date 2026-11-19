@@ -35,3 +35,7 @@ require the correct ELF machine for both ABIs and exact shared web assets.
 This is not full GUI E2E, production signing or native Cloud support.
 Eight verifier fixture regressions passed locally in Python 3.13.5;
 Android Gradle, Rust and instrumentation were not run in this environment.
+
+## Export lifecycle (2026-11-19)
+
+The canonical host uses a single-flight, size-bounded ExportSlot. Pending SAF payload cannot be overwritten by another request and is consumed once. JVM contract executable passed; Android SDK/device integration still unverified. See [evidence](../../docs/audits/BUILDER_MOBILE_EXPORT_LIFECYCLE_2026-11-19.md).

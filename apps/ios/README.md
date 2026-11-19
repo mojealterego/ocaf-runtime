@@ -32,3 +32,7 @@ apps/agents-builder-ios host. Simulator builds disable code signing and use
 apps/ios/build as DerivedData, with the Rust target matched to the macOS
 host architecture; Swift language mode is 5.0. Device builds do not
 disable signing. No compiled iOS artifact or live Cloud session verified.
+
+## Export lifecycle (2026-11-19)
+
+One private temporary directory per in-flight share; stale callbacks cannot remove a later export. Completion/cancellation cleans the file; WebKit handler removed on teardown. Swift Foundation contract executable passed on Linux; UIKit/Share Sheet/Xcode integration and process-abort cleanup remain unverified. See [evidence](../../docs/audits/BUILDER_MOBILE_EXPORT_LIFECYCLE_2026-11-19.md).

@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
     private val localHost = "appassets.androidplatform.net"
     private val localUrl = "https://appassets.androidplatform.net/assets/www/index.html"
     private var pickerCallback: ValueCallback<Array<Uri>>? = null
-    private var exportPayload: ByteArray? = null
+    private val exportSlot = ExportSlot()
 
     private val importLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         pickerCallback?.onReceiveValue(if (uri == null) null else arrayOf(uri))
@@ -47,15 +47,21 @@ class MainActivity : ComponentActivity() {
     private val exportLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
-        val payload = exportPayload
-        exportPayload = null
-        if (uri != null && payload != null) {
-            try {
-                contentResolver.openOutputStream(uri, "w")?.use { it.write(payload) }
-            } catch (_: Exception) {
-                // SAF failure does not claim a successful export.
+        val payload = exportSlot.take() ?: return@registerForActivityResult
+        try {
+            if (uri != null) {
+                contentResolver.openOutputStream(uri, "wt")?.use { it.write(payload) }
             }
+        } catch (_: Exception) {
+            // SAF failure does not claim a successful export.
+        } finally {
+            payload.fill(0)
         }
+    }
+
+    override fun onDestroy() {
+        exportSlot.cancel()
+        super.onDestroy()
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -131,8 +137,14 @@ class MainActivity : ComponentActivity() {
                                         val name = obj.optString("filename", "project.ocaf-builder.json")
                                             .replace(Regex("[^A-Za-z0-9_.-]"), "_").take(100)
                                         runOnUiThread {
-                                            exportPayload = data
-                                            exportLauncher.launch(name.ifEmpty { "project.json" })
+                                            if (!isFinishing && !isDestroyed && exportSlot.begin(data)) {
+                                                try {
+                                                    val safeName = if (name.isEmpty() || name == "." || name == "..") "project.json" else name
+                                                    exportLauncher.launch(safeName)
+                                                } catch (_: Exception) {
+                                                    exportSlot.cancel()
+                                                }
+                                            }
                                         }
                                     }
                                     "validate" -> {

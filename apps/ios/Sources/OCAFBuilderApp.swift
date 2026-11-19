@@ -45,9 +45,17 @@ struct BuilderWebView: UIViewRepresentable {
 
     func updateUIView(_ uiView: WKWebView, context: Context) {}
 
+    static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
+        uiView.configuration.userContentController.removeScriptMessageHandler(forName: "ocafHost")
+        uiView.navigationDelegate = nil
+        uiView.stopLoading()
+        coordinator.webView = nil
+    }
+
     final class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         weak var webView: WKWebView?
         var allowedDirectory: URL?
+        private let exportLease = LocalExportLease()
 
         func webView(
             _ webView: WKWebView,
@@ -107,15 +115,24 @@ struct BuilderWebView: UIViewRepresentable {
                 character.isASCII && (character.isLetter || character.isNumber || character == "." || character == "_" || character == "-")
                     ? character : "_"
             })
-            let name = safeName.isEmpty ? "project.json" : safeName
-            let temporary = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "-" + name)
-            guard (try? data.write(to: temporary, options: .atomic)) != nil else { return }
+            let name = safeName.isEmpty || safeName == "." || safeName == ".." ? "project.json" : safeName
+            guard let temporary = try? exportLease.begin(data: data, name: name) else { return }
 
-            DispatchQueue.main.async { [weak self] in
-                guard let root = self?.webView?.window?.rootViewController else { return }
+            DispatchQueue.main.async { [weak self, lease = exportLease] in
+                guard let root = self?.webView?.window?.rootViewController else {
+                    lease.finish(temporary)
+                    return
+                }
                 var presenter = root
                 while let next = presenter.presentedViewController { presenter = next }
+                guard !presenter.isBeingDismissed, presenter.viewIfLoaded?.window != nil else {
+                    lease.finish(temporary)
+                    return
+                }
                 let share = UIActivityViewController(activityItems: [temporary], applicationActivities: nil)
+                share.completionWithItemsHandler = { _, _, _, _ in
+                    DispatchQueue.main.async { lease.finish(temporary) }
+                }
                 if let popover = share.popoverPresentationController {
                     popover.sourceView = presenter.view
                     popover.sourceRect = CGRect(x: presenter.view.bounds.midX, y: presenter.view.bounds.midY, width: 1, height: 1)
