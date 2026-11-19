@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "id": "OCAF-AB-OM-EVOLUTION-V1",
+  "effective_date": "2026-11-19",
+  "status": "SPECIFIED_NOT_IMPLEMENTED_AS_COMPLETE_PRODUCT",
+  "parent_stages": [
+    "0.43",
+    "0.50",
+    "0.51",
+    "0.52",
+    "0.53",
+    "0.54",
+    "0.55",
+    "0.56"
+  ],
+  "platforms": [
+    "windows",
+    "macos",
+    "linux",
+    "kali-linux",
+    "android",
+    "ios",
+    "harmonyos",
+    "kaios"
+  ],
+  "mandatory_for_all_platforms": true,
+  "execution_engine": "OM Engine",
+  "native_protocols": {
+    "agents": "OMAs",
+    "tools": "OMAt",
+    "transport": "Zenoh",
+    "internal_mcp_required": false
+  },
+  "roles": [
+    "Meta Agent Architekt",
+    "Główny zarządca Agentów"
+  ],
+  "editor_modes": [
+    "Code",
+    "NoCode"
+  ],
+  "workspace_modes": [
+    "Local",
+    "Cloud"
+  ],
+  "catalog_seed": {
+    "agents": 111,
+    "swarms": 33,
+    "active_runtime_agents_at_baseline": 0,
+    "dynamic": true
+  },
+  "plugin_center": {
+    "required": [
+      "OMAs",
+      "OMAt"
+    ],
+    "third_plugin_category": {
+      "status": "UNCONFIRMED",
+      "historical_candidates": [
+        "OSTc",
+        "OCTs"
+      ]
+    },
+    "ostc": {
+      "status": "DISABLED",
+      "purpose": "topological cryptography/source protection",
+      "policy": "preserve existing fail-closed and operator sequencing"
+    }
+  },
+  "jobs": [
+    {
+      "id": "COMPETITIVE_DEEP_RESEARCH",
+      "cadence": "weekly"
+    },
+    {
+      "id": "MARKET_OPPORTUNITY_DEEP_RESEARCH",
+      "cadence": "weekly"
+    },
+    {
+      "id": "ULTRA_DEEP_RESEARCH_SYSTEM_EVOLUTION",
+      "cadence": "monthly",
+      "approval": "explicit_operator_approval_exact_digest"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "AB-OM-01",
+      "parent": "0.56",
+      "title": "OM Engine",
+      "acceptance": "Wszystkie agenty i roje wykonują zadania przez OM Engine, z autoryzowanym OMAs/OMAt, rzeczywistym modelem, budżetem, anulowaniem, trace i recovery. Statyczny preview DAG nie jest wykonaniem.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-02",
+      "parent": "0.56",
+      "title": "Meta Agent Architekt i Główny zarządca",
+      "acceptance": "Obie role dostępne w każdej aplikacji. Architekt projektuje, planuje, dobiera agentów, prowadzi badania i przygotowuje ewolucję. Zarządca odpowiada za cykl życia, wersje, zdrowie, kolejki, zasoby, wykonanie i monitoring; role nie podnoszą własnych uprawnień.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-03",
+      "parent": "0.50",
+      "title": "Dynamiczny katalog",
+      "acceptance": "Wersjonowany wspólny katalog z istniejących 111 agentów i 33 rojów, rozszerzalny o nowe zweryfikowane wersje, wyszukiwalny według specjalizacji, aktualizowany podpisanymi zmianami, z widocznym zdrowiem, pochodzeniem, dostępnością i rollback. DRAFT/STAGED nie są ACTIVE.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-04",
+      "parent": "0.51",
+      "title": "Agent Chat i Architect Chat",
+      "acceptance": "Użytkownik zleca zadanie wybranemu agentowi z listy w indywidualnym czacie albo Architektowi, który deleguje do jednego lub wielu odpowiednich agentów/rojów, uzasadnia wybór i scala rzeczywiste wyniki. Historia, postęp, koszty, anulowanie, izolacja tenantów.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-05",
+      "parent": "0.56",
+      "title": "Fabryka agentów i narzędzi",
+      "acceptance": "Architekt przyjmuje opis tekstowy lub polecenie głosowe, projektuje, implementuje, kompiluje, testuje, benchmarkuje i dopuszcza nowe artefakty agentów/narzędzi do katalogu. STT/TTS wymaga rzeczywistych adapterów i stosownych zgód; OMAs/OMAt są natywnymi granicami.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-06",
+      "parent": "0.56",
+      "title": "Cotygodniowy Advanced Deep Research konkurencji",
+      "acceptance": "Raz na okres tygodniowy bada istniejących agentów i bieżące rozwiązania konkurencyjne; źródła i daty, porównywalne benchmarki i baseline. Po stwierdzeniu przewagi konkurenta opracowuje lepszą wersję własnego agenta; promuje tylko kandydatów z udowodnioną poprawą i zachowanymi bramkami regresji/bezpieczeństwa.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-07",
+      "parent": "0.56",
+      "title": "Cotygodniowy Advanced Deep Research rynku",
+      "acceptance": "Osobne zadanie bada popyt, potencjalną rentowność, braki i nisze, ocenia koszty i niepewność, projektuje i maksymalnie ulepsza nowe agenty, buduje/testuje/dopuszcza je i aktualizuje katalog. Prognoza zysku nie jest przychodem.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-08",
+      "parent": "0.56",
+      "title": "Comiesięczny Ultra Deep Research i ewolucja",
+      "acceptance": "Bada cały system aplikacji, OM Engine, Architekta i jego strategie, UX, bezpieczeństwo, wydajność i architekturę. Przygotowuje rzeczywisty zweryfikowany pakiet ewolucji z diff, metrykami, ryzykiem, migracją i rollback; AWAITING_OPERATOR_APPROVAL.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-09",
+      "parent": "0.55",
+      "title": "Zatwierdzenie i aktualizacja",
+      "acceptance": "Miesięczna ewolucja całego systemu i Architekta wyłącznie po jawnym zatwierdzeniu operatora dokładnego digestu kandydata; odrzucenie braku, zmiany, wygaśnięcia lub replay zgody. Podpis, health gates, audyt, rollback. Tygodniowe odwracalne aktualizacje agentów tylko w granicach uprzednio zatwierdzonej delegacji i zweryfikowanego wydania.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-10",
+      "parent": "0.56",
+      "title": "Trwały harmonogram",
+      "acceptance": "Dwa samodzielne zadania cotygodniowe i jedno comiesięczne, konfigurowalny kalendarz/strefa czasowa, deduplikacja per okres i tenant/flota, lease/fencing, retry, checkpoint, catch-up, limity i egress. Offline pokazuje ostatni wynik i oczekiwanie. Harmonogram wymaga realnego wykonawcy; nie uruchamia się od samego wpisu.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-11",
+      "parent": "0.53",
+      "title": "Atelier Sovereign Luxury Professional Edition",
+      "acceptance": "Osiem natywnych produktów premium: czerń, grafit, szampańskie złoto, szlachetna typografia, responsywność, dostępność, profesjonalne IDE, wizualny canvas NoCode, katalog, indywidualny i Meta Agent Chat/Voice, konsola zarządcy, centrum badań, ewolucji i wtyczek. Rzeczywista kontrola GUI, ergonomii i wizualna; nie dekoracyjna atrapa.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-12",
+      "parent": "0.55",
+      "title": "Pełny odbiór ośmiu produktów",
+      "acceptance": "Każda platforma spełnia AB-OM-01–13 oraz istniejące cztery kombinacje Local/Cloud Code/NoCode, natywną instalację, bezpieczeństwo i podpis operatora. Dotychczasowe scoped E2E edytora zachowane; nie potwierdzają OM Engine ani pełnego produktu.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-13",
+      "parent": "0.43",
+      "title": "Centrum wtyczek i rozszerzeń",
+      "acceptance": "Każda aplikacja umożliwia wyszukiwanie, dodawanie, instalację, aktualizację, konfigurację, włączanie/wyłączanie i usuwanie zweryfikowanych integracji OMAs i OMAt; manifesty, wersje, zależności, zakresy, podpisy, izolacja, ograniczenia tenantów, cofnięcie wersji. Meta Agent Architekt może tworzyć i integrować nowe wtyczki przez te same bramki. OSTc pozostaje przyszłą chronioną integracją kryptograficzną, fail-closed zgodnie z 0.43 i decyzją operatora; nie potwierdzono, że OSTc lub OCTs to dokładna trzecia kategoria wtyczek. Zastrzeżone rozszerzenie rejestru po potwierdzeniu nazwy, bez domyślnego włączenia OSTc i bez zastąpienia OMAs/OMAt przez MCP.",
+      "status": "OPEN_UNVERIFIED"
+    }
+  ],
+  "release_gate": {
+    "status": "NOT_ACCEPTED",
+    "prior_editor_evidence_preserved": true,
+    "production_approved": false
+  }
+}

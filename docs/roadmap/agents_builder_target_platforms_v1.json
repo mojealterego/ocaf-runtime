@@ -26,14 +26,18 @@
       "native_host": "tauri-v2",
       "source_root": "apps/agents-builder-desktop",
       "distribution": "windows-native",
-      "status": "BUILD_E2E_UNVERIFIED"
+      "status": "BUILD_E2E_UNVERIFIED",
+      "om_engine_product_acceptance": "OPEN_UNVERIFIED",
+      "full_product_accepted": false
     },
     {
       "platform_id": "macos",
       "native_host": "tauri-v2",
       "source_root": "apps/agents-builder-desktop",
       "distribution": "macos-native",
-      "status": "BUILD_E2E_UNVERIFIED"
+      "status": "BUILD_E2E_UNVERIFIED",
+      "om_engine_product_acceptance": "OPEN_UNVERIFIED",
+      "full_product_accepted": false
     },
     {
       "platform_id": "linux",
@@ -58,7 +62,9 @@
         "Cloud Code",
         "Cloud NoCode"
       ],
-      "production_approved": false
+      "production_approved": false,
+      "om_engine_product_acceptance": "OPEN_UNVERIFIED",
+      "full_product_accepted": false
     },
     {
       "platform_id": "kali-linux",
@@ -85,21 +91,27 @@
         "Cloud NoCode"
       ],
       "environment_scope": "Kali Rolling 2026.3 userland on shared laboratory kernel",
-      "production_approved": false
+      "production_approved": false,
+      "om_engine_product_acceptance": "OPEN_UNVERIFIED",
+      "full_product_accepted": false
     },
     {
       "platform_id": "android",
       "native_host": "kotlin-rust-uniffi",
       "source_root": "apps/android",
       "distribution": "android-apk",
-      "status": "BUILD_E2E_UNVERIFIED"
+      "status": "BUILD_E2E_UNVERIFIED",
+      "om_engine_product_acceptance": "OPEN_UNVERIFIED",
+      "full_product_accepted": false
     },
     {
       "platform_id": "ios",
       "native_host": "swiftui-rust-uniffi",
       "source_root": "apps/ios",
       "distribution": "ios-ipa",
-      "status": "BUILD_E2E_UNVERIFIED"
+      "status": "BUILD_E2E_UNVERIFIED",
+      "om_engine_product_acceptance": "OPEN_UNVERIFIED",
+      "full_product_accepted": false
     },
     {
       "platform_id": "harmonyos",
@@ -107,7 +119,9 @@
       "source_root": "apps/agents-builder-harmonyos",
       "distribution": "harmonyos-hap",
       "status": "LOCAL_NOCODE_DOMAIN_TESTED_NATIVE_BUILD_E2E_UNVERIFIED",
-      "source_tests": "apps/agents-builder-harmonyos/tests/*.test.mjs"
+      "source_tests": "apps/agents-builder-harmonyos/tests/*.test.mjs",
+      "om_engine_product_acceptance": "OPEN_UNVERIFIED",
+      "full_product_accepted": false
     },
     {
       "platform_id": "kaios",
@@ -115,17 +129,41 @@
       "source_root": "apps/agents-builder-kaios",
       "distribution": "kaios-webapp",
       "status": "HOSTED_CLOUD_CLIENT_SOURCE_TESTED_NATIVE_CLOUD_AND_DEVICE_UNVERIFIED",
-      "cloud_transport": "same-origin HTTPS hosted editor; native app-origin integration unverified"
+      "cloud_transport": "same-origin HTTPS hosted editor; native app-origin integration unverified",
+      "om_engine_product_acceptance": "OPEN_UNVERIFIED",
+      "full_product_accepted": false
     }
   ],
   "release_gate": {
     "status": "NOT_ACCEPTED",
-    "required": "Platform-specific native installation, Code/NoCode GUI E2E, Local/Cloud authenticated mode checks, signed package provenance, and actual SHA-bound receipts.",
+    "required": "Platform-specific native installation, Code/NoCode GUI E2E, Local/Cloud authenticated mode checks, signed package provenance, and actual SHA-bound receipts. All AB-OM-01–13 requirements, including OM Engine execution, plugin center and premium UX; v2 editor evidence alone insufficient.",
     "verifier": "scripts/verify_builder_platform_gate.py",
     "schema_version": 2,
     "platform_packages_required": 8,
     "mode_workspace_suites_required": 32,
     "historical_baseline_verifier": "scripts/verify_builder_gate10.py",
-    "certificate_record": "release/PLATFORM_CERTIFICATE_RECORD.json"
+    "certificate_record": "release/PLATFORM_CERTIFICATE_RECORD.json",
+    "om_engine_contract": "docs/roadmap/agents_builder_om_evolution_v1.json"
+  },
+  "om_engine_product_contract": {
+    "path": "docs/roadmap/agents_builder_om_evolution_v1.json",
+    "architecture": "docs/om-engine/AGENTS_BUILDER_OM_EVOLUTION_CONTRACT_V1.md",
+    "required_for_all_8": true,
+    "status": "NOT_ACCEPTED",
+    "requirements": [
+      "AB-OM-01",
+      "AB-OM-02",
+      "AB-OM-03",
+      "AB-OM-04",
+      "AB-OM-05",
+      "AB-OM-06",
+      "AB-OM-07",
+      "AB-OM-08",
+      "AB-OM-09",
+      "AB-OM-10",
+      "AB-OM-11",
+      "AB-OM-12",
+      "AB-OM-13"
+    ]
   }
 }

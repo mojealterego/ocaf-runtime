@@ -179,3 +179,8 @@ Dopuszczalne bez interakcji: pobranie publicznych danych, sporządzenie propozyc
 ### Kryteria odbioru i aktualny stan
 
 **SPECIFIED / NOT IMPLEMENTED** dla DGM–RSI–AlphaEvolve w OM Engine, Architect Chat/Voice, Market Intelligence, samoczynnego release i integracji siedmiu Builderów. `src/om_engine.rs` pozostaje trwałym koordynatorem workflow, a nie implementacją RSI. Brak nowych buildów, CI ani benchmarków na podstawie tego dodatku. Wymagane są osobne cykle RED/GREEN i testy na konkretnym SHA przed zmianą statusu. Wszelkie historyczne etapy 0.50–0.56 i manifest v11 zachowują swoje znaczenie.
+
+
+## 2026-11-19 — obowiązkowy rozszerzony zakres produktu
+
+[OCAF-AB-OM-EVOLUTION-V1](AGENTS_BUILDER_OM_EVOLUTION_CONTRACT_V1.md) ma pierwszeństwo dla nowego zakresu: osiem platform (w tym Kali), obie role, rzeczywisty OM Engine, dwa tygodniowe research jobs, miesięczna ewolucja wyłącznie po jawnej zgodzie operatora, centrum OMAs/OMAt. OSTc nadal DISABLED; trzecia kategoria wtyczek niepotwierdzona. OPEN_UNVERIFIED.

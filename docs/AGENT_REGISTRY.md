@@ -88,3 +88,8 @@ Organizacyjny rejestr bieżącej dyspozycji **33 rojów / 111 osobnych agentów*
 status `NOT_DEPLOYED` i nie są dowodem aktywnych agentów runtime. Fizyczne,
 odrębne katalogi agentów znajdują się w
 [`OCAF Agents MOJEALTEREGO/AGENT-FLEET-111`](<../OCAF Agents MOJEALTEREGO/AGENT-FLEET-111/>).
+
+
+## 2026-11-19 — obowiązkowy rozszerzony zakres produktu
+
+[Kontrakt AB-OM-01–13](om-engine/AGENTS_BUILDER_OM_EVOLUTION_CONTRACT_V1.md) wymaga żywego katalogu, faktycznego uruchamiania przez OM Engine, aktualizacji po testach oraz centrum wtyczek OMAs/OMAt we wszystkich ośmiu aplikacjach. Nie zmienia liczby aktywnych agentów ani blokady OSTc.
