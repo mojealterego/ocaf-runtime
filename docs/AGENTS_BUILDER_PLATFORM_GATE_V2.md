@@ -63,3 +63,7 @@ Roadmapy, bez utraty historycznych wymagań i bez zmian numeracji.
 ## 2026-11-19 — obowiązkowy rozszerzony zakres produktu
 
 [Kontrakt AB-OM-01–13](om-engine/AGENTS_BUILDER_OM_EVOLUTION_CONTRACT_V1.md) obejmuje OM Engine, katalog, chaty, Architekta i Zarządcę, wtyczki oraz ewolucję po zatwierdzeniu. GATE-10 v2 wymaga rozszerzenia; dotychczasowe PASS dotyczą wyłącznie udokumentowanego edytora. Pełny produkt niezaakceptowany.
+
+## 2026-11-19 — Agent Market i ochrona kryptograficzna
+
+Pełny GATE-10 wymaga wszystkich AB-OM-01–20, w tym [Agent Market i OSTc/PQC](om-engine/AGENT_MARKET_AND_CRYPTOGRAPHIC_PROTECTION_V1.md). Dotychczasowy wykonywalny verifier v2 nie sprawdza jeszcze nowych wymagań; nie jest dowodem pełnego odbioru. NOT_ACCEPTED.

@@ -184,3 +184,7 @@ Dopuszczalne bez interakcji: pobranie publicznych danych, sporządzenie propozyc
 ## 2026-11-19 — obowiązkowy rozszerzony zakres produktu
 
 [OCAF-AB-OM-EVOLUTION-V1](AGENTS_BUILDER_OM_EVOLUTION_CONTRACT_V1.md) ma pierwszeństwo dla nowego zakresu: osiem platform (w tym Kali), obie role, rzeczywisty OM Engine, dwa tygodniowe research jobs, miesięczna ewolucja wyłącznie po jawnej zgodzie operatora, centrum OMAs/OMAt. OSTc nadal DISABLED; trzecia kategoria wtyczek niepotwierdzona. OPEN_UNVERIFIED.
+
+## 2026-11-19 — Agent Market i obowiązkowa ochrona
+
+[AB-OM-14–20](AGENT_MARKET_AND_CRYPTOGRAPHIC_PROTECTION_V1.md) rozszerza kontrakt o dossier, certyfikaty, wycenę, licencje sprzedaży/najmu oraz obowiązkową ochronę OSTc/PQC wszystkich komponentów. OSTc pozostaje fail-closed/DISABLED do implementacji i walidacji; pełna bramka produktu jest otwarta.

@@ -28,7 +28,9 @@
       "distribution": "windows-native",
       "status": "BUILD_E2E_UNVERIFIED",
       "om_engine_product_acceptance": "OPEN_UNVERIFIED",
-      "full_product_accepted": false
+      "full_product_accepted": false,
+      "agent_market_acceptance": "OPEN_UNVERIFIED",
+      "cryptographic_protection_acceptance": "OPEN_UNVERIFIED"
     },
     {
       "platform_id": "macos",
@@ -37,7 +39,9 @@
       "distribution": "macos-native",
       "status": "BUILD_E2E_UNVERIFIED",
       "om_engine_product_acceptance": "OPEN_UNVERIFIED",
-      "full_product_accepted": false
+      "full_product_accepted": false,
+      "agent_market_acceptance": "OPEN_UNVERIFIED",
+      "cryptographic_protection_acceptance": "OPEN_UNVERIFIED"
     },
     {
       "platform_id": "linux",
@@ -64,7 +68,9 @@
       ],
       "production_approved": false,
       "om_engine_product_acceptance": "OPEN_UNVERIFIED",
-      "full_product_accepted": false
+      "full_product_accepted": false,
+      "agent_market_acceptance": "OPEN_UNVERIFIED",
+      "cryptographic_protection_acceptance": "OPEN_UNVERIFIED"
     },
     {
       "platform_id": "kali-linux",
@@ -93,7 +99,9 @@
       "environment_scope": "Kali Rolling 2026.3 userland on shared laboratory kernel",
       "production_approved": false,
       "om_engine_product_acceptance": "OPEN_UNVERIFIED",
-      "full_product_accepted": false
+      "full_product_accepted": false,
+      "agent_market_acceptance": "OPEN_UNVERIFIED",
+      "cryptographic_protection_acceptance": "OPEN_UNVERIFIED"
     },
     {
       "platform_id": "android",
@@ -102,7 +110,9 @@
       "distribution": "android-apk",
       "status": "BUILD_E2E_UNVERIFIED",
       "om_engine_product_acceptance": "OPEN_UNVERIFIED",
-      "full_product_accepted": false
+      "full_product_accepted": false,
+      "agent_market_acceptance": "OPEN_UNVERIFIED",
+      "cryptographic_protection_acceptance": "OPEN_UNVERIFIED"
     },
     {
       "platform_id": "ios",
@@ -111,7 +121,9 @@
       "distribution": "ios-ipa",
       "status": "BUILD_E2E_UNVERIFIED",
       "om_engine_product_acceptance": "OPEN_UNVERIFIED",
-      "full_product_accepted": false
+      "full_product_accepted": false,
+      "agent_market_acceptance": "OPEN_UNVERIFIED",
+      "cryptographic_protection_acceptance": "OPEN_UNVERIFIED"
     },
     {
       "platform_id": "harmonyos",
@@ -121,7 +133,9 @@
       "status": "LOCAL_NOCODE_DOMAIN_TESTED_NATIVE_BUILD_E2E_UNVERIFIED",
       "source_tests": "apps/agents-builder-harmonyos/tests/*.test.mjs",
       "om_engine_product_acceptance": "OPEN_UNVERIFIED",
-      "full_product_accepted": false
+      "full_product_accepted": false,
+      "agent_market_acceptance": "OPEN_UNVERIFIED",
+      "cryptographic_protection_acceptance": "OPEN_UNVERIFIED"
     },
     {
       "platform_id": "kaios",
@@ -131,19 +145,22 @@
       "status": "HOSTED_CLOUD_CLIENT_SOURCE_TESTED_NATIVE_CLOUD_AND_DEVICE_UNVERIFIED",
       "cloud_transport": "same-origin HTTPS hosted editor; native app-origin integration unverified",
       "om_engine_product_acceptance": "OPEN_UNVERIFIED",
-      "full_product_accepted": false
+      "full_product_accepted": false,
+      "agent_market_acceptance": "OPEN_UNVERIFIED",
+      "cryptographic_protection_acceptance": "OPEN_UNVERIFIED"
     }
   ],
   "release_gate": {
     "status": "NOT_ACCEPTED",
-    "required": "Platform-specific native installation, Code/NoCode GUI E2E, Local/Cloud authenticated mode checks, signed package provenance, and actual SHA-bound receipts. All AB-OM-01–13 requirements, including OM Engine execution, plugin center and premium UX; v2 editor evidence alone insufficient.",
+    "required": "Platform-specific native installation, Code/NoCode GUI E2E, Local/Cloud authenticated mode checks, signed package provenance, and actual SHA-bound receipts. All AB-OM-01–20 requirements, including OM Engine execution, plugin center and premium UX; v2 editor evidence alone insufficient. Agent Market, dossier/certificates/licensing and validated OSTc/PQC are mandatory.",
     "verifier": "scripts/verify_builder_platform_gate.py",
     "schema_version": 2,
     "platform_packages_required": 8,
     "mode_workspace_suites_required": 32,
     "historical_baseline_verifier": "scripts/verify_builder_gate10.py",
     "certificate_record": "release/PLATFORM_CERTIFICATE_RECORD.json",
-    "om_engine_contract": "docs/roadmap/agents_builder_om_evolution_v1.json"
+    "om_engine_contract": "docs/roadmap/agents_builder_om_evolution_v1.json",
+    "market_crypto_contract": "docs/om-engine/AGENT_MARKET_AND_CRYPTOGRAPHIC_PROTECTION_V1.md"
   },
   "om_engine_product_contract": {
     "path": "docs/roadmap/agents_builder_om_evolution_v1.json",
@@ -163,7 +180,14 @@
       "AB-OM-10",
       "AB-OM-11",
       "AB-OM-12",
-      "AB-OM-13"
+      "AB-OM-13",
+      "AB-OM-14",
+      "AB-OM-15",
+      "AB-OM-16",
+      "AB-OM-17",
+      "AB-OM-18",
+      "AB-OM-19",
+      "AB-OM-20"
     ]
   }
 }

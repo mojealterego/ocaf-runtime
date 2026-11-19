@@ -5,6 +5,8 @@
   "status": "SPECIFIED_NOT_IMPLEMENTED_AS_COMPLETE_PRODUCT",
   "parent_stages": [
     "0.43",
+    "0.45",
+    "0.49",
     "0.50",
     "0.51",
     "0.52",
@@ -55,16 +57,20 @@
       "OMAt"
     ],
     "third_plugin_category": {
-      "status": "UNCONFIRMED",
+      "status": "OSTC_NAMED_AS_PROTECTED_INTEGRATION_NOT_GENERIC_PLUGIN_TYPE",
       "historical_candidates": [
         "OSTc",
         "OCTs"
-      ]
+      ],
+      "note": "Operator named OMAs, OMAt, OSTc and OM Engine explicitly on 2026-11-19; OSTc is a protected security integration; historical OCTs remains unconfirmed."
     },
     "ostc": {
       "status": "DISABLED",
       "purpose": "topological cryptography/source protection",
-      "policy": "preserve existing fail-closed and operator sequencing"
+      "policy": "preserve DISABLED and fail-closed until validated implementation; mandatory before production admission",
+      "mandatory_target": true,
+      "market_integration_required": true,
+      "protected_component": true
     }
   },
   "jobs": [
@@ -164,14 +170,63 @@
       "id": "AB-OM-12",
       "parent": "0.55",
       "title": "Pełny odbiór ośmiu produktów",
-      "acceptance": "Każda platforma spełnia AB-OM-01–13 oraz istniejące cztery kombinacje Local/Cloud Code/NoCode, natywną instalację, bezpieczeństwo i podpis operatora. Dotychczasowe scoped E2E edytora zachowane; nie potwierdzają OM Engine ani pełnego produktu.",
+      "acceptance": "Każda platforma spełnia AB-OM-01–20 oraz istniejące cztery kombinacje Local/Cloud Code/NoCode, natywną instalację, bezpieczeństwo i podpis operatora. Dotychczasowe scoped E2E edytora zachowane; nie potwierdzają OM Engine ani pełnego produktu.",
       "status": "OPEN_UNVERIFIED"
     },
     {
       "id": "AB-OM-13",
       "parent": "0.43",
       "title": "Centrum wtyczek i rozszerzeń",
-      "acceptance": "Każda aplikacja umożliwia wyszukiwanie, dodawanie, instalację, aktualizację, konfigurację, włączanie/wyłączanie i usuwanie zweryfikowanych integracji OMAs i OMAt; manifesty, wersje, zależności, zakresy, podpisy, izolacja, ograniczenia tenantów, cofnięcie wersji. Meta Agent Architekt może tworzyć i integrować nowe wtyczki przez te same bramki. OSTc pozostaje przyszłą chronioną integracją kryptograficzną, fail-closed zgodnie z 0.43 i decyzją operatora; nie potwierdzono, że OSTc lub OCTs to dokładna trzecia kategoria wtyczek. Zastrzeżone rozszerzenie rejestru po potwierdzeniu nazwy, bez domyślnego włączenia OSTc i bez zastąpienia OMAs/OMAt przez MCP.",
+      "acceptance": "Każda aplikacja umożliwia wyszukiwanie, dodawanie, instalację, aktualizację, konfigurację, włączanie/wyłączanie i usuwanie zweryfikowanych integracji OMAs i OMAt; manifesty, wersje, zależności, zakresy, podpisy, izolacja, ograniczenia tenantów, cofnięcie wersji. Meta Agent Architekt może tworzyć i integrować nowe wtyczki przez te same bramki. OSTc pozostaje przyszłą chronioną integracją kryptograficzną, fail-closed zgodnie z 0.43 i decyzją operatora; nie potwierdzono, że OSTc lub OCTs to dokładna trzecia kategoria wtyczek. Zastrzeżone rozszerzenie rejestru po potwierdzeniu nazwy, bez domyślnego włączenia OSTc i bez zastąpienia OMAs/OMAt przez MCP. Operator potwierdził obowiązkową chronioną integrację OSTc; stan DISABLED aż do spełnienia AB-OM-19. Nie utożsamiać automatycznie kryptografii OSTc z ogólnym mechanizmem wtyczki.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-14",
+      "parent": "0.50",
+      "title": "Dossier każdego agenta i roju",
+      "acceptance": "Karta każdego wpisu (także DRAFT/STAGED) ma trwałe ID, wersję, producenta, pełną dokumentację użytkową/techniczną/architektoniczną/API, ograniczenia, wymagania zasobów, kompatybilność, historię wersji, wyniki testów, rzeczywiste certyfikaty albo jawny status NOT_ISSUED i wycenę albo jawny status NOT_PRICED. Certyfikaty i dokumentacja są przeglądane w aplikacji bez ujawnienia chronionego kodu. Weryfikacja podpisu, digestu, zakresu, ważności i unieważnienia. Fałszywe świadectwo lub niezweryfikowana cena nie mogą być prezentowane jako potwierdzone.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-15",
+      "parent": "0.49",
+      "title": "Agent Market — zakup i wynajem",
+      "acceptance": "W każdej z 8 aplikacji dostępny jest wspólny tenant-scoped marketplace agentów, rojów oraz zgodnych wtyczek narzędziowych OMAs/OMAt i chronionej integracji OSTc. Zakup licencji i wynajem na określony czas; waluta, jednostka, okres, zakres, koszty wykonania, warunki odnowienia i pełna cena przed zgodą. Rzeczywista autoryzacja przez operatora/użytkownika, transakcyjny ledger, idempotencja, potwierdzenie rozliczenia przed przyznaniem uprawnień, zwroty, cofnięcie i wygaśnięcie. Żadnych automatycznych obciążeń bez zgody; testy sandbox rozliczeń nie są produkcyjnym settlement.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-16",
+      "parent": "0.49",
+      "title": "Wycena i oferta wersjonowana",
+      "acceptance": "Architekt przygotowuje opartą na porównywalnych benchmarkach, kosztach, popycie i ryzyku wycenę zakupu/wynajmu i wtyczek, z datą, walutą, modelem cenowym, metodą, źródłami i niepewnością. Wycena jest propozycją, nie przychodem; publikowana oferta jest zatwierdzona, wersjonowana, ważna czasowo i przypięta do konkretnego artefaktu/licencji. Nie wymyślać cen, rozliczeń ani zysków.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-17",
+      "parent": "0.55",
+      "title": "Chronione licencje i dystrybucja",
+      "acceptance": "Podpisane zaszyfrowane pakiety własnościowe i wersjonowane entitlement, powiązane z użytkownikiem/tenantem, zakresem i okresem licencji; klucze przez zaufany broker/chronione magazyny platformy. Zakaz dostępu do plaintext bez uprawnień, nieautoryzowanego klonowania uruchamialnej instancji, replay i downgrade; ograniczony jawny offline lease, bezpieczne odnowienie, unieważnienie i recovery. Użytkownik zachowuje możliwość edycji i eksportu własnego kodu/danych; chroniony kod dostawcy nie jest ujawniany w Code, logach, debug, eksportach ani dossier. Nie obiecywać bezwzględnej odporności na kontrolującego hosta/root/debuggera; publiczne źródła już ujawnione nie mogą stać się tajne przez szyfrowanie kolejnej dystrybucji.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-18",
+      "parent": "0.45",
+      "title": "Obowiązkowa postkwantowa kryptografia całego ekosystemu",
+      "acceptance": "Wszystkie aplikacje, wszystkie agenty/roje, OM Engine, Architekt, Zarządca, OMAs, OMAt, OSTc, ich pakiety, komunikacja, pamięć i aktualizacje obejmuje standardowy hybrydowy profil kryptograficzny z ML-KEM do ustanawiania kluczy, ML-DSA do podpisów i audytowanym AEAD do danych. Zachować obecne mTLS i podpisy do potwierdzonej interoperacyjności; algorytm i zestaw kluczy związane z kontekstem, tenantem i wersją; downgrade i błędy fail closed. Testy wektorów, interoperacyjności, manipulacji, replay, unieważnienia, rotacji, integralności i pomiar platformowy. Nie zastępować dojrzałej ochrony niesprawdzoną kryptografią.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-19",
+      "parent": "0.43",
+      "title": "OSTc — topologiczna ochrona wszystkich komponentów",
+      "acceptance": "Obowiązkowe docelowe zabezpieczenie topologiczne wszystkich aplikacji, każdego agenta/roju, OM Engine, Architekta, Zarządcy, OMAs, OMAt oraz samego OSTc. OSTc ma odrębną specyfikację modelu zagrożeń, konstrukcji, parametrów, własności, interfejsu, integracji z PQC i proof/test vectors; nie uznawać niezweryfikowanego prymitywu za bezpieczny. Dotychczasowy OSTc DISABLED i fail-closed pozostają do czasu implementacji, walidacji i zgody; nie omijać blokady źródeł ani podpisów, brak jawnych kluczy w pakietach. Ochrona własnego bootstrappingu OSTc musi wynikać z niezależnego zaufanego root of trust, bez cyklicznej autoryzacji. Dotychczasowa decyzja odłożenia wdrożenia do ostatniego etapu nie oznacza zgody na wydanie produkcyjne bez ochrony.",
+      "status": "OPEN_UNVERIFIED"
+    },
+    {
+      "id": "AB-OM-20",
+      "parent": "0.55",
+      "title": "Odbiór Agent Market i ochrony na wszystkich platformach",
+      "acceptance": "E2E każdej z 8 aplikacji w zakresie dossier/certyfikaty/wycena, zakup/wynajem w środowisku testowym, instalacja wtyczki, dopuszczenie licencji i wykonanie przez OM Engine; odmowa obcego tenanta, zmienionego pakietu, wygasłej licencji, nieautoryzowanego kopiowania uruchamialnej instancji, wycieku sekretów, braku OSTc/PQC i downgrade. Dowody per artefakt, platforma, wersja, digest, realne testy albo jawnie ograniczona deterministyczna symulacja niedostępnej infrastruktury. Żadne wcześniejsze scoped E2E ani sam manifest nie zamykają pełnego produktu.",
       "status": "OPEN_UNVERIFIED"
     }
   ],
@@ -179,5 +234,50 @@
     "status": "NOT_ACCEPTED",
     "prior_editor_evidence_preserved": true,
     "production_approved": false
+  },
+  "agent_market": {
+    "mandatory_for_all_platforms": true,
+    "scope": [
+      "agents",
+      "swarms",
+      "OMAs",
+      "OMAt",
+      "OSTc protected integration"
+    ],
+    "commercial_modes": [
+      "purchase_license",
+      "time_bounded_rental"
+    ],
+    "dossier_required": true,
+    "certificate_missing_status": "NOT_ISSUED",
+    "valuation_missing_status": "NOT_PRICED",
+    "settlement_requires_authorization": true,
+    "status": "OPEN_UNVERIFIED",
+    "contract": "docs/om-engine/AGENT_MARKET_AND_CRYPTOGRAPHIC_PROTECTION_V1.md"
+  },
+  "cryptographic_protection": {
+    "mandatory_for_all_platforms": true,
+    "protected_classes": [
+      "all_8_apps",
+      "every_agent",
+      "every_swarm",
+      "OM Engine",
+      "Meta Agent Architekt",
+      "Główny zarządca Agentów",
+      "OMAs",
+      "OMAt",
+      "OSTc"
+    ],
+    "pqc": [
+      "ML-KEM",
+      "ML-DSA"
+    ],
+    "ostc_required": true,
+    "ostc_currently_enabled": false,
+    "absolute_anticopy_guarantee": false,
+    "public_docs_accessible": true,
+    "own_user_projects_exportable": true,
+    "status": "OPEN_UNVERIFIED",
+    "contract": "docs/om-engine/AGENT_MARKET_AND_CRYPTOGRAPHIC_PROTECTION_V1.md"
   }
 }

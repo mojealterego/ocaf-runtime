@@ -93,3 +93,7 @@ odrębne katalogi agentów znajdują się w
 ## 2026-11-19 — obowiązkowy rozszerzony zakres produktu
 
 [Kontrakt AB-OM-01–13](om-engine/AGENTS_BUILDER_OM_EVOLUTION_CONTRACT_V1.md) wymaga żywego katalogu, faktycznego uruchamiania przez OM Engine, aktualizacji po testach oraz centrum wtyczek OMAs/OMAt we wszystkich ośmiu aplikacjach. Nie zmienia liczby aktywnych agentów ani blokady OSTc.
+
+## 2026-11-19 — dossier, Agent Market i licencje
+
+Każdy wpis agenta, także DRAFT/STAGED, musi mieć dossier z dokumentacją, certyfikatami lub jawnym stanem NOT_ISSUED, wyceną lub NOT_PRICED. Agent Market wymaga zweryfikowanego pakietu, ważnej oferty i autoryzowanej licencji przed udostępnieniem chronionego wykonania. [AB-OM-14–20](om-engine/AGENT_MARKET_AND_CRYPTOGRAPHIC_PROTECTION_V1.md) obowiązuje wszystkie komponenty; dotychczasowa blokada OSTc nie została zniesiona. Nie deklaruje się aktywacji floty ani nowych certyfikatów.
