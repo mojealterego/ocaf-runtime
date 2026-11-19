@@ -39,6 +39,7 @@ EXACT = frozenset({
     "scripts/tests/test_builder_cloud_ingress.py",
     "scripts/tests/test_builder_cloud_supervisor.py",
     "scripts/verify_builder_cloud_stack.sh",
+    "scripts/verify_builder_linux_local_gui.py",
     "docs/audits/STAGE052_BUILDER_CLOUD_STACK_2026-11-18.md",
     "scripts/tests/test_agents_builder_local_runner.py",
     "scripts/tests/test_local_runner_http_admission.py",
@@ -121,6 +122,7 @@ REQUIRED_BUILDER_FILES = (
     "scripts/tests/test_builder_cloud_ingress.py",
     "scripts/tests/test_builder_cloud_supervisor.py",
     "scripts/verify_builder_cloud_stack.sh",
+    "scripts/verify_builder_linux_local_gui.py",
     "docs/audits/STAGE052_BUILDER_CLOUD_STACK_2026-11-18.md",
     "scripts/tests/test_agents_builder_local_runner.py",
     "scripts/tests/test_local_runner_http_admission.py",
@@ -129,6 +131,7 @@ REQUIRED_BUILDER_FILES = (
     "rust-toolchain.toml",
     # Windows, macOS, Linux and Kali share this host.
     "apps/agents-builder-desktop/src-tauri/Cargo.toml",
+    "apps/agents-builder-desktop/src-tauri/Cargo.lock",
     "apps/agents-builder-desktop/src-tauri/src/main.rs",
     "apps/agents-builder-desktop/src-tauri/tauri.conf.json",
     "scripts/package_builder_kali.py",

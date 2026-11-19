@@ -71,7 +71,7 @@ jobs:
           iconutil -c icns "$icons/icon.iconset" -o "$icons/icon.icns"
       - name: Compile actual platform-native Tauri executable
         shell: bash
-        run: cargo build --release --manifest-path apps/agents-builder-desktop/src-tauri/Cargo.toml
+        run: cargo build --locked --release --manifest-path apps/agents-builder-desktop/src-tauri/Cargo.toml
       - name: Verify executable binary format
         shell: bash
         run: python3 scripts/verify_native_artifact.py '${{ matrix.artifact }}' 'apps/agents-builder-desktop/src-tauri/target/release/${{ matrix.executable }}'

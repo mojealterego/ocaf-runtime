@@ -21,6 +21,23 @@ class DesktopNativeSourceTests(unittest.TestCase):
         self.assertTrue((WEB / "index.html").is_file())
         self.assertEqual(config["app"]["windows"][0]["url"], "index.html")
 
+    def test_native_desktop_lockfile_and_all_build_commands_are_pinned(self):
+        import tomllib
+        import re
+        lock = tomllib.loads((DESKTOP / "src-tauri" / "Cargo.lock").read_text())
+        packages = lock["package"]
+        self.assertEqual(lock["version"], 4)
+        self.assertTrue(any(p["name"] == "ocaf-agents-builder-desktop" for p in packages))
+        self.assertTrue(any(p["name"] == "tauri" for p in packages))
+        for package in packages:
+            if package.get("source", "").startswith("registry+"):
+                self.assertRegex(package.get("checksum", ""), r"^[a-f0-9]{64}$")
+        for name in ["desktop", "linux"]:
+            workflow = (ROOT / f".github/workflows/agents-builder-native-{name}.yml").read_text()
+            builds = re.findall(r"cargo build[^\n]+", workflow)
+            self.assertTrue(builds)
+            self.assertTrue(all("--locked" in command.split() for command in builds))
+
     def test_generated_windows_icon_is_valid_png_backed_ico(self):
         subprocess.run([sys.executable, str(ROOT / "scripts/generate_builder_icons.py")],
                        check=True)

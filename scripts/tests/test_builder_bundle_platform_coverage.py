@@ -19,6 +19,8 @@ SPEC.loader.exec_module(packager)
 # macOS, Linux and Kali; Kali has a separate packaging path.
 ANCHORS = (
     'apps/agents-builder-desktop/src-tauri/src/main.rs',
+    'apps/agents-builder-desktop/src-tauri/Cargo.lock',
+    'scripts/verify_builder_linux_local_gui.py',
     'apps/agents-builder-desktop/src-tauri/tauri.conf.json',
     'scripts/package_builder_kali.py',
     'apps/android/app/src/main/java/com/ocaf/builder/MainActivity.kt',
