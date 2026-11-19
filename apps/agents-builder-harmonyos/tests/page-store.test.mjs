@@ -79,3 +79,46 @@ test('cloud and identity changes fail closed before local mutation or storage',a
   p.cloudMode=false;p.projectId='other';p.updateFromNoCode('transform');await p.save();
   assert.equal(h.calls.length,0);assert.equal(p.source,before);
 });
+
+test('local JSON export and import preserve canonical graph across Code and NoCode without storage effects',()=>{
+  const h=fixture(),p=h.page;
+  p.nextNodeId='tool';p.toolCost='5';p.updateFromNoCode('tool');
+  const expected=p.source;p.codeView=false;p.exportProject();
+  assert.equal(p.exchange,expected);assert.match(p.status,/Eksport/);
+  p.create();p.codeView=true;p.importProject();
+  assert.equal(p.source,expected);assert.match(p.status,/Import/);
+  p.codeView=false;p.validate();assert.match(p.status,/input → tool → output/);
+  assert.equal(h.calls.length,0);
+});
+test('import rejects foreign identity, malformed, duplicate and oversized JSON atomically',()=>{
+  const h=fixture(),p=h.page,before=p.source;
+  for(const input of [core.writeCode(core.newProject('foreign','my_agent'),'foreign'),
+    core.writeCode(core.newProject('local','other'),'local'),'{invalid',
+    before.replace('"revision": 1,','"revision": 1, "revision": 2,'),' '.repeat(131073)]){
+    p.exchange=input;p.importProject();assert.equal(p.source,before);assert.match(p.status,/ODMOWA IMPORTU/);
+  }
+  assert.equal(h.calls.length,0);
+});
+test('export refuses foreign project selection and clears stale export on failure',()=>{
+  const h=fixture(),p=h.page;p.exportProject();assert.ok(p.exchange);
+  p.projectId='other';p.exportProject();assert.equal(p.exchange,'');assert.match(p.status,/ODMOWA EKSPORTU/);
+  p.validate();assert.match(p.status,/ODMOWA/);
+  assert.equal(h.calls.length,0);
+});
+test('transfer and validation fail closed during save and unauthenticated Cloud',async()=>{
+  const h=fixture(),p=h.page,before=p.source;const saving=p.save();
+  p.exchange=before;p.importProject();assert.match(p.status,/ODMOWA IMPORTU/);
+  p.exportProject();assert.match(p.status,/ODMOWA EKSPORTU/);assert.equal(p.exchange,'');
+  p.validate();assert.match(p.status,/ODMOWA/);h.finish();await saving;
+  p.cloudMode=true;p.exchange=before;p.importProject();assert.match(p.status,/ODMOWA IMPORTU/);
+  p.exportProject();assert.match(p.status,/ODMOWA EKSPORTU/);assert.equal(p.exchange,'');
+  p.validate();assert.match(p.status,/ODMOWA/);assert.equal(p.source,before);assert.equal(h.calls.length,1);
+});
+test('native page wires explicit transfer controls and clears buffer on identity or workspace changes',()=>{
+  assert.match(pageSource,/Button\('Eksport JSON'\)[\s\S]*?\.enabled\(!this\.saving && !this\.cloudMode\)[\s\S]*?this\.exportProject\(\)/);
+  assert.match(pageSource,/Button\('Import JSON'\)[\s\S]*?\.enabled\(!this\.saving && !this\.cloudMode\)[\s\S]*?this\.importProject\(\)/);
+  assert.match(pageSource,/text: this\.exchange/);
+  assert.match(pageSource,/this\.tenant = value; this\.exchange = '';/);
+  assert.match(pageSource,/this\.projectId = value; this\.exchange = '';/);
+  assert.match(pageSource,/this\.cloudMode = true;\s*this\.exchange = '';/);
+});

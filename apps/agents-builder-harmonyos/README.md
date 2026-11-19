@@ -79,3 +79,7 @@ Native HAP/GUI, authenticated Cloud, device persistence and signing are
 unverified or unimplemented. GATE-10 remains NOT_ACCEPTED.
 
 Handler test Git blob: 8b5d68692b92ea70a39443e1e40d7e70ba71844b. Handler source blob ec0ef34c01d5ae3a7bf8f5cce9557ca715cbec2f. Real Preferences durability is not established by this adapter.
+
+## Local JSON exchange (2026-11-19)
+
+Code/NoCode share explicit JSON import/export through a text field. Input must match the selected local tenant namespace and project ID. Invalid input preserves the current graph; import never writes storage automatically. Cloud and pending save block transfer and validation. Source-handler RED 5 failures; GREEN 10/10 PASS. See [test evidence](../../docs/audits/BUILDER_HARMONYOS_LOCAL_JSON_EXCHANGE_2026-11-19.md). Native build, GUI and authenticated Cloud remain unverified; GATE-10 not accepted.

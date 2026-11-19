@@ -18,6 +18,7 @@ struct BuilderPage {
   @State codeView: boolean = false;
   @State cloudMode: boolean = false;
   @State source: string = writeCode(newProject('local', 'my_agent'), 'local');
+  @State exchange: string = '';
   @State status: string = 'Projekt lokalny. Nie uruchomiono żadnych narzędzi.';
 
   private store(): ProjectStore {
@@ -29,11 +30,38 @@ struct BuilderPage {
     if (this.cloudMode) throw new Error('Cloud zablokowany: brak uwierzytelnionego gateway HTTPS');
   }
 
+  private checkedProject(source: string): BuilderProject {
+    const project = readCode(source, this.tenant);
+    if (project.project_id !== this.projectId) throw new Error('ID projektu nie zgadza się z formularzem');
+    return project;
+  }
+
+  private exportProject(): void {
+    try {
+      this.localOnly();
+      this.exchange = writeCode(this.checkedProject(this.source), this.tenant);
+      this.status = 'Eksport JSON do pola wymiany. Nie podpisano ani nie opublikowano projektu.';
+    } catch (error) {
+      this.exchange = '';
+      this.status = 'ODMOWA EKSPORTU: ' + String(error);
+    }
+  }
+
+  private importProject(): void {
+    try {
+      this.localOnly();
+      const canonical = writeCode(this.checkedProject(this.exchange), this.tenant);
+      this.source = canonical;
+      this.status = 'Import JSON do pamięci. Zapis wymaga jawnego działania.';
+    } catch (error) {
+      this.status = 'ODMOWA IMPORTU: ' + String(error);
+    }
+  }
+
   private updateFromNoCode(operation: string): void {
     try {
       this.localOnly();
-      const before = readCode(this.source, this.tenant);
-      if (before.project_id !== this.projectId) throw new Error('ID projektu nie zgadza się z formularzem');
+      const before = this.checkedProject(this.source);
       let project: BuilderProject;
       if (operation === 'transform') {
         project = addTransform(before, this.tenant, this.nextNodeId);
@@ -59,7 +87,8 @@ struct BuilderPage {
 
   private validate(): void {
     try {
-      const project = readCode(this.source, this.tenant);
+      this.localOnly();
+      const project = this.checkedProject(this.source);
       const plan = compileProject(project, this.tenant);
       this.status = 'Plan statyczny: ' + plan.ordered_nodes.join(' → ') + '. Efekty: nie wykonywano.';
     } catch (error) {
@@ -81,8 +110,7 @@ struct BuilderPage {
     if (this.saving) return;
     try {
       this.localOnly();
-      const project = readCode(this.source, this.tenant);
-      if (project.project_id !== this.projectId) throw new Error('ID projektu nie zgadza się z formularzem');
+      const project = this.checkedProject(this.source);
       this.saving = true;
       await this.store().save(project, this.tenant);
       this.status = 'Zapisano projekt lokalnie; nie opublikowano ani nie wykonano narzędzi.';
@@ -127,29 +155,30 @@ struct BuilderPage {
         Row({ space: 10 }) {
           Button(this.cloudMode ? 'Local' : 'Local ✓')
             .enabled(!this.saving)
-            .onClick(() => { this.cloudMode = false; this.status = 'Tryb lokalny.'; })
+            .onClick(() => { this.cloudMode = false; this.exchange = ''; this.status = 'Tryb lokalny.'; })
           Button(this.cloudMode ? 'Cloud ✓' : 'Cloud')
             .enabled(!this.saving)
             .onClick(() => {
               this.cloudMode = true;
+              this.exchange = '';
               this.status = 'Cloud: wymagane uwierzytelnienie i zaufany gateway. Operacje są zablokowane.';
             })
         }
 
         TextInput({ placeholder: 'Tenant (lokalny namespace)', text: this.tenant })
-          .enabled(!this.saving)
-          .onChange((value: string) => { if (!this.saving) this.tenant = value; })
+          .enabled(!this.saving && !this.cloudMode)
+          .onChange((value: string) => { if (!this.saving && !this.cloudMode && this.tenant !== value) { this.tenant = value; this.exchange = ''; } })
         TextInput({ placeholder: 'ID projektu', text: this.projectId })
-          .enabled(!this.saving)
-          .onChange((value: string) => { if (!this.saving) this.projectId = value; })
+          .enabled(!this.saving && !this.cloudMode)
+          .onChange((value: string) => { if (!this.saving && !this.cloudMode && this.projectId !== value) { this.projectId = value; this.exchange = ''; } })
 
         if (this.codeView) {
           Text('Code: edytuj kanoniczny JSON DAG')
             .fontColor('#F4F1EA')
           TextArea({ text: this.source, placeholder: 'JSON DAG' })
             .height(320)
-            .enabled(!this.saving)
-            .onChange((value: string) => { if (!this.saving) this.source = value; })
+            .enabled(!this.saving && !this.cloudMode)
+            .onChange((value: string) => { if (!this.saving && !this.cloudMode) this.source = value; })
         } else {
           Text('NoCode: typowany graf i bezpieczna transformacja')
             .fontColor('#F4F1EA')
@@ -185,11 +214,28 @@ struct BuilderPage {
 
         Row({ space: 8 }) {
           Button('Nowy').enabled(!this.saving && !this.cloudMode).onClick(() => { this.create(); })
-          Button('Sprawdź plan').onClick(() => { this.validate(); })
+          Button('Sprawdź plan').enabled(!this.saving && !this.cloudMode).onClick(() => { this.validate(); })
         }
         Row({ space: 8 }) {
           Button('Zapisz lokalnie').enabled(!this.saving && !this.cloudMode).onClick(() => { this.save(); })
           Button('Otwórz').enabled(!this.saving && !this.cloudMode).onClick(() => { this.load(); })
+        }
+
+        if (!this.cloudMode) {
+          Text('Wymiana projektu JSON (bez podpisu, bez automatycznego zapisu)')
+            .fontColor('#F4F1EA')
+          TextArea({ text: this.exchange, placeholder: 'Wklej JSON projektu albo wybierz Eksport JSON' })
+            .height(220)
+            .maxLength(131072)
+            .enabled(!this.saving && !this.cloudMode)
+            .onChange((value: string) => { if (!this.saving && !this.cloudMode) this.exchange = value; })
+          Row({ space: 8 }) {
+            Button('Eksport JSON').enabled(!this.saving && !this.cloudMode).onClick(() => { this.exportProject(); })
+            Button('Import JSON').enabled(!this.saving && !this.cloudMode).onClick(() => { this.importProject(); })
+          }
+          Text('Import zastępuje projekt w pamięci; nie zmienia zapisanego projektu.')
+            .fontSize(12)
+            .fontColor('#9499A3')
         }
 
         Text(this.status)
