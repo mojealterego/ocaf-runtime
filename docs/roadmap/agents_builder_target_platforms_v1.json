@@ -40,7 +40,11 @@
       "native_host": "tauri-v2",
       "source_root": "apps/agents-builder-desktop",
       "distribution": "linux-elf",
-      "status": "BUILD_E2E_UNVERIFIED"
+      "status": "NATIVE_BUILD_AND_LOCAL_GUI_E2E_PASS_CLOUD_SIGNING_UNVERIFIED",
+      "evidence_source_commit": "3d96c8c9af40aea79051aaa10a0cb23d45b0d0a5",
+      "evidence": "docs/audits/STAGE053_BUILDER_LINUX_NATIVE_2026-11-19.md",
+      "original_test_commit": "9ff9a5742a6cf0439d37be7c985a8caed9580b8f",
+      "evidence_source_tree": "67e473f77ec1756bdcb9f683143bfc824142033c"
     },
     {
       "platform_id": "kali-linux",
@@ -48,7 +52,11 @@
       "source_root": "apps/agents-builder-desktop",
       "distribution": "kali-deb-amd64",
       "packager": "scripts/package_builder_kali.py",
-      "status": "PACKAGE_SOURCE_TESTED_PLATFORM_E2E_UNVERIFIED"
+      "status": "UNSIGNED_DEB_BUILT_EXTRACTED_UBUNTU_GUI_PASS_KALI_E2E_UNVERIFIED",
+      "evidence_source_commit": "3d96c8c9af40aea79051aaa10a0cb23d45b0d0a5",
+      "evidence": "docs/audits/STAGE053_BUILDER_LINUX_NATIVE_2026-11-19.md",
+      "original_test_commit": "9ff9a5742a6cf0439d37be7c985a8caed9580b8f",
+      "evidence_source_tree": "67e473f77ec1756bdcb9f683143bfc824142033c"
     },
     {
       "platform_id": "android",
