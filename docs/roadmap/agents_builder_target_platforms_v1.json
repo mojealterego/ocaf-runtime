@@ -40,11 +40,25 @@
       "native_host": "tauri-v2",
       "source_root": "apps/agents-builder-desktop",
       "distribution": "linux-elf",
-      "status": "NATIVE_BUILD_AND_LOCAL_GUI_E2E_PASS_CLOUD_SIGNING_UNVERIFIED",
-      "evidence_source_commit": "3d96c8c9af40aea79051aaa10a0cb23d45b0d0a5",
-      "evidence": "docs/audits/STAGE053_BUILDER_LINUX_NATIVE_2026-11-19.md",
-      "original_test_commit": "9ff9a5742a6cf0439d37be7c985a8caed9580b8f",
-      "evidence_source_tree": "67e473f77ec1756bdcb9f683143bfc824142033c"
+      "status": "NATIVE_BUILD_LOCAL_CLOUD_GUI_E2E_PASS_OPERATOR_SIGNING_UNVERIFIED",
+      "evidence_source_commit": "353f92ed11b76e04f26947b5066e34932f2da487",
+      "evidence": "docs/audits/STAGE053_BUILDER_LINUX_FULL_E2E_2026-11-19.md",
+      "original_test_commit": "7b428f7cde1cfce88c790456ca47aca75cfcb780",
+      "evidence_source_tree": "35974dcafa8def0ef685dfbecfadbbd09c68f201",
+      "previous_evidence": {
+        "status": "NATIVE_BUILD_AND_LOCAL_GUI_E2E_PASS_CLOUD_SIGNING_UNVERIFIED",
+        "evidence_source_commit": "3d96c8c9af40aea79051aaa10a0cb23d45b0d0a5",
+        "evidence": "docs/audits/STAGE053_BUILDER_LINUX_NATIVE_2026-11-19.md",
+        "original_test_commit": "9ff9a5742a6cf0439d37be7c985a8caed9580b8f",
+        "evidence_source_tree": "67e473f77ec1756bdcb9f683143bfc824142033c"
+      },
+      "engineering_modes_pass": [
+        "Local Code",
+        "Local NoCode",
+        "Cloud Code",
+        "Cloud NoCode"
+      ],
+      "production_approved": false
     },
     {
       "platform_id": "kali-linux",

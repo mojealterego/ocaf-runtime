@@ -1,0 +1,1 @@
+{"binary_sha256": "67e050d478cefb288fd315cd6211df7f3144257bc1f0c4ea80536dcc17a00f77", "code_nocode_cas": true, "code_nocode_export_import": true, "foreign_import_denied": true, "foreign_tenant_denied": true, "local_isolation": true, "mtls_oauth": true, "restart_recovery": true, "result": "PASS", "signed_release": false, "test": "AB-LINUX-NATIVE-CLOUD-GUI"}

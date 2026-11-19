@@ -1,0 +1,9 @@
+source_sha=7b428f7cde1cfce88c790456ca47aca75cfcb780
+tree_sha=35974dcafa8def0ef685dfbecfadbbd09c68f201
+rustc 1.99.0 (b940084d7 2026-09-28)
+cargo 1.99.0 (5f94df478 2026-08-27)
+Python 3.13.7
+v24.18.0
+OpenSSL 3.5.5 27 Jan 2026 (Library: OpenSSL 3.5.5 27 Jan 2026)
+Linux x86_64
+2.52.6

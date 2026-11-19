@@ -1,0 +1,11 @@
+    Finished `release` profile [optimized] target(s) in 0.22s
+     Running unittests src/main.rs (/tmp/ocaf-builder-052.13FKml/repo/apps/agents-builder-desktop/src-tauri/target/release/deps/ocaf_agents_builder_desktop-d43ae1eec0ea39ed)
+
+running 4 tests
+test native_cloud::tests::exact_routes_only ... ok
+test native_cloud::tests::canonical_https_authorities_only ... ok
+test native_local::tests::actual_compiler_is_inert_and_rejects_foreign_namespace ... ok
+test native_local::tests::export_is_private_no_clobber_and_validated ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
