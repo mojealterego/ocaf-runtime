@@ -66,11 +66,26 @@
       "source_root": "apps/agents-builder-desktop",
       "distribution": "kali-deb-amd64",
       "packager": "scripts/package_builder_kali.py",
-      "status": "UNSIGNED_DEB_BUILT_EXTRACTED_UBUNTU_GUI_PASS_KALI_E2E_UNVERIFIED",
-      "evidence_source_commit": "3d96c8c9af40aea79051aaa10a0cb23d45b0d0a5",
-      "evidence": "docs/audits/STAGE053_BUILDER_LINUX_NATIVE_2026-11-19.md",
-      "original_test_commit": "9ff9a5742a6cf0439d37be7c985a8caed9580b8f",
-      "evidence_source_tree": "67e473f77ec1756bdcb9f683143bfc824142033c"
+      "status": "INSTALLED_DEB_REAL_KALI_USERLAND_LOCAL_CLOUD_GUI_E2E_PASS_OPERATOR_SIGNING_UNVERIFIED",
+      "evidence_source_commit": "18521af4d2ea65452c6d7c7c9ecb5afca4a0ca76",
+      "evidence": "docs/audits/STAGE053_BUILDER_KALI_FULL_E2E_2026-11-19.md",
+      "original_test_commit": "a1dffcb28e7ff2d93047f142ea7a157c04d19bcb",
+      "evidence_source_tree": "5d792fb0618b06f2bf19c55372f196bb60f9aff3",
+      "previous_evidence": {
+        "status": "UNSIGNED_DEB_BUILT_EXTRACTED_UBUNTU_GUI_PASS_KALI_E2E_UNVERIFIED",
+        "evidence_source_commit": "3d96c8c9af40aea79051aaa10a0cb23d45b0d0a5",
+        "evidence": "docs/audits/STAGE053_BUILDER_LINUX_NATIVE_2026-11-19.md",
+        "original_test_commit": "9ff9a5742a6cf0439d37be7c985a8caed9580b8f",
+        "evidence_source_tree": "67e473f77ec1756bdcb9f683143bfc824142033c"
+      },
+      "engineering_modes_pass": [
+        "Local Code",
+        "Local NoCode",
+        "Cloud Code",
+        "Cloud NoCode"
+      ],
+      "environment_scope": "Kali Rolling 2026.3 userland on shared laboratory kernel",
+      "production_approved": false
     },
     {
       "platform_id": "android",

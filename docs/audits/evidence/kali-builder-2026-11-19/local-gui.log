@@ -1,0 +1,6 @@
+dbus-run-session: ignoring unknown child process 59
+dbus-run-session: ignoring unknown child process 103
+dbus-run-session: ignoring unknown child process 40
+{"authenticated_cloud": "UNVERIFIED", "binary_sha256": "67e050d478cefb288fd315cd6211df7f3144257bc1f0c4ea80536dcc17a00f77", "code_nocode_export_import": true, "local_code_nocode_roundtrip": true, "native_rust_compile": true, "no_overwrite": true, "persistent_restart": true, "platform": "linux-x86_64", "result": "PASS", "test": "AB-LINUX-LOCAL-CODE-NOCODE-E2E", "unauthenticated_cloud_disabled": true}
+dbus-run-session: ignoring unknown child process 168
+dbus-run-session: ignoring unknown child process 183

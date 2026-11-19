@@ -1,0 +1,8 @@
+test_all_platform_anchors_are_selected_and_required (test_builder_bundle_platform_coverage.PlatformCoverage.test_all_platform_anchors_are_selected_and_required) ... ok
+test_missing_platform_source_prevents_any_release (test_builder_bundle_platform_coverage.PlatformCoverage.test_missing_platform_source_prevents_any_release) ... ok
+test_real_zip_contains_all_anchors_and_hashes (test_builder_bundle_platform_coverage.PlatformCoverage.test_real_zip_contains_all_anchors_and_hashes) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 4.180s
+
+OK

@@ -1,0 +1,11 @@
+test_builds_reproducible_kali_deb_and_validates_payload (test_package_builder_kali.KaliPackagingTests.test_builds_reproducible_kali_deb_and_validates_payload) ... ok
+test_invalid_png_fails_without_publish (test_package_builder_kali.KaliPackagingTests.test_invalid_png_fails_without_publish) ... ok
+test_native_tls_runtime_dependency_is_declared (test_package_builder_kali.KaliPackagingTests.test_native_tls_runtime_dependency_is_declared) ... ok
+test_png_corruption_and_trailing_data_rejected (test_package_builder_kali.KaliPackagingTests.test_png_corruption_and_trailing_data_rejected) ... ok
+test_refuses_symlink_and_overwrite (test_package_builder_kali.KaliPackagingTests.test_refuses_symlink_and_overwrite) ... ok
+test_rejects_wrong_arch_and_invalid_source_commit (test_package_builder_kali.KaliPackagingTests.test_rejects_wrong_arch_and_invalid_source_commit) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.103s
+
+OK
