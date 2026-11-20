@@ -6,9 +6,9 @@
   "agent_count": 191,
   "active_runtime_agent_count": 0,
   "profile_import_counts": {
-    "STATIC_EXPANDED_ROLE": 61,
-    "STATIC_INSTRUCTION_LITERAL": 2,
-    "REGISTRY_DESCRIPTION": 128
+    "STATIC_EXPANDED_ROLE": 62,
+    "STATIC_INSTRUCTION_LITERAL": 13,
+    "REGISTRY_DESCRIPTION": 116
   },
   "agents": [
     {
@@ -459,7 +459,7 @@
       "source_entrypoint": "agents/photo/specialist_agent.py",
       "source_blob_sha": "19cb4760cb1b60f10ba551a172fa068c94de2a87",
       "specialization": "Profile-driven photographic prompt generation.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/photo-specialist",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -475,7 +475,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-millennium-mathematics",
@@ -484,7 +485,7 @@
       "source_entrypoint": "agents/millennium-mathematics/agent.py",
       "source_blob_sha": "a7dd5570edd496f9db207b2f097f59bf1dd3eaaf",
       "specialization": "Research assistance with explicit proof and validation discipline.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_INSTRUCTION_LITERAL",
       "package_path": "Agenci OCAF/packages/millennium-mathematics",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -500,7 +501,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-light-geometry",
@@ -509,7 +511,7 @@
       "source_entrypoint": "agents/architekt-swiatla-i-geometrii-ciala/agent.py",
       "source_blob_sha": "94a703fcb2b669508ca6dbc69fbaa197ccb7ba93",
       "specialization": "Photographic art direction and production-ready image prompts.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_INSTRUCTION_LITERAL",
       "package_path": "Agenci OCAF/packages/light-geometry",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -525,7 +527,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-agent-policy-gateway",
@@ -1418,7 +1421,7 @@
       "source_entrypoint": "agents/agent-forge/agent.py",
       "source_blob_sha": "512963e2d072a780f06f05b99367a51c19b44c8b",
       "specialization": "Compiles research into agent capabilities, upgrades, tests and verification gates.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_INSTRUCTION_LITERAL",
       "package_path": "Agenci OCAF/packages/agent-forge",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1434,7 +1437,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-causal-systems-research",
@@ -1443,7 +1447,7 @@
       "source_entrypoint": "agents/causal-systems-research/agent.py",
       "source_blob_sha": "3bb03589774eb3f3c8059440e66375de5f9046d4",
       "specialization": "Causal inference, identification audits and research validation.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_INSTRUCTION_LITERAL",
       "package_path": "Agenci OCAF/packages/causal-systems-research",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1459,7 +1463,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-ai-coding-workflow-engineer",
@@ -1468,7 +1473,7 @@
       "source_entrypoint": "agents/ai-coding-workflow-engineer/agent.py",
       "source_blob_sha": "0bdd3268da7ede61ad815bcd50eb2b350e98d108",
       "specialization": "Bounded agentic coding workflows and verification.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_INSTRUCTION_LITERAL",
       "package_path": "Agenci OCAF/packages/ai-coding-workflow-engineer",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1484,7 +1489,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-pdf-rag-quality",
@@ -1493,7 +1499,7 @@
       "source_entrypoint": "agents/pdf-rag-quality/agent.py",
       "source_blob_sha": "e2a80e0d839d8e3fda4d14789266daf2b64d439e",
       "specialization": "PDF extraction, provenance and RAG evaluation.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_INSTRUCTION_LITERAL",
       "package_path": "Agenci OCAF/packages/pdf-rag-quality",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1509,7 +1515,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-datasheet-spice-model-extractor",
@@ -1518,7 +1525,7 @@
       "source_entrypoint": "agents/datasheet-spice-model-extractor/agent.py",
       "source_blob_sha": "7d112cee2c63dd4f933e1a718938310c34d27c24",
       "specialization": "Datasheet parameter extraction and candidate SPICE validation.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_INSTRUCTION_LITERAL",
       "package_path": "Agenci OCAF/packages/datasheet-spice-model-extractor",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1534,7 +1541,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-godot-gaussian-splatting-integrator",
@@ -1543,7 +1551,7 @@
       "source_entrypoint": "agents/godot-gaussian-splatting-integrator/agent.py",
       "source_blob_sha": "bf19f31cee0dee1d28590180dc5fdade3b23a856",
       "specialization": "Godot Gaussian-Splatting integration and validation.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_INSTRUCTION_LITERAL",
       "package_path": "Agenci OCAF/packages/godot-gaussian-splatting-integrator",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1559,7 +1567,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-omnicore-forge",
@@ -1568,7 +1577,7 @@
       "source_entrypoint": "agents/omnicore-forge/agent.py",
       "source_blob_sha": "f71a640c230270717dcde4192046170900c52053",
       "specialization": "Private AI infrastructure, nested virtualization, GPU/RAG and Rust kernel engineering with safety gates.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_INSTRUCTION_LITERAL",
       "package_path": "Agenci OCAF/packages/omnicore-forge",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1584,7 +1593,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-gemini-agent-builder",
@@ -1593,7 +1603,7 @@
       "source_entrypoint": "agents/gemini-agent-builder/agent.py",
       "source_blob_sha": "549a6e24a4c85a45af68f8c9a87147146c2e2036",
       "specialization": "Cross-platform Gemini agent compilation, manifests, adapters and security gates.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_INSTRUCTION_LITERAL",
       "package_path": "Agenci OCAF/packages/gemini-agent-builder",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1609,7 +1619,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-gemini-desktop-builder",
@@ -1618,7 +1629,7 @@
       "source_entrypoint": "agents/gemini-desktop-builder/agent.py",
       "source_blob_sha": "fd243a5f1eb0945aa9e3e1ee93c625b65f1184e9",
       "specialization": "Python/Google GenAI SDK/ADK desktop agent engineering.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_INSTRUCTION_LITERAL",
       "package_path": "Agenci OCAF/packages/gemini-desktop-builder",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1634,7 +1645,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-gemini-android-builder",
