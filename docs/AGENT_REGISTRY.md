@@ -97,3 +97,8 @@ odrębne katalogi agentów znajdują się w
 ## 2026-11-19 — dossier, Agent Market i licencje
 
 Każdy wpis agenta, także DRAFT/STAGED, musi mieć dossier z dokumentacją, certyfikatami lub jawnym stanem NOT_ISSUED, wyceną lub NOT_PRICED. Agent Market wymaga zweryfikowanego pakietu, ważnej oferty i autoryzowanej licencji przed udostępnieniem chronionego wykonania. [AB-OM-14–20](om-engine/AGENT_MARKET_AND_CRYPTOGRAPHIC_PROTECTION_V1.md) obowiązuje wszystkie komponenty; dotychczasowa blokada OSTc nie została zniesiona. Nie deklaruje się aktywacji floty ani nowych certyfikatów.
+
+
+### Imported MojeAlterego candidate fleet (191 logical entries)
+
+See [Agenci OCAF](<../Agenci OCAF/README.md>) and [registry](<../Agenci OCAF/registry.json>). Native Rust + Zenoh staging, per-agent dossier, shared bounded DGM/RSI proposal kernel. DRAFT, 0 active, not certified. Existing 111-agent and 33-swarm registries remain unchanged. Production admission, source-specific algorithm port, compilation and signed evidence remain open.

@@ -1,0 +1,22 @@
+agent_id = "OCAF-AGENT-EXT-comic-visual-continuity"
+display_name = "Comic Visual Continuity Agent"
+source_id = "comic-visual-continuity"
+version = "0.1.0"
+lifecycle = "DRAFT"
+active_admission = "DENY"
+transport = "zenoh"
+model_backend = "UNASSIGNED"
+memory_namespace = "comic-visual-continuity"
+source_access = "disabled"
+ostc_enabled = false
+max_steps = 4
+max_input_bytes = 65536
+[omas]
+enabled = false
+[omat]
+enabled = false
+[evolution]
+dgm = true
+rsi = true
+max_rounds = 32
+release_admission = "DENY"

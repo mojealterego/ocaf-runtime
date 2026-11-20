@@ -1,0 +1,10 @@
+id = "OCAF-AGENT-EXT-architekt-kariery"
+kind = "agent"
+zenoh_required = true
+transport = "zenoh"
+status = "DRAFT"
+active_admission = "DENY"
+source_access = "disabled"
+ostc_enabled = false
+pqc_verified = false
+model_backend = "UNASSIGNED"

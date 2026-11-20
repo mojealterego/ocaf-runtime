@@ -1,0 +1,7 @@
+# Legal & Compliance Agent (OCAF-AGENT-EXT-legal-compliance-agent) — technical specification
+
+Source: [pinned entrypoint](https://github.com/mojealterego/Ageni-AI-mojealterego/blob/a86626db5f40630809ecbb4c4110a3774ff16150/agents/legal-compliance-agent/agent.py); blob 512b5e8ee5608059d77f4bc87cd28b179bb3dce3. Original ID: legal-compliance-agent. Version 0.1.0.
+
+Role: Traceable legal-information analysis, agentic RAG, citation enforcement and compliance evidence mapping.
+
+API: profile returns static identity and role; prepare produces a draft with DENY, zero tools, four-step budget and 65,536-byte limit. Zenoh probe uses actual correlated query/reply with timeout. Evolve uses archive branching and strict incumbent selection without source modification. Caller provides independent evaluator. Source Python-specific algorithms beyond extracted profile have not been ported. Native build and model execution unverified.

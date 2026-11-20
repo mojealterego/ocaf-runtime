@@ -1,0 +1,22 @@
+agent_id = "OCAF-AGENT-EXT-contract-review"
+display_name = "Contract Review & Redlining Agent"
+source_id = "contract-review"
+version = "0.1.0"
+lifecycle = "DRAFT"
+active_admission = "DENY"
+transport = "zenoh"
+model_backend = "UNASSIGNED"
+memory_namespace = "contract-review"
+source_access = "disabled"
+ostc_enabled = false
+max_steps = 4
+max_input_bytes = 65536
+[omas]
+enabled = false
+[omat]
+enabled = false
+[evolution]
+dgm = true
+rsi = true
+max_rounds = 32
+release_admission = "DENY"

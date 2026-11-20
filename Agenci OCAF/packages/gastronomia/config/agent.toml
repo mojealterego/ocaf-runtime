@@ -1,0 +1,22 @@
+agent_id = "OCAF-AGENT-EXT-gastronomia"
+display_name = "Tutor Gastronomii HGT"
+source_id = "gastronomia"
+version = "0.1.0"
+lifecycle = "DRAFT"
+active_admission = "DENY"
+transport = "zenoh"
+model_backend = "UNASSIGNED"
+memory_namespace = "gastronomia"
+source_access = "disabled"
+ostc_enabled = false
+max_steps = 4
+max_input_bytes = 65536
+[omas]
+enabled = false
+[omat]
+enabled = false
+[evolution]
+dgm = true
+rsi = true
+max_rounds = 32
+release_admission = "DENY"

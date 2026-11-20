@@ -1,0 +1,12 @@
+[package]
+name = "ocaf-ext-playful-polyglot"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+ocaf-import-core.workspace = true
+zenoh.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true

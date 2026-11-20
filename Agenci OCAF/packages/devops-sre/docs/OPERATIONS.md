@@ -1,0 +1,3 @@
+# Autonomous DevOps / SRE Agent (OCAF-AGENT-EXT-devops-sre) — operations
+
+Review source provenance, dependency lock and build evidence. Run `cargo test --manifest-path "Agenci OCAF/Cargo.toml" -p ocaf-ext-devops-sre` and shared core tests. Actual staging probe sends only identity and nonce; no task data. No auto-start. Configure production transport only through trusted OM Engine, OMAs/OMAt and policy. Timeout, invalid scope, failed evaluation, missing signature or unsupported crypto: fail closed. Do not activate or expose in Agent Market. Host monitors correlation, errors, budgets and evaluator provenance. No production evidence.

@@ -1,0 +1,22 @@
+agent_id = "OCAF-AGENT-EXT-inf02"
+display_name = "SysAdmin Mentor INF.02"
+source_id = "inf02"
+version = "0.1.0"
+lifecycle = "DRAFT"
+active_admission = "DENY"
+transport = "zenoh"
+model_backend = "UNASSIGNED"
+memory_namespace = "inf02"
+source_access = "disabled"
+ostc_enabled = false
+max_steps = 4
+max_input_bytes = 65536
+[omas]
+enabled = false
+[omat]
+enabled = false
+[evolution]
+dgm = true
+rsi = true
+max_rounds = 32
+release_admission = "DENY"
