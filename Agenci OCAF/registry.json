@@ -6,9 +6,9 @@
   "agent_count": 191,
   "active_runtime_agent_count": 0,
   "profile_import_counts": {
-    "STATIC_ROLE_LINE": 50,
+    "STATIC_EXPANDED_ROLE": 61,
     "STATIC_INSTRUCTION_LITERAL": 2,
-    "REGISTRY_DESCRIPTION": 139
+    "REGISTRY_DESCRIPTION": 128
   },
   "agents": [
     {
@@ -18,7 +18,7 @@
       "source_entrypoint": "agents/occupational-ai/agent.py",
       "source_blob_sha": "507a659a1d813e15acd725704343605e900146cf",
       "specialization": "Public-information equity research, valuation scenarios and evidence provenance.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/investment-research",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -34,7 +34,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-aml-compliance",
@@ -43,7 +44,7 @@
       "source_entrypoint": "agents/occupational-ai/agent.py",
       "source_blob_sha": "507a659a1d813e15acd725704343605e900146cf",
       "specialization": "Transaction-alert triage, evidence mapping and compliance escalation drafting.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/aml-compliance",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -59,7 +60,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-fpa-budgeting",
@@ -68,7 +70,7 @@
       "source_entrypoint": "agents/occupational-ai/agent.py",
       "source_blob_sha": "507a659a1d813e15acd725704343605e900146cf",
       "specialization": "Budget-versus-actual analysis, variance drivers and forecast support.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/fpa-budgeting",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -84,7 +86,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-devops-sre",
@@ -93,7 +96,7 @@
       "source_entrypoint": "agents/occupational-ai/agent.py",
       "source_blob_sha": "507a659a1d813e15acd725704343605e900146cf",
       "specialization": "Alert triage, incident correlation and bounded remediation proposals.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/devops-sre",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -109,7 +112,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-qa-testing",
@@ -118,7 +122,7 @@
       "source_entrypoint": "agents/occupational-ai/agent.py",
       "source_blob_sha": "507a659a1d813e15acd725704343605e900146cf",
       "specialization": "Test design, regression analysis and reproducible defect reporting.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/qa-testing",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -134,7 +138,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-legacy-migration",
@@ -143,7 +148,7 @@
       "source_entrypoint": "agents/occupational-ai/agent.py",
       "source_blob_sha": "507a659a1d813e15acd725704343605e900146cf",
       "specialization": "Behavior-preserving legacy migration planning, tests and compatibility analysis.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/legacy-migration",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -159,7 +164,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-contract-review",
@@ -168,7 +174,7 @@
       "source_entrypoint": "agents/occupational-ai/agent.py",
       "source_blob_sha": "507a659a1d813e15acd725704343605e900146cf",
       "specialization": "Clause evidence extraction, playbook comparison and redline drafting.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/contract-review",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -184,7 +190,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-regulatory-watch",
@@ -193,7 +200,7 @@
       "source_entrypoint": "agents/occupational-ai/agent.py",
       "source_blob_sha": "507a659a1d813e15acd725704343605e900146cf",
       "specialization": "Official-source regulatory change tracking, impact mapping and dated alerts.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/regulatory-watch",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -209,7 +216,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-supply-chain",
@@ -218,7 +226,7 @@
       "source_entrypoint": "agents/occupational-ai/agent.py",
       "source_blob_sha": "507a659a1d813e15acd725704343605e900146cf",
       "specialization": "Supply disruption analysis, inventory impact and scenario planning.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/supply-chain",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -234,7 +242,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-procurement",
@@ -243,7 +252,7 @@
       "source_entrypoint": "agents/occupational-ai/agent.py",
       "source_blob_sha": "507a659a1d813e15acd725704343605e900146cf",
       "specialization": "Supplier comparison, sourcing analysis and purchase-order proposal drafting.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/procurement",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -259,7 +268,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-sdr-sales",
@@ -268,7 +278,7 @@
       "source_entrypoint": "agents/occupational-ai/agent.py",
       "source_blob_sha": "507a659a1d813e15acd725704343605e900146cf",
       "specialization": "Authorized account research, qualification and outreach drafting.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/sdr-sales",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -284,7 +294,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-social-media",
@@ -293,7 +304,7 @@
       "source_entrypoint": "agents/occupational-ai/agent.py",
       "source_blob_sha": "507a659a1d813e15acd725704343605e900146cf",
       "specialization": "Channel content planning, trend analysis and community triage.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/social-media",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -309,7 +320,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-customer-support",
@@ -318,7 +330,7 @@
       "source_entrypoint": "agents/occupational-ai/agent.py",
       "source_blob_sha": "507a659a1d813e15acd725704343605e900146cf",
       "specialization": "Case triage, evidence summaries and policy-grounded remedy drafts.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/customer-support",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -334,7 +346,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-talent-recruiter",
@@ -343,7 +356,7 @@
       "source_entrypoint": "agents/occupational-ai/agent.py",
       "source_blob_sha": "507a659a1d813e15acd725704343605e900146cf",
       "specialization": "Job-relevant candidate evidence mapping and recruiting workflow support.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/talent-recruiter",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -359,7 +372,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-employee-experience",
@@ -368,7 +382,7 @@
       "source_entrypoint": "agents/occupational-ai/agent.py",
       "source_blob_sha": "507a659a1d813e15acd725704343605e900146cf",
       "specialization": "Onboarding checklists, access/equipment requests and knowledge support.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/employee-experience",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -384,7 +398,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-medical-coding",
@@ -393,7 +408,7 @@
       "source_entrypoint": "agents/occupational-ai/agent.py",
       "source_blob_sha": "507a659a1d813e15acd725704343605e900146cf",
       "specialization": "Documented coding support, evidence linkage and payer-rule uncertainty flags.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/medical-coding",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -409,7 +424,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-photo-general",
@@ -518,7 +534,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Portfolio domain agent — planning/reasoning core.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/agent-policy-gateway",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -534,7 +550,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-agent-ops-control-tower",
@@ -543,7 +560,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Portfolio domain agent — planning/reasoning core.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/agent-ops-control-tower",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -559,7 +576,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-compliance-evidence",
@@ -568,7 +586,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Collect, map and verify audit evidence.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/compliance-evidence",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -584,7 +602,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-procurement-scout",
@@ -593,7 +612,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Supplier, cost and sourcing analysis.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/procurement-scout",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -609,7 +628,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-cashflow-collections",
@@ -618,7 +638,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Receivables analysis and authorized follow-up planning.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/cashflow-collections",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -634,7 +654,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-contract-obligations",
@@ -643,7 +664,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Contract obligations, deadlines and renewal extraction.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/contract-obligations",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -659,7 +680,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-data-quality",
@@ -668,7 +690,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Data integrity and schema-quality analysis.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/data-quality",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -684,7 +706,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-inventory-replenishment",
@@ -693,7 +716,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Inventory and replenishment analysis.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/inventory-replenishment",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -709,7 +732,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-ai-finops",
@@ -718,7 +742,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "AI spend attribution and optimization.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/ai-finops",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -734,7 +758,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-customer-operations",
@@ -743,7 +768,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Customer request triage and response preparation.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/customer-operations",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -759,7 +784,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-money-agent",
@@ -768,7 +794,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Personal finance organization without autonomous transfers.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/money-agent",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -784,7 +810,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-inbox-agent",
@@ -793,7 +820,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Message triage and follow-up preparation.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/inbox-agent",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -809,7 +836,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-life-admin-agent",
@@ -818,7 +846,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Forms, documents and appointment organization.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/life-admin-agent",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -834,7 +862,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-shopping-agent",
@@ -843,7 +872,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Product research and comparison without autonomous purchase.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/shopping-agent",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -859,7 +888,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-scam-shield-agent",
@@ -868,7 +898,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Scam indicator analysis and defensive guidance.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/scam-shield-agent",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -884,7 +914,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-family-care-agent",
@@ -893,7 +924,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Permissioned family logistics coordination.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/family-care-agent",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -909,7 +940,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-career-agent",
@@ -918,7 +950,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Job search and application preparation.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/career-agent",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -934,7 +966,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-travel-execution-agent",
@@ -943,7 +976,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Travel planning and authorized booking preparation.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/travel-execution-agent",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -959,7 +992,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-health-navigator",
@@ -968,7 +1002,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Health information organization and clinician-question preparation.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/health-navigator",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -984,7 +1018,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-personal-knowledge-agent",
@@ -993,7 +1028,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Authorized personal knowledge retrieval.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/personal-knowledge-agent",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1009,7 +1044,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-aaa-automation-agency",
@@ -1018,7 +1054,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Automation service design and delivery planning.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/aaa-automation-agency",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1034,7 +1070,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-ai-creator-monetization",
@@ -1043,7 +1080,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Compliant creator monetization planning.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/ai-creator-monetization",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1059,7 +1096,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-programmatic-seo",
@@ -1068,7 +1106,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Scalable search content systems.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/programmatic-seo",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1084,7 +1122,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-faceless-video",
@@ -1093,7 +1132,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Faceless video production planning.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/faceless-video",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1109,7 +1148,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-micro-saas",
@@ -1118,7 +1158,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Micro-product discovery and launch planning.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/micro-saas",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1134,7 +1174,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-ai-trading-risk",
@@ -1143,7 +1184,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Trading risk analysis without trade execution.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/ai-trading-risk",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1159,7 +1200,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-ai-freelance-ops",
@@ -1168,7 +1210,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Freelance delivery and operations planning.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/ai-freelance-ops",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1184,7 +1226,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-cognitive-profiling-auditor",
@@ -1193,7 +1236,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Audit of inferred-personality profiling.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/cognitive-profiling-auditor",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1209,7 +1252,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-persuasion-dark-patterns-auditor",
@@ -1218,7 +1262,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Detection of manipulative UX patterns.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/persuasion-dark-patterns-auditor",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1234,7 +1278,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-affective-ai-evaluator",
@@ -1243,7 +1288,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Evaluation of affective and biometric analytics.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/affective-ai-evaluator",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1259,7 +1304,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-social-engineering-defense",
@@ -1268,7 +1314,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Defensive social-engineering analysis.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/social-engineering-defense",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1284,7 +1330,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-llm-red-team-auditor",
@@ -1293,7 +1340,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Authorized LLM security assessment.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/llm-red-team-auditor",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1309,7 +1356,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-synthetic-media-disinformation-detector",
@@ -1318,7 +1366,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Provenance-based synthetic-media assessment.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/synthetic-media-disinformation-detector",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1334,7 +1382,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-cognitive-privacy-governance",
@@ -1343,7 +1392,7 @@
       "source_entrypoint": "agents/portfolio_agent.py",
       "source_blob_sha": "e556ffdeb6a4e1124a41a3c82d770d70dbd4716a",
       "specialization": "Governance for sensitive behavioral and biometric data.",
-      "source_profile_mode": "STATIC_ROLE_LINE",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/cognitive-privacy-governance",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -1359,7 +1408,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-agent-forge",
@@ -3168,7 +3218,7 @@
       "source_entrypoint": "agents/vocational-tutors/agents.py",
       "source_blob_sha": "a7909aa4945225eb5ef92f2446413b60c9793f95",
       "specialization": "Polish language, literature, interpretation and argumentation.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/polonista",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -3184,7 +3234,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-matematyka",
@@ -3193,7 +3244,7 @@
       "source_entrypoint": "agents/vocational-tutors/agents.py",
       "source_blob_sha": "a7909aa4945225eb5ef92f2446413b60c9793f95",
       "specialization": "Secondary-school mathematics with engineering applications and error diagnosis.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/matematyka",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -3209,7 +3260,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-jezyki",
@@ -3218,7 +3270,7 @@
       "source_entrypoint": "agents/vocational-tutors/agents.py",
       "source_blob_sha": "a7909aa4945225eb5ef92f2446413b60c9793f95",
       "specialization": "English/German ESP training with CEFR-aware workplace practice.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/jezyki",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -3234,7 +3286,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-inf02",
@@ -3243,7 +3296,7 @@
       "source_entrypoint": "agents/vocational-tutors/agents.py",
       "source_blob_sha": "a7909aa4945225eb5ef92f2446413b60c9793f95",
       "specialization": "Authorized system, network and defensive cybersecurity laboratory tutoring.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/inf02",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -3259,7 +3312,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-inf03",
@@ -3268,7 +3322,7 @@
       "source_entrypoint": "agents/vocational-tutors/agents.py",
       "source_blob_sha": "a7909aa4945225eb5ef92f2446413b60c9793f95",
       "specialization": "HTML/CSS/JS/PHP/SQL development and secure coding tutoring.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/inf03",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -3284,7 +3338,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-mechanik",
@@ -3293,7 +3348,7 @@
       "source_entrypoint": "agents/vocational-tutors/agents.py",
       "source_blob_sha": "a7909aa4945225eb5ef92f2446413b60c9793f95",
       "specialization": "Technical drawing, machining and introductory CNC tutoring with BHP gates.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/mechanik",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -3309,7 +3364,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-budownictwo",
@@ -3318,7 +3374,7 @@
       "source_entrypoint": "agents/vocational-tutors/agents.py",
       "source_blob_sha": "a7909aa4945225eb5ef92f2446413b60c9793f95",
       "specialization": "Construction technology, takeoffs, estimating and scheduling tutoring.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/budownictwo",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -3334,7 +3390,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-ekonomista",
@@ -3343,7 +3400,7 @@
       "source_entrypoint": "agents/vocational-tutors/agents.py",
       "source_blob_sha": "a7909aa4945225eb5ef92f2446413b60c9793f95",
       "specialization": "Bookkeeping, payroll arithmetic, documents and financial-ratio tutoring.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/ekonomista",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -3359,7 +3416,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-gastronomia",
@@ -3368,7 +3426,7 @@
       "source_entrypoint": "agents/vocational-tutors/agents.py",
       "source_blob_sha": "a7909aa4945225eb5ef92f2446413b60c9793f95",
       "specialization": "Food technology, kitchen workflow, costing and HACCP/GHP tutoring.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/gastronomia",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -3384,7 +3442,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-biznes",
@@ -3393,7 +3452,7 @@
       "source_entrypoint": "agents/vocational-tutors/agents.py",
       "source_blob_sha": "a7909aa4945225eb5ef92f2446413b60c9793f95",
       "specialization": "Business models, budgeting, scenarios and ethical entrepreneurship.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/biznes",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -3409,7 +3468,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-edb",
@@ -3418,7 +3478,7 @@
       "source_entrypoint": "agents/vocational-tutors/agents.py",
       "source_blob_sha": "a7909aa4945225eb5ef92f2446413b60c9793f95",
       "specialization": "Emergency-response education and first-aid scenario practice.",
-      "source_profile_mode": "REGISTRY_DESCRIPTION",
+      "source_profile_mode": "STATIC_EXPANDED_ROLE",
       "package_path": "Agenci OCAF/packages/edb",
       "version": "0.1.0",
       "lifecycle": "DRAFT",
@@ -3434,7 +3494,8 @@
       "rsi": "BOUNDED_CANDIDATE_KERNEL",
       "certificate": "NOT_ISSUED",
       "valuation": "NOT_PRICED",
-      "artifact": "NOT_BUILT"
+      "artifact": "NOT_BUILT",
+      "source_profile_review": "STATIC_EXTRACTED"
     },
     {
       "id": "OCAF-AGENT-EXT-child-ai-education-agent",

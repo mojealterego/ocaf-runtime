@@ -4,4 +4,4 @@ Source: [pinned entrypoint](https://github.com/mojealterego/Ageni-AI-mojealtereg
 
 Role: Faceless video production planning.
 
-API: profile returns static identity and role; prepare produces a draft with DENY, zero tools, four-step budget and 65,536-byte limit. Zenoh probe uses actual correlated query/reply with timeout. Evolve uses archive branching and strict incumbent selection without source modification. Caller provides independent evaluator. Source Python-specific algorithms beyond extracted profile have not been ported. Native build and model execution unverified.
+API: profile returns static identity and expanded original mission and common guardrails; prepare produces a draft with DENY, zero tools, four-step budget and 65,536-byte limit. Zenoh probe uses correlated query/reply with timeout. Evolve uses archive branching and strict incumbent selection without source modification. Caller provides independent evaluator. Original instructional data never authorizes tools. Python-specific algorithms and deterministic gates beyond extracted profile are not ported. Native build and model execution unverified.
