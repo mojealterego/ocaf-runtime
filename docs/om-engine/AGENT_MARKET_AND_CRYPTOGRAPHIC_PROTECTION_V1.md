@@ -4,6 +4,12 @@
 
 Decyzja operatora: każda z ośmiu aplikacji Atelier Sovereign Luxury Professional Edition ma Agent Market, dossier, certyfikaty i wyceny każdego agenta, zakup i wynajem agentów oraz wtyczek; każdy produkt i komponent chronić kryptografią topologiczną i postkwantową. Rozszerzenie AB-OM-14–20 istniejących etapów 0.43, 0.45, 0.49, 0.50 i 0.55, bez renumeracji. Nie jest dowodem implementacji.
 
+## Aktualizacja decyzji operatora — 2026-11-20
+
+Decyzja operatora 2026-11-20: kod i artefakty własnych agentów oraz rojów w kontrolowanej strefie właściciela (rozwój, kompilacja, testy, DGM/RSI, wewnętrzne wykonanie) nie wymagają szyfrowania ani obfuskacji dystrybucyjnej. Zatwierdzony dostęp do źródeł roboczych przez uprawnionego właściciela lub izolowany wykonawca ewolucji nie jest eksportem chronionych źródeł przez OMAt. OSTc/PQC ochrony pakietu, podpis wydania i licencja obowiązują przed przekroczeniem tej granicy: sprzedaż, wynajem, instalacja u klienta, eksport lub przekazanie własnościowego artefaktu poza strefę. Nie wolno ufać deklaracji klienta o strefie; nieznany kontekst lub brak zaufanego poświadczenia oznacza odmowę wydania. Reguła nie znosi mTLS/Zenoh, uwierzytelnienia, izolacji, uprawnień narzędzi, ochrony sekretów i danych ani kontroli integralności. Publiczny GitHub nie jest prywatną strefą; ujawnionych źródeł nie można później uczynić tajnymi przez szyfrowanie. Publiczne źródła dopuszczone przez właściciela pozostają publiczne, nowe niepubliczne własnościowe źródła należy przechowywać w prywatnym środowisku. Wewnętrzne uruchomienie wymaga odrębnego autorytatywnego trybu OM Engine, gotowego modelu, testów, budżetu, polityki i audytu; nie oznacza produkcyjnego ACTIVE ani uprawnienia do chronionych źródeł. Istniejące wykonywalne bramki fail-closed pozostają bez zmian do implementacji i testów odrębnego trybu.
+
+W przypadku wcześniejszej ogólnej reguły ochrony wszystkich komponentów niniejsze doprecyzowanie ma pierwszeństwo wyłącznie w zakresie szyfrowania/obfuskacji kodu i pakietu agenta lub roju w strefie wewnętrznej. Wymagania AB-OM-17–20 dla dystrybucji i pozostałej ochrony pozostają obowiązujące.
+
 ## Granice architektury
 
 Wspólny katalog OMAs, registry narzędzi OMAt, OM Engine, istniejące ekonomiczne etapy 0.49/0.87 oraz wspólna polityka bezpieczeństwa — nie osiem niezależnych marketplace. Meta Agent Architekt generuje i weryfikuje kandydatów, wyceny i aktualizacje ofert, Zarządca egzekwuje lifecycle, licencje, zasoby i status. Rozdzielić Product/Offer/Valuation, Artifact/Certificate, Entitlement, Invoice/Settlement i ReleaseApproval. Nie przypisywać samej decyzji Architekta mocy księgowania lub nadawania sobie uprawnień.
@@ -35,7 +41,7 @@ Status: OPEN_UNVERIFIED.
 
 ### AB-OM-17 · etap 0.55 — Chronione licencje i dystrybucja
 
-Podpisane zaszyfrowane pakiety własnościowe i wersjonowane entitlement, powiązane z użytkownikiem/tenantem, zakresem i okresem licencji; klucze przez zaufany broker/chronione magazyny platformy. Zakaz dostępu do plaintext bez uprawnień, nieautoryzowanego klonowania uruchamialnej instancji, replay i downgrade; ograniczony jawny offline lease, bezpieczne odnowienie, unieważnienie i recovery. Użytkownik zachowuje możliwość edycji i eksportu własnego kodu/danych; chroniony kod dostawcy nie jest ujawniany w Code, logach, debug, eksportach ani dossier. Nie obiecywać bezwzględnej odporności na kontrolującego hosta/root/debuggera; publiczne źródła już ujawnione nie mogą stać się tajne przez szyfrowanie kolejnej dystrybucji.
+Przy dystrybucji poza strefę właściciela: podpisane zaszyfrowane pakiety własnościowe i wersjonowane entitlement, powiązane z użytkownikiem/tenantem, zakresem i okresem licencji; klucze przez zaufany broker/chronione magazyny platformy. Zakaz dostępu do plaintext bez uprawnień, nieautoryzowanego klonowania uruchamialnej instancji, replay i downgrade; ograniczony jawny offline lease, bezpieczne odnowienie, unieważnienie i recovery. Użytkownik zachowuje możliwość edycji i eksportu własnego kodu/danych; chroniony kod dostawcy nie jest ujawniany w Code, logach, debug, eksportach ani dossier. Nie obiecywać bezwzględnej odporności na kontrolującego hosta/root/debuggera; publiczne źródła już ujawnione nie mogą stać się tajne przez szyfrowanie kolejnej dystrybucji.
 
 Status: OPEN_UNVERIFIED.
 

@@ -205,28 +205,28 @@
       "id": "AB-OM-17",
       "parent": "0.55",
       "title": "Chronione licencje i dystrybucja",
-      "acceptance": "Podpisane zaszyfrowane pakiety własnościowe i wersjonowane entitlement, powiązane z użytkownikiem/tenantem, zakresem i okresem licencji; klucze przez zaufany broker/chronione magazyny platformy. Zakaz dostępu do plaintext bez uprawnień, nieautoryzowanego klonowania uruchamialnej instancji, replay i downgrade; ograniczony jawny offline lease, bezpieczne odnowienie, unieważnienie i recovery. Użytkownik zachowuje możliwość edycji i eksportu własnego kodu/danych; chroniony kod dostawcy nie jest ujawniany w Code, logach, debug, eksportach ani dossier. Nie obiecywać bezwzględnej odporności na kontrolującego hosta/root/debuggera; publiczne źródła już ujawnione nie mogą stać się tajne przez szyfrowanie kolejnej dystrybucji.",
+      "acceptance": "Podpisane zaszyfrowane pakiety własnościowe i wersjonowane entitlement, powiązane z użytkownikiem/tenantem, zakresem i okresem licencji; klucze przez zaufany broker/chronione magazyny platformy. Zakaz dostępu do plaintext bez uprawnień, nieautoryzowanego klonowania uruchamialnej instancji, replay i downgrade; ograniczony jawny offline lease, bezpieczne odnowienie, unieważnienie i recovery. Użytkownik zachowuje możliwość edycji i eksportu własnego kodu/danych; chroniony kod dostawcy nie jest ujawniany w Code, logach, debug, eksportach ani dossier. Nie obiecywać bezwzględnej odporności na kontrolującego hosta/root/debuggera; publiczne źródła już ujawnione nie mogą stać się tajne przez szyfrowanie kolejnej dystrybucji. Doprecyzowanie 2026-11-20: szyfrowanie i obfuskacja kodu/pakietu własnego agenta lub roju nie są wymagane w kontrolowanej strefie właściciela; ochrona dystrybucyjna obowiązuje przed jej opuszczeniem. Pozostała ochrona, integralność i autoryzacja bez zmian; tryb wewnętrzny wymaga odrębnej zaufanej bramki.",
       "status": "OPEN_UNVERIFIED"
     },
     {
       "id": "AB-OM-18",
       "parent": "0.45",
       "title": "Obowiązkowa postkwantowa kryptografia całego ekosystemu",
-      "acceptance": "Wszystkie aplikacje, wszystkie agenty/roje, OM Engine, Architekt, Zarządca, OMAs, OMAt, OSTc, ich pakiety, komunikacja, pamięć i aktualizacje obejmuje standardowy hybrydowy profil kryptograficzny z ML-KEM do ustanawiania kluczy, ML-DSA do podpisów i audytowanym AEAD do danych. Zachować obecne mTLS i podpisy do potwierdzonej interoperacyjności; algorytm i zestaw kluczy związane z kontekstem, tenantem i wersją; downgrade i błędy fail closed. Testy wektorów, interoperacyjności, manipulacji, replay, unieważnienia, rotacji, integralności i pomiar platformowy. Nie zastępować dojrzałej ochrony niesprawdzoną kryptografią.",
+      "acceptance": "Wszystkie aplikacje, wszystkie agenty/roje, OM Engine, Architekt, Zarządca, OMAs, OMAt, OSTc, ich pakiety, komunikacja, pamięć i aktualizacje obejmuje standardowy hybrydowy profil kryptograficzny z ML-KEM do ustanawiania kluczy, ML-DSA do podpisów i audytowanym AEAD do danych. Zachować obecne mTLS i podpisy do potwierdzonej interoperacyjności; algorytm i zestaw kluczy związane z kontekstem, tenantem i wersją; downgrade i błędy fail closed. Testy wektorów, interoperacyjności, manipulacji, replay, unieważnienia, rotacji, integralności i pomiar platformowy. Nie zastępować dojrzałej ochrony niesprawdzoną kryptografią. Doprecyzowanie 2026-11-20: szyfrowanie i obfuskacja kodu/pakietu własnego agenta lub roju nie są wymagane w kontrolowanej strefie właściciela; ochrona dystrybucyjna obowiązuje przed jej opuszczeniem. Pozostała ochrona, integralność i autoryzacja bez zmian; tryb wewnętrzny wymaga odrębnej zaufanej bramki.",
       "status": "OPEN_UNVERIFIED"
     },
     {
       "id": "AB-OM-19",
       "parent": "0.43",
       "title": "OSTc — topologiczna ochrona wszystkich komponentów",
-      "acceptance": "Obowiązkowe docelowe zabezpieczenie topologiczne wszystkich aplikacji, każdego agenta/roju, OM Engine, Architekta, Zarządcy, OMAs, OMAt oraz samego OSTc. OSTc ma odrębną specyfikację modelu zagrożeń, konstrukcji, parametrów, własności, interfejsu, integracji z PQC i proof/test vectors; nie uznawać niezweryfikowanego prymitywu za bezpieczny. Dotychczasowy OSTc DISABLED i fail-closed pozostają do czasu implementacji, walidacji i zgody; nie omijać blokady źródeł ani podpisów, brak jawnych kluczy w pakietach. Ochrona własnego bootstrappingu OSTc musi wynikać z niezależnego zaufanego root of trust, bez cyklicznej autoryzacji. Dotychczasowa decyzja odłożenia wdrożenia do ostatniego etapu nie oznacza zgody na wydanie produkcyjne bez ochrony.",
+      "acceptance": "Obowiązkowe docelowe zabezpieczenie topologiczne wszystkich aplikacji, każdego agenta/roju, OM Engine, Architekta, Zarządcy, OMAs, OMAt oraz samego OSTc. OSTc ma odrębną specyfikację modelu zagrożeń, konstrukcji, parametrów, własności, interfejsu, integracji z PQC i proof/test vectors; nie uznawać niezweryfikowanego prymitywu za bezpieczny. Dotychczasowy OSTc DISABLED i fail-closed pozostają do czasu implementacji, walidacji i zgody; nie omijać blokady źródeł ani podpisów, brak jawnych kluczy w pakietach. Ochrona własnego bootstrappingu OSTc musi wynikać z niezależnego zaufanego root of trust, bez cyklicznej autoryzacji. Dotychczasowa decyzja odłożenia wdrożenia do ostatniego etapu nie oznacza zgody na wydanie produkcyjne bez ochrony. Doprecyzowanie 2026-11-20: szyfrowanie i obfuskacja kodu/pakietu własnego agenta lub roju nie są wymagane w kontrolowanej strefie właściciela; ochrona dystrybucyjna obowiązuje przed jej opuszczeniem. Pozostała ochrona, integralność i autoryzacja bez zmian; tryb wewnętrzny wymaga odrębnej zaufanej bramki.",
       "status": "OPEN_UNVERIFIED"
     },
     {
       "id": "AB-OM-20",
       "parent": "0.55",
       "title": "Odbiór Agent Market i ochrony na wszystkich platformach",
-      "acceptance": "E2E każdej z 8 aplikacji w zakresie dossier/certyfikaty/wycena, zakup/wynajem w środowisku testowym, instalacja wtyczki, dopuszczenie licencji i wykonanie przez OM Engine; odmowa obcego tenanta, zmienionego pakietu, wygasłej licencji, nieautoryzowanego kopiowania uruchamialnej instancji, wycieku sekretów, braku OSTc/PQC i downgrade. Dowody per artefakt, platforma, wersja, digest, realne testy albo jawnie ograniczona deterministyczna symulacja niedostępnej infrastruktury. Żadne wcześniejsze scoped E2E ani sam manifest nie zamykają pełnego produktu.",
+      "acceptance": "E2E każdej z 8 aplikacji w zakresie dossier/certyfikaty/wycena, zakup/wynajem w środowisku testowym, instalacja wtyczki, dopuszczenie licencji i wykonanie przez OM Engine; odmowa obcego tenanta, zmienionego pakietu, wygasłej licencji, nieautoryzowanego kopiowania uruchamialnej instancji, wycieku sekretów, braku OSTc/PQC i downgrade. Dowody per artefakt, platforma, wersja, digest, realne testy albo jawnie ograniczona deterministyczna symulacja niedostępnej infrastruktury. Żadne wcześniejsze scoped E2E ani sam manifest nie zamykają pełnego produktu. Doprecyzowanie 2026-11-20: szyfrowanie i obfuskacja kodu/pakietu własnego agenta lub roju nie są wymagane w kontrolowanej strefie właściciela; ochrona dystrybucyjna obowiązuje przed jej opuszczeniem. Pozostała ochrona, integralność i autoryzacja bez zmian; tryb wewnętrzny wymaga odrębnej zaufanej bramki.",
       "status": "OPEN_UNVERIFIED"
     }
   ],
@@ -278,6 +278,32 @@
     "public_docs_accessible": true,
     "own_user_projects_exportable": true,
     "status": "OPEN_UNVERIFIED",
-    "contract": "docs/om-engine/AGENT_MARKET_AND_CRYPTOGRAPHIC_PROTECTION_V1.md"
+    "contract": "docs/om-engine/AGENT_MARKET_AND_CRYPTOGRAPHIC_PROTECTION_V1.md",
+    "agent_artifact_scope": {
+      "effective_date": "2026-11-20",
+      "internal_owner_controlled": {
+        "code_encryption_required": false,
+        "code_obfuscation_required": false,
+        "allowed_phases": [
+          "development",
+          "build",
+          "test",
+          "dgm_rsi",
+          "internal_execution_after_admission"
+        ],
+        "execution_admission": "SEPARATE_TRUSTED_INTERNAL_MODE_NOT_IMPLEMENTED"
+      },
+      "external_proprietary_distribution": {
+        "code_encryption_required": true,
+        "ostc_required": true,
+        "pqc_required": true,
+        "release_signature_required": true,
+        "entitlement_required": true,
+        "unknown_scope": "DENY"
+      },
+      "public_repository_is_internal": false,
+      "transport_identity_data_and_secret_protection_unchanged": true,
+      "existing_executable_admission_unchanged": true
+    }
   }
 }

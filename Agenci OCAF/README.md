@@ -11,3 +11,7 @@ Run from repository root:
 `cargo test --manifest-path "Agenci OCAF/Cargo.toml" --workspace`
 and then `cargo clippy --manifest-path "Agenci OCAF/Cargo.toml" --workspace --all-targets -- -D warnings`.
 Generate and review Cargo.lock before locked builds. No native build/test evidence has been obtained for this import yet.
+
+## Owner-controlled development and execution
+
+Agent Rust source and build artifacts need no distribution encryption or obfuscation inside a trusted owner-controlled workspace, including DGM/RSI. External proprietary distribution requires release protection (OSTc/PQC, signature, entitlement). Public GitHub is not a private workspace. Transport, identities, secrets, data and isolation remain protected. Internal execution needs a separate trusted OM Engine admission mode; it is not implemented by this policy, and DRAFT/ACTIVE gates remain unchanged.
