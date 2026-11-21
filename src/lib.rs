@@ -141,3 +141,5 @@ pub mod procurement_scout;
 pub mod evidence_gate;
 
 pub mod stage_evidence_bridge;
+
+pub mod architect_research_schedule;
