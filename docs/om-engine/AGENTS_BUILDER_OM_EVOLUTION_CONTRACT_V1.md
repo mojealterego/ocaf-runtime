@@ -51,3 +51,9 @@ Wersja zawiera rzeczywisty lokalny proces UTC tworzący i odtwarzający okresy b
 Bramka Ed25519 przyjmuje podpis operatora dopasowany do kandydata, rewizji i tożsamości tenanta/floty; jednorazowe użycie nie jest równoznaczne z wdrożeniem. Operator musi zostać poprawnie związany z przypiętym kluczem na zaufanej granicy, a stan SQLite zabezpieczony przed rollbackiem zewnętrznym.
 
 Dowody: ../audits/AB_OM_09_10_CATCHUP_APPROVAL_RUNNER_2026_11_21.md. Pełny AB-OM-09 i AB-OM-10: OPEN_UNVERIFIED.
+
+## 2026-11-21 — rzeczywisty most scheduler do OM Engine
+
+Nowy architect_workflow_bridge.rs rejestruje okresy badań jako trwałe kontrakty OM Engine z typowanym DAG Planner, Architect, Verifier, przypiętym source SHA i budżetem. bin/ocaf-architect-scheduler.rs może przy jawnie przypiętych ustawieniach uruchamiać tę rejestrację podczas cyklu harmonogramu. Rejestracja nie oznacza wykonania Deep Research ani aktywacji agenta; w pełnym zakresie AB-OM-01 i AB-OM-10 pozostają OPEN_UNVERIFIED.
+
+Dowody: ../audits/AB_OM_01_10_RESEARCH_ENGINE_BRIDGE_2026_11_21.md.

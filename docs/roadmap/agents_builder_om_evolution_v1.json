@@ -94,7 +94,13 @@
       "parent": "0.56",
       "title": "OM Engine",
       "acceptance": "Wszystkie agenty i roje wykonują zadania przez OM Engine, z autoryzowanym OMAs/OMAt, rzeczywistym modelem, budżetem, anulowaniem, trace i recovery. Statyczny preview DAG nie jest wykonaniem.",
-      "status": "OPEN_UNVERIFIED"
+      "status": "OPEN_UNVERIFIED",
+      "engineering_progress": {
+        "status": "TESTED_LOCAL_PARTIAL",
+        "evidence": "docs/audits/AB_OM_01_10_RESEARCH_ENGINE_BRIDGE_2026_11_21.md",
+        "baseline_sha": "fe885f0f873c6636cb550ced08150feeca89acd5",
+        "complete_product": false
+      }
     },
     {
       "id": "AB-OM-02",
@@ -168,7 +174,10 @@
         "status": "TESTED_LOCAL_PARTIAL",
         "evidence": "docs/audits/AB_OM_09_10_CATCHUP_APPROVAL_RUNNER_2026_11_21.md",
         "baseline_sha": "a5cdf14a219de61a4acd926138811dd1e13b5eab",
-        "complete_product": false
+        "complete_product": false,
+        "additional_evidence": [
+          "docs/audits/AB_OM_01_10_RESEARCH_ENGINE_BRIDGE_2026_11_21.md"
+        ]
       }
     },
     {
