@@ -43,3 +43,11 @@ Operator rozszerzył kontrakt o [AB-OM-14–20](AGENT_MARKET_AND_CRYPTOGRAPHIC_P
 ## 2026-11-20 — granica ochrony dystrybucyjnej agentów
 
 Decyzja operatora 2026-11-20: kod i artefakty własnych agentów oraz rojów w kontrolowanej strefie właściciela (rozwój, kompilacja, testy, DGM/RSI, wewnętrzne wykonanie) nie wymagają szyfrowania ani obfuskacji dystrybucyjnej. Zatwierdzony dostęp do źródeł roboczych przez uprawnionego właściciela lub izolowany wykonawca ewolucji nie jest eksportem chronionych źródeł przez OMAt. OSTc/PQC ochrony pakietu, podpis wydania i licencja obowiązują przed przekroczeniem tej granicy: sprzedaż, wynajem, instalacja u klienta, eksport lub przekazanie własnościowego artefaktu poza strefę. Nie wolno ufać deklaracji klienta o strefie; nieznany kontekst lub brak zaufanego poświadczenia oznacza odmowę wydania. Reguła nie znosi mTLS/Zenoh, uwierzytelnienia, izolacji, uprawnień narzędzi, ochrony sekretów i danych ani kontroli integralności. Publiczny GitHub nie jest prywatną strefą; ujawnionych źródeł nie można później uczynić tajnymi przez szyfrowanie. Publiczne źródła dopuszczone przez właściciela pozostają publiczne, nowe niepubliczne własnościowe źródła należy przechowywać w prywatnym środowisku. Wewnętrzne uruchomienie wymaga odrębnego autorytatywnego trybu OM Engine, gotowego modelu, testów, budżetu, polityki i audytu; nie oznacza produkcyjnego ACTIVE ani uprawnienia do chronionych źródeł. Istniejące wykonywalne bramki fail-closed pozostają bez zmian do implementacji i testów odrębnego trybu.
+
+## 2026-11-21 — AB-OM-09 i AB-OM-10: ograniczony zakres wdrożenia
+
+Wersja zawiera rzeczywisty lokalny proces UTC tworzący i odtwarzający okresy badań w SQLite, z 90-dniowym ograniczeniem, bez naruszania istniejących dzierżaw. Harmonogram nie wykonuje sam Deep Research ani nie wywołuje OMAs/OMAt.
+
+Bramka Ed25519 przyjmuje podpis operatora dopasowany do kandydata, rewizji i tożsamości tenanta/floty; jednorazowe użycie nie jest równoznaczne z wdrożeniem. Operator musi zostać poprawnie związany z przypiętym kluczem na zaufanej granicy, a stan SQLite zabezpieczony przed rollbackiem zewnętrznym.
+
+Dowody: ../audits/AB_OM_09_10_CATCHUP_APPROVAL_RUNNER_2026_11_21.md. Pełny AB-OM-09 i AB-OM-10: OPEN_UNVERIFIED.

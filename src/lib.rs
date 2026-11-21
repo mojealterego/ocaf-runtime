@@ -143,3 +143,5 @@ pub mod evidence_gate;
 pub mod stage_evidence_bridge;
 
 pub mod architect_research_schedule;
+
+pub mod architect_evolution_approval;

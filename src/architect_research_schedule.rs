@@ -15,6 +15,8 @@ const MAX_ATTEMPTS: i64 = 3;
 const MAX_LEASE_SECONDS: i64 = 3600;
 const MAX_UNIX: i64 = 253_402_300_799;
 const DAY: i64 = 86_400;
+const MAX_CATCH_UP_DAYS: i64 = 90;
+const MAX_DUE_QUERY: usize = 64;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -25,6 +27,15 @@ pub enum ResearchKind {
 }
 
 impl ResearchKind {
+    fn decode(raw: &str) -> Result<Self, ResearchError> {
+        match raw {
+            "COMPETITIVE_DEEP_RESEARCH" => Ok(Self::Competitive),
+            "MARKET_OPPORTUNITY_DEEP_RESEARCH" => Ok(Self::Market),
+            "ULTRA_DEEP_RESEARCH_SYSTEM_EVOLUTION" => Ok(Self::SystemEvolution),
+            _ => Err(ResearchError::Integrity),
+        }
+    }
+
     fn key(self) -> &'static str {
         match self {
             Self::Competitive => "COMPETITIVE_DEEP_RESEARCH",
@@ -69,6 +80,13 @@ pub struct ResearchPeriod {
     pub kind: ResearchKind,
     pub start_unix: i64,
     pub end_unix: i64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CatchUpReport {
+    pub from_unix: i64,
+    pub through_unix: i64,
+    pub new_runs: usize,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -147,6 +165,21 @@ fn valid_time(t: i64) -> bool {
     (0..=MAX_UNIX).contains(&t)
 }
 
+/// Query calendar-month boundaries using SQLite's UTC Gregorian calendar.
+/// The repository does not need system-local timezone configuration for UTC.
+fn month_bounds(tx: &rusqlite::Transaction<'_>, unix: i64) -> Result<(i64, i64), ResearchError> {
+    let period: (Option<i64>, Option<i64>) = tx.query_row(
+        "SELECT CAST(strftime('%s',?1,'unixepoch','start of month') AS INTEGER),
+                CAST(strftime('%s',?1,'unixepoch','start of month','+1 month') AS INTEGER)",
+        params![unix],
+        |r| Ok((r.get(0)?, r.get(1)?)),
+    )?;
+    match period {
+        (Some(start), Some(end)) if start >= 0 && end > start => Ok((start, end)),
+        _ => Err(ResearchError::Invalid),
+    }
+}
+
 impl ArchitectResearchScheduler {
     pub fn open(path: impl AsRef<Path>) -> Result<Self, ResearchError> {
         if path
@@ -180,9 +213,150 @@ impl ArchitectResearchScheduler {
                  PRIMARY KEY(tenant,fleet,kind,period_start)
              );
              CREATE INDEX IF NOT EXISTS architect_research_due
-                 ON architect_research_runs(tenant,fleet,state,period_start);",
+                 ON architect_research_runs(tenant,fleet,state,period_start);
+             CREATE TABLE IF NOT EXISTS architect_research_scan_state (
+                 tenant TEXT NOT NULL, fleet TEXT NOT NULL,
+                 last_scan_unix INTEGER NOT NULL,
+                 PRIMARY KEY(tenant,fleet)
+             );",
         )?;
         Ok(Self { db: Mutex::new(db) })
+    }
+
+    /// Idempotent, transactional scheduler tick with an SQLite-persisted
+    /// high-water mark. On first use only the current periods are registered.
+    /// Subsequent invocations backfill each missed UTC week and month.
+    /// Outages beyond 90 days fail atomically to require operator intervention.
+    /// Calls never perform research, dispatch a worker or approve an evolution.
+    pub fn tick(
+        &self,
+        tenant: &str,
+        fleet: &str,
+        now_unix: i64,
+    ) -> Result<CatchUpReport, ResearchError> {
+        if !valid_id(tenant) || !valid_id(fleet) || !valid_time(now_unix) {
+            return Err(ResearchError::Invalid);
+        }
+        let mut db = self.db.lock().map_err(|_| ResearchError::Poisoned)?;
+        let tx = db.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let previous: Option<i64> = tx
+            .query_row(
+                "SELECT last_scan_unix FROM architect_research_scan_state
+             WHERE tenant=?1 AND fleet=?2",
+                params![tenant, fleet],
+                |r| r.get(0),
+            )
+            .optional()?;
+        let from = previous.unwrap_or(now_unix);
+        if !valid_time(from) {
+            return Err(ResearchError::Integrity);
+        }
+        if from > now_unix {
+            return Err(ResearchError::Invalid);
+        }
+        if now_unix - from > MAX_CATCH_UP_DAYS * DAY {
+            return Err(ResearchError::Capacity);
+        }
+        // 1970-01-01 is Thursday: Monday-based ISO weeks (UTC).
+        let mut week = (from / DAY - (from / DAY + 3) % 7) * DAY;
+        let last_week = (now_unix / DAY - (now_unix / DAY + 3) % 7) * DAY;
+        if week < 0 {
+            return Err(ResearchError::Invalid);
+        }
+        let mut new_runs = 0_usize;
+        while week <= last_week {
+            let end = week.checked_add(7 * DAY).ok_or(ResearchError::Invalid)?;
+            for kind in [ResearchKind::Competitive, ResearchKind::Market] {
+                new_runs += tx.execute(
+                    "INSERT OR IGNORE INTO architect_research_runs
+                     (tenant,fleet,kind,period_start,period_end,state)
+                     VALUES (?1,?2,?3,?4,?5,'READY')",
+                    params![tenant, fleet, kind.key(), week, end],
+                )?;
+            }
+            week = end;
+        }
+        let (mut month, _) = month_bounds(&tx, from)?;
+        loop {
+            let (_, month_end) = month_bounds(&tx, month)?;
+            if month > now_unix {
+                break;
+            }
+            new_runs += tx.execute(
+                "INSERT OR IGNORE INTO architect_research_runs
+                 (tenant,fleet,kind,period_start,period_end,state)
+                 VALUES (?1,?2,?3,?4,?5,'READY')",
+                params![
+                    tenant,
+                    fleet,
+                    ResearchKind::SystemEvolution.key(),
+                    month,
+                    month_end
+                ],
+            )?;
+            if month_end > now_unix {
+                break;
+            }
+            month = month_end;
+        }
+        tx.execute(
+            "INSERT INTO architect_research_scan_state (tenant,fleet,last_scan_unix)
+             VALUES (?1,?2,?3)
+             ON CONFLICT(tenant,fleet) DO UPDATE
+             SET last_scan_unix=excluded.last_scan_unix",
+            params![tenant, fleet, now_unix],
+        )?;
+        tx.commit()?;
+        Ok(CatchUpReport {
+            from_unix: from,
+            through_unix: now_unix,
+            new_runs,
+        })
+    }
+
+    /// Read-only bounded backlog: exclusively READY periods whose start has
+    /// passed. This provides deterministic ordering for a trusted dispatcher.
+    pub fn list_due(
+        &self,
+        tenant: &str,
+        fleet: &str,
+        now_unix: i64,
+        limit: usize,
+    ) -> Result<Vec<ResearchPeriod>, ResearchError> {
+        if !valid_id(tenant)
+            || !valid_id(fleet)
+            || !valid_time(now_unix)
+            || !(1..=MAX_DUE_QUERY).contains(&limit)
+        {
+            return Err(ResearchError::Invalid);
+        }
+        let db = self.db.lock().map_err(|_| ResearchError::Poisoned)?;
+        let mut statement = db.prepare(
+            "SELECT kind,period_start,period_end FROM architect_research_runs
+             WHERE tenant=?1 AND fleet=?2 AND state='READY' AND period_start<=?3
+             ORDER BY period_start ASC, kind ASC LIMIT ?4",
+        )?;
+        let rows = statement.query_map(params![tenant, fleet, now_unix, limit as i64], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, i64>(1)?,
+                r.get::<_, i64>(2)?,
+            ))
+        })?;
+        let mut result = Vec::new();
+        for row in rows {
+            let (raw, start, end) = row?;
+            let kind = ResearchKind::decode(&raw)?;
+            if !valid_time(start) || end <= start {
+                return Err(ResearchError::Integrity);
+            }
+            result.push(ResearchPeriod {
+                kind,
+                start_unix: start,
+                end_unix: end,
+            });
+        }
+        Ok(result)
     }
 
     /// Registers two weekly periods and one calendar-month period in UTC.
