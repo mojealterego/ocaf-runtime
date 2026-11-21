@@ -99,7 +99,10 @@
         "status": "TESTED_LOCAL_PARTIAL",
         "evidence": "docs/audits/AB_OM_01_10_RESEARCH_ENGINE_BRIDGE_2026_11_21.md",
         "baseline_sha": "fe885f0f873c6636cb550ced08150feeca89acd5",
-        "complete_product": false
+        "complete_product": false,
+        "additional_evidence": [
+          "docs/audits/AB_OM_SIGNED_RESEARCH_EVIDENCE_2026_11_21.md"
+        ]
       }
     },
     {

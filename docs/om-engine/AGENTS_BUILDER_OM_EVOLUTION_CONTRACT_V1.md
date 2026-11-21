@@ -57,3 +57,9 @@ Dowody: ../audits/AB_OM_09_10_CATCHUP_APPROVAL_RUNNER_2026_11_21.md. Pełny AB-O
 Nowy architect_workflow_bridge.rs rejestruje okresy badań jako trwałe kontrakty OM Engine z typowanym DAG Planner, Architect, Verifier, przypiętym source SHA i budżetem. bin/ocaf-architect-scheduler.rs może przy jawnie przypiętych ustawieniach uruchamiać tę rejestrację podczas cyklu harmonogramu. Rejestracja nie oznacza wykonania Deep Research ani aktywacji agenta; w pełnym zakresie AB-OM-01 i AB-OM-10 pozostają OPEN_UNVERIFIED.
 
 Dowody: ../audits/AB_OM_01_10_RESEARCH_ENGINE_BRIDGE_2026_11_21.md.
+
+## 2026-11-21 — Dowody podpisane Ed25519 i wiązanie z OM Engine
+
+Wprowadzono odrębną warstwę przyjmowania i utrwalania podpisanych raportów z ról Planner, Architect, Verifier. Dowody są związane z tenantem, konkretnym workflow, epoch i attempt, a niezależny podpis Verifier wskazuje konkretny SHA-256 uprzedniego badania. Uruchamialny CLI --submit przeprowadza lokalne odbieranie raportów z zaufanego kanału operatora i zapisuje do OM Engine tylko potwierdzenia po pozytywnej weryfikacji podpisów i dzierżaw.
+
+Żaden komponent nie przeprowadza automatycznie badań internetu. URL-e źródeł to metadane, a nie dowód pozyskania prawdziwej treści. OSTc / OMAt i wymagania zewnętrznego wykonawcy pozostają fail-closed. Odbiór AB-OM-01/06/07/08 pozostaje OPEN_UNVERIFIED. Dokument dowodowy: ../audits/AB_OM_SIGNED_RESEARCH_EVIDENCE_2026_11_21.md.

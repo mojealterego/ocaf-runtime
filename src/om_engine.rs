@@ -425,6 +425,25 @@ impl OmEngine {
         Ok(status)
     }
 
+    /// Read the latest committed step receipt through the tamper-checked
+    /// event replay. This permits exact idempotent failed-receipt recovery.
+    pub fn last_receipt(
+        &self,
+        tenant: &str,
+        workflow_id: &str,
+        step: &str,
+    ) -> Result<Option<Receipt>, OmError> {
+        if !valid_id(tenant) || !valid_id(workflow_id) || !valid_id(step) {
+            return Err(OmError::Invalid);
+        }
+        let mut db = self.db.lock().map_err(|_| OmError::Poisoned)?;
+        let tx = db.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let (wf, _, _) = load(&tx, tenant, workflow_id)?;
+        let receipt = wf.last_receipt(tenant, step)?;
+        tx.commit()?;
+        Ok(receipt)
+    }
+
     pub fn audit_head(&self, tenant: &str, workflow_id: &str) -> Result<AuditHead, OmError> {
         if !valid_id(tenant) || !valid_id(workflow_id) {
             return Err(OmError::Invalid);

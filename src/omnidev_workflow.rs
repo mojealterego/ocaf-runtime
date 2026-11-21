@@ -47,7 +47,8 @@ pub struct WorkflowContract {
     pub steps: Vec<StepContract>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Outcome {
     Passed,
     Failed,
@@ -442,6 +443,23 @@ impl OmniDevWorkflow {
         self.nodes
             .get(id)
             .map(|n| &n.status)
+            .ok_or(WorkflowError::Denied)
+    }
+
+    /// Last committed completion receipt for this role step, if present.
+    /// Read-only, tenant-bound and replayed from the persistent engine journal
+    /// when used through OmEngine. It does not grant completion authority.
+    pub fn last_receipt(
+        &self,
+        trusted_tenant: &str,
+        step: &str,
+    ) -> Result<Option<Receipt>, WorkflowError> {
+        if trusted_tenant != self.contract.tenant {
+            return Err(WorkflowError::Denied);
+        }
+        self.nodes
+            .get(step)
+            .map(|state| state.last_receipt.clone())
             .ok_or(WorkflowError::Denied)
     }
 

@@ -147,3 +147,5 @@ pub mod architect_research_schedule;
 pub mod architect_evolution_approval;
 
 pub mod architect_workflow_bridge;
+
+pub mod architect_research_evidence;
