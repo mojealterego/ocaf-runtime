@@ -1,0 +1,172 @@
+use axum::{
+    body::Body, extract::{DefaultBodyLimit, State}, http::{header, HeaderMap, StatusCode},
+    response::{IntoResponse, Response}, routing::{get, post}, Json, Router,
+};
+use futures_util::StreamExt;
+use omega_openai_gateway::{admit, reserve, Request};
+use serde_json::json;
+use sha2::{Digest, Sha256};
+use std::{env, path::PathBuf, sync::Arc, time::Duration};
+use subtle::ConstantTimeEq;
+use tokio::sync::Semaphore;
+
+const CLOUD: &str = "https://api.openai.com/v1/responses";
+const LOCAL: &str = "http://127.0.0.1:8082/v1/chat/completions";
+const MAX_RESPONSE: usize = 2 * 1024 * 1024;
+
+struct App {
+    client: reqwest::Client,
+    token_hash: [u8; 32],
+    api_key: Option<String>,
+    cloud_cap: u32,
+    tools: bool,
+    db: Option<PathBuf>,
+    local_model: String,
+    slots: Arc<Semaphore>,
+}
+
+fn error(status: StatusCode, code: &'static str) -> Response {
+    (status, Json(json!({"error":code}))).into_response()
+}
+
+fn authenticated(headers: &HeaderMap, expected: &[u8; 32]) -> bool {
+    let Some(value) = headers.get(header::AUTHORIZATION).and_then(|v| v.to_str().ok()) else {
+        return false;
+    };
+    let Some(token) = value.strip_prefix("Bearer ") else { return false; };
+    if token.len() > 512 { return false; }
+    let digest: [u8; 32] = Sha256::digest(token.as_bytes()).into();
+    bool::from(digest.ct_eq(expected))
+}
+
+async fn generate(State(app): State<Arc<App>>, headers: HeaderMap, Json(req): Json<Request>) -> Response {
+    if !authenticated(&headers, &app.token_hash) {
+        return error(StatusCode::UNAUTHORIZED, "unauthorized");
+    }
+    let cloud = req.model.cloud();
+    if let Err(code) = admit(&req, app.cloud_cap > 0 && app.api_key.is_some(), app.tools) {
+        let status = if code == "invalid_input" { StatusCode::BAD_REQUEST } else { StatusCode::FORBIDDEN };
+        return error(status, code);
+    }
+    let Ok(permit) = app.slots.clone().try_acquire_owned() else {
+        return error(StatusCode::TOO_MANY_REQUESTS, "busy");
+    };
+    let mut outbound = app.client.post(if cloud { CLOUD } else { LOCAL })
+        .json(&req.payload(&app.local_model));
+    if cloud {
+        let (Some(db), Some(key)) = (app.db.clone(), app.api_key.as_ref()) else {
+            return error(StatusCode::SERVICE_UNAVAILABLE, "cloud_unconfigured");
+        };
+        let cap = app.cloud_cap;
+        match tokio::task::spawn_blocking(move || reserve(&db, cap)).await {
+            Ok(Ok(true)) => (),
+            Ok(Ok(false)) => return error(StatusCode::TOO_MANY_REQUESTS, "quota_exhausted"),
+            _ => return error(StatusCode::SERVICE_UNAVAILABLE, "quota_unavailable"),
+        }
+        outbound = outbound.bearer_auth(key);
+    }
+    let upstream = match outbound.send().await {
+        Ok(r) => r,
+        Err(_) => return error(StatusCode::BAD_GATEWAY, "upstream_unavailable"),
+    };
+    if !upstream.status().is_success() {
+        let status = if upstream.status() == reqwest::StatusCode::TOO_MANY_REQUESTS {
+            StatusCode::TOO_MANY_REQUESTS
+        } else { StatusCode::BAD_GATEWAY };
+        return error(status, "upstream_rejected");
+    }
+    let expected = if req.stream { "text/event-stream" } else { "application/json" };
+    let actual = upstream.headers().get(reqwest::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok()).unwrap_or("");
+    if actual.split(';').next().map(str::trim) != Some(expected) {
+        return error(StatusCode::BAD_GATEWAY, "upstream_content_type");
+    }
+    let mut bytes = upstream.bytes_stream();
+    if !req.stream {
+        let mut data = Vec::new();
+        while let Some(chunk) = bytes.next().await {
+            match chunk {
+                Ok(chunk) if chunk.len() <= MAX_RESPONSE.saturating_sub(data.len()) => data.extend_from_slice(&chunk),
+                _ => return error(StatusCode::BAD_GATEWAY, "upstream_body_rejected"),
+            }
+        }
+        drop(permit);
+        if serde_json::from_slice::<serde_json::Value>(&data).is_err() {
+            return error(StatusCode::BAD_GATEWAY, "upstream_invalid_json");
+        }
+        return ([(header::CONTENT_TYPE, expected), (header::CACHE_CONTROL, "no-store"),
+            (header::HeaderName::from_static("x-omega-provider"), if cloud { "openai" } else { "local" })], data).into_response();
+    }
+    let stream = async_stream::stream! {
+        let _permit = permit;
+        let mut total = 0usize;
+        while let Some(item) = bytes.next().await {
+            match item {
+                Ok(chunk) if chunk.len() <= MAX_RESPONSE.saturating_sub(total) => {
+                    total += chunk.len();
+                    yield Ok::<_, std::io::Error>(chunk);
+                }
+                _ => {
+                    yield Err(std::io::Error::other("upstream stream interrupted or oversized"));
+                    break;
+                }
+            }
+        }
+    };
+    ([(header::CONTENT_TYPE, expected), (header::CACHE_CONTROL, "no-store"),
+      (header::HeaderName::from_static("x-omega-provider"), if cloud { "openai" } else { "local" })],
+      Body::from_stream(stream)).into_response()
+}
+
+fn config() -> Result<App, Box<dyn std::error::Error>> {
+    let token = env::var("OMEGA_GATEWAY_TOKEN")?;
+    if !(32..=512).contains(&token.len()) || !token.bytes().all(|b| b.is_ascii_graphic()) {
+        return Err("OMEGA_GATEWAY_TOKEN must contain 32-512 visible ASCII characters".into());
+    }
+    let cloud_cap: u32 = match env::var("OMEGA_CLOUD_DAILY_REQUESTS") {
+        Ok(v) => v.parse()?,
+        Err(env::VarError::NotPresent) => 0,
+        Err(e) => return Err(e.into()),
+    };
+    if cloud_cap > 1000 { return Err("cloud quota exceeds maximum".into()); }
+    let (api_key, db) = if cloud_cap > 0 {
+        let key = env::var("OPENAI_API_KEY")?;
+        if key.trim().is_empty() || key.len() > 512 {
+            return Err("invalid API key configuration".into());
+        }
+        let db = PathBuf::from(env::var("OMEGA_QUOTA_DB")?);
+        if !db.is_absolute() || db.as_os_str().is_empty() {
+            return Err("quota path must be absolute and in a private directory".into());
+        }
+        (Some(key), Some(db))
+    } else { (None, None) };
+    let local_model = env::var("OMEGA_LOCAL_MODEL").unwrap_or_else(|_| "local".into());
+    if local_model.is_empty() || local_model.len() > 256 {
+        return Err("invalid local model configuration".into());
+    }
+    let client = reqwest::Client::builder().no_proxy()
+        .redirect(reqwest::redirect::Policy::none())
+        .connect_timeout(Duration::from_secs(10))
+        .timeout(Duration::from_secs(120)).build()?;
+    Ok(App {
+        client, token_hash: Sha256::digest(token.as_bytes()).into(), api_key, cloud_cap,
+        tools: env::var("OMEGA_CLOUD_TOOLS").as_deref() == Ok("1"),
+        db, local_model, slots: Arc::new(Semaphore::new(4)),
+    })
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let app = Arc::new(config()?);
+    let router = Router::new()
+        .route("/healthz", get(|| async { StatusCode::NO_CONTENT }))
+        .route("/v1/generate", post(generate))
+        .layer(DefaultBodyLimit::max(64 * 1024))
+        .with_state(app);
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:8788").await?;
+    eprintln!("OMEGA gateway listening on loopback");
+    axum::serve(listener, router).with_graceful_shutdown(async {
+        let _ = tokio::signal::ctrl_c().await;
+    }).await?;
+    Ok(())
+}
