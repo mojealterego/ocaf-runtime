@@ -246,3 +246,5 @@ pub mod embedding;
 pub mod private_db;
 
 pub mod mcp;
+
+pub mod duplex;

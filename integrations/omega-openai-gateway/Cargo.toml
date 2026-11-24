@@ -1,13 +1,13 @@
 [package]
 name = "omega-openai-gateway"
-version = "0.8.0"
+version = "0.9.0"
 edition = "2021"
 publish = false
 
 [workspace]
 
 [dependencies]
-axum = "=0.8.4"
+axum = { version = "=0.8.4", features = ["ws"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal", "sync", "time"] }
 reqwest = { version = "=0.12.22", default-features = false, features = ["rustls-tls", "json", "stream", "multipart"] }
 serde = { version = "1", features = ["derive"] }
@@ -20,7 +20,7 @@ base64 = "0.22"
 subtle = "2"
 rusqlite = { version = "=0.37.0", features = ["bundled"] }
 async-stream = "0.3"
-futures-util = "0.3"
+futures-util = { version = "0.3", features = ["sink"] }
 tokio-tungstenite = { version = "=0.28.0", features = ["rustls-tls-webpki-roots"] }
 
 [dev-dependencies]

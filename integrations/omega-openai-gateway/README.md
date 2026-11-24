@@ -1,4 +1,4 @@
-# OMEGA OpenAI Gateway Ω — 0.8.0
+# OMEGA OpenAI Gateway Ω — 0.9.0
 
 Status: source implementation / build and tests UNVERIFIED. Single trusted
 operator, loopback only. Not an OCAF tenant ingress, OMAt tool, or production
@@ -162,3 +162,17 @@ fail closed. Both API requests are separately budgeted. The remote server may
 receive data; trust is not established by its URL or tool name. This is a
 single-operator path, not general multi-tenant MCP authorization. Live MCP
 contract remains unverified.
+
+## Bidirectional Realtime PCM
+GET /v1/audio/realtime-stream upgrades to WebSocket. Native/trusted backend
+clients must send Authorization: Bearer <gateway token>, X-Omega-Cloud-Consent:
+yes, and no Origin header. Voice/cloud enablement and a reservation are required.
+Binary input is 24 kHz mono signed PCM16 LE, max 32 KiB per frame; text "commit"
+commits at least 100 ms of audio and requests one response. Receive binary PCM
+and JSON ready/done/error messages. Audio may be buffered while a response is
+streaming; committing while a response is active is rejected. Three turns,
+90s, 2 MiB input, 4 MiB output, 8192 messages. Session consumes one operator-
+priced reservation; price must account for all three turns. No tools, arbitrary
+client JSON, URL tokens or direct browser origin. No playback truncation,
+barge-in/cancellation, microphone capture, or WebRTC media transport. No native
+or live provider verification yet.

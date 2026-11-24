@@ -22,6 +22,8 @@ use omega_openai_gateway::private_db::prepare_private_database;
 
 use omega_openai_gateway::mcp::{Profiles,ApprovalStore,StartRequest,ApprovalRequest,ApprovalDecision};
 
+use axum::extract::ws::WebSocketUpgrade;
+
 struct App {
     client: reqwest::Client,
     token_hash: [u8; 32],
@@ -368,6 +370,23 @@ async fn mcp_approve(State(app):State<Arc<App>>,headers:HeaderMap,Json(req):Json
     }
 }
 
+async fn realtime_stream(State(app):State<Arc<App>>,headers:HeaderMap,ws:WebSocketUpgrade)->Response{
+    if !authenticated(&headers,&app.token_hash){return error(StatusCode::UNAUTHORIZED,"unauthorized");}
+    // Native clients / trusted backends only. No browser origin or URL token.
+    if headers.contains_key(header::ORIGIN)
+        || headers.get("x-omega-cloud-consent").and_then(|v|v.to_str().ok())!=Some("yes")
+        || !app.voice || app.cloud_cap==0{
+        return error(StatusCode::FORBIDDEN,"cloud_denied");
+    }
+    let (permit,key)=match cloud_lease(&app).await{
+        Ok((p,k))=>(p,k.to_owned()),Err((status,code))=>return error(status,code),
+    };
+    ws.max_message_size(32768).max_frame_size(32768).on_upgrade(move|socket|async move{
+        let _permit=permit;
+        omega_openai_gateway::duplex::serve(socket,key).await;
+    })
+}
+
 fn config() -> Result<App, Box<dyn std::error::Error>> {
     let token = env::var("OMEGA_GATEWAY_TOKEN")?;
     if !(32..=512).contains(&token.len()) || !token.bytes().all(|b| b.is_ascii_graphic()) {
@@ -450,6 +469,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/v1/rag/embed", post(rag_embed))
         .route("/v1/mcp/start", post(mcp_start))
         .route("/v1/mcp/approve", post(mcp_approve))
+        .route("/v1/audio/realtime-stream", get(realtime_stream))
         .with_state(app);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8788").await?;
     eprintln!("OMEGA gateway listening on loopback");

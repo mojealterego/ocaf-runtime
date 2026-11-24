@@ -26,7 +26,7 @@ impl Profiles {
             if !identifier(&p.id)||p.url.len()>2048||url.scheme()!="https"
                 ||url.port_or_known_default()!=Some(443)||!url.username().is_empty()||url.password().is_some()
                 ||url.query().is_some()||url.fragment().is_some()||!host.contains('.')
-                ||[".local",".localhost",".internal",".test",".invalid",".onion"].iter().any(|s|host.ends_with(s))
+                ||[".local",".localhost",".internal",".test",".invalid",".onion"].iter().any(|s|host.ends_with(*s))
                 ||p.tools.is_empty()||p.tools.len()>32||tools.len()!=p.tools.len()
                 ||p.tools.iter().any(|t|!identifier(t))||map.contains_key(&p.id){
                 return Err("invalid_mcp_config");
@@ -82,7 +82,7 @@ impl ApprovalStore{
                 Some("mcp_approval_request")=>{
                     if approval.is_some()||item["server_label"]!=label{return Err("upstream_protocol");}
                     let id=item["id"].as_str().filter(|s|crate::advanced::valid_id(s,"mcpr_")).ok_or("upstream_protocol")?;
-                    let name=item["name"].as_str().filter(|s|profile.tools.iter().any(|t|t==s)).ok_or("tool_denied")?;
+                    let name=item["name"].as_str().filter(|s|profile.tools.iter().any(|t|t.as_str()==*s)).ok_or("tool_denied")?;
                     let args=item["arguments"].as_str().filter(|s|s.len()<=16384).ok_or("upstream_protocol")?;
                     let parsed:Value=serde_json::from_str(args).map_err(|_|"upstream_protocol")?;
                     if !parsed.is_object(){return Err("upstream_protocol");}

@@ -104,26 +104,7 @@ impl AudioCollector {
 
 pub async fn realtime(item: Value, key: &str) -> Result<Value, &'static str> {
     tokio::time::timeout(Duration::from_secs(90), async move {
-        let mut request = "wss://api.openai.com/v1/realtime?model=gpt-realtime-2.1-mini"
-            .into_client_request().map_err(|_| "upstream_unavailable")?;
-        request.headers_mut().insert("Authorization", format!("Bearer {key}").parse().map_err(|_| "upstream_unavailable")?);
-        let config = WebSocketConfig::default().max_message_size(Some(256*1024)).max_frame_size(Some(256*1024));
-        let (mut ws, _) = connect_async_with_config(request, Some(config), false).await.map_err(|_| "upstream_unavailable")?;
-        let session = json!({"type":"session.update","session":{"type":"realtime",
-            "output_modalities":["audio"],"tools":[],
-            "audio":{"input":{"format":{"type":"audio/pcm","rate":24000},"turn_detection":null},
-                     "output":{"format":{"type":"audio/pcm","rate":24000},"voice":"marin"}}}});
-        ws.send(Message::Text(session.to_string().into())).await.map_err(|_| "upstream_unavailable")?;
-        let mut ready = false;
-        for _ in 0..64 {
-            let msg = ws.next().await.ok_or("upstream_incomplete")?.map_err(|_| "upstream_unavailable")?;
-            if let Message::Text(s) = msg {
-                let event: Value = serde_json::from_str(&s).map_err(|_| "upstream_protocol")?;
-                if event["type"] == "error" { return Err("upstream_rejected"); }
-                if event["type"] == "session.updated" { ready = true; break; }
-            }
-        }
-        if !ready { return Err("upstream_protocol"); }
+        let mut ws = connect_realtime(key).await?;
         ws.send(Message::Text(item.to_string().into())).await.map_err(|_| "upstream_unavailable")?;
         ws.send(Message::Text(json!({"type":"response.create","response":{
             "output_modalities":["audio"],"max_output_tokens":1024,
@@ -146,4 +127,28 @@ pub async fn realtime(item: Value, key: &str) -> Result<Value, &'static str> {
         }
         Err("upstream_incomplete")
     }).await.map_err(|_| "upstream_timeout")?
+}
+
+pub(crate) async fn connect_realtime(key:&str)->Result<tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,&'static str>{
+    let mut request = "wss://api.openai.com/v1/realtime?model=gpt-realtime-2.1-mini"
+        .into_client_request().map_err(|_| "upstream_unavailable")?;
+    request.headers_mut().insert("Authorization", format!("Bearer {key}").parse().map_err(|_| "upstream_unavailable")?);
+    let config = WebSocketConfig::default().max_message_size(Some(256*1024)).max_frame_size(Some(256*1024));
+    let (mut ws, _) = connect_async_with_config(request, Some(config), false).await.map_err(|_| "upstream_unavailable")?;
+    let session = json!({"type":"session.update","session":{"type":"realtime",
+        "output_modalities":["audio"],"tools":[],
+        "audio":{"input":{"format":{"type":"audio/pcm","rate":24000},"turn_detection":null},
+                 "output":{"format":{"type":"audio/pcm","rate":24000},"voice":"marin"}}}});
+    ws.send(Message::Text(session.to_string().into())).await.map_err(|_| "upstream_unavailable")?;
+    let mut ready = false;
+    for _ in 0..64 {
+        let msg = ws.next().await.ok_or("upstream_incomplete")?.map_err(|_| "upstream_unavailable")?;
+        if let Message::Text(s) = msg {
+            let event: Value = serde_json::from_str(&s).map_err(|_| "upstream_protocol")?;
+            if event["type"] == "error" { return Err("upstream_rejected"); }
+            if event["type"] == "session.updated" { ready = true; break; }
+        }
+    }
+    if !ready { return Err("upstream_protocol"); }
+    Ok(ws)
 }
