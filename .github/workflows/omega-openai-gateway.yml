@@ -26,6 +26,13 @@ jobs:
           cargo generate-lockfile
       - name: Compile and test
         run: cargo test --locked --all-targets
+      - name: Build executable
+        run: cargo build --locked --bin omega-openai-gateway
+      - name: Deterministic local-provider integration
+        run: |
+          python -m unittest discover -s clients -p 'test_*.py' -v
+          python clients/verify_gateway.py --self-test
+          python clients/verify_gateway.py --binary target/debug/omega-openai-gateway
       - name: Clippy
         run: cargo clippy --locked --all-targets -- -D warnings
       - name: Formatting

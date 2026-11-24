@@ -1,4 +1,4 @@
-# OMEGA OpenAI Gateway Ω — 0.9.0
+# OMEGA OpenAI Gateway Ω — 0.9.1
 
 Status: source implementation / build and tests UNVERIFIED. Single trusted
 operator, loopback only. Not an OCAF tenant ingress, OMAt tool, or production
@@ -207,3 +207,16 @@ until all calls are reconciled. Host loss can delay hangup until restart or
 the provider's own timeout: 90 seconds is NOT a hard external spending limit.
 Do not expose this route to untrusted clients. No live WebRTC test, device media
 capture, provider-side hard cost limit or production authorization is claimed.
+
+## Native regression harness
+With a reviewed Cargo.lock and native Rust toolchain, use a clean host with
+ports 8082, 8083 and 8788 free:
+```sh
+cargo test --locked --all-targets
+cargo build --locked --bin omega-openai-gateway
+python clients/verify_gateway.py --binary target/debug/omega-openai-gateway
+```
+The native fixture explicitly disables cloud and uses local HTTP/SSE and
+embedding servers to check authentication, cloud denial, ingestion, revision
+conflicts, and persisted retrieval after restart. The separate --self-test
+mode checks fixture behaviour only; it is not a native Gateway PASS.
