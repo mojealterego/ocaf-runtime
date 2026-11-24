@@ -225,3 +225,5 @@ impl LocalChatRequest {
 }
 
 pub mod advanced;
+
+pub mod voice;

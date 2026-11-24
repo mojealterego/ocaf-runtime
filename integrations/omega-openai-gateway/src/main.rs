@@ -9,7 +9,8 @@ use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::{env, path::PathBuf, sync::Arc, time::Duration};
 use subtle::ConstantTimeEq;
-use tokio::sync::Semaphore;
+use tokio::sync::{Semaphore, OwnedSemaphorePermit};
+use omega_openai_gateway::voice::{self, TranscribeRequest, VoiceRequest};
 
 const CLOUD: &str = "https://api.openai.com/v1/responses";
 const LOCAL: &str = "http://127.0.0.1:8082/v1/chat/completions";
@@ -23,6 +24,7 @@ struct App {
     daily_budget: u64,
     reservation: u64,
     advanced: ToolPolicy,
+    voice: bool,
     tools: bool,
     db: Option<PathBuf>,
     local_model: String,
@@ -100,26 +102,73 @@ async fn local_chat(
     forward(app, false, req.stream, payload).await
 }
 
+async fn cloud_lease(app: &App) -> Result<(OwnedSemaphorePermit, &str), (StatusCode, &'static str)> {
+    let permit = app.slots.clone().try_acquire_owned().map_err(|_| (StatusCode::TOO_MANY_REQUESTS, "busy"))?;
+    let (Some(db), Some(key)) = (app.db.clone(), app.api_key.as_deref()) else {
+        return Err((StatusCode::SERVICE_UNAVAILABLE, "cloud_unconfigured"));
+    };
+    let (cap, daily, amount) = (app.cloud_cap, app.daily_budget, app.reservation);
+    match tokio::task::spawn_blocking(move || reserve_budget(&db, cap, daily, amount)).await {
+        Ok(Ok(true)) => Ok((permit,key)),
+        Ok(Ok(false)) => Err((StatusCode::TOO_MANY_REQUESTS,"quota_exhausted")),
+        _ => Err((StatusCode::SERVICE_UNAVAILABLE,"quota_unavailable")),
+    }
+}
+
+async fn transcribe(State(app): State<Arc<App>>, headers: HeaderMap, Json(req): Json<TranscribeRequest>) -> Response {
+    if !authenticated(&headers, &app.token_hash) { return error(StatusCode::UNAUTHORIZED,"unauthorized"); }
+    let wav = match req.wav(app.voice && app.cloud_cap > 0) {
+        Ok(wav) => wav,
+        Err(code) => return error(if code == "invalid_input" { StatusCode::BAD_REQUEST } else { StatusCode::FORBIDDEN },code),
+    };
+    let (_permit,key) = match cloud_lease(&app).await { Ok(x) => x, Err((status,code)) => return error(status,code) };
+    let part = match reqwest::multipart::Part::bytes(wav).file_name("audio.wav").mime_str("audio/wav") {
+        Ok(part) => part, Err(_) => return error(StatusCode::BAD_REQUEST,"invalid_input"),
+    };
+    let form = reqwest::multipart::Form::new().text("model","gpt-transcribe").part("file",part);
+    let upstream = match app.client.post("https://api.openai.com/v1/audio/transcriptions").bearer_auth(key).multipart(form).send().await {
+        Ok(r) if r.status().is_success() => r,
+        _ => return error(StatusCode::BAD_GATEWAY,"upstream_rejected"),
+    };
+    let mut stream = upstream.bytes_stream();
+    let mut data = Vec::new();
+    while let Some(chunk) = stream.next().await {
+        match chunk {
+            Ok(b) if b.len() <= MAX_RESPONSE.saturating_sub(data.len()) => data.extend_from_slice(&b),
+            _ => return error(StatusCode::BAD_GATEWAY,"upstream_body_rejected"),
+        }
+    }
+    match serde_json::from_slice::<serde_json::Value>(&data) {
+        Ok(v) if v["text"].is_string() => Json(v).into_response(),
+        _ => error(StatusCode::BAD_GATEWAY,"upstream_protocol"),
+    }
+}
+
+async fn realtime_voice(State(app): State<Arc<App>>, headers: HeaderMap, Json(req): Json<VoiceRequest>) -> Response {
+    if !authenticated(&headers, &app.token_hash) { return error(StatusCode::UNAUTHORIZED,"unauthorized"); }
+    let item = match req.item(app.voice && app.cloud_cap > 0) {
+        Ok(v) => v,
+        Err(code) => return error(if code == "invalid_input" { StatusCode::BAD_REQUEST } else { StatusCode::FORBIDDEN },code),
+    };
+    let (_permit,key) = match cloud_lease(&app).await { Ok(x) => x, Err((status,code)) => return error(status,code) };
+    match voice::realtime(item,key).await {
+        Ok(v) => Json(v).into_response(),
+        Err(code) => error(StatusCode::BAD_GATEWAY,code),
+    }
+}
+
 async fn forward(
     app: Arc<App>, cloud: bool, streaming: bool, payload: serde_json::Value,
 ) -> Response {
-    let Ok(permit) = app.slots.clone().try_acquire_owned() else {
-        return error(StatusCode::TOO_MANY_REQUESTS, "busy");
-    };
-    let mut outbound = app.client.post(if cloud { CLOUD } else { LOCAL })
-        .json(&payload);
-    if cloud {
-        let (Some(db), Some(key)) = (app.db.clone(), app.api_key.as_ref()) else {
-            return error(StatusCode::SERVICE_UNAVAILABLE, "cloud_unconfigured");
-        };
-        let (cap, daily, amount) = (app.cloud_cap, app.daily_budget, app.reservation);
-        match tokio::task::spawn_blocking(move || reserve_budget(&db, cap, daily, amount)).await {
-            Ok(Ok(true)) => (),
-            Ok(Ok(false)) => return error(StatusCode::TOO_MANY_REQUESTS, "quota_exhausted"),
-            _ => return error(StatusCode::SERVICE_UNAVAILABLE, "quota_unavailable"),
+    let (permit,key) = if cloud {
+        match cloud_lease(&app).await { Ok((p,k)) => (p,Some(k)), Err((status,code)) => return error(status,code) }
+    } else {
+        match app.slots.clone().try_acquire_owned() {
+            Ok(p) => (p,None), Err(_) => return error(StatusCode::TOO_MANY_REQUESTS,"busy"),
         }
-        outbound = outbound.bearer_auth(key);
-    }
+    };
+    let mut outbound = app.client.post(if cloud { CLOUD } else { LOCAL }).json(&payload);
+    if let Some(key) = key { outbound = outbound.bearer_auth(key); }
     let upstream = match outbound.send().await {
         Ok(r) => r,
         Err(_) => return error(StatusCode::BAD_GATEWAY, "upstream_unavailable"),
@@ -223,6 +272,7 @@ fn config() -> Result<App, Box<dyn std::error::Error>> {
         .timeout(Duration::from_secs(120)).build()?;
     Ok(App {
         client, token_hash: Sha256::digest(token.as_bytes()).into(), api_key, cloud_cap, daily_budget, reservation, advanced,
+        voice: env::var("OMEGA_CLOUD_VOICE").as_deref() == Ok("1"),
         tools: env::var("OMEGA_CLOUD_TOOLS").as_deref() == Ok("1"),
         db, local_model, slots: Arc::new(Semaphore::new(4)),
     })
@@ -238,6 +288,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/v1/functions/execute", post(local_function))
         .layer(DefaultBodyLimit::max(64 * 1024))
         .route("/v1/analyze", post(advanced_generate).layer(DefaultBodyLimit::max(3 * 1024 * 1024)))
+        .route("/v1/audio/transcribe", post(transcribe).layer(DefaultBodyLimit::max(3 * 1024 * 1024)))
+        .route("/v1/audio/realtime-turn", post(realtime_voice).layer(DefaultBodyLimit::max(3 * 1024 * 1024)))
         .with_state(app);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8788").await?;
     eprintln!("OMEGA gateway listening on loopback");

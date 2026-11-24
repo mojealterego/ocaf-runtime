@@ -1,4 +1,4 @@
-# OMEGA OpenAI Gateway Ω — 0.4.0
+# OMEGA OpenAI Gateway Ω — 0.5.0
 
 Status: source implementation / build and tests UNVERIFIED. Single trusted
 operator, loopback only. Not an OCAF tenant ingress, OMAt tool, or production
@@ -92,6 +92,20 @@ closed until the next day. Operator prices are assumptions and do not bound
 actual provider invoices; set conservative values and separate provider limits.
 File search, images, containers, cached and reasoning tokens can change actual
 charges. No cloud calls have been executed by this implementation session.
+
+## Voice (explicit cloud opt-in)
+Set OMEGA_CLOUD_VOICE=1 in addition to the cloud budget. POST /v1/audio/transcribe
+accepts {"allow_cloud":true,"wav_base64":"..."} and uses gpt-transcribe.
+POST /v1/audio/realtime-turn accepts exactly one of text (max 4096 UTF-8 bytes)
+or pcm16_base64 (mono 24 kHz PCM16 LE, max 2 MiB) and allow_cloud:true.
+It establishes a server-side WebSocket to gpt-realtime-2.1-mini, disables tools
+and VAD, sends a single turn, collects bounded PCM and requires response.done
+with completed status before returning JSON. A session is capped at 90 seconds,
+1024 output tokens and 4 MiB audio. Output is AI-generated speech; disclose this
+to listeners. This is not a persistent duplex WebRTC conversation. No API secret
+is returned to clients. All audio attempts share the existing reservation and
+concurrency controls. WAV validation is structural only; no local decoding.
+Live API and hardware tests remain UNVERIFIED.
 
 ## Integration boundaries
 Locally-XXX: Tauri backend invokes gateway; never expose bearer to renderer.
