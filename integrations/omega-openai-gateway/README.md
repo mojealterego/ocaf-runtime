@@ -1,4 +1,4 @@
-# OMEGA OpenAI Gateway Ω — 0.3.0
+# OMEGA OpenAI Gateway Ω — 0.4.0
 
 Status: source implementation / build and tests UNVERIFIED. Single trusted
 operator, loopback only. Not an OCAF tenant ingress, OMAt tool, or production
@@ -20,7 +20,7 @@ Local llama-server must listen at 127.0.0.1:8082 and accept the configured model
 No OpenAI request is enabled by default. In a private terminal only, load an API
 key from a secret manager, set OMEGA_CLOUD_DAILY_REQUESTS to an explicitly
 approved nonzero quota and OMEGA_QUOTA_DB to an absolute persistent path in a
-private directory (mode 0700), then restart. Never commit keys. Tools separately
+private directory (mode 0700). Also configure OMEGA_CLOUD_DAILY_BUDGET_MICRO_USD\nand OMEGA_CLOUD_RESERVE_MICRO_USD (both positive integer micro-USD units), then restart. Never commit keys. Tools separately
 disabled unless OMEGA_CLOUD_TOOLS=1. No automatic fallback to cloud.
 
 ```sh
@@ -31,7 +31,7 @@ curl -fsS http://127.0.0.1:8788/v1/generate \
 ```
 Cloud: model astra/sol/terra/luna and allow_cloud:true, optional tool docs/web.
 Each cloud attempt consumes a persistent daily slot, including failed attempts.
-Quota is NOT a hard USD budget; provider pricing, reasoning, tool fees and other
+Quota and operator-priced reservations are NOT a hard provider USD budget; provider pricing, reasoning, tool fees and other
 clients may incur charges. No automatic retries. Stream:true returns native SSE:
 OpenAI Responses events or llama-server Chat Completions chunks, distinguished by
 X-Omega-Provider. Stream clients must verify terminal event and reject incomplete
@@ -70,6 +70,28 @@ For Omega-X-Evolution the existing dynamic local_openai provider can be
 configured with model identifier:
 `local/omega-local@http://127.0.0.1:8788/v1?api_key_env=OMEGA_GATEWAY_TOKEN`.
 This configuration has not been exercised end-to-end.
+
+## Advanced requests
+POST /v1/analyze is cloud-only, requires explicit allow_cloud:true and active
+operator budget. Accepts text, an optional inline PNG/JPEG data URL (2 MiB decoded,
+magic-byte and base64 validation only), optional previously uploaded file_id from
+OMEGA_ALLOWED_FILE_IDS, and tool none/file_search/code_interpreter/sha256.
+File search uses only OMEGA_VECTOR_STORE_ID, at most five results. Hosted
+Code Interpreter requires OMEGA_CODE_INTERPRETER=1 and can incur extra charges.
+No user-controlled URL, upload, arbitrary tool schema or container ID.
+The sha256 tool requires OMEGA_LOCAL_FUNCTIONS=1. It advertises one strict
+function schema; the trusted client may invoke POST /v1/functions/execute with
+{"name":"sha256_text","arguments":"{\"text\":\"abc\"}"} to execute a pure hash.
+Automatic model-tool-result continuation is not implemented. Never interpret
+other model-generated functions as authority.
+
+Budget migration: both per-day call count and operator-priced reservation are
+written atomically in SQLite before each cloud attempt. No refunds on errors.
+If older unpriced calls exist for the current UTC day, cloud admission fails
+closed until the next day. Operator prices are assumptions and do not bound
+actual provider invoices; set conservative values and separate provider limits.
+File search, images, containers, cached and reasoning tokens can change actual
+charges. No cloud calls have been executed by this implementation session.
 
 ## Integration boundaries
 Locally-XXX: Tauri backend invokes gateway; never expose bearer to renderer.

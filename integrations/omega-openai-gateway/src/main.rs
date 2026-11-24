@@ -3,7 +3,8 @@ use axum::{
     response::{IntoResponse, Response}, routing::{get, post}, Json, Router,
 };
 use futures_util::StreamExt;
-use omega_openai_gateway::{admit, reserve, LocalChatRequest, Request};
+use omega_openai_gateway::{admit, LocalChatRequest, Request};
+use omega_openai_gateway::advanced::{AdvancedRequest, ToolPolicy, execute_function, reserve_budget, valid_id};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::{env, path::PathBuf, sync::Arc, time::Duration};
@@ -19,6 +20,9 @@ struct App {
     token_hash: [u8; 32],
     api_key: Option<String>,
     cloud_cap: u32,
+    daily_budget: u64,
+    reservation: u64,
+    advanced: ToolPolicy,
     tools: bool,
     db: Option<PathBuf>,
     local_model: String,
@@ -52,6 +56,35 @@ async fn generate(State(app): State<Arc<App>>, headers: HeaderMap, Json(req): Js
     forward(app, cloud, req.stream, payload).await
 }
 
+async fn advanced_generate(
+    State(app): State<Arc<App>>,
+    headers: HeaderMap,
+    Json(req): Json<AdvancedRequest>,
+) -> Response {
+    if !authenticated(&headers, &app.token_hash) {
+        return error(StatusCode::UNAUTHORIZED, "unauthorized");
+    }
+    let payload = match req.payload(app.cloud_cap > 0 && app.api_key.is_some(), &app.advanced) {
+        Ok(p) => p,
+        Err(code) => return error(if code == "invalid_input" { StatusCode::BAD_REQUEST } else { StatusCode::FORBIDDEN }, code),
+    };
+    forward(app, true, req.stream, payload).await
+}
+
+async fn local_function(
+    State(app): State<Arc<App>>,
+    headers: HeaderMap,
+    Json(call): Json<serde_json::Value>,
+) -> Response {
+    if !authenticated(&headers, &app.token_hash) {
+        return error(StatusCode::UNAUTHORIZED, "unauthorized");
+    }
+    match execute_function(&call, &app.advanced) {
+        Ok(result) => Json(result).into_response(),
+        Err(code) => error(if code == "tool_denied" { StatusCode::FORBIDDEN } else { StatusCode::BAD_REQUEST }, code),
+    }
+}
+
 async fn local_chat(
     State(app): State<Arc<App>>,
     headers: HeaderMap,
@@ -79,8 +112,8 @@ async fn forward(
         let (Some(db), Some(key)) = (app.db.clone(), app.api_key.as_ref()) else {
             return error(StatusCode::SERVICE_UNAVAILABLE, "cloud_unconfigured");
         };
-        let cap = app.cloud_cap;
-        match tokio::task::spawn_blocking(move || reserve(&db, cap)).await {
+        let (cap, daily, amount) = (app.cloud_cap, app.daily_budget, app.reservation);
+        match tokio::task::spawn_blocking(move || reserve_budget(&db, cap, daily, amount)).await {
             Ok(Ok(true)) => (),
             Ok(Ok(false)) => return error(StatusCode::TOO_MANY_REQUESTS, "quota_exhausted"),
             _ => return error(StatusCode::SERVICE_UNAVAILABLE, "quota_unavailable"),
@@ -162,6 +195,24 @@ fn config() -> Result<App, Box<dyn std::error::Error>> {
         }
         (Some(key), Some(db))
     } else { (None, None) };
+    let (daily_budget, reservation): (u64, u64) = if cloud_cap > 0 {
+        let daily: u64 = env::var("OMEGA_CLOUD_DAILY_BUDGET_MICRO_USD")?.parse()?;
+        let per_call: u64 = env::var("OMEGA_CLOUD_RESERVE_MICRO_USD")?.parse()?;
+        if per_call == 0 || per_call > daily || daily > i64::MAX as u64 {
+            return Err("invalid cloud reservation budget".into());
+        }
+        (daily, per_call)
+    } else { (0, 0) };
+    let files: Vec<String> = env::var("OMEGA_ALLOWED_FILE_IDS").unwrap_or_default()
+        .split(',').filter(|s| !s.is_empty()).map(str::to_owned).collect();
+    let vector_store = env::var("OMEGA_VECTOR_STORE_ID").ok().filter(|s| !s.is_empty());
+    if files.len() > 64 || files.iter().any(|id| !valid_id(id, "file-"))
+        || vector_store.as_ref().is_some_and(|id| !valid_id(id, "vs_")) {
+        return Err("invalid advanced tool configuration".into());
+    }
+    let advanced = ToolPolicy { files, vector_store,
+        code: env::var("OMEGA_CODE_INTERPRETER").as_deref() == Ok("1"),
+        function: env::var("OMEGA_LOCAL_FUNCTIONS").as_deref() == Ok("1") };
     let local_model = env::var("OMEGA_LOCAL_MODEL").unwrap_or_else(|_| "local".into());
     if local_model.is_empty() || local_model.len() > 256 {
         return Err("invalid local model configuration".into());
@@ -171,7 +222,7 @@ fn config() -> Result<App, Box<dyn std::error::Error>> {
         .connect_timeout(Duration::from_secs(10))
         .timeout(Duration::from_secs(120)).build()?;
     Ok(App {
-        client, token_hash: Sha256::digest(token.as_bytes()).into(), api_key, cloud_cap,
+        client, token_hash: Sha256::digest(token.as_bytes()).into(), api_key, cloud_cap, daily_budget, reservation, advanced,
         tools: env::var("OMEGA_CLOUD_TOOLS").as_deref() == Ok("1"),
         db, local_model, slots: Arc::new(Semaphore::new(4)),
     })
@@ -184,7 +235,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/healthz", get(|| async { StatusCode::NO_CONTENT }))
         .route("/v1/generate", post(generate))
         .route("/v1/chat/completions", post(local_chat))
+        .route("/v1/functions/execute", post(local_function))
         .layer(DefaultBodyLimit::max(64 * 1024))
+        .route("/v1/analyze", post(advanced_generate).layer(DefaultBodyLimit::max(3 * 1024 * 1024)))
         .with_state(app);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8788").await?;
     eprintln!("OMEGA gateway listening on loopback");

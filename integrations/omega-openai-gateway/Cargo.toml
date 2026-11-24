@@ -1,6 +1,6 @@
 [package]
 name = "omega-openai-gateway"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 publish = false
 
@@ -13,6 +13,7 @@ reqwest = { version = "=0.12.22", default-features = false, features = ["rustls-
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
+base64 = "0.22"
 subtle = "2"
 rusqlite = { version = "=0.37.0", features = ["bundled"] }
 async-stream = "0.3"
