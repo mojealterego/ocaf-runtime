@@ -46,3 +46,15 @@ fn compatible_chat_enforces_budget_and_turn_order() {
         assert!(req.payload("configured-gguf").is_err());
     }
 }
+
+#[test]
+fn seed_is_forwarded_and_bounded() {
+    let req: LocalChatRequest = serde_json::from_value(json!({
+        "model":"omega-local","messages":[{"role":"user","content":"x"}],"seed":42
+    })).unwrap();
+    assert_eq!(req.payload("configured-gguf").unwrap()["seed"], 42);
+    let bad: LocalChatRequest = serde_json::from_value(json!({
+        "model":"omega-local","messages":[{"role":"user","content":"x"}],"seed":2147483648u64
+    })).unwrap();
+    assert!(bad.payload("configured-gguf").is_err());
+}

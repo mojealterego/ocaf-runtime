@@ -61,7 +61,7 @@ permissions, and quotas remain enforced.
 ## Local OpenAI-compatible subset
 POST /v1/chat/completions accepts model omega-local, messages (optional initial
 system message followed by alternating user/assistant, ending in user),
-temperature, top_p, n=1, stream and max_tokens or max_completion_tokens.
+temperature, top_p, seed (0..=2147483647), n=1, stream and max_tokens or max_completion_tokens.
 Authentication and all existing resource limits remain mandatory. The alias
 always resolves to the operator's configured GGUF model; no cloud or tools are
 reachable through this endpoint. Unsupported fields fail closed. This is not a

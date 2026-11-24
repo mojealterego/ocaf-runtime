@@ -174,6 +174,7 @@ pub struct LocalChatRequest {
     pub n: Option<u32>,
     pub temperature: Option<f64>,
     pub top_p: Option<f64>,
+    pub seed: Option<u32>,
 }
 
 impl LocalChatRequest {
@@ -185,6 +186,7 @@ impl LocalChatRequest {
             || (self.max_tokens.is_some() && self.max_completion_tokens.is_some())
             || self.temperature.is_some_and(|v| !(0.0..=2.0).contains(&v))
             || self.top_p.is_some_and(|v| !(0.0..=1.0).contains(&v))
+            || self.seed.is_some_and(|v| v > i32::MAX as u32)
         {
             return Err("invalid_input");
         }
@@ -219,6 +221,9 @@ impl LocalChatRequest {
         }
         if let Some(top_p) = self.top_p {
             payload["top_p"] = json!(top_p);
+        }
+        if let Some(seed) = self.seed {
+            payload["seed"] = json!(seed);
         }
         Ok(payload)
     }
