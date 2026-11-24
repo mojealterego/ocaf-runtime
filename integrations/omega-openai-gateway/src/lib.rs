@@ -232,3 +232,12 @@ impl LocalChatRequest {
 pub mod advanced;
 
 pub mod voice;
+
+// Compile the same OCAF retrieval implementation, without importing its runtime.
+#[path = "../../../src/retrieval_quality.rs"]
+pub mod retrieval_quality;
+#[path = "../../../src/hybrid_retrieval.rs"]
+pub mod hybrid_retrieval;
+#[path = "../../../src/gateway_graph_rag.rs"]
+pub mod gateway_graph_rag;
+pub mod rag;

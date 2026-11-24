@@ -17,19 +17,21 @@ pub enum GraphError {
     #[error("resource limit")]
     Limit,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct GraphSource {
     pub id: String,
     pub body: String,
     pub embedding: Vec<f32>,
     pub sha256: [u8; 32],
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct GraphEdge {
     pub from: String,
     pub to: String,
 }
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct GraphEvidence {
     pub source_id: String,
     pub body: String,

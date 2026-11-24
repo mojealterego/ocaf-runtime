@@ -1,4 +1,4 @@
-# OMEGA OpenAI Gateway Ω — 0.6.0
+# OMEGA OpenAI Gateway Ω — 0.7.0
 
 Status: source implementation / build and tests UNVERIFIED. Single trusted
 operator, loopback only. Not an OCAF tenant ingress, OMAt tool, or production
@@ -127,3 +127,13 @@ cargo test --locked; cargo fmt -- --check; cargo clippy --locked --all-targets
 Tests cover policy and SQLite quota, not live upstream, native SSE completeness,
 tenant isolation, replay across requests, end-to-end integration or supply-chain.
 Do not expose outside loopback. No production approval.
+
+## Local GraphRAG
+Opt in with OMEGA_RAG_ENABLED=1, OMEGA_RAG_DB (absolute path in a private directory),
+OMEGA_RAG_EMBEDDING_MODEL and OMEGA_RAG_DIMENSION (1–256). POST /v1/rag/index
+replaces one snapshot with expected_revision, sources [{id,body,embedding,sha256:
+[32 digest bytes]}] and edges [{from,to}]. POST /v1/rag/retrieve accepts query,
+embedding,seeds,limit,body_bytes. Returns revision, source text, SHA-256 and graph
+path. Uses identical OCAF BM25/cosine/RRF code via repository-relative modules.
+No remote ingestion, automatic embedding generation, cloud export or model
+execution. Single operator; not a multi-tenant database. Native tests unexecuted.

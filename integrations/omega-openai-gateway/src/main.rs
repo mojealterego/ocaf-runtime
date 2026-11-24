@@ -16,6 +16,8 @@ const CLOUD: &str = "https://api.openai.com/v1/responses";
 const LOCAL: &str = "http://127.0.0.1:8082/v1/chat/completions";
 const MAX_RESPONSE: usize = 2 * 1024 * 1024;
 
+use omega_openai_gateway::rag::{RagStore, RagError, Snapshot, Query};
+
 struct App {
     client: reqwest::Client,
     token_hash: [u8; 32],
@@ -25,6 +27,7 @@ struct App {
     reservation: u64,
     advanced: ToolPolicy,
     voice: bool,
+    rag: Option<RagStore>,
     tools: bool,
     db: Option<PathBuf>,
     local_model: String,
@@ -267,6 +270,34 @@ async fn forward(
       Body::from_stream(stream)).into_response()
 }
 
+fn rag_error(e: RagError) -> Response {
+    match e {
+        RagError::Invalid => error(StatusCode::BAD_REQUEST,"invalid_graph"),
+        RagError::Conflict => error(StatusCode::CONFLICT,"stale_revision"),
+        RagError::Storage => error(StatusCode::SERVICE_UNAVAILABLE,"rag_unavailable"),
+    }
+}
+async fn rag_replace(State(app): State<Arc<App>>, headers: HeaderMap, Json(snapshot): Json<Snapshot>) -> Response {
+    if !authenticated(&headers,&app.token_hash) {return error(StatusCode::UNAUTHORIZED,"unauthorized");}
+    let Some(store)=app.rag.clone() else {return error(StatusCode::FORBIDDEN,"rag_disabled");};
+    let Ok(permit)=app.slots.clone().try_acquire_owned() else {return error(StatusCode::TOO_MANY_REQUESTS,"busy");};
+    match tokio::task::spawn_blocking(move||{let _permit=permit;store.replace(snapshot)}).await {
+        Ok(Ok(revision))=>Json(json!({"revision":revision})).into_response(),
+        Ok(Err(e))=>rag_error(e),
+        Err(_)=>error(StatusCode::SERVICE_UNAVAILABLE,"rag_unavailable"),
+    }
+}
+async fn rag_retrieve(State(app): State<Arc<App>>, headers: HeaderMap, Json(query): Json<Query>) -> Response {
+    if !authenticated(&headers,&app.token_hash) {return error(StatusCode::UNAUTHORIZED,"unauthorized");}
+    let Some(store)=app.rag.clone() else {return error(StatusCode::FORBIDDEN,"rag_disabled");};
+    let Ok(permit)=app.slots.clone().try_acquire_owned() else {return error(StatusCode::TOO_MANY_REQUESTS,"busy");};
+    match tokio::task::spawn_blocking(move||{let _permit=permit;store.retrieve(query)}).await {
+        Ok(Ok(result))=>([(header::CACHE_CONTROL,"no-store")],Json(result)).into_response(),
+        Ok(Err(e))=>rag_error(e),
+        Err(_)=>error(StatusCode::SERVICE_UNAVAILABLE,"rag_unavailable"),
+    }
+}
+
 fn config() -> Result<App, Box<dyn std::error::Error>> {
     let token = env::var("OMEGA_GATEWAY_TOKEN")?;
     if !(32..=512).contains(&token.len()) || !token.bytes().all(|b| b.is_ascii_graphic()) {
@@ -311,12 +342,18 @@ fn config() -> Result<App, Box<dyn std::error::Error>> {
     if local_model.is_empty() || local_model.len() > 256 {
         return Err("invalid local model configuration".into());
     }
+    let rag=if env::var("OMEGA_RAG_ENABLED").as_deref()==Ok("1") {
+        let path=PathBuf::from(env::var("OMEGA_RAG_DB")?);
+        let model=env::var("OMEGA_RAG_EMBEDDING_MODEL")?;
+        let dim:usize=env::var("OMEGA_RAG_DIMENSION")?.parse()?;
+        Some(RagStore::open(&path,&model,dim)?)
+    }else{None};
     let client = reqwest::Client::builder().no_proxy()
         .redirect(reqwest::redirect::Policy::none())
         .connect_timeout(Duration::from_secs(10))
         .timeout(Duration::from_secs(120)).build()?;
     Ok(App {
-        client, token_hash: Sha256::digest(token.as_bytes()).into(), api_key, cloud_cap, daily_budget, reservation, advanced,
+        client, token_hash: Sha256::digest(token.as_bytes()).into(), api_key, cloud_cap, daily_budget, reservation, advanced, rag,
         voice: env::var("OMEGA_CLOUD_VOICE").as_deref() == Ok("1"),
         tools: env::var("OMEGA_CLOUD_TOOLS").as_deref() == Ok("1"),
         db, local_model, slots: Arc::new(Semaphore::new(4)),
@@ -335,6 +372,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/v1/analyze", post(advanced_generate).layer(DefaultBodyLimit::max(3 * 1024 * 1024)))
         .route("/v1/audio/transcribe", post(transcribe).layer(DefaultBodyLimit::max(3 * 1024 * 1024)))
         .route("/v1/audio/realtime-turn", post(realtime_voice).layer(DefaultBodyLimit::max(3 * 1024 * 1024)))
+        .route("/v1/rag/index", post(rag_replace).layer(DefaultBodyLimit::max(3*1024*1024)))
+        .route("/v1/rag/retrieve", post(rag_retrieve))
         .with_state(app);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8788").await?;
     eprintln!("OMEGA gateway listening on loopback");
