@@ -1,6 +1,8 @@
 use ocaf_runtime::{
+    architect_https_source_fetch::FetchedSource,
     architect_research_evidence::{ResearchEvidence, ResearchEvidenceGate, SourceRecord},
     architect_research_schedule::{ArchitectResearchScheduler, ResearchKind, RunState},
+    architect_source_archive::SourceArchive,
     architect_workflow_bridge::register_due,
     om_engine::OmEngine,
     omnidev_workflow::{Outcome, Role},
@@ -32,9 +34,25 @@ fn keys() -> [PKey<Private>; 3] {
     ]
 }
 fn run(paths: [&Path; 3], k: &[PKey<Private>; 3], tenant: &str) -> Output {
+    run_mode(paths, k, tenant, None)
+}
+fn run_archived(paths: [&Path; 3], k: &[PKey<Private>; 3], tenant: &str, archive: &Path) -> Output {
+    run_mode(paths, k, tenant, Some(archive))
+}
+fn run_mode(
+    paths: [&Path; 3],
+    k: &[PKey<Private>; 3],
+    tenant: &str,
+    archive: Option<&Path>,
+) -> Output {
     let mut cmd = Command::new(env!("CARGO_BIN_EXE_ocaf-architect-finalizer"));
-    cmd.arg("--once")
-        .env("OCAF_FINALIZER_SCHEDULE_DB", paths[0])
+    if let Some(archive_db) = archive {
+        cmd.arg("--once-archived")
+            .env("OCAF_FINALIZER_ARCHIVE_DB", archive_db);
+    } else {
+        cmd.arg("--once");
+    }
+    cmd.env("OCAF_FINALIZER_SCHEDULE_DB", paths[0])
         .env("OCAF_FINALIZER_OM_DB", paths[1])
         .env("OCAF_FINALIZER_EVIDENCE_DB", paths[2])
         .env("OCAF_FINALIZER_TENANT", tenant)
@@ -195,7 +213,65 @@ fn real_binary_finalizes_only_signed_research_and_skips_unfinished_periods() {
         rusqlite::params![original],
     ).unwrap();
     drop(db);
-    let result = run(args, &k, "tenant");
+    let archive_db = dir.path().join("source.sqlite");
+    let missing = run_archived(args, &k, "tenant", &archive_db);
+    assert!(!missing.status.success());
+    assert!(
+        String::from_utf8_lossy(&missing.stderr)
+            .to_lowercase()
+            .contains("archive"),
+        "missing archive must be explicit: {:?}",
+        String::from_utf8_lossy(&missing.stderr)
+    );
+    assert_eq!(
+        scheduler
+            .snapshot("tenant", "fleet", selected.kind, selected.period_start_unix)
+            .unwrap()
+            .state,
+        RunState::Ready
+    );
+    let archive = SourceArchive::open(&archive_db).unwrap();
+    for id in [1_u8, 2_u8] {
+        let body = vec![id];
+        archive
+            .save(
+                "tenant",
+                &FetchedSource {
+                    source: source(id),
+                    status: 200,
+                    body,
+                },
+            )
+            .unwrap();
+    }
+    let conn = rusqlite::Connection::open(&archive_db).unwrap();
+    conn.execute(
+        "UPDATE architect_source_archive SET body=X'78797a' WHERE source_url=?1 AND tenant='tenant'",
+        rusqlite::params![source(1).url],
+    ).unwrap();
+    let tampered = run_archived(args, &k, "tenant", &archive_db);
+    assert!(!tampered.status.success());
+    assert!(
+        String::from_utf8_lossy(&tampered.stderr)
+            .to_lowercase()
+            .contains("integrity"),
+        "archive tampering must be detected: {:?}",
+        String::from_utf8_lossy(&tampered.stderr)
+    );
+    assert_eq!(
+        scheduler
+            .snapshot("tenant", "fleet", selected.kind, selected.period_start_unix)
+            .unwrap()
+            .state,
+        RunState::Ready
+    );
+    conn.execute(
+        "UPDATE architect_source_archive SET body=?1 WHERE source_url=?2 AND tenant='tenant'",
+        rusqlite::params![vec![1_u8], source(1).url],
+    )
+    .unwrap();
+    drop(conn);
+    let result = run_archived(args, &k, "tenant", &archive_db);
     assert!(
         result.status.success(),
         "{:?}",
@@ -213,7 +289,7 @@ fn real_binary_finalizes_only_signed_research_and_skips_unfinished_periods() {
             .state,
         RunState::Succeeded
     );
-    let repeated = run(args, &k, "tenant");
+    let repeated = run_archived(args, &k, "tenant", &archive_db);
     assert!(repeated.status.success());
     assert!(String::from_utf8_lossy(&repeated.stdout).contains("scanned=2 finalized=0 pending=2"));
     // Alternate tenant cannot see signed study in a different tenant scope.

@@ -8,6 +8,7 @@
 //! time and retain an external audit anchor against SQLite rollback.
 
 use crate::{
+    architect_source_archive::{ArchiveError, SourceArchive},
     om_engine::{OmEngine, OmError},
     omnidev_workflow::{Completion, Outcome, Receipt, Role, StepStatus},
 };
@@ -104,6 +105,8 @@ pub enum EvidenceError {
     Integrity,
     #[error("evidence database lock poisoned")]
     Poisoned,
+    #[error(transparent)]
+    Archive(#[from] ArchiveError),
     #[error(transparent)]
     Engine(#[from] OmError),
     #[error(transparent)]
@@ -361,6 +364,30 @@ impl ResearchEvidenceGate {
             evidence,
             digest_sha256,
         })
+    }
+
+    /// Strict operator-facing evidence ingress: verify that every signed
+    /// source reference has an exact, readable archived body before accepting
+    /// the signed OM Engine receipt. This does not independently authenticate
+    /// the source server; the trusted fetcher and source archive custody are
+    /// external requirements. The older submit() remains a legacy entrypoint,
+    /// so production callers MUST enforce this stronger API boundary.
+    pub fn submit_with_archive(
+        &self,
+        engine: &OmEngine,
+        archive: &SourceArchive,
+        trusted_tenant: &str,
+        evidence: &ResearchEvidence,
+        signature: &[u8],
+        now_unix: u64,
+    ) -> Result<SubmittedEvidence, EvidenceError> {
+        if !valid_id(trusted_tenant) || evidence.tenant != trusted_tenant {
+            return Err(EvidenceError::Denied);
+        }
+        self.validate(evidence, now_unix)?;
+        self.verify_signature(evidence, signature)?;
+        archive.verify_sources(trusted_tenant, &evidence.sources)?;
+        self.submit(engine, trusted_tenant, evidence, signature, now_unix)
     }
 
     /// Stage signed, immutable evidence BEFORE recording the OM Engine event.

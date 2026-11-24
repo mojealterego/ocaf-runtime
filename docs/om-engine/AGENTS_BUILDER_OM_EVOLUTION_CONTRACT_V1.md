@@ -73,3 +73,9 @@ Dołożono moduł architect_research_finalizer.rs oraz proces ocaf-architect-fin
 Udostępniono owner-only Pinned HTTPS Fetcher z przypiętym publicznym IPv4, certyfikatem TLS i SHA-256 rzeczywiście odebranej treści. Implementacja znajduje się poza niedopuszczonym jeszcze OMAt i nie pozwala agentowi obchodzić ograniczeń OSTc. Potwierdzono rzeczywisty zewnętrzny transfer, ale nie uruchomiono automatycznego odkrywania i oceny konkurencji/rynku. AB-OM-06 i AB-OM-07 pozostają OPEN_UNVERIFIED.
 
 Dowody: ../audits/AB_OM_PINNED_HTTPS_SOURCE_FETCH_2026_11_24.md.
+
+## 2026-11-24 — source archive, signed reports and archived finalization
+
+Operator-owned pinned HTTPS source fetch saves actual response BLOB and digest to tenant-scoped SQLite. ResearchEvidenceGate.submit_with_archive verifies that source references resolve to retained exact bytes; finalize_due_with_archive and ocaf-architect-finalizer --once-archived revalidate those bytes before sealing SUCCEEDED. Old modes remain for compatibility and must not serve as the production source-backed admission path. Test results: 788 and 829 full Rust PASS, 0 FAIL, real HTTPS archive smoke PASS. Research agents, OMAt execution, authentic benchmarking and release gate remain OPEN_UNVERIFIED.
+
+Evidence: ../audits/AB_OM_SOURCE_ARCHIVE_PROVENANCE_2026_11_24.md.

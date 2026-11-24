@@ -9,6 +9,7 @@
 use crate::{
     architect_research_evidence::{EvidenceError, ResearchEvidenceGate},
     architect_research_schedule::{ArchitectResearchScheduler, Recorded, ResearchError},
+    architect_source_archive::{ArchiveError, SourceArchive},
     architect_workflow_bridge::{workflow_id, RegisteredResearch},
     om_engine::{OmEngine, OmError},
     omnidev_workflow::{Outcome, Role, StepStatus},
@@ -42,6 +43,54 @@ pub fn finalize_ready(
     now_unix: i64,
     limit: usize,
 ) -> Result<FinalizationScan, FinalizeError> {
+    finalize_ready_internal(
+        scheduler,
+        engine,
+        evidence_gate,
+        None,
+        tenant,
+        fleet,
+        now_unix,
+        limit,
+    )
+}
+
+/// Stronger, archived evidence workflow. Never seals a READY period unless
+/// every signed source reference is present and its bytes still hash correctly.
+#[allow(clippy::too_many_arguments)]
+pub fn finalize_ready_with_archive(
+    scheduler: &ArchitectResearchScheduler,
+    engine: &OmEngine,
+    evidence_gate: &ResearchEvidenceGate,
+    archive: &SourceArchive,
+    tenant: &str,
+    fleet: &str,
+    now_unix: i64,
+    limit: usize,
+) -> Result<FinalizationScan, FinalizeError> {
+    finalize_ready_internal(
+        scheduler,
+        engine,
+        evidence_gate,
+        Some(archive),
+        tenant,
+        fleet,
+        now_unix,
+        limit,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn finalize_ready_internal(
+    scheduler: &ArchitectResearchScheduler,
+    engine: &OmEngine,
+    evidence_gate: &ResearchEvidenceGate,
+    archive: Option<&SourceArchive>,
+    tenant: &str,
+    fleet: &str,
+    now_unix: i64,
+    limit: usize,
+) -> Result<FinalizationScan, FinalizeError> {
     let due = scheduler.list_due(tenant, fleet, now_unix, limit)?;
     let scanned = due.len();
     let mut finalized = 0;
@@ -52,10 +101,11 @@ pub fn finalize_ready(
             kind: period.kind,
             period_start_unix: period.start_unix,
         };
-        match finalize_due(
+        match finalize_due_internal(
             scheduler,
             engine,
             evidence_gate,
+            archive,
             tenant,
             fleet,
             &record,
@@ -87,6 +137,8 @@ pub enum FinalizeError {
     #[error("OM Engine research lacks a completed signed three-role evidence chain")]
     Unverified,
     #[error(transparent)]
+    Archive(#[from] ArchiveError),
+    #[error(transparent)]
     Evidence(#[from] EvidenceError),
     #[error(transparent)]
     Engine(#[from] OmError),
@@ -102,6 +154,55 @@ pub fn finalize_due(
     scheduler: &ArchitectResearchScheduler,
     engine: &OmEngine,
     evidence_gate: &ResearchEvidenceGate,
+    tenant: &str,
+    fleet: &str,
+    record: &RegisteredResearch,
+    now_unix: i64,
+) -> Result<FinalizedResearch, FinalizeError> {
+    finalize_due_internal(
+        scheduler,
+        engine,
+        evidence_gate,
+        None,
+        tenant,
+        fleet,
+        record,
+        now_unix,
+    )
+}
+
+/// Exact signed receipts, plus independently retained and re-hashed source
+/// bytes at the point of scheduler transition. This is the required boundary
+/// for source-backed studies and must be chosen by the trusted service host.
+#[allow(clippy::too_many_arguments)]
+pub fn finalize_due_with_archive(
+    scheduler: &ArchitectResearchScheduler,
+    engine: &OmEngine,
+    evidence_gate: &ResearchEvidenceGate,
+    archive: &SourceArchive,
+    tenant: &str,
+    fleet: &str,
+    record: &RegisteredResearch,
+    now_unix: i64,
+) -> Result<FinalizedResearch, FinalizeError> {
+    finalize_due_internal(
+        scheduler,
+        engine,
+        evidence_gate,
+        Some(archive),
+        tenant,
+        fleet,
+        record,
+        now_unix,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn finalize_due_internal(
+    scheduler: &ArchitectResearchScheduler,
+    engine: &OmEngine,
+    evidence_gate: &ResearchEvidenceGate,
+    archive: Option<&SourceArchive>,
     tenant: &str,
     fleet: &str,
     record: &RegisteredResearch,
@@ -145,6 +246,9 @@ pub fn finalize_due(
                 }
         {
             return Err(FinalizeError::Unverified);
+        }
+        if let Some(archive) = archive {
+            archive.verify_sources(tenant, &signed.evidence.sources)?;
         }
         match step {
             "research" => research_digest = Some(signed.digest_sha256),

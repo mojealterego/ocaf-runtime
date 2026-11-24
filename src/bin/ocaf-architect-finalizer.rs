@@ -7,8 +7,10 @@
 
 use ocaf_runtime::{
     architect_research_evidence::ResearchEvidenceGate,
-    architect_research_finalizer::finalize_ready,
-    architect_research_schedule::ArchitectResearchScheduler, om_engine::OmEngine,
+    architect_research_finalizer::{finalize_ready, finalize_ready_with_archive},
+    architect_research_schedule::ArchitectResearchScheduler,
+    architect_source_archive::SourceArchive,
+    om_engine::OmEngine,
 };
 use std::{
     env,
@@ -25,6 +27,7 @@ struct Config {
     scheduler_db: PathBuf,
     om_db: PathBuf,
     evidence_db: PathBuf,
+    archive_db: Option<PathBuf>,
     planner_pubkey: [u8; 32],
     architect_pubkey: [u8; 32],
     verifier_pubkey: [u8; 32],
@@ -76,14 +79,17 @@ fn decode_ed25519_key(name: &'static str) -> io::Result<[u8; 32]> {
     Ok(decoded)
 }
 
-fn validate_distinct_journals(paths: [&Path; 3]) -> io::Result<()> {
+fn validate_distinct_journals(paths: &[&Path]) -> io::Result<()> {
     let canonical: Vec<_> = paths
         .iter()
         .map(fs::canonicalize)
         .collect::<io::Result<Vec<_>>>()?;
-    if canonical[0] == canonical[1] || canonical[0] == canonical[2] || canonical[1] == canonical[2]
-    {
-        return Err(invalid("journal files must be distinct"));
+    for i in 0..canonical.len() {
+        for j in i + 1..canonical.len() {
+            if canonical[i] == canonical[j] {
+                return Err(invalid("journal files must be distinct"));
+            }
+        }
     }
     // Canonical paths do not identify multiple hard links to the same inode.
     // Independent SQLite journals must not share physical database files.
@@ -94,8 +100,8 @@ fn validate_distinct_journals(paths: [&Path; 3]) -> io::Result<()> {
             .iter()
             .map(fs::metadata)
             .collect::<io::Result<Vec<_>>>()?;
-        for i in 0..3 {
-            for j in (i + 1)..3 {
+        for i in 0..metadata.len() {
+            for j in (i + 1)..metadata.len() {
                 if metadata[i].dev() == metadata[j].dev() && metadata[i].ino() == metadata[j].ino()
                 {
                     return Err(invalid("journal files must be distinct"));
@@ -107,9 +113,12 @@ fn validate_distinct_journals(paths: [&Path; 3]) -> io::Result<()> {
 }
 
 fn config() -> io::Result<Config> {
-    if env::args().skip(1).collect::<Vec<_>>() != ["--once"] {
-        return Err(invalid("only --once is supported"));
-    }
+    let args: Vec<String> = env::args().skip(1).collect();
+    let archive_mode = match args.as_slice() {
+        [flag] if flag == "--once" => false,
+        [flag] if flag == "--once-archived" => true,
+        _ => return Err(invalid("only --once and --once-archived are supported")),
+    };
     let tenant = required("OCAF_FINALIZER_TENANT")?;
     let fleet = required("OCAF_FINALIZER_FLEET")?;
     if !valid_id(&tenant) || !valid_id(&fleet) {
@@ -135,13 +144,22 @@ fn config() -> io::Result<Config> {
     let scheduler_db = existing_file("OCAF_FINALIZER_SCHEDULE_DB")?;
     let om_db = existing_file("OCAF_FINALIZER_OM_DB")?;
     let evidence_db = existing_file("OCAF_FINALIZER_EVIDENCE_DB")?;
-    validate_distinct_journals([&scheduler_db, &om_db, &evidence_db])?;
+    let archive_db = if archive_mode {
+        let path = existing_file("OCAF_FINALIZER_ARCHIVE_DB")
+            .map_err(|_| invalid("valid source archive is required for --once-archived"))?;
+        validate_distinct_journals(&[&scheduler_db, &om_db, &evidence_db, &path])?;
+        Some(path)
+    } else {
+        validate_distinct_journals(&[&scheduler_db, &om_db, &evidence_db])?;
+        None
+    };
     Ok(Config {
         tenant,
         fleet,
         scheduler_db,
         om_db,
         evidence_db,
+        archive_db,
         planner_pubkey,
         architect_pubkey,
         verifier_pubkey,
@@ -160,15 +178,29 @@ fn run() -> Result<(), Box<dyn Error>> {
         &cfg.architect_pubkey,
         &cfg.verifier_pubkey,
     )?;
-    let outcome = finalize_ready(
-        &scheduler,
-        &engine,
-        &evidence,
-        &cfg.tenant,
-        &cfg.fleet,
-        now_unix,
-        cfg.limit,
-    )?;
+    let outcome = if let Some(ref archive_path) = cfg.archive_db {
+        let archive = SourceArchive::open(archive_path)?;
+        finalize_ready_with_archive(
+            &scheduler,
+            &engine,
+            &evidence,
+            &archive,
+            &cfg.tenant,
+            &cfg.fleet,
+            now_unix,
+            cfg.limit,
+        )?
+    } else {
+        finalize_ready(
+            &scheduler,
+            &engine,
+            &evidence,
+            &cfg.tenant,
+            &cfg.fleet,
+            now_unix,
+            cfg.limit,
+        )?
+    };
     println!(
         "OCAF_ARCHITECT_FINALIZER scanned={} finalized={} pending={}",
         outcome.scanned, outcome.finalized, outcome.pending

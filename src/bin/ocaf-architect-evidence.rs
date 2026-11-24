@@ -5,6 +5,7 @@
 
 use ocaf_runtime::{
     architect_research_evidence::{ResearchEvidence, ResearchEvidenceGate},
+    architect_source_archive::SourceArchive,
     om_engine::OmEngine,
     omnidev_workflow::Completion,
 };
@@ -31,6 +32,7 @@ struct Config {
     tenant: String,
     evidence_db: PathBuf,
     om_db: PathBuf,
+    archive_db: Option<PathBuf>,
     planner_key: [u8; 32],
     architect_key: [u8; 32],
     verifier_key: [u8; 32],
@@ -76,6 +78,43 @@ fn decode_hex(raw: &str, wanted_bytes: usize) -> io::Result<Vec<u8>> {
     Ok(out)
 }
 
+/// Refuse sharing one physical SQLite journal across trust domains, even
+/// through a symlink or a hard link. The service manager must also protect
+/// parent directories against race-based path substitution.
+fn distinct_archive(
+    archive: &std::path::Path,
+    om: &std::path::Path,
+    evidence: &std::path::Path,
+) -> io::Result<()> {
+    for other in [om, evidence] {
+        if archive == other {
+            return Err(invalid(
+                "source archive must be distinct from other journals",
+            ));
+        }
+        if other.symlink_metadata().is_err() {
+            continue;
+        }
+        if std::fs::canonicalize(archive)? == std::fs::canonicalize(other)? {
+            return Err(invalid(
+                "source archive must be distinct from other journals",
+            ));
+        }
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::MetadataExt;
+            let a = std::fs::metadata(archive)?;
+            let b = std::fs::metadata(other)?;
+            if a.ino() == b.ino() && a.dev() == b.dev() {
+                return Err(invalid(
+                    "source archive must be distinct from other journals",
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
 fn public_key(name: &'static str) -> io::Result<[u8; 32]> {
     let key = decode_hex(&required(name)?, 32)?;
     key.try_into()
@@ -83,9 +122,12 @@ fn public_key(name: &'static str) -> io::Result<[u8; 32]> {
 }
 
 fn config() -> io::Result<Config> {
-    if env::args().skip(1).collect::<Vec<_>>() != ["--submit"] {
-        return Err(invalid("only --submit is supported"));
-    }
+    let arguments: Vec<String> = env::args().skip(1).collect();
+    let archived_mode = match arguments.as_slice() {
+        [arg] if arg == "--submit" => false,
+        [arg] if arg == "--submit-archived" => true,
+        _ => return Err(invalid("only --submit and --submit-archived are supported")),
+    };
     let tenant = required("OCAF_EVIDENCE_TENANT")?;
     if !valid_id(&tenant) {
         return Err(invalid("invalid trusted tenant identity"));
@@ -95,6 +137,21 @@ fn config() -> io::Result<Config> {
     if evidence_db == om_db {
         return Err(invalid("OM Engine and evidence journals must be separate"));
     }
+    let archive_db = if archived_mode {
+        let db = path("OCAF_EVIDENCE_ARCHIVE_DB")
+            .map_err(|_| invalid("source archive must be configured for --submit-archived"))?;
+        let metadata = std::fs::symlink_metadata(&db)
+            .map_err(|_| invalid("source archive must already exist"))?;
+        if !metadata.file_type().is_file() {
+            return Err(invalid(
+                "source archive must be an existing distinct regular file",
+            ));
+        }
+        distinct_archive(&db, &om_db, &evidence_db)?;
+        Some(db)
+    } else {
+        None
+    };
     let planner_key = public_key("OCAF_EVIDENCE_PLANNER_PUBKEY_ED25519")?;
     let architect_key = public_key("OCAF_EVIDENCE_ARCHITECT_PUBKEY_ED25519")?;
     let verifier_key = public_key("OCAF_EVIDENCE_VERIFIER_PUBKEY_ED25519")?;
@@ -106,6 +163,7 @@ fn config() -> io::Result<Config> {
         tenant,
         evidence_db,
         om_db,
+        archive_db,
         planner_key,
         architect_key,
         verifier_key,
@@ -137,13 +195,25 @@ fn run() -> Result<(), Box<dyn Error>> {
     )?;
     let engine = OmEngine::open(&cfg.om_db)?;
     let now_unix = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
-    let result = gate.submit(
-        &engine,
-        &cfg.tenant,
-        &submission.evidence,
-        &signature,
-        now_unix,
-    )?;
+    let result = if let Some(ref archive_db) = cfg.archive_db {
+        let archive = SourceArchive::open(archive_db)?;
+        gate.submit_with_archive(
+            &engine,
+            &archive,
+            &cfg.tenant,
+            &submission.evidence,
+            &signature,
+            now_unix,
+        )?
+    } else {
+        gate.submit(
+            &engine,
+            &cfg.tenant,
+            &submission.evidence,
+            &signature,
+            now_unix,
+        )?
+    };
     let label = match result.completion {
         Completion::Recorded => "RECORDED",
         Completion::Replay => "REPLAY",

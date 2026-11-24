@@ -153,3 +153,5 @@ pub mod architect_research_evidence;
 pub mod architect_research_finalizer;
 
 pub mod architect_https_source_fetch;
+
+pub mod architect_source_archive;

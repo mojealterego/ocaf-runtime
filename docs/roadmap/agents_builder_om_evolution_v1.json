@@ -102,7 +102,8 @@
         "complete_product": false,
         "additional_evidence": [
           "docs/audits/AB_OM_SIGNED_RESEARCH_EVIDENCE_2026_11_21.md",
-          "docs/audits/AB_OM_SIGNED_RESEARCH_FINALIZATION_2026_11_24.md"
+          "docs/audits/AB_OM_SIGNED_RESEARCH_FINALIZATION_2026_11_24.md",
+          "docs/audits/AB_OM_SOURCE_ARCHIVE_PROVENANCE_2026_11_24.md"
         ]
       }
     },
@@ -144,7 +145,10 @@
         "status": "TESTED_LOCAL_PARTIAL",
         "evidence": "docs/audits/AB_OM_PINNED_HTTPS_SOURCE_FETCH_2026_11_24.md",
         "base_sha": "f7194ffcee168dac8adfbbe86fca24f5f62e06d8",
-        "complete_product": false
+        "complete_product": false,
+        "additional_evidence": [
+          "docs/audits/AB_OM_SOURCE_ARCHIVE_PROVENANCE_2026_11_24.md"
+        ]
       }
     },
     {
@@ -157,7 +161,10 @@
         "status": "TESTED_LOCAL_PARTIAL",
         "evidence": "docs/audits/AB_OM_PINNED_HTTPS_SOURCE_FETCH_2026_11_24.md",
         "base_sha": "f7194ffcee168dac8adfbbe86fca24f5f62e06d8",
-        "complete_product": false
+        "complete_product": false,
+        "additional_evidence": [
+          "docs/audits/AB_OM_SOURCE_ARCHIVE_PROVENANCE_2026_11_24.md"
+        ]
       }
     },
     {
@@ -193,7 +200,8 @@
         "complete_product": false,
         "additional_evidence": [
           "docs/audits/AB_OM_01_10_RESEARCH_ENGINE_BRIDGE_2026_11_21.md",
-          "docs/audits/AB_OM_SIGNED_RESEARCH_FINALIZATION_2026_11_24.md"
+          "docs/audits/AB_OM_SIGNED_RESEARCH_FINALIZATION_2026_11_24.md",
+          "docs/audits/AB_OM_SOURCE_ARCHIVE_PROVENANCE_2026_11_24.md"
         ]
       }
     },
