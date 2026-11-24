@@ -47,7 +47,7 @@ fn valid_commit(input: &str) -> bool {
             .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
 }
 
-fn workflow_id(fleet: &str, kind: ResearchKind, period_start: i64) -> String {
+pub(crate) fn workflow_id(fleet: &str, kind: ResearchKind, period_start: i64) -> String {
     let fleet_digest = format!("{:x}", Sha256::digest(fleet.as_bytes()));
     let kind_key = match kind {
         ResearchKind::Competitive => "competition",

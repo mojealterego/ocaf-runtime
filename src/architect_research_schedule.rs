@@ -688,6 +688,62 @@ impl ArchitectResearchScheduler {
         Ok(())
     }
 
+    /// Seal a period only after the internal signed-evidence finalizer has
+    /// verified all three OM Engine receipts against separately pinned signer
+    /// keys. This method is deliberately crate-private, not an externally
+    /// exposed "mark successful" API.
+    pub(crate) fn seal_verified(
+        &self,
+        tenant: &str,
+        fleet: &str,
+        kind: ResearchKind,
+        period_start_unix: i64,
+        evidence_sha256: &str,
+        now_unix: i64,
+    ) -> Result<Recorded, ResearchError> {
+        if !valid_id(tenant)
+            || !valid_id(fleet)
+            || !valid_time(period_start_unix)
+            || !valid_time(now_unix)
+            || !valid_digest(evidence_sha256)
+        {
+            return Err(ResearchError::Invalid);
+        }
+        if now_unix < period_start_unix {
+            return Err(ResearchError::NotDue);
+        }
+        let mut db = self.db.lock().map_err(|_| ResearchError::Poisoned)?;
+        let tx = db.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let current: Option<(String, Option<String>)> = tx
+            .query_row(
+                "SELECT state,last_evidence_sha256
+             FROM architect_research_runs
+             WHERE tenant=?1 AND fleet=?2 AND kind=?3 AND period_start=?4",
+                params![tenant, fleet, kind.key(), period_start_unix],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .optional()?;
+        let (state, previous_evidence) = current.ok_or(ResearchError::NotFound)?;
+        let result = match RunState::decode(&state)? {
+            RunState::Succeeded if previous_evidence.as_deref() == Some(evidence_sha256) => {
+                Recorded::Replay
+            }
+            RunState::Succeeded => return Err(ResearchError::Integrity),
+            RunState::Ready => {
+                tx.execute(
+                    "UPDATE architect_research_runs
+                     SET state='SUCCEEDED',last_evidence_sha256=?5
+                     WHERE tenant=?1 AND fleet=?2 AND kind=?3 AND period_start=?4 AND state='READY'",
+                    params![tenant,fleet,kind.key(),period_start_unix,evidence_sha256],
+                )?;
+                Recorded::New
+            }
+            RunState::Leased | RunState::Halted => return Err(ResearchError::Busy),
+        };
+        tx.commit()?;
+        Ok(result)
+    }
+
     /// Current persisted state, also suitable for read-only offline UI.
     pub fn snapshot(
         &self,

@@ -63,3 +63,7 @@ Dowody: ../audits/AB_OM_01_10_RESEARCH_ENGINE_BRIDGE_2026_11_21.md.
 Wprowadzono odrębną warstwę przyjmowania i utrwalania podpisanych raportów z ról Planner, Architect, Verifier. Dowody są związane z tenantem, konkretnym workflow, epoch i attempt, a niezależny podpis Verifier wskazuje konkretny SHA-256 uprzedniego badania. Uruchamialny CLI --submit przeprowadza lokalne odbieranie raportów z zaufanego kanału operatora i zapisuje do OM Engine tylko potwierdzenia po pozytywnej weryfikacji podpisów i dzierżaw.
 
 Żaden komponent nie przeprowadza automatycznie badań internetu. URL-e źródeł to metadane, a nie dowód pozyskania prawdziwej treści. OSTc / OMAt i wymagania zewnętrznego wykonawcy pozostają fail-closed. Odbiór AB-OM-01/06/07/08 pozostaje OPEN_UNVERIFIED. Dokument dowodowy: ../audits/AB_OM_SIGNED_RESEARCH_EVIDENCE_2026_11_21.md.
+
+## 2026-11-24 — podpisana finalizacja badań Planner / Architect / Verifier
+
+Dołożono moduł architect_research_finalizer.rs oraz proces ocaf-architect-finalizer --once. Wyłącznie spójne trzy podpisy i potwierdzenia OM Engine umożliwiają zamknięcie okresu badawczego. Autentyczne badania sieciowe, OMAs/OMAt, zewnętrzne kotwiczenie i produkcyjne wdrożenia pozostają poza ukończonym zakresem. AB-OM-01 i AB-OM-10 pozostają OPEN_UNVERIFIED. Dowody: ../audits/AB_OM_SIGNED_RESEARCH_FINALIZATION_2026_11_24.md.
