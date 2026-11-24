@@ -244,3 +244,5 @@ pub mod rag;
 
 pub mod embedding;
 pub mod private_db;
+
+pub mod mcp;

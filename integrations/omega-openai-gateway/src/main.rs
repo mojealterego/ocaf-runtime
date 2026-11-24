@@ -20,6 +20,8 @@ use omega_openai_gateway::rag::{RagStore, RagError, Snapshot, Query};
 use omega_openai_gateway::embedding::{EmbedRequest,parse_embedding};
 use omega_openai_gateway::private_db::prepare_private_database;
 
+use omega_openai_gateway::mcp::{Profiles,ApprovalStore,StartRequest,ApprovalRequest,ApprovalDecision};
+
 struct App {
     client: reqwest::Client,
     token_hash: [u8; 32],
@@ -31,6 +33,8 @@ struct App {
     voice: bool,
     rag: Option<RagStore>,
     embeddings: bool,
+    mcp_profiles: Profiles,
+    mcp_approvals: std::sync::Mutex<ApprovalStore>,
     tools: bool,
     db: Option<PathBuf>,
     local_model: String,
@@ -327,6 +331,43 @@ async fn rag_embed(State(app):State<Arc<App>>,headers:HeaderMap,Json(req):Json<E
     }
 }
 
+async fn mcp_start(State(app):State<Arc<App>>,headers:HeaderMap,Json(req):Json<StartRequest>)->Response{
+    if !authenticated(&headers,&app.token_hash){return error(StatusCode::UNAUTHORIZED,"unauthorized");}
+    let payload=match req.payload(&app.mcp_profiles,app.tools&&app.cloud_cap>0){
+        Ok(v)=>v,Err(code)=>return error(if code=="invalid_input"{StatusCode::BAD_REQUEST}else{StatusCode::FORBIDDEN},code),
+    };
+    let first=match cloud_json(&app,&payload).await{Ok(v)=>v,Err((status,code))=>return error(status,code)};
+    let approval=match app.mcp_approvals.lock(){
+        Ok(mut store)=>store.issue(&app.mcp_profiles,&payload,&first,std::time::Instant::now()),
+        Err(_)=>return error(StatusCode::SERVICE_UNAVAILABLE,"approval_unavailable"),
+    };
+    match approval{
+        Ok(Some(ticket))=>(StatusCode::ACCEPTED,[(header::CACHE_CONTROL,"no-store")],Json(ticket)).into_response(),
+        Ok(None)=>([(header::CACHE_CONTROL,"no-store")],Json(first)).into_response(),
+        Err(code)=>error(StatusCode::BAD_GATEWAY,code),
+    }
+}
+async fn mcp_approve(State(app):State<Arc<App>>,headers:HeaderMap,Json(req):Json<ApprovalRequest>)->Response{
+    if !authenticated(&headers,&app.token_hash){return error(StatusCode::UNAUTHORIZED,"unauthorized");}
+    if !app.tools||app.cloud_cap==0{return error(StatusCode::FORBIDDEN,"tool_denied");}
+    let decision=match app.mcp_approvals.lock(){
+        Ok(mut store)=>store.consume(&req.ticket,req.approve,std::time::Instant::now()),
+        Err(_)=>return error(StatusCode::SERVICE_UNAVAILABLE,"approval_unavailable"),
+    };
+    let payload=match decision{
+        Ok(ApprovalDecision::Approved(v))=>v,
+        Ok(ApprovalDecision::Denied)=>return Json(json!({"status":"denied"})).into_response(),
+        Err(code)=>return error(StatusCode::BAD_REQUEST,code),
+    };
+    match cloud_json(&app,&payload).await{
+        Ok(v) if v["status"]=="completed"&&v["output"].as_array().is_some_and(|items|
+            !items.is_empty()&&items.iter().all(|i|matches!(i["type"].as_str(),Some("reasoning"|"message"|"mcp_list_tools"|"mcp_call"))))=>
+            ([(header::CACHE_CONTROL,"no-store")],Json(v)).into_response(),
+        Ok(_)=>error(StatusCode::BAD_GATEWAY,"upstream_incomplete"),
+        Err((status,code))=>error(status,code),
+    }
+}
+
 fn config() -> Result<App, Box<dyn std::error::Error>> {
     let token = env::var("OMEGA_GATEWAY_TOKEN")?;
     if !(32..=512).contains(&token.len()) || !token.bytes().all(|b| b.is_ascii_graphic()) {
@@ -377,12 +418,14 @@ fn config() -> Result<App, Box<dyn std::error::Error>> {
         let dim:usize=env::var("OMEGA_RAG_DIMENSION")?.parse()?;
         Some(RagStore::open(&prepare_private_database(&path)?,&model,dim)?)
     }else{None};
+    let mcp_profiles=Profiles::parse(&env::var("OMEGA_MCP_PROFILES_JSON").unwrap_or_else(|_|"[]".into()))?;
     let client = reqwest::Client::builder().no_proxy()
         .redirect(reqwest::redirect::Policy::none())
         .connect_timeout(Duration::from_secs(10))
         .timeout(Duration::from_secs(120)).build()?;
     Ok(App {
         client, token_hash: Sha256::digest(token.as_bytes()).into(), api_key, cloud_cap, daily_budget, reservation, advanced, rag,
+        mcp_profiles, mcp_approvals: std::sync::Mutex::new(ApprovalStore::default()),
         embeddings: env::var("OMEGA_RAG_LOCAL_EMBEDDINGS").as_deref()==Ok("1"),
         voice: env::var("OMEGA_CLOUD_VOICE").as_deref() == Ok("1"),
         tools: env::var("OMEGA_CLOUD_TOOLS").as_deref() == Ok("1"),
@@ -405,6 +448,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/v1/rag/index", post(rag_replace).layer(DefaultBodyLimit::max(3*1024*1024)))
         .route("/v1/rag/retrieve", post(rag_retrieve))
         .route("/v1/rag/embed", post(rag_embed))
+        .route("/v1/mcp/start", post(mcp_start))
+        .route("/v1/mcp/approve", post(mcp_approve))
         .with_state(app);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8788").await?;
     eprintln!("OMEGA gateway listening on loopback");

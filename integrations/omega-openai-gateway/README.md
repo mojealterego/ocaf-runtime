@@ -1,4 +1,4 @@
-# OMEGA OpenAI Gateway Ω — 0.7.0
+# OMEGA OpenAI Gateway Ω — 0.8.0
 
 Status: source implementation / build and tests UNVERIFIED. Single trusted
 operator, loopback only. Not an OCAF tenant ingress, OMAt tool, or production
@@ -146,3 +146,19 @@ response shape and finite nonzero vectors; it does not attest loaded weights.
 Cloud and RAG state paths require owned mode-0700 directories and mode-0600
 regular files on Unix. Symlinks and hardlinks are rejected at startup; a trusted
 operator must not replace paths during use. No Windows private-state backend yet.
+
+## Operator MCP profiles
+OMEGA_MCP_PROFILES_JSON is a JSON array of up to 16 {id,url,tools} entries.
+Only operator-controlled HTTPS domain URLs and explicit tool names are accepted;
+operator must verify server ownership, DNS, and tool semantics. Public server
+URLs only; no OAuth token forwarding or caller-supplied endpoints. With cloud
+and OMEGA_CLOUD_TOOLS enabled, POST /v1/mcp/start accepts
+{profile,model,input,allow_cloud:true,max_output_tokens}. Pending calls return
+HTTP 202 with exact tool name, arguments and a random one-shot ticket expiring
+in 120 seconds. A human/operator must review them before POST /v1/mcp/approve
+{ticket,approve:true}. Denial consumes the ticket without another API request.
+Approvals are memory-only and invalidated by restart; second approval requests
+fail closed. Both API requests are separately budgeted. The remote server may
+receive data; trust is not established by its URL or tool name. This is a
+single-operator path, not general multi-tenant MCP authorization. Live MCP
+contract remains unverified.
