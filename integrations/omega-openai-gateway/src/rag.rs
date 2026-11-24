@@ -43,7 +43,7 @@ impl RagStore {
         if !path.is_absolute() { return Err(RagError::Invalid); }
         GraphRag::new(TENANT,model,dim).map_err(|_|RagError::Invalid)?;
         let store=Self{path:path.to_owned(),model:model.into(),dim};
-        let conn=store.connection()?;
+        let mut conn=store.connection()?;
         conn.execute_batch("CREATE TABLE IF NOT EXISTS omega_rag_snapshot (
             id INTEGER PRIMARY KEY CHECK(id=1), model TEXT NOT NULL,
             dim INTEGER NOT NULL, revision INTEGER NOT NULL CHECK(revision>=0),
@@ -53,9 +53,13 @@ impl RagStore {
             .map_err(|_|RagError::Invalid)?;
         conn.execute("INSERT OR IGNORE INTO omega_rag_snapshot(id,model,dim,revision,payload) VALUES(1,?1,?2,0,?3)",
             params![store.model,dim as i64,empty]).map_err(|_|RagError::Storage)?;
-        store.read(&conn)?;
+        let tx=conn.transaction_with_behavior(TransactionBehavior::Deferred).map_err(|_|RagError::Storage)?;
+        store.read(&tx)?;
+        tx.commit().map_err(|_|RagError::Storage)?;
         Ok(store)
     }
+    pub fn model(&self)->&str{&self.model}
+    pub fn dimension(&self)->usize{self.dim}
     fn connection(&self) -> Result<Connection,RagError> {
         let conn=Connection::open(&self.path).map_err(|_|RagError::Storage)?;
         conn.busy_timeout(Duration::from_secs(5)).map_err(|_|RagError::Storage)?;

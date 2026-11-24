@@ -137,3 +137,12 @@ embedding,seeds,limit,body_bytes. Returns revision, source text, SHA-256 and gra
 path. Uses identical OCAF BM25/cosine/RRF code via repository-relative modules.
 No remote ingestion, automatic embedding generation, cloud export or model
 execution. Single operator; not a multi-tenant database. Native tests unexecuted.
+
+### Local embeddings
+OMEGA_RAG_LOCAL_EMBEDDINGS=1 enables POST /v1/rag/embed with {"input":"text"}.
+A separate local embedding server must be configured at 127.0.0.1:8083/v1/embeddings
+with the exact configured model name and dimension (1–256). The gateway verifies
+response shape and finite nonzero vectors; it does not attest loaded weights.
+Cloud and RAG state paths require owned mode-0700 directories and mode-0600
+regular files on Unix. Symlinks and hardlinks are rejected at startup; a trusted
+operator must not replace paths during use. No Windows private-state backend yet.

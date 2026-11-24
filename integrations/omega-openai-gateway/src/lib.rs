@@ -241,3 +241,6 @@ pub mod hybrid_retrieval;
 #[path = "../../../src/gateway_graph_rag.rs"]
 pub mod gateway_graph_rag;
 pub mod rag;
+
+pub mod embedding;
+pub mod private_db;

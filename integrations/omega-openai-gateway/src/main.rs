@@ -17,6 +17,8 @@ const LOCAL: &str = "http://127.0.0.1:8082/v1/chat/completions";
 const MAX_RESPONSE: usize = 2 * 1024 * 1024;
 
 use omega_openai_gateway::rag::{RagStore, RagError, Snapshot, Query};
+use omega_openai_gateway::embedding::{EmbedRequest,parse_embedding};
+use omega_openai_gateway::private_db::prepare_private_database;
 
 struct App {
     client: reqwest::Client,
@@ -28,6 +30,7 @@ struct App {
     advanced: ToolPolicy,
     voice: bool,
     rag: Option<RagStore>,
+    embeddings: bool,
     tools: bool,
     db: Option<PathBuf>,
     local_model: String,
@@ -298,6 +301,32 @@ async fn rag_retrieve(State(app): State<Arc<App>>, headers: HeaderMap, Json(quer
     }
 }
 
+async fn rag_embed(State(app):State<Arc<App>>,headers:HeaderMap,Json(req):Json<EmbedRequest>)->Response{
+    if !authenticated(&headers,&app.token_hash){return error(StatusCode::UNAUTHORIZED,"unauthorized");}
+    let Some(store)=app.rag.as_ref().filter(|_|app.embeddings) else{return error(StatusCode::FORBIDDEN,"embeddings_disabled");};
+    let payload=match req.payload(store.model()){Ok(v)=>v,Err(code)=>return error(StatusCode::BAD_REQUEST,code)};
+    let Ok(_permit)=app.slots.clone().try_acquire_owned() else{return error(StatusCode::TOO_MANY_REQUESTS,"busy");};
+    let response=match app.client.post("http://127.0.0.1:8083/v1/embeddings").json(&payload).send().await{
+        Ok(r) if r.status().is_success()=>r,
+        _=>return error(StatusCode::BAD_GATEWAY,"upstream_unavailable"),
+    };
+    let mut chunks=response.bytes_stream();
+    let mut data=Vec::new();
+    while let Some(chunk)=chunks.next().await{
+        match chunk{
+            Ok(b) if b.len()<=65536usize.saturating_sub(data.len())=>data.extend_from_slice(&b),
+            _=>return error(StatusCode::BAD_GATEWAY,"upstream_body_rejected"),
+        }
+    }
+    let v:serde_json::Value=match serde_json::from_slice(&data){
+        Ok(v)=>v,Err(_)=>return error(StatusCode::BAD_GATEWAY,"upstream_invalid_json"),
+    };
+    match parse_embedding(&v,store.model(),store.dimension()){
+        Ok(embedding)=>([(header::CACHE_CONTROL,"no-store")],Json(json!({"model":store.model(),"embedding":embedding}))).into_response(),
+        Err(code)=>error(StatusCode::BAD_GATEWAY,code),
+    }
+}
+
 fn config() -> Result<App, Box<dyn std::error::Error>> {
     let token = env::var("OMEGA_GATEWAY_TOKEN")?;
     if !(32..=512).contains(&token.len()) || !token.bytes().all(|b| b.is_ascii_graphic()) {
@@ -318,7 +347,7 @@ fn config() -> Result<App, Box<dyn std::error::Error>> {
         if !db.is_absolute() || db.as_os_str().is_empty() {
             return Err("quota path must be absolute and in a private directory".into());
         }
-        (Some(key), Some(db))
+        (Some(key), Some(prepare_private_database(&db)?))
     } else { (None, None) };
     let (daily_budget, reservation): (u64, u64) = if cloud_cap > 0 {
         let daily: u64 = env::var("OMEGA_CLOUD_DAILY_BUDGET_MICRO_USD")?.parse()?;
@@ -346,7 +375,7 @@ fn config() -> Result<App, Box<dyn std::error::Error>> {
         let path=PathBuf::from(env::var("OMEGA_RAG_DB")?);
         let model=env::var("OMEGA_RAG_EMBEDDING_MODEL")?;
         let dim:usize=env::var("OMEGA_RAG_DIMENSION")?.parse()?;
-        Some(RagStore::open(&path,&model,dim)?)
+        Some(RagStore::open(&prepare_private_database(&path)?,&model,dim)?)
     }else{None};
     let client = reqwest::Client::builder().no_proxy()
         .redirect(reqwest::redirect::Policy::none())
@@ -354,6 +383,7 @@ fn config() -> Result<App, Box<dyn std::error::Error>> {
         .timeout(Duration::from_secs(120)).build()?;
     Ok(App {
         client, token_hash: Sha256::digest(token.as_bytes()).into(), api_key, cloud_cap, daily_budget, reservation, advanced, rag,
+        embeddings: env::var("OMEGA_RAG_LOCAL_EMBEDDINGS").as_deref()==Ok("1"),
         voice: env::var("OMEGA_CLOUD_VOICE").as_deref() == Ok("1"),
         tools: env::var("OMEGA_CLOUD_TOOLS").as_deref() == Ok("1"),
         db, local_model, slots: Arc::new(Semaphore::new(4)),
@@ -374,6 +404,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/v1/audio/realtime-turn", post(realtime_voice).layer(DefaultBodyLimit::max(3 * 1024 * 1024)))
         .route("/v1/rag/index", post(rag_replace).layer(DefaultBodyLimit::max(3*1024*1024)))
         .route("/v1/rag/retrieve", post(rag_retrieve))
+        .route("/v1/rag/embed", post(rag_embed))
         .with_state(app);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8788").await?;
     eprintln!("OMEGA gateway listening on loopback");
