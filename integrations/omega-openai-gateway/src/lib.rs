@@ -145,3 +145,81 @@ pub fn reserve(path: &Path, cap: u32) -> rusqlite::Result<bool> {
     )?;
     Ok(changed == 1)
 }
+
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum ChatRole {
+    System,
+    User,
+    Assistant,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ChatMessage {
+    pub role: ChatRole,
+    pub content: String,
+}
+
+/// Deliberately small, local-only subset of Chat Completions.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LocalChatRequest {
+    pub model: String,
+    pub messages: Vec<ChatMessage>,
+    #[serde(default)]
+    pub stream: bool,
+    pub max_tokens: Option<u32>,
+    pub max_completion_tokens: Option<u32>,
+    pub n: Option<u32>,
+    pub temperature: Option<f64>,
+    pub top_p: Option<f64>,
+}
+
+impl LocalChatRequest {
+    pub fn payload(&self, configured_model: &str) -> Result<Value, &'static str> {
+        if self.model != "omega-local"
+            || self.messages.is_empty()
+            || self.messages.len() > 34
+            || self.n.is_some_and(|n| n != 1)
+            || (self.max_tokens.is_some() && self.max_completion_tokens.is_some())
+            || self.temperature.is_some_and(|v| !(0.0..=2.0).contains(&v))
+            || self.top_p.is_some_and(|v| !(0.0..=1.0).contains(&v))
+        {
+            return Err("invalid_input");
+        }
+        let max_tokens = self.max_tokens.or(self.max_completion_tokens).unwrap_or(512);
+        if !(16..=4096).contains(&max_tokens) {
+            return Err("invalid_input");
+        }
+        let mut expected = ChatRole::User;
+        let mut total = 0usize;
+        for (index, message) in self.messages.iter().enumerate() {
+            total = total.checked_add(message.content.len()).ok_or("invalid_input")?;
+            if total > 16_384 {
+                return Err("invalid_input");
+            }
+            if index == 0 && message.role == ChatRole::System {
+                continue;
+            }
+            if message.role != expected || message.content.trim().is_empty() {
+                return Err("invalid_input");
+            }
+            expected = if expected == ChatRole::User { ChatRole::Assistant } else { ChatRole::User };
+        }
+        if expected != ChatRole::Assistant {
+            return Err("invalid_input");
+        }
+        let mut payload = json!({
+            "model":configured_model,"messages":self.messages,
+            "stream":self.stream,"max_tokens":max_tokens,"n":1
+        });
+        if let Some(temperature) = self.temperature {
+            payload["temperature"] = json!(temperature);
+        }
+        if let Some(top_p) = self.top_p {
+            payload["top_p"] = json!(top_p);
+        }
+        Ok(payload)
+    }
+}

@@ -1,4 +1,4 @@
-# OMEGA OpenAI Gateway Ω — 0.2.0
+# OMEGA OpenAI Gateway Ω — 0.3.0
 
 Status: source implementation / build and tests UNVERIFIED. Single trusted
 operator, loopback only. Not an OCAF tenant ingress, OMAt tool, or production
@@ -57,6 +57,19 @@ permissions, and quotas remain enforced.
 ```json
 {"model":"local","input":"Dalszy ciąg","history":[{"role":"user","content":"Pytanie"},{"role":"assistant","content":"Odpowiedź"}]}
 ```
+
+## Local OpenAI-compatible subset
+POST /v1/chat/completions accepts model omega-local, messages (optional initial
+system message followed by alternating user/assistant, ending in user),
+temperature, top_p, n=1, stream and max_tokens or max_completion_tokens.
+Authentication and all existing resource limits remain mandatory. The alias
+always resolves to the operator's configured GGUF model; no cloud or tools are
+reachable through this endpoint. Unsupported fields fail closed. This is not a
+complete SDK-compatible API (no embeddings, model listing or structured output).
+For Omega-X-Evolution the existing dynamic local_openai provider can be
+configured with model identifier:
+`local/omega-local@http://127.0.0.1:8788/v1?api_key_env=OMEGA_GATEWAY_TOKEN`.
+This configuration has not been exercised end-to-end.
 
 ## Integration boundaries
 Locally-XXX: Tauri backend invokes gateway; never expose bearer to renderer.

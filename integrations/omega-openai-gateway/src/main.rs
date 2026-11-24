@@ -3,7 +3,7 @@ use axum::{
     response::{IntoResponse, Response}, routing::{get, post}, Json, Router,
 };
 use futures_util::StreamExt;
-use omega_openai_gateway::{admit, reserve, Request};
+use omega_openai_gateway::{admit, reserve, LocalChatRequest, Request};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::{env, path::PathBuf, sync::Arc, time::Duration};
@@ -48,11 +48,33 @@ async fn generate(State(app): State<Arc<App>>, headers: HeaderMap, Json(req): Js
         let status = if code == "invalid_input" { StatusCode::BAD_REQUEST } else { StatusCode::FORBIDDEN };
         return error(status, code);
     }
+    let payload = req.payload(&app.local_model);
+    forward(app, cloud, req.stream, payload).await
+}
+
+async fn local_chat(
+    State(app): State<Arc<App>>,
+    headers: HeaderMap,
+    Json(req): Json<LocalChatRequest>,
+) -> Response {
+    if !authenticated(&headers, &app.token_hash) {
+        return error(StatusCode::UNAUTHORIZED, "unauthorized");
+    }
+    let payload = match req.payload(&app.local_model) {
+        Ok(payload) => payload,
+        Err(code) => return error(StatusCode::BAD_REQUEST, code),
+    };
+    forward(app, false, req.stream, payload).await
+}
+
+async fn forward(
+    app: Arc<App>, cloud: bool, streaming: bool, payload: serde_json::Value,
+) -> Response {
     let Ok(permit) = app.slots.clone().try_acquire_owned() else {
         return error(StatusCode::TOO_MANY_REQUESTS, "busy");
     };
     let mut outbound = app.client.post(if cloud { CLOUD } else { LOCAL })
-        .json(&req.payload(&app.local_model));
+        .json(&payload);
     if cloud {
         let (Some(db), Some(key)) = (app.db.clone(), app.api_key.as_ref()) else {
             return error(StatusCode::SERVICE_UNAVAILABLE, "cloud_unconfigured");
@@ -75,14 +97,14 @@ async fn generate(State(app): State<Arc<App>>, headers: HeaderMap, Json(req): Js
         } else { StatusCode::BAD_GATEWAY };
         return error(status, "upstream_rejected");
     }
-    let expected = if req.stream { "text/event-stream" } else { "application/json" };
+    let expected = if streaming { "text/event-stream" } else { "application/json" };
     let actual = upstream.headers().get(reqwest::header::CONTENT_TYPE)
         .and_then(|v| v.to_str().ok()).unwrap_or("");
     if actual.split(';').next().map(str::trim) != Some(expected) {
         return error(StatusCode::BAD_GATEWAY, "upstream_content_type");
     }
     let mut bytes = upstream.bytes_stream();
-    if !req.stream {
+    if !streaming {
         let mut data = Vec::new();
         while let Some(chunk) = bytes.next().await {
             match chunk {
@@ -161,6 +183,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let router = Router::new()
         .route("/healthz", get(|| async { StatusCode::NO_CONTENT }))
         .route("/v1/generate", post(generate))
+        .route("/v1/chat/completions", post(local_chat))
         .layer(DefaultBodyLimit::max(64 * 1024))
         .with_state(app);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8788").await?;
