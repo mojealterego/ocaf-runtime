@@ -1,4 +1,4 @@
-# OMEGA OpenAI Gateway Ω — 0.1.0
+# OMEGA OpenAI Gateway Ω — 0.2.0
 
 Status: source implementation / build and tests UNVERIFIED. Single trusted
 operator, loopback only. Not an OCAF tenant ingress, OMAt tool, or production
@@ -41,6 +41,22 @@ four concurrent requests, 120s upstream deadline. Fixed upstream URLs,
 no redirects or proxy, no caller-supplied tool schemas/URLs. Docs MCP only
 search_openai_docs; web search separately operator-enabled through tool flag.
 No prompt or API-key logging. TLS for cloud; local loopback HTTP is single-user.
+
+## Multi-turn and content handling
+Optional history contains up to 32 alternating user/assistant messages, ending
+in an assistant message. The current input remains the next user message.
+The aggregate text limit is 16 KiB. Original message text (including spaces,
+Unicode and line breaks) is preserved; the gateway performs no semantic
+rewriting, classification or content moderation of its own. Local model
+behaviour depends on the installed model; cloud provider policies remain
+unchanged. Selecting cloud explicitly authorizes sending the complete supplied
+history to that provider. No history is automatically stored by the gateway
+or sent to a fallback provider. Authentication, size limits, network and tool
+permissions, and quotas remain enforced.
+
+```json
+{"model":"local","input":"Dalszy ciąg","history":[{"role":"user","content":"Pytanie"},{"role":"assistant","content":"Odpowiedź"}]}
+```
 
 ## Integration boundaries
 Locally-XXX: Tauri backend invokes gateway; never expose bearer to renderer.

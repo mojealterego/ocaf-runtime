@@ -1,5 +1,5 @@
 use rusqlite::{params, Connection};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{path::Path, time::Duration};
 
@@ -40,10 +40,26 @@ pub enum Tool {
 
 fn default_tokens() -> u32 { 512 }
 
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum Role {
+    User,
+    Assistant,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Message {
+    pub role: Role,
+    pub content: String,
+}
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Request {
     pub input: String,
+    #[serde(default)]
+    pub history: Vec<Message>,
     #[serde(default)]
     pub model: Model,
     #[serde(default)]
@@ -61,6 +77,20 @@ pub fn admit(req: &Request, cloud_enabled: bool, tools_enabled: bool) -> Result<
        !(16..=4096).contains(&req.max_output_tokens) {
         return Err("invalid_input");
     }
+    if req.history.len() > 32 || req.history.len() % 2 != 0 {
+        return Err("invalid_input");
+    }
+    let mut total = req.input.len();
+    for (index, message) in req.history.iter().enumerate() {
+        let role = if index % 2 == 0 { Role::User } else { Role::Assistant };
+        if message.role != role || message.content.trim().is_empty() {
+            return Err("invalid_input");
+        }
+        total = total.checked_add(message.content.len()).ok_or("invalid_input")?;
+        if total > 16_384 {
+            return Err("invalid_input");
+        }
+    }
     if req.model.cloud() && !(cloud_enabled && req.allow_cloud) {
         return Err("cloud_denied");
     }
@@ -72,11 +102,14 @@ pub fn admit(req: &Request, cloud_enabled: bool, tools_enabled: bool) -> Result<
 
 impl Request {
     pub fn payload(&self, local_model: &str) -> Value {
+        let mut messages: Vec<Value> = self.history.iter().map(|message| json!(message)).collect();
+        messages.push(json!({"role":"user","content":self.input}));
         if !self.model.cloud() {
-            return json!({"model":local_model,"messages":[{"role":"user","content":self.input}],
+            return json!({"model":local_model,"messages":messages,
                 "max_tokens":self.max_output_tokens,"stream":self.stream});
         }
-        let mut value = json!({"model":self.model.id(),"input":self.input,
+        let input = if self.history.is_empty() { json!(self.input) } else { json!(messages) };
+        let mut value = json!({"model":self.model.id(),"input":input,
             "max_output_tokens":self.max_output_tokens,"stream":self.stream,"store":false});
         match self.tool {
             Tool::None => (),
@@ -85,6 +118,7 @@ impl Request {
                     "server_description":"Search public OpenAI documentation",
                     "server_url":"https://developers.openai.com/mcp",
                     "allowed_tools":["search_openai_docs"],"require_approval":"never"}]);
+                value["max_tool_calls"] = json!(1);
             }
             Tool::Web => {
                 value["tools"] = json!([{"type":"web_search"}]);
