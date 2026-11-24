@@ -176,3 +176,17 @@ priced reservation; price must account for all three turns. No tools, arbitrary
 client JSON, URL tokens or direct browser origin. No playback truncation,
 barge-in/cancellation, microphone capture, or WebRTC media transport. No native
 or live provider verification yet.
+
+## Local document ingestion (Termux / Python)
+Run from clients/ with OMEGA_GATEWAY_TOKEN in a private environment:
+```sh
+python -m unittest -v test_omega_ingest.py
+python omega_ingest.py ingest --revision 0 /path/to/document.txt
+python omega_ingest.py query "question"
+```
+Ingest explicitly replaces the entire snapshot and requires its current revision.
+Supports UTF-8 files only (not PDF parsing), 32 files / 1 MiB / 256 chunks,
+SHA-256 provenance and directed links between adjacent chunks. All embeddings
+and retrieval requests use the local gateway; no cloud call. The result maps
+source IDs to local filenames; retain it with the snapshot revision. No
+recursive scanning. Tests use deterministic mocked HTTP and embedding responses.
