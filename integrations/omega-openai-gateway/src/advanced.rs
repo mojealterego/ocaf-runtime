@@ -20,7 +20,7 @@ pub fn valid_id(id: &str, prefix: &str) -> bool {
         && id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
 }
 
-#[derive(Default, Deserialize)]
+#[derive(Clone, Copy, Default, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum AdvancedTool {
     #[default]
@@ -92,6 +92,8 @@ impl AdvancedRequest {
             }
             AdvancedTool::Sha256 => {
                 if !policy.function { return Err("tool_denied"); }
+                if self.stream { return Err("invalid_input"); }
+                payload["include"] = json!(["reasoning.encrypted_content"]);
                 payload["parallel_tool_calls"] = json!(false);
                 json!({"type":"function","name":"sha256_text","description":"Return SHA-256 of UTF-8 text.",
                     "strict":true,"parameters":{"type":"object","properties":{"text":{"type":"string"}},
@@ -144,4 +146,36 @@ pub fn reserve_budget(path: &Path, calls_cap: u32, daily: u64, amount: u64) -> r
     tx.execute("INSERT INTO gateway_budget(day,calls,reserved) VALUES(?1,?2,?3) ON CONFLICT(day) DO UPDATE SET calls=excluded.calls,reserved=excluded.reserved", params![day,calls+1,reserved+(amount as i64)])?;
     tx.commit()?;
     Ok(true)
+}
+
+/// Stateless, one-step function continuation. No caller-supplied output items:
+/// first is obtained by the server from its own authenticated API response.
+pub fn function_continuation(payload: &Value, first: &Value, policy: &ToolPolicy)
+    -> Result<Option<Value>, &'static str>
+{
+    if !policy.function || first["status"] != "completed" { return Err("upstream_incomplete"); }
+    let output = first["output"].as_array().ok_or("upstream_protocol")?;
+    if output.is_empty() || output.len() > 64 { return Err("upstream_protocol"); }
+    let mut function_output = None;
+    for item in output {
+        match item["type"].as_str() {
+            Some("reasoning" | "message") => (),
+            Some("function_call") => {
+                if function_output.is_some() { return Err("upstream_protocol"); }
+                let call_id = item["call_id"].as_str().filter(|id| valid_id(id, "call_")).ok_or("upstream_protocol")?;
+                let result = execute_function(&json!({"name":item["name"],"arguments":item["arguments"]}), policy)?;
+                function_output = Some(json!({"type":"function_call_output","call_id":call_id,"output":result.to_string()}));
+            }
+            _ => return Err("upstream_protocol"),
+        }
+    }
+    let Some(result) = function_output else { return Ok(None); };
+    let mut next = payload.clone();
+    let input = next["input"].as_array_mut().ok_or("invalid_input")?;
+    input.extend(output.iter().cloned());
+    input.push(result);
+    next["tool_choice"] = json!("none");
+    next["stream"] = json!(false);
+    next["store"] = json!(false);
+    Ok(Some(next))
 }

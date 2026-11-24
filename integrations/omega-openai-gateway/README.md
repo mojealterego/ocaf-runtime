@@ -1,4 +1,4 @@
-# OMEGA OpenAI Gateway Ω — 0.5.0
+# OMEGA OpenAI Gateway Ω — 0.6.0
 
 Status: source implementation / build and tests UNVERIFIED. Single trusted
 operator, loopback only. Not an OCAF tenant ingress, OMAt tool, or production
@@ -82,8 +82,12 @@ No user-controlled URL, upload, arbitrary tool schema or container ID.
 The sha256 tool requires OMEGA_LOCAL_FUNCTIONS=1. It advertises one strict
 function schema; the trusted client may invoke POST /v1/functions/execute with
 {"name":"sha256_text","arguments":"{\"text\":\"abc\"}"} to execute a pure hash.
-Automatic model-tool-result continuation is not implemented. Never interpret
-other model-generated functions as authority.
+The nonstreaming analyze route performs at most one automatic SHA-256 call, then
+replays its own authenticated output and function_call_output in a second
+stateless Responses call with tool_choice:none. Each request consumes an
+independent budget reservation; if the second admission fails the operation
+fails closed. Streaming SHA-256 orchestration is rejected. No arbitrary tool
+names, URLs, file operations or shell execution are accepted.
 
 Budget migration: both per-day call count and operator-priced reservation are
 written atomically in SQLite before each cloud attempt. No refunds on errors.

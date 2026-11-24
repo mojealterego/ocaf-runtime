@@ -79,3 +79,38 @@ fn concurrent_budget_reservation_never_overshoots() {
     }).collect();
     assert_eq!(workers.into_iter().map(|t| t.join().unwrap()).filter(|x| *x).count(), 3);
 }
+
+#[test]
+fn stateless_function_continuation_binds_output_to_call() {
+    use omega_openai_gateway::advanced::function_continuation;
+    let p = ToolPolicy { function: true, ..Default::default() };
+    let req = request(json!({"model":"astra","input":"hash abc","allow_cloud":true,"tool":"sha256"}));
+    let payload = req.payload(true, &p).unwrap();
+    let first = json!({"status":"completed","output":[
+        {"type":"reasoning","id":"rs_1","summary":[],"encrypted_content":"opaque"},
+        {"type":"function_call","name":"sha256_text","call_id":"call_1","arguments":"{\"text\":\"abc\"}"}
+    ]});
+    let next = function_continuation(&payload,&first,&p).unwrap().unwrap();
+    assert_eq!(next["store"], false);
+    assert_eq!(next["tool_choice"], "none");
+    assert_eq!(next["input"][1]["type"], "reasoning");
+    assert_eq!(next["input"][3]["call_id"], "call_1");
+    assert!(next["input"][3]["output"].as_str().unwrap().contains("ba7816bf"));
+}
+#[test]
+fn continuation_rejects_multiple_calls_and_unknown_tools() {
+    use omega_openai_gateway::advanced::function_continuation;
+    let p = ToolPolicy { function: true, ..Default::default() };
+    let req = request(json!({"model":"astra","input":"hash","allow_cloud":true,"tool":"sha256"}));
+    let payload = req.payload(true,&p).unwrap();
+    let call = json!({"type":"function_call","name":"sha256_text","call_id":"call_1","arguments":"{\"text\":\"x\"}"});
+    assert!(function_continuation(&payload,&json!({"status":"completed","output":[call.clone(),call]}),&p).is_err());
+    assert!(function_continuation(&payload,&json!({"status":"completed","output":[{"type":"function_call","name":"shell","call_id":"call_2","arguments":"{}"}]}),&p).is_err());
+    assert!(function_continuation(&payload,&json!({"status":"incomplete","output":[]}),&p).is_err());
+}
+#[test]
+fn automatic_function_does_not_accept_streaming() {
+    let p = ToolPolicy { function: true, ..Default::default() };
+    let req = request(json!({"model":"astra","input":"hash","allow_cloud":true,"tool":"sha256","stream":true}));
+    assert!(req.payload(true,&p).is_err());
+}

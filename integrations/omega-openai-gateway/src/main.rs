@@ -4,7 +4,7 @@ use axum::{
 };
 use futures_util::StreamExt;
 use omega_openai_gateway::{admit, LocalChatRequest, Request};
-use omega_openai_gateway::advanced::{AdvancedRequest, ToolPolicy, execute_function, reserve_budget, valid_id};
+use omega_openai_gateway::advanced::{AdvancedRequest, AdvancedTool, ToolPolicy, execute_function, function_continuation, reserve_budget, valid_id};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::{env, path::PathBuf, sync::Arc, time::Duration};
@@ -70,6 +70,9 @@ async fn advanced_generate(
         Ok(p) => p,
         Err(code) => return error(if code == "invalid_input" { StatusCode::BAD_REQUEST } else { StatusCode::FORBIDDEN }, code),
     };
+    if req.tool == AdvancedTool::Sha256 {
+        return function_turn(app, payload).await;
+    }
     forward(app, true, req.stream, payload).await
 }
 
@@ -100,6 +103,48 @@ async fn local_chat(
         Err(code) => return error(StatusCode::BAD_REQUEST, code),
     };
     forward(app, false, req.stream, payload).await
+}
+
+
+async fn cloud_json(app: &App, payload: &serde_json::Value) -> Result<serde_json::Value,(StatusCode,&'static str)> {
+    let (_permit,key) = cloud_lease(app).await?;
+    let upstream = app.client.post(CLOUD).bearer_auth(key).json(payload).send().await
+        .map_err(|_| (StatusCode::BAD_GATEWAY,"upstream_unavailable"))?;
+    if !upstream.status().is_success() {
+        return Err((if upstream.status() == reqwest::StatusCode::TOO_MANY_REQUESTS { StatusCode::TOO_MANY_REQUESTS } else { StatusCode::BAD_GATEWAY },"upstream_rejected"));
+    }
+    let actual = upstream.headers().get(reqwest::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok()).unwrap_or("");
+    if actual.split(';').next().map(str::trim) != Some("application/json") {
+        return Err((StatusCode::BAD_GATEWAY,"upstream_content_type"));
+    }
+    let mut stream = upstream.bytes_stream();
+    let mut data = Vec::new();
+    while let Some(chunk) = stream.next().await {
+        match chunk {
+            Ok(b) if b.len() <= MAX_RESPONSE.saturating_sub(data.len()) => data.extend_from_slice(&b),
+            _ => return Err((StatusCode::BAD_GATEWAY,"upstream_body_rejected")),
+        }
+    }
+    serde_json::from_slice(&data).map_err(|_| (StatusCode::BAD_GATEWAY,"upstream_invalid_json"))
+}
+
+async fn function_turn(app: Arc<App>, payload: serde_json::Value) -> Response {
+    let first = match cloud_json(&app,&payload).await {
+        Ok(v) => v, Err((status,code)) => return error(status,code),
+    };
+    let next = match function_continuation(&payload,&first,&app.advanced) {
+        Ok(Some(v)) => v,
+        Ok(None) => return ([(header::CACHE_CONTROL,"no-store"),(header::HeaderName::from_static("x-omega-provider"),"openai")],Json(first)).into_response(),
+        Err(code) => return error(StatusCode::BAD_GATEWAY,code),
+    };
+    let result = match cloud_json(&app,&next).await {
+        Ok(v) => v, Err((status,code)) => return error(status,code),
+    };
+    let valid = result["status"] == "completed" && result["output"].as_array().is_some_and(|items|
+        !items.is_empty() && items.iter().all(|item| matches!(item["type"].as_str(),Some("reasoning" | "message"))));
+    if !valid { return error(StatusCode::BAD_GATEWAY,"upstream_incomplete"); }
+    ([(header::CACHE_CONTROL,"no-store"),(header::HeaderName::from_static("x-omega-provider"),"openai")],Json(result)).into_response()
 }
 
 async fn cloud_lease(app: &App) -> Result<(OwnedSemaphorePermit, &str), (StatusCode, &'static str)> {
