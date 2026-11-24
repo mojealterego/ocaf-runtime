@@ -24,6 +24,8 @@ use omega_openai_gateway::mcp::{Profiles,ApprovalStore,StartRequest,ApprovalRequ
 
 use axum::extract::ws::WebSocketUpgrade;
 
+use omega_openai_gateway::webrtc::{self,CallStore,StartRequest as RtcStart,StopRequest as RtcStop};
+
 struct App {
     client: reqwest::Client,
     token_hash: [u8; 32],
@@ -36,6 +38,7 @@ struct App {
     rag: Option<RagStore>,
     embeddings: bool,
     mcp_profiles: Profiles,
+    webrtc: Option<CallStore>,
     mcp_approvals: std::sync::Mutex<ApprovalStore>,
     tools: bool,
     db: Option<PathBuf>,
@@ -387,6 +390,70 @@ async fn realtime_stream(State(app):State<Arc<App>>,headers:HeaderMap,ws:WebSock
     })
 }
 
+async fn webrtc_start(State(app):State<Arc<App>>,headers:HeaderMap,Json(req):Json<RtcStart>)->Response{
+    if !authenticated(&headers,&app.token_hash){return error(StatusCode::UNAUTHORIZED,"unauthorized");}
+    if headers.contains_key(header::ORIGIN)||!req.allow_cloud||!app.voice||app.cloud_cap==0{
+        return error(StatusCode::FORBIDDEN,"cloud_denied");
+    }
+    let Some(store)=app.webrtc.clone() else{return error(StatusCode::FORBIDDEN,"webrtc_disabled");};
+    if let Err(code)=webrtc::validate_sdp(&req.sdp){return error(StatusCode::BAD_REQUEST,code);}
+    let ticket=match store.begin(){Ok(t)=>t,Err(code)=>return error(StatusCode::CONFLICT,code)};
+    let (permit,key)=match cloud_lease(&app).await{
+        Ok((p,k))=>(p,k.to_owned()),
+        Err((status,code))=>{let _=store.clear(&ticket);return error(status,code);}
+    };
+    let form=reqwest::multipart::Form::new().text("sdp",req.sdp).text("session",webrtc::session().to_string());
+    let response=match app.client.post(webrtc::CALLS).bearer_auth(&key).multipart(form)
+        .timeout(Duration::from_secs(20)).send().await{
+        Ok(r)=>r,
+        Err(_)=>return error(StatusCode::BAD_GATEWAY,"webrtc_creation_unresolved"),
+    };
+    if !response.status().is_success(){
+        // A provider 4xx is a rejection, not evidence of a connected call.
+        // Keep the fence for 5xx/ambiguous outcomes.
+        if response.status().is_client_error(){let _=store.clear(&ticket);}
+        return error(StatusCode::BAD_GATEWAY,"upstream_rejected");
+    }
+    let id=match response.headers().get(header::LOCATION).and_then(|v|v.to_str().ok()).and_then(|v|webrtc::call_id(v).ok()){
+        Some(id)=>id.to_owned(),None=>return error(StatusCode::BAD_GATEWAY,"webrtc_creation_unresolved"),
+    };
+    if store.bind(&ticket,&id).is_err(){
+        let _=webrtc::hangup(&app.client,&key,&id).await;
+        return error(StatusCode::SERVICE_UNAVAILABLE,"webrtc_lease_unresolved");
+    }
+    let watchdog_store=store.clone();let watchdog_ticket=ticket.clone();let client=app.client.clone();
+    let watchdog_key=key.clone();
+    tokio::spawn(async move{
+        let _permit=permit;
+        tokio::time::sleep(Duration::from_secs(90)).await;
+        if webrtc::close_record(&client,&watchdog_key,&watchdog_store,&watchdog_ticket).await.is_err(){
+            eprintln!("OMEGA WebRTC lease unresolved; new WebRTC admissions fenced");
+        }
+    });
+    let mut stream=response.bytes_stream();let mut data=Vec::new();
+    while let Some(chunk)=stream.next().await{
+        match chunk{
+            Ok(b) if b.len()<=32768usize.saturating_sub(data.len())=>data.extend_from_slice(&b),
+            _=>return error(StatusCode::BAD_GATEWAY,"upstream_body_rejected"),
+        }
+    }
+    let answer=match String::from_utf8(data){
+        Ok(s) if webrtc::validate_sdp(&s).is_ok()=>s,
+        _=>return error(StatusCode::BAD_GATEWAY,"upstream_protocol"),
+    };
+    ([(header::CACHE_CONTROL,"no-store")],Json(json!({"ticket":ticket,"sdp":answer,"expires_in_seconds":90,"generated_by_ai":true}))).into_response()
+}
+async fn webrtc_stop(State(app):State<Arc<App>>,headers:HeaderMap,Json(req):Json<RtcStop>)->Response{
+    if !authenticated(&headers,&app.token_hash){return error(StatusCode::UNAUTHORIZED,"unauthorized");}
+    let (Some(store),Some(key))=(app.webrtc.as_ref(),app.api_key.as_deref())else{return error(StatusCode::FORBIDDEN,"webrtc_disabled");};
+    if req.ticket.len()!=64||!req.ticket.bytes().all(|b|b.is_ascii_hexdigit()){
+        return error(StatusCode::BAD_REQUEST,"invalid_ticket");
+    }
+    match webrtc::close_record(&app.client,key,store,&req.ticket).await{
+        Ok(())=>StatusCode::NO_CONTENT.into_response(),Err(code)=>error(StatusCode::CONFLICT,code),
+    }
+}
+
 fn config() -> Result<App, Box<dyn std::error::Error>> {
     let token = env::var("OMEGA_GATEWAY_TOKEN")?;
     if !(32..=512).contains(&token.len()) || !token.bytes().all(|b| b.is_ascii_graphic()) {
@@ -437,6 +504,11 @@ fn config() -> Result<App, Box<dyn std::error::Error>> {
         let dim:usize=env::var("OMEGA_RAG_DIMENSION")?.parse()?;
         Some(RagStore::open(&prepare_private_database(&path)?,&model,dim)?)
     }else{None};
+    let webrtc=if env::var("OMEGA_CLOUD_WEBRTC").as_deref()==Ok("1"){
+        if cloud_cap==0||env::var("OMEGA_CLOUD_VOICE").as_deref()!=Ok("1"){return Err("WebRTC requires cloud voice admission".into());}
+        let path=PathBuf::from(env::var("OMEGA_WEBRTC_DB")?);
+        Some(CallStore::open(&prepare_private_database(&path)?)?)
+    }else{None};
     let mcp_profiles=Profiles::parse(&env::var("OMEGA_MCP_PROFILES_JSON").unwrap_or_else(|_|"[]".into()))?;
     let client = reqwest::Client::builder().no_proxy()
         .redirect(reqwest::redirect::Policy::none())
@@ -444,7 +516,7 @@ fn config() -> Result<App, Box<dyn std::error::Error>> {
         .timeout(Duration::from_secs(120)).build()?;
     Ok(App {
         client, token_hash: Sha256::digest(token.as_bytes()).into(), api_key, cloud_cap, daily_budget, reservation, advanced, rag,
-        mcp_profiles, mcp_approvals: std::sync::Mutex::new(ApprovalStore::default()),
+        webrtc, mcp_profiles, mcp_approvals: std::sync::Mutex::new(ApprovalStore::default()),
         embeddings: env::var("OMEGA_RAG_LOCAL_EMBEDDINGS").as_deref()==Ok("1"),
         voice: env::var("OMEGA_CLOUD_VOICE").as_deref() == Ok("1"),
         tools: env::var("OMEGA_CLOUD_TOOLS").as_deref() == Ok("1"),
@@ -470,8 +542,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/v1/mcp/start", post(mcp_start))
         .route("/v1/mcp/approve", post(mcp_approve))
         .route("/v1/audio/realtime-stream", get(realtime_stream))
-        .with_state(app);
+        .route("/v1/audio/webrtc/start", post(webrtc_start))
+        .route("/v1/audio/webrtc/stop", post(webrtc_stop))
+        .with_state(app.clone());
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8788").await?;
+    if let (Some(store),Some(key))=(app.webrtc.as_ref(),app.api_key.as_deref()){
+        if let Some(record)=store.active()?{
+            if webrtc::close_record(&app.client,key,store,&record.ticket).await.is_err(){
+                eprintln!("OMEGA WebRTC recovery incomplete; new admissions fenced");
+            }
+        }
+    }
     eprintln!("OMEGA gateway listening on loopback");
     axum::serve(listener, router).with_graceful_shutdown(async {
         let _ = tokio::signal::ctrl_c().await;

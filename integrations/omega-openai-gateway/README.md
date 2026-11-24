@@ -190,3 +190,20 @@ SHA-256 provenance and directed links between adjacent chunks. All embeddings
 and retrieval requests use the local gateway; no cloud call. The result maps
 source IDs to local filenames; retain it with the snapshot revision. No
 recursive scanning. Tests use deterministic mocked HTTP and embedding responses.
+
+## Audio-only WebRTC signalling (experimental)
+Set OMEGA_CLOUD_WEBRTC=1, OMEGA_CLOUD_VOICE=1 and OMEGA_WEBRTC_DB in a private
+state directory. Cloud budget and an operator reservation for the complete
+session are mandatory. POST /v1/audio/webrtc/start accepts {sdp,allow_cloud:true}
+from a native or trusted backend client. Exactly one audio media section is
+allowed; no data channel, video, arbitrary session settings or browser Origin.
+Returns SDP answer, opaque lease ticket and 90-second watchdog target. The
+native client negotiates and carries media directly with OpenAI. POST
+/v1/audio/webrtc/stop accepts {ticket} and attempts provider hangup. SQLite
+fences all further WebRTC admissions until hangup is confirmed. Startup tries
+to close a previously bound call; an unknown creation outcome remains fenced
+for operator reconciliation. Keep the WebRTC database/configuration available
+until all calls are reconciled. Host loss can delay hangup until restart or
+the provider's own timeout: 90 seconds is NOT a hard external spending limit.
+Do not expose this route to untrusted clients. No live WebRTC test, device media
+capture, provider-side hard cost limit or production authorization is claimed.

@@ -248,3 +248,5 @@ pub mod private_db;
 pub mod mcp;
 
 pub mod duplex;
+
+pub mod webrtc;
