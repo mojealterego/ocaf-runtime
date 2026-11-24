@@ -157,3 +157,5 @@ pub mod architect_https_source_fetch;
 pub mod architect_source_archive;
 
 pub mod omega_gateway_omat;
+
+pub mod gateway_graph_rag;
