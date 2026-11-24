@@ -1,0 +1,32 @@
+name: OMEGA OpenAI Gateway verification
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'integrations/omega-openai-gateway/**'
+      - '.github/workflows/omega-openai-gateway.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gateway:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: integrations/omega-openai-gateway
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Resolve dependencies
+        run: |
+          rustc --version
+          cargo --version
+          cargo generate-lockfile
+      - name: Compile and test
+        run: cargo test --locked --all-targets
+      - name: Clippy
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: Formatting
+        run: cargo fmt -- --check
