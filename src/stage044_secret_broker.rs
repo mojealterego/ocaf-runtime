@@ -96,7 +96,7 @@ impl BrokerRoute {
 
 /// Fail-closed IPv4 public-address allowlist; deliberately rejects IPv6 until
 /// the operator deploys an equivalent reviewed global-address classifier.
-fn public_ipv4(ip: Ipv4Addr) -> bool {
+pub(crate) fn public_ipv4(ip: Ipv4Addr) -> bool {
     let [a, b, c, _] = ip.octets();
     !(a == 0
         || a == 10

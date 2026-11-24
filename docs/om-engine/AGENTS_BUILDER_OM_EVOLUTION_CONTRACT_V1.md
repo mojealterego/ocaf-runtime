@@ -67,3 +67,9 @@ Wprowadzono odrębną warstwę przyjmowania i utrwalania podpisanych raportów z
 ## 2026-11-24 — podpisana finalizacja badań Planner / Architect / Verifier
 
 Dołożono moduł architect_research_finalizer.rs oraz proces ocaf-architect-finalizer --once. Wyłącznie spójne trzy podpisy i potwierdzenia OM Engine umożliwiają zamknięcie okresu badawczego. Autentyczne badania sieciowe, OMAs/OMAt, zewnętrzne kotwiczenie i produkcyjne wdrożenia pozostają poza ukończonym zakresem. AB-OM-01 i AB-OM-10 pozostają OPEN_UNVERIFIED. Dowody: ../audits/AB_OM_SIGNED_RESEARCH_FINALIZATION_2026_11_24.md.
+
+## 2026-11-24 — fizyczne pozyskiwanie źródeł HTTPS w kontrolowanej strefie
+
+Udostępniono owner-only Pinned HTTPS Fetcher z przypiętym publicznym IPv4, certyfikatem TLS i SHA-256 rzeczywiście odebranej treści. Implementacja znajduje się poza niedopuszczonym jeszcze OMAt i nie pozwala agentowi obchodzić ograniczeń OSTc. Potwierdzono rzeczywisty zewnętrzny transfer, ale nie uruchomiono automatycznego odkrywania i oceny konkurencji/rynku. AB-OM-06 i AB-OM-07 pozostają OPEN_UNVERIFIED.
+
+Dowody: ../audits/AB_OM_PINNED_HTTPS_SOURCE_FETCH_2026_11_24.md.

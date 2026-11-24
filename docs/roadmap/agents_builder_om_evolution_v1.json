@@ -139,14 +139,26 @@
       "parent": "0.56",
       "title": "Cotygodniowy Advanced Deep Research konkurencji",
       "acceptance": "Raz na okres tygodniowy bada istniejących agentów i bieżące rozwiązania konkurencyjne; źródła i daty, porównywalne benchmarki i baseline. Po stwierdzeniu przewagi konkurenta opracowuje lepszą wersję własnego agenta; promuje tylko kandydatów z udowodnioną poprawą i zachowanymi bramkami regresji/bezpieczeństwa.",
-      "status": "OPEN_UNVERIFIED"
+      "status": "OPEN_UNVERIFIED",
+      "engineering_progress": {
+        "status": "TESTED_LOCAL_PARTIAL",
+        "evidence": "docs/audits/AB_OM_PINNED_HTTPS_SOURCE_FETCH_2026_11_24.md",
+        "base_sha": "f7194ffcee168dac8adfbbe86fca24f5f62e06d8",
+        "complete_product": false
+      }
     },
     {
       "id": "AB-OM-07",
       "parent": "0.56",
       "title": "Cotygodniowy Advanced Deep Research rynku",
       "acceptance": "Osobne zadanie bada popyt, potencjalną rentowność, braki i nisze, ocenia koszty i niepewność, projektuje i maksymalnie ulepsza nowe agenty, buduje/testuje/dopuszcza je i aktualizuje katalog. Prognoza zysku nie jest przychodem.",
-      "status": "OPEN_UNVERIFIED"
+      "status": "OPEN_UNVERIFIED",
+      "engineering_progress": {
+        "status": "TESTED_LOCAL_PARTIAL",
+        "evidence": "docs/audits/AB_OM_PINNED_HTTPS_SOURCE_FETCH_2026_11_24.md",
+        "base_sha": "f7194ffcee168dac8adfbbe86fca24f5f62e06d8",
+        "complete_product": false
+      }
     },
     {
       "id": "AB-OM-08",
