@@ -64,7 +64,10 @@ impl TaskAggregate {
         if !valid_transition(self.state, next) {
             return Err(CasError::InvalidTransition);
         }
-        let new_revision = self.revision.checked_add(1).ok_or(CasError::RevisionExhausted)?;
+        let new_revision = self
+            .revision
+            .checked_add(1)
+            .ok_or(CasError::RevisionExhausted)?;
         let receipt = TransitionReceipt {
             task_id: self.task_id.clone(),
             previous: self.state,
@@ -133,9 +136,15 @@ mod tests {
     fn stale_cas_and_stale_epoch_leave_aggregate_unchanged() {
         let mut task = aggregate();
         let snapshot = task.clone();
-        assert_eq!(task.transition_cas(1, 7, TaskState::Queued), Err(CasError::StaleRevision));
+        assert_eq!(
+            task.transition_cas(1, 7, TaskState::Queued),
+            Err(CasError::StaleRevision)
+        );
         assert_eq!(task, snapshot);
-        assert_eq!(task.transition_cas(0, 6, TaskState::Queued), Err(CasError::StaleFencingEpoch));
+        assert_eq!(
+            task.transition_cas(0, 6, TaskState::Queued),
+            Err(CasError::StaleFencingEpoch)
+        );
         assert_eq!(task, snapshot);
     }
 
@@ -144,7 +153,10 @@ mod tests {
         let mut task = aggregate();
         task.transition_cas(0, 7, TaskState::Cancelled).unwrap();
         let snapshot = task.clone();
-        assert_eq!(task.transition_cas(1, 7, TaskState::Queued), Err(CasError::InvalidTransition));
+        assert_eq!(
+            task.transition_cas(1, 7, TaskState::Queued),
+            Err(CasError::InvalidTransition)
+        );
         assert_eq!(task, snapshot);
     }
 
@@ -153,7 +165,10 @@ mod tests {
         let mut task = aggregate();
         task.revision = u64::MAX;
         let snapshot = task.clone();
-        assert_eq!(task.transition_cas(u64::MAX, 7, TaskState::Queued), Err(CasError::RevisionExhausted));
+        assert_eq!(
+            task.transition_cas(u64::MAX, 7, TaskState::Queued),
+            Err(CasError::RevisionExhausted)
+        );
         assert_eq!(task, snapshot);
     }
 
@@ -161,15 +176,24 @@ mod tests {
     fn competing_writers_only_first_revision_wins() {
         let mut task = aggregate();
         assert!(task.transition_cas(0, 7, TaskState::Queued).is_ok());
-        assert_eq!(task.transition_cas(0, 7, TaskState::Cancelled), Err(CasError::StaleRevision));
+        assert_eq!(
+            task.transition_cas(0, 7, TaskState::Cancelled),
+            Err(CasError::StaleRevision)
+        );
     }
 
     #[test]
     fn epoch_is_strictly_monotonic() {
         let mut task = aggregate();
-        assert_eq!(task.observe_fencing_epoch(7), Err(CasError::StaleFencingEpoch));
+        assert_eq!(
+            task.observe_fencing_epoch(7),
+            Err(CasError::StaleFencingEpoch)
+        );
         task.observe_fencing_epoch(8).unwrap();
-        assert_eq!(task.transition_cas(0, 7, TaskState::Queued), Err(CasError::StaleFencingEpoch));
+        assert_eq!(
+            task.transition_cas(0, 7, TaskState::Queued),
+            Err(CasError::StaleFencingEpoch)
+        );
         assert!(task.transition_cas(0, 8, TaskState::Queued).is_ok());
     }
 }

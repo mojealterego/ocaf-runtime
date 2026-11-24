@@ -4,8 +4,8 @@
 //! authentication or protection from global traffic correlation. The caller
 //! must encrypt and authenticate real packets and transport chaff in a format
 //! indistinguishable to its actual adversary model.
-use std::collections::VecDeque;
 use openssl::rand::rand_bytes;
+use std::collections::VecDeque;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TrafficConfig {
@@ -30,17 +30,29 @@ pub struct TrafficQueue {
 impl TrafficQueue {
     /// Enforces a bounded queue and a bounded packet allocation.
     pub fn new(config: TrafficConfig) -> Result<Self, TrafficError> {
-        if config.packet_size == 0 || config.packet_size > 65_536
-            || config.capacity == 0 || config.capacity > 4_096
-            || config.packet_size.checked_mul(config.capacity).map_or(true, |n| n > 64 * 1024 * 1024)
+        if config.packet_size == 0
+            || config.packet_size > 65_536
+            || config.capacity == 0
+            || config.capacity > 4_096
+            || config
+                .packet_size
+                .checked_mul(config.capacity)
+                .is_none_or(|n| n > 64 * 1024 * 1024)
         {
             return Err(TrafficError::InvalidConfig);
         }
-        Ok(Self { config, pending: VecDeque::new() })
+        Ok(Self {
+            config,
+            pending: VecDeque::new(),
+        })
     }
 
-    pub fn len(&self) -> usize { self.pending.len() }
-    pub fn is_empty(&self) -> bool { self.pending.is_empty() }
+    pub fn len(&self) -> usize {
+        self.pending.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.pending.is_empty()
+    }
 
     /// No silent drop of authenticated user data: backpressure is explicit.
     pub fn enqueue(&mut self, packet: Vec<u8>) -> Result<(), TrafficError> {

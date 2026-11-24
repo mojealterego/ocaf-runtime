@@ -33,8 +33,16 @@ pub enum SealError {
     CapacityExceeded,
 }
 
-fn frame(tenant: &str, sender: &str, key_epoch: u64, fencing_epoch: u64, sequence: u64, payload: &[u8]) -> Vec<u8> {
-    let mut buf = Vec::with_capacity(DOMAIN.len() + tenant.len() + sender.len() + payload.len() + 64);
+fn frame(
+    tenant: &str,
+    sender: &str,
+    key_epoch: u64,
+    fencing_epoch: u64,
+    sequence: u64,
+    payload: &[u8],
+) -> Vec<u8> {
+    let mut buf =
+        Vec::with_capacity(DOMAIN.len() + tenant.len() + sender.len() + payload.len() + 64);
     buf.extend_from_slice(DOMAIN);
     for field in [tenant.as_bytes(), sender.as_bytes(), payload] {
         buf.extend_from_slice(&(field.len() as u64).to_be_bytes());
@@ -48,7 +56,14 @@ fn frame(tenant: &str, sender: &str, key_epoch: u64, fencing_epoch: u64, sequenc
 
 fn authenticate(key: &[u8], envelope: &Envelope) -> Result<[u8; 32], SealError> {
     let mut mac = HmacSha256::new_from_slice(key).map_err(|_| SealError::InvalidKey)?;
-    mac.update(&frame(&envelope.tenant, &envelope.sender, envelope.key_epoch, envelope.fencing_epoch, envelope.sequence, &envelope.payload));
+    mac.update(&frame(
+        &envelope.tenant,
+        &envelope.sender,
+        envelope.key_epoch,
+        envelope.fencing_epoch,
+        envelope.sequence,
+        &envelope.payload,
+    ));
     let bytes = mac.finalize().into_bytes();
     let mut tag = [0u8; 32];
     tag.copy_from_slice(&bytes);
@@ -67,17 +82,32 @@ pub struct SealKeys {
 }
 impl SealKeys {
     pub fn new(epoch: u64, key: &[u8]) -> Result<Self, SealError> {
-        if key.len() < 32 { return Err(SealError::InvalidKey); }
+        if key.len() < 32 {
+            return Err(SealError::InvalidKey);
+        }
         let mut keys = BTreeMap::new();
         keys.insert(epoch, key.to_vec());
-        Ok(Self { current_epoch: epoch, keys })
+        Ok(Self {
+            current_epoch: epoch,
+            keys,
+        })
     }
-    pub fn rotate(&mut self, new_epoch: u64, new_key: &[u8], retain_previous: bool) -> Result<(), SealError> {
-        if new_epoch <= self.current_epoch { return Err(SealError::EpochRollback); }
-        if new_key.len() < 32 { return Err(SealError::InvalidKey); }
+    pub fn rotate(
+        &mut self,
+        new_epoch: u64,
+        new_key: &[u8],
+        retain_previous: bool,
+    ) -> Result<(), SealError> {
+        if new_epoch <= self.current_epoch {
+            return Err(SealError::EpochRollback);
+        }
+        if new_key.len() < 32 {
+            return Err(SealError::InvalidKey);
+        }
         let old = self.current_epoch;
-        if !retain_previous { self.clear_keys(); }
-        else {
+        if !retain_previous {
+            self.clear_keys();
+        } else {
             let old_key = self.keys.remove(&old).ok_or(SealError::UnknownKeyEpoch)?;
             self.clear_keys();
             self.keys.insert(old, old_key);
@@ -87,23 +117,43 @@ impl SealKeys {
         Ok(())
     }
     fn clear_keys(&mut self) {
-        for key in self.keys.values_mut() { key.fill(0); }
+        for key in self.keys.values_mut() {
+            key.fill(0);
+        }
         self.keys.clear();
     }
-    pub fn sign(&self, tenant: &str, sender: &str, fencing_epoch: u64, sequence: u64, payload: &[u8]) -> Result<Envelope, SealError> {
-        if !valid_identity(tenant) || !valid_identity(sender) { return Err(SealError::InvalidIdentity); }
+    pub fn sign(
+        &self,
+        tenant: &str,
+        sender: &str,
+        fencing_epoch: u64,
+        sequence: u64,
+        payload: &[u8],
+    ) -> Result<Envelope, SealError> {
+        if !valid_identity(tenant) || !valid_identity(sender) {
+            return Err(SealError::InvalidIdentity);
+        }
         let mut envelope = Envelope {
-            tenant: tenant.to_owned(), sender: sender.to_owned(),
-            key_epoch: self.current_epoch, fencing_epoch, sequence,
-            payload: payload.to_vec(), tag: [0; 32],
+            tenant: tenant.to_owned(),
+            sender: sender.to_owned(),
+            key_epoch: self.current_epoch,
+            fencing_epoch,
+            sequence,
+            payload: payload.to_vec(),
+            tag: [0; 32],
         };
-        let key = self.keys.get(&self.current_epoch).ok_or(SealError::UnknownKeyEpoch)?;
+        let key = self
+            .keys
+            .get(&self.current_epoch)
+            .ok_or(SealError::UnknownKeyEpoch)?;
         envelope.tag = authenticate(key, &envelope)?;
         Ok(envelope)
     }
 }
 impl Drop for SealKeys {
-    fn drop(&mut self) { self.clear_keys(); }
+    fn drop(&mut self) {
+        self.clear_keys();
+    }
 }
 
 /// Replay cache is intentionally bounded and in-memory. Persist or replicate
@@ -116,8 +166,14 @@ pub struct SealVerifier {
 }
 impl SealVerifier {
     pub fn new(authorized_fencing_epoch: u64, capacity: usize) -> Result<Self, SealError> {
-        if capacity == 0 { return Err(SealError::CapacityExceeded); }
-        Ok(Self { authorized_fencing_epoch, seen: BTreeSet::new(), capacity })
+        if capacity == 0 {
+            return Err(SealError::CapacityExceeded);
+        }
+        Ok(Self {
+            authorized_fencing_epoch,
+            seen: BTreeSet::new(),
+            capacity,
+        })
     }
     pub fn verify(&mut self, keys: &SealKeys, envelope: &Envelope) -> Result<(), SealError> {
         if !valid_identity(&envelope.tenant) || !valid_identity(&envelope.sender) {
@@ -126,13 +182,34 @@ impl SealVerifier {
         if envelope.fencing_epoch != self.authorized_fencing_epoch {
             return Err(SealError::UnauthorizedFencingEpoch);
         }
-        let key = keys.keys.get(&envelope.key_epoch).ok_or(SealError::UnknownKeyEpoch)?;
+        let key = keys
+            .keys
+            .get(&envelope.key_epoch)
+            .ok_or(SealError::UnknownKeyEpoch)?;
         let mut mac = HmacSha256::new_from_slice(key).map_err(|_| SealError::InvalidKey)?;
-        mac.update(&frame(&envelope.tenant, &envelope.sender, envelope.key_epoch, envelope.fencing_epoch, envelope.sequence, &envelope.payload));
-        mac.verify_slice(&envelope.tag).map_err(|_| SealError::InvalidTag)?;
-        let identity = (envelope.tenant.clone(), envelope.sender.clone(), envelope.key_epoch, envelope.fencing_epoch, envelope.sequence);
-        if self.seen.contains(&identity) { return Err(SealError::Replay); }
-        if self.seen.len() >= self.capacity { return Err(SealError::CapacityExceeded); }
+        mac.update(&frame(
+            &envelope.tenant,
+            &envelope.sender,
+            envelope.key_epoch,
+            envelope.fencing_epoch,
+            envelope.sequence,
+            &envelope.payload,
+        ));
+        mac.verify_slice(&envelope.tag)
+            .map_err(|_| SealError::InvalidTag)?;
+        let identity = (
+            envelope.tenant.clone(),
+            envelope.sender.clone(),
+            envelope.key_epoch,
+            envelope.fencing_epoch,
+            envelope.sequence,
+        );
+        if self.seen.contains(&identity) {
+            return Err(SealError::Replay);
+        }
+        if self.seen.len() >= self.capacity {
+            return Err(SealError::CapacityExceeded);
+        }
         self.seen.insert(identity);
         Ok(())
     }
@@ -174,7 +251,10 @@ mod tests {
         assert_eq!(verifier.verify(&keys, &old), Ok(()));
         assert_eq!(verifier.verify(&keys, &new), Ok(()));
         keys.rotate(3, &KEY_A, false).unwrap();
-        assert_eq!(verifier.verify(&keys, &old), Err(SealError::UnknownKeyEpoch));
+        assert_eq!(
+            verifier.verify(&keys, &old),
+            Err(SealError::UnknownKeyEpoch)
+        );
         assert_eq!(keys.rotate(3, &KEY_B, false), Err(SealError::EpochRollback));
     }
     #[test]
@@ -182,17 +262,28 @@ mod tests {
         let keys = SealKeys::new(1, &KEY_A).unwrap();
         let mut verifier = SealVerifier::new(7, 1).unwrap();
         let stale = keys.sign("tenant-a", "node-1", 6, 1, b"x").unwrap();
-        assert_eq!(verifier.verify(&keys, &stale), Err(SealError::UnauthorizedFencingEpoch));
+        assert_eq!(
+            verifier.verify(&keys, &stale),
+            Err(SealError::UnauthorizedFencingEpoch)
+        );
         let first = keys.sign("tenant-a", "node-1", 7, 1, b"x").unwrap();
         let second = keys.sign("tenant-a", "node-1", 7, 2, b"x").unwrap();
         assert_eq!(verifier.verify(&keys, &first), Ok(()));
-        assert_eq!(verifier.verify(&keys, &second), Err(SealError::CapacityExceeded));
+        assert_eq!(
+            verifier.verify(&keys, &second),
+            Err(SealError::CapacityExceeded)
+        );
     }
     #[test]
     fn rejected_rotation_preserves_current_signing_key() {
         let mut keys = SealKeys::new(7, &KEY_A).unwrap();
-        assert_eq!(keys.rotate(8, &[1u8; 31], false), Err(SealError::InvalidKey));
-        let msg = keys.sign("tenant-a", "node-1", 4, 9, b"after-error").unwrap();
+        assert_eq!(
+            keys.rotate(8, &[1u8; 31], false),
+            Err(SealError::InvalidKey)
+        );
+        let msg = keys
+            .sign("tenant-a", "node-1", 4, 9, b"after-error")
+            .unwrap();
         assert_eq!(msg.key_epoch, 7);
         let mut verifier = SealVerifier::new(4, 1).unwrap();
         assert_eq!(verifier.verify(&keys, &msg), Ok(()));
@@ -206,5 +297,4 @@ mod tests {
         msg.sender = "sender-b".to_string();
         assert_eq!(verifier.verify(&keys, &msg), Err(SealError::InvalidTag));
     }
-
 }

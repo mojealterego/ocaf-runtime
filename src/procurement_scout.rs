@@ -112,9 +112,9 @@ fn canonical_name(name: &str) -> Result<String, ProcurementError> {
     let words: Vec<_> = name.split_ascii_whitespace().collect();
     if words.is_empty()
         || words.iter().any(|word| {
-            !word.bytes().all(|b| {
-                b.is_ascii_alphanumeric() || matches!(b, b'-' | b'&' | b'.' | b'\'')
-            })
+            !word
+                .bytes()
+                .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'-' | b'&' | b'.' | b'\''))
         })
     {
         return Err(ProcurementError::UnsupportedName);
@@ -213,8 +213,7 @@ pub fn assess_supplier(
         .iter()
         .filter_map(|record| {
             let name = canonical_name(record.entity_name).ok()?;
-            (supplier_name == name || owners.contains(&name))
-                .then(|| record.listing_id.to_owned())
+            (supplier_name == name || owners.contains(&name)).then(|| record.listing_id.to_owned())
         })
         .collect::<Vec<_>>();
     let mut findings = Vec::new();
@@ -227,10 +226,16 @@ pub fn assess_supplier(
     if supplier.proposed_commitment_cents > policy.medium_risk_cap_cents {
         findings.push(Finding::AboveMediumRiskCap);
     }
-    if supplier.tax_evidence_expires.is_none_or(|t| t <= trusted_now) {
+    if supplier
+        .tax_evidence_expires
+        .is_none_or(|t| t <= trusted_now)
+    {
         findings.push(Finding::MissingTaxEvidence);
     }
-    if supplier.insurance_evidence_expires.is_none_or(|t| t <= trusted_now) {
+    if supplier
+        .insurance_evidence_expires
+        .is_none_or(|t| t <= trusted_now)
+    {
         findings.push(Finding::MissingInsuranceEvidence);
     }
     if supplier.financial_score < policy.min_financial_score {
@@ -441,8 +446,10 @@ pub fn prepare_purchase_intent(
 mod tests {
     use super::*;
     const NOW: u64 = 1_800_000_000;
-    const RECORD: WatchlistRecord<'static> =
-        WatchlistRecord { listing_id: "w1", entity_name: "OTHER LTD" };
+    const RECORD: WatchlistRecord<'static> = WatchlistRecord {
+        listing_id: "w1",
+        entity_name: "OTHER LTD",
+    };
 
     fn policy() -> ProcurementPolicy {
         ProcurementPolicy {
@@ -478,7 +485,14 @@ mod tests {
         dossier: &SupplierDossier<'_>,
         snapshot: &WatchlistSnapshot<'_>,
     ) -> Result<ProcurementAssessment, ProcurementError> {
-        assess_supplier("tenant-A", NOW, policy(), dossier, snapshot, digest_snapshot(snapshot)?)
+        assess_supplier(
+            "tenant-A",
+            NOW,
+            policy(),
+            dossier,
+            snapshot,
+            digest_snapshot(snapshot)?,
+        )
     }
 
     #[test]
@@ -492,20 +506,28 @@ mod tests {
     fn missing_beneficial_owner_identity_requires_manual_review() {
         let result = assess(&supplier(&[]), &feed(&[RECORD])).unwrap();
         assert_eq!(result.recommendation, Recommendation::ReviewNeeded);
-        assert!(result.findings.contains(&Finding::MissingBeneficialOwnerIdentity));
+        assert!(result
+            .findings
+            .contains(&Finding::MissingBeneficialOwnerIdentity));
         assert!(result.human_attestation_required);
         assert!(!result.purchase_authorized);
     }
     #[test]
     fn supplier_exact_match_is_blocked() {
-        let records = [WatchlistRecord { listing_id: "w2", entity_name: "  acme  inc " }];
+        let records = [WatchlistRecord {
+            listing_id: "w2",
+            entity_name: "  acme  inc ",
+        }];
         let r = assess(&supplier(&[]), &feed(&records)).unwrap();
         assert_eq!(r.recommendation, Recommendation::NotQualified);
         assert_eq!(r.possible_listing_ids, vec!["w2"]);
     }
     #[test]
     fn owner_exact_match_is_blocked() {
-        let records = [WatchlistRecord { listing_id: "w2", entity_name: "OWNER LLC" }];
+        let records = [WatchlistRecord {
+            listing_id: "w2",
+            entity_name: "OWNER LLC",
+        }];
         let r = assess(&supplier(&["Owner LLC"]), &feed(&records)).unwrap();
         assert_eq!(r.recommendation, Recommendation::NotQualified);
     }
@@ -513,12 +535,18 @@ mod tests {
     fn cross_tenant_input_fails_closed() {
         let mut dossier = supplier(&[]);
         dossier.tenant = "tenant-B";
-        assert_eq!(assess(&dossier, &feed(&[RECORD])).unwrap_err(), ProcurementError::InvalidInput);
+        assert_eq!(
+            assess(&dossier, &feed(&[RECORD])).unwrap_err(),
+            ProcurementError::InvalidInput
+        );
     }
     #[test]
     fn feed_tampering_is_rejected_by_independent_pin() {
         let a = [RECORD];
-        let b = [WatchlistRecord { listing_id: "w1", entity_name: "ACME INC" }];
+        let b = [WatchlistRecord {
+            listing_id: "w1",
+            entity_name: "ACME INC",
+        }];
         let pinned = digest_snapshot(&feed(&a)).unwrap();
         assert_eq!(
             assess_supplier("tenant-A", NOW, policy(), &supplier(&[]), &feed(&b), pinned)
@@ -531,7 +559,10 @@ mod tests {
         let records = [RECORD];
         let mut snapshot = feed(&records);
         snapshot.expires_at = NOW;
-        assert_eq!(assess(&supplier(&[]), &snapshot).unwrap_err(), ProcurementError::StaleSnapshot);
+        assert_eq!(
+            assess(&supplier(&[]), &snapshot).unwrap_err(),
+            ProcurementError::StaleSnapshot
+        );
     }
     #[test]
     fn over_cap_commitment_cannot_be_approved() {
@@ -550,15 +581,36 @@ mod tests {
     }
     #[test]
     fn feed_reordering_is_hash_stable() {
-        let a = [RECORD, WatchlistRecord { listing_id: "w2", entity_name: "ABCD LLC" }];
+        let a = [
+            RECORD,
+            WatchlistRecord {
+                listing_id: "w2",
+                entity_name: "ABCD LLC",
+            },
+        ];
         let b = [a[1], a[0]];
-        assert_eq!(digest_snapshot(&feed(&a)).unwrap(), digest_snapshot(&feed(&b)).unwrap());
+        assert_eq!(
+            digest_snapshot(&feed(&a)).unwrap(),
+            digest_snapshot(&feed(&b)).unwrap()
+        );
     }
     #[test]
     fn malformed_or_duplicate_feed_cannot_clear_a_supplier() {
-        let d = [RECORD, WatchlistRecord { listing_id: "w1", entity_name: "NEW INC" }];
-        assert_eq!(digest_snapshot(&feed(&d)).unwrap_err(), ProcurementError::DuplicateListing);
-        assert_eq!(digest_snapshot(&feed(&[])).unwrap_err(), ProcurementError::ResourceLimit);
+        let d = [
+            RECORD,
+            WatchlistRecord {
+                listing_id: "w1",
+                entity_name: "NEW INC",
+            },
+        ];
+        assert_eq!(
+            digest_snapshot(&feed(&d)).unwrap_err(),
+            ProcurementError::DuplicateListing
+        );
+        assert_eq!(
+            digest_snapshot(&feed(&[])).unwrap_err(),
+            ProcurementError::ResourceLimit
+        );
     }
 
     #[test]
@@ -576,10 +628,38 @@ mod tests {
             digest_snapshot(&snapshot).unwrap(),
         )
         .unwrap();
-        assert_eq!(intent.watchlist_sha256, [0xe0, 0xa2, 0x39, 0x7d, 0xb9, 0xb2, 0xb9, 0x5b, 0x8f, 0x34, 0x87, 0xdf, 0xf8, 0xd0, 0x48, 0x3c, 0x6c, 0xc8, 0x4b, 0x5c, 0xb9, 0xf9, 0x6f, 0x0f, 0x48, 0x7d, 0xda, 0x26, 0xa1, 0xde, 0x01, 0x55]);
-        assert_eq!(intent.policy_sha256, [0xa2, 0xd7, 0x4b, 0xb6, 0xb4, 0xa5, 0xdb, 0xf6, 0x72, 0x50, 0x51, 0x42, 0x88, 0x84, 0x4d, 0xe7, 0x40, 0xfa, 0x14, 0x3b, 0xc4, 0x88, 0x9c, 0x61, 0xf0, 0x41, 0x25, 0xd9, 0xa9, 0x5d, 0x14, 0x0a]);
-        assert_eq!(intent.dossier_sha256, [0xee, 0x4f, 0x0b, 0xbc, 0xdc, 0x34, 0xae, 0x70, 0xd8, 0xdf, 0x30, 0xb2, 0xac, 0x13, 0xdc, 0x29, 0x22, 0x39, 0x51, 0xcb, 0xc7, 0x7c, 0xad, 0x76, 0x81, 0x63, 0x2b, 0x11, 0xc6, 0xb8, 0xe1, 0x15]);
-        assert_eq!(intent.payload_sha256, [0x61, 0x52, 0xf3, 0xef, 0xa2, 0x2f, 0xd5, 0x91, 0x12, 0xec, 0x37, 0x1d, 0x9a, 0xb8, 0xe9, 0x60, 0x59, 0xcf, 0x9e, 0xe3, 0x89, 0xa8, 0xa8, 0xce, 0xf0, 0xed, 0x03, 0xd4, 0x4c, 0x9c, 0x49, 0x89]);
+        assert_eq!(
+            intent.watchlist_sha256,
+            [
+                0xe0, 0xa2, 0x39, 0x7d, 0xb9, 0xb2, 0xb9, 0x5b, 0x8f, 0x34, 0x87, 0xdf, 0xf8, 0xd0,
+                0x48, 0x3c, 0x6c, 0xc8, 0x4b, 0x5c, 0xb9, 0xf9, 0x6f, 0x0f, 0x48, 0x7d, 0xda, 0x26,
+                0xa1, 0xde, 0x01, 0x55
+            ]
+        );
+        assert_eq!(
+            intent.policy_sha256,
+            [
+                0xa2, 0xd7, 0x4b, 0xb6, 0xb4, 0xa5, 0xdb, 0xf6, 0x72, 0x50, 0x51, 0x42, 0x88, 0x84,
+                0x4d, 0xe7, 0x40, 0xfa, 0x14, 0x3b, 0xc4, 0x88, 0x9c, 0x61, 0xf0, 0x41, 0x25, 0xd9,
+                0xa9, 0x5d, 0x14, 0x0a
+            ]
+        );
+        assert_eq!(
+            intent.dossier_sha256,
+            [
+                0xee, 0x4f, 0x0b, 0xbc, 0xdc, 0x34, 0xae, 0x70, 0xd8, 0xdf, 0x30, 0xb2, 0xac, 0x13,
+                0xdc, 0x29, 0x22, 0x39, 0x51, 0xcb, 0xc7, 0x7c, 0xad, 0x76, 0x81, 0x63, 0x2b, 0x11,
+                0xc6, 0xb8, 0xe1, 0x15
+            ]
+        );
+        assert_eq!(
+            intent.payload_sha256,
+            [
+                0x61, 0x52, 0xf3, 0xef, 0xa2, 0x2f, 0xd5, 0x91, 0x12, 0xec, 0x37, 0x1d, 0x9a, 0xb8,
+                0xe9, 0x60, 0x59, 0xcf, 0x9e, 0xe3, 0x89, 0xa8, 0xa8, 0xce, 0xf0, 0xed, 0x03, 0xd4,
+                0x4c, 0x9c, 0x49, 0x89
+            ]
+        );
     }
 
     #[test]
@@ -589,18 +669,37 @@ mod tests {
         let clean = [RECORD];
         let first = feed(&clean);
         let original = prepare_purchase_intent(
-            "tenant-A", NOW, policy(), &supplier(&owners), &first, digest_snapshot(&first).unwrap()
-        ).unwrap();
+            "tenant-A",
+            NOW,
+            policy(),
+            &supplier(&owners),
+            &first,
+            digest_snapshot(&first).unwrap(),
+        )
+        .unwrap();
         let changed_records = [WatchlistRecord {
             listing_id: "w1",
             entity_name: "OTHER UNRELATED PARTNER",
         }];
         let second = feed(&changed_records);
         let changed = prepare_purchase_intent(
-            "tenant-A", NOW, policy(), &supplier(&owners), &second, digest_snapshot(&second).unwrap()
-        ).unwrap();
+            "tenant-A",
+            NOW,
+            policy(),
+            &supplier(&owners),
+            &second,
+            digest_snapshot(&second).unwrap(),
+        )
+        .unwrap();
         assert_ne!(changed.payload_sha256(), original.payload_sha256());
-        assert_eq!(changed.payload_sha256(), [0x84, 0x35, 0xb3, 0x4e, 0xc7, 0x5c, 0xd2, 0x0a, 0xcb, 0x15, 0x88, 0x5a, 0xe9, 0x39, 0xe6, 0x57, 0x0d, 0xb8, 0x79, 0xb9, 0xae, 0xcd, 0x47, 0x9e, 0x5e, 0x30, 0x05, 0x67, 0x88, 0x15, 0x45, 0xe7]);
+        assert_eq!(
+            changed.payload_sha256(),
+            [
+                0x84, 0x35, 0xb3, 0x4e, 0xc7, 0x5c, 0xd2, 0x0a, 0xcb, 0x15, 0x88, 0x5a, 0xe9, 0x39,
+                0xe6, 0x57, 0x0d, 0xb8, 0x79, 0xb9, 0xae, 0xcd, 0x47, 0x9e, 0x5e, 0x30, 0x05, 0x67,
+                0x88, 0x15, 0x45, 0xe7
+            ]
+        );
         assert!(!changed.is_purchase_authorized());
     }
 
@@ -611,39 +710,72 @@ mod tests {
         let owners = ["KNOWN OWNER"];
         let base = supplier(&owners);
         let first = prepare_purchase_intent(
-            "tenant-A", NOW, policy(), &base, &snapshot, digest_snapshot(&snapshot).unwrap()
-        ).unwrap();
+            "tenant-A",
+            NOW,
+            policy(),
+            &base,
+            &snapshot,
+            digest_snapshot(&snapshot).unwrap(),
+        )
+        .unwrap();
         assert_eq!(first.amount_cents, 9_000);
         assert_eq!(first.tenant, "tenant-A");
         assert_eq!(first.supplier_id, "supplier-1");
         assert_eq!(first.action, "procurement.commit_purchase_order");
         assert!(!first.purchase_authorized);
         let request = first.to_action_request("req-1", "agent-1", None, None);
-        assert_eq!(request.domain, crate::governance_contract::Domain::ProcurementScout);
+        assert_eq!(
+            request.domain,
+            crate::governance_contract::Domain::ProcurementScout
+        );
         assert_eq!(request.risk, crate::governance_contract::RiskTier::Medium);
         assert_eq!(request.payload_sha256, first.payload_sha256);
 
         let again = prepare_purchase_intent(
-            "tenant-A", NOW, policy(), &base, &snapshot, digest_snapshot(&snapshot).unwrap()
-        ).unwrap();
+            "tenant-A",
+            NOW,
+            policy(),
+            &base,
+            &snapshot,
+            digest_snapshot(&snapshot).unwrap(),
+        )
+        .unwrap();
         assert_eq!(first.payload_sha256, again.payload_sha256);
         let mut changed_amount = supplier(&owners);
         changed_amount.proposed_commitment_cents += 1;
         let after_amount = prepare_purchase_intent(
-            "tenant-A", NOW, policy(), &changed_amount, &snapshot, digest_snapshot(&snapshot).unwrap()
-        ).unwrap();
+            "tenant-A",
+            NOW,
+            policy(),
+            &changed_amount,
+            &snapshot,
+            digest_snapshot(&snapshot).unwrap(),
+        )
+        .unwrap();
         assert_ne!(first.payload_sha256, after_amount.payload_sha256);
         let mut changed_policy = policy();
         changed_policy.medium_risk_cap_cents += 1;
         let after_policy = prepare_purchase_intent(
-            "tenant-A", NOW, changed_policy, &base, &snapshot, digest_snapshot(&snapshot).unwrap()
-        ).unwrap();
+            "tenant-A",
+            NOW,
+            changed_policy,
+            &base,
+            &snapshot,
+            digest_snapshot(&snapshot).unwrap(),
+        )
+        .unwrap();
         assert_ne!(first.payload_sha256, after_policy.payload_sha256);
         let mut changed_owner = supplier(&owners);
         changed_owner.beneficial_owners = &["DIFFERENT OWNER"];
         let after_owner = prepare_purchase_intent(
-            "tenant-A", NOW, policy(), &changed_owner, &snapshot, digest_snapshot(&snapshot).unwrap()
-        ).unwrap();
+            "tenant-A",
+            NOW,
+            policy(),
+            &changed_owner,
+            &snapshot,
+            digest_snapshot(&snapshot).unwrap(),
+        )
+        .unwrap();
         assert_ne!(first.payload_sha256, after_owner.payload_sha256);
     }
 
@@ -654,23 +786,27 @@ mod tests {
         let pin = digest_snapshot(&snapshot).unwrap();
         let mut dossier = supplier(&[]);
         assert_eq!(
-            prepare_purchase_intent("tenant-A", NOW, policy(), &dossier, &snapshot, pin).unwrap_err(),
+            prepare_purchase_intent("tenant-A", NOW, policy(), &dossier, &snapshot, pin)
+                .unwrap_err(),
             ProcurementError::SupplierNotQualified
         );
         dossier.beneficial_owners = &["KNOWN OWNER"];
         dossier.proposed_commitment_cents = 0;
         assert_eq!(
-            prepare_purchase_intent("tenant-A", NOW, policy(), &dossier, &snapshot, pin).unwrap_err(),
+            prepare_purchase_intent("tenant-A", NOW, policy(), &dossier, &snapshot, pin)
+                .unwrap_err(),
             ProcurementError::InvalidInput
         );
         dossier.proposed_commitment_cents = 10_001;
         assert_eq!(
-            prepare_purchase_intent("tenant-A", NOW, policy(), &dossier, &snapshot, pin).unwrap_err(),
+            prepare_purchase_intent("tenant-A", NOW, policy(), &dossier, &snapshot, pin)
+                .unwrap_err(),
             ProcurementError::SupplierNotQualified
         );
         dossier.proposed_commitment_cents = 9_000;
         assert_eq!(
-            prepare_purchase_intent("tenant-B", NOW, policy(), &dossier, &snapshot, pin).unwrap_err(),
+            prepare_purchase_intent("tenant-B", NOW, policy(), &dossier, &snapshot, pin)
+                .unwrap_err(),
             ProcurementError::InvalidInput
         );
     }
@@ -680,9 +816,14 @@ mod tests {
         let records = [RECORD];
         let snapshot = feed(&records);
         let intent = prepare_purchase_intent(
-            "tenant-A", NOW, policy(), &supplier(&["KNOWN OWNER"]),
-            &snapshot, digest_snapshot(&snapshot).unwrap()
-        ).unwrap();
+            "tenant-A",
+            NOW,
+            policy(),
+            &supplier(&["KNOWN OWNER"]),
+            &snapshot,
+            digest_snapshot(&snapshot).unwrap(),
+        )
+        .unwrap();
         let request = intent.to_action_request("req-provider", "agent-1", None, None);
         assert!(request.uses_external_provider);
         assert!(request.provider.is_none());
@@ -690,14 +831,21 @@ mod tests {
 
     #[test]
     fn purchase_intent_cannot_be_admitted_without_human_approval() {
-        use crate::governance_contract::{Accountability, AgentContract, DenyReason, SocialCommitment};
+        use crate::governance_contract::{
+            Accountability, AgentContract, DenyReason, SocialCommitment,
+        };
         use crate::governance_journal::{Admission, GovernanceJournal};
         let records = [RECORD];
         let snapshot = feed(&records);
         let intent = prepare_purchase_intent(
-            "tenant-A", NOW, policy(), &supplier(&["OWNER LLC"]),
-            &snapshot, digest_snapshot(&snapshot).unwrap()
-        ).unwrap();
+            "tenant-A",
+            NOW,
+            policy(),
+            &supplier(&["OWNER LLC"]),
+            &snapshot,
+            digest_snapshot(&snapshot).unwrap(),
+        )
+        .unwrap();
         let provider = crate::governance_contract::ProviderAccess {
             authenticated: true,
             region_model_authorized: true,
@@ -728,17 +876,29 @@ mod tests {
         let journal = GovernanceJournal::open_existing(database.path()).unwrap();
         let missing_provider = intent.to_action_request("request-1", "agent-1", None, None);
         assert_eq!(
-            journal.begin(
-                &agent_contract, &missing_provider, None,
-                ("tenant-A", "agent-1"), NOW, "order-idem"
-            ).unwrap(),
+            journal
+                .begin(
+                    &agent_contract,
+                    &missing_provider,
+                    None,
+                    ("tenant-A", "agent-1"),
+                    NOW,
+                    "order-idem"
+                )
+                .unwrap(),
             Admission::Denied(DenyReason::ProviderNotAuthorized)
         );
         assert_eq!(
-            journal.begin(
-                &agent_contract, &request, None,
-                ("tenant-A", "agent-1"), NOW, "order-idem"
-            ).unwrap(),
+            journal
+                .begin(
+                    &agent_contract,
+                    &request,
+                    None,
+                    ("tenant-A", "agent-1"),
+                    NOW,
+                    "order-idem"
+                )
+                .unwrap(),
             Admission::Denied(DenyReason::MissingApproval)
         );
         assert_eq!(journal.inspect("tenant-A", None).unwrap().sequence, 2);
@@ -749,6 +909,9 @@ mod tests {
     fn non_ascii_names_are_not_marked_clear() {
         let mut dossier = supplier(&[]);
         dossier.legal_name = "ŻURAW SA";
-        assert_eq!(assess(&dossier, &feed(&[RECORD])).unwrap_err(), ProcurementError::UnsupportedName);
+        assert_eq!(
+            assess(&dossier, &feed(&[RECORD])).unwrap_err(),
+            ProcurementError::UnsupportedName
+        );
     }
 }

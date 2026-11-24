@@ -27,12 +27,18 @@ impl VectorClock {
 
     /// Inclusive dominance. Equality is dominance, not concurrency.
     pub fn dominates(&self, other: &Self) -> bool {
-        other.entries.iter().all(|(actor, count)| self.get(actor) >= *count)
+        other
+            .entries
+            .iter()
+            .all(|(actor, count)| self.get(actor) >= *count)
     }
 
     pub fn strictly_dominates(&self, other: &Self) -> bool {
         self.dominates(other)
-            && self.entries.iter().any(|(actor, count)| *count > other.get(actor))
+            && self
+                .entries
+                .iter()
+                .any(|(actor, count)| *count > other.get(actor))
     }
 
     fn observe(&mut self, actor: &str, counter: u64) {
@@ -79,23 +85,28 @@ pub enum CrdtError {
 fn valid_id(value: &str, max: usize) -> bool {
     !value.is_empty()
         && value.len() <= max
-        && value.bytes().all(|b| b.is_ascii_alphanumeric() || b"._:-/".contains(&b))
+        && value
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"._:-/".contains(&b))
 }
 
 impl CrdtOperation {
     fn validate(&self) -> Result<(), CrdtError> {
-        if !valid_id(&self.tenant, 128)
-            || !valid_id(&self.actor, 128)
-            || !valid_id(&self.key, 256)
+        if !valid_id(&self.tenant, 128) || !valid_id(&self.actor, 128) || !valid_id(&self.key, 256)
         {
             return Err(CrdtError::InvalidIdentity);
         }
         if self.counter == 0
-            || self.value.as_ref().is_some_and(|v| v.len() > MAX_VALUE_BYTES)
+            || self
+                .value
+                .as_ref()
+                .is_some_and(|v| v.len() > MAX_VALUE_BYTES)
             || self.context.entries.len() > MAX_ACTORS
-            || self.context.entries.iter().any(|(actor, count)| {
-                !valid_id(actor, 128) || *count == 0
-            })
+            || self
+                .context
+                .entries
+                .iter()
+                .any(|(actor, count)| !valid_id(actor, 128) || *count == 0)
         {
             return Err(CrdtError::InvalidOperation);
         }
@@ -106,7 +117,10 @@ impl CrdtOperation {
     }
 
     fn estimated_bytes(&self) -> Option<usize> {
-        let mut size = self.tenant.len().checked_add(self.actor.len())?
+        let mut size = self
+            .tenant
+            .len()
+            .checked_add(self.actor.len())?
             .checked_add(self.key.len())?
             .checked_add(self.value.as_ref().map_or(0, Vec::len))?
             .checked_add(32)?;
@@ -168,7 +182,10 @@ impl CrdtStateStore {
         if self.operations.len() >= MAX_OPERATIONS {
             return Err(CrdtError::CapacityExceeded);
         }
-        let additional_actors = op.context.entries.keys()
+        let additional_actors = op
+            .context
+            .entries
+            .keys()
             .chain(std::iter::once(&op.actor))
             .filter(|actor| !self.observed.entries.contains_key(*actor))
             .collect::<BTreeSet<_>>()
@@ -177,7 +194,9 @@ impl CrdtStateStore {
             return Err(CrdtError::CapacityExceeded);
         }
         let size = op.estimated_bytes().ok_or(CrdtError::CapacityExceeded)?;
-        let total = self.history_bytes.checked_add(size)
+        let total = self
+            .history_bytes
+            .checked_add(size)
             .ok_or(CrdtError::CapacityExceeded)?;
         if total > MAX_HISTORY_BYTES {
             return Err(CrdtError::CapacityExceeded);
@@ -214,7 +233,10 @@ impl CrdtStateStore {
         if !valid_id(actor, 128) || !valid_id(key, 256) {
             return Err(CrdtError::InvalidIdentity);
         }
-        let counter = self.observed.get(actor).checked_add(1)
+        let counter = self
+            .observed
+            .get(actor)
+            .checked_add(1)
             .ok_or(CrdtError::CounterExhausted)?;
         let op = CrdtOperation {
             tenant: self.tenant.clone(),
@@ -281,9 +303,14 @@ impl CrdtStateStore {
                 winners.insert(candidate.key.as_str(), candidate);
             }
         }
-        winners.into_iter().filter_map(|(key, op)| {
-            op.value.as_ref().map(|value| (key.to_owned(), value.clone()))
-        }).collect()
+        winners
+            .into_iter()
+            .filter_map(|(key, op)| {
+                op.value
+                    .as_ref()
+                    .map(|value| (key.to_owned(), value.clone()))
+            })
+            .collect()
     }
 
     /// Atomic in-memory reconciliation: a collision or quota error cannot
@@ -305,8 +332,13 @@ impl CrdtStateStore {
 mod tests {
     use super::*;
 
-    fn operation(actor: &str, counter: u64, key: &str, value: Option<&[u8]>,
-        context: &[(&str, u64)]) -> CrdtOperation {
+    fn operation(
+        actor: &str,
+        counter: u64,
+        key: &str,
+        value: Option<&[u8]>,
+        context: &[(&str, u64)],
+    ) -> CrdtOperation {
         CrdtOperation {
             tenant: "tenant-a".into(),
             actor: actor.into(),
@@ -314,7 +346,10 @@ mod tests {
             key: key.into(),
             value: value.map(<[u8]>::to_vec),
             context: VectorClock {
-                entries: context.iter().map(|(id, n)| ((*id).to_owned(), *n)).collect(),
+                entries: context
+                    .iter()
+                    .map(|(id, n)| ((*id).to_owned(), *n))
+                    .collect(),
             },
         }
     }
@@ -382,10 +417,16 @@ mod tests {
         let mut store = CrdtStateStore::new("tenant-a").unwrap();
         let op = operation("a", 1, "k", Some(b"first"), &[]);
         assert_eq!(store.apply_operation(op.clone()), Ok(ApplyOutcome::Applied));
-        assert_eq!(store.apply_operation(op.clone()), Ok(ApplyOutcome::Duplicate));
+        assert_eq!(
+            store.apply_operation(op.clone()),
+            Ok(ApplyOutcome::Duplicate)
+        );
         let mut tampered = op;
         tampered.value = Some(b"second".to_vec());
-        assert_eq!(store.apply_operation(tampered), Err(CrdtError::IdentityCollision));
+        assert_eq!(
+            store.apply_operation(tampered),
+            Err(CrdtError::IdentityCollision)
+        );
         assert_eq!(store.operation_count(), 1);
         assert_eq!(store.get("k"), Some(b"first".as_slice()));
     }
@@ -406,9 +447,12 @@ mod tests {
         let mut a = CrdtStateStore::new("tenant-a").unwrap();
         let mut b = CrdtStateStore::new("tenant-a").unwrap();
         let mut c = CrdtStateStore::new("tenant-a").unwrap();
-        a.apply_local("actor-a", "doc", Some(b"A".to_vec())).unwrap();
-        b.apply_local("actor-b", "doc", Some(b"B".to_vec())).unwrap();
-        c.apply_local("actor-c", "other", Some(b"C".to_vec())).unwrap();
+        a.apply_local("actor-a", "doc", Some(b"A".to_vec()))
+            .unwrap();
+        b.apply_local("actor-b", "doc", Some(b"B".to_vec()))
+            .unwrap();
+        c.apply_local("actor-c", "other", Some(b"C".to_vec()))
+            .unwrap();
         a.merge_from(&b).unwrap();
         c.merge_from(&a).unwrap();
         b.merge_from(&c).unwrap();
@@ -421,9 +465,12 @@ mod tests {
     fn merge_collision_is_atomic() {
         let mut a = CrdtStateStore::new("tenant-a").unwrap();
         let mut b = CrdtStateStore::new("tenant-a").unwrap();
-        a.apply_operation(operation("a", 1, "k", Some(b"A"), &[])).unwrap();
-        b.apply_operation(operation("a", 1, "k", Some(b"X"), &[])).unwrap();
-        b.apply_operation(operation("b", 1, "new", Some(b"Y"), &[])).unwrap();
+        a.apply_operation(operation("a", 1, "k", Some(b"A"), &[]))
+            .unwrap();
+        b.apply_operation(operation("a", 1, "k", Some(b"X"), &[]))
+            .unwrap();
+        b.apply_operation(operation("b", 1, "new", Some(b"Y"), &[]))
+            .unwrap();
         let before = a.visible_snapshot();
         assert_eq!(a.merge_from(&b), Err(CrdtError::IdentityCollision));
         assert_eq!(a.visible_snapshot(), before);
@@ -440,7 +487,10 @@ mod tests {
         assert_eq!(store.operation_count(), 0);
         let extreme = operation("a", u64::MAX, "key", Some(b"x"), &[("a", u64::MAX - 1)]);
         store.apply_operation(extreme).unwrap();
-        assert_eq!(store.apply_local("a", "key", None), Err(CrdtError::CounterExhausted));
+        assert_eq!(
+            store.apply_local("a", "key", None),
+            Err(CrdtError::CounterExhausted)
+        );
     }
 
     #[test]
@@ -457,7 +507,9 @@ mod tests {
         let mut store = CrdtStateStore::new("tenant-a").unwrap();
         for i in 0..128 {
             let key = format!("key_{i}");
-            store.apply_local("actor", &key, Some(vec![i as u8])).unwrap();
+            store
+                .apply_local("actor", &key, Some(vec![i as u8]))
+                .unwrap();
         }
         let snapshot = store.visible_snapshot();
         assert_eq!(snapshot.len(), 128);

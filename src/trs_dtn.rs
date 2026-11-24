@@ -36,26 +36,53 @@ pub struct DtnStore {
 impl DtnStore {
     /// Limits are per-process, not durable. No unbounded queues or TTL extension.
     pub fn new(max_bundles: usize, max_payload: usize) -> Result<Self, DtnError> {
-        if max_bundles == 0 || max_bundles > 4096 ||
-            max_payload == 0 || max_payload > 65_536 ||
-            max_bundles.checked_mul(max_payload).map_or(true, |n| n > 64 * 1024 * 1024) {
+        if max_bundles == 0
+            || max_bundles > 4096
+            || max_payload == 0
+            || max_payload > 65_536
+            || max_bundles
+                .checked_mul(max_payload)
+                .is_none_or(|n| n > 64 * 1024 * 1024)
+        {
             return Err(DtnError::InvalidConfig);
         }
-        Ok(Self { max_bundles, max_payload, bundles: BTreeMap::new() })
+        Ok(Self {
+            max_bundles,
+            max_payload,
+            bundles: BTreeMap::new(),
+        })
     }
 
-    pub fn len(&self) -> usize { self.bundles.len() }
-    pub fn is_empty(&self) -> bool { self.bundles.is_empty() }
+    pub fn len(&self) -> usize {
+        self.bundles.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.bundles.is_empty()
+    }
 
     pub fn insert(&mut self, bundle: Bundle, now: u64) -> Result<(), DtnError> {
         if bundle.ciphertext.is_empty() || bundle.ciphertext.len() > self.max_payload {
             return Err(DtnError::InvalidPayload);
         }
-        if bundle.hops_remaining == 0 { return Err(DtnError::InvalidHops); }
-        if bundle.expires_at <= now { return Err(DtnError::Expired); }
-        if self.bundles.contains_key(&bundle.id) { return Err(DtnError::Duplicate); }
-        if self.bundles.len() >= self.max_bundles { return Err(DtnError::Capacity); }
-        self.bundles.insert(bundle.id, Stored { bundle, forwarded_to: BTreeSet::new() });
+        if bundle.hops_remaining == 0 {
+            return Err(DtnError::InvalidHops);
+        }
+        if bundle.expires_at <= now {
+            return Err(DtnError::Expired);
+        }
+        if self.bundles.contains_key(&bundle.id) {
+            return Err(DtnError::Duplicate);
+        }
+        if self.bundles.len() >= self.max_bundles {
+            return Err(DtnError::Capacity);
+        }
+        self.bundles.insert(
+            bundle.id,
+            Stored {
+                bundle,
+                forwarded_to: BTreeSet::new(),
+            },
+        );
         Ok(())
     }
 
@@ -84,8 +111,13 @@ impl DtnStore {
         self.purge_expired(now);
         let mut batch = Vec::new();
         for item in self.bundles.values_mut() {
-            if batch.len() == max_items { break; }
-            if item.bundle.hops_remaining <= 1 || item.forwarded_to.contains(peer) || item.forwarded_to.len() >= 64 {
+            if batch.len() == max_items {
+                break;
+            }
+            if item.bundle.hops_remaining <= 1
+                || item.forwarded_to.contains(peer)
+                || item.forwarded_to.len() >= 64
+            {
                 continue;
             }
             let mut outgoing = item.bundle.clone();
@@ -102,14 +134,22 @@ mod safety_regression_tests {
     use super::*;
 
     fn bundle(id: u8) -> Bundle {
-        Bundle { id: [id; 32], ciphertext: vec![7; 32], expires_at: 100, hops_remaining: 3 }
+        Bundle {
+            id: [id; 32],
+            ciphertext: vec![7; 32],
+            expires_at: 100,
+            hops_remaining: 3,
+        }
     }
 
     #[test]
     fn reject_unbounded_forward_batch_without_consuming_peer_delivery() {
         let mut store = DtnStore::new(4, 64).unwrap();
         store.insert(bundle(1), 0).unwrap();
-        assert_eq!(store.forward_for("peer", 1, usize::MAX), Err(DtnError::Capacity));
+        assert_eq!(
+            store.forward_for("peer", 1, usize::MAX),
+            Err(DtnError::Capacity)
+        );
         assert_eq!(store.forward_for("peer", 1, 1).unwrap().len(), 1);
     }
 

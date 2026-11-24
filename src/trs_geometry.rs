@@ -4,19 +4,34 @@
 //! or identify the proposed infinite-dimensional Kahler manifold.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GeometryError {
-    Empty, DimensionMismatch, NonFinite, InvalidProbability,
-    NotNormalized, InvalidEdge, InvalidStep,
+    Empty,
+    DimensionMismatch,
+    NonFinite,
+    InvalidProbability,
+    NotNormalized,
+    InvalidEdge,
+    InvalidStep,
 }
 
 const TOL: f64 = 1e-10;
 
 fn validate_probability(p: &[f64]) -> Result<(), GeometryError> {
-    if p.is_empty() { return Err(GeometryError::Empty); }
-    if p.iter().any(|x| !x.is_finite()) { return Err(GeometryError::NonFinite); }
-    if p.iter().any(|x| *x <= 0.0) { return Err(GeometryError::InvalidProbability); }
+    if p.is_empty() {
+        return Err(GeometryError::Empty);
+    }
+    if p.iter().any(|x| !x.is_finite()) {
+        return Err(GeometryError::NonFinite);
+    }
+    if p.iter().any(|x| *x <= 0.0) {
+        return Err(GeometryError::InvalidProbability);
+    }
     let sum: f64 = p.iter().sum();
-    if !sum.is_finite() { return Err(GeometryError::NonFinite); }
-    if (sum - 1.0).abs() > TOL { return Err(GeometryError::NotNormalized); }
+    if !sum.is_finite() {
+        return Err(GeometryError::NonFinite);
+    }
+    if (sum - 1.0).abs() > TOL {
+        return Err(GeometryError::NotNormalized);
+    }
     Ok(())
 }
 
@@ -33,8 +48,15 @@ pub fn fisher_metric(p: &[f64], u: &[f64], v: &[f64]) -> Result<f64, GeometryErr
     if u.iter().sum::<f64>().abs() > TOL || v.iter().sum::<f64>().abs() > TOL {
         return Err(GeometryError::InvalidStep);
     }
-    let result: f64 = p.iter().zip(u).zip(v).map(|((pi, ui), vi)| ui * vi / pi).sum();
-    if !result.is_finite() { return Err(GeometryError::NonFinite); }
+    let result: f64 = p
+        .iter()
+        .zip(u)
+        .zip(v)
+        .map(|((pi, ui), vi)| ui * vi / pi)
+        .sum();
+    if !result.is_finite() {
+        return Err(GeometryError::NonFinite);
+    }
     Ok(result)
 }
 
@@ -43,9 +65,13 @@ pub fn fisher_metric(p: &[f64], u: &[f64], v: &[f64]) -> Result<f64, GeometryErr
 pub fn fisher_rao_distance(p: &[f64], q: &[f64]) -> Result<f64, GeometryError> {
     validate_probability(p)?;
     validate_probability(q)?;
-    if p.len() != q.len() { return Err(GeometryError::DimensionMismatch); }
+    if p.len() != q.len() {
+        return Err(GeometryError::DimensionMismatch);
+    }
     let affinity: f64 = p.iter().zip(q).map(|(a, b)| (a * b).sqrt()).sum();
-    if !affinity.is_finite() { return Err(GeometryError::NonFinite); }
+    if !affinity.is_finite() {
+        return Err(GeometryError::NonFinite);
+    }
     Ok(2.0 * affinity.clamp(0.0, 1.0).acos())
 }
 
@@ -55,20 +81,25 @@ pub fn hodge_zero_laplacian(
     values: &[f64],
     edges: &[(usize, usize)],
 ) -> Result<Vec<f64>, GeometryError> {
-    if values.is_empty() { return Err(GeometryError::Empty); }
-    if values.iter().any(|v| !v.is_finite()) { return Err(GeometryError::NonFinite); }
+    if values.is_empty() {
+        return Err(GeometryError::Empty);
+    }
+    if values.iter().any(|v| !v.is_finite()) {
+        return Err(GeometryError::NonFinite);
+    }
     let mut out = vec![0.0; values.len()];
     let mut seen = std::collections::HashSet::new();
     for &(a, b) in edges {
-        if a >= values.len() || b >= values.len() || a == b ||
-            !seen.insert((a.min(b), a.max(b))) {
+        if a >= values.len() || b >= values.len() || a == b || !seen.insert((a.min(b), a.max(b))) {
             return Err(GeometryError::InvalidEdge);
         }
         let delta = values[a] - values[b];
         out[a] += delta;
         out[b] -= delta;
     }
-    if out.iter().any(|v| !v.is_finite()) { return Err(GeometryError::NonFinite); }
+    if out.iter().any(|v| !v.is_finite()) {
+        return Err(GeometryError::NonFinite);
+    }
     Ok(out)
 }
 
@@ -77,7 +108,9 @@ pub fn hodge_zero_laplacian(
 pub fn dirichlet_energy(values: &[f64], edges: &[(usize, usize)]) -> Result<f64, GeometryError> {
     let lap = hodge_zero_laplacian(values, edges)?;
     let result: f64 = values.iter().zip(lap.iter()).map(|(x, lx)| x * lx).sum();
-    if !result.is_finite() { return Err(GeometryError::NonFinite); }
+    if !result.is_finite() {
+        return Err(GeometryError::NonFinite);
+    }
     Ok(result.max(0.0))
 }
 
@@ -103,18 +136,30 @@ mod tests {
     }
     #[test]
     fn fisher_rejects_boundary_and_invalid_tangent() {
-        assert_eq!(fisher_rao_distance(&[0.0, 1.0], &[0.5, 0.5]), Err(GeometryError::InvalidProbability));
-        assert_eq!(fisher_metric(&[0.5, 0.5], &[0.1, 0.0], &[0.0, 0.0]), Err(GeometryError::InvalidStep));
+        assert_eq!(
+            fisher_rao_distance(&[0.0, 1.0], &[0.5, 0.5]),
+            Err(GeometryError::InvalidProbability)
+        );
+        assert_eq!(
+            fisher_metric(&[0.5, 0.5], &[0.1, 0.0], &[0.0, 0.0]),
+            Err(GeometryError::InvalidStep)
+        );
     }
     #[test]
     fn hodge_laplacian_annihilates_constant_functions() {
-        assert_eq!(hodge_zero_laplacian(&[3.0, 3.0, 3.0], &[(0, 1), (1, 2)]).unwrap(), vec![0.0; 3]);
+        assert_eq!(
+            hodge_zero_laplacian(&[3.0, 3.0, 3.0], &[(0, 1), (1, 2)]).unwrap(),
+            vec![0.0; 3]
+        );
     }
     #[test]
     fn hodge_energy_matches_edge_differences() {
         let x = [1.0, 2.0, 4.0];
         let edges = [(0, 1), (1, 2)];
         assert!((dirichlet_energy(&x, &edges).unwrap() - 5.0).abs() < 1e-12);
-        assert_eq!(hodge_zero_laplacian(&x, &[(0, 1), (1, 0)]), Err(GeometryError::InvalidEdge));
+        assert_eq!(
+            hodge_zero_laplacian(&x, &[(0, 1), (1, 0)]),
+            Err(GeometryError::InvalidEdge)
+        );
     }
 }

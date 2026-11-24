@@ -79,11 +79,19 @@ mod tests {
     fn parses_both_supported_versions_without_tensor_allocation() {
         assert_eq!(
             SafeGgufHeaderParser::parse_header(&fixture(2, 100, 20)),
-            Ok(GgufHeader { version: 2, tensor_count: 100, metadata_kv_count: 20 })
+            Ok(GgufHeader {
+                version: 2,
+                tensor_count: 100,
+                metadata_kv_count: 20
+            })
         );
         assert_eq!(
             SafeGgufHeaderParser::parse_header(&fixture(3, 1, 0)),
-            Ok(GgufHeader { version: 3, tensor_count: 1, metadata_kv_count: 0 })
+            Ok(GgufHeader {
+                version: 3,
+                tensor_count: 1,
+                metadata_kv_count: 0
+            })
         );
     }
 
@@ -154,9 +162,12 @@ mod tests {
 
     #[test]
     fn boundary_values_are_admissible_but_not_model_validation() {
-        let h = SafeGgufHeaderParser::parse_header(
-            &fixture(3, GGUF_MAX_TENSORS, GGUF_MAX_METADATA_PAIRS)
-        ).unwrap();
+        let h = SafeGgufHeaderParser::parse_header(&fixture(
+            3,
+            GGUF_MAX_TENSORS,
+            GGUF_MAX_METADATA_PAIRS,
+        ))
+        .unwrap();
         assert_eq!(h.tensor_count, GGUF_MAX_TENSORS);
         assert_eq!(h.metadata_kv_count, GGUF_MAX_METADATA_PAIRS);
     }
@@ -175,7 +186,9 @@ mod tests {
         for length in 0..128usize {
             let mut bytes = vec![0u8; length];
             for byte in &mut bytes {
-                state = state.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
+                state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1);
                 *byte = (state >> 24) as u8;
             }
             // Parsing arbitrary bytes must return an error or a bounded header.

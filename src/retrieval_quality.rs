@@ -566,7 +566,10 @@ mod tests {
         assert_eq!(index.search("tenant_a", "stale", 10).unwrap().len(), 1);
         assert_eq!(index.upsert("tenant_a", "doc", "fresh verified", 1), Ok(2));
         assert!(index.search("tenant_a", "stale", 10).unwrap().is_empty());
-        assert_eq!(index.search("tenant_a", "fresh", 10).unwrap()[0].source_id, "doc");
+        assert_eq!(
+            index.search("tenant_a", "fresh", 10).unwrap()[0].source_id,
+            "doc"
+        );
         assert_eq!(index.revision(), 2);
     }
 
@@ -627,12 +630,7 @@ mod tests {
         let mut index = MutableLexicalIndex::new("tenant_a").unwrap();
         for id in 0..MAX_MUTABLE_DOCUMENTS {
             assert_eq!(
-                index.upsert(
-                    "tenant_a",
-                    &format!("doc_{id}"),
-                    "bounded",
-                    id as u64
-                ),
+                index.upsert("tenant_a", &format!("doc_{id}"), "bounded", id as u64),
                 Ok((id + 1) as u64)
             );
         }

@@ -28,7 +28,6 @@ pub struct CollaborationEvent {
     pub artifact_sha256: String,
 }
 
-
 /// A chronological focus change within one authenticated tenant's object.
 /// This never establishes human/agent intention or ownership.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -209,7 +208,6 @@ impl CollaborationTracker {
             focus_transitions,
         })
     }
-
 }
 
 #[cfg(test)]
@@ -328,14 +326,45 @@ mod tests {
             tenant: "tenant1".into(),
             actor: "agent".into(),
         };
-        tracker.append(&human, "shared", 0, CognitiveOperation::Propose, "design", &hash).unwrap();
-        tracker.append(&ai, "shared", 1, CognitiveOperation::Validate, "security", &hash).unwrap();
-        tracker.append(&ai, "shared", 2, CognitiveOperation::Modify, "security", &hash).unwrap();
+        tracker
+            .append(
+                &human,
+                "shared",
+                0,
+                CognitiveOperation::Propose,
+                "design",
+                &hash,
+            )
+            .unwrap();
+        tracker
+            .append(
+                &ai,
+                "shared",
+                1,
+                CognitiveOperation::Validate,
+                "security",
+                &hash,
+            )
+            .unwrap();
+        tracker
+            .append(
+                &ai,
+                "shared",
+                2,
+                CognitiveOperation::Modify,
+                "security",
+                &hash,
+            )
+            .unwrap();
 
         let analysis = tracker.analyze_object("tenant1", "shared").unwrap();
         assert_eq!(analysis.event_count, 3);
         assert_eq!(
-            analysis.contribution_basis_points.values().map(|x| u64::from(*x)).sum::<u64>(),
+            analysis
+                .contribution_basis_points
+                .values()
+                .map(|x| u64::from(*x))
+                .sum::<u64>(),
             10_000
         );
         // human=15, agent=18. Weighted scores are heuristics, not ownership.
@@ -349,7 +378,13 @@ mod tests {
         assert_eq!(analysis.focus_transitions[0].to_focus, "security");
         assert_eq!(analysis.focus_transitions[0].actor, "agent");
 
-        assert_eq!(tracker.analyze_object("tenant2", "shared").unwrap().event_count, 0);
+        assert_eq!(
+            tracker
+                .analyze_object("tenant2", "shared")
+                .unwrap()
+                .event_count,
+            0
+        );
     }
 
     #[test]
@@ -360,8 +395,26 @@ mod tests {
         assert_eq!(empty.diversity_basis_points, 0);
         assert!(empty.contribution_basis_points.is_empty());
         let hash = "b".repeat(64);
-        tracker.append(&actor("tenant1"), "object1", 0, CognitiveOperation::Propose, "same", &hash).unwrap();
-        tracker.append(&actor("tenant1"), "object1", 1, CognitiveOperation::Modify, "same", &hash).unwrap();
+        tracker
+            .append(
+                &actor("tenant1"),
+                "object1",
+                0,
+                CognitiveOperation::Propose,
+                "same",
+                &hash,
+            )
+            .unwrap();
+        tracker
+            .append(
+                &actor("tenant1"),
+                "object1",
+                1,
+                CognitiveOperation::Modify,
+                "same",
+                &hash,
+            )
+            .unwrap();
         let a = tracker.analyze_object("tenant1", "object1").unwrap();
         assert_eq!(a.contribution_basis_points["agent-1"], 10_000);
         assert_eq!(a.diversity_basis_points, 0);
@@ -373,10 +426,19 @@ mod tests {
         let mut tracker = CollaborationTracker::default();
         let hash = "c".repeat(64);
         for (revision, id) in ["bravo", "alpha", "charlie"].iter().enumerate() {
-            tracker.append(
-                &TrustedActor { tenant: "tenant1".into(), actor: (*id).into() },
-                "shared", revision as u64, CognitiveOperation::Propose, "shared", &hash
-            ).unwrap();
+            tracker
+                .append(
+                    &TrustedActor {
+                        tenant: "tenant1".into(),
+                        actor: (*id).into(),
+                    },
+                    "shared",
+                    revision as u64,
+                    CognitiveOperation::Propose,
+                    "shared",
+                    &hash,
+                )
+                .unwrap();
         }
         let one = tracker.analyze_object("tenant1", "shared").unwrap();
         let two = tracker.analyze_object("tenant1", "shared").unwrap();
@@ -390,8 +452,13 @@ mod tests {
     #[test]
     fn analytics_rejects_invalid_context_without_disclosing_objects() {
         let tracker = CollaborationTracker::default();
-        assert_eq!(tracker.analyze_object("../tenant", "shared"), Err(TrackerError::Invalid));
-        assert_eq!(tracker.analyze_object("tenant1", "../shared"), Err(TrackerError::Invalid));
+        assert_eq!(
+            tracker.analyze_object("../tenant", "shared"),
+            Err(TrackerError::Invalid)
+        );
+        assert_eq!(
+            tracker.analyze_object("tenant1", "../shared"),
+            Err(TrackerError::Invalid)
+        );
     }
-
 }

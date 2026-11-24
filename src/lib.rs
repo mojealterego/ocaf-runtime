@@ -122,17 +122,17 @@ pub mod task_cas;
 
 pub mod task_cas_sqlite;
 
-pub mod trs_seal;
-pub mod trs_seal_sqlite;
-pub mod trs_math;
-pub mod trs_geometry;
 pub mod trs_cover_traffic;
-pub mod trs_traffic;
+pub mod trs_digital_life;
+pub mod trs_digital_life_durable;
+pub mod trs_digital_life_session;
 pub mod trs_dtn;
 pub mod trs_dtn_reliable;
-pub mod trs_digital_life;
-pub mod trs_digital_life_session;
-pub mod trs_digital_life_durable;
+pub mod trs_geometry;
+pub mod trs_math;
+pub mod trs_seal;
+pub mod trs_seal_sqlite;
+pub mod trs_traffic;
 
 pub mod trs_dtn_sqlite;
 

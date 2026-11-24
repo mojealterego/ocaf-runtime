@@ -34,7 +34,10 @@ pub struct BridgeResponse {
     pub payload: Vec<u8>,
 }
 
-pub enum Admission { Denied, Accepted }
+pub enum Admission {
+    Denied,
+    Accepted,
+}
 
 fn valid_identity(value: &str) -> bool {
     !value.is_empty() && value.len() <= 256 && !value.chars().any(char::is_control)
@@ -54,18 +57,28 @@ impl BridgeRequest {
             return Err(BridgeError::PayloadTooLarge);
         }
         match self.operation.as_str() {
-            "trs.geometry.fisher_rao" | "trs.geometry.hodge_laplacian"
-            | "trs.math.sat_evaluate" | "trs.health" => Ok(()),
+            "trs.geometry.fisher_rao"
+            | "trs.geometry.hodge_laplacian"
+            | "trs.math.sat_evaluate"
+            | "trs.health" => Ok(()),
             _ => Err(BridgeError::ForbiddenOperation),
         }
     }
 }
 impl BridgeResponse {
     pub fn accepted(payload: Vec<u8>) -> Self {
-        Self { version: DIGITAL_LIFE_BRIDGE_VERSION, accepted: true, payload }
+        Self {
+            version: DIGITAL_LIFE_BRIDGE_VERSION,
+            accepted: true,
+            payload,
+        }
     }
     pub fn rejected() -> Self {
-        Self { version: DIGITAL_LIFE_BRIDGE_VERSION, accepted: false, payload: Vec::new() }
+        Self {
+            version: DIGITAL_LIFE_BRIDGE_VERSION,
+            accepted: false,
+            payload: Vec::new(),
+        }
     }
 }
 
@@ -76,13 +89,22 @@ pub fn dispatch_local(request: &BridgeRequest) -> Result<BridgeResponse, BridgeE
     request.validate()?;
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
-    struct FisherInput { p: Vec<f64>, q: Vec<f64> }
+    struct FisherInput {
+        p: Vec<f64>,
+        q: Vec<f64>,
+    }
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
-    struct HodgeInput { values: Vec<f64>, edges: Vec<(usize, usize)> }
+    struct HodgeInput {
+        values: Vec<f64>,
+        edges: Vec<(usize, usize)>,
+    }
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
-    struct SatInput { variables: usize, clauses: Vec<[i32; 3]> }
+    struct SatInput {
+        variables: usize,
+        clauses: Vec<[i32; 3]>,
+    }
     let payload = match request.operation.as_str() {
         "trs.health" => {
             if !request.payload.is_empty() && request.payload != b"{}" {
@@ -117,8 +139,11 @@ pub fn dispatch_local(request: &BridgeRequest) -> Result<BridgeResponse, BridgeE
             if input.variables == 0 || input.variables > 12 || input.clauses.len() > 4096 {
                 return Err(BridgeError::InvalidPayload);
             }
-            let clauses: Vec<crate::trs_math::Clause3> =
-                input.clauses.into_iter().map(crate::trs_math::Clause3).collect();
+            let clauses: Vec<crate::trs_math::Clause3> = input
+                .clauses
+                .into_iter()
+                .map(crate::trs_math::Clause3)
+                .collect();
             let result = crate::trs_math::enumerate_3sat(input.variables, &clauses)
                 .map_err(|_| BridgeError::InvalidPayload)?;
             serde_json::json!({
@@ -156,7 +181,10 @@ pub fn dispatch_authorized(
         || !valid_identity(&principal.sender)
         || principal.tenant != request.tenant
         || principal.sender != request.sender
-        || !principal.allowed_operations.iter().any(|op| op == &request.operation)
+        || !principal
+            .allowed_operations
+            .iter()
+            .any(|op| op == &request.operation)
     {
         return Err(BridgeError::Unauthorized);
     }

@@ -103,8 +103,11 @@ mod tests {
 
     fn edge() -> RoutingGraphEdge {
         RoutingGraphEdge {
-            source: 0, target: 1, latency_cost: 10.0,
-            traffic_load: 2.0, current_weight: 4.0,
+            source: 0,
+            target: 1,
+            latency_cost: 10.0,
+            traffic_load: 2.0,
+            current_weight: 4.0,
         }
     }
 
@@ -123,7 +126,10 @@ mod tests {
     #[test]
     fn rejects_invalid_configuration() {
         for rate in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY, 0.0, -1.0, 1.01] {
-            assert_eq!(RicciFlowOptimizer::new(rate).unwrap_err(), RicciError::InvalidConfiguration);
+            assert_eq!(
+                RicciFlowOptimizer::new(rate).unwrap_err(),
+                RicciError::InvalidConfiguration
+            );
         }
     }
 
@@ -131,7 +137,13 @@ mod tests {
     fn invalid_edges_do_not_partially_mutate_graph() {
         let optimizer = RicciFlowOptimizer::new(0.5).unwrap();
         for invalid in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY, 0.0, -1.0] {
-            let mut edges = vec![edge(), RoutingGraphEdge { latency_cost: invalid, ..edge() }];
+            let mut edges = vec![
+                edge(),
+                RoutingGraphEdge {
+                    latency_cost: invalid,
+                    ..edge()
+                },
+            ];
             let before = edges[0].current_weight;
             assert!(optimizer.compute_ricci_step(&mut edges).is_err());
             assert_eq!(edges[0].current_weight, before);
@@ -141,11 +153,19 @@ mod tests {
     #[test]
     fn intermediate_overflow_is_rejected_without_mutation() {
         let optimizer = RicciFlowOptimizer::new(1.0).unwrap();
-        let mut edges = vec![edge(), RoutingGraphEdge {
-            traffic_load: f64::MAX, latency_cost: f64::MIN_POSITIVE, ..edge()
-        }];
+        let mut edges = vec![
+            edge(),
+            RoutingGraphEdge {
+                traffic_load: f64::MAX,
+                latency_cost: f64::MIN_POSITIVE,
+                ..edge()
+            },
+        ];
         let before = edges[0].current_weight;
-        assert_eq!(optimizer.compute_ricci_step(&mut edges), Err(RicciError::NumericalInstability));
+        assert_eq!(
+            optimizer.compute_ricci_step(&mut edges),
+            Err(RicciError::NumericalInstability)
+        );
         assert_eq!(edges[0].current_weight, before);
     }
 
@@ -153,13 +173,31 @@ mod tests {
     fn invalid_weight_and_load_leave_graph_unchanged() {
         let optimizer = RicciFlowOptimizer::new(0.5).unwrap();
         for invalid in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY, -1.0] {
-            let mut edges = vec![edge(), RoutingGraphEdge { traffic_load: invalid, ..edge() }];
+            let mut edges = vec![
+                edge(),
+                RoutingGraphEdge {
+                    traffic_load: invalid,
+                    ..edge()
+                },
+            ];
             let snapshot = edges.clone();
-            assert_eq!(optimizer.compute_ricci_step(&mut edges), Err(RicciError::InvalidEdge));
+            assert_eq!(
+                optimizer.compute_ricci_step(&mut edges),
+                Err(RicciError::InvalidEdge)
+            );
             assert_eq!(edges, snapshot);
-            let mut edges = vec![edge(), RoutingGraphEdge { current_weight: invalid, ..edge() }];
+            let mut edges = vec![
+                edge(),
+                RoutingGraphEdge {
+                    current_weight: invalid,
+                    ..edge()
+                },
+            ];
             let snapshot = edges.clone();
-            assert_eq!(optimizer.compute_ricci_step(&mut edges), Err(RicciError::InvalidEdge));
+            assert_eq!(
+                optimizer.compute_ricci_step(&mut edges),
+                Err(RicciError::InvalidEdge)
+            );
             assert_eq!(edges, snapshot);
         }
     }

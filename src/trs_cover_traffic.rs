@@ -25,13 +25,27 @@ pub struct CoverScheduler {
 impl CoverScheduler {
     /// Rate is Poisson arrivals per second; this is NOT a constant-rate stream.
     /// Limits bound memory use and maximum generated packet size.
-    pub fn new(packet_bytes: usize, rate_per_second: f64, capacity: usize) -> Result<Self, CoverError> {
-        if packet_bytes == 0 || packet_bytes > 65_536 || capacity == 0 ||
-            capacity > 4096 || !rate_per_second.is_finite() ||
-            rate_per_second <= 0.0 || rate_per_second > 1000.0 {
+    pub fn new(
+        packet_bytes: usize,
+        rate_per_second: f64,
+        capacity: usize,
+    ) -> Result<Self, CoverError> {
+        if packet_bytes == 0
+            || packet_bytes > 65_536
+            || capacity == 0
+            || capacity > 4096
+            || !rate_per_second.is_finite()
+            || rate_per_second <= 0.0
+            || rate_per_second > 1000.0
+        {
             return Err(CoverError::InvalidConfig);
         }
-        Ok(Self { packet_bytes, rate_per_second, capacity, pending: VecDeque::new() })
+        Ok(Self {
+            packet_bytes,
+            rate_per_second,
+            capacity,
+            pending: VecDeque::new(),
+        })
     }
 
     pub fn enqueue(&mut self, ciphertext: Vec<u8>) -> Result<(), CoverError> {
@@ -45,7 +59,9 @@ impl CoverScheduler {
         Ok(())
     }
 
-    pub fn queued(&self) -> usize { self.pending.len() }
+    pub fn queued(&self) -> usize {
+        self.pending.len()
+    }
 
     /// Cryptographically random exponential interarrival duration.
     /// Saturates at one hour so a malformed or extreme random sample cannot
@@ -100,9 +116,18 @@ mod tests {
 
     #[test]
     fn invalid_configuration_fails_closed() {
-        assert!(matches!(CoverScheduler::new(0, 2.0, 1), Err(CoverError::InvalidConfig)));
-        assert!(matches!(CoverScheduler::new(32, f64::NAN, 1), Err(CoverError::InvalidConfig)));
-        assert!(matches!(CoverScheduler::new(32, 2.0, 0), Err(CoverError::InvalidConfig)));
+        assert!(matches!(
+            CoverScheduler::new(0, 2.0, 1),
+            Err(CoverError::InvalidConfig)
+        ));
+        assert!(matches!(
+            CoverScheduler::new(32, f64::NAN, 1),
+            Err(CoverError::InvalidConfig)
+        ));
+        assert!(matches!(
+            CoverScheduler::new(32, 2.0, 0),
+            Err(CoverError::InvalidConfig)
+        ));
     }
 
     #[test]

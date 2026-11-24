@@ -148,9 +148,9 @@ fn valid_id(value: &str) -> bool {
         && !value.starts_with('.')
         && !value.ends_with('.')
         && !value.contains("..")
-        && value.bytes().all(|byte| {
-            byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-' | b'.' | b':')
-        })
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-' | b'.' | b':'))
 }
 
 type LinkKey = (String, String, String);
@@ -252,8 +252,14 @@ impl DeterministicSimulator {
     }
 
     fn enqueue(&mut self, delay_ms: u64, kind: SimEvent, bytes: usize) -> Result<u64, SimError> {
-        let at_ms = self.now_ms.checked_add(delay_ms).ok_or(SimError::ClockOverflow)?;
-        let new_id = self.next_id.checked_add(1).ok_or(SimError::SequenceExhausted)?;
+        let at_ms = self
+            .now_ms
+            .checked_add(delay_ms)
+            .ok_or(SimError::ClockOverflow)?;
+        let new_id = self
+            .next_id
+            .checked_add(1)
+            .ok_or(SimError::SequenceExhausted)?;
         let new_bytes = self
             .queued_bytes
             .checked_add(bytes)
@@ -276,10 +282,12 @@ impl DeterministicSimulator {
 
     /// Take ownership of the message; the caller cannot mutate the scheduled
     /// event afterward. This is synthetic data, not authenticated ingress.
-    pub fn schedule_message(&mut self, delay_ms: u64, message: SimMessage) -> Result<u64, SimError> {
-        if !valid_id(&message.tenant)
-            || !valid_id(&message.sender)
-            || !valid_id(&message.recipient)
+    pub fn schedule_message(
+        &mut self,
+        delay_ms: u64,
+        message: SimMessage,
+    ) -> Result<u64, SimError> {
+        if !valid_id(&message.tenant) || !valid_id(&message.sender) || !valid_id(&message.recipient)
         {
             return Err(SimError::InvalidIdentity);
         }
@@ -319,10 +327,7 @@ impl DeterministicSimulator {
     }
 
     fn draw_percent(&mut self) -> u16 {
-        self.prng_state = self
-            .prng_state
-            .wrapping_mul(LCG_FACTOR)
-            .wrapping_add(1);
+        self.prng_state = self.prng_state.wrapping_mul(LCG_FACTOR).wrapping_add(1);
         (self.prng_state % 100) as u16
     }
 
@@ -465,7 +470,10 @@ impl DeterministicSimulator {
                 }
             }
         }
-        receipt.budget_exhausted = self.events.peek().is_some_and(|event| event.at_ms <= horizon_ms);
+        receipt.budget_exhausted = self
+            .events
+            .peek()
+            .is_some_and(|event| event.at_ms <= horizon_ms);
         if !receipt.budget_exhausted {
             self.now_ms = horizon_ms;
         }
@@ -506,13 +514,16 @@ mod tests {
     fn equal_time_events_follow_monotonic_insertion_id() {
         let mut sim = clean();
         for payload in [b"A".as_slice(), b"B".as_slice(), b"C".as_slice()] {
-            sim.schedule_message(10, message("t1", "a", "b", payload)).unwrap();
+            sim.schedule_message(10, message("t1", "a", "b", payload))
+                .unwrap();
         }
         let mut observed = Vec::new();
-        let r = sim.run_until(10, 10, |msg, kind, _| {
-            assert_eq!(kind, DeliveryKind::Primary);
-            observed.push(msg.payload.clone());
-        }).unwrap();
+        let r = sim
+            .run_until(10, 10, |msg, kind, _| {
+                assert_eq!(kind, DeliveryKind::Primary);
+                observed.push(msg.payload.clone());
+            })
+            .unwrap();
         assert_eq!(observed, vec![b"A".to_vec(), b"B".to_vec(), b"C".to_vec()]);
         assert_eq!(r.processed_events, 3);
         assert!(!r.budget_exhausted);
@@ -522,12 +533,17 @@ mod tests {
     #[test]
     fn future_event_is_not_consumed_at_shorter_horizon() {
         let mut sim = clean();
-        sim.schedule_message(20, message("t1", "a", "b", b"future")).unwrap();
-        let early = sim.run_until(10, 5, |_, _, _| panic!("future event delivered")).unwrap();
+        sim.schedule_message(20, message("t1", "a", "b", b"future"))
+            .unwrap();
+        let early = sim
+            .run_until(10, 5, |_, _, _| panic!("future event delivered"))
+            .unwrap();
         assert_eq!(early.pending_events, 1);
         assert_eq!(early.current_time_ms, 10);
         assert_eq!(sim.queued_bytes(), 6);
-        let later = sim.run_until(20, 5, |m, _, _| assert_eq!(m.payload, b"future")).unwrap();
+        let later = sim
+            .run_until(20, 5, |m, _, _| assert_eq!(m.payload, b"future"))
+            .unwrap();
         assert_eq!(later.delivered_callbacks, 1);
         assert_eq!(later.pending_events, 0);
     }
@@ -535,11 +551,16 @@ mod tests {
     #[test]
     fn partition_is_direction_independent_and_tenant_scoped() {
         let mut sim = clean();
-        sim.schedule_partition(0, "tenant1", "b", "a", true).unwrap();
-        sim.schedule_message(1, message("tenant1", "a", "b", b"blocked")).unwrap();
-        sim.schedule_message(1, message("tenant2", "a", "b", b"allowed")).unwrap();
+        sim.schedule_partition(0, "tenant1", "b", "a", true)
+            .unwrap();
+        sim.schedule_message(1, message("tenant1", "a", "b", b"blocked"))
+            .unwrap();
+        sim.schedule_message(1, message("tenant2", "a", "b", b"allowed"))
+            .unwrap();
         let mut seen = Vec::new();
-        let r = sim.run_until(2, 10, |m, _, _| seen.push(m.tenant.clone())).unwrap();
+        let r = sim
+            .run_until(2, 10, |m, _, _| seen.push(m.tenant.clone()))
+            .unwrap();
         assert_eq!(seen, vec!["tenant2"]);
         assert_eq!(r.dropped_messages, 1);
         assert!(sim.is_partitioned("tenant1", "a", "b").unwrap());
@@ -551,10 +572,14 @@ mod tests {
         let mut sim = clean();
         sim.schedule_partition(0, "t1", "a", "b", true).unwrap();
         sim.schedule_partition(5, "t1", "a", "b", false).unwrap();
-        sim.schedule_message(4, message("t1", "a", "b", b"lost")).unwrap();
-        sim.schedule_message(6, message("t1", "a", "b", b"ok")).unwrap();
+        sim.schedule_message(4, message("t1", "a", "b", b"lost"))
+            .unwrap();
+        sim.schedule_message(6, message("t1", "a", "b", b"ok"))
+            .unwrap();
         let mut values = Vec::new();
-        let r = sim.run_until(7, 10, |m, _, _| values.push(m.payload.clone())).unwrap();
+        let r = sim
+            .run_until(7, 10, |m, _, _| values.push(m.payload.clone()))
+            .unwrap();
         assert_eq!(r.partition_changes, 2);
         assert_eq!(r.dropped_messages, 1);
         assert_eq!(values, vec![b"ok".to_vec()]);
@@ -564,13 +589,23 @@ mod tests {
     #[test]
     fn duplicate_fault_requires_consumer_deduplication() {
         let mut sim = DeterministicSimulator::new(
-            1, SimulatorLimits::default(),
-            FaultPolicy { drop_percent: 0, duplicate_percent: 100, corrupt_percent: 0 }
-        ).unwrap();
-        sim.schedule_message(1, message("t1", "a", "b", b"test")).unwrap();
+            1,
+            SimulatorLimits::default(),
+            FaultPolicy {
+                drop_percent: 0,
+                duplicate_percent: 100,
+                corrupt_percent: 0,
+            },
+        )
+        .unwrap();
+        sim.schedule_message(1, message("t1", "a", "b", b"test"))
+            .unwrap();
         let mut kinds = Vec::new();
         let r = sim.run_until(1, 1, |_, kind, _| kinds.push(kind)).unwrap();
-        assert_eq!(kinds, vec![DeliveryKind::Primary, DeliveryKind::InjectedDuplicate]);
+        assert_eq!(
+            kinds,
+            vec![DeliveryKind::Primary, DeliveryKind::InjectedDuplicate]
+        );
         assert_eq!(r.duplicate_callbacks, 1);
         assert_eq!(r.delivered_callbacks, 2);
     }
@@ -578,15 +613,23 @@ mod tests {
     #[test]
     fn corruption_fault_changes_payload_without_editing_enqueued_input() {
         let mut sim = DeterministicSimulator::new(
-            1, SimulatorLimits::default(),
-            FaultPolicy { drop_percent: 0, duplicate_percent: 0, corrupt_percent: 100 }
-        ).unwrap();
+            1,
+            SimulatorLimits::default(),
+            FaultPolicy {
+                drop_percent: 0,
+                duplicate_percent: 0,
+                corrupt_percent: 100,
+            },
+        )
+        .unwrap();
         let original = message("t1", "a", "b", b"truth");
         sim.schedule_message(1, original.clone()).unwrap();
-        let r = sim.run_until(1, 1, |m, kind, _| {
-            assert_eq!(kind, DeliveryKind::InjectedCorruption);
-            assert_ne!(m.payload, original.payload);
-        }).unwrap();
+        let r = sim
+            .run_until(1, 1, |m, kind, _| {
+                assert_eq!(kind, DeliveryKind::InjectedCorruption);
+                assert_ne!(m.payload, original.payload);
+            })
+            .unwrap();
         assert_eq!(original.payload, b"truth");
         assert_eq!(r.corrupted_callbacks, 1);
     }
@@ -594,11 +637,20 @@ mod tests {
     #[test]
     fn deterministic_drop_never_invokes_handler() {
         let mut sim = DeterministicSimulator::new(
-            1, SimulatorLimits::default(),
-            FaultPolicy { drop_percent: 100, duplicate_percent: 0, corrupt_percent: 0 }
-        ).unwrap();
-        sim.schedule_message(1, message("t1", "a", "b", b"discard")).unwrap();
-        let r = sim.run_until(1, 1, |_, _, _| panic!("dropped message delivered")).unwrap();
+            1,
+            SimulatorLimits::default(),
+            FaultPolicy {
+                drop_percent: 100,
+                duplicate_percent: 0,
+                corrupt_percent: 0,
+            },
+        )
+        .unwrap();
+        sim.schedule_message(1, message("t1", "a", "b", b"discard"))
+            .unwrap();
+        let r = sim
+            .run_until(1, 1, |_, _, _| panic!("dropped message delivered"))
+            .unwrap();
         assert_eq!(r.dropped_messages, 1);
         assert_eq!(r.delivered_callbacks, 0);
     }
@@ -607,14 +659,18 @@ mod tests {
     fn segmented_and_one_shot_execution_have_the_same_transcript() {
         let mut a = clean();
         for (time, data) in [(1, b"a"), (5, b"b"), (8, b"c")] {
-            a.schedule_message(time, message("t1", "x", "y", data)).unwrap();
+            a.schedule_message(time, message("t1", "x", "y", data))
+                .unwrap();
         }
         let mut b = a.clone();
         let mut first = Vec::new();
-        a.run_until(8, 10, |m, _, _| first.push(m.payload.clone())).unwrap();
+        a.run_until(8, 10, |m, _, _| first.push(m.payload.clone()))
+            .unwrap();
         let mut second = Vec::new();
-        b.run_until(4, 10, |m, _, _| second.push(m.payload.clone())).unwrap();
-        b.run_until(8, 10, |m, _, _| second.push(m.payload.clone())).unwrap();
+        b.run_until(4, 10, |m, _, _| second.push(m.payload.clone()))
+            .unwrap();
+        b.run_until(8, 10, |m, _, _| second.push(m.payload.clone()))
+            .unwrap();
         assert_eq!(first, second);
         assert_eq!(a.trace_digest(), b.trace_digest());
         assert_eq!(a.now_ms(), b.now_ms());
@@ -623,10 +679,13 @@ mod tests {
     #[test]
     fn callback_can_enqueue_but_budget_stops_zero_delay_feedback() {
         let mut sim = clean();
-        sim.schedule_message(0, message("t1", "a", "b", b"loop")).unwrap();
-        let r = sim.run_until(0, 5, |m, _, s| {
-            s.schedule_message(0, m.clone()).unwrap();
-        }).unwrap();
+        sim.schedule_message(0, message("t1", "a", "b", b"loop"))
+            .unwrap();
+        let r = sim
+            .run_until(0, 5, |m, _, s| {
+                s.schedule_message(0, m.clone()).unwrap();
+            })
+            .unwrap();
         assert_eq!(r.processed_events, 5);
         assert_eq!(r.pending_events, 1);
         assert!(r.budget_exhausted);
@@ -638,10 +697,21 @@ mod tests {
     fn over_capacity_rejection_leaves_state_unchanged() {
         let mut sim = DeterministicSimulator::new(
             1,
-            SimulatorLimits { max_pending_events: 1, max_queued_bytes: 5, max_payload_bytes: 5, max_steps_per_run: 10 },
-            FaultPolicy { drop_percent: 0, duplicate_percent: 0, corrupt_percent: 0 },
-        ).unwrap();
-        sim.schedule_message(1, message("t1", "a", "b", b"abcde")).unwrap();
+            SimulatorLimits {
+                max_pending_events: 1,
+                max_queued_bytes: 5,
+                max_payload_bytes: 5,
+                max_steps_per_run: 10,
+            },
+            FaultPolicy {
+                drop_percent: 0,
+                duplicate_percent: 0,
+                corrupt_percent: 0,
+            },
+        )
+        .unwrap();
+        sim.schedule_message(1, message("t1", "a", "b", b"abcde"))
+            .unwrap();
         let digest = sim.trace_digest();
         let bytes = sim.queued_bytes();
         assert_eq!(
@@ -651,15 +721,21 @@ mod tests {
         assert_eq!(sim.pending_events(), 1);
         assert_eq!(sim.queued_bytes(), bytes);
         assert_eq!(sim.trace_digest(), digest);
-        sim.run_until(1, 1, |m, _, _| assert_eq!(m.payload, b"abcde")).unwrap();
+        sim.run_until(1, 1, |m, _, _| assert_eq!(m.payload, b"abcde"))
+            .unwrap();
     }
 
     #[test]
     fn invalid_configuration_and_identifiers_fail_closed() {
         assert!(matches!(
             DeterministicSimulator::new(
-                1, SimulatorLimits::default(),
-                FaultPolicy { drop_percent: 80, duplicate_percent: 30, corrupt_percent: 0 }
+                1,
+                SimulatorLimits::default(),
+                FaultPolicy {
+                    drop_percent: 80,
+                    duplicate_percent: 30,
+                    corrupt_percent: 0
+                }
             ),
             Err(SimError::InvalidConfiguration)
         ));
@@ -678,10 +754,14 @@ mod tests {
     #[test]
     fn invalid_horizon_does_not_consume_any_message() {
         let mut sim = clean();
-        sim.schedule_message(20, message("t1", "a", "b", b"kept")).unwrap();
+        sim.schedule_message(20, message("t1", "a", "b", b"kept"))
+            .unwrap();
         let early = sim.run_until(10, 1, |_, _, _| {}).unwrap();
         assert_eq!(early.current_time_ms, 10);
-        assert_eq!(sim.run_until(9, 1, |_, _, _| {}), Err(SimError::InvalidHorizon));
+        assert_eq!(
+            sim.run_until(9, 1, |_, _, _| {}),
+            Err(SimError::InvalidHorizon)
+        );
         assert_eq!(sim.pending_events(), 1);
         assert_eq!(sim.now_ms(), 10);
     }
@@ -709,7 +789,8 @@ mod tests {
         let mut a = clean();
         let mut b = clean();
         for sim in [&mut a, &mut b] {
-            sim.schedule_message(3, message("t1", "a", "b", b"payload")).unwrap();
+            sim.schedule_message(3, message("t1", "a", "b", b"payload"))
+                .unwrap();
         }
         let ra = a.run_until(3, 10, |_, _, _| {}).unwrap();
         let rb = b.run_until(3, 10, |_, _, _| {}).unwrap();

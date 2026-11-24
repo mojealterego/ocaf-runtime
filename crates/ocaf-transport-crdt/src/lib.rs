@@ -4,8 +4,8 @@
 //! requires TLS-only protocol whitelisting and mTLS material. It does NOT
 //! replace Zenoh's actual certificate chain validation and TLS handshake.
 
-pub mod ricci_routing;
 pub mod crdt;
+pub mod ricci_routing;
 
 use std::io::Read;
 use std::net::IpAddr;

@@ -1,7 +1,7 @@
 //! Durable single-node CAS using SQLite. State update and audit receipt are
 //! committed atomically. This is NOT PostgreSQL HA or a quorum fencing service.
-use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use crate::task_cas::{CasError, TaskAggregate, TaskState, TransitionReceipt};
+use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 
 #[derive(Debug)]
 pub enum DurableCasError {
@@ -11,10 +11,14 @@ pub enum DurableCasError {
     CorruptState,
 }
 impl From<rusqlite::Error> for DurableCasError {
-    fn from(e: rusqlite::Error) -> Self { Self::Database(e) }
+    fn from(e: rusqlite::Error) -> Self {
+        Self::Database(e)
+    }
 }
 impl From<CasError> for DurableCasError {
-    fn from(e: CasError) -> Self { Self::Domain(e) }
+    fn from(e: CasError) -> Self {
+        Self::Domain(e)
+    }
 }
 
 fn encode(state: TaskState) -> &'static str {
@@ -66,7 +70,7 @@ pub fn initialize(conn: &Connection) -> Result<(), DurableCasError> {
            fencing_epoch INTEGER NOT NULL,
            PRIMARY KEY(task_id, revision),
            FOREIGN KEY(task_id) REFERENCES ocaf_task_cas(task_id)
-         );"
+         );",
     )?;
     Ok(())
 }
@@ -75,8 +79,12 @@ pub fn initialize(conn: &Connection) -> Result<(), DurableCasError> {
 pub fn insert_initial(conn: &Connection, task: &TaskAggregate) -> Result<(), DurableCasError> {
     conn.execute(
         "INSERT INTO ocaf_task_cas(task_id,state,revision,fencing_epoch) VALUES(?1,?2,?3,?4)",
-        params![task.task_id, encode(task.state), to_sql_integer(task.revision)?,
-                to_sql_integer(task.fencing_epoch)?],
+        params![
+            task.task_id,
+            encode(task.state),
+            to_sql_integer(task.revision)?,
+            to_sql_integer(task.fencing_epoch)?
+        ],
     )?;
     Ok(())
 }
@@ -91,10 +99,13 @@ pub fn transition(
     next: TaskState,
 ) -> Result<TransitionReceipt, DurableCasError> {
     let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
-    let row: Option<(String, i64, i64)> = tx.query_row(
-        "SELECT state,revision,fencing_epoch FROM ocaf_task_cas WHERE task_id=?1",
-        params![task_id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?))
-    ).optional()?;
+    let row: Option<(String, i64, i64)> = tx
+        .query_row(
+            "SELECT state,revision,fencing_epoch FROM ocaf_task_cas WHERE task_id=?1",
+            params![task_id],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .optional()?;
     let (state, revision, epoch) = row.ok_or(DurableCasError::Conflict)?;
     let mut task = TaskAggregate {
         task_id: task_id.to_owned(),
@@ -108,7 +119,9 @@ pub fn transition(
         params![encode(next), to_sql_integer(receipt.new_revision)?, task_id,
                 to_sql_integer(expected_revision)?, to_sql_integer(authoritative_epoch)?],
     )?;
-    if affected != 1 { return Err(DurableCasError::Conflict); }
+    if affected != 1 {
+        return Err(DurableCasError::Conflict);
+    }
     tx.execute(
         "INSERT INTO ocaf_task_receipts(task_id,revision,previous_state,next_state,fencing_epoch) VALUES(?1,?2,?3,?4,?5)",
         params![task_id, to_sql_integer(receipt.new_revision)?, encode(receipt.previous),
@@ -125,12 +138,16 @@ mod tests {
     fn setup() -> Connection {
         let conn = Connection::open_in_memory().unwrap();
         initialize(&conn).unwrap();
-        insert_initial(&conn, &TaskAggregate {
-            task_id: "tenant-a/task-1".into(),
-            state: TaskState::Created,
-            revision: 0,
-            fencing_epoch: 7,
-        }).unwrap();
+        insert_initial(
+            &conn,
+            &TaskAggregate {
+                task_id: "tenant-a/task-1".into(),
+                state: TaskState::Created,
+                revision: 0,
+                fencing_epoch: 7,
+            },
+        )
+        .unwrap();
         conn
     }
 
@@ -139,30 +156,43 @@ mod tests {
         let mut conn = setup();
         let receipt = transition(&mut conn, "tenant-a/task-1", 0, 7, TaskState::Queued).unwrap();
         assert_eq!(receipt.previous, TaskState::Created);
-        let state: (String, i64) = conn.query_row(
-            "SELECT state,revision FROM ocaf_task_cas WHERE task_id='tenant-a/task-1'",
-            [], |r| Ok((r.get(0)?, r.get(1)?))
-        ).unwrap();
+        let state: (String, i64) = conn
+            .query_row(
+                "SELECT state,revision FROM ocaf_task_cas WHERE task_id='tenant-a/task-1'",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .unwrap();
         assert_eq!(state, ("Queued".into(), 1));
-        let count: i64 = conn.query_row("SELECT count(*) FROM ocaf_task_receipts", [], |r| r.get(0)).unwrap();
+        let count: i64 = conn
+            .query_row("SELECT count(*) FROM ocaf_task_receipts", [], |r| r.get(0))
+            .unwrap();
         assert_eq!(count, 1);
     }
 
     #[test]
     fn stale_revision_does_not_write_receipt() {
         let mut conn = setup();
-        assert!(matches!(transition(&mut conn, "tenant-a/task-1", 1, 7, TaskState::Queued),
-                         Err(DurableCasError::Domain(CasError::StaleRevision))));
-        let count: i64 = conn.query_row("SELECT count(*) FROM ocaf_task_receipts", [], |r| r.get(0)).unwrap();
+        assert!(matches!(
+            transition(&mut conn, "tenant-a/task-1", 1, 7, TaskState::Queued),
+            Err(DurableCasError::Domain(CasError::StaleRevision))
+        ));
+        let count: i64 = conn
+            .query_row("SELECT count(*) FROM ocaf_task_receipts", [], |r| r.get(0))
+            .unwrap();
         assert_eq!(count, 0);
     }
 
     #[test]
     fn stale_epoch_does_not_write_receipt() {
         let mut conn = setup();
-        assert!(matches!(transition(&mut conn, "tenant-a/task-1", 0, 8, TaskState::Queued),
-                         Err(DurableCasError::Domain(CasError::StaleFencingEpoch))));
-        let count: i64 = conn.query_row("SELECT count(*) FROM ocaf_task_receipts", [], |r| r.get(0)).unwrap();
+        assert!(matches!(
+            transition(&mut conn, "tenant-a/task-1", 0, 8, TaskState::Queued),
+            Err(DurableCasError::Domain(CasError::StaleFencingEpoch))
+        ));
+        let count: i64 = conn
+            .query_row("SELECT count(*) FROM ocaf_task_receipts", [], |r| r.get(0))
+            .unwrap();
         assert_eq!(count, 0);
     }
 
@@ -171,7 +201,9 @@ mod tests {
         let mut conn = setup();
         transition(&mut conn, "tenant-a/task-1", 0, 7, TaskState::Queued).unwrap();
         assert!(transition(&mut conn, "tenant-a/task-1", 0, 7, TaskState::Queued).is_err());
-        let count: i64 = conn.query_row("SELECT count(*) FROM ocaf_task_receipts", [], |r| r.get(0)).unwrap();
+        let count: i64 = conn
+            .query_row("SELECT count(*) FROM ocaf_task_receipts", [], |r| r.get(0))
+            .unwrap();
         assert_eq!(count, 1);
     }
 }

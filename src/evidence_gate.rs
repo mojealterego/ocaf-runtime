@@ -41,8 +41,7 @@ impl VerificationStatus {
     pub fn is_verified(self) -> bool {
         matches!(
             self,
-            Self::TestedLocal | Self::CiVerified
-                | Self::DeviceVerified | Self::ProductionApproved
+            Self::TestedLocal | Self::CiVerified | Self::DeviceVerified | Self::ProductionApproved
         )
     }
 }
@@ -100,17 +99,15 @@ fn nonzero(digest: &[u8; 32]) -> bool {
 }
 
 fn valid_label(value: &str, max: usize) -> bool {
-    !value.is_empty()
-        && value.len() <= max
-        && !value.chars().any(char::is_control)
+    !value.is_empty() && value.len() <= max && !value.chars().any(char::is_control)
 }
 
 fn valid_stage_id(value: &str) -> bool {
     !value.is_empty()
         && value.len() <= 64
-        && value.split('.').all(|part| {
-            !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit())
-        })
+        && value
+            .split('.')
+            .all(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit()))
 }
 
 fn field(bytes: &mut Vec<u8>, value: &[u8]) {
@@ -122,7 +119,10 @@ impl EvidenceReceipt {
     fn validate(&self) -> Result<(), EvidenceError> {
         if !valid_stage_id(&self.stage_id)
             || !matches!(self.source_commit.len(), 40 | 64)
-            || !self.source_commit.bytes().all(|byte| byte.is_ascii_hexdigit())
+            || !self
+                .source_commit
+                .bytes()
+                .all(|byte| byte.is_ascii_hexdigit())
             || self.signature_ed25519.len() != 64
         {
             return Err(EvidenceError::InvalidReceipt);
@@ -144,12 +144,20 @@ impl EvidenceReceipt {
                 | VerificationStatus::ImplementedUnverified,
                 ProofContext::Specification,
             ) => true,
-            (VerificationStatus::TestedLocal, ProofContext::Local { test_command, log_sha256 }) => {
-                valid_label(test_command, 512) && nonzero(log_sha256)
-            }
+            (
+                VerificationStatus::TestedLocal,
+                ProofContext::Local {
+                    test_command,
+                    log_sha256,
+                },
+            ) => valid_label(test_command, 512) && nonzero(log_sha256),
             (
                 VerificationStatus::CiVerified,
-                ProofContext::Ci { run_url, runner_image_sha256, log_sha256 },
+                ProofContext::Ci {
+                    run_url,
+                    runner_image_sha256,
+                    log_sha256,
+                },
             ) => {
                 run_url.starts_with("https://github.com/")
                     && run_url.contains("/actions/runs/")
@@ -159,7 +167,11 @@ impl EvidenceReceipt {
             }
             (
                 VerificationStatus::DeviceVerified,
-                ProofContext::Device { device_id, hardware_attestation_sha256, log_sha256 },
+                ProofContext::Device {
+                    device_id,
+                    hardware_attestation_sha256,
+                    log_sha256,
+                },
             ) => {
                 valid_label(device_id, 256)
                     && nonzero(hardware_attestation_sha256)
@@ -168,7 +180,8 @@ impl EvidenceReceipt {
             (
                 VerificationStatus::ProductionApproved,
                 ProofContext::Production {
-                    slsa_statement_sha256, release_authorization_sha256,
+                    slsa_statement_sha256,
+                    release_authorization_sha256,
                 },
             ) => nonzero(slsa_statement_sha256) && nonzero(release_authorization_sha256),
             _ => false,
@@ -196,25 +209,37 @@ impl EvidenceReceipt {
         }
         match &self.proof {
             ProofContext::Specification => field(&mut bytes, &[0]),
-            ProofContext::Local { test_command, log_sha256 } => {
+            ProofContext::Local {
+                test_command,
+                log_sha256,
+            } => {
                 field(&mut bytes, &[1]);
                 field(&mut bytes, test_command.as_bytes());
                 field(&mut bytes, log_sha256);
             }
-            ProofContext::Ci { run_url, runner_image_sha256, log_sha256 } => {
+            ProofContext::Ci {
+                run_url,
+                runner_image_sha256,
+                log_sha256,
+            } => {
                 field(&mut bytes, &[2]);
                 field(&mut bytes, run_url.as_bytes());
                 field(&mut bytes, runner_image_sha256);
                 field(&mut bytes, log_sha256);
             }
-            ProofContext::Device { device_id, hardware_attestation_sha256, log_sha256 } => {
+            ProofContext::Device {
+                device_id,
+                hardware_attestation_sha256,
+                log_sha256,
+            } => {
                 field(&mut bytes, &[3]);
                 field(&mut bytes, device_id.as_bytes());
                 field(&mut bytes, hardware_attestation_sha256);
                 field(&mut bytes, log_sha256);
             }
             ProofContext::Production {
-                slsa_statement_sha256, release_authorization_sha256,
+                slsa_statement_sha256,
+                release_authorization_sha256,
             } => {
                 field(&mut bytes, &[4]);
                 field(&mut bytes, slsa_statement_sha256);
@@ -250,7 +275,12 @@ impl EvidenceAuthorities {
                 return Err(EvidenceError::InvalidAuthority);
             }
         }
-        Ok(Self { local, ci, device, release })
+        Ok(Self {
+            local,
+            ci,
+            device,
+            release,
+        })
     }
 
     fn key_for(&self, status: VerificationStatus) -> Option<&[u8; 32]> {
@@ -279,9 +309,15 @@ pub trait ExternalEvidenceValidator: Send + Sync {
 pub struct DenyExternalEvidence;
 
 impl ExternalEvidenceValidator for DenyExternalEvidence {
-    fn verify_ci(&self, _receipt: &EvidenceReceipt) -> bool { false }
-    fn verify_device(&self, _receipt: &EvidenceReceipt) -> bool { false }
-    fn verify_release(&self, _receipt: &EvidenceReceipt) -> bool { false }
+    fn verify_ci(&self, _receipt: &EvidenceReceipt) -> bool {
+        false
+    }
+    fn verify_device(&self, _receipt: &EvidenceReceipt) -> bool {
+        false
+    }
+    fn verify_release(&self, _receipt: &EvidenceReceipt) -> bool {
+        false
+    }
 }
 
 pub struct EvidenceGate {
@@ -299,12 +335,14 @@ impl EvidenceGate {
         external: &dyn ExternalEvidenceValidator,
     ) -> Result<(), EvidenceError> {
         receipt.validate()?;
-        let raw_key = self.authorities.key_for(receipt.status)
+        let raw_key = self
+            .authorities
+            .key_for(receipt.status)
             .ok_or(EvidenceError::MissingAuthority)?;
         let key = PKey::public_key_from_raw_bytes(raw_key, Id::ED25519)
             .map_err(|_| EvidenceError::InvalidAuthority)?;
-        let mut verifier = Verifier::new_without_digest(&key)
-            .map_err(|_| EvidenceError::InvalidAuthority)?;
+        let mut verifier =
+            Verifier::new_without_digest(&key).map_err(|_| EvidenceError::InvalidAuthority)?;
         let accepted = verifier
             .verify_oneshot(&receipt.signature_ed25519, &receipt.signing_bytes())
             .map_err(|_| EvidenceError::InvalidSignature)?;
@@ -344,10 +382,15 @@ mod tests {
     }
 
     fn gate(keys: &(PKey<Private>, PKey<Private>, PKey<Private>, PKey<Private>)) -> EvidenceGate {
-        EvidenceGate::new(EvidenceAuthorities::new(
-            public(&keys.0), Some(public(&keys.1)),
-            Some(public(&keys.2)), Some(public(&keys.3)),
-        ).unwrap())
+        EvidenceGate::new(
+            EvidenceAuthorities::new(
+                public(&keys.0),
+                Some(public(&keys.1)),
+                Some(public(&keys.2)),
+                Some(public(&keys.3)),
+            )
+            .unwrap(),
+        )
     }
 
     fn receipt(status: VerificationStatus, proof: ProofContext) -> EvidenceReceipt {
@@ -366,8 +409,9 @@ mod tests {
 
     fn sign(receipt: &mut EvidenceReceipt, key: &PKey<Private>) {
         let mut signer = Signer::new_without_digest(key).unwrap();
-        receipt.signature_ed25519 =
-            signer.sign_oneshot_to_vec(&receipt.signing_bytes()).unwrap();
+        receipt.signature_ed25519 = signer
+            .sign_oneshot_to_vec(&receipt.signing_bytes())
+            .unwrap();
     }
 
     fn local() -> ProofContext {
@@ -386,47 +430,65 @@ mod tests {
         assert_eq!(gate.verify(&r, &DenyExternalEvidence), Ok(()));
         let mut changed = r.clone();
         changed.deterministic_seed += 1;
-        assert_eq!(gate.verify(&changed, &DenyExternalEvidence),
-            Err(EvidenceError::InvalidSignature));
+        assert_eq!(
+            gate.verify(&changed, &DenyExternalEvidence),
+            Err(EvidenceError::InvalidSignature)
+        );
         let mut changed = r.clone();
         changed.stage_id = "321".into();
-        assert_eq!(gate.verify(&changed, &DenyExternalEvidence),
-            Err(EvidenceError::InvalidSignature));
+        assert_eq!(
+            gate.verify(&changed, &DenyExternalEvidence),
+            Err(EvidenceError::InvalidSignature)
+        );
         let mut changed = r;
         changed.source_commit = "b".repeat(40);
-        assert_eq!(gate.verify(&changed, &DenyExternalEvidence),
-            Err(EvidenceError::InvalidSignature));
+        assert_eq!(
+            gate.verify(&changed, &DenyExternalEvidence),
+            Err(EvidenceError::InvalidSignature)
+        );
     }
 
     #[test]
     fn ci_signature_alone_does_not_promote_status() {
         let keys = keys();
         let gate = gate(&keys);
-        let mut r = receipt(VerificationStatus::CiVerified, ProofContext::Ci {
-            run_url: "https://github.com/mojealterego/ocaf-runtime/actions/runs/42".into(),
-            runner_image_sha256: [4; 32],
-            log_sha256: [5; 32],
-        });
+        let mut r = receipt(
+            VerificationStatus::CiVerified,
+            ProofContext::Ci {
+                run_url: "https://github.com/mojealterego/ocaf-runtime/actions/runs/42".into(),
+                runner_image_sha256: [4; 32],
+                log_sha256: [5; 32],
+            },
+        );
         sign(&mut r, &keys.0);
-        assert_eq!(gate.verify(&r, &DenyExternalEvidence),
-            Err(EvidenceError::InvalidSignature));
+        assert_eq!(
+            gate.verify(&r, &DenyExternalEvidence),
+            Err(EvidenceError::InvalidSignature)
+        );
         sign(&mut r, &keys.1);
-        assert_eq!(gate.verify(&r, &DenyExternalEvidence),
-            Err(EvidenceError::ExternalAttestationRequired));
+        assert_eq!(
+            gate.verify(&r, &DenyExternalEvidence),
+            Err(EvidenceError::ExternalAttestationRequired)
+        );
     }
 
     #[test]
     fn device_and_production_require_independent_attestation() {
         let keys = keys();
         let gate = gate(&keys);
-        let mut device = receipt(VerificationStatus::DeviceVerified, ProofContext::Device {
-            device_id: "android-device-01".into(),
-            hardware_attestation_sha256: [6; 32],
-            log_sha256: [7; 32],
-        });
+        let mut device = receipt(
+            VerificationStatus::DeviceVerified,
+            ProofContext::Device {
+                device_id: "android-device-01".into(),
+                hardware_attestation_sha256: [6; 32],
+                log_sha256: [7; 32],
+            },
+        );
         sign(&mut device, &keys.2);
-        assert_eq!(gate.verify(&device, &DenyExternalEvidence),
-            Err(EvidenceError::ExternalAttestationRequired));
+        assert_eq!(
+            gate.verify(&device, &DenyExternalEvidence),
+            Err(EvidenceError::ExternalAttestationRequired)
+        );
         let mut production = receipt(
             VerificationStatus::ProductionApproved,
             ProofContext::Production {
@@ -435,11 +497,15 @@ mod tests {
             },
         );
         sign(&mut production, &keys.3);
-        assert_eq!(gate.verify(&production, &DenyExternalEvidence),
-            Err(EvidenceError::ExternalAttestationRequired));
+        assert_eq!(
+            gate.verify(&production, &DenyExternalEvidence),
+            Err(EvidenceError::ExternalAttestationRequired)
+        );
         production.signature_ed25519.truncate(32);
-        assert_eq!(gate.verify(&production, &DenyExternalEvidence),
-            Err(EvidenceError::InvalidReceipt));
+        assert_eq!(
+            gate.verify(&production, &DenyExternalEvidence),
+            Err(EvidenceError::InvalidReceipt)
+        );
     }
 
     #[test]
@@ -448,51 +514,59 @@ mod tests {
         let gate = gate(&keys);
         let mut r = receipt(VerificationStatus::CiVerified, local());
         sign(&mut r, &keys.1);
-        assert_eq!(gate.verify(&r, &DenyExternalEvidence),
-            Err(EvidenceError::InvalidReceipt));
+        assert_eq!(
+            gate.verify(&r, &DenyExternalEvidence),
+            Err(EvidenceError::InvalidReceipt)
+        );
         r.proof = ProofContext::Ci {
             run_url: "http://localhost/fake".into(),
             runner_image_sha256: [4; 32],
             log_sha256: [5; 32],
         };
         sign(&mut r, &keys.1);
-        assert_eq!(gate.verify(&r, &DenyExternalEvidence),
-            Err(EvidenceError::InvalidReceipt));
+        assert_eq!(
+            gate.verify(&r, &DenyExternalEvidence),
+            Err(EvidenceError::InvalidReceipt)
+        );
         r.proof = ProofContext::Ci {
             run_url: "https://github.com/mojealterego/ocaf-runtime/actions/runs/42".into(),
             runner_image_sha256: [0; 32],
             log_sha256: [5; 32],
         };
         sign(&mut r, &keys.1);
-        assert_eq!(gate.verify(&r, &DenyExternalEvidence),
-            Err(EvidenceError::InvalidReceipt));
+        assert_eq!(
+            gate.verify(&r, &DenyExternalEvidence),
+            Err(EvidenceError::InvalidReceipt)
+        );
     }
 
     #[test]
     fn independent_python_ed25519_vector_is_byte_exact() {
         use sha2::{Digest, Sha256};
         fn hex_bytes(value: &str) -> Vec<u8> {
-            (0..value.len()).step_by(2).map(|index| {
-                u8::from_str_radix(&value[index..index + 2], 16).unwrap()
-            }).collect()
+            (0..value.len())
+                .step_by(2)
+                .map(|index| u8::from_str_radix(&value[index..index + 2], 16).unwrap())
+                .collect()
         }
         // Generated with Python cryptography Ed25519 from seed 00..1f.
         // See docs/evidence/OCAF_EVIDENCE_ED25519_VECTOR_2026-11-15.json.
-        let public: [u8; 32] = hex_bytes(
-            "03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8"
-        ).try_into().unwrap();
-        let gate = EvidenceGate::new(
-            EvidenceAuthorities::new(public, None, None, None).unwrap()
-        );
+        let public: [u8; 32] =
+            hex_bytes("03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8")
+                .try_into()
+                .unwrap();
+        let gate = EvidenceGate::new(EvidenceAuthorities::new(public, None, None, None).unwrap());
         let mut r = receipt(VerificationStatus::TestedLocal, local());
         r.signature_ed25519 = hex_bytes(concat!(
             "64134d7db962f2d57c36246857c78f8227dbeba24a815bc124863f8a1ad2839",
             "1656d5259435bf3ad7d8c4f225eaefed0ad5253a8c3ed1a5e01f26ec39803560a"
         ));
-        let expected = hex_bytes(
-            "2c29e3d404f0c748692072a42c02c7d8a4ec58e4a72dae4c1314ccec5ca2cebf"
+        let expected =
+            hex_bytes("2c29e3d404f0c748692072a42c02c7d8a4ec58e4a72dae4c1314ccec5ca2cebf");
+        assert_eq!(
+            Sha256::digest(r.signing_bytes()).as_slice(),
+            expected.as_slice()
         );
-        assert_eq!(Sha256::digest(r.signing_bytes()).as_slice(), expected.as_slice());
         assert_eq!(gate.verify(&r, &DenyExternalEvidence), Ok(()));
     }
 
@@ -503,16 +577,20 @@ mod tests {
             EvidenceAuthorities::new(public(&keys.0), Some(public(&keys.0)), None, None),
             Err(EvidenceError::InvalidAuthority)
         ));
-        let gate = EvidenceGate::new(EvidenceAuthorities::new(
-            public(&keys.0), None, None, None,
-        ).unwrap());
-        let mut r = receipt(VerificationStatus::CiVerified, ProofContext::Ci {
-            run_url: "https://github.com/mojealterego/ocaf-runtime/actions/runs/42".into(),
-            runner_image_sha256: [4; 32],
-            log_sha256: [5; 32],
-        });
+        let gate =
+            EvidenceGate::new(EvidenceAuthorities::new(public(&keys.0), None, None, None).unwrap());
+        let mut r = receipt(
+            VerificationStatus::CiVerified,
+            ProofContext::Ci {
+                run_url: "https://github.com/mojealterego/ocaf-runtime/actions/runs/42".into(),
+                runner_image_sha256: [4; 32],
+                log_sha256: [5; 32],
+            },
+        );
         sign(&mut r, &keys.1);
-        assert_eq!(gate.verify(&r, &DenyExternalEvidence),
-            Err(EvidenceError::MissingAuthority));
+        assert_eq!(
+            gate.verify(&r, &DenyExternalEvidence),
+            Err(EvidenceError::MissingAuthority)
+        );
     }
 }

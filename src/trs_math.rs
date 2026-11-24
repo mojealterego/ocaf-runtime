@@ -33,7 +33,11 @@ impl Clause3 {
     pub fn penalty(&self, assignment: u64) -> u8 {
         let unsatisfied = self.0.iter().all(|&lit| {
             let x = (assignment >> (lit.unsigned_abs() - 1)) & 1 != 0;
-            if lit > 0 { !x } else { x }
+            if lit > 0 {
+                !x
+            } else {
+                x
+            }
         });
         u8::from(unsatisfied)
     }
@@ -48,10 +52,7 @@ pub struct SatResult {
 
 /// Exhaustive exact finite baseline. Limited to 24 variables to avoid
 /// accidentally exposing an exponential algorithm as a production SAT solver.
-pub fn enumerate_3sat(
-    variables: usize,
-    clauses: &[Clause3],
-) -> Result<SatResult, TrsMathError> {
+pub fn enumerate_3sat(variables: usize, clauses: &[Clause3]) -> Result<SatResult, TrsMathError> {
     if variables == 0 || variables > 24 {
         return Err(TrsMathError::TooManyVariables);
     }
@@ -62,7 +63,10 @@ pub fn enumerate_3sat(
     let mut minimizers = Vec::new();
     let mut satisfying_count = 0;
     for assignment in 0..(1u64 << variables) {
-        let energy: u32 = clauses.iter().map(|c| u32::from(c.penalty(assignment))).sum();
+        let energy: u32 = clauses
+            .iter()
+            .map(|c| u32::from(c.penalty(assignment)))
+            .sum();
         if energy == 0 {
             satisfying_count += 1;
         }
@@ -74,7 +78,11 @@ pub fn enumerate_3sat(
             minimizers.push(assignment);
         }
     }
-    Ok(SatResult { minimum_energy, minimizers, satisfying_count })
+    Ok(SatResult {
+        minimum_energy,
+        minimizers,
+        satisfying_count,
+    })
 }
 
 /// First Betti number of the 1-dimensional graph as a cell complex:
@@ -100,7 +108,9 @@ pub fn graph_betti_one(vertices: usize, edges: &[(usize, usize)]) -> Result<usiz
         }
         let a = root(&mut parent, u);
         let b = root(&mut parent, v);
-        if a != b { parent[a] = b; }
+        if a != b {
+            parent[a] = b;
+        }
     }
     let components = (0..vertices).filter(|&v| root(&mut parent, v) == v).count();
     Ok(unique.len() + components - vertices)
@@ -186,6 +196,9 @@ mod tests {
         let after = graph_heat_step(&before, &[(0, 1)], 0.25).unwrap();
         assert_eq!(after, vec![0.75, 0.25]);
         assert_eq!(after.iter().sum::<f64>(), before.iter().sum::<f64>());
-        assert_eq!(graph_heat_step(&before, &[(0, 1)], 1.1), Err(TrsMathError::NonFinite));
+        assert_eq!(
+            graph_heat_step(&before, &[(0, 1)], 1.1),
+            Err(TrsMathError::NonFinite)
+        );
     }
 }

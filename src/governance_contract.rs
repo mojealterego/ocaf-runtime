@@ -471,8 +471,6 @@ mod tests {
         );
     }
 
-
-
     #[test]
     fn legacy_buy_requires_provider_check_even_with_signed_approval() {
         let c = contract();
@@ -746,7 +744,8 @@ mod tests {
     #[test]
     fn canonical_purchase_cannot_omit_provider_gate_after_human_approval() {
         let mut c = contract();
-        c.permissions.insert("procurement.commit_purchase_order".into());
+        c.permissions
+            .insert("procurement.commit_purchase_order".into());
         let mut r = request();
         r.action = "procurement.commit_purchase_order";
         let authority = ApprovalAuthority::new([9; 32]).unwrap();
@@ -761,7 +760,8 @@ mod tests {
     #[test]
     fn procurement_commit_requires_canonical_domain_risk_and_human_approval() {
         let mut c = contract();
-        c.permissions.insert("procurement.commit_purchase_order".into());
+        c.permissions
+            .insert("procurement.commit_purchase_order".into());
         let mut r = request();
         let provider = authorized_test_provider();
         r.uses_external_provider = true;
@@ -818,7 +818,8 @@ mod tests {
     #[test]
     fn compliance_evidence_validation_cannot_spoof_retrieval_domain() {
         let mut c = contract();
-        c.permissions.insert("compliance.validate_evidence_pack".into());
+        c.permissions
+            .insert("compliance.validate_evidence_pack".into());
         let mut r = request();
         r.action = "compliance.validate_evidence_pack";
         r.domain = Domain::CoreRetrieval;
@@ -831,7 +832,6 @@ mod tests {
         assert_eq!(c.evaluate(&r, None, 150), PreflightDecision::Continue);
     }
 
-
     #[test]
     fn known_low_risk_governed_actions_remain_admissible() {
         let mut c = contract();
@@ -841,7 +841,10 @@ mod tests {
             ("contract.extract_obligation", Domain::ContractObligations),
             ("contract.extract_obligations", Domain::ContractObligations),
             ("contract.record_action", Domain::ContractObligations),
-            ("compliance.validate_evidence_pack", Domain::ComplianceEvidence),
+            (
+                "compliance.validate_evidence_pack",
+                Domain::ComplianceEvidence,
+            ),
             (
                 "procurement.evaluate_supplier_dossier",
                 Domain::ProcurementScout,
@@ -861,7 +864,8 @@ mod tests {
     #[test]
     fn high_risk_procurement_commit_remains_forbidden() {
         let mut c = contract();
-        c.permissions.insert("procurement.commit_purchase_order".into());
+        c.permissions
+            .insert("procurement.commit_purchase_order".into());
         let mut r = request();
         r.action = "procurement.commit_purchase_order";
         r.domain = Domain::ProcurementScout;
@@ -875,9 +879,12 @@ mod tests {
     #[test]
     fn unknown_scoped_actions_fail_closed_even_when_explicitly_allowlisted() {
         let mut c = contract();
-        c.permissions.insert("procurement.commit_without_policy".into());
-        c.permissions.insert("contract.verify_without_policy".into());
-        c.permissions.insert("compliance.clear_without_policy".into());
+        c.permissions
+            .insert("procurement.commit_without_policy".into());
+        c.permissions
+            .insert("contract.verify_without_policy".into());
+        c.permissions
+            .insert("compliance.clear_without_policy".into());
         let mut r = request();
         r.risk = RiskTier::Low;
         for action in [
@@ -892,5 +899,4 @@ mod tests {
             );
         }
     }
-
 }

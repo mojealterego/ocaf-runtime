@@ -113,6 +113,9 @@ impl HybridIndex {
     /// Atomically replace text, associated embedding and lexical postings.
     /// The digest checks consistency with the caller's source bytes only; it
     /// cannot certify that a model/provider genuinely created the vector.
+    // Retain the established public contract; changing argument order/types
+    // would be a breaking API change for repository consumers.
+    #[allow(clippy::too_many_arguments)]
     pub fn upsert(
         &mut self,
         authenticated_tenant: &str,
@@ -139,7 +142,13 @@ impl HybridIndex {
             return Err(HybridError::SourceDigestMismatch);
         }
         let mut candidate = self.documents.clone();
-        candidate.insert(source_id.to_owned(), HybridDocument { body, vector: embedding });
+        candidate.insert(
+            source_id.to_owned(),
+            HybridDocument {
+                body,
+                vector: embedding,
+            },
+        );
         self.publish(candidate)
     }
 
@@ -168,7 +177,9 @@ impl HybridIndex {
         }
         let mut total_bytes = 0usize;
         for record in candidate.values() {
-            total_bytes = total_bytes.checked_add(record.body.len()).ok_or(HybridError::Limit)?;
+            total_bytes = total_bytes
+                .checked_add(record.body.len())
+                .ok_or(HybridError::Limit)?;
             if total_bytes > MAX_TOTAL_BYTES {
                 return Err(HybridError::Limit);
             }
@@ -276,7 +287,12 @@ mod tests {
         HybridIndex::new("tenant_a", "emb_v1", 2).unwrap()
     }
 
-    fn put(index: &mut HybridIndex, id: &str, body: &str, vector: &[f32]) -> Result<u64, HybridError> {
+    fn put(
+        index: &mut HybridIndex,
+        id: &str,
+        body: &str,
+        vector: &[f32],
+    ) -> Result<u64, HybridError> {
         let revision = index.revision();
         index.upsert(
             "tenant_a",
@@ -294,8 +310,15 @@ mod tests {
         let mut index = new_index();
         assert_eq!(put(&mut index, "a", "forest", &[1.0, 0.0]), Ok(1));
         assert_eq!(put(&mut index, "b", "desert", &[0.0, 1.0]), Ok(2));
-        let hits = index.search("tenant_a", "unmatched", &[1.0, 0.0], "emb_v1", 2).unwrap();
-        assert_eq!(hits.iter().map(|h| h.source_id.as_str()).collect::<Vec<_>>(), vec!["a", "b"]);
+        let hits = index
+            .search("tenant_a", "unmatched", &[1.0, 0.0], "emb_v1", 2)
+            .unwrap();
+        assert_eq!(
+            hits.iter()
+                .map(|h| h.source_id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["a", "b"]
+        );
         assert_eq!(hits[0].lexical_rank, None);
         assert_eq!(hits[0].semantic_rank, 1);
     }
@@ -305,7 +328,9 @@ mod tests {
         let mut index = new_index();
         put(&mut index, "vector", "alpha", &[1.0, 0.0]).unwrap();
         put(&mut index, "lexical", "needle needle needle", &[0.0, 1.0]).unwrap();
-        let hits = index.search("tenant_a", "needle", &[1.0, 0.0], "emb_v1", 2).unwrap();
+        let hits = index
+            .search("tenant_a", "needle", &[1.0, 0.0], "emb_v1", 2)
+            .unwrap();
         assert_eq!(hits[0].source_id, "lexical");
         assert_eq!(hits[0].lexical_rank, Some(1));
         assert_eq!(hits[0].semantic_rank, 2);
@@ -318,7 +343,9 @@ mod tests {
         let mut index = new_index();
         put(&mut index, "doc", "stale secret", &[0.0, 1.0]).unwrap();
         put(&mut index, "doc", "fresh", &[1.0, 0.0]).unwrap();
-        let hits = index.search("tenant_a", "stale", &[1.0, 0.0], "emb_v1", 1).unwrap();
+        let hits = index
+            .search("tenant_a", "stale", &[1.0, 0.0], "emb_v1", 1)
+            .unwrap();
         assert_eq!(hits[0].lexical_rank, None);
         assert_eq!(hits[0].semantic_rank, 1);
         assert_eq!(index.revision(), 2);
@@ -327,10 +354,46 @@ mod tests {
     #[test]
     fn tenant_and_embedding_provenance_gate_are_fail_closed() {
         let mut index = new_index();
-        assert_eq!(index.upsert("tenant_b", "id", "s".into(), vec![1.0, 0.0], "emb_v1", Sha256::digest(b"s").into(), 0), Err(HybridError::Invalid));
-        assert_eq!(index.search("tenant_b", "s", &[1.0, 0.0], "emb_v1", 1), Err(HybridError::Invalid));
-        assert_eq!(index.upsert("tenant_a", "id", "s".into(), vec![1.0, 0.0], "emb_v1", [0; 32], 0), Err(HybridError::SourceDigestMismatch));
-        assert_eq!(index.upsert("tenant_a", "id", "s".into(), vec![1.0, 0.0], "wrong", Sha256::digest(b"s").into(), 0), Err(HybridError::Invalid));
+        assert_eq!(
+            index.upsert(
+                "tenant_b",
+                "id",
+                "s".into(),
+                vec![1.0, 0.0],
+                "emb_v1",
+                Sha256::digest(b"s").into(),
+                0
+            ),
+            Err(HybridError::Invalid)
+        );
+        assert_eq!(
+            index.search("tenant_b", "s", &[1.0, 0.0], "emb_v1", 1),
+            Err(HybridError::Invalid)
+        );
+        assert_eq!(
+            index.upsert(
+                "tenant_a",
+                "id",
+                "s".into(),
+                vec![1.0, 0.0],
+                "emb_v1",
+                [0; 32],
+                0
+            ),
+            Err(HybridError::SourceDigestMismatch)
+        );
+        assert_eq!(
+            index.upsert(
+                "tenant_a",
+                "id",
+                "s".into(),
+                vec![1.0, 0.0],
+                "wrong",
+                Sha256::digest(b"s").into(),
+                0
+            ),
+            Err(HybridError::Invalid)
+        );
         assert_eq!(index.revision(), 0);
     }
 
@@ -338,11 +401,32 @@ mod tests {
     fn stale_revision_and_invalid_vectors_never_publish() {
         let mut index = new_index();
         put(&mut index, "id", "before", &[1.0, 0.0]).unwrap();
-        assert_eq!(index.upsert("tenant_a", "id", "after".into(), vec![1.0, 0.0], "emb_v1", Sha256::digest(b"after").into(), 0), Err(HybridError::Conflict));
-        for invalid in [vec![0.0, 0.0], vec![f32::NAN, 1.0], vec![1.0], vec![f32::INFINITY, 0.0]] {
-            assert_eq!(put(&mut index, "id", "after", &invalid), Err(HybridError::Invalid));
+        assert_eq!(
+            index.upsert(
+                "tenant_a",
+                "id",
+                "after".into(),
+                vec![1.0, 0.0],
+                "emb_v1",
+                Sha256::digest(b"after").into(),
+                0
+            ),
+            Err(HybridError::Conflict)
+        );
+        for invalid in [
+            vec![0.0, 0.0],
+            vec![f32::NAN, 1.0],
+            vec![1.0],
+            vec![f32::INFINITY, 0.0],
+        ] {
+            assert_eq!(
+                put(&mut index, "id", "after", &invalid),
+                Err(HybridError::Invalid)
+            );
         }
-        let hit = index.search("tenant_a", "before", &[1.0, 0.0], "emb_v1", 1).unwrap();
+        let hit = index
+            .search("tenant_a", "before", &[1.0, 0.0], "emb_v1", 1)
+            .unwrap();
         assert_eq!(hit[0].lexical_rank, Some(1));
         assert_eq!(index.revision(), 1);
     }
@@ -352,9 +436,26 @@ mod tests {
         let mut index = new_index();
         put(&mut index, "id", "secret", &[1.0, 0.0]).unwrap();
         assert_eq!(index.remove("tenant_a", "id", 1), Ok(2));
-        assert!(index.search("tenant_a", "secret", &[1.0, 0.0], "emb_v1", 1).unwrap().is_empty());
-        assert_eq!(index.remove("tenant_a", "id", 2), Err(HybridError::Conflict));
-        assert_eq!(index.upsert("tenant_a", "id", "replay".into(), vec![1.0, 0.0], "emb_v1", Sha256::digest(b"replay").into(), 1), Err(HybridError::Conflict));
+        assert!(index
+            .search("tenant_a", "secret", &[1.0, 0.0], "emb_v1", 1)
+            .unwrap()
+            .is_empty());
+        assert_eq!(
+            index.remove("tenant_a", "id", 2),
+            Err(HybridError::Conflict)
+        );
+        assert_eq!(
+            index.upsert(
+                "tenant_a",
+                "id",
+                "replay".into(),
+                vec![1.0, 0.0],
+                "emb_v1",
+                Sha256::digest(b"replay").into(),
+                1
+            ),
+            Err(HybridError::Conflict)
+        );
     }
 
     #[test]
@@ -362,11 +463,24 @@ mod tests {
         let mut index = new_index();
         put(&mut index, "zeta", "same", &[1.0, 0.0]).unwrap();
         put(&mut index, "alpha", "same", &[1.0, 0.0]).unwrap();
-        let hits = index.search("tenant_a", "same", &[1.0, 0.0], "emb_v1", 2).unwrap();
+        let hits = index
+            .search("tenant_a", "same", &[1.0, 0.0], "emb_v1", 2)
+            .unwrap();
         assert_eq!(hits[0].source_id, "alpha");
         assert_eq!(hits[1].source_id, "zeta");
-        assert_eq!(index.search("tenant_a", "same", &[1.0, 0.0], "emb_v1", 101), Err(HybridError::Limit));
-        assert_eq!(put(&mut index, "oversized", &"x".repeat(MAX_BODY_BYTES + 1), &[1.0, 0.0]), Err(HybridError::Limit));
+        assert_eq!(
+            index.search("tenant_a", "same", &[1.0, 0.0], "emb_v1", 101),
+            Err(HybridError::Limit)
+        );
+        assert_eq!(
+            put(
+                &mut index,
+                "oversized",
+                &"x".repeat(MAX_BODY_BYTES + 1),
+                &[1.0, 0.0]
+            ),
+            Err(HybridError::Limit)
+        );
         assert_eq!(index.revision(), 2);
         assert!(HybridIndex::new("tenant_a", "m", 0).is_err());
         assert!(HybridIndex::new("tenant_a", "m", 257).is_err());
