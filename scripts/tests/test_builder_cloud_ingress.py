@@ -9,6 +9,7 @@ import socket
 import ssl
 import struct
 import subprocess
+import sys
 import tempfile
 import threading
 import unittest
@@ -129,6 +130,21 @@ class IngressTest(unittest.TestCase):
                 with self.assertRaises(ValueError):read_frame(left,1)
         for raw in (b'1e400',b'NaN',b'{"a":1,"a":2}'):
             with self.assertRaises(ValueError):load_json(raw)
+    @unittest.skipUnless(sys.platform.startswith('linux') and hasattr(socket, 'SO_PEERCRED'),
+                         'Linux SO_PEERCRED required')
+    def test_unix_peer_pid_is_verified_before_forwarding(self):
+        original = self.ingress.config.bridge_pid
+        count = len(self.calls)
+        try:
+            self.ingress.config.bridge_pid = os.getpid() + 10000
+            self.assertEqual(self.request()[0],503)
+            self.assertEqual(len(self.calls),count, 'impostor must not receive bearer token')
+            self.ingress.config.bridge_pid = os.getpid()
+            self.assertEqual(self.request()[0],200)
+            self.assertEqual(len(self.calls),count+1)
+        finally:
+            self.ingress.config.bridge_pid = original
+
     def test_private_tls_key_permissions_are_enforced(self):
         config = self.ingress.config
         key = config.key

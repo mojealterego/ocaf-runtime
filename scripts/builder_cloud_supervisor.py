@@ -155,7 +155,8 @@ def main() -> int:
         identities=load_json(args.registry.read_bytes())
         with BridgeProcess(args.bridge_bin,args.bridge_config,socket_path,cancel=stop) as bridge:
             if stop.is_set():return 0
-            config=GatewayConfig(args.origin,args.cert,args.key,args.ca,identities,socket_path,args.assets)
+            config=GatewayConfig(args.origin,args.cert,args.key,args.ca,identities,socket_path,args.assets,
+                                 bridge_pid=bridge.process.pid)
             with Ingress((args.bind,args.port),config) as server:
                 if bridge.process.poll() is not None:raise StartupError('bridge exited during HTTPS startup')
                 print(f'OCAF Builder HTTPS listener ready (protocol probe only) port={server.server_address[1]}',flush=True)

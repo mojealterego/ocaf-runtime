@@ -27,6 +27,8 @@ import time
 from dataclasses import dataclass
 from urllib.parse import urlsplit
 
+from scripts.builder_cloud_peer import verify_bridge_peer
+
 MAX_BODY = 128 * 1024
 MAX_HEADERS = 16 * 1024
 MAX_FRAME = 256 * 1024
@@ -143,6 +145,7 @@ class GatewayConfig:
     identities: dict
     bridge: Path
     assets: Path
+    bridge_pid: int | None = None
 
     def validate(self):
         parsed = urlsplit(self.origin)
@@ -166,6 +169,8 @@ class GatewayConfig:
             if (not re.fullmatch('[0-9a-f]{64}', digest) or not isinstance(record, dict)
                     or set(record) != {'tenant','user'} or not all(identifier(v) for v in record.values())):
                 raise ValueError('invalid certificate identity')
+        if self.bridge_pid is not None and (type(self.bridge_pid) is not int or self.bridge_pid <= 0):
+            raise ValueError('invalid bridge PID')
         private_regular_file(self.key)
         private_bridge(self.bridge)
         return parsed.netloc
@@ -307,6 +312,7 @@ class Ingress(socketserver.ThreadingMixIn, socketserver.TCPServer):
             with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as peer:
                 deadline=time.monotonic()+TIMEOUT
                 peer.settimeout(remaining(deadline));peer.connect(str(self.config.bridge))
+                verify_bridge_peer(peer, expected_pid=self.config.bridge_pid)
                 write_frame(peer,envelope,remaining(deadline))
                 response=read_frame(peer,remaining(deadline))
             if (not isinstance(response,dict) or set(response) != {'status','body_b64'}
@@ -353,13 +359,16 @@ def main():
         parser.add_argument('--'+key,required=True,type=str if key=='origin' else Path)
     parser.add_argument('--bind',default='127.0.0.1')
     parser.add_argument('--port',type=int,default=8443)
+    parser.add_argument('--bridge-pid',type=int,default=None,
+                        help='pin Linux Unix peer PID (required for high-assurance standalone deployments)')
     args=parser.parse_args()
     try:
         private_regular_file(args.registry)
         private_regular_file(args.key)
     except (OSError, ValueError):
         parser.error('invalid private registry or TLS key')
-    config=GatewayConfig(args.origin,args.cert,args.key,args.ca,load_json(args.registry.read_bytes()),args.bridge,args.assets)
+    config=GatewayConfig(args.origin,args.cert,args.key,args.ca,load_json(args.registry.read_bytes()),args.bridge,args.assets,
+                         bridge_pid=args.bridge_pid)
     with Ingress((args.bind,args.port),config) as server:
         def stop(*_):threading.Thread(target=server.shutdown,daemon=True).start()
         signal.signal(signal.SIGINT,stop);signal.signal(signal.SIGTERM,stop)

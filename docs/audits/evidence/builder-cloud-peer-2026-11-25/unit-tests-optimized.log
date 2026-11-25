@@ -1,0 +1,13 @@
+test_expected_pid_requires_real_positive_integer (test_builder_cloud_peer.BridgePeerSecurityTests.test_expected_pid_requires_real_positive_integer) ... ok
+test_invalid_peer_credentials_fail_closed (test_builder_cloud_peer.BridgePeerSecurityTests.test_invalid_peer_credentials_fail_closed) ... ok
+test_mismatched_process_is_rejected (test_builder_cloud_peer.BridgePeerSecurityTests.test_mismatched_process_is_rejected) ... ok
+test_peer_credentials_syscall_failure_is_rejected (test_builder_cloud_peer.BridgePeerSecurityTests.test_peer_credentials_syscall_failure_is_rejected) ... ok
+test_real_different_process_cannot_impersonate_expected_bridge (test_builder_cloud_peer.BridgePeerSecurityTests.test_real_different_process_cannot_impersonate_expected_bridge) ... ok
+test_real_unix_socketpair_pins_expected_current_process (test_builder_cloud_peer.BridgePeerSecurityTests.test_real_unix_socketpair_pins_expected_current_process) ... ok
+test_unsupported_kernel_platform_is_denied_not_skipped (test_builder_cloud_peer.BridgePeerSecurityTests.test_unsupported_kernel_platform_is_denied_not_skipped) ... ok
+test_untrusted_peer_uid_is_rejected (test_builder_cloud_peer.BridgePeerSecurityTests.test_untrusted_peer_uid_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.897s
+
+OK
