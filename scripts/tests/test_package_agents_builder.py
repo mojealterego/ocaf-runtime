@@ -54,6 +54,17 @@ class PackageBuilderTests(unittest.TestCase):
         self.assertFalse(bundle.select_builder(".env"))
         self.assertFalse(bundle.select_builder("src/unrelated.rs"))
 
+    def test_cloud_peer_authentication_dependencies_are_required_in_focused_bundle(self):
+        # The deployed HTTPS ingress imports this module before accepting requests.
+        for path in (
+            "scripts/builder_cloud_peer.py",
+            "scripts/tests/test_builder_cloud_peer.py",
+        ):
+            with self.subTest(path=path):
+                self.assertTrue(bundle.select_builder(path))
+                self.assertIn(path, bundle.REQUIRED_BUILDER_FILES)
+        self.assertFalse(bundle.select_builder("scripts/untrusted_peer.py"))
+
     def test_reproducible_snapshots_and_sha256_manifest(self):
         paths = bundle.tracked_files(self.root)
         sha = bundle.current_sha(self.root)

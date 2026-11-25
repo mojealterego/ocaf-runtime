@@ -19,6 +19,9 @@ on:
       - "scripts/tests/test_builder_cloud_ingress.py"
       - "scripts/tests/test_builder_cloud_supervisor.py"
       - "scripts/tests/test_builder_cloud_peer.py"
+      - "scripts/package_agents_builder.py"
+      - "scripts/tests/test_package_agents_builder.py"
+      - "scripts/tests/test_builder_bundle_platform_coverage.py"
       - ".github/workflows/stage052-builder-cloud.yml"
   pull_request:
     paths:
@@ -38,6 +41,9 @@ on:
       - "scripts/tests/test_builder_cloud_ingress.py"
       - "scripts/tests/test_builder_cloud_supervisor.py"
       - "scripts/tests/test_builder_cloud_peer.py"
+      - "scripts/package_agents_builder.py"
+      - "scripts/tests/test_package_agents_builder.py"
+      - "scripts/tests/test_builder_bundle_platform_coverage.py"
       - ".github/workflows/stage052-builder-cloud.yml"
 permissions:
   contents: read
