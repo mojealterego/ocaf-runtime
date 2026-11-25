@@ -1,0 +1,43 @@
+name: OCAF v11 full-scope traceability integrity (not production acceptance)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/roadmap/canonical_v11_inventory.json"
+      - "docs/roadmap/agents_builder_om_evolution_v1.json"
+      - "docs/roadmap/agents_builder_products_v11.json"
+      - "docs/roadmap/missing_capabilities_v11.json"
+      - "docs/roadmap/unfinished_requirement_matrix_2026_11_26.json"
+      - "scripts/roadmap_traceability_gate.py"
+      - "scripts/tests/test_roadmap_traceability_gate.py"
+      - ".github/workflows/ocaf-roadmap-traceability.yml"
+  pull_request:
+    paths:
+      - "docs/roadmap/canonical_v11_inventory.json"
+      - "docs/roadmap/agents_builder_om_evolution_v1.json"
+      - "docs/roadmap/agents_builder_products_v11.json"
+      - "docs/roadmap/missing_capabilities_v11.json"
+      - "docs/roadmap/unfinished_requirement_matrix_2026_11_26.json"
+      - "scripts/roadmap_traceability_gate.py"
+      - "scripts/tests/test_roadmap_traceability_gate.py"
+      - ".github/workflows/ocaf-roadmap-traceability.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Compile source-traceability gate
+        run: python3 -B -m py_compile scripts/roadmap_traceability_gate.py scripts/tests/test_roadmap_traceability_gate.py
+      - name: Deterministic source-traceability negative tests
+        run: python3 -B -m unittest discover -s scripts/tests -p test_roadmap_traceability_gate.py -v
+      - name: Validate every source record against pinned input blobs
+        run: python3 -B scripts/roadmap_traceability_gate.py --repo .
