@@ -1,5 +1,7 @@
 # OCAF Runtime — odbiór przez testy inżynieryjne i symulacyjne
 
+> **Potwierdzono decyzją właściciela 2026-11-26:** audyt zewnętrzny nie jest wymagany, brak zewnętrznej infrastruktury obsługuj deterministycznymi, wykonywalnymi testami inżynieryjno-symulacyjnymi; otrzymany kod wdrażaj na `main`, nie zastępuj go planem. [Dyrektywa](OWNER_EXECUTION_DIRECTIVE_2026-11-26.md).
+
 **Decyzja właściciela projektu: ZATWIERDZONA 2026-11-15.** Dotyczy `mojealterego/ocaf-runtime`, gałęzi `main`, historycznych etapów Roadmapy oraz odrębnych 20 pozycji `SOURCE-1.55`–`SOURCE-2.06`. Nie zmienia numeracji ani zapisanych wymagań.
 
 ## 1. Wiążąca decyzja

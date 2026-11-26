@@ -1,6 +1,9 @@
 # OCAF Runtime — AGENTS.md
 ## Repository Steward · Agent Foundry · Tool Engineering · Evidence-Driven Delivery
 
+**WIAZACA DYREKTYWA 2026-11-26 — dla kazdego asystenta i kolejnej sesji:** [docs/OWNER_EXECUTION_DIRECTIVE_2026-11-26.md](docs/OWNER_EXECUTION_DIRECTIVE_2026-11-26.md). Audyt zewnetrzny NIE jest wymagany. Niedostepna zewnetrzna infrastruktura → realny kod + odtwarzalne deterministyczne testy inzynieryjno-symulacyjne. Dostarczony przez wlasciciela kod → wdrozenie i testy na `main`, nie plan. Nie falszuj PASS, wydan, natywnych buildow ani produkcji.
+
+
 > **Zakres:** wszystkie katalogi repozytorium `mojealterego/ocaf-runtime`, gałąź zapisu **`main`**. Instrukcje dotyczą każdego wykonawcy AI, agenta kodującego i współpracującego roju; nie są deklaracją, że taki agent już działa autonomicznie. Sam plik `AGENTS.md` jest kontraktem operacyjnym, **nie procesem, usługą, modelem ani dowodem uruchomienia**.
 >
 > **Misja:** utrzymywać OCAF Runtime w stanie możliwym do zweryfikowania; usuwać rzeczywiste defekty; realizować wszystkie obowiązujące etapy bez naruszania historii; budować bezpieczne, mierzalne produkty Agents Builder, agentów OCAF, roje i narzędzia OMAt/OMAs. Maksymalizacja jakości nie znosi praw fizyki, limitów budżetu, uprawnień, kryteriów odbioru ani obowiązku przedstawiania dowodów.
@@ -27,7 +30,7 @@
 4. **RED:** utwórz test odtwarzający brak/defekt, potwierdź jego porażkę (dla zmian zachowania). Dla dokumentów i samej konfiguracji bez zmiany działania uzasadniona jest weryfikacja statyczna.
 5. **GREEN:** wprowadź najmniejszą kompletną poprawkę bez pustych implementacji, `todo!()`, `unimplemented!()` ani fikcyjnych adapterów. Rozwiązanie ma spełniać realny kontrakt, nie tylko test.
 6. **HARDEN:** uruchom odpowiednie unit/integration/contract/E2E, property-based/fuzz/chaos/security, formatter, Clippy i testy regresji. Sprawdź współbieżność, idempotencję, retry/backoff, timeouty, ograniczenia zasobów, telemetrię i recovery w zakresie zmiany.
-7. **REVIEW:** porównaj diff z wymaganiem, sprawdź zależności, SBOM, licencje, supply chain, niejawne skutki uboczne, wycieki danych i błędy autoryzacji. Wymagaj drugiego, niezależnego przeglądu tam, gdzie wymaga tego bramka; agent nie udaje audytora zewnętrznego.
+7. **REVIEW:** porównaj diff z wymaganiem, sprawdź zależności, SBOM, licencje, supply chain, niejawne skutki uboczne, wycieki danych i błędy autoryzacji. Wymagaj niezależnej logicznie weryfikacji wewnętrznej tam, gdzie wymaga tego bramka; nie wymagaj audytora zewnętrznego i nie udawaj przeprowadzonej kontroli.
 8. **INTEGRATE:** zapisuj **wyłącznie na `main`**, po ponownym odczycie HEAD, jako fast-forward z kontrolą optimistic concurrency / `expected_sha`; przy konflikcie ponownie odczytaj i scal semantycznie. **Bez force-push, destrukcyjnego resetu i ukrytego nadpisania cudzej pracy.**
 9. **VERIFY:** sprawdź wynik commita, uruchomiony workflow, pełne logi i zakończenie bramek na **dokładnie tym SHA**. Nie opisuj testu jako PASS, gdy ma status queued/in_progress/skipped/failure.
 10. **RECORD & CONTINUE:** zaktualizuj właściwe dowody i status; pozostaw otwarte kryteria bez potwierdzenia. Kontynuuj następną niezależną pracę w dostępnym przebiegu, zamiast zatrzymywać się na samej koncepcji. Działanie pomiędzy przebiegami wymaga rzeczywistego schedulera/uruchomionego wykonawcy, którego `AGENTS.md` nie tworzy.
@@ -91,7 +94,7 @@ Dla każdego nowego narzędzia OMAt/MCP/A2A/OpenAPI/Zenoh definiuj **najpierw ko
 - `principal`, `tenant`, `capability_scope`, policy decision, allowlisted hosts/paths, data classification, expiry, revocation i provenance; podpis/replay guard tam, gdzie wymagany.
 - `side_effect_class`: read-only, reversible, destructive, external-cost; wymagany poziom zatwierdzenia, idempotency key i obsługa kompensacji.
 - Timeout, retry/backoff tylko przy bezpiecznej semantyce idempotentnej, rate limit, concurrency bound, backpressure, circuit breaker, cancellation i trace context.
-- Adaptery testowane **na rzeczywistych endpointach/procesach** dla deklarowanej integracji; mock jest wyłącznie dowodem dla mocka. Testy negatywne: niepoprawny token, inny tenant, replay, zły podpis, SSRF, injection, limit zasobów i niedostępny downstream.
+- Adaptery testuj na rzeczywistych endpointach/procesach, gdy są dostępne; w przeciwnym razie wykonaj deterministyczne symulacje zgodne z kontraktem. Mock pozostaje dowodem tylko dla mocka, nie fizycznego backendu. Testy negatywne: niepoprawny token, inny tenant, replay, zły podpis, SSRF, injection, limit zasobów i niedostępny downstream.
 - Rejestrowanie narzędzia w katalogu nie oznacza integracji end-to-end. Publikacja wymaga dowodu uruchomienia, wersji, RBAC i ścieżki rollback.
 
 Nie twórz zastępczych „uniwersalnych” endpointów pozwalających agentowi wykonywać dowolną komendę, nie pozwalaj modelowi samodzielnie podwyższać grantów ani zmieniać policy engine. Rozdziel tool discovery, authorization, execution i effect commit.
@@ -102,7 +105,7 @@ Zachowaj i osobno weryfikuj: **Cloud/Windows/macOS/Android/iOS × Code/NoCode = 
 
 - Nie przedstawiaj ograniczonego JSON DSL jako dowolnego kompilowalnego Rust; nie obiecuj bezstratnego Code↔NoCode dla nieobsługiwanego kodu.
 - Nie przedstawiaj PWA jako osobnego natywnego Windows/macOS/Android/iOS.
-- Każdy wariant: uruchamialna aplikacja, rzeczywisty GUI, trwałe projekty, permission-aware edits, testy E2E docelowej platformy, artefakt instalacyjny/publikacyjny i niezależne kryteria akceptacji.
+- Każdy wariant: uruchamialny kod aplikacji, GUI, trwałe projekty, permission-aware edits, testy docelowej platformy gdy dostępna lub deterministyczne testy inżynieryjno-symulacyjne o ograniczonym zakresie przy jej braku; build i wydanie natywne wymagają osobnych dowodów, bez obowiązkowego audytu zewnętrznego.
 - Źródło planu produktów: `docs/AGENTS_BUILDER_CODE_NOCODE_5_PLATFORMS.md`, `docs/BUILDER_INSTALLER_MATRIX.md`, `docs/roadmap/agents_builder_products_v11.json`. Zachowuj statusy niespełnionych wymagań.
 
 ### 8. Poligon agentów OCAF — docelowe środowisko, nie fikcyjny certyfikat
