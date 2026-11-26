@@ -1,0 +1,14 @@
+{
+  "schema_version": 2,
+  "id": "OCAF-OWNER-EXECUTION-POLICY-2026-11-26",
+  "repository": "mojealterego/ocaf-runtime",
+  "branch": "main",
+  "external_audit_required": false,
+  "internal_independent_evidence_review_required": true,
+  "deterministic_simulation_for_unavailable_external_infrastructure": true,
+  "simulation_must_not_claim_real_hardware_or_production": true,
+  "when_owner_supplies_code": "IMPLEMENT_TEST_COMMIT_NOT_ONLY_DOCUMENT",
+  "no_automatic_promotion_of_status": true,
+  "source": "docs/OWNER_EXECUTION_DIRECTIVE_2026-11-26.md",
+  "effective_date": "2026-11-26"
+}

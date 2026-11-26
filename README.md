@@ -1,5 +1,9 @@
 <!-- OCAF_README_ROADMAP_BEGIN -->
 
+**DECYZJA WŁAŚCICIELA / 2026-11-26 — obowiązuje wszystkie etapy OCAF Runtime.** **AUDYT ZEWNĘTRZNY NIE JEST WYMAGANY** przez wewnętrzne bramki odbioru. Gdy zewnętrzny host, KVM, HSM, płatny backend lub sprzęt są niedostępne, należy wykonać rzeczywisty kod i deterministyczne inżynieryjne testy symulacyjne z kontrolowanymi awariami, odtwarzalnym dowodem oraz wyraźnym rozróżnieniem od prawdziwego sprzętu/produkcji. Przekazane przez właściciela pliki i kod muszą zostać faktycznie zintegrowane, przetestowane i zapisane na `main` — nie zastąpione planem. [Dyrektywa](docs/OWNER_EXECUTION_DIRECTIVE_2026-11-26.md) · [Protokół symulacyjny](docs/ENGINEERING_SIMULATION_ACCEPTANCE.md). Statusy etapów i produkcji nie są podnoszone bez dowodu.
+
+
+
 **2026-11-07 / 0.53 — Linux GUI PNG structural integrity (IMPLEMENTED_CI_PENDING):** RED regression `67bbf61c` adds CRC/IEND/truncation/trailing-data negative checks; GREEN `38661f37` adds chunk framing/CRC/IHDR/IDAT/IEND validation; fixture corrections `66f1fc72`, `1a2fe830` replace synthetic headers with complete PNG; `db71f8b4` permits valid indexed PNG palettes with ordering constraints. Standalone local algorithm tests 8/8 PASS; full repository unittest, Rust CI and native Linux GUI E2E on final SHA remain UNVERIFIED. Ten products and production approval unchanged.
 
 
