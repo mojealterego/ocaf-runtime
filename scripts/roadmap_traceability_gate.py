@@ -48,6 +48,11 @@ def _unique(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 def _read(root: Path, name: str) -> tuple[dict[str, Any], bytes]:
     path = root / name
     try:
+        parent = root
+        for component in Path(name).parts:
+            parent = parent / component
+            if parent.is_symlink():
+                raise ScopeError(f"symlinked input parent or leaf: {name}")
         if path.is_symlink() or not path.is_file():
             raise ScopeError(f"missing or symlinked input: {name}")
         size = path.stat().st_size

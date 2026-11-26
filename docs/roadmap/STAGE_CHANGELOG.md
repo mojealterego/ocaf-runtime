@@ -1,3 +1,5 @@
+**2026-11-26 / traceability gate symlink parent (SECURITY_REVIEWED / 13 TESTS LOCAL PASS):** Odtworzono i naprawiono brak odmowy symlinkowanego katalogu pośredniego. RED 1 FAIL / GREEN 13 PASS zwykły i -O. Granica TOCTOU nadal jawnie otwarta. Dowody: `docs/audits/OCAF_TRACEABILITY_GATE_IMPLEMENTED_2026_11_26.md`.
+
 **2026-11-26 / GATE-01/08 — weryfikacja pełnego źródłowego zakresu 525 rekordów (IMPLEMENTED / 12 TESTS LOCAL PASS / CI_PENDING):** Nowy fail-closed gate porównuje identyfikatory, kryteria odbioru, statusy i Git blob SHA czterech manifestów. Testy jednostkowe uruchomione lokalnie 12/12 PASS; integracja CI i pełny odbiór OCAF nadal otwarte. Raport `docs/audits/OCAF_TRACEABILITY_GATE_IMPLEMENTED_2026_11_26.md`.
 
 **2026-11-26 / OCAF 0.52 — poprawka kompletności focused ZIP (SOURCE_IMPLEMENTED / TESTS_AND_CI_PENDING):** Wymagane przez HTTPS ingress `builder_cloud_peer.py` i testy zostały włączone do manifestów źródłowych, testów pokrycia archiwum i wyzwalaczy CI. Pełny runtime ZIP E2E niezweryfikowany; brak odbioru produktu i wdrożenia. Raport: `docs/audits/BUILDER_CLOUD_SOURCE_BUNDLE_PEER_CLOSURE_2026_11_26.md`.

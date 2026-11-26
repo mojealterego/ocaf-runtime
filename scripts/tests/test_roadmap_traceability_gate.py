@@ -152,6 +152,15 @@ class TraceabilityGateTests(unittest.TestCase):
         with self.assertRaisesRegex(ScopeError, 'duplicate JSON key'):
             validate(self.root)
 
+    def test_rejects_symlinked_parent_directory(self):
+        self.save()
+        original = self.root / 'docs' / 'roadmap'
+        target = self.root / 'outside-repository-root'
+        original.rename(target)
+        original.symlink_to(target, target_is_directory=True)
+        with self.assertRaisesRegex(ScopeError, 'symlinked'):
+            validate(self.root)
+
     def test_rejects_symlinked_matrix(self):
         self.save()
         p = self.root / MATRIX
