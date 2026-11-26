@@ -40,9 +40,10 @@ HEADER = re.compile(r'[A-Za-z0-9-]+\Z')
 ASSETS = {
     '/index.html': 'text/html; charset=utf-8', '/style.css': 'text/css; charset=utf-8',
     '/manifest.webmanifest': 'application/manifest+json', '/sw.js': 'text/javascript; charset=utf-8',
+    '/agent-catalog.json': 'application/json; charset=utf-8',
     **{'/'+name+'.mjs': 'text/javascript; charset=utf-8' for name in (
         'app','editor','strict-json','cloud','preview-gate','i18n','credentials',
-        'models','integrations-ui','runner-client')},
+        'models','integrations-ui','runner-client','agent-catalog','agent-catalog-ui')},
 }
 
 

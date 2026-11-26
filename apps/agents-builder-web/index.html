@@ -163,6 +163,17 @@
     <button id="runner-send" type="button" class="primary" data-i18n="runner_send">Generuj lokalnie</button>
     <pre id="runner-answer" aria-live="polite"></pre>
   </section>
+  <section class="integrations public-agent-catalog" aria-labelledby="catalog-heading">
+    <div class="integration-heading"><h2 id="catalog-heading">Katalog OCAF — agenci i roje</h2></div>
+    <p class="muted">111 agentów DRAFT i 33 roje referencyjne. Bez certyfikatów, aktywacji i ofert.</p>
+    <label for="catalog-query">Szukaj po nazwie, ID lub specjalizacji</label>
+    <input id="catalog-query" type="search" maxlength="256" autocomplete="off">
+    <output id="catalog-status" role="status" aria-live="polite">Ładowanie katalogu…</output>
+    <div class="public-catalog-grid">
+      <ol id="catalog-list" aria-label="Agenci i roje"></ol>
+      <section id="catalog-detail" aria-label="Dossier i status" aria-live="polite"></section>
+    </div>
+  </section>
   <p id="message" role="status" aria-live="polite"></p>
 </main>
 <footer>OCAF / Agents Builder · Stage 0.51 partial · Restricted typed DSL · No automatic publishing</footer>

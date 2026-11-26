@@ -23,6 +23,10 @@ on:
       - "src/model_router.rs"
       - "tests/builder_*.rs"
       - "scripts/package_agents_builder.py"
+      - "scripts/build_public_agent_catalog.mjs"
+      - "scripts/tests/test_public_catalog.mjs"
+      - "docs/agents/agent_registry_111.json"
+      - "docs/agents/swarm_groups_v1.json"
       - "scripts/builder_cloud_ingress.py"
       - "scripts/builder_cloud_peer.py"
       - "scripts/builder_cloud_supervisor.py"
@@ -62,6 +66,10 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: "22"
+      - name: Repository-backed catalog source integrity
+        run: |
+          node scripts/build_public_agent_catalog.mjs --check
+          node --test scripts/tests/test_public_catalog.mjs
       - name: Packaging unit and security tests
         run: python3 -m unittest discover -s scripts/tests -p test_package_agents_builder.py -v
       - name: Eight-platform evidence verifier regression

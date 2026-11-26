@@ -35,6 +35,7 @@ STATIC = frozenset({
     "i18n.mjs", "credentials.mjs", "models.mjs", "integrations-ui.mjs",
     "runner-client.mjs", "manifest.webmanifest", "sw.js",
     "strict-json.mjs", "preview-gate.mjs",
+    "agent-catalog.mjs", "agent-catalog-ui.mjs", "agent-catalog.json",
 })
 MIME = {
     ".html": "text/html; charset=utf-8",
@@ -42,6 +43,7 @@ MIME = {
     ".js": "text/javascript; charset=utf-8",
     ".css": "text/css; charset=utf-8",
     ".webmanifest": "application/manifest+json",
+    ".json": "application/json; charset=utf-8",
 }
 MAX_REQUEST = 32768
 MAX_RESPONSE = 512 * 1024

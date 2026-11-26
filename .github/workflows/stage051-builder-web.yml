@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - apps/agents-builder-web/**
+      - docs/agents/agent_registry_111.json
+      - docs/agents/swarm_groups_v1.json
+      - scripts/build_public_agent_catalog.mjs
+      - scripts/tests/test_public_catalog.mjs
       - scripts/tests/test_agents_builder_local_runner.py
       - scripts/tests/test_local_runner_http_admission.py
       - tests/builder_web_contract.rs
@@ -26,8 +30,14 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
+      - name: Verify source-backed fleet roster
+        run: |
+          node scripts/build_public_agent_catalog.mjs --check
+          node --test scripts/tests/test_public_catalog.mjs
       - name: Web editor syntax
         run: |
+          node --check apps/agents-builder-web/agent-catalog.mjs
+          node --check apps/agents-builder-web/agent-catalog-ui.mjs
           node --check apps/agents-builder-web/editor.mjs
           node --check apps/agents-builder-web/app.mjs
           node --check apps/agents-builder-web/cloud.mjs

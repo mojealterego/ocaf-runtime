@@ -4,6 +4,7 @@ import {
 } from './editor.mjs';
 import {CloudWorkspaceClient, CloudApiError} from './cloud.mjs';
 import {initIntegrations} from './integrations-ui.mjs';
+import {initPublicCatalog} from './agent-catalog-ui.mjs';
 import {PreviewGate} from './preview-gate.mjs';
 
 const TENANT = 'local';
@@ -619,6 +620,7 @@ function init() {
     notify: (message, isError=false) => isError ? fail(new Error(message)) : notice(message)
   });
   render();
+  initPublicCatalog({document}).catch(() => {});
   notice('Offline workspace ready. Code/NoCode, Local/Cloud and model profiles configured; no automatic execution.');
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
