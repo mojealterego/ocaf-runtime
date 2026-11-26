@@ -1,0 +1,37 @@
+name: OCAF Agent Fleet 111 fail-closed structural integrity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/validate_agent_fleet_111.py"
+      - "scripts/tests/test_validate_agent_fleet_111.py"
+      - "docs/agents/agent_registry_111.json"
+      - "OCAF Agents MOJEALTEREGO/AGENT-FLEET-111/**"
+      - ".github/workflows/ocaf-agent-fleet-structural.yml"
+  pull_request:
+    paths:
+      - "scripts/validate_agent_fleet_111.py"
+      - "scripts/tests/test_validate_agent_fleet_111.py"
+      - "docs/agents/agent_registry_111.json"
+      - "OCAF Agents MOJEALTEREGO/AGENT-FLEET-111/**"
+      - ".github/workflows/ocaf-agent-fleet-structural.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  structure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Compile structural gate and real-fixture tests
+        run: python3 -B -m py_compile scripts/validate_agent_fleet_111.py scripts/tests/test_validate_agent_fleet_111.py
+      - name: Fail-closed negative and optimized Python tests
+        run: python3 -B -m unittest discover -s scripts/tests -p test_validate_agent_fleet_111.py -v
+      - name: Inspect real 111 source packages in optimized Python
+        run: python3 -O scripts/validate_agent_fleet_111.py
