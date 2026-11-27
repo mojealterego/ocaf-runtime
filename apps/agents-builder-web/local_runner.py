@@ -435,8 +435,8 @@ class LocalHandler(BaseHTTPRequestHandler):
 
     def allowed_host(self) -> bool:
         port = self.server.server_address[1]
-        host = self.headers.get("Host", "")
-        return host in (f"127.0.0.1:{port}", f"localhost:{port}")
+        hosts = self.headers.get_all("Host", [])
+        return len(hosts) == 1 and hosts[0] in (f"127.0.0.1:{port}", f"localhost:{port}")
 
     def expected_origin(self) -> str:
         return f"http://{self.headers.get('Host')}"
@@ -444,14 +444,18 @@ class LocalHandler(BaseHTTPRequestHandler):
     def authorized(self, write=False) -> None:
         if not self.allowed_host():
             raise RunnerError(403, "request: invalid Host header")
-        origin = self.headers.get("Origin")
+        origins = self.headers.get_all("Origin", [])
+        if len(origins) > 1:
+            raise RunnerError(403, "request: ambiguous Origin header")
+        origin = origins[0] if origins else None
         if origin is not None and origin != self.expected_origin():
             raise RunnerError(403, "request: cross-origin denied")
         if write and origin != self.expected_origin():
             raise RunnerError(403, "request: Origin required")
-        authorization = self.headers.get("Authorization", "")
+        authorizations = self.headers.get_all("Authorization", [])
         expected = "Bearer " + self.server.token
-        if not secrets.compare_digest(authorization, expected):
+        if (len(authorizations) != 1 or not authorizations[0].isascii()
+                or not secrets.compare_digest(authorizations[0], expected)):
             raise RunnerError(401, "request: invalid local session token")
 
     def route(self) -> str:
@@ -500,13 +504,18 @@ class LocalHandler(BaseHTTPRequestHandler):
             if path not in ("/v1/local-runner/start", "/v1/local-runner/chat",
                             "/v1/local-runner/stop", "/v1/local-runner/import"):
                 raise RunnerError(404, "not found")
-            mime = self.headers.get("Content-Type", "").split(";")[0].strip()
+            content_types = self.headers.get_all("Content-Type", [])
+            if len(content_types) != 1 or "," in content_types[0]:
+                raise RunnerError(415, "request: ambiguous or missing Content-Type")
+            mime = content_types[0].split(";", 1)[0].strip()
             if path == "/v1/local-runner/import":
                 if mime != "application/octet-stream":
                     raise RunnerError(415, "request: binary GGUF required")
                 size = self.content_length()
-                name = self.headers.get("X-OCAF-Model-Name", "")
-                result = self.server.runner.import_model(name, self.rfile, size)
+                names = self.headers.get_all("X-OCAF-Model-Name", [])
+                if len(names) != 1:
+                    raise RunnerError(400, "request: ambiguous or missing model name")
+                result = self.server.runner.import_model(names[0], self.rfile, size)
                 self.json_response(201, result)
                 return
             if mime != "application/json":
