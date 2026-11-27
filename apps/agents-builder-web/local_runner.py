@@ -104,16 +104,26 @@ def check_gguf(root: Path, filename: str, max_bytes: int) -> dict:
         raise RunnerError(422, "model: invalid GGUF filename")
     path = root / filename
     try:
-        if path.is_symlink() or path.resolve(strict=True).parent != root:
-            raise RunnerError(422, "model: symlink or escaped model directory")
-        with path.open("rb") as handle:
-            metadata = os.fstat(handle.fileno())
-            if not stat.S_ISREG(metadata.st_mode) or not 24 <= metadata.st_size <= max_bytes:
-                raise RunnerError(422, "model: invalid file size or type")
-            header = handle.read(24)
+        if path.resolve(strict=True).parent != root:
+            raise RunnerError(422, "model: escaped model directory")
+        expected = path.lstat()
+        if not stat.S_ISREG(expected.st_mode) or not 24 <= expected.st_size <= max_bytes:
+            raise RunnerError(422, "model: invalid file size or type")
+        flags = os.O_RDONLY | getattr(os, "O_BINARY", 0)
+        flags |= getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+        fd = os.open(path, flags)
+        try:
+            metadata = os.fstat(fd)
+            if (not stat.S_ISREG(metadata.st_mode)
+                    or not 24 <= metadata.st_size <= max_bytes
+                    or (metadata.st_dev, metadata.st_ino) != (expected.st_dev, expected.st_ino)):
+                raise RunnerError(422, "model: file changed or invalid file size or type")
+            header = os.read(fd, 24)
+        finally:
+            os.close(fd)
     except (OSError, RuntimeError) as exc:
         raise RunnerError(422, "model: file inaccessible") from exc
-    if header[:4] != b"GGUF":
+    if len(header) != 24 or header[:4] != b"GGUF":
         raise RunnerError(422, "model: GGUF magic mismatch")
     version, tensors, metadata_items = struct.unpack_from("<IQQ", header, 4)
     if version not in (2, 3) or tensors > 10_000_000 or metadata_items > 65_536:
