@@ -282,18 +282,29 @@ class LocalRunner:
 
     def _stop_locked(self) -> None:
         proc = self.process
+        if proc is not None:
+            try:
+                if proc.poll() is None:
+                    proc.terminate()
+                    try:
+                        proc.wait(timeout=4)
+                    except subprocess.TimeoutExpired:
+                        proc.kill()
+                        proc.wait(timeout=4)
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                # Keep ownership until exit is confirmed, so stop can be retried
+                # and start cannot launch a second live backend.
+                try:
+                    exited = proc.poll() is not None
+                except OSError:
+                    exited = False
+                if not exited:
+                    raise RunnerError(503, "runner: cannot confirm backend shutdown") from exc
         self.process = None
         self.model = None
         self.backend_port = None
         self.backend_key = None
         self.settings = None
-        if proc and proc.poll() is None:
-            proc.terminate()
-            try:
-                proc.wait(timeout=4)
-            except subprocess.TimeoutExpired:
-                proc.kill()
-                proc.wait(timeout=4)
 
     def stop(self) -> dict:
         with self.lock:
