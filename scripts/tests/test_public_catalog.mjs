@@ -75,3 +75,21 @@ test('rejects dangerous UTF8, large inventory and control character names',()=>{
   assert.throws(()=>generateCatalog(Buffer.from([0xff,0xfe]),Buffer.from('{}')),/invalid JSON or UTF-8/);
   assert.throws(()=>generateCatalog(Buffer.alloc(600000),Buffer.from('{}')),/size/);
 });
+
+test('denies duplicate JSON keys, escaped aliases, non-finite numbers and nested pollution',()=>{
+  const fixtureData=fixture();
+  const a=Buffer.from(JSON.stringify(fixtureData.agents));
+  const b=Buffer.from(JSON.stringify(fixtureData.swarms));
+  const malicious=[
+    '{"schema_version":1,"schema_version":2}',
+    '{"schema_version":1,"schema_\u0076ersion":1}',
+    '{"nested":{"__proto__":1,"__proto__":2}}',
+    '{"price":1e999}',
+  ];
+  for(const raw of malicious){
+    assert.throws(()=>generateCatalog(Buffer.from(raw),b),
+      /invalid JSON or UTF-8/, raw);
+    assert.throws(()=>generateCatalog(a,Buffer.from(raw)),
+      /invalid JSON or UTF-8/, raw);
+  }
+});

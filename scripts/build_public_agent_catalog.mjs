@@ -5,6 +5,7 @@
  * ACTIVE state or authorization to execute/deploy.
  */
 import {readFile, writeFile} from 'node:fs/promises';
+import {parseUniqueJson} from '../apps/agents-builder-web/strict-json.mjs';
 import {createHash} from 'node:crypto';
 import {resolve, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -19,7 +20,10 @@ const invalid = reason => { throw new Error('catalog: ' + reason); };
 const gitBlob = bytes => createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
 const jsonFile = (bytes, name) => {
   if (bytes.length < 2 || bytes.length > 512 * 1024) invalid(name + ' size');
-  try { return JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(bytes)); }
+  try {
+    return parseUniqueJson(new TextDecoder('utf-8', {fatal:true}).decode(bytes),
+      {maxBytes:512*1024});
+  }
   catch { invalid(name + ' invalid JSON or UTF-8'); }
 };
 
