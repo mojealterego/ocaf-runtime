@@ -5,6 +5,7 @@
 import {parseUniqueJson} from './strict-json.mjs';
 
 const HEX40 = /^[0-9a-f]{40}$/;
+const gitDigest = value => typeof value === 'string' && value.length === 40 && HEX40.test(value);
 const ID = /^OCAF-AGENT-\d{3}$/;
 const GROUP = /^G(?:[1-9]|[12]\d|3[0-3])$/;
 const GROUP2 = /^G(?:0[1-9]|[12]\d|3[0-3])$/;
@@ -35,8 +36,8 @@ export function validatePublicCatalog(value) {
   if (!exact(value,ROOT_FIELDS) || value.schema_version !== 1 ||
       value.provenance !== 'GIT_SOURCE_INVENTORY_ONLY_NOT_EXECUTION_AUTHORITY' ||
       value.fleet_id !== 'OCAF-FLEET-111' || value.active_runtime_agent_count !== 0 ||
-      !HEX40.test(value.source_agent_registry_git_blob) ||
-      !HEX40.test(value.source_swarm_registry_git_blob) ||
+      !gitDigest(value.source_agent_registry_git_blob) ||
+      !gitDigest(value.source_swarm_registry_git_blob) ||
       !Array.isArray(value.agents) || value.agents.length !== 111 ||
       !Array.isArray(value.swarms) || value.swarms.length !== 33) deny('source identity/counts');
   const ids = new Set(), names = new Set(), groups = new Set();
@@ -76,8 +77,9 @@ export async function fetchPublicCatalog({fetchImpl=globalThis.fetch.bind(global
     method:'GET',credentials:'omit',redirect:'error',mode:'same-origin',
     cache:'no-store',referrerPolicy:'no-referrer',signal
   });
-  if (!response.ok || response.redirected ||
-      !(response.headers.get('content-type')||'').toLowerCase().startsWith('application/json'))
+  const contentType=response.headers.get('content-type')||'';
+  if (!response.ok || response.redirected || contentType.includes(',') ||
+      contentType.split(';',1)[0].trim().toLowerCase() !== 'application/json')
     deny('untrusted source response');
   const declared=response.headers.get('content-length');
   if (declared!==null && (!/^\d+$/.test(declared) || Number(declared)>256*1024))
