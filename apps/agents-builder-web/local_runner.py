@@ -155,6 +155,7 @@ class LocalRunner:
         self.backend_key: str | None = None
         self.lock = threading.RLock()
         self.request_slot = threading.BoundedSemaphore(1)
+        self.import_slot = threading.BoundedSemaphore(1)
 
     def available_models(self) -> list[dict]:
         models = []
@@ -175,17 +176,29 @@ class LocalRunner:
             raise RunnerError(422, "model: invalid GGUF filename")
         if type(length) is not int or not 24 <= length <= self.max_model_bytes:
             raise RunnerError(413, "model: upload exceeds configured limit")
+        if not self.import_slot.acquire(blocking=False):
+            raise RunnerError(429, "model: another upload in progress")
+        try:
+            return self._import_model(filename, source, length)
+        finally:
+            self.import_slot.release()
+
+    def _import_model(self, filename: str, source, length: int) -> dict:
         destination = self.models_dir / filename
         if destination.exists() or destination.is_symlink():
             raise RunnerError(409, "model: file already exists")
-        fd, temporary = tempfile.mkstemp(prefix=".ocaf-gguf-upload-",
-                                        suffix=".tmp", dir=self.models_dir)
+        temporary = None
         hash_state = hashlib.sha256()
         try:
+            fd, temporary = tempfile.mkstemp(prefix=".ocaf-gguf-upload-",
+                                            suffix=".tmp", dir=self.models_dir)
             remaining = length
             with os.fdopen(fd, "wb") as output:
                 while remaining:
-                    chunk = source.read(min(1024 * 1024, remaining))
+                    requested = min(1024 * 1024, remaining)
+                    chunk = source.read(requested)
+                    if not isinstance(chunk, bytes) or len(chunk) > requested:
+                        raise RunnerError(422, "model: invalid upload chunk")
                     if not chunk:
                         raise RunnerError(422, "model: truncated upload")
                     remaining -= len(chunk)
@@ -211,7 +224,8 @@ class LocalRunner:
         except OSError as error:
             raise RunnerError(507, "model: local storage unavailable") from error
         finally:
-            os.unlink(temporary)
+            if temporary is not None:
+                os.unlink(temporary)
 
     def status(self) -> dict:
         with self.lock:
