@@ -4,8 +4,42 @@
  * It never contacts third-party providers and never persists credentials.
  */
 import {validateSettings} from './models.mjs';
+import {parseUniqueJson} from './strict-json.mjs';
 
 const MODEL=/^[A-Za-z0-9][A-Za-z0-9_. -]{0,126}\.gguf$/i;
+
+// Bound actual bytes before allocating the complete response, and reject
+// ambiguous JSON using the same parser as the builder admission boundary.
+async function readRunnerJson(response,maxBytes,upload=false){
+  const limitError=()=>new Error(upload?'runner: upload response limit':'runner: response limit');
+  const invalid=()=>new Error(upload?'runner: invalid upload response':'runner: invalid JSON response');
+  const declared=response.headers?.get('Content-Length');
+  if(declared!=null&&(!/^\d+$/.test(declared)||Number(declared)>maxBytes)){
+    if(response.body)await response.body.cancel().catch(()=>{});
+    throw limitError();
+  }
+  if(!response.body?.getReader)throw invalid();
+  const reader=response.body.getReader();
+  const bytes=new Uint8Array(maxBytes);
+  let total=0;
+  try{
+    for(;;){
+      const {done,value}=await reader.read();
+      if(done)break;
+      if(!(value instanceof Uint8Array))throw invalid();
+      if(value.byteLength>maxBytes-total)throw limitError();
+      bytes.set(value,total);total+=value.byteLength;
+    }
+  }catch(error){
+    await reader.cancel().catch(()=>{});throw error;
+  }finally{reader.releaseLock();}
+  try{
+    const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes.subarray(0,total));
+    const result=parseUniqueJson(text,{maxBytes});
+    if(!result||typeof result!=='object'||Array.isArray(result))throw invalid();
+    return result;
+  }catch{throw invalid();}
+}
 
 export class LocalRunnerError extends Error {
   constructor(status,message){
@@ -48,11 +82,7 @@ export class LocalRunnerClient {
         init.body=serialized;
       }
       const res=await this.#fetch(this.#origin+'/v1/local-runner/'+endpoint,init);
-      if(Number(res.headers?.get('Content-Length'))>512*1024)throw new Error('runner: response limit');
-      const data=await res.text();
-      if(new TextEncoder().encode(data).length>512*1024)throw new Error('runner: response limit');
-      let result;
-      try{result=JSON.parse(data);}catch{throw new Error('runner: invalid JSON response');}
+      const result=await readRunnerJson(res,512*1024);
       if(!res.ok)throw new LocalRunnerError(res.status,
         typeof result?.error==='string'?result.error.slice(0,200):'runner: HTTP '+res.status);
       if(!result||typeof result!=='object'||Array.isArray(result))throw new Error('runner: invalid response');
@@ -103,11 +133,7 @@ export class LocalRunnerClient {
           'X-OCAF-Model-Name':file.name,
         }
       });
-      if(Number(response.headers?.get('Content-Length'))>8192)throw new Error('runner: upload response limit');
-      const raw=await response.text();
-      if(raw.length>8192)throw new Error('runner: upload response limit');
-      let body;
-      try{body=JSON.parse(raw);}catch{throw new Error('runner: invalid upload response');}
+      const body=await readRunnerJson(response,8192,true);
       if(!response.ok)throw new LocalRunnerError(response.status,
         typeof body.error==='string'?body.error.slice(0,200):'runner: upload failed');
       if(body.name!==file.name||body.size_bytes!==file.size||
