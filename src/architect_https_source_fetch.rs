@@ -64,15 +64,16 @@ impl PinnedSourceRoute {
     /// redirects, caller-controlled headers or unapproved authentication.
     pub fn validate(&self) -> Result<(), SourceFetchError> {
         let host = self.hostname.as_bytes();
+        let lower_host = self.hostname.to_ascii_lowercase();
         let valid_hostname = host.len() <= 253
             && self.hostname.contains('.')
             && !host.is_empty()
             && host
                 .iter()
                 .all(|b| b.is_ascii_alphanumeric() || *b == b'-' || *b == b'.')
-            && !self.hostname.ends_with(".local")
-            && !self.hostname.ends_with(".localhost")
-            && !self.hostname.eq_ignore_ascii_case("localhost")
+            && !lower_host.ends_with(".local")
+            && !lower_host.ends_with(".localhost")
+            && lower_host != "localhost"
             && self.hostname.parse::<IpAddr>().is_err()
             && self.hostname.split('.').all(|part| {
                 !part.is_empty()

@@ -163,6 +163,7 @@ fn validate_source(source: &SourceRecord, observed_at: u64) -> bool {
         && host.contains('.')
         && !host.ends_with(".local")
         && !host.ends_with(".localhost")
+        && !host.ends_with('.')
         && !host.eq_ignore_ascii_case("localhost")
         && std::net::IpAddr::from_str(host).is_err()
 }
@@ -499,7 +500,7 @@ mod reserved_domain_tests {
 
     #[test]
     fn reserved_local_dns_suffixes_cannot_be_signed_as_public_sources() {
-        for name in ["foo.localhost", "foo.local", "localhost"] {
+        for name in ["foo.localhost", "foo.local", "foo.localhost.", "localhost"] {
             let record = SourceRecord {
                 url: format!("https://{name}/probe"),
                 retrieved_unix: 1_795_480_000,

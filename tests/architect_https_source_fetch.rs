@@ -47,6 +47,7 @@ fn pinned_route_rejects_ssrf_special_addresses_injected_host_and_path() {
         "evil.com\r\nHost: internal",
         "foo..com",
         "local.localhost",
+        "UPPER.LOCALHOST",
         "source.local",
         "-bad.com",
         "example.com:443",
