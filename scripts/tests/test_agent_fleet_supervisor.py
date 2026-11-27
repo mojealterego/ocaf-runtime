@@ -109,6 +109,51 @@ def test_noncanonical_agent_numbers_and_unicode_are_rejected():
             else:
                 raise AssertionError(f"noncanonical agent ID accepted: {forged_id}")
 
+
+def test_swarm_master_and_member_manifest_must_match():
+    root = ROOT / "OCAF Agents MOJEALTEREGO/SWARM-FLEET-33"
+    master_path = root / "fleet_manifest.json"
+    manifest_path = root / "OCAF-SWARM-01/manifest.json"
+    original_master = json.loads(master_path.read_text(encoding="utf-8"))
+    original_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    with tempfile.TemporaryDirectory() as tmp:
+        sandbox = Path(tmp) / "swarms"
+        sandbox.mkdir()
+        (sandbox / "fleet_manifest.json").write_text(
+            json.dumps(original_master), encoding="utf-8")
+        for item in original_master["swarms"]:
+            sid = item["swarm_id"]
+            target = sandbox / sid / "manifest.json"
+            target.parent.mkdir(parents=True)
+            target.write_text(json.dumps(item), encoding="utf-8")
+        agent_root = ROOT / "OCAF Agents MOJEALTEREGO/AGENT-FLEET-111"
+        registry = ROOT / "docs/agents/agent_registry_111.json"
+
+        # An intact copy must validate identically to the committed fleet.
+        assert MODULE.validate(agent_root, sandbox, registry)["swarms"] == 33
+
+        target = sandbox / "OCAF-SWARM-01/manifest.json"
+        changed = json.loads(target.read_text(encoding="utf-8"))
+        changed["specialization"] = "forged"
+        target.write_text(json.dumps(changed), encoding="utf-8")
+        try:
+            MODULE.validate(agent_root, sandbox, registry)
+        except MODULE.SupervisorError as exc:
+            assert "differs from master" in str(exc)
+        else:
+            raise AssertionError("divergent swarm declaration must be rejected")
+
+        target.write_text(json.dumps(original_manifest), encoding="utf-8")
+        master = json.loads((sandbox / "fleet_manifest.json").read_text(encoding="utf-8"))
+        master["swarms"][0]["swarm_id"] = "OCAF-SWARM-99"
+        (sandbox / "fleet_manifest.json").write_text(json.dumps(master), encoding="utf-8")
+        try:
+            MODULE.validate(agent_root, sandbox, registry)
+        except MODULE.SupervisorError as exc:
+            assert "invalid or duplicate swarm ID" in str(exc)
+        else:
+            raise AssertionError("invalid master swarm ID must be rejected")
+
 def load_tests(_loader, _tests, _pattern):
     cases = [value for name, value in globals().items()
              if name.startswith("test_") and callable(value)]

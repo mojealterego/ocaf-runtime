@@ -83,7 +83,7 @@ def validate(agent_root: Path, swarm_root: Path, registry_path: Path) -> dict[st
         group_id = entry.get("group_id")
         if not isinstance(aid, str) or not re.fullmatch(r"OCAF-AGENT-(?:00[1-9]|0[1-9][0-9]|10[0-9]|11[01])", aid) or aid in ids:
             raise SupervisorError(f"duplicate or invalid agent_id: {aid}")
-        if not isinstance(group_id, str) or not re.fullmatch(r"G(?:0[1-9]|[12]\d|3[0-3])", group_id):
+        if not isinstance(group_id, str) or not re.fullmatch(r"G(?:0[1-9]|[12][0-9]|3[0-3])", group_id):
             raise SupervisorError(f"{aid}: invalid group_id: {group_id}")
         ids.add(aid)
         agent_groups[aid] = group_id
@@ -120,13 +120,27 @@ def validate(agent_root: Path, swarm_root: Path, registry_path: Path) -> dict[st
         raise SupervisorError("swarm manifest must declare 33 swarms")
     if fleet.get("active_runtime_swarm_count") != 0:
         raise SupervisorError("swarm fleet cannot declare ACTIVE while OSTc is disabled")
+    registered_swarms = fleet.get("swarms")
+    if (not isinstance(registered_swarms, list) or len(registered_swarms) != 33
+            or any(not isinstance(item, dict) for item in registered_swarms)):
+        raise SupervisorError("master swarm registry must contain 33 typed swarms")
+    master_by_id = {}
+    for item in registered_swarms:
+        key = item.get("swarm_id")
+        if (not isinstance(key, str)
+                or not re.fullmatch(r"OCAF-SWARM-(?:0[1-9]|[12][0-9]|3[0-3])", key)
+                or key in master_by_id):
+            raise SupervisorError("invalid or duplicate swarm ID in master registry")
+        master_by_id[key] = item
     swarm_ids = set()
     members = []
     for path in sorted(swarm_root.glob("OCAF-SWARM-*/manifest.json")):
         manifest = load(path)
         sid = manifest.get("swarm_id")
-        if not isinstance(sid, str) or sid in swarm_ids:
+        if not isinstance(sid, str) or sid in swarm_ids or sid not in master_by_id:
             raise SupervisorError(f"duplicate or invalid swarm_id: {sid}")
+        if manifest != master_by_id[sid]:
+            raise SupervisorError(f"{sid}: manifest differs from master swarm registry")
         if path.parent.name != sid:
             raise SupervisorError(f"{sid}: swarm directory does not match manifest identity")
         swarm_ids.add(sid)
@@ -144,7 +158,8 @@ def validate(agent_root: Path, swarm_root: Path, registry_path: Path) -> dict[st
             if agent_groups.get(member) != expected_group:
                 raise SupervisorError(f"{sid}: member {member} is outside its group")
         members.extend(listed)
-    if len(swarm_ids) != 33 or len(members) != 111 or set(members) != ids or len(set(members)) != 111:
+    if (swarm_ids != set(master_by_id) or len(members) != 111
+            or set(members) != ids or len(set(members)) != 111):
         raise SupervisorError("swarm membership must cover exactly the 111 registered agents")
     return {"agents": 111, "swarms": 33, "active_agents": 0, "active_swarms": 0,
             "inventory_only": True, "ostc_enabled": False,
