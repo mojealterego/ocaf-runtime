@@ -88,6 +88,27 @@ def test_duplicate_agent_is_rejected():
             raise AssertionError("duplicate agent must be rejected")
 
 
+
+def test_noncanonical_agent_numbers_and_unicode_are_rejected():
+    original = json.loads((ROOT / "docs/agents/agent_registry_111.json").read_text())
+    for forged_id in ("OCAF-AGENT-000", "OCAF-AGENT-112", "OCAF-AGENT-999",
+                      "OCAF-AGENT-1", "OCAF-AGENT-١١١"):
+        registry = json.loads(json.dumps(original))
+        registry["agents"][0]["agent_id"] = forged_id
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "registry.json"
+            path.write_text(json.dumps(registry), encoding="utf-8")
+            try:
+                MODULE.validate(
+                    ROOT / "OCAF Agents MOJEALTEREGO/AGENT-FLEET-111",
+                    ROOT / "OCAF Agents MOJEALTEREGO/SWARM-FLEET-33",
+                    path,
+                )
+            except MODULE.SupervisorError as exc:
+                assert "invalid agent_id" in str(exc), (forged_id, str(exc))
+            else:
+                raise AssertionError(f"noncanonical agent ID accepted: {forged_id}")
+
 def load_tests(_loader, _tests, _pattern):
     cases = [value for name, value in globals().items()
              if name.startswith("test_") and callable(value)]

@@ -125,10 +125,10 @@ pub enum AgentAdmissionError {
 impl AgentManifest {
     pub fn validate(&self) -> Result<(), AgentAdmissionError> {
         let id = &self.identity.agent_id;
-        if !valid_component(id, "OCAF-AGENT-") {
+        if !valid_agent_id(id) {
             return Err(AgentAdmissionError::InvalidIdentity("agent_id"));
         }
-        if !valid_component(&self.identity.swarm_id, "G") || self.identity.swarm_id.len() != 3 {
+        if !valid_swarm_id(&self.identity.swarm_id) {
             return Err(AgentAdmissionError::InvalidIdentity("swarm_id"));
         }
         if self.identity.display_name.trim().is_empty()
@@ -252,12 +252,28 @@ pub enum FleetValidationError {
     DistinctSwarmCount(usize),
 }
 
-fn valid_component(value: &str, prefix: &str) -> bool {
-    value.starts_with(prefix)
-        && value.len() > prefix.len()
-        && value
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+/// Canonical immutable ID range of the 111 registered OCAF agents.
+fn valid_agent_id(value: &str) -> bool {
+    let Some(suffix) = value.strip_prefix("OCAF-AGENT-") else {
+        return false;
+    };
+    suffix.len() == 3
+        && suffix.bytes().all(|byte| byte.is_ascii_digit())
+        && suffix
+            .parse::<u16>()
+            .is_ok_and(|number| (1..=111).contains(&number))
+}
+
+/// Canonical G01..G33 swarm slots, rejecting Unicode digits and G00/G34.
+fn valid_swarm_id(value: &str) -> bool {
+    let Some(suffix) = value.strip_prefix('G') else {
+        return false;
+    };
+    suffix.len() == 2
+        && suffix.bytes().all(|byte| byte.is_ascii_digit())
+        && suffix
+            .parse::<u8>()
+            .is_ok_and(|number| (1..=33).contains(&number))
 }
 
 #[cfg(test)]
@@ -321,6 +337,42 @@ mod tests {
             agent.validate(),
             Err(AgentAdmissionError::SharedServiceEndpoint)
         );
+    }
+
+    #[test]
+    fn agent_ids_must_be_canonical_and_inside_signed_fleet_range() {
+        for id in [
+            "OCAF-AGENT-000", "OCAF-AGENT-112", "OCAF-AGENT-999",
+            "OCAF-AGENT-1", "OCAF-AGENT-01", "OCAF-AGENT-0001",
+            "OCAF-AGENT-ABC", "OCAF-AGENT-1A1", "OCAF-AGENT-١١١",
+        ] {
+            let mut candidate = manifest(AgentLifecycle::Draft);
+            candidate.identity.agent_id = id.to_owned();
+            assert_eq!(
+                candidate.validate(),
+                Err(AgentAdmissionError::InvalidIdentity("agent_id")),
+                "must reject {id}"
+            );
+        }
+        for number in 1..=111 {
+            assert!(valid_agent_id(&format!("OCAF-AGENT-{number:03}")));
+        }
+    }
+
+    #[test]
+    fn swarm_ids_must_be_canonical_and_inside_signed_fleet_range() {
+        for id in ["G00", "G34", "G99", "GAA", "G1-", "G1", "g01", "G٠١"] {
+            let mut candidate = manifest(AgentLifecycle::Draft);
+            candidate.identity.swarm_id = id.to_owned();
+            assert_eq!(
+                candidate.validate(),
+                Err(AgentAdmissionError::InvalidIdentity("swarm_id")),
+                "must reject {id}"
+            );
+        }
+        for number in 1..=33 {
+            assert!(valid_swarm_id(&format!("G{number:02}")));
+        }
     }
 
     #[test]

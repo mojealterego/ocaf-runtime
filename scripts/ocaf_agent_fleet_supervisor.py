@@ -81,7 +81,7 @@ def validate(agent_root: Path, swarm_root: Path, registry_path: Path) -> dict[st
     for entry in agents:
         aid = entry.get("agent_id")
         group_id = entry.get("group_id")
-        if not isinstance(aid, str) or not re.fullmatch(r"OCAF-AGENT-\d{3}", aid) or aid in ids:
+        if not isinstance(aid, str) or not re.fullmatch(r"OCAF-AGENT-(?:00[1-9]|0[1-9][0-9]|10[0-9]|11[01])", aid) or aid in ids:
             raise SupervisorError(f"duplicate or invalid agent_id: {aid}")
         if not isinstance(group_id, str) or not re.fullmatch(r"G(?:0[1-9]|[12]\d|3[0-3])", group_id):
             raise SupervisorError(f"{aid}: invalid group_id: {group_id}")
