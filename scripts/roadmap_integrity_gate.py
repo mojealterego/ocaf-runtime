@@ -50,6 +50,48 @@ def _validate_manifest(repo: Path) -> None:
         raise IntegrityError("duplicate or equivalent roadmap stage IDs")
     if ids != sorted(ids):
         raise IntegrityError("roadmap stages not in numeric order")
+    _validate_other_sections(manifest)
+
+
+def _validate_other_sections(manifest: dict) -> None:
+    """Validate the previously unchecked 64 technical and 33 reference records.
+
+    These are structural checks; passing them does not mean any requirement
+    is implemented or its acceptance tests have been performed.
+    """
+    technical = manifest.get("technical")
+    if not isinstance(technical, list) or len(technical) != COUNTS["technical_count"]:
+        raise IntegrityError("canonical roadmap technical section count mismatch")
+    keys: list[tuple[int, ...]] = []
+    for item in technical:
+        if not isinstance(item, dict):
+            raise IntegrityError("invalid technical entry")
+        identifier = item.get("id")
+        if not isinstance(identifier, str) or not STAGE_ID.fullmatch(identifier):
+            raise IntegrityError("invalid technical stage ID")
+        parts = identifier.split(".")
+        if len(parts) != 3:
+            raise IntegrityError("technical stage ID must have three components")
+        title = item.get("title")
+        if not isinstance(title, str) or not title.strip():
+            raise IntegrityError("technical stage title missing")
+        keys.append(tuple(int(component) for component in parts))
+    if len(set(keys)) != len(keys):
+        raise IntegrityError("duplicate or equivalent technical stage IDs")
+    if keys != sorted(keys):
+        raise IntegrityError("technical stages not in numeric order")
+
+    references = manifest.get("reference_repositories")
+    if not isinstance(references, list) or len(references) != COUNTS["reference_count"]:
+        raise IntegrityError("canonical roadmap reference section count mismatch")
+    names: list[str] = []
+    for entry in references:
+        name = entry.get("name") if isinstance(entry, dict) else None
+        if not isinstance(name, str) or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", name) is None:
+            raise IntegrityError("invalid reference repository name")
+        names.append(name.casefold())
+    if len(set(names)) != len(names):
+        raise IntegrityError("duplicate reference repository")
 
 
 def _snapshot_path(repo: Path, relative: str) -> Path:
