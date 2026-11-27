@@ -89,6 +89,11 @@ fn invalid_status_tampered_payload_and_hash_are_rejected() {
         archive.save("t", &bad),
         Err(ArchiveError::Invalid)
     ));
+    for host in ["metadata.localhost", "metadata.local"] {
+        bad = original.clone();
+        bad.source.url = format!("https://{host}/private");
+        assert!(matches!(archive.save("t", &bad), Err(ArchiveError::Invalid)));
+    }
     archive.save("t", &original).unwrap();
     let db = rusqlite::Connection::open(&file).unwrap();
     db.execute(

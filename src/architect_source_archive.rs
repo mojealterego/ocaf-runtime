@@ -89,6 +89,7 @@ fn validate_ref(source: &SourceRecord) -> Result<(), ArchiveError> {
         || !host.contains('.')
         || host.eq_ignore_ascii_case("localhost")
         || host.ends_with(".local")
+        || host.ends_with(".localhost")
         || host.parse::<IpAddr>().is_ok()
     {
         return Err(ArchiveError::Invalid);

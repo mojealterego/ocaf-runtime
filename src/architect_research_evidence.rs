@@ -162,6 +162,7 @@ fn validate_source(source: &SourceRecord, observed_at: u64) -> bool {
         && url.fragment().is_none()
         && host.contains('.')
         && !host.ends_with(".local")
+        && !host.ends_with(".localhost")
         && !host.eq_ignore_ascii_case("localhost")
         && std::net::IpAddr::from_str(host).is_err()
 }
@@ -489,5 +490,28 @@ impl ResearchEvidenceGate {
             digest_sha256: proof_sha,
             completion,
         })
+    }
+}
+
+#[cfg(test)]
+mod reserved_domain_tests {
+    use super::*;
+
+    #[test]
+    fn reserved_local_dns_suffixes_cannot_be_signed_as_public_sources() {
+        for name in ["foo.localhost", "foo.local", "localhost"] {
+            let record = SourceRecord {
+                url: format!("https://{name}/probe"),
+                retrieved_unix: 1_795_480_000,
+                content_sha256: "a".repeat(64),
+            };
+            assert!(!validate_source(&record, 1_795_480_010), "{name}");
+        }
+        let record = SourceRecord {
+            url: "https://example.com/research".to_owned(),
+            retrieved_unix: 1_795_480_000,
+            content_sha256: "a".repeat(64),
+        };
+        assert!(validate_source(&record, 1_795_480_010));
     }
 }

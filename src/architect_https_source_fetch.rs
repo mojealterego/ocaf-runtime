@@ -70,6 +70,9 @@ impl PinnedSourceRoute {
             && host
                 .iter()
                 .all(|b| b.is_ascii_alphanumeric() || *b == b'-' || *b == b'.')
+            && !self.hostname.ends_with(".local")
+            && !self.hostname.ends_with(".localhost")
+            && !self.hostname.eq_ignore_ascii_case("localhost")
             && self.hostname.parse::<IpAddr>().is_err()
             && self.hostname.split('.').all(|part| {
                 !part.is_empty()
