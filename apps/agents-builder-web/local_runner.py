@@ -221,9 +221,19 @@ class LocalRunner:
                 ready = result.status == 200
             finally:
                 connection.close()
-            return {"state": "ready" if ready else "loading", "model": model}
         except (OSError, http.client.HTTPException):
-            return {"state": "loading", "model": model}
+            ready = False
+        # The health observation belongs only to the process that was probed.
+        with self.lock:
+            current = self.process
+            if current is None:
+                return {"state": "stopped", "model": None}
+            result = current.poll()
+            if result is not None:
+                return {"state": "failed", "model": self.model, "exit_code": result}
+            if current is not proc:
+                return {"state": "loading", "model": self.model}
+            return {"state": "ready" if ready else "loading", "model": model}
 
     def start(self, filename: str, settings: dict) -> dict:
         validated = valid_settings(settings, context_limit=self.context_limit,
@@ -296,14 +306,21 @@ class LocalRunner:
         if not self.request_slot.acquire(blocking=False):
             raise RunnerError(429, "chat: one inference at a time")
         try:
-            if self.status()["state"] != "ready":
-                raise RunnerError(409, "chat: runner not ready")
             with self.lock:
+                proc = self.process
+                if proc is None or self.settings is None or self.backend_key is None or self.backend_port is None:
+                    raise RunnerError(409, "chat: runner not ready")
                 settings = self.settings.copy()
                 port = self.backend_port
                 key = self.backend_key
+                model = self.model
+            if self.status()["state"] != "ready":
+                raise RunnerError(409, "chat: runner not ready")
+            with self.lock:
+                if self.process is not proc or proc.poll() is not None:
+                    raise RunnerError(409, "chat: backend generation changed")
             body = {
-                "model": self.model,
+                "model": model,
                 "messages": [{"role": "user", "content": prompt}],
                 "stream": False, "max_tokens": settings["max_output_tokens"],
                 "temperature": settings["temperature"],
@@ -334,13 +351,16 @@ class LocalRunner:
             finally:
                 connection.close()
             try:
-                result = json.loads(raw)
+                result = parse_request_json(raw)
                 content = result["choices"][0]["message"]["content"]
                 if not isinstance(content, str) or len(content) > 200_000:
                     raise ValueError("invalid assistant response")
-            except (KeyError, IndexError, TypeError, ValueError) as exc:
+            except (KeyError, IndexError, TypeError, ValueError, RunnerError) as exc:
                 raise RunnerError(502, "chat: invalid backend response") from exc
-            return {"text": content, "model": self.model}
+            with self.lock:
+                if self.process is not proc or proc.poll() is not None:
+                    raise RunnerError(409, "chat: backend generation changed")
+                return {"text": content, "model": model}
         finally:
             self.request_slot.release()
 
