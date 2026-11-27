@@ -49,7 +49,7 @@ def test_technical_and_reference_records_are_structurally_validated(tmp_path):
 
     check(lambda m: m["technical"].pop())
     check(lambda m: m["technical"][1].update(id=m["technical"][0]["id"]))
-    check(lambda m: m["technical"][1:3].reverse())
+    check(lambda m: m["technical"].__setitem__(slice(1, 3), list(reversed(m["technical"][1:3]))))
     check(lambda m: m["technical"][0].update(title=" "))
     check(lambda m: m["reference_repositories"].pop())
     check(lambda m: m["reference_repositories"][0].update(
