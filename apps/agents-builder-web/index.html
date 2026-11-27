@@ -169,6 +169,10 @@
     <label for="catalog-query">Szukaj po nazwie, ID lub specjalizacji</label>
     <input id="catalog-query" type="search" maxlength="256" autocomplete="off">
     <output id="catalog-status" role="status" aria-live="polite">Ładowanie katalogu…</output>
+    <nav aria-label="Stronicowanie katalogu">
+      <button id="catalog-prev" type="button" class="secondary" disabled>Poprzednia strona</button>
+      <button id="catalog-next" type="button" class="secondary" disabled>Następna strona</button>
+    </nav>
     <div class="public-catalog-grid">
       <ol id="catalog-list" aria-label="Agenci i roje"></ol>
       <section id="catalog-detail" aria-label="Dossier i status" aria-live="polite"></section>

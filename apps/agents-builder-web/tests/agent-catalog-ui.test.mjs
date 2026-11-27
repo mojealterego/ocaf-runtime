@@ -53,3 +53,33 @@ test('network failure leaves no displayed data and clearly refuses access',async
   assert.match(document.getElementById('catalog-status').textContent,/niedostępny/);
   assert.equal(document.getElementById('catalog-list').children.length,0);
 });
+
+test('AB-OM-03: all 144 records are reachable without guessing a search term',async()=>{
+  const document=doc();
+  await initPublicCatalog({document,fetchImpl:async()=>new Response(JSON.stringify(fixture()),
+    {headers:{'content-type':'application/json'}})});
+  const list=document.getElementById('catalog-list');
+  const prev=document.getElementById('catalog-prev'), next=document.getElementById('catalog-next');
+  assert.equal(prev.disabled,true);
+  const seen=[];
+  for(let page=0;page<5;page++){
+    assert.equal(list.children.length,page===4?24:30);
+    seen.push(...list.children.map(item=>item.children[0].textContent));
+    assert.equal(next.disabled,page===4);
+    next.click();
+  }
+  assert.equal(new Set(seen).size,144);
+  assert.match(seen.at(-1),/^G33 ·/);
+  prev.click();
+  assert.equal(list.children.length,30);
+  assert.equal(next.disabled,false);
+  const search=document.getElementById('catalog-query');
+  search.value='Agent 111';search.dispatch('input');
+  assert.equal(list.children.length,1);
+  assert.equal(prev.disabled,true);
+  assert.equal(next.disabled,true);
+  search.value='nothing matches';search.dispatch('input');
+  assert.equal(list.children.length,0);
+  assert.equal(prev.disabled,true);
+  assert.equal(next.disabled,true);
+});

@@ -63,13 +63,19 @@ export function validatePublicCatalog(value) {
 }
 
 export function searchPublicCatalog(catalog, query, limit=30) {
+  return searchPublicCatalogPage(catalog,query,limit).rows;
+}
+
+export function searchPublicCatalogPage(catalog, query, limit=30, offset=0) {
   validatePublicCatalog(catalog);
   if (!Number.isSafeInteger(limit) || limit<1 || limit>50 ||
-      typeof query !== 'string' || query.length>256) deny('invalid query or result limit');
+      !Number.isSafeInteger(offset) || offset<0 || offset>catalog.agents.length+catalog.swarms.length ||
+      typeof query !== 'string' || query.length>256) deny('invalid query or pagination');
   const needle=query.trim().toLocaleLowerCase('pl-PL');
   const all=[...catalog.agents,...catalog.swarms];
-  return all.filter(x=>[x.id,x.display_name||'',x.specialization,
-    x.group_id||'',x.scope||''].some(y=>y.toLocaleLowerCase('pl-PL').includes(needle))).slice(0,limit);
+  const matches=all.filter(x=>[x.id,x.display_name||'',x.specialization,
+    x.group_id||'',x.scope||''].some(y=>y.toLocaleLowerCase('pl-PL').includes(needle)));
+  return {rows:matches.slice(offset,offset+limit),total:matches.length};
 }
 
 export async function fetchPublicCatalog({fetchImpl=globalThis.fetch.bind(globalThis),signal}={}) {

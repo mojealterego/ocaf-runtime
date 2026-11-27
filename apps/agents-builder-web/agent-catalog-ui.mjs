@@ -1,5 +1,5 @@
 /** Read-only public fleet browser. This never grants agent execution or licenses. */
-import {fetchPublicCatalog,searchPublicCatalog} from './agent-catalog.mjs';
+import {fetchPublicCatalog,searchPublicCatalogPage} from './agent-catalog.mjs';
 
 const LABELS = Object.freeze({
   DRAFT:'Projekt / DRAFT', REFERENCE_ONLY:'Rój referencyjny',
@@ -17,7 +17,10 @@ export async function initPublicCatalog({document,fetchImpl}={}) {
   };
   const input=el('catalog-query'), list=el('catalog-list');
   const status=el('catalog-status'), detail=el('catalog-detail');
-  let catalog=null;
+  const prev=el('catalog-prev'), next=el('catalog-next');
+  const PAGE_SIZE=30;
+  let catalog=null, offset=0;
+  prev.disabled=next.disabled=true;
   const clearDetail=()=>detail.replaceChildren();
   function show(entry) {
     clearDetail();
@@ -43,9 +46,10 @@ export async function initPublicCatalog({document,fetchImpl}={}) {
   }
   function render() {
     list.replaceChildren();clearDetail();
+    prev.disabled=next.disabled=true;
     if(!catalog)return;
-    let rows;
-    try { rows=searchPublicCatalog(catalog,input.value,30); }
+    let rows,total;
+    try { ({rows,total}=searchPublicCatalogPage(catalog,input.value,PAGE_SIZE,offset)); }
     catch(error){status.textContent=error.message;return;}
     for(const entry of rows){
       const item=document.createElement('li'),button=document.createElement('button');
@@ -55,12 +59,16 @@ export async function initPublicCatalog({document,fetchImpl}={}) {
       button.addEventListener('click',()=>show(entry));
       item.append(button);list.append(item);
     }
+    prev.disabled=offset===0;
+    next.disabled=offset+rows.length>=total;
     status.textContent=`Rejestr źródłowy: ${catalog.agents.length} agentów DRAFT, `+
       `${catalog.swarms.length} rojów referencyjnych, `+
-      `${catalog.active_runtime_agent_count} aktywnych. Pokazano ${rows.length} pozycji. `+
+      `${catalog.active_runtime_agent_count} aktywnych. Pokazano ${total?offset+1:0}–${offset+rows.length} z ${total} pozycji. `+
       'Brak certyfikacji, wycen i autoryzacji uruchomienia.';
   }
-  input.addEventListener('input',render);
+  input.addEventListener('input',()=>{offset=0;render();});
+  prev.addEventListener('click',()=>{if(!prev.disabled){offset-=PAGE_SIZE;render();}});
+  next.addEventListener('click',()=>{if(!next.disabled){offset+=PAGE_SIZE;render();}});
   try {
     status.textContent='Wczytywanie rejestru źródłowego…';
     catalog=await fetchPublicCatalog({fetchImpl});
@@ -68,6 +76,7 @@ export async function initPublicCatalog({document,fetchImpl}={}) {
     return {render,select:show};
   } catch(error) {
     catalog=null;list.replaceChildren();clearDetail();
+    prev.disabled=next.disabled=true;
     status.textContent='Katalog niedostępny: brak zweryfikowanych danych źródłowych.';
     throw error;
   }
