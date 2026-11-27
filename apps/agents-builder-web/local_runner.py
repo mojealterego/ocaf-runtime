@@ -444,12 +444,42 @@ def parse_request_json(raw: bytes) -> Any:
 class OCAFServer(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = False
+    max_connections = 16
 
     def __init__(self, addr, web_root: Path, runner: LocalRunner, token: str):
+        if type(self.max_connections) is not int or not 1 <= self.max_connections <= 128:
+            raise ValueError("server: invalid connection budget")
+        self._connection_slots = threading.BoundedSemaphore(self.max_connections)
         self.web_root = web_root.resolve(strict=True)
         self.runner = runner
         self.token = token
         super().__init__(addr, LocalHandler)
+
+    def process_request(self, request, client_address):
+        if not self._connection_slots.acquire(blocking=False):
+            # Reject before creating a worker or parsing untrusted request data.
+            # The response is best-effort; a peer may already have disconnected.
+            try:
+                request.settimeout(0.1)
+                request.sendall(b"HTTP/1.1 503 Service Unavailable\r\n"
+                                b"Connection: close\r\nContent-Length: 0\r\n"
+                                b"Cache-Control: no-store\r\nRetry-After: 1\r\n\r\n")
+            except OSError:
+                pass
+            finally:
+                self.shutdown_request(request)
+            return
+        try:
+            super().process_request(request, client_address)
+        except BaseException:
+            self._connection_slots.release()
+            raise
+
+    def process_request_thread(self, request, client_address):
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self._connection_slots.release()
 
     def server_close(self):
         try:
