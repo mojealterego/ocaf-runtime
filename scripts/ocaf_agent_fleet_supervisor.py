@@ -11,6 +11,7 @@ import argparse
 import json
 import re
 import sys
+import stat
 import time
 from pathlib import Path
 from typing import Any
@@ -34,13 +35,51 @@ class SupervisorError(RuntimeError):
     pass
 
 
+MAX_MANIFEST_BYTES = 4 * 1024 * 1024
+
+
+def _unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate JSON key")
+        result[key] = value
+    return result
+
+
+def _reject_json_constant(value: str) -> None:
+    raise ValueError(f"non-finite JSON number: {value}")
+
+
 def load(path: Path) -> Any:
+    """Read an immutable-sized regular JSON file using an opened descriptor.
+
+    Reject duplicate keys, non-finite numbers, symlink final components,
+    malformed UTF-8 and oversized inputs before accepting fleet identity.
+    This is a local filesystem integrity boundary, not a signed provenance
+    claim against an administrator able to replace the whole repository.
+    """
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError as exc:
-        raise SupervisorError(f"missing manifest: {path}") from exc
-    except json.JSONDecodeError as exc:
-        raise SupervisorError(f"invalid JSON: {path}: {exc}") from exc
+        flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0)
+        if not hasattr(os, "O_NOFOLLOW"):
+            raise SupervisorError("O_NOFOLLOW required for manifest admission")
+        flags |= os.O_NOFOLLOW
+        descriptor = os.open(path, flags)
+        with os.fdopen(descriptor, "rb") as handle:
+            info = os.fstat(handle.fileno())
+            if not stat.S_ISREG(info.st_mode) or not 0 < info.st_size <= MAX_MANIFEST_BYTES:
+                raise ValueError("missing, empty or oversized regular JSON file")
+            raw = handle.read(MAX_MANIFEST_BYTES + 1)
+            if len(raw) != info.st_size or len(raw) > MAX_MANIFEST_BYTES:
+                raise ValueError("manifest changed during read or exceeded limit")
+        return json.loads(
+            raw.decode("utf-8"), object_pairs_hook=_unique_json_object,
+            parse_constant=_reject_json_constant,
+        )
+    except SupervisorError:
+        raise
+    except (OSError, ValueError, UnicodeError, RecursionError) as exc:
+        raise SupervisorError(f"invalid or inaccessible manifest: {path}: {exc}") from exc
 
 
 def agent_package_path(agent_root: Path, entry: dict[str, Any]) -> Path:
@@ -135,6 +174,8 @@ def validate(agent_root: Path, swarm_root: Path, registry_path: Path) -> dict[st
     swarm_ids = set()
     members = []
     for path in sorted(swarm_root.glob("OCAF-SWARM-*/manifest.json")):
+        if path.is_symlink() or path.parent.is_symlink():
+            raise SupervisorError("symlinked swarm manifest or directory")
         manifest = load(path)
         sid = manifest.get("swarm_id")
         if not isinstance(sid, str) or sid in swarm_ids or sid not in master_by_id:

@@ -154,6 +154,45 @@ def test_swarm_master_and_member_manifest_must_match():
         else:
             raise AssertionError("invalid master swarm ID must be rejected")
 
+
+def test_strict_fleet_json_rejects_duplicates_nonfinite_symlink_and_oversize():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        manifest = root / "manifest.json"
+        cases = (
+            ('{"a":1,"a":2}', "duplicate JSON key"),
+            ('{"amount":NaN}', "non-finite JSON number"),
+            ('{"amount":Infinity}', "non-finite JSON number"),
+            ('{"a":', "invalid or inaccessible manifest"),
+            ('{}{}', "invalid or inaccessible manifest"),
+        )
+        for content, needle in cases:
+            manifest.write_text(content, encoding="utf-8")
+            try:
+                MODULE.load(manifest)
+            except MODULE.SupervisorError as exc:
+                assert needle in str(exc), (content, str(exc))
+            else:
+                raise AssertionError(f"invalid JSON accepted: {content}")
+        manifest.write_text('{"ok":true}', encoding="utf-8")
+        assert MODULE.load(manifest) == {"ok": True}
+        alias = root / "alias.json"
+        alias.symlink_to(manifest)
+        try:
+            MODULE.load(alias)
+        except MODULE.SupervisorError:
+            pass
+        else:
+            raise AssertionError("symlink manifest must be rejected")
+        with manifest.open("wb") as handle:
+            handle.truncate(MODULE.MAX_MANIFEST_BYTES + 1)
+        try:
+            MODULE.load(manifest)
+        except MODULE.SupervisorError as exc:
+            assert "oversized" in str(exc)
+        else:
+            raise AssertionError("oversized manifest must be rejected")
+
 def load_tests(_loader, _tests, _pattern):
     cases = [value for name, value in globals().items()
              if name.startswith("test_") and callable(value)]
