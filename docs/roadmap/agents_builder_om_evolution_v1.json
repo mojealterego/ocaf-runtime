@@ -231,7 +231,13 @@
       "parent": "0.50",
       "title": "Dossier każdego agenta i roju",
       "acceptance": "Karta każdego wpisu (także DRAFT/STAGED) ma trwałe ID, wersję, producenta, pełną dokumentację użytkową/techniczną/architektoniczną/API, ograniczenia, wymagania zasobów, kompatybilność, historię wersji, wyniki testów, rzeczywiste certyfikaty albo jawny status NOT_ISSUED i wycenę albo jawny status NOT_PRICED. Certyfikaty i dokumentacja są przeglądane w aplikacji bez ujawnienia chronionego kodu. Weryfikacja podpisu, digestu, zakresu, ważności i unieważnienia. Fałszywe świadectwo lub niezweryfikowana cena nie mogą być prezentowane jako potwierdzone.",
-      "status": "OPEN_UNVERIFIED"
+      "status": "OPEN_UNVERIFIED",
+      "engineering_progress": {
+        "status": "TESTED_LOCAL_PARTIAL",
+        "evidence": "docs/audits/AB_OM_14_DOSSIER_SOURCE_PROVENANCE_2026_11_27.md",
+        "baseline_sha": "a92a67f067b61bd3464a08f45fef90fec5e5af5e",
+        "complete_product": false
+      }
     },
     {
       "id": "AB-OM-15",

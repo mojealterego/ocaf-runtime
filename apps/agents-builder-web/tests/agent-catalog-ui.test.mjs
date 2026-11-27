@@ -83,3 +83,41 @@ test('AB-OM-03: all 144 records are reachable without guessing a search term',as
   assert.equal(prev.disabled,true);
   assert.equal(next.disabled,true);
 });
+
+test('AB-OM-14: dossier resolves canonical IDs, not caller-supplied claims',async()=>{
+  const document=doc();
+  const controller=await initPublicCatalog({document,fetchImpl:async()=>new Response(JSON.stringify(fixture()),
+    {headers:{'content-type':'application/json'}})});
+  const detail=document.getElementById('catalog-detail');
+  controller.select({...fixture().agents[0],display_name:'forged',deployment_status:'DEPLOYED'});
+  const rows=detail.children[0].children.map(x=>x.textContent);
+  assert.ok(rows.includes(fixture().agents[0].display_name));
+  assert.ok(!rows.includes('forged'));
+  assert.ok(rows.includes('Niewdrożony'));
+  assert.throws(()=>controller.select({id:'OCAF-AGENT-999'}),/catalog: unknown dossier/);
+  assert.equal(detail.children.length,0);
+});
+
+test('AB-OM-14: every dossier exposes source provenance and swarm membership',async()=>{
+  const document=doc();
+  const controller=await initPublicCatalog({document,fetchImpl:async()=>new Response(JSON.stringify(fixture()),
+    {headers:{'content-type':'application/json'}})});
+  const detail=document.getElementById('catalog-detail');
+  for(const entry of [...fixture().agents,...fixture().swarms]){
+    controller.select(entry.id);
+    const rows=detail.children[0].children.map(x=>x.textContent);
+    assert.ok(rows.includes(entry.id));
+    assert.ok(rows.includes('OCAF-FLEET-111'));
+    assert.ok(rows.includes('a'.repeat(40)));
+    assert.ok(rows.includes('b'.repeat(40)));
+    assert.ok(rows.includes('Niezweryfikowane kryptograficznie'));
+    assert.ok(rows.includes('Certyfikat niewydany'));
+    assert.ok(rows.includes('Brak potwierdzonej ceny'));
+  }
+  controller.select('G33');
+  const rows=detail.children[0].children.map(x=>x.textContent);
+  assert.ok(rows.includes('Task'));
+  assert.ok(rows.some(x=>typeof x==='string'&&x.includes('OCAF-AGENT-111')));
+  controller.select('OCAF-AGENT-111');
+  assert.ok(detail.children[0].children.some(x=>x.textContent==='Brak gotowego artefaktu'));
+});

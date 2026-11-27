@@ -22,15 +22,30 @@ export async function initPublicCatalog({document,fetchImpl}={}) {
   let catalog=null, offset=0;
   prev.disabled=next.disabled=true;
   const clearDetail=()=>detail.replaceChildren();
-  function show(entry) {
+  function show(selection) {
     clearDetail();
+    const id=typeof selection==='string'?selection:selection?.id;
+    const entry=catalog&&[...catalog.agents,...catalog.swarms].find(item=>item.id===id);
+    if(!entry)throw Error('catalog: unknown dossier');
+    const isAgent=Object.hasOwn(entry,'group_id');
+    const groupId=isAgent?`G${Number(entry.group_id.slice(1))}`:entry.id;
+    const swarm=catalog.swarms.find(item=>item.id===groupId);
+    const members=catalog.agents.filter(item=>`G${Number(item.group_id.slice(1))}`===groupId);
     const lines=[
       ['Identyfikator',entry.id],
       ['Nazwa / specjalizacja',entry.display_name||entry.specialization],
       ['Specjalizacja',entry.specialization],
       ['Rój',entry.group_id||entry.id],
+      ['Zakres roju',swarm.scope],
+      ['Członkowie roju (rejestr źródłowy)',members.map(item=>item.id).join(', ')||'Brak wpisów'],
+      ['Flota',catalog.fleet_id],
+      ['Wersja schematu katalogu',String(catalog.schema_version)],
+      ['Git blob rejestru agentów (deklarowany)',catalog.source_agent_registry_git_blob],
+      ['Git blob rejestru rojów (deklarowany)',catalog.source_swarm_registry_git_blob],
+      ['Autentyczność źródła','Niezweryfikowane kryptograficznie'],
       ['Cykl życia',LABELS[entry.lifecycle]],
       ['Wdrożenie',LABELS[entry.deployment_status]],
+      ...(isAgent?[['Artefakt',LABELS[entry.artifact_status]]]:[]),
       ['Dokumentacja',LABELS[entry.documentation_status]],
       ['Certyfikacja',LABELS[entry.certification_status]],
       ['Wycena',LABELS[entry.price_status]],
@@ -56,7 +71,7 @@ export async function initPublicCatalog({document,fetchImpl}={}) {
       button.type='button';button.className='secondary';
       button.textContent=(entry.display_name||entry.id)+' · '+entry.specialization+' · '+
         (entry.lifecycle==='REFERENCE_ONLY'?'RÓJ REFERENCYJNY':'DRAFT');
-      button.addEventListener('click',()=>show(entry));
+      button.addEventListener('click',()=>show(entry.id));
       item.append(button);list.append(item);
     }
     prev.disabled=offset===0;
