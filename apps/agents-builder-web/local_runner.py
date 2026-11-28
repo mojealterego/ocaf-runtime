@@ -27,7 +27,6 @@ import sys
 import tempfile
 import threading
 from typing import Any
-from urllib.parse import urlsplit
 
 MODEL_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_. -]{0,126}\.gguf$", re.I)
 STATIC = frozenset({
@@ -544,10 +543,36 @@ class LocalHandler(BaseHTTPRequestHandler):
             raise RunnerError(401, "request: invalid local session token")
 
     def route(self) -> str:
-        path = urlsplit(self.path)
-        if path.query or path.fragment or not path.path.startswith("/"):
+        # The editor exposes only fixed ASCII origin-form paths. Do not
+        # normalize an absolute URI, encoded alias, or empty query/fragment.
+        if (self.requestline.split()[1] != self.path or self.path.startswith("//")
+                or re.fullmatch(r"/[A-Za-z0-9_./-]*", self.path) is None):
             raise RunnerError(400, "request: invalid path")
-        return path.path
+        return self.path
+
+    def read_static(self, name: str) -> bytes:
+        # Names have already passed STATIC admission. Limit allocation and
+        # reject links, special files, and a changed inode before reading.
+        path = self.server.web_root / name
+        limit = 1024 * 1024
+        expected = path.lstat()
+        if not stat.S_ISREG(expected.st_mode) or expected.st_size > limit:
+            raise RunnerError(404, "not found")
+        flags = os.O_RDONLY | getattr(os, "O_BINARY", 0)
+        flags |= getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+        fd = os.open(path, flags)
+        try:
+            actual = os.fstat(fd)
+            if (not stat.S_ISREG(actual.st_mode) or actual.st_size > limit
+                    or (actual.st_dev, actual.st_ino) != (expected.st_dev, expected.st_ino)):
+                raise RunnerError(404, "not found")
+            with os.fdopen(fd, "rb", closefd=False) as source:
+                data = source.read(limit + 1)
+            if len(data) > limit or len(data) != actual.st_size:
+                raise RunnerError(404, "not found")
+            return data
+        finally:
+            os.close(fd)
 
     def do_GET(self):
         try:
@@ -566,7 +591,7 @@ class LocalHandler(BaseHTTPRequestHandler):
             name = "index.html" if path == "/" else path.removeprefix("/")
             if name not in STATIC:
                 raise RunnerError(404, "not found")
-            data = (self.server.web_root / name).read_bytes()
+            data = self.read_static(name)
             self.send_bytes(200, data, MIME.get(Path(name).suffix, "application/octet-stream"))
         except RunnerError as err:
             self.reject(err)

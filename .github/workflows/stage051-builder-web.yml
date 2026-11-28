@@ -17,6 +17,7 @@ on:
       - scripts/tests/test_local_runner_file_admission.py
       - scripts/tests/test_local_runner_import_budget.py
       - scripts/tests/test_local_runner_connection_budget.py
+      - scripts/tests/test_local_runner_static_admission.py
       - tests/builder_web_contract.rs
       - src/builder_core.rs
       - .github/workflows/stage051-builder-web.yml

@@ -1,0 +1,15 @@
+# AB-OM-01 / 0.51 — static asset and HTTP target admission
+
+Date: 2026-11-28. Base aa13c2191a6ea9cd9784ba8f0f1e9069ebd5f9cd. TESTED_LOCAL_PARTIAL.
+
+The local server accepted absolute-form URLs and empty query/fragment delimiters; served allowlisted names via unbounded Path.read_bytes, following symlinks and potentially blocking on FIFO. Strict origin-form ASCII target admission rejects normalized aliases (including double slash and percent-encoding). Static read requires regular lstat and fstat, checks inode identity and size, uses O_NOFOLLOW/O_NONBLOCK where available, limits each asset to 1 MiB, checks bytes read against the opened size and closes descriptors. Missing/unsafe/oversized static assets return 404. Largest tracked public asset at base: agent-catalog.json, 57386 bytes, so the cap accommodates current assets.
+
+Evidence: Python 3.13.5 on Linux, real loopback TCP and filesystem; injected replacement race. Full OCAFServer and LocalHandler sections copied byte-for-byte from GitHub into a minimal harness (imports/constants/RunnerError/LocalRunner annotation). Exact existing JSON parser added for regression. Not a full module import or complete checkout; git clone/raw download unavailable due DNS; Rust/Cargo absent. Original server section 8739 bytes SHA-1 9f9adab0a9bb9a96c467d11a7696aba305383259; fixed section 10070 bytes SHA-1 71f68d22c1916f6dd547178b52d2eb7f51312426. Original full Git blob a82a73a9987d261f5bbb68ebe08b9d395811b2f6; modified full source blob f3ed3960de21e93f7b74428c46e8f4fe8259554c; new test blob d3db61509df50b9bc3dca3b93b5c9f3629d8bdb8. Parser SHA-1 5226a33dfccd519adfbb5c09988b58754902e788. Existing header and connection test blobs reproduced exactly: 0dbb03801d220464e0d2e1d29b6766bf99cbf789, bee6c444c2a7ffa70f520d3eec8c2e49df8990f7.
+
+TDD command: python3 -m unittest discover -s scripts/tests -p test_local_runner_static_admission.py -v
+RED: 6 methods, 8 failure reports including subtests, 1 error (FIFO timeout), exit 1; SHA-256 1a736c97818c7b073382a669882376c4b85274a14a3559a80b2f2ef13ad7eee6.
+GREEN: 6/6 PASS, 0 skipped, exit 0; SHA-256 3d6f26d940add9d1608e5407dba2ad6ab497b1a9fd780ac87d8c6f04d721e2d8.
+Regression on locally available verified tests: python3 -m unittest discover -s scripts/tests -p 'test_local_runner_*admission.py' -v (13 PASS); python3 -m unittest discover -s scripts/tests -p test_local_runner_connection_budget.py -v (4 PASS). Combined 17/17 PASS; both exit 0; combined log SHA-256 97da0d3bf23c42dd1ac3caa8a992e9930999bfb4a69e6cd4e328aad77b417b6a. No skipped tests.
+py_compile reconstructed module and 3 test files exit 0. Raw logs retained in local execution environment. Existing CI wildcard includes new test; push filter extended, no manual dispatch.
+
+Remaining: trusted web-root directory assumption, no protection against same-inode same-size concurrent content edits or replacement of ancestor directories; fallback flags on non-POSIX platforms unverified. Full static asset serving suite, actual browser, full module, Rust compilation, llama inference and production remain unverified. No canonical requirement or release status promoted.
