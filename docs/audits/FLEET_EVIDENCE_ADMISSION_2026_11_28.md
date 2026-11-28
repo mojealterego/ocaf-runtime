@@ -15,3 +15,12 @@ python3 -m py_compile scripts/evidence_pipeline.py scripts/tests/test_evidence_p
 Existing fleet structural workflow extended to test both historical baseline documents and negative fixtures. No manual CI dispatch. Local raw logs exported in session. Full repository and actual baseline file regression not run locally (checkout unavailable due DNS). No Rust/Cargo in local runtime.
 
 Limits: structurally valid fabricated receipts can still pass structure validation; this validator does not verify signatures, Git object existence, artifact bytes, member topology, execution logs or receipt issuer. No agent or swarm status was promoted. No external audit requirement introduced. CLI success text changes intentionally; external consumers expecting the former literal PASS may need adjustment.
+
+## Follow-up actual baseline regression (same session)
+
+After implementation commit 8364fddb4e6a182fef6736f1a7de6b97ca9e6371, both historical baseline files were reconstructed locally from their GitHub contents and verified byte-for-byte by Git blob SHA. Each is 87804 bytes. Actual CLI validation in optimized Python 3.13.5 passed for both documents:
+
+- 2026-10-21: c09bb3412407337bd026ab99cb0c27d65cb4a088 — PASS_STRUCTURE_ONLY, exit 0.
+- 2026-10-22: 9f4d1ede0804728f71c0e88aa3220c32e662db91 — PASS_STRUCTURE_ONLY, exit 0.
+
+Command for each: python3 -O scripts/evidence_pipeline.py validate --output docs/evidence/FLEET_EVIDENCE_BASELINE_<date>.json. Combined raw log SHA-256 60cd36c86913716967f10a388b1a058fe74303291470e6ef3524b69679dd99ff. This supersedes the earlier local historical-baseline regression limitation, but does not establish full repository regression or actual agent execution.
