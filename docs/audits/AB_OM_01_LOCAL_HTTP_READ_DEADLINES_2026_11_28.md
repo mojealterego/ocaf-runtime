@@ -1,0 +1,15 @@
+# AB-OM-01 / 0.51 — absolute HTTP read deadlines
+
+Date: 2026-11-28. Base 52c2ebe8167441d90af7adf272b51d7c7a81984c. TESTED_LOCAL_PARTIAL.
+
+Previously socket timeout was only an idle bound. Slow trickles could keep a connection slot indefinitely. Add DeadlineReader using monotonic deadlines and per-read timeout bounded by remaining time. Header phase 12s; JSON body 12s; GGUF upload body 1200s; idle timeout 12s. Header expiration closes connection; body expiration raises RunnerError 408. Preserve unread bytes between phases, EOF semantics and normal response write timeout. No extra timer threads. Time budgets are fixed class defaults; tests override locally. This is a read-phase deadline, not an end-to-end inference or disk-operation deadline.
+
+Evidence: Python 3.13.5 on isolated Linux; real TCP loopback and socketpair, test backend (not actual llama inference), time-controlled unit case and short real wall-clock integration cases. Reconstructed exact OCAFServer and LocalHandler section plus unchanged JSON parser from GitHub, harness imports/constants, RunnerError and unused LocalRunner annotation. Full module not imported or compiled locally. Baseline blob f3ed3960de21e93f7b74428c46e8f4fe8259554c; original server section SHA-1 71f68d22c1916f6dd547178b52d2eb7f51312426; tested fixed section 5c182fafb4b2ec54c7609aa01ebdbb83deb9193f; parser SHA-1 5226a33dfccd519adfbb5c09988b58754902e788; new test blob 7d8ca4594a73895067985221d2cc503576c3125e; patched full source blob a2036a9b02063c59183a3f5f7ae28c830eba43c9. Existing header regression test blob 0dbb03801d220464e0d2e1d29b6766bf99cbf789 verified.
+
+Command: python3 -m unittest discover -s scripts/tests -p test_local_runner_deadlines.py -v.
+RED: 6 methods, 1 PASS, 3 FAIL (slow header, JSON, upload accepted), 2 ERROR (reader absent), exit 1. SHA-256 314497898081f195919025c893fb137e86ae9e93ff1311d85a8647f3ce296c72.
+GREEN: 6/6 PASS, exit 0. SHA-256 24a1a11564226a88bac2fbefa01132d365bd05e4b9a70235fab25cec71b1acb3.
+Available subset regression: python3 -m unittest discover -s scripts/tests -p 'test_local_runner_*.py' -v; local directory contains only deadlines and header admission tests, 13/13 PASS, 0 skipped, exit 0. SHA-256 3c38f17ce9a738719a9f8ce5523fd626b74c399a7f3b35a005cb0e3f55c4e863.
+python -m py_compile apps/agents-builder-web/local_runner.py scripts/tests/*.py on reconstructed module and two test files: exit 0. Raw logs exported in session; existing CI workflow extended; no manual dispatch.
+
+Limitations: upload test uses recording backend, not actual import publication/cleanup. Network buffering adds temporary copies bounded by caller read size; not proof of a global memory quota. Absolute deadlines only cover network reads and cannot interrupt backend inference, filesystem operations or response writes. All saturated slots may still block stop admission. No full checkout (GitHub DNS failure), no Rust/Cargo, no native or browser E2E, full regression not executed. No canonical requirement or release status promoted.

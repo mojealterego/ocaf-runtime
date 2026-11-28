@@ -26,6 +26,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 from typing import Any
 
 MODEL_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_. -]{0,126}\.gguf$", re.I)
@@ -487,16 +488,103 @@ class OCAFServer(ThreadingHTTPServer):
             super().server_close()
 
 
+class DeadlineReader:
+    """Bound each read phase by a monotonic deadline, not an idle timeout."""
+
+    def __init__(self, stream, connection, idle_timeout):
+        self.stream = stream
+        self.connection = connection
+        self.idle_timeout = idle_timeout
+        self.deadline = 0.0
+        self.body = False
+
+    def reset(self, seconds, *, body=False):
+        self.deadline = time.monotonic() + seconds
+        self.body = body
+
+    def _expired(self):
+        if self.body:
+            raise RunnerError(408, "request: body read timeout")
+        raise TimeoutError("request: header read timeout")
+
+    def _remaining(self):
+        remaining = self.deadline - time.monotonic()
+        if remaining <= 0:
+            self._expired()
+        return remaining
+
+    def _read_step(self, operation, *args):
+        self.connection.settimeout(min(self.idle_timeout, self._remaining()))
+        try:
+            data = operation(*args)
+        except TimeoutError:
+            self._expired()
+        self._remaining()
+        return data
+
+    def readline(self, size):
+        # peek/read only consume bytes already in the socket's buffer; each
+        # buffer refill is subject to the remaining absolute deadline.
+        if size < 0:
+            raise ValueError("request: bounded line read required")
+        result = bytearray()
+        while len(result) < size:
+            chunk = self._read_step(self.stream.peek, 1)
+            if not chunk:
+                break
+            count = min(size - len(result), len(chunk))
+            newline = chunk.find(b"\n", 0, count)
+            if newline >= 0:
+                count = newline + 1
+            result.extend(self._read_step(self.stream.read, count))
+            if newline >= 0:
+                break
+        return bytes(result)
+
+    def read(self, size):
+        if size < 0:
+            raise ValueError("request: bounded body read required")
+        result = bytearray()
+        while len(result) < size:
+            chunk = self._read_step(self.stream.read1, size - len(result))
+            if not chunk:
+                break
+            result.extend(chunk)
+        return bytes(result)
+
+    def close(self):
+        self.stream.close()
+
+
 class LocalHandler(BaseHTTPRequestHandler):
     server: OCAFServer
     protocol_version = "HTTP/1.1"
     timeout = 12
+    header_deadline = 12
+    json_deadline = 12
+    upload_deadline = 20 * 60
+
+    def setup(self):
+        super().setup()
+        self.rfile = DeadlineReader(self.rfile, self.connection, self.timeout)
+
+    def handle_one_request(self):
+        self.rfile.reset(self.header_deadline)
+        super().handle_one_request()
+
+    def parse_request(self):
+        if not super().parse_request():
+            return False
+        budget = self.upload_deadline if self.path == "/v1/local-runner/import" else self.json_deadline
+        self.rfile.reset(budget, body=True)
+        return True
 
     def log_message(self, fmt, *args):
         # Never log API key, prompt, Authorization headers or filesystem paths.
         pass
 
     def send_bytes(self, status: int, content: bytes, mime: str):
+        self.connection.settimeout(self.timeout)
         self.send_response(status)
         self.send_header("Content-Type", mime)
         self.send_header("Content-Length", str(len(content)))
