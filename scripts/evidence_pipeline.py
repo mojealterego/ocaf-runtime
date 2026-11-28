@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -94,23 +95,90 @@ def collect(out: Path) -> dict[str, Any]:
     return record
 
 
+def _present_text(value: Any) -> bool:
+    return (isinstance(value, str) and bool(value.strip())
+            and value.strip().upper() not in {"NOT_RUN", "N/A", "NONE", "UNKNOWN", "PENDING", "BLOCKED", "FAIL"})
+
+
 def validate(record: dict[str, Any]) -> list[str]:
+    """Validate evidence structure only; never authenticate receipts or execute commands."""
+    if not isinstance(record, dict):
+        return ["record must be an object"]
     errors: list[str] = []
-    if record.get("counts", {}).get("agents") != 111 or len(record.get("agents", [])) != 111:
-        errors.append("agent count is not exactly 111")
-    if record.get("counts", {}).get("swarms") != 33 or len(record.get("swarms", [])) != 33:
-        errors.append("swarm count is not exactly 33")
-    ids = {row.get("agent_id") for row in record.get("agents", [])}
-    if len(ids) != 111:
-        errors.append("agent IDs are not unique")
-    for row in record.get("agents", []) + record.get("swarms", []):
-        if row.get("evidence_status") == "COMPLETE_VERIFIED":
-            missing = [key for key in REQUIRED if not row.get(key)]
-            if missing:
-                errors.append(f"{row.get('agent_id', row.get('swarm_id'))}: complete without {','.join(missing)}")
-            if not str(row.get("artifact_digest", "")).startswith("sha256:"):
-                errors.append(f"{row.get('agent_id', row.get('swarm_id'))}: invalid artifact digest")
+    if type(record.get("schema_version")) is not int or record["schema_version"] != 1:
+        errors.append("unsupported evidence schema")
+    status = record.get("status")
+    if status not in ("PENDING_EVIDENCE", "COMPLETE_VERIFIED"):
+        errors.append("invalid record evidence status")
+    counts = record.get("counts")
+    if not isinstance(counts, dict):
+        return errors + ["counts must be an object"]
+    for kind, identity, prefix, width, count in (
+        ("agents", "agent_id", "OCAF-AGENT-", 3, 111),
+        ("swarms", "swarm_id", "OCAF-SWARM-", 2, 33),
+    ):
+        rows = record.get(kind)
+        if (type(counts.get(kind)) is not int or counts[kind] != count
+                or not isinstance(rows, list) or len(rows) != count):
+            errors.append(f"{kind} count is not exactly {count}")
+            continue
+        expected = {f"{prefix}{index:0{width}d}" for index in range(1, count + 1)}
+        seen: set[str] = set()
+        for index, row in enumerate(rows):
+            if not isinstance(row, dict):
+                errors.append(f"{kind}[{index}]: expected object")
+                continue
+            rid = row.get(identity)
+            if not isinstance(rid, str) or rid not in expected or rid in seen:
+                errors.append(f"{kind}[{index}]: unknown or duplicate identity")
+                continue
+            seen.add(rid)
+            row_status = row.get("evidence_status")
+            if row_status not in ("PENDING_EVIDENCE", "COMPLETE_VERIFIED"):
+                errors.append(f"{rid}: invalid evidence status")
+            if status == "COMPLETE_VERIFIED" and row_status != "COMPLETE_VERIFIED":
+                errors.append(f"{rid}: summary claims completion without completed row")
+            if row_status != "COMPLETE_VERIFIED":
+                continue
+            for key in REQUIRED:
+                if not _present_text(row.get(key)):
+                    errors.append(f"{rid}: missing or invalid {key}")
+            for key in ("build_result", "test_result"):
+                if row.get(key) != "PASS":
+                    errors.append(f"{rid}: {key} must be PASS")
+            for key, pattern in (("source_commit", r"[0-9a-f]{40}"),
+                                 ("artifact_digest", r"sha256:[0-9a-f]{64}")):
+                value = row.get(key)
+                if not isinstance(value, str) or re.fullmatch(pattern, value) is None:
+                    errors.append(f"{rid}: invalid {key}")
+            if row.get("blockers") != []:
+                errors.append(f"{rid}: completion requires empty blockers list")
+        if seen != expected:
+            errors.append(f"{kind}: canonical identity set mismatch")
     return errors
+
+
+def _unique_json(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate JSON key")
+        result[key] = value
+    return result
+
+
+def _reject_constant(value: str) -> Any:
+    raise ValueError("non-finite JSON constant")
+
+
+def read_evidence(path: Path) -> Any:
+    limit = 4 * 1024 * 1024
+    with path.open("rb") as stream:
+        raw = stream.read(limit + 1)
+    if len(raw) > limit:
+        raise ValueError("evidence exceeds size limit")
+    return json.loads(raw.decode("utf-8"), object_pairs_hook=_unique_json,
+                      parse_constant=_reject_constant)
 
 
 def main() -> int:
@@ -122,13 +190,17 @@ def main() -> int:
         record = collect(args.output)
         print(json.dumps({"status": record["status"], "agents": 111, "swarms": 33, "output": str(args.output)}, ensure_ascii=False))
         return 0
-    record = json.loads(args.output.read_text())
-    errors = validate(record)
+    try:
+        record = read_evidence(args.output)
+        errors = validate(record)
+    except (OSError, ValueError, RecursionError) as exc:
+        print(f"evidence_pipeline: invalid input: {exc}", file=sys.stderr)
+        return 1
     if errors:
         for error in errors:
             print(error, file=sys.stderr)
         return 1
-    print("evidence_pipeline: PASS")
+    print("evidence_pipeline: PASS_STRUCTURE_ONLY")
     return 0
 
 

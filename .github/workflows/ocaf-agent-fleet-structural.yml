@@ -6,6 +6,10 @@ on:
     paths:
       - "scripts/validate_agent_fleet_111.py"
       - "scripts/tests/test_validate_agent_fleet_111.py"
+      - "scripts/evidence_pipeline.py"
+      - "scripts/tests/test_evidence_pipeline.py"
+      - "docs/evidence/FLEET_EVIDENCE_BASELINE_*.json"
+      - "docs/agents/swarm_registry_33.json"
       - "docs/agents/agent_registry_111.json"
       - "OCAF Agents MOJEALTEREGO/AGENT-FLEET-111/**"
       - ".github/workflows/ocaf-agent-fleet-structural.yml"
@@ -13,6 +17,10 @@ on:
     paths:
       - "scripts/validate_agent_fleet_111.py"
       - "scripts/tests/test_validate_agent_fleet_111.py"
+      - "scripts/evidence_pipeline.py"
+      - "scripts/tests/test_evidence_pipeline.py"
+      - "docs/evidence/FLEET_EVIDENCE_BASELINE_*.json"
+      - "docs/agents/swarm_registry_33.json"
       - "docs/agents/agent_registry_111.json"
       - "OCAF Agents MOJEALTEREGO/AGENT-FLEET-111/**"
       - ".github/workflows/ocaf-agent-fleet-structural.yml"
@@ -35,3 +43,9 @@ jobs:
         run: python3 -B -m unittest discover -s scripts/tests -p test_validate_agent_fleet_111.py -v
       - name: Inspect real 111 source packages in optimized Python
         run: python3 -O scripts/validate_agent_fleet_111.py
+      - name: Validate fleet evidence structure and negative cases
+        run: |
+          python3 -B -m py_compile scripts/evidence_pipeline.py scripts/tests/test_evidence_pipeline.py
+          python3 -O -m unittest discover -s scripts/tests -p test_evidence_pipeline.py -v
+          python3 -O scripts/evidence_pipeline.py validate --output docs/evidence/FLEET_EVIDENCE_BASELINE_2026-10-21.json
+          python3 -O scripts/evidence_pipeline.py validate --output docs/evidence/FLEET_EVIDENCE_BASELINE_2026-10-22.json
